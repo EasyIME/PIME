@@ -19,6 +19,16 @@ ChewingWrapper::~ChewingWrapper()
     m_ctx = 0;
 }
 
+void ChewingWrapper::handle_default(int key)
+{
+    chewing_handle_Default(m_ctx, key);
+}
+
+void ChewingWrapper::handle_enter()
+{
+    chewing_handle_Enter(m_ctx);
+}
+
 bool ChewingWrapper::has_commit()
 {
     return !!chewing_commit_Check(m_ctx);

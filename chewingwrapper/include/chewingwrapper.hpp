@@ -9,6 +9,9 @@ public:
     ChewingWrapper();
     ~ChewingWrapper();
 
+    void handle_default(int key);
+    void handle_enter();
+
     bool has_commit();
     std::unique_ptr<wchar_t> get_commit();
 

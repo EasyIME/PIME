@@ -1,15 +1,9 @@
 cmake_minimum_required(VERSION 2.8.8)
 project(windows-TSF-chewing)
 
-add_subdirectory(external/libchewing)
+enable_testing()
 
-include_directories(
-    chewingwrapper/include
-    external/libchewing/include
-)
+set(PROJECT_LIBCHEWING ${PROJECT_SOURCE_DIR}/external/libchewing)
+add_subdirectory(${PROJECT_LIBCHEWING})
 
-add_library(chewingwrapper STATIC
-    chewingwrapper/include/chewingwrapper.hpp
-    chewingwrapper/src/chewingwrapper.cpp
-)
-target_link_libraries(chewingwrapper chewing_static)
+add_subdirectory(chewingwrapper)

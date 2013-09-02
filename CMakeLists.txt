@@ -4,6 +4,7 @@ project(windows-TSF-chewing)
 enable_testing()
 
 set(PROJECT_LIBCHEWING ${PROJECT_SOURCE_DIR}/external/libchewing)
+set(CHEWING_DATA_PREFIX ${PROJECT_BINARY_DIR}/external/libchewing/data)
 add_subdirectory(${PROJECT_LIBCHEWING})
 
 add_subdirectory(chewingwrapper)

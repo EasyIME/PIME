@@ -19,5 +19,5 @@ private:
     ChewingWrapper(const ChewingWrapper&);
     ChewingWrapper& operator=(const ChewingWrapper&);
     std::unique_ptr<wchar_t> convert_utf8_to_utf16(std::unique_ptr<char, void(*)(void*)>&& input);
-    ChewingContext *m_ctx;
+    std::unique_ptr<ChewingContext, void (*)(ChewingContext*)> m_ctx;
 };

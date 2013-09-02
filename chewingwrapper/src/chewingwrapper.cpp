@@ -6,37 +6,34 @@
 #include <windows.h>
 
 ChewingWrapper::ChewingWrapper()
-:m_ctx(0)
+:m_ctx(chewing_new(), chewing_delete)
 {
-    m_ctx = chewing_new();
     if (!m_ctx)
         throw std::runtime_error("Cannot initialize chewing instance");
 }
 
 ChewingWrapper::~ChewingWrapper()
 {
-    chewing_delete(m_ctx);
-    m_ctx = 0;
 }
 
 void ChewingWrapper::handle_default(int key)
 {
-    chewing_handle_Default(m_ctx, key);
+    chewing_handle_Default(m_ctx.get(), key);
 }
 
 void ChewingWrapper::handle_enter()
 {
-    chewing_handle_Enter(m_ctx);
+    chewing_handle_Enter(m_ctx.get());
 }
 
 bool ChewingWrapper::has_commit()
 {
-    return !!chewing_commit_Check(m_ctx);
+    return !!chewing_commit_Check(m_ctx.get());
 }
 
 std::unique_ptr<wchar_t> ChewingWrapper::get_commit()
 {
-    std::unique_ptr<char, void(*)(void*)> utf8_string(chewing_commit_String(m_ctx), chewing_free);
+    std::unique_ptr<char, void(*)(void*)> utf8_string(chewing_commit_String(m_ctx.get()), chewing_free);
     if (!utf8_string.get())
         throw std::bad_alloc();
     return convert_utf8_to_utf16(std::move(utf8_string));

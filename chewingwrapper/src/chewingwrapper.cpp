@@ -36,14 +36,13 @@ bool ChewingWrapper::has_commit()
 
 std::unique_ptr<wchar_t> ChewingWrapper::get_commit()
 {
-    // FIXME: Use chewing_free
-    std::unique_ptr<char> utf8_string(chewing_commit_String(m_ctx));
+    std::unique_ptr<char, void(*)(void*)> utf8_string(chewing_commit_String(m_ctx), chewing_free);
     if (!utf8_string.get())
         throw std::bad_alloc();
     return convert_utf8_to_utf16(std::move(utf8_string));
 }
 
-std::unique_ptr<wchar_t> ChewingWrapper::convert_utf8_to_utf16(std::unique_ptr<char>&& input)
+std::unique_ptr<wchar_t> ChewingWrapper::convert_utf8_to_utf16(std::unique_ptr<char, void(*)(void*)>&& input)
 {
     int len = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, input.get(), -1, 0, 0);
     if (len == 0)

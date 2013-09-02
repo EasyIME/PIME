@@ -16,7 +16,7 @@ ChewingWrapper::~ChewingWrapper()
 {
 }
 
-void ChewingWrapper::handle_default(int key)
+void ChewingWrapper::handle_key(int key)
 {
     chewing_handle_Default(m_ctx.get(), key);
 }
@@ -24,6 +24,81 @@ void ChewingWrapper::handle_default(int key)
 void ChewingWrapper::handle_enter()
 {
     chewing_handle_Enter(m_ctx.get());
+}
+
+void ChewingWrapper::handle_space()
+{
+    chewing_handle_Space(m_ctx.get());
+}
+
+void ChewingWrapper::handle_esc()
+{
+    chewing_handle_Esc(m_ctx.get());
+}
+
+void ChewingWrapper::handle_delete()
+{
+    chewing_handle_Del(m_ctx.get());
+}
+
+void ChewingWrapper::handle_backspace()
+{
+    chewing_handle_Backspace(m_ctx.get());
+}
+
+void ChewingWrapper::handle_home()
+{
+    chewing_handle_Home(m_ctx.get());
+}
+
+void ChewingWrapper::handle_end()
+{
+    chewing_handle_End(m_ctx.get());
+}
+
+void ChewingWrapper::handle_ctrl_num(int code)
+{
+    chewing_handle_CtrlNum(m_ctx.get(), code);
+}
+
+void ChewingWrapper::handle_up()
+{
+    chewing_handle_Up(m_ctx.get());
+}
+
+void ChewingWrapper::handle_down()
+{
+    chewing_handle_Down(m_ctx.get());
+}
+
+void ChewingWrapper::handle_left()
+{
+    chewing_handle_Left(m_ctx.get());
+}
+
+void ChewingWrapper::handle_right()
+{
+    chewing_handle_Right(m_ctx.get());
+}
+
+void ChewingWrapper::handle_shift_left()
+{
+    chewing_handle_ShiftLeft(m_ctx.get());
+}
+
+void ChewingWrapper::handle_shift_right()
+{
+    chewing_handle_ShiftRight(m_ctx.get());
+}
+
+void ChewingWrapper::handle_shift_space()
+{
+    chewing_handle_ShiftSpace(m_ctx.get());
+}
+
+void ChewingWrapper::handle_tab()
+{
+    chewing_handle_Tab(m_ctx.get());
 }
 
 bool ChewingWrapper::has_commit()

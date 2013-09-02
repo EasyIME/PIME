@@ -15,11 +15,11 @@ int main()
 
     ChewingWrapper ctx;
 
-    ctx.handle_default('h');
-    ctx.handle_default('k');
-    ctx.handle_default('4');
-    ctx.handle_default('g');
-    ctx.handle_default('4');
+    ctx.handle_key('h');
+    ctx.handle_key('k');
+    ctx.handle_key('4');
+    ctx.handle_key('g');
+    ctx.handle_key('4');
     ctx.handle_enter();
 
     if (!ctx.has_commit()) {

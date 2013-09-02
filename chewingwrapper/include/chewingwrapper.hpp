@@ -9,8 +9,29 @@ public:
     ChewingWrapper();
     ~ChewingWrapper();
 
-    void handle_default(int key);
+    void handle_key(int key);
     void handle_enter();
+    void handle_space();
+    void handle_esc();
+
+    void handle_delete();
+    void handle_backspace();
+
+    void handle_home();
+    void handle_end();
+
+    void handle_ctrl_num(int code);
+
+    void handle_up();
+    void handle_down();
+    void handle_left();
+    void handle_right();
+
+    void handle_shift_left();
+    void handle_shift_right();
+    void handle_shift_space();
+
+    void handle_tab();
 
     bool has_commit();
     std::unique_ptr<wchar_t> get_commit();

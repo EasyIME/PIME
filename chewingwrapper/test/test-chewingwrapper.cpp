@@ -7,8 +7,9 @@
 
 int main()
 {
-    SetEnvironmentVariable("CHEWING_PATH", CHEWING_PATH);
-    SetEnvironmentVariable("CHEWING_USER_PATH", CHEWING_USER_PATH);
+    // XXX: Use SetEnvironmentVariableA here will cause crash in Visual Studio.
+    _putenv("CHEWING_PATH="CHEWING_PATH);
+    _putenv("CHEWING_USER_PATH="CHEWING_USER_PATH);
 
     const wchar_t EXPECT[] = { 0x6e2c, 0x8a66, 0 /* 測試 */ };
 

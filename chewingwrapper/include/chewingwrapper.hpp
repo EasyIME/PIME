@@ -36,6 +36,12 @@ public:
     bool has_commit();
     std::unique_ptr<wchar_t> get_commit();
 
+    bool has_bopomofo();
+    std::unique_ptr<wchar_t> get_bopomofo();
+
+    bool has_preedit();
+    std::unique_ptr<wchar_t> get_preedit();
+
 private:
     ChewingWrapper(const ChewingWrapper&);
     ChewingWrapper& operator=(const ChewingWrapper&);

@@ -114,6 +114,33 @@ std::unique_ptr<wchar_t> ChewingWrapper::get_commit()
     return convert_utf8_to_utf16(std::move(utf8_string));
 }
 
+bool ChewingWrapper::has_bopomofo()
+{
+    return !chewing_zuin_Check(m_ctx.get());
+}
+
+std::unique_ptr<wchar_t> ChewingWrapper::get_bopomofo()
+{
+    int dummy;
+    std::unique_ptr<char, void(*)(void*)> utf8_string(chewing_zuin_String(m_ctx.get(), &dummy), chewing_free);
+    if (!utf8_string.get())
+        throw std::bad_alloc();
+    return convert_utf8_to_utf16(std::move(utf8_string));
+}
+
+bool ChewingWrapper::has_preedit()
+{
+    return !!chewing_buffer_Check(m_ctx.get());
+}
+
+std::unique_ptr<wchar_t> ChewingWrapper::get_preedit()
+{
+    std::unique_ptr<char, void(*)(void*)> utf8_string(chewing_buffer_String(m_ctx.get()), chewing_free);
+    if (!utf8_string.get())
+        throw std::bad_alloc();
+    return convert_utf8_to_utf16(std::move(utf8_string));
+}
+
 std::unique_ptr<wchar_t> ChewingWrapper::convert_utf8_to_utf16(std::unique_ptr<char, void(*)(void*)>&& input)
 {
     int len = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, input.get(), -1, 0, 0);
@@ -125,3 +152,4 @@ std::unique_ptr<wchar_t> ChewingWrapper::convert_utf8_to_utf16(std::unique_ptr<c
     MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, input.get(), -1, output.get(), len);
     return output;
 }
+

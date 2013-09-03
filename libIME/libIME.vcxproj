@@ -159,6 +159,7 @@
     <ClInclude Include="TextService.h" />
     <ClInclude Include="libIME.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EditSession.cpp" />
@@ -166,6 +167,7 @@
     <ClCompile Include="KeyEvent.cpp" />
     <ClCompile Include="libIME.cpp" />
     <ClCompile Include="TextService.cpp" />
+    <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="libIME.rc" />

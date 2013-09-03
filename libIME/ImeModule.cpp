@@ -22,7 +22,6 @@ HRESULT ImeModule::canUnloadNow() {
 }
 
 HRESULT ImeModule::getClassObject(REFCLSID rclsid, REFIID riid, void **ppvObj) {
-	::MessageBoxW(0, L"getClassObject", 0, 0);
     if (IsEqualIID(riid, IID_IClassFactory) || IsEqualIID(riid, IID_IUnknown)) {
 		// increase reference count
 		AddRef();

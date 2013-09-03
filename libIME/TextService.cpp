@@ -17,6 +17,12 @@ TextService::TextService(void):
 TextService::~TextService(void) {
 }
 
+// public methods
+void TextService::replaceSelectedText(wchar_t* str, int len) {
+	// threadMgr_
+}
+
+
 // virtual
 void TextService::onActivate() {
 }
@@ -155,22 +161,27 @@ STDMETHODIMP TextService::Deactivate() {
 
 // ITfThreadMgrEventSink
 STDMETHODIMP TextService::OnInitDocumentMgr(ITfDocumentMgr *pDocMgr) {
+	::MessageBoxW(0, L"OnInitDocumentMgr", 0, 0);
 	return S_OK;
 }
 
 STDMETHODIMP TextService::OnUninitDocumentMgr(ITfDocumentMgr *pDocMgr) {
+	::MessageBoxW(0, L"OnUninitDocumentMgr", 0, 0);
 	return S_OK;
 }
 
 STDMETHODIMP TextService::OnSetFocus(ITfDocumentMgr *pDocMgrFocus, ITfDocumentMgr *pDocMgrPrevFocus) {
+	onFocus();
 	return S_OK;
 }
 
 STDMETHODIMP TextService::OnPushContext(ITfContext *pContext) {
+	::MessageBoxW(0, L"OnPushContext", 0, 0);
 	return S_OK;
 }
 
 STDMETHODIMP TextService::OnPopContext(ITfContext *pContext) {
+	::MessageBoxW(0, L"OnPopContext", 0, 0);
 	return S_OK;
 }
 
@@ -246,7 +257,7 @@ STDMETHODIMP TextService::EndCompositionEditSession::DoEditSession(TfEditCookie 
 // callback from edit session of key events
 HRESULT TextService::onKeyEditSession(TfEditCookie cookie, KeyEditSession* session) {
 	// TODO: perform key handling
-	onKeyDown(session->wParam_);
+	onKeyDown((long)session->wParam_);
 	return S_OK;
 }
 

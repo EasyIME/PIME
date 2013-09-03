@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ChewingTextService.def" />
+    <None Include="mainicon.ico" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChewingImeModule.cpp" />
@@ -29,6 +30,10 @@
   <ItemGroup>
     <ClInclude Include="ChewingImeModule.h" />
     <ClInclude Include="ChewingTextService.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ChewingTextService.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C2843899-A670-4753-B79D-776A42F7BC77}</ProjectGuid>
@@ -109,12 +114,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;CHEWINGTEXTSERVICE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..;$(ProjectDir)\..\libchewing\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(OutDir)\libIme.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(OutDir)\libIme.lib;$(ProjectDir)..\libchewing\build\Debug\chewing.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>ChewingTextService.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -147,14 +152,14 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;CHEWINGTEXTSERVICE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..;$(ProjectDir)\..\libchewing\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(OutDir)\libIme.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(OutDir)\libIme.lib;libchewing\build\Debug\chewing.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>ChewingTextService.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>

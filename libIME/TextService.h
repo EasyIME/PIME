@@ -22,6 +22,7 @@ public:
 	virtual ~TextService(void);
 
 	// public methods
+	void replaceSelectedText(wchar_t* str, int len);
 
 	// virtual functions that IME implementors may need to override
 	virtual void onActivate();

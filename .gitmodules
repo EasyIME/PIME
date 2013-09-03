@@ -1,0 +1,3 @@
+[submodule "libchewing"]
+	path = libchewing
+	url = https://github.com/chewing/libchewing.git

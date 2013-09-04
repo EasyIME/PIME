@@ -2,8 +2,6 @@
 
 #include <Windows.h>
 
-using namespace Ime;
-
 wchar_t* utf8ToUtf16(const char* text, int* outLen) {
 	wchar_t *wtext = NULL;
 	int wlen = MultiByteToWideChar(CP_UTF8, 0, text, -1, NULL, 0);

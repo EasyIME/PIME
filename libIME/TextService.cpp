@@ -70,7 +70,17 @@ void TextService::onDeactivate() {
 }
 
 // virtual
+bool TextService::filterKeyDown(long key) {
+	return false;
+}
+
+// virtual
 bool TextService::onKeyDown(long key, EditSession* session) {
+	return false;
+}
+
+// virtual
+bool TextService::filterKeyUp(long key) {
 	return false;
 }
 
@@ -230,24 +240,32 @@ STDMETHODIMP TextService::OnSetFocus(BOOL fForeground) {
 }
 
 STDMETHODIMP TextService::OnTestKeyDown(ITfContext *pContext, WPARAM wParam, LPARAM lParam, BOOL *pfEaten) {
-	*pfEaten = TRUE;
+	*pfEaten = (BOOL)filterKeyDown((long)wParam);
 	return S_OK;
 }
 
 STDMETHODIMP TextService::OnKeyDown(ITfContext *pContext, WPARAM wParam, LPARAM lParam, BOOL *pfEaten) {
 	HRESULT sessionResult;
-	KeyEditSession* session = new KeyEditSession(this, pContext, wParam, lParam);
+	KeyEditSession* session = new KeyEditSession(this, pContext, true, wParam, lParam);
 	pContext->RequestEditSession(clientId_, session, TF_ES_SYNC|TF_ES_READWRITE, &sessionResult);
+	*pfEaten = session->result_; // tell TSF if we handled the key
 	session->Release();
 	return S_OK;
 }
 
 STDMETHODIMP TextService::OnTestKeyUp(ITfContext *pContext, WPARAM wParam, LPARAM lParam, BOOL *pfEaten) {
-	*pfEaten = TRUE;
+	*pfEaten = (BOOL)filterKeyUp((long)wParam);
 	return S_OK;
 }
 
 STDMETHODIMP TextService::OnKeyUp(ITfContext *pContext, WPARAM wParam, LPARAM lParam, BOOL *pfEaten) {
+	HRESULT sessionResult;
+	KeyEditSession* session = new KeyEditSession(this, pContext, false, wParam, lParam);
+	pContext->RequestEditSession(clientId_, session, TF_ES_SYNC|TF_ES_READWRITE, &sessionResult);
+	*pfEaten = session->result_; // tell TSF if we handled the key
+	session->Release();
+	return S_OK;
+
 	return S_OK;
 }
 
@@ -292,8 +310,10 @@ STDMETHODIMP TextService::EndCompositionEditSession::DoEditSession(TfEditCookie 
 // callback from edit session of key events
 HRESULT TextService::doKeyEditSession(TfEditCookie cookie, KeyEditSession* session) {
 	// TODO: perform key handling
-	onKeyDown((long)session->wParam_, session);
-	// FIXME: separate key down and key up
+	if(session->isDown_)
+		session->result_ = onKeyDown((long)session->wParam_, session);
+	else
+		session->result_ = onKeyUp((long)session->wParam_, session);
 	return S_OK;
 }
 

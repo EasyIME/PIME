@@ -38,6 +38,23 @@ void TextService::onFocus() {
 #include <iostream>
 
 // virtual
+bool TextService::filterKeyDown(long key) {
+	assert(chewingContext_);
+	// TODO: check if we're in Chinses or English mode
+	if(!isComposing()) {
+		// when not composing, we only cares about Bopomopho
+		// FIXME: we should check if the key is mapped to a phonetic symbol instead
+		// FIXME: we need to handle Shift, Alt, and Ctrl, ...etc.
+		if((key >= 'A' && key <= 'Z')
+			|| (key >= '0' && key <= '9')) {
+			return true;
+		}
+		return false;
+	}
+	return true;
+}
+
+// virtual
 bool TextService::onKeyDown(long key, Ime::EditSession* session) {
 	assert(chewingContext_);
     /*
@@ -51,6 +68,7 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
      * shift space
      * numlock num		VK_NUMLOCK
 	 */
+
     if('A' <= key && key <= 'Z') {
         chewing_handle_Default(chewingContext_, key - 'A' + 'a');
     } else if ('0' <= key && key <= '9') {
@@ -111,6 +129,9 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
                 return S_OK;
         }
     }
+
+	if(chewing_keystroke_CheckIgnore(chewingContext_))
+		return false;
 
 	// has something to commit
 	if(chewing_commit_Check(chewingContext_)) {
@@ -179,6 +200,11 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
 	SetComposition(preedit_zuin.GetString(), preedit_zuin.GetLength());
 #endif
 	return true;
+}
+
+// virtual
+bool TextService::filterKeyUp(long key) {
+	return false;
 }
 
 // virtual

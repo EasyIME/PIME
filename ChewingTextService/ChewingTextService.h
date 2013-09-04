@@ -16,7 +16,9 @@ public:
 
 	virtual void onFocus();
 
+	virtual bool filterKeyDown(long key);
 	virtual bool onKeyDown(long key, Ime::EditSession* session);
+	virtual bool filterKeyUp(long key);
 	virtual bool onKeyUp(long key, Ime::EditSession* session);
 
 private:

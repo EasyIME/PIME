@@ -34,7 +34,9 @@ public:
 
 	virtual void onFocus();
 
+	virtual bool filterKeyDown(long key);
 	virtual bool onKeyDown(long key, EditSession* session);
+	virtual bool filterKeyUp(long key);
 	virtual bool onKeyUp(long key, EditSession* session);
 
 	// COM related stuff
@@ -77,8 +79,10 @@ protected:
 	// edit session classes, used with TSF
 	class KeyEditSession: public EditSession {
 	public:
-		KeyEditSession(TextService* service, ITfContext* context, WPARAM wParam, LPARAM lParam):
+		KeyEditSession(TextService* service, ITfContext* context, bool isDown, WPARAM wParam, LPARAM lParam):
 			EditSession(service, context),
+			isDown_(isDown),
+			result_(false),
 			wParam_(wParam),
 			lParam_(lParam) {
 		}
@@ -86,6 +90,8 @@ protected:
 
 		WPARAM wParam_;
 		LPARAM lParam_;
+		bool isDown_;
+		bool result_;
 	};
 
 	class StartCompositionEditSession: public EditSession {

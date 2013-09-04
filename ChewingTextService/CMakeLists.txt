@@ -14,13 +14,15 @@ include_directories(
     ${CMAKE_SOURCE_DIR}
 )
 
-add_library(ChewingService SHARED
+add_library(ChewingTextService SHARED
     ${PROJECT_SOURCE_DIR}/ChewingImeModule.cpp
     ${PROJECT_SOURCE_DIR}/ChewingImeModule.h
     ${PROJECT_SOURCE_DIR}/ChewingTextService.cpp
     ${PROJECT_SOURCE_DIR}/ChewingTextService.def
     ${PROJECT_SOURCE_DIR}/ChewingTextService.h
     ${PROJECT_SOURCE_DIR}/DllEntry.cpp
+    # resources
+    ${PROJECT_SOURCE_DIR}/ChewingTextService.rc
     ${PROJECT_SOURCE_DIR}/mainicon.ico
 )
-target_link_libraries(ChewingService chewing_static libime_static)
+target_link_libraries(ChewingTextService chewing_static libIME_static)

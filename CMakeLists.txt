@@ -7,7 +7,7 @@ add_definitions(/D_UNICODE=1 /DUNICODE=1)
 
 enable_testing()
 
-set(PROJECT_LIBCHEWING ${PROJECT_SOURCE_DIR}/external/libchewing)
+set(PROJECT_LIBCHEWING ${PROJECT_SOURCE_DIR}/libchewing)
 add_subdirectory(${PROJECT_LIBCHEWING})
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/libIME)

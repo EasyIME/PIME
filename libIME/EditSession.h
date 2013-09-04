@@ -20,6 +20,10 @@ public:
 		return context_;
 	}
 
+	TfEditCookie editCookie() {
+		return editCookie_;
+	}
+
 	// COM stuff
 
     // IUnknown
@@ -28,7 +32,7 @@ public:
 	STDMETHODIMP_(ULONG) Release(void);
 
     // ITfEditSession
-    virtual STDMETHODIMP DoEditSession(TfEditCookie ec) = 0;
+    virtual STDMETHODIMP DoEditSession(TfEditCookie ec);
 
 protected:
 	TextService* textService_;
@@ -36,6 +40,7 @@ protected:
 
 private:
 	long refCount_;
+	TfEditCookie editCookie_;
 };
 
 }

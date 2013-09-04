@@ -7,6 +7,7 @@ using namespace Ime;
 EditSession::EditSession(TextService* service, ITfContext* context):
 	textService_(service),
 	context_(context),
+	editCookie_(0),
 	refCount_(1) {
 	if(textService_)
 		textService_->AddRef();
@@ -51,4 +52,9 @@ STDMETHODIMP_(ULONG) EditSession::Release(void) {
 	if(0 == refCount_)
 		delete this;
 	return refCount_;
+}
+
+STDMETHODIMP EditSession::DoEditSession(TfEditCookie ec) {
+	editCookie_ = ec;
+	return S_OK;
 }

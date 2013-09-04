@@ -22,7 +22,11 @@ public:
 	virtual ~TextService(void);
 
 	// public methods
-	void replaceSelectedText(wchar_t* str, int len);
+	bool isComposing();
+	void startComposition(EditSession* session);
+	void endComposition(EditSession* session);
+
+	void replaceSelectedText(EditSession* session, const wchar_t* str, int len);
 
 	// virtual functions that IME implementors may need to override
 	virtual void onActivate();
@@ -30,8 +34,8 @@ public:
 
 	virtual void onFocus();
 
-	virtual bool onKeyDown(long key);
-	virtual bool onKeyUp(long key);
+	virtual bool onKeyDown(long key, EditSession* session);
+	virtual bool onKeyUp(long key, EditSession* session);
 
 	// COM related stuff
 public:
@@ -100,9 +104,11 @@ protected:
 		STDMETHODIMP DoEditSession(TfEditCookie ec);
 	};
 
-	HRESULT onKeyEditSession(TfEditCookie cookie, KeyEditSession* session);
-	HRESULT onStartCompositionEditSession(TfEditCookie cookie, StartCompositionEditSession* session);
-	HRESULT onEndCompositionEditSession(TfEditCookie cookie, EndCompositionEditSession* session);
+	HRESULT doKeyEditSession(TfEditCookie cookie, KeyEditSession* session);
+	HRESULT doStartCompositionEditSession(TfEditCookie cookie, StartCompositionEditSession* session);
+	HRESULT doEndCompositionEditSession(TfEditCookie cookie, EndCompositionEditSession* session);
+
+	ITfContext* currentContext();
 
 private:
 	ITfThreadMgr *threadMgr_;
@@ -113,7 +119,8 @@ private:
 	DWORD textEditSinkCookie_;
 	DWORD compositionSinkCookie_;
 
-	long refCount_;
+	ITfComposition* composition_; // acquired when starting composition, released when ending composition
+	long refCount_; // reference counting
 };
 
 }

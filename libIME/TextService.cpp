@@ -11,6 +11,7 @@ TextService::TextService(void):
 	threadMgrEventSinkCookie_(TF_INVALID_COOKIE),
 	textEditSinkCookie_(TF_INVALID_COOKIE),
 	compositionSinkCookie_(TF_INVALID_COOKIE),
+	composition_(NULL),
 	refCount_(1) {
 }
 
@@ -18,8 +19,45 @@ TextService::~TextService(void) {
 }
 
 // public methods
-void TextService::replaceSelectedText(wchar_t* str, int len) {
-	// threadMgr_
+
+bool TextService::isComposing() {
+	return (composition_ != NULL);
+}
+
+void TextService::startComposition(EditSession* session) {
+	ITfContext* context = session->context();
+	if(context) {
+		HRESULT sessionResult;
+		StartCompositionEditSession* session = new StartCompositionEditSession(this, context);
+		context->RequestEditSession(clientId_, session, TF_ES_SYNC|TF_ES_READWRITE, &sessionResult);
+		session->Release();
+		context->Release();
+	}
+}
+
+void TextService::endComposition(EditSession* session) {
+	ITfContext* context = session->context();
+	if(context) {
+		HRESULT sessionResult;
+		EndCompositionEditSession* session = new EndCompositionEditSession(this, context);
+		context->RequestEditSession(clientId_, session, TF_ES_SYNC|TF_ES_READWRITE, &sessionResult);
+		session->Release();
+		context->Release();
+	}
+}
+
+void TextService::replaceSelectedText(EditSession* session, const wchar_t* str, int len) {
+	ITfContext* context = session->context();
+	if(context) {
+		TF_SELECTION selection;
+		ULONG selectionNum;
+		if(context->GetSelection(session->editCookie(), TF_DEFAULT_SELECTION, 1, &selection, &selectionNum) == S_OK) {
+			if(selectionNum > 0 && selection.range) {
+				selection.range->SetText(session->editCookie(), 0, str, len);
+				selection.range->Release();
+			}
+		}
+	}
 }
 
 
@@ -32,18 +70,17 @@ void TextService::onDeactivate() {
 }
 
 // virtual
-bool TextService::onKeyDown(long key) {
+bool TextService::onKeyDown(long key, EditSession* session) {
 	return false;
 }
 
 // virtual
-bool TextService::onKeyUp(long key) {
+bool TextService::onKeyUp(long key, EditSession* session) {
 	return false;
 }
 
 // virtual
 void TextService::onFocus() {
-
 }
 
 
@@ -53,7 +90,6 @@ void TextService::onFocus() {
 STDMETHODIMP TextService::QueryInterface(REFIID riid, void **ppvObj) {
     if (ppvObj == NULL)
         return E_INVALIDARG;
-
 	if(IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_ITfTextInputProcessor))
 		*ppvObj = (ITfTextInputProcessor*)this;
 	else if(IsEqualIID(riid, IID_ITfDisplayAttributeProvider))
@@ -161,27 +197,22 @@ STDMETHODIMP TextService::Deactivate() {
 
 // ITfThreadMgrEventSink
 STDMETHODIMP TextService::OnInitDocumentMgr(ITfDocumentMgr *pDocMgr) {
-	::MessageBoxW(0, L"OnInitDocumentMgr", 0, 0);
 	return S_OK;
 }
 
 STDMETHODIMP TextService::OnUninitDocumentMgr(ITfDocumentMgr *pDocMgr) {
-	::MessageBoxW(0, L"OnUninitDocumentMgr", 0, 0);
 	return S_OK;
 }
 
 STDMETHODIMP TextService::OnSetFocus(ITfDocumentMgr *pDocMgrFocus, ITfDocumentMgr *pDocMgrPrevFocus) {
-	onFocus();
 	return S_OK;
 }
 
 STDMETHODIMP TextService::OnPushContext(ITfContext *pContext) {
-	::MessageBoxW(0, L"OnPushContext", 0, 0);
 	return S_OK;
 }
 
 STDMETHODIMP TextService::OnPopContext(ITfContext *pContext) {
-	::MessageBoxW(0, L"OnPopContext", 0, 0);
 	return S_OK;
 }
 
@@ -194,6 +225,7 @@ STDMETHODIMP TextService::OnEndEdit(ITfContext *pContext, TfEditCookie ecReadOnl
 
 // ITfKeyEventSink
 STDMETHODIMP TextService::OnSetFocus(BOOL fForeground) {
+	onFocus();
 	return S_OK;
 }
 
@@ -241,32 +273,79 @@ STDMETHODIMP TextService::GetDisplayAttributeInfo(REFGUID guidInfo, ITfDisplayAt
 
 // edit session handling
 STDMETHODIMP TextService::KeyEditSession::DoEditSession(TfEditCookie ec) {
-	return textService_->onKeyEditSession(ec, this);
+	EditSession::DoEditSession(ec);
+	return textService_->doKeyEditSession(ec, this);
 }
 
 // edit session handling
 STDMETHODIMP TextService::StartCompositionEditSession::DoEditSession(TfEditCookie ec) {
-	return textService_->onStartCompositionEditSession(ec, this);
+	EditSession::DoEditSession(ec);
+	return textService_->doStartCompositionEditSession(ec, this);
 }
 
 // edit session handling
 STDMETHODIMP TextService::EndCompositionEditSession::DoEditSession(TfEditCookie ec) {
-	return textService_->onEndCompositionEditSession(ec, this);
+	EditSession::DoEditSession(ec);
+	return textService_->doEndCompositionEditSession(ec, this);
 }
 
 // callback from edit session of key events
-HRESULT TextService::onKeyEditSession(TfEditCookie cookie, KeyEditSession* session) {
+HRESULT TextService::doKeyEditSession(TfEditCookie cookie, KeyEditSession* session) {
 	// TODO: perform key handling
-	onKeyDown((long)session->wParam_);
+	onKeyDown((long)session->wParam_, session);
+	// FIXME: separate key down and key up
 	return S_OK;
 }
 
 // callback from edit session for starting composition
-HRESULT TextService::onStartCompositionEditSession(TfEditCookie cookie, StartCompositionEditSession* session) {
+HRESULT TextService::doStartCompositionEditSession(TfEditCookie cookie, StartCompositionEditSession* session) {
+	ITfContext* context = session->context();
+	ITfContextComposition* contextComposition;
+	if(context->QueryInterface(IID_ITfContextComposition, (void**)&contextComposition) == S_OK) {
+		// get current insertion point in the current context
+		ITfRange* range = NULL;
+		ITfInsertAtSelection* insertAtSelection;
+		if(context->QueryInterface(IID_ITfInsertAtSelection, (void **)&insertAtSelection) == S_OK) {
+			// get current selection range & insertion position (query only, did not insert any text)
+			insertAtSelection->InsertTextAtSelection(cookie, TF_IAS_QUERYONLY, NULL, 0, &range);
+			insertAtSelection->Release();
+		}
+
+		if(range) {
+			if(contextComposition->StartComposition(cookie, range, (ITfCompositionSink*)this, &composition_) == S_OK) {
+				// according to the TSF sample provided by M$, we need to reset current
+				// selection here. (maybe the range is altered by StartComposition()?
+				// So mysterious. TSF is absolutely overly-engineered!
+				TF_SELECTION selection;
+				selection.range = range;
+				selection.style.ase = TF_AE_NONE;
+				selection.style.fInterimChar = FALSE;
+				context->SetSelection(cookie, 1, &selection);
+				// we did not release composition_ object. we store it for use later
+			}
+			range->Release();
+		}
+		contextComposition->Release();
+	}
 	return S_OK;
 }
 
 // callback from edit session for ending composition
-HRESULT TextService::onEndCompositionEditSession(TfEditCookie cookie, EndCompositionEditSession* session) {
+HRESULT TextService::doEndCompositionEditSession(TfEditCookie cookie, EndCompositionEditSession* session) {
+	if(composition_) {
+		composition_->EndComposition(cookie);
+		composition_->Release();
+		composition_ = NULL;
+	}
 	return S_OK;
+}
+
+ITfContext* TextService::currentContext() {
+	ITfContext* context = NULL;
+	ITfDocumentMgr  *docMgr;
+	if(threadMgr_->GetFocus(&docMgr) == S_OK) {
+		docMgr->GetTop(&context);
+		docMgr->Release();
+	}
+	return context;
 }

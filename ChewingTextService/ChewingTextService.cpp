@@ -1,8 +1,10 @@
 #include "ChewingTextService.h"
 #include <assert.h>
+#include <string>
 #include <libIME/Utils.h>
 
 using namespace Chewing;
+using namespace std;
 
 TextService::TextService(void):
 	chewingContext_(NULL) {
@@ -33,8 +35,10 @@ void TextService::onDeactivate() {
 void TextService::onFocus() {
 }
 
+#include <iostream>
+
 // virtual
-bool TextService::onKeyDown(long key) {
+bool TextService::onKeyDown(long key, Ime::EditSession* session) {
 	assert(chewingContext_);
     /*
      * FIXME: the following keys are not handled:
@@ -108,32 +112,57 @@ bool TextService::onKeyDown(long key) {
         }
     }
 
-	if(chewing_buffer_Check(chewingContext_)) { // has something in buffer
-		char* buf = ::chewing_buffer_String(chewingContext_);
-		int len;
-		wchar_t* wbuf = utf8ToUtf16(buf, &len);
-		chewing_free(buf);
-		// MessageBoxW(0, wbuf, L"chewing_buffer_String", 0);
-		delete []wbuf;
-	}
+	// has something to commit
+	if(chewing_commit_Check(chewingContext_)) {
+		if(!isComposing()) // start the composition
+			startComposition(session);
 
-	if(!chewing_zuin_Check(chewingContext_)) { // has some bopomofo in buffer
-		int n;
-		char* buf = ::chewing_zuin_String(chewingContext_, &n);
-		int len;
-		wchar_t* wbuf = utf8ToUtf16(buf, &len);
-		chewing_free(buf);
-		// MessageBoxW(0, wbuf, L"chewing_zuin_String", 0);
-		delete []wbuf;
-	}
-
-	if(chewing_commit_Check(chewingContext_)) { // has something to commit
 		char* buf = ::chewing_commit_String(chewingContext_);
 		int len;
 		wchar_t* wbuf = utf8ToUtf16(buf, &len);
 		chewing_free(buf);
-		// MessageBoxW(0, wbuf, L"chewing_commit_String", 0);
+		// commit the text, replace currently selected text with our commit string
+		replaceSelectedText(session, wbuf, len);
 		delete []wbuf;
+
+		if(isComposing())
+			endComposition(session);
+	}
+
+	wstring compositionBuf;
+	if(::chewing_buffer_Check(chewingContext_)) {
+		char* buf = ::chewing_buffer_String(chewingContext_);
+		int len;
+		wchar_t* wbuf;
+		if(buf) {
+			wbuf = ::utf8ToUtf16(buf, &len);
+			::chewing_free(buf);
+			compositionBuf += wbuf;
+			delete []wbuf;
+		}
+	}
+
+	if(!::chewing_zuin_Check(chewingContext_)) {
+		int zuinNum;
+		char* buf = ::chewing_zuin_String(chewingContext_, &zuinNum);
+		if(buf) {
+			int len;
+			wchar_t* wbuf = ::utf8ToUtf16(buf, &len);
+			::chewing_free(buf);
+			compositionBuf += wbuf;
+			delete []wbuf;
+		}
+	}
+
+	// has something in composition buffer
+	if(!compositionBuf.empty()) {
+		if(!isComposing()) // start the composition
+			startComposition(session);
+		replaceSelectedText(session, compositionBuf.c_str(), compositionBuf.length());
+	}
+	else { // nothing left in composition buffer, terminate composition status
+		if(isComposing())
+			endComposition(session);
 	}
 
 #if 0
@@ -153,6 +182,6 @@ bool TextService::onKeyDown(long key) {
 }
 
 // virtual
-bool TextService::onKeyUp(long key) {
+bool TextService::onKeyUp(long key, Ime::EditSession* session) {
 	return true;
 }

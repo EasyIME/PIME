@@ -1,5 +1,6 @@
 #include "TextService.h"
 #include "EditSession.h"
+#include "CandidateWindow.h"
 
 #include <assert.h>
 #include <string>
@@ -13,10 +14,13 @@ TextService::TextService(void):
 	textEditSinkCookie_(TF_INVALID_COOKIE),
 	compositionSinkCookie_(TF_INVALID_COOKIE),
 	composition_(NULL),
+	candidateWindow_(NULL),
 	refCount_(1) {
 }
 
 TextService::~TextService(void) {
+	if(candidateWindow_)
+		delete candidateWindow_;
 }
 
 // public methods
@@ -72,21 +76,39 @@ void TextService::endComposition(ITfContext* context) {
 void TextService::setCompositionString(EditSession* session, const wchar_t* str, int len) {
 	ITfContext* context = session->context();
 	if(context) {
-		if(!isInsertionAllowed(session))
-				return;
-
 		TfEditCookie editCookie = session->editCookie();
 		TF_SELECTION selection;
 		ULONG selectionNum;
+		// get current selection/insertion point
 		if(context->GetSelection(editCookie, TF_DEFAULT_SELECTION, 1, &selection, &selectionNum) == S_OK) {
 			ITfRange* compositionRange;
 			if(composition_->GetRange(&compositionRange) == S_OK) {
-				LONG shifted;
-				compositionRange->SetText(editCookie, TF_ST_CORRECTION, str, len);
-				selection.range->Collapse(editCookie, TF_ANCHOR_END);
-				context->SetSelection(editCookie, 1, &selection);
-				//compositionRange->Collapse(session->editCookie(), TF_ANCHOR_START);
-				//compositionRange->ShiftEnd(session->editCookie(), len, &shifted, NULL);
+# if 0
+				// FIXME: according to the TSF examples and other TSF implementations,
+				// we have to test if the selection range is covered by composition range.
+				// However, in our IME this does not work. So I disable it until I know
+				// what's wrong and how to fix it. :-(
+				bool selPosInComposition = false;
+				LONG compareResult1;
+				LONG compareResult2;
+				// check if current selection is covered by composition range
+				if(selection.range->CompareStart(editCookie, compositionRange, TF_ANCHOR_START, &compareResult1) == S_OK
+					&& selection.range->CompareStart(editCookie, compositionRange, TF_ANCHOR_END, &compareResult2) == S_OK) {
+					if(compareResult1 <= 0 && compareResult2 >= 0)
+						selPosInComposition = true;
+				}
+#endif
+				bool selPosInComposition = true;
+
+				// if current insertion point is not covered by composition, we cannot insert text here.
+				if(selPosInComposition) {
+					// replace context of composion area with the new string.
+					compositionRange->SetText(editCookie, TF_ST_CORRECTION, str, len);
+
+					// move the insertion point to end of the composition string
+					selection.range->Collapse(editCookie, TF_ANCHOR_END);
+					context->SetSelection(editCookie, 1, &selection);
+				}
 				compositionRange->Release();
 			}
 			selection.range->Release();
@@ -423,4 +445,47 @@ ITfContext* TextService::currentContext() {
 		docMgr->Release();
 	}
 	return context;
+}
+
+// virtual
+void TextService::showCandidateWindow(EditSession* session) {
+	if(!candidateWindow_) {
+		candidateWindow_ = new CandidateWindow();
+		candidateWindow_->create();
+		RECT textRect;
+		if(compositionRect(session, &textRect)) {
+			// FIXME: where should we put the candidate window?
+			// how to get the position in TSF?
+			::MoveWindow(candidateWindow_->hwnd(), textRect.left, textRect.bottom, 100, 32, TRUE);
+		}
+	}
+	candidateWindow_->show();
+}
+
+// virtual
+void TextService::hideCandidateWindow() {
+	if(candidateWindow_)
+		candidateWindow_->hide();
+}
+
+bool TextService::isCandidateWindowShown() {
+	return candidateWindow_ ? candidateWindow_->isVisible() : false;
+}
+
+bool TextService::compositionRect(EditSession* session, RECT* rect) {
+	bool ret = false;
+	if(isComposing()) {
+		ITfContextView* view;
+		if(session->context()->GetActiveView(&view) == S_OK) {
+			BOOL clipped;
+			ITfRange* range;
+			if(composition_->GetRange(&range) == S_OK) {
+				if(view->GetTextExt(session->editCookie(), range, rect, &clipped) == S_OK)
+					ret = true;
+				range->Release();
+			}
+			view->Release();
+		}
+	}
+	return ret;
 }

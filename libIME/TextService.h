@@ -7,6 +7,8 @@
 
 namespace Ime {
 
+class CandidateWindow;
+
 class TextService:
 	// TSF interfaces
 	public ITfTextInputProcessor,
@@ -26,8 +28,13 @@ public:
 	bool isInsertionAllowed(EditSession* session);
 	void startComposition(ITfContext* context);
 	void endComposition(ITfContext* context);
+	bool compositionRect(EditSession* session, RECT* rect);
 
 	void setCompositionString(EditSession* session, const wchar_t* str, int len);
+
+	bool isCandidateWindowShown();
+	virtual void showCandidateWindow(EditSession* session);
+	virtual void hideCandidateWindow();
 
 	// virtual functions that IME implementors may need to override
 	virtual void onActivate();
@@ -127,6 +134,8 @@ private:
 	DWORD compositionSinkCookie_;
 
 	ITfComposition* composition_; // acquired when starting composition, released when ending composition
+
+	CandidateWindow* candidateWindow_;
 	long refCount_; // reference counting
 };
 

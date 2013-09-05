@@ -131,6 +131,20 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
 	if(chewing_keystroke_CheckIgnore(chewingContext_))
 		return false;
 
+	// still choosing candidate string
+	int candidateNum = chewing_cand_TotalChoice(chewingContext_);
+	if(candidateNum > 0) {
+		if(!isCandidateWindowShown()) {
+			showCandidateWindow(session);
+		}
+		return true;
+	}
+	else {
+		if(isCandidateWindowShown()) {
+			hideCandidateWindow();
+		}
+	}
+
 	// has something to commit
 	if(chewing_commit_Check(chewingContext_)) {
 		if(!isComposing()) // start the composition

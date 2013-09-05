@@ -3,6 +3,7 @@
 #include <ObjBase.h>
 #include <msctf.h>
 #include <assert.h>
+#include "Window.h"
 
 using namespace Ime;
 using namespace std;
@@ -10,6 +11,8 @@ using namespace std;
 ImeModule::ImeModule(HMODULE module):
 	hInstance_(HINSTANCE(module)),
 	refCount_(1) {
+
+	Window::registerClass(hInstance_);
 }
 
 ImeModule::~ImeModule(void) {

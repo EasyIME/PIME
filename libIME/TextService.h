@@ -23,10 +23,11 @@ public:
 
 	// public methods
 	bool isComposing();
-	void startComposition(EditSession* session);
-	void endComposition(EditSession* session);
+	bool isInsertionAllowed(EditSession* session);
+	void startComposition(ITfContext* context);
+	void endComposition(ITfContext* context);
 
-	void replaceSelectedText(EditSession* session, const wchar_t* str, int len);
+	void setCompositionString(EditSession* session, const wchar_t* str, int len);
 
 	// virtual functions that IME implementors may need to override
 	virtual void onActivate();

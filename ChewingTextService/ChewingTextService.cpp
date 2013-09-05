@@ -35,8 +35,6 @@ void TextService::onDeactivate() {
 void TextService::onFocus() {
 }
 
-#include <iostream>
-
 // virtual
 bool TextService::filterKeyDown(long key) {
 	assert(chewingContext_);
@@ -136,18 +134,18 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
 	// has something to commit
 	if(chewing_commit_Check(chewingContext_)) {
 		if(!isComposing()) // start the composition
-			startComposition(session);
+			startComposition(session->context());
 
 		char* buf = ::chewing_commit_String(chewingContext_);
 		int len;
 		wchar_t* wbuf = utf8ToUtf16(buf, &len);
 		chewing_free(buf);
 		// commit the text, replace currently selected text with our commit string
-		replaceSelectedText(session, wbuf, len);
+		setCompositionString(session, wbuf, len);
 		delete []wbuf;
 
 		if(isComposing())
-			endComposition(session);
+			endComposition(session->context());
 	}
 
 	wstring compositionBuf;
@@ -177,13 +175,14 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
 
 	// has something in composition buffer
 	if(!compositionBuf.empty()) {
-		if(!isComposing()) // start the composition
-			startComposition(session);
-		replaceSelectedText(session, compositionBuf.c_str(), compositionBuf.length());
+		if(!isComposing()) { // start the composition
+			startComposition(session->context());
+		}
+		setCompositionString(session, compositionBuf.c_str(), compositionBuf.length());
 	}
 	else { // nothing left in composition buffer, terminate composition status
 		if(isComposing())
-			endComposition(session);
+			endComposition(session->context());
 	}
 
 #if 0

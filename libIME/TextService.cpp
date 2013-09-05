@@ -2,6 +2,7 @@
 #include "EditSession.h"
 
 #include <assert.h>
+#include <string>
 
 using namespace Ime;
 
@@ -24,42 +25,74 @@ bool TextService::isComposing() {
 	return (composition_ != NULL);
 }
 
-void TextService::startComposition(EditSession* session) {
-	ITfContext* context = session->context();
-	if(context) {
-		HRESULT sessionResult;
-		StartCompositionEditSession* session = new StartCompositionEditSession(this, context);
-		context->RequestEditSession(clientId_, session, TF_ES_SYNC|TF_ES_READWRITE, &sessionResult);
-		session->Release();
-		context->Release();
+// check if current insertion point is in the range of composition.
+// if not in range, insertion is now allowed
+bool TextService::isInsertionAllowed(EditSession* session) {
+	TfEditCookie cookie = session->editCookie();
+	TF_SELECTION selection;
+	ULONG selectionNum;
+	if(isComposing()) {
+		if(session->context()->GetSelection(cookie, TF_DEFAULT_SELECTION, 1, &selection, &selectionNum) == S_OK) {
+			ITfRange* compositionRange;
+			if(composition_->GetRange(&compositionRange) == S_OK) {
+				bool allowed = false;
+				// check if current selection is covered by composition range
+				LONG compareResult1;
+				LONG compareResult2;
+				if(selection.range->CompareStart(cookie, compositionRange, TF_ANCHOR_START, &compareResult1) == S_OK
+					&& selection.range->CompareStart(cookie, compositionRange, TF_ANCHOR_END, &compareResult2) == S_OK) {
+					if(compareResult1 == -1 && compareResult2 == +1)
+						allowed = true;
+				}
+				compositionRange->Release();
+			}
+			if(selection.range)
+				selection.range->Release();
+		}
 	}
+	return false;
 }
 
-void TextService::endComposition(EditSession* session) {
-	ITfContext* context = session->context();
-	if(context) {
-		HRESULT sessionResult;
-		EndCompositionEditSession* session = new EndCompositionEditSession(this, context);
-		context->RequestEditSession(clientId_, session, TF_ES_SYNC|TF_ES_READWRITE, &sessionResult);
-		session->Release();
-		context->Release();
-	}
+void TextService::startComposition(ITfContext* context) {
+	assert(context);
+	HRESULT sessionResult;
+	StartCompositionEditSession* session = new StartCompositionEditSession(this, context);
+	context->RequestEditSession(clientId_, session, TF_ES_SYNC|TF_ES_READWRITE, &sessionResult);
+	session->Release();
 }
 
-void TextService::replaceSelectedText(EditSession* session, const wchar_t* str, int len) {
+void TextService::endComposition(ITfContext* context) {
+	assert(context);
+	HRESULT sessionResult;
+	EndCompositionEditSession* session = new EndCompositionEditSession(this, context);
+	context->RequestEditSession(clientId_, session, TF_ES_SYNC|TF_ES_READWRITE, &sessionResult);
+	session->Release();
+}
+
+void TextService::setCompositionString(EditSession* session, const wchar_t* str, int len) {
 	ITfContext* context = session->context();
 	if(context) {
+		if(!isInsertionAllowed(session))
+				return;
+
+		TfEditCookie editCookie = session->editCookie();
 		TF_SELECTION selection;
 		ULONG selectionNum;
-		if(context->GetSelection(session->editCookie(), TF_DEFAULT_SELECTION, 1, &selection, &selectionNum) == S_OK) {
-			if(selectionNum > 0 && selection.range) {
-				selection.range->SetText(session->editCookie(), 0, str, len);
-				selection.range->Release();
+		if(context->GetSelection(editCookie, TF_DEFAULT_SELECTION, 1, &selection, &selectionNum) == S_OK) {
+			ITfRange* compositionRange;
+			if(composition_->GetRange(&compositionRange) == S_OK) {
+				LONG shifted;
+				compositionRange->SetText(editCookie, TF_ST_CORRECTION, str, len);
+				selection.range->Collapse(editCookie, TF_ANCHOR_END);
+				context->SetSelection(editCookie, 1, &selection);
+				//compositionRange->Collapse(session->editCookie(), TF_ANCHOR_START);
+				//compositionRange->ShiftEnd(session->editCookie(), len, &shifted, NULL);
+				compositionRange->Release();
 			}
+			selection.range->Release();
 		}
 	}
 }
-
 
 // virtual
 void TextService::onActivate() {
@@ -245,11 +278,24 @@ STDMETHODIMP TextService::OnTestKeyDown(ITfContext *pContext, WPARAM wParam, LPA
 }
 
 STDMETHODIMP TextService::OnKeyDown(ITfContext *pContext, WPARAM wParam, LPARAM lParam, BOOL *pfEaten) {
-	HRESULT sessionResult;
-	KeyEditSession* session = new KeyEditSession(this, pContext, true, wParam, lParam);
-	pContext->RequestEditSession(clientId_, session, TF_ES_SYNC|TF_ES_READWRITE, &sessionResult);
-	*pfEaten = session->result_; // tell TSF if we handled the key
-	session->Release();
+	// Some applications do not trigger OnTestKeyDown()
+	// So we need to test it again here! Windows TSF sucks!
+	*pfEaten = (BOOL)filterKeyDown((long)wParam);
+	if(*pfEaten) { // we want to eat the key
+		HRESULT sessionResult;
+		// ask TSF for an edit session. If editing is approved by TSF,
+		// KeyEditSession::DoEditSession will be called, which in turns
+		// call back to TextService::doKeyEditSession().
+		// So the real key handling is relayed to TextService::doKeyEditSession().
+		KeyEditSession* session = new KeyEditSession(this, pContext, true, wParam, lParam);
+
+		// We use TF_ES_SYNC here, so the request becomes synchronus and blocking.
+		// KeyEditSession::DoEditSession() and TextService::doKeyEditSession() will be
+		// called before RequestEditSession() returns.
+		pContext->RequestEditSession(clientId_, session, TF_ES_SYNC|TF_ES_READWRITE, &sessionResult);
+		*pfEaten = session->result_; // tell TSF if we handled the key
+		session->Release();
+	}
 	return S_OK;
 }
 
@@ -259,13 +305,16 @@ STDMETHODIMP TextService::OnTestKeyUp(ITfContext *pContext, WPARAM wParam, LPARA
 }
 
 STDMETHODIMP TextService::OnKeyUp(ITfContext *pContext, WPARAM wParam, LPARAM lParam, BOOL *pfEaten) {
-	HRESULT sessionResult;
-	KeyEditSession* session = new KeyEditSession(this, pContext, false, wParam, lParam);
-	pContext->RequestEditSession(clientId_, session, TF_ES_SYNC|TF_ES_READWRITE, &sessionResult);
-	*pfEaten = session->result_; // tell TSF if we handled the key
-	session->Release();
-	return S_OK;
-
+	// Some applications do not trigger OnTestKeyDown()
+	// So we need to test it again here! Windows TSF sucks!
+	*pfEaten = (BOOL)filterKeyUp((long)wParam);
+	if(*pfEaten) {
+		HRESULT sessionResult;
+		KeyEditSession* session = new KeyEditSession(this, pContext, false, wParam, lParam);
+		pContext->RequestEditSession(clientId_, session, TF_ES_SYNC|TF_ES_READWRITE, &sessionResult);
+		*pfEaten = session->result_; // tell TSF if we handled the key
+		session->Release();
+	}
 	return S_OK;
 }
 
@@ -309,7 +358,6 @@ STDMETHODIMP TextService::EndCompositionEditSession::DoEditSession(TfEditCookie 
 
 // callback from edit session of key events
 HRESULT TextService::doKeyEditSession(TfEditCookie cookie, KeyEditSession* session) {
-	// TODO: perform key handling
 	if(session->isDown_)
 		session->result_ = onKeyDown((long)session->wParam_, session);
 	else
@@ -353,6 +401,13 @@ HRESULT TextService::doStartCompositionEditSession(TfEditCookie cookie, StartCom
 // callback from edit session for ending composition
 HRESULT TextService::doEndCompositionEditSession(TfEditCookie cookie, EndCompositionEditSession* session) {
 	if(composition_) {
+		/*
+		// Is this correct? I saw this in 
+		ITfRange* compositionRange;
+		if(composition_->GetRange(&compositionRange) == S_OK) {
+			compositionRange->SetText(cookie, 0, L"", 0);
+			compositionRange->Release();
+		}*/
 		composition_->EndComposition(cookie);
 		composition_->Release();
 		composition_ = NULL;

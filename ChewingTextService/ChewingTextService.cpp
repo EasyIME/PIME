@@ -252,14 +252,21 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 	}
 }
 
+// show candidate list window
 void TextService::showCandidates(Ime::EditSession* session) {
+	// TODO: implement ITfCandidateListUIElement interface to support UI less mode
+	// Great reference: http://msdn.microsoft.com/en-us/library/windows/desktop/aa966970(v=vs.85).aspx
 	assert(candidateWindow_);
+
 	updateCandidates(session);
 	candidateWindow_->show();
 	showingCandidates_ = true;
 }
 
+// hide candidate list window
 void TextService::hideCandidates() {
+	assert(candidateWindow_);
+
 	candidateWindow_->hide();
 	candidateWindow_->clear();
 	showingCandidates_ = false;

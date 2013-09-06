@@ -97,11 +97,16 @@ HRESULT ImeModule::registerServer(wchar_t* name, const CLSID& textServiceClsid, 
 
 	// register category
 	if(result == S_OK) {
-		result = E_FAIL;
 		ITfCategoryMgr *categoryMgr = NULL;
 		if(CoCreateInstance(CLSID_TF_CategoryMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfCategoryMgr, (void**)&categoryMgr) == S_OK) {
-			if(categoryMgr->RegisterCategory(textServiceClsid, GUID_TFCAT_TIP_KEYBOARD, textServiceClsid)== S_OK) {
-				result = S_OK;
+			if(categoryMgr->RegisterCategory(textServiceClsid, GUID_TFCAT_TIP_KEYBOARD, textServiceClsid) != S_OK) {
+				result = E_FAIL;
+			}
+
+			// register ourself as a display attribute provider
+			// so later we can set change the look and feels of composition string.
+			if(categoryMgr->RegisterCategory(textServiceClsid, GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, textServiceClsid) != S_OK) {
+				result = E_FAIL;
 			}
 			categoryMgr->Release();
 		}

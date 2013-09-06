@@ -10,14 +10,18 @@ add_definitions(
 
 add_library(libIME_static STATIC
 	# Core TSF part
-    ${PROJECT_SOURCE_DIR}/EditSession.cpp
-    ${PROJECT_SOURCE_DIR}/EditSession.h
     ${PROJECT_SOURCE_DIR}/ImeModule.cpp
     ${PROJECT_SOURCE_DIR}/ImeModule.h
     ${PROJECT_SOURCE_DIR}/libIME.cpp
     ${PROJECT_SOURCE_DIR}/libIME.h
     ${PROJECT_SOURCE_DIR}/TextService.cpp
     ${PROJECT_SOURCE_DIR}/TextService.h
+    ${PROJECT_SOURCE_DIR}/EditSession.cpp
+    ${PROJECT_SOURCE_DIR}/EditSession.h
+    ${PROJECT_SOURCE_DIR}/DisplayAttributeInfo.cpp
+    ${PROJECT_SOURCE_DIR}/DisplayAttributeInfo.h
+    ${PROJECT_SOURCE_DIR}/EnumDisplayAttributeInfo.cpp
+    ${PROJECT_SOURCE_DIR}/EnumDisplayAttributeInfo.h
     ${PROJECT_SOURCE_DIR}/Utils.cpp
     ${PROJECT_SOURCE_DIR}/Utils.h
 	# UI-related code

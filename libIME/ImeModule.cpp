@@ -21,7 +21,7 @@ ImeModule::~ImeModule(void) {
 // Dll entry points implementations
 HRESULT ImeModule::canUnloadNow() {
 	// we own the last reference
-	return refCount_ == 1 ? S_OK : S_FALSE;
+	return refCount_ <= 1 ? S_OK : S_FALSE;
 }
 
 HRESULT ImeModule::getClassObject(REFCLSID rclsid, REFIID riid, void **ppvObj) {
@@ -133,14 +133,21 @@ STDMETHODIMP ImeModule::QueryInterface(REFIID riid, void **ppvObj) {
 }
 
 STDMETHODIMP_(ULONG) ImeModule::AddRef(void) {
-	return ++refCount_;
+	return ::InterlockedIncrement(&refCount_);
 }
 
 STDMETHODIMP_(ULONG) ImeModule::Release(void) {
+	// NOTE: I think we do not need to use critical sections to
+	// protect the operation as M$ did in their TSF samples.
+	// Our ImeModule will be alive until dll unload so
+	// it's not possible for an user application and TSF manager
+	// to free our objecet since we always have refCount == 1.
+	// The last reference is released in DllMain() when unloading.
+	// Hence interlocked operations are enough here, I guess.
 	assert(refCount_ > 0);
-	--refCount_;
-	if(0 == refCount_)
+	if(::InterlockedExchangeSubtract(&refCount_, 1) == 1) {
 		delete this;
+	}
 	return refCount_;
 }
 

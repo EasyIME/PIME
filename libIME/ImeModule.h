@@ -2,6 +2,7 @@
 #define IME_MODULE_H
 
 #include <Unknwn.h>
+#include <Windows.h>
 
 namespace Ime {
 
@@ -38,7 +39,7 @@ protected:
     STDMETHODIMP LockServer(BOOL fLock);
 
 private:
-	int refCount_;
+	volatile unsigned long refCount_;
 	HINSTANCE hInstance_;
 };
 

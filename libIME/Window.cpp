@@ -14,9 +14,8 @@ Window::~Window() {
 		DestroyWindow(hwnd_);
 }
 
-bool Window::create(HWND parent) {
-	hwnd_ = CreateWindowEx(0, g_imeWindowClassName, NULL,
-					WS_POPUP|WS_CLIPCHILDREN,
+bool Window::create(HWND parent, DWORD style, DWORD exStyle) {
+	hwnd_ = CreateWindowEx(exStyle, g_imeWindowClassName, NULL, style,
 					0, 0, 0, 0, parent, NULL, g_hinstance, NULL);
 	if(hwnd_) {
 		// store our this pointer in user data of the window

@@ -22,7 +22,7 @@ public:
 
 	HWND hwnd(){	return hwnd_;	}
 
-	bool create(HWND parent = HWND_DESKTOP);
+	bool create(HWND parent, DWORD style, DWORD exStyle = 0);
 	void destroy(void);
 
 	bool isVisible(){

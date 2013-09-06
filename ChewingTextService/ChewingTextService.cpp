@@ -28,7 +28,6 @@ void TextService::onActivate() {
 	}
 	if(!candidateWindow_) {
 		candidateWindow_ = new Ime::CandidateWindow();
-		candidateWindow_->create();
 	}
 }
 

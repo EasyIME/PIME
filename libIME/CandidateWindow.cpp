@@ -26,6 +26,8 @@ void CandidateWindow::updateFont() {
 CandidateWindow::CandidateWindow() {
     font_size = 0;
     updateFont();
+
+	create(NULL, WS_POPUP|WS_CLIPCHILDREN, WS_EX_TOOLWINDOW);
 }
 
 CandidateWindow::~CandidateWindow(void) {

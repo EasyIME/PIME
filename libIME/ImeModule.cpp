@@ -105,9 +105,9 @@ HRESULT ImeModule::registerServer(wchar_t* name, const CLSID& textServiceClsid, 
 
 			// register ourself as a display attribute provider
 			// so later we can set change the look and feels of composition string.
-			if(categoryMgr->RegisterCategory(textServiceClsid, GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, textServiceClsid) != S_OK) {
-				result = E_FAIL;
-			}
+			//if(categoryMgr->RegisterCategory(textServiceClsid, GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, textServiceClsid) != S_OK) {
+			//	result = E_FAIL;
+			//}
 			categoryMgr->Release();
 		}
 	}

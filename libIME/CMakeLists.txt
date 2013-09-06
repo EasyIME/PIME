@@ -20,8 +20,6 @@ add_library(libIME_static STATIC
     ${PROJECT_SOURCE_DIR}/TextService.h
     ${PROJECT_SOURCE_DIR}/Utils.cpp
     ${PROJECT_SOURCE_DIR}/Utils.h
-    ${PROJECT_SOURCE_DIR}/CandidateList.cpp
-    ${PROJECT_SOURCE_DIR}/CandidateList.h
 	# UI-related code
 	${PROJECT_SOURCE_DIR}/DrawUtils.h
 	${PROJECT_SOURCE_DIR}/DrawUtils.cpp

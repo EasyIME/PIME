@@ -5,6 +5,7 @@
 #include <windows.h>
 
 using namespace Ime;
+using namespace std;
 
 void CandidateWindow::updateFont() {
 /*
@@ -73,10 +74,6 @@ void CandidateWindow::onPaint(WPARAM wp, LPARAM lp) {
 /*
 	if (g_isWinLogon)
 		return;
-	IMCLock imc(hIMC);
-	CandList* candList = imc.getCandList();
-	if(!candList)
-		return;
 */
 	PAINTSTRUCT ps;
 	BeginPaint(hwnd_, &ps);
@@ -85,12 +82,28 @@ void CandidateWindow::onPaint(WPARAM wp, LPARAM lp) {
 	RECT rc;
 
     updateFont();
-	oldFont = (HFONT)SelectObject(hDC, font);
+	// oldFont = (HFONT)SelectObject(hDC, font);
 	GetClientRect(hwnd_,&rc);
 	SetTextColor(hDC, GetSysColor(COLOR_WINDOWTEXT));
 	SetBkColor(hDC, GetSysColor(COLOR_WINDOW));
 
 	FillSolidRect(ps.hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, GetSysColor(COLOR_WINDOW));
+
+	RECT textRect = {2, 0, rc.right, 0};
+	vector<wstring>::const_iterator it;
+	for(int i = 0, n = items_.size(); i < n; ++i) {
+		wstring& item = items_.at(i);
+		wchar_t numStr[10];
+		wstring line = _itow(i + 1, numStr, 10);
+		line += L". ";
+		line += item;
+
+		SIZE size;
+		::GetTextExtentPoint32W(hDC, line.c_str(), line.length(), &size);
+		textRect.bottom = textRect.top + size.cy;
+		::ExtTextOut(hDC, textRect.left, textRect.top, ETO_OPAQUE, &textRect, line.c_str(), line.length(), NULL);
+		textRect.top = textRect.bottom;
+	}
 
 #if 0
 	int items_per_row =  g_candPerRow;
@@ -177,15 +190,40 @@ void CandidateWindow::onPaint(WPARAM wp, LPARAM lp) {
 
 #endif
 	Draw3DBorder(hDC, &rc, GetSysColor(COLOR_3DFACE), 0);
-	SelectObject(hDC, oldFont);
+	//SelectObject(hDC, oldFont);
 
 	EndPaint(hwnd_, &ps);
 }
 
+void CandidateWindow::recalculateSize() {
+	HDC hDC = ::GetWindowDC(hwnd());
+	int height = 0;
+	int width = 0;
+	vector<wstring>::const_iterator it;
+	for(int i = 0, n = items_.size(); i < n; ++i) {
+		wstring& item = items_.at(i);
+		wchar_t numStr[10];
+		wstring line = _itow(i + 1, numStr, 10);
+		line += L". ";
+		line += item;
+
+		SIZE size;
+		::GetTextExtentPoint32W(hDC, line.c_str(), line.length(), &size);
+		height += size.cy;
+		if(size.cx > width)
+			width = size.cx;
+	}
+	width += 4;
+	height += 4;
+	::ReleaseDC(hwnd(), hDC);
+	resize(width, height);
+}
+
+#if 0
+
 void CandidateWindow::getSize(int* w, int* h) {
 	*w = 0; *h = 0;
 
-#if 0
 	CandList* candList = (CandList*)ImmLockIMCC(ic->hCandInfo);
 
 	HDC hDC = GetDC(hwnd_);
@@ -244,7 +282,6 @@ void CandidateWindow::getSize(int* w, int* h) {
 // End paint
 
 	ReleaseDC(hwnd_, hDC);
-#endif
 
 	*w = 120;
 	*h= 60;
@@ -257,3 +294,4 @@ void CandidateWindow::updateSize(void) {
 	getSize(&w, &h);
 	SetWindowPos(hwnd_, NULL, 0, 0, w, h, SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
 }
+#endif

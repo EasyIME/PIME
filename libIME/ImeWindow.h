@@ -10,8 +10,6 @@ class ImeWindow: public Window {
 public:
 	ImeWindow();
 	virtual ~ImeWindow(void);
-
-	virtual void getSize(int* w, int* h){	*w=0; *h=0;	}
 	void move(int x, int y);
 
 	static bool workingArea(RECT* rc, HWND app_wnd);

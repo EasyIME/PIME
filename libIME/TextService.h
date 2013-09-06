@@ -32,10 +32,6 @@ public:
 
 	void setCompositionString(EditSession* session, const wchar_t* str, int len);
 
-	bool isCandidateWindowShown();
-	virtual void showCandidateWindow(EditSession* session);
-	virtual void hideCandidateWindow();
-
 	// virtual functions that IME implementors may need to override
 	virtual void onActivate();
 	virtual void onDeactivate();

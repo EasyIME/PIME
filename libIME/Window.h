@@ -25,9 +25,32 @@ public:
 	bool create(HWND parent = HWND_DESKTOP);
 	void destroy(void);
 
-	bool isVisible(){ return (bool)IsWindowVisible(hwnd_); }
+	bool isVisible(){
+		return !!IsWindowVisible(hwnd_);
+	}
 
-	bool isWindow(){ return (bool)IsWindow(hwnd_); }
+	bool isWindow(){
+		return !!IsWindow(hwnd_);
+	}
+
+	void size(int* width, int* height) {
+		RECT rc;
+		rect(&rc);
+		*width = (rc.right - rc.left);
+		*height = (rc.bottom - rc.top);
+	}
+
+	void resize(int width, int height) {
+		::SetWindowPos(hwnd_, HWND_TOP, 0, 0, width, height, SWP_NOZORDER|SWP_NOMOVE|SWP_NOACTIVATE);
+	}
+
+	void clientRect(RECT* rect) {
+		::GetClientRect(hwnd_, rect);
+	}
+
+	void rect(RECT* rect) {
+		::GetWindowRect(hwnd_, rect);
+	}
 
 	void show() {
 		if( hwnd_ )

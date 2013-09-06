@@ -447,31 +447,6 @@ ITfContext* TextService::currentContext() {
 	return context;
 }
 
-// virtual
-void TextService::showCandidateWindow(EditSession* session) {
-	if(!candidateWindow_) {
-		candidateWindow_ = new CandidateWindow();
-		candidateWindow_->create();
-		RECT textRect;
-		if(compositionRect(session, &textRect)) {
-			// FIXME: where should we put the candidate window?
-			// how to get the position in TSF?
-			::MoveWindow(candidateWindow_->hwnd(), textRect.left, textRect.bottom, 100, 32, TRUE);
-		}
-	}
-	candidateWindow_->show();
-}
-
-// virtual
-void TextService::hideCandidateWindow() {
-	if(candidateWindow_)
-		candidateWindow_->hide();
-}
-
-bool TextService::isCandidateWindowShown() {
-	return candidateWindow_ ? candidateWindow_->isVisible() : false;
-}
-
 bool TextService::compositionRect(EditSession* session, RECT* rect) {
 	bool ret = false;
 	if(isComposing()) {

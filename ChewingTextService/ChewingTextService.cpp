@@ -7,10 +7,15 @@ using namespace Chewing;
 using namespace std;
 
 TextService::TextService(void):
+	showingCandidates_(false),
+	candidateWindow_(NULL),
 	chewingContext_(NULL) {
 }
 
 TextService::~TextService(void) {
+	if(candidateWindow_)
+		delete candidateWindow_;
+
 	if(chewingContext_)
 		chewing_delete(chewingContext_);
 }
@@ -21,6 +26,10 @@ void TextService::onActivate() {
 		chewingContext_ = chewing_new();
 		chewing_set_maxChiSymbolLen(chewingContext_, 50);
 	}
+	if(!candidateWindow_) {
+		candidateWindow_ = new Ime::CandidateWindow();
+		candidateWindow_->create();
+	}
 }
 
 // virtual
@@ -28,6 +37,10 @@ void TextService::onDeactivate() {
 	if(chewingContext_) {
 		chewing_delete(chewingContext_);
 		chewingContext_ = NULL;
+	}
+	if(candidateWindow_) {
+		delete candidateWindow_;
+		candidateWindow_ = NULL;
 	}
 }
 
@@ -131,18 +144,16 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
 	if(chewing_keystroke_CheckIgnore(chewingContext_))
 		return false;
 
-	// still choosing candidate string
-	int candidateNum = chewing_cand_TotalChoice(chewingContext_);
-	if(candidateNum > 0) {
-		if(!isCandidateWindowShown()) {
-			showCandidateWindow(session);
-		}
-		return true;
+	// handle candidates
+	if(hasCandidates()) {
+		if(!showingCandidates())
+			showCandidates(session);
+		else
+			updateCandidates(session);
 	}
 	else {
-		if(isCandidateWindowShown()) {
-			hideCandidateWindow();
-		}
+		if(showingCandidates())
+			hideCandidates();
 	}
 
 	// has something to commit
@@ -199,19 +210,6 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
 			endComposition(session->context());
 	}
 
-#if 0
-    ChewingCandidates candidate(chewingContext_);
-	SetCandidates(candidate);
-
-    CImeString commit(chewingContext_, IME_STRING_COMMIT);
-    if (!commit.IsEmpty()) {
-		CommitString(commit.GetString(), commit.GetLength());
-    }
-
-    // Composition is mapped to preedit buffer + zuin buffer
-    CImeString preedit_zuin(chewingContext_, IME_STRING_PREEDIT);
-	SetComposition(preedit_zuin.GetString(), preedit_zuin.GetLength());
-#endif
 	return true;
 }
 
@@ -223,4 +221,41 @@ bool TextService::filterKeyUp(long key) {
 // virtual
 bool TextService::onKeyUp(long key, Ime::EditSession* session) {
 	return true;
+}
+
+void TextService::updateCandidates(Ime::EditSession* session) {
+	assert(candidateWindow_);
+	candidateWindow_->clear();
+
+	::chewing_cand_Enumerate(chewingContext_);
+	int n = ::chewing_cand_ChoicePerPage(chewingContext_);
+	for(; n > 0 && ::chewing_cand_hasNext(chewingContext_); --n) {
+		char* str = ::chewing_cand_String(chewingContext_);
+		wchar_t* wstr = utf8ToUtf16(str);
+		chewing_free(str);
+		candidateWindow_->add(wstr);
+		delete []wstr;
+	}
+	candidateWindow_->recalculateSize();
+	candidateWindow_->refresh();
+
+	RECT textRect;
+	// get the position of composition area from TSF
+	if(compositionRect(session, &textRect)) {
+		// FIXME: where should we put the candidate window?
+		candidateWindow_->move(textRect.left, textRect.bottom);
+	}
+}
+
+void TextService::showCandidates(Ime::EditSession* session) {
+	assert(candidateWindow_);
+	updateCandidates(session);
+	candidateWindow_->show();
+	showingCandidates_ = true;
+}
+
+void TextService::hideCandidates() {
+	candidateWindow_->hide();
+	candidateWindow_->clear();
+	showingCandidates_ = false;
 }

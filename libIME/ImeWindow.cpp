@@ -29,7 +29,7 @@ void ImeWindow::onMouseMove(WPARAM wp, LPARAM lp) {
 
 void ImeWindow::move(int x, int y) {
 	int w, h;
-	getSize(&w, &h);
+	size(&w, &h);
 
 	RECT rc;
 	workingArea( &rc, hwnd_);

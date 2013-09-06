@@ -116,6 +116,32 @@ void TextService::setCompositionString(EditSession* session, const wchar_t* str,
 	}
 }
 
+// set cursor position in the composition area
+// 0 means the start pos of composition string
+void TextService::setCompositionCursor(EditSession* session, int pos) {
+	TF_SELECTION selection;
+	ULONG selectionNum;
+	// get current selection
+	if(session->context()->GetSelection(session->editCookie(), TF_DEFAULT_SELECTION, 1, &selection, &selectionNum) == S_OK) {
+		// get composition range
+		ITfRange* compositionRange;
+		if(composition_->GetRange(&compositionRange) == S_OK) {
+			// make the start of selectionRange the same as that of compositionRange
+			selection.range->ShiftStartToRange(session->editCookie(), compositionRange, TF_ANCHOR_START);
+			selection.range->Collapse(session->editCookie(), TF_ANCHOR_START);
+			LONG moved;
+			// move the start anchor to right
+			selection.range->ShiftStart(session->editCookie(), (LONG)pos, &moved, NULL);
+			selection.range->Collapse(session->editCookie(), TF_ANCHOR_START);
+			// set the new selection to the context
+			session->context()->SetSelection(session->editCookie(), 1, &selection);
+			compositionRange->Release();
+		}
+		selection.range->Release();
+	}
+}
+
+
 // virtual
 void TextService::onActivate() {
 }
@@ -423,13 +449,20 @@ HRESULT TextService::doStartCompositionEditSession(TfEditCookie cookie, StartCom
 // callback from edit session for ending composition
 HRESULT TextService::doEndCompositionEditSession(TfEditCookie cookie, EndCompositionEditSession* session) {
 	if(composition_) {
-		/*
-		// Is this correct? I saw this in 
+		// move current insertion point to end of the composition string
 		ITfRange* compositionRange;
 		if(composition_->GetRange(&compositionRange) == S_OK) {
-			compositionRange->SetText(cookie, 0, L"", 0);
+			TF_SELECTION selection;
+			ULONG selectionNum;
+			if(session->context()->GetSelection(cookie, TF_DEFAULT_SELECTION, 1, &selection, &selectionNum) == S_OK) {
+				selection.range->ShiftEndToRange(cookie, compositionRange, TF_ANCHOR_END);
+				selection.range->Collapse(cookie, TF_ANCHOR_END);
+				session->context()->SetSelection(cookie, 1, &selection);
+				selection.range->Release();
+			}
 			compositionRange->Release();
-		}*/
+		}
+		// end composition and clean up
 		composition_->EndComposition(cookie);
 		composition_->Release();
 		composition_ = NULL;
@@ -458,6 +491,25 @@ bool TextService::compositionRect(EditSession* session, RECT* rect) {
 				if(view->GetTextExt(session->editCookie(), range, rect, &clipped) == S_OK)
 					ret = true;
 				range->Release();
+			}
+			view->Release();
+		}
+	}
+	return ret;
+}
+
+bool TextService::selectionRect(EditSession* session, RECT* rect) {
+	bool ret = false;
+	if(isComposing()) {
+		ITfContextView* view;
+		if(session->context()->GetActiveView(&view) == S_OK) {
+			BOOL clipped;
+			TF_SELECTION selection;
+			ULONG selectionNum;
+			if(session->context()->GetSelection(session->editCookie(), TF_DEFAULT_SELECTION, 1, &selection, &selectionNum) == S_OK ) {
+				if(view->GetTextExt(session->editCookie(), selection.range, rect, &clipped) == S_OK)
+					ret = true;
+				selection.range->Release();
 			}
 			view->Release();
 		}

@@ -29,8 +29,10 @@ public:
 	void startComposition(ITfContext* context);
 	void endComposition(ITfContext* context);
 	bool compositionRect(EditSession* session, RECT* rect);
+	bool selectionRect(EditSession* session, RECT* rect);
 
 	void setCompositionString(EditSession* session, const wchar_t* str, int len);
+	void setCompositionCursor(EditSession* session, int pos);
 
 	// virtual functions that IME implementors may need to override
 	virtual void onActivate();

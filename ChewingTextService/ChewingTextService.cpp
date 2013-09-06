@@ -17,14 +17,14 @@ TextService::~TextService(void) {
 		delete candidateWindow_;
 
 	if(chewingContext_)
-		chewing_delete(chewingContext_);
+		::chewing_delete(chewingContext_);
 }
 
 // virtual
 void TextService::onActivate() {
 	if(!chewingContext_) {
-		chewingContext_ = chewing_new();
-		chewing_set_maxChiSymbolLen(chewingContext_, 50);
+		chewingContext_ = ::chewing_new();
+		::chewing_set_maxChiSymbolLen(chewingContext_, 50);
 	}
 	if(!candidateWindow_) {
 		candidateWindow_ = new Ime::CandidateWindow();
@@ -35,7 +35,7 @@ void TextService::onActivate() {
 // virtual
 void TextService::onDeactivate() {
 	if(chewingContext_) {
-		chewing_delete(chewingContext_);
+		::chewing_delete(chewingContext_);
 		chewingContext_ = NULL;
 	}
 	if(candidateWindow_) {
@@ -81,67 +81,67 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
 	 */
 
     if('A' <= key && key <= 'Z') {
-        chewing_handle_Default(chewingContext_, key - 'A' + 'a');
+        ::chewing_handle_Default(chewingContext_, key - 'A' + 'a');
     } else if ('0' <= key && key <= '9') {
-        chewing_handle_Default(chewingContext_, key);
+        ::chewing_handle_Default(chewingContext_, key);
     } else {
         switch(key) {
             case VK_OEM_COMMA:
-                chewing_handle_Default(chewingContext_, ',');
+                ::chewing_handle_Default(chewingContext_, ',');
                 break;
             case VK_OEM_MINUS:
-                chewing_handle_Default(chewingContext_, '-');
+                ::chewing_handle_Default(chewingContext_, '-');
                 break;
             case VK_OEM_PERIOD:
-                chewing_handle_Default(chewingContext_, '.');
+                ::chewing_handle_Default(chewingContext_, '.');
                 break;
             case VK_OEM_1:
-                chewing_handle_Default(chewingContext_, ';');
+                ::chewing_handle_Default(chewingContext_, ';');
                 break;
             case VK_OEM_2:
-                chewing_handle_Default(chewingContext_, '/');
+                ::chewing_handle_Default(chewingContext_, '/');
                 break;
             case VK_OEM_3:
-                chewing_handle_Default(chewingContext_, '`');
+                ::chewing_handle_Default(chewingContext_, '`');
                 break;
             case VK_SPACE:
-                chewing_handle_Space(chewingContext_);
+                ::chewing_handle_Space(chewingContext_);
                 break;
             case VK_ESCAPE:
-                chewing_handle_Esc(chewingContext_);
+                ::chewing_handle_Esc(chewingContext_);
                 break;
             case VK_RETURN:
-                chewing_handle_Enter(chewingContext_);
+                ::chewing_handle_Enter(chewingContext_);
                 break;
             case VK_DELETE:
-                chewing_handle_Del(chewingContext_);
+                ::chewing_handle_Del(chewingContext_);
                 break;
             case VK_BACK:
-                chewing_handle_Backspace(chewingContext_);
+                ::chewing_handle_Backspace(chewingContext_);
                 break;
             case VK_UP:
-                chewing_handle_Up(chewingContext_);
+                ::chewing_handle_Up(chewingContext_);
                 break;
             case VK_DOWN:
-                chewing_handle_Down(chewingContext_);
+                ::chewing_handle_Down(chewingContext_);
             case VK_LEFT:
-                chewing_handle_Left(chewingContext_);
+                ::chewing_handle_Left(chewingContext_);
                 break;
             case VK_RIGHT:
-                chewing_handle_Right(chewingContext_);
+                ::chewing_handle_Right(chewingContext_);
                 break;
             case VK_HOME:
-                chewing_handle_Home(chewingContext_);
+                ::chewing_handle_Home(chewingContext_);
                 break;
             case VK_END:
-                chewing_handle_End(chewingContext_);
+                ::chewing_handle_End(chewingContext_);
                 break;
             default:
                 return S_OK;
         }
     }
 
-	if(chewing_keystroke_CheckIgnore(chewingContext_))
+	if(::chewing_keystroke_CheckIgnore(chewingContext_))
 		return false;
 
 	// handle candidates
@@ -157,14 +157,14 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
 	}
 
 	// has something to commit
-	if(chewing_commit_Check(chewingContext_)) {
+	if(::chewing_commit_Check(chewingContext_)) {
 		if(!isComposing()) // start the composition
 			startComposition(session->context());
 
 		char* buf = ::chewing_commit_String(chewingContext_);
 		int len;
 		wchar_t* wbuf = utf8ToUtf16(buf, &len);
-		chewing_free(buf);
+		::chewing_free(buf);
 		// commit the text, replace currently selected text with our commit string
 		setCompositionString(session, wbuf, len);
 		delete []wbuf;
@@ -210,6 +210,11 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
 			endComposition(session->context());
 	}
 
+	// update cursor pos
+	if(isComposing()) {
+		setCompositionCursor(session, ::chewing_cursor_Current(chewingContext_));
+	}
+
 	return true;
 }
 
@@ -232,7 +237,7 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 	for(; n > 0 && ::chewing_cand_hasNext(chewingContext_); --n) {
 		char* str = ::chewing_cand_String(chewingContext_);
 		wchar_t* wstr = utf8ToUtf16(str);
-		chewing_free(str);
+		::chewing_free(str);
 		candidateWindow_->add(wstr);
 		delete []wstr;
 	}
@@ -241,7 +246,7 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 
 	RECT textRect;
 	// get the position of composition area from TSF
-	if(compositionRect(session, &textRect)) {
+	if(selectionRect(session, &textRect)) {
 		// FIXME: where should we put the candidate window?
 		candidateWindow_->move(textRect.left, textRect.bottom);
 	}

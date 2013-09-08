@@ -16,6 +16,8 @@ add_library(libIME_static STATIC
     ${PROJECT_SOURCE_DIR}/libIME.h
     ${PROJECT_SOURCE_DIR}/TextService.cpp
     ${PROJECT_SOURCE_DIR}/TextService.h
+    ${PROJECT_SOURCE_DIR}/KeyEvent.cpp
+    ${PROJECT_SOURCE_DIR}/KeyEvent.h
     ${PROJECT_SOURCE_DIR}/EditSession.cpp
     ${PROJECT_SOURCE_DIR}/EditSession.h
     ${PROJECT_SOURCE_DIR}/DisplayAttributeInfo.cpp

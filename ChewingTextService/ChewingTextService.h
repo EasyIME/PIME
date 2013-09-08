@@ -18,10 +18,10 @@ public:
 
 	virtual void onFocus();
 
-	virtual bool filterKeyDown(long key);
-	virtual bool onKeyDown(long key, Ime::EditSession* session);
-	virtual bool filterKeyUp(long key);
-	virtual bool onKeyUp(long key, Ime::EditSession* session);
+	virtual bool filterKeyDown(Ime::KeyEvent& keyEvent);
+	virtual bool onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session);
+	virtual bool filterKeyUp(Ime::KeyEvent& keyEvent);
+	virtual bool onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session);
 
 	ChewingContext* chewingContext() {
 		return chewingContext_;

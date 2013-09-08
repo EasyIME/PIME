@@ -151,22 +151,22 @@ void TextService::onDeactivate() {
 }
 
 // virtual
-bool TextService::filterKeyDown(long key) {
+bool TextService::filterKeyDown(KeyEvent& keyEvent) {
 	return false;
 }
 
 // virtual
-bool TextService::onKeyDown(long key, EditSession* session) {
+bool TextService::onKeyDown(KeyEvent& keyEvent, EditSession* session) {
 	return false;
 }
 
 // virtual
-bool TextService::filterKeyUp(long key) {
+bool TextService::filterKeyUp(KeyEvent& keyEvent) {
 	return false;
 }
 
 // virtual
-bool TextService::onKeyUp(long key, EditSession* session) {
+bool TextService::onKeyUp(KeyEvent& keyEvent, EditSession* session) {
 	return false;
 }
 
@@ -321,21 +321,23 @@ STDMETHODIMP TextService::OnSetFocus(BOOL fForeground) {
 }
 
 STDMETHODIMP TextService::OnTestKeyDown(ITfContext *pContext, WPARAM wParam, LPARAM lParam, BOOL *pfEaten) {
-	*pfEaten = (BOOL)filterKeyDown((long)wParam);
+	KeyEvent keyEvent(WM_KEYDOWN, wParam, lParam);
+	*pfEaten = (BOOL)filterKeyDown(keyEvent);
 	return S_OK;
 }
 
 STDMETHODIMP TextService::OnKeyDown(ITfContext *pContext, WPARAM wParam, LPARAM lParam, BOOL *pfEaten) {
 	// Some applications do not trigger OnTestKeyDown()
 	// So we need to test it again here! Windows TSF sucks!
-	*pfEaten = (BOOL)filterKeyDown((long)wParam);
+	KeyEvent keyEvent(WM_KEYDOWN, wParam, lParam);
+	*pfEaten = (BOOL)filterKeyDown(keyEvent);
 	if(*pfEaten) { // we want to eat the key
 		HRESULT sessionResult;
 		// ask TSF for an edit session. If editing is approved by TSF,
 		// KeyEditSession::DoEditSession will be called, which in turns
 		// call back to TextService::doKeyEditSession().
 		// So the real key handling is relayed to TextService::doKeyEditSession().
-		KeyEditSession* session = new KeyEditSession(this, pContext, true, wParam, lParam);
+		KeyEditSession* session = new KeyEditSession(this, pContext, keyEvent);
 
 		// We use TF_ES_SYNC here, so the request becomes synchronus and blocking.
 		// KeyEditSession::DoEditSession() and TextService::doKeyEditSession() will be
@@ -348,17 +350,19 @@ STDMETHODIMP TextService::OnKeyDown(ITfContext *pContext, WPARAM wParam, LPARAM 
 }
 
 STDMETHODIMP TextService::OnTestKeyUp(ITfContext *pContext, WPARAM wParam, LPARAM lParam, BOOL *pfEaten) {
-	*pfEaten = (BOOL)filterKeyUp((long)wParam);
+	KeyEvent keyEvent(WM_KEYDOWN, wParam, lParam);
+	*pfEaten = (BOOL)filterKeyUp(keyEvent);
 	return S_OK;
 }
 
 STDMETHODIMP TextService::OnKeyUp(ITfContext *pContext, WPARAM wParam, LPARAM lParam, BOOL *pfEaten) {
 	// Some applications do not trigger OnTestKeyDown()
 	// So we need to test it again here! Windows TSF sucks!
-	*pfEaten = (BOOL)filterKeyUp((long)wParam);
+	KeyEvent keyEvent(WM_KEYUP, wParam, lParam);
+	*pfEaten = (BOOL)filterKeyUp(keyEvent);
 	if(*pfEaten) {
 		HRESULT sessionResult;
-		KeyEditSession* session = new KeyEditSession(this, pContext, false, wParam, lParam);
+		KeyEditSession* session = new KeyEditSession(this, pContext, keyEvent);
 		pContext->RequestEditSession(clientId_, session, TF_ES_SYNC|TF_ES_READWRITE, &sessionResult);
 		*pfEaten = session->result_; // tell TSF if we handled the key
 		session->Release();
@@ -406,10 +410,10 @@ STDMETHODIMP TextService::EndCompositionEditSession::DoEditSession(TfEditCookie 
 
 // callback from edit session of key events
 HRESULT TextService::doKeyEditSession(TfEditCookie cookie, KeyEditSession* session) {
-	if(session->isDown_)
-		session->result_ = onKeyDown((long)session->wParam_, session);
-	else
-		session->result_ = onKeyUp((long)session->wParam_, session);
+	if(session->keyEvent_.type() == WM_KEYDOWN)
+		session->result_ = onKeyDown(session->keyEvent_, session);
+	else if(session->keyEvent_.type() == WM_KEYUP)
+		session->result_ = onKeyUp(session->keyEvent_, session);
 	return S_OK;
 }
 

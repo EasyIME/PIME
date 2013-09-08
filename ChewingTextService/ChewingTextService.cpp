@@ -48,15 +48,15 @@ void TextService::onFocus() {
 }
 
 // virtual
-bool TextService::filterKeyDown(long key) {
+bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
 	assert(chewingContext_);
 	// TODO: check if we're in Chinses or English mode
 	if(!isComposing()) {
 		// when not composing, we only cares about Bopomopho
 		// FIXME: we should check if the key is mapped to a phonetic symbol instead
 		// FIXME: we need to handle Shift, Alt, and Ctrl, ...etc.
-		UINT ch = ::MapVirtualKey((UINT)key, MAPVK_VK_TO_CHAR);
-		if(ch && isprint(ch)) { // this is a key mapped to a printable char
+		if(keyEvent.isChar() && isgraph(keyEvent.charCode())) {
+			// this is a key mapped to a printable char. we want it!
 			return true;
 		}
 		return false;
@@ -65,7 +65,7 @@ bool TextService::filterKeyDown(long key) {
 }
 
 // virtual
-bool TextService::onKeyDown(long key, Ime::EditSession* session) {
+bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	assert(chewingContext_);
     /*
      * FIXME: the following keys are not handled:
@@ -77,35 +77,19 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
      * numlock num		VK_NUMLOCK
 	 */
 
-	short shiftState = ::GetKeyState(VK_SHIFT);
-	bool isShiftDown = (shiftState & (1 << 16));
+	Ime::KeyState shiftState(VK_SHIFT);
 	// set this to true or false according to the status of Shift key
-	::chewing_set_easySymbolInput(chewingContext_, isShiftDown);
+	::chewing_set_easySymbolInput(chewingContext_, shiftState.isDown());
 
-    if('A' <= key && key <= 'Z') {
-        ::chewing_handle_Default(chewingContext_, key - 'A' + 'a');
-    } else if ('0' <= key && key <= '9') {
-        ::chewing_handle_Default(chewingContext_, key);
+	UINT charCode = keyEvent.charCode();
+	if(charCode && isgraph(charCode) && !keyEvent.isExtended()) { // printable characters (exclude extended keys?)
+		// FIXME: should we treat numpad keys differently?
+		if(isalpha(charCode))
+			::chewing_handle_Default(chewingContext_, tolower(charCode));
+		else
+			::chewing_handle_Default(chewingContext_, charCode);
     } else {
-        switch(key) {
-            case VK_OEM_COMMA:
-                ::chewing_handle_Default(chewingContext_, ',');
-                break;
-            case VK_OEM_MINUS:
-                ::chewing_handle_Default(chewingContext_, '-');
-                break;
-            case VK_OEM_PERIOD:
-                ::chewing_handle_Default(chewingContext_, '.');
-                break;
-            case VK_OEM_1:
-                ::chewing_handle_Default(chewingContext_, ';');
-                break;
-            case VK_OEM_2:
-                ::chewing_handle_Default(chewingContext_, '/');
-                break;
-            case VK_OEM_3:
-                ::chewing_handle_Default(chewingContext_, '`');
-                break;
+		switch(keyEvent.keyCode()) {
             case VK_SPACE:
                 ::chewing_handle_Space(chewingContext_);
                 break;
@@ -227,12 +211,12 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
 }
 
 // virtual
-bool TextService::filterKeyUp(long key) {
+bool TextService::filterKeyUp(Ime::KeyEvent& keyEvent) {
 	return false;
 }
 
 // virtual
-bool TextService::onKeyUp(long key, Ime::EditSession* session) {
+bool TextService::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	return true;
 }
 

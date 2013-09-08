@@ -4,6 +4,7 @@
 #include "libIME.h"
 #include <msctf.h>
 #include "EditSession.h"
+#include "KeyEvent.h"
 
 namespace Ime {
 
@@ -40,10 +41,10 @@ public:
 
 	virtual void onFocus();
 
-	virtual bool filterKeyDown(long key);
-	virtual bool onKeyDown(long key, EditSession* session);
-	virtual bool filterKeyUp(long key);
-	virtual bool onKeyUp(long key, EditSession* session);
+	virtual bool filterKeyDown(KeyEvent& keyEvent);
+	virtual bool onKeyDown(KeyEvent& keyEvent, EditSession* session);
+	virtual bool filterKeyUp(KeyEvent& keyEvent);
+	virtual bool onKeyUp(KeyEvent& keyEvent, EditSession* session);
 
 	// COM related stuff
 public:
@@ -85,18 +86,14 @@ protected:
 	// edit session classes, used with TSF
 	class KeyEditSession: public EditSession {
 	public:
-		KeyEditSession(TextService* service, ITfContext* context, bool isDown, WPARAM wParam, LPARAM lParam):
+		KeyEditSession(TextService* service, ITfContext* context, KeyEvent& keyEvent):
 			EditSession(service, context),
-			isDown_(isDown),
-			result_(false),
-			wParam_(wParam),
-			lParam_(lParam) {
+			keyEvent_(keyEvent),
+			result_(false) {
 		}
 		STDMETHODIMP DoEditSession(TfEditCookie ec);
 
-		WPARAM wParam_;
-		LPARAM lParam_;
-		bool isDown_;
+		KeyEvent keyEvent_;
 		bool result_;
 	};
 

@@ -4,12 +4,12 @@ project(libIME)
 
 # http://www.utf8everywhere.org/
 add_definitions(
-	/D_UNICODE=1
-	/DUNICODE=1
+    /D_UNICODE=1
+    /DUNICODE=1
 )
 
 add_library(libIME_static STATIC
-	# Core TSF part
+    # Core TSF part
     ${PROJECT_SOURCE_DIR}/ImeModule.cpp
     ${PROJECT_SOURCE_DIR}/ImeModule.h
     ${PROJECT_SOURCE_DIR}/libIME.cpp
@@ -24,15 +24,17 @@ add_library(libIME_static STATIC
     ${PROJECT_SOURCE_DIR}/DisplayAttributeInfo.h
     ${PROJECT_SOURCE_DIR}/EnumDisplayAttributeInfo.cpp
     ${PROJECT_SOURCE_DIR}/EnumDisplayAttributeInfo.h
+    ${PROJECT_SOURCE_DIR}/LangBarButton.cpp
+    ${PROJECT_SOURCE_DIR}/LangBarButton.h
     ${PROJECT_SOURCE_DIR}/Utils.cpp
     ${PROJECT_SOURCE_DIR}/Utils.h
-	# UI-related code
-	${PROJECT_SOURCE_DIR}/DrawUtils.h
-	${PROJECT_SOURCE_DIR}/DrawUtils.cpp
-	${PROJECT_SOURCE_DIR}/Window.cpp
-	${PROJECT_SOURCE_DIR}/Window.h
-	${PROJECT_SOURCE_DIR}/ImeWindow.cpp
-	${PROJECT_SOURCE_DIR}/ImeWindow.h
-	${PROJECT_SOURCE_DIR}/CandidateWindow.h
-	${PROJECT_SOURCE_DIR}/CandidateWindow.cpp
+    # GUI-related code
+    ${PROJECT_SOURCE_DIR}/DrawUtils.h
+    ${PROJECT_SOURCE_DIR}/DrawUtils.cpp
+    ${PROJECT_SOURCE_DIR}/Window.cpp
+    ${PROJECT_SOURCE_DIR}/Window.h
+    ${PROJECT_SOURCE_DIR}/ImeWindow.cpp
+    ${PROJECT_SOURCE_DIR}/ImeWindow.h
+    ${PROJECT_SOURCE_DIR}/CandidateWindow.h
+    ${PROJECT_SOURCE_DIR}/CandidateWindow.cpp
 )

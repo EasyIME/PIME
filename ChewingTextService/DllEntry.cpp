@@ -1,4 +1,5 @@
 #include "ChewingImeModule.h"
+#include "resource.h"
 
 Chewing::ImeModule* g_imeModule = NULL;
 
@@ -43,8 +44,10 @@ STDAPI DllUnregisterServer(void) {
 }
 
 STDAPI DllRegisterServer(void) {
+	wchar_t name[32];
+	::LoadStringW(g_imeModule->hInstance(), IDS_CHEWING, name, 32);
 	return g_imeModule->registerServer(
-		L"新酷音輸入法",
+		name,
 		g_textServiceClsid,
 		g_profileGuid,
 		MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL));

@@ -55,8 +55,8 @@ bool TextService::filterKeyDown(long key) {
 		// when not composing, we only cares about Bopomopho
 		// FIXME: we should check if the key is mapped to a phonetic symbol instead
 		// FIXME: we need to handle Shift, Alt, and Ctrl, ...etc.
-		if((key >= 'A' && key <= 'Z')
-			|| (key >= '0' && key <= '9')) {
+		UINT ch = ::MapVirtualKey((UINT)key, MAPVK_VK_TO_CHAR);
+		if(ch && isprint(ch)) { // this is a key mapped to a printable char
 			return true;
 		}
 		return false;
@@ -72,12 +72,15 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
      * shift left		VK_LSHIFT
      * shift right		VK_RSHIFT
      * caps lock		VK_CAPITAL
-     * page up			VK_PRIOR
-     * page down		VK_NEXT
      * ctrl num
      * shift space
      * numlock num		VK_NUMLOCK
 	 */
+
+	short shiftState = ::GetKeyState(VK_SHIFT);
+	bool isShiftDown = (shiftState & (1 << 16));
+	// set this to true or false according to the status of Shift key
+	::chewing_set_easySymbolInput(chewingContext_, isShiftDown);
 
     if('A' <= key && key <= 'Z') {
         ::chewing_handle_Default(chewingContext_, key - 'A' + 'a');
@@ -135,6 +138,12 @@ bool TextService::onKeyDown(long key, Ime::EditSession* session) {
             case VK_END:
                 ::chewing_handle_End(chewingContext_);
                 break;
+			case VK_PRIOR:
+				::chewing_handle_PageUp(chewingContext_);
+				break;
+			case VK_NEXT:
+				::chewing_handle_PageDown(chewingContext_);
+				break;
             default:
                 return S_OK;
         }

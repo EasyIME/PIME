@@ -19,11 +19,11 @@ All parts are licensed under GNU LGPL v2.1 license.
 *   Get source from github
 
         git clone https://github.com/chewing/windows-chewing-tsf.git
-        cd windows-TSF-chewing
+        cd windows-chewing-tsf
         git submodule init
         git submodule update
 
-*   Use CMake to generate Visual Studio project
+*   Use one of the following CMake commands to generate Visual Studio project
 
         cmake -G "Visual Studio 11" <path to windows-chewing-tsf>
         cmake -G "Visual Studio 11 Win64" <path to windows-chewing-tsf>
@@ -34,6 +34,7 @@ All parts are licensed under GNU LGPL v2.1 license.
 *   [Text Services Framework](http://msdn.microsoft.com/en-us/library/windows/desktop/ms629032%28v=vs.85%29.aspx)
 *   [Guidelines and checklist for IME development (Windows Store apps)](http://msdn.microsoft.com/en-us/library/windows/apps/hh967425.aspx)
 *   [Strategies for App Communication between Windows 8 UI and Windows 8 Desktop](http://software.intel.com/en-us/articles/strategies-for-app-communication-between-windows-8-ui-and-windows-8-desktop)
+*   [TSF Aware, Dictation, Windows Speech Recognition, and Text Services Framework. (blog)](http://blogs.msdn.com/b/tsfaware/?Redirected=true)
 
 # Install
 *   Copy `libchewing/data/*.dat` to `%WINDIR%/chewing`

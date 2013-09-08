@@ -1,13 +1,65 @@
 #include "LangBarButton.h"
+#include "TextService.h"
+#include "ImeModule.h"
 #include <assert.h>
 
 using namespace Ime;
 
-LangBarButton::LangBarButton(void):
+LangBarButton::LangBarButton(TextService* service, const GUID& guid, wchar_t* text, DWORD style):
+	textService_(service),
+	tooltip_(NULL),
 	refCount_(1) {
+
+	assert(service && service->module());
+
+	textService_->AddRef();
+
+	info_.clsidService = service->module()->textServiceClsid();
+	info_.guidItem = guid;
+	info_.dwStyle = style;
+	info_.ulSort = 0;
+	setText(text);
 }
 
 LangBarButton::~LangBarButton(void) {
+	if(textService_)
+		textService_->Release();
+	if(tooltip_) // allocated by wcsdup()
+		::free(tooltip_);
+}
+
+const wchar_t* LangBarButton::text() const {
+	return info_.szDescription;
+}
+
+void LangBarButton::setText(wchar_t* text) {
+	if(text) {
+		wcsncpy(info_.szDescription, text, TF_LBI_DESC_MAXLEN - 1);
+	}
+	else
+		*info_.szDescription = 0;
+	// FIXME: do we need to inform TSF to update the UI?
+}
+
+// public methods
+const wchar_t* LangBarButton::tooltip() const {
+	return tooltip_;
+}
+
+void LangBarButton::setTooltip(const wchar_t* tooltip) {
+	if(tooltip_)
+		free(tooltip_);
+	tooltip = _wcsdup(tooltip);
+	// FIXME: do we need to inform TSF to update the UI?
+}
+
+
+HICON LangBarButton::icon() const {
+	return icon_;
+}
+
+void LangBarButton::setIcon(HICON icon) {
+	icon_ = icon;
 }
 
 // COM stuff
@@ -46,6 +98,7 @@ STDMETHODIMP_(ULONG) LangBarButton::Release(void) {
 
 // ITfLangBarItem
 STDMETHODIMP LangBarButton::GetInfo(TF_LANGBARITEMINFO *pInfo) {
+	*pInfo = info_;
 	return S_OK;
 }
 
@@ -76,11 +129,13 @@ STDMETHODIMP LangBarButton::OnMenuSelect(UINT wID) {
 }
 
 STDMETHODIMP LangBarButton::GetIcon(HICON *phIcon) {
+	*phIcon = icon_;
 	return S_OK;
 }
 
 STDMETHODIMP LangBarButton::GetText(BSTR *pbstrText) {
-	return S_OK;
+	*pbstrText = ::SysAllocString(info_.szDescription);
+	return *pbstrText ? S_OK : S_FALSE;
 }
 
 // ITfSource
@@ -91,3 +146,4 @@ STDMETHODIMP LangBarButton::AdviseSink(REFIID riid, IUnknown *punk, DWORD *pdwCo
 STDMETHODIMP LangBarButton::UnadviseSink(DWORD dwCookie) {
 	return S_OK;
 }
+

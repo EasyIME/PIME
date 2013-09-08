@@ -3,12 +3,6 @@
 
 Chewing::ImeModule* g_imeModule = NULL;
 
-// CLSID of our Text service
-// {13F2EF08-575C-4D8C-88E0-F67BB8052B84}
-static const CLSID g_textServiceClsid = {
-	0x13f2ef08, 0x575c, 0x4d8c, { 0x88, 0xe0, 0xf6, 0x7b, 0xb8, 0x5, 0x2b, 0x84 }
-};
-
 // GUID of our language profile
 // {CE45F71D-CE79-41D1-967D-640B65A380E3}
 static const GUID g_profileGuid = {
@@ -40,7 +34,7 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppvObj) {
 }
 
 STDAPI DllUnregisterServer(void) {
-	return g_imeModule->unregisterServer(g_textServiceClsid, g_profileGuid);
+	return g_imeModule->unregisterServer(g_profileGuid);
 }
 
 STDAPI DllRegisterServer(void) {
@@ -48,7 +42,6 @@ STDAPI DllRegisterServer(void) {
 	::LoadStringW(g_imeModule->hInstance(), IDS_CHEWING, name, 32);
 	return g_imeModule->registerServer(
 		name,
-		g_textServiceClsid,
 		g_profileGuid,
 		MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL));
 }

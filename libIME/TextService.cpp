@@ -1,13 +1,17 @@
 #include "TextService.h"
 #include "EditSession.h"
 #include "CandidateWindow.h"
+#include "LangBarButton.h"
 
 #include <assert.h>
 #include <string>
+#include <algorithm>
 
 using namespace Ime;
+using namespace std;
 
-TextService::TextService(void):
+TextService::TextService(ImeModule* module):
+	module_(module),
 	threadMgr_(NULL),
 	clientId_(TF_CLIENTID_NULL),
 	threadMgrEventSinkCookie_(TF_INVALID_COOKIE),
@@ -24,6 +28,52 @@ TextService::~TextService(void) {
 }
 
 // public methods
+
+ImeModule* TextService::module() const {
+	return module_;
+}
+
+ITfThreadMgr* TextService::threadMgr() const {
+	return threadMgr_;
+}
+
+TfClientId TextService::clientId() const {
+	return clientId_;
+}
+
+
+// language bar
+void TextService::addButton(LangBarButton* button) {
+	if(button) {
+		langBarButtons_.push_back(button);
+		button->AddRef();
+		if(isActivated()) {
+		}
+	}
+}
+
+void TextService::removeButton(LangBarButton* button) {
+	if(button) {
+		vector<LangBarButton*>::iterator it;
+		it = find(langBarButtons_.begin(), langBarButtons_.end(), button);
+		if(it != langBarButtons_.end()) {
+			(*it)->Release();
+			langBarButtons_.erase(it);
+		}
+
+		if(isActivated()) {
+		}
+	}
+}
+
+void addButtons(LangBarButton** button, int count) {
+}
+
+void removeButtons(LangBarButton** button, int count) {
+}
+
+
+// text composition
 
 bool TextService::isComposing() {
 	return (composition_ != NULL);

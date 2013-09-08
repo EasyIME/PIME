@@ -2,14 +2,41 @@
 #include <assert.h>
 #include <string>
 #include <libIME/Utils.h>
+#include <libIME/LangBarButton.h>
+#include "ChewingImeModule.h"
 
 using namespace Chewing;
 using namespace std;
 
-TextService::TextService(void):
+// {B59D51B9-B832-40D2-9A8D-56959372DDC7}
+static const GUID g_modeButtonGuid = // English/Chinses mode switch
+{ 0xb59d51b9, 0xb832, 0x40d2, { 0x9a, 0x8d, 0x56, 0x95, 0x93, 0x72, 0xdd, 0xc7 } };
+
+// {5325DBF5-5FBE-467B-ADF0-2395BE9DD2BB}
+static const GUID g_shapeTypeButtonGuid = // half shape/full shape switch
+{ 0x5325dbf5, 0x5fbe, 0x467b, { 0xad, 0xf0, 0x23, 0x95, 0xbe, 0x9d, 0xd2, 0xbb } };
+
+// {4FAFA520-2104-407E-A532-9F1AAB7751CD}
+static const GUID g_settingsButtonGuid = // settings button/menu
+{ 0x4fafa520, 0x2104, 0x407e, { 0xa5, 0x32, 0x9f, 0x1a, 0xab, 0x77, 0x51, 0xcd } };
+
+TextService::TextService(ImeModule* module):
+	Ime::TextService(module),
 	showingCandidates_(false),
 	candidateWindow_(NULL),
 	chewingContext_(NULL) {
+
+	Ime::LangBarButton* button = new Ime::LangBarButton(this, g_modeButtonGuid, L"");
+	addButton(button);
+	button->Release();
+
+	button = new Ime::LangBarButton(this, g_shapeTypeButtonGuid, L"");
+	addButton(button);
+	button->Release();
+
+	button = new Ime::LangBarButton(this, g_settingsButtonGuid, L"");
+	addButton(button);
+	button->Release();
 }
 
 TextService::~TextService(void) {

@@ -5,10 +5,13 @@
 #include <msctf.h>
 #include "EditSession.h"
 #include "KeyEvent.h"
+#include <vector>
 
 namespace Ime {
 
+class ImeModule;
 class CandidateWindow;
+class LangBarButton;
 
 class TextService:
 	// TSF interfaces
@@ -21,10 +24,27 @@ class TextService:
 	public ITfCompositionSink {
 public:
 
-	TextService(void);
+	TextService(ImeModule* module);
 	virtual ~TextService(void);
 
 	// public methods
+	ImeModule* module() const;
+
+	ITfThreadMgr* threadMgr() const;
+
+	TfClientId clientId() const;
+
+	ITfContext* currentContext();
+
+	bool isActivated() const {
+		return (threadMgr() != NULL);
+	}
+
+	// language bar buttons
+	void addButton(LangBarButton* button);
+	void removeButton(LangBarButton* button);
+
+	// text composition handling
 	bool isComposing();
 	bool isInsertionAllowed(EditSession* session);
 	void startComposition(ITfContext* context);
@@ -117,9 +137,11 @@ protected:
 	HRESULT doStartCompositionEditSession(TfEditCookie cookie, StartCompositionEditSession* session);
 	HRESULT doEndCompositionEditSession(TfEditCookie cookie, EndCompositionEditSession* session);
 
-	ITfContext* currentContext();
+	void addButtons(LangBarButton** button, int count);
+	void removeButtons(LangBarButton** button, int count);
 
 private:
+	ImeModule* module_;
 	ITfThreadMgr *threadMgr_;
 	TfClientId clientId_;
 
@@ -129,8 +151,8 @@ private:
 	DWORD compositionSinkCookie_;
 
 	ITfComposition* composition_; // acquired when starting composition, released when ending composition
-
 	CandidateWindow* candidateWindow_;
+	std::vector<LangBarButton*> langBarButtons_;
 	long refCount_; // reference counting
 };
 

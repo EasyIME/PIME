@@ -8,9 +8,11 @@
 
 namespace Chewing {
 
+class ImeModule;
+
 class TextService: public Ime::TextService {
 public:
-	TextService(void);
+	TextService(ImeModule* module);
 	virtual ~TextService(void);
 
 	virtual void onActivate();

@@ -10,7 +10,7 @@ class TextService;
 
 class ImeModule: public IClassFactory {
 public:
-	ImeModule(HMODULE module);
+	ImeModule(HMODULE module, const CLSID& textServiceClsid);
 	virtual ~ImeModule(void);
 
 	// public methods
@@ -18,11 +18,15 @@ public:
 		return hInstance_;
 	}
 
+	const CLSID& textServiceClsid() const {
+		return textServiceClsid_;
+	}
+
 	// Dll entry points implementations
 	HRESULT canUnloadNow();
 	HRESULT getClassObject(REFCLSID rclsid, REFIID riid, void **ppvObj);
-	HRESULT registerServer(wchar_t* name, const CLSID& textServiceClsid, const GUID& profileGuid, LANGID languageId);
-	HRESULT unregisterServer(const CLSID& textServiceClsid, const GUID& profileGuid);
+	HRESULT registerServer(wchar_t* name, const GUID& profileGuid, LANGID languageId);
+	HRESULT unregisterServer(const GUID& profileGuid);
 
 	virtual TextService* createTextService() = 0;
 
@@ -41,6 +45,8 @@ protected:
 private:
 	volatile unsigned long refCount_;
 	HINSTANCE hInstance_;
+	CLSID textServiceClsid_;
+	wchar_t* tooltip_;
 };
 
 }

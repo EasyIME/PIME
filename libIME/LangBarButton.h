@@ -2,17 +2,29 @@
 #define IME_LANGUAGE_BAR_BUTTON_H
 
 #include <msctf.h>
+#include <string.h>
+#include <Windows.h>
 
 namespace Ime {
+
+class TextService;
 
 class LangBarButton:
 	public ITfLangBarItemButton,
 	public ITfSource {
 public:
-	LangBarButton(void);
+	LangBarButton(TextService* service, const GUID& guid, wchar_t* text = NULL, DWORD style = TF_LBI_STYLE_BTN_BUTTON);
 	virtual ~LangBarButton(void);
 
 	// public methods
+	const wchar_t* text() const;
+	void setText(wchar_t* text);
+
+	const wchar_t* tooltip() const;
+	void setTooltip(const wchar_t* tooltip);
+
+	HICON icon() const;
+	void setIcon(HICON icon);
 
 	// COM-related stuff
 
@@ -40,6 +52,10 @@ public:
 
 private:
 	int refCount_;
+	TextService* textService_;
+	TF_LANGBARITEMINFO info_;
+	wchar_t* tooltip_;
+	HICON icon_;
 };
 
 }

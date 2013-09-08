@@ -8,8 +8,9 @@
 using namespace Ime;
 using namespace std;
 
-ImeModule::ImeModule(HMODULE module):
+ImeModule::ImeModule(HMODULE module, const CLSID& textServiceClsid):
 	hInstance_(HINSTANCE(module)),
+	textServiceClsid_(textServiceClsid),
 	refCount_(1) {
 
 	Window::registerClass(hInstance_);
@@ -36,7 +37,7 @@ HRESULT ImeModule::getClassObject(REFCLSID rclsid, REFIID riid, void **ppvObj) {
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-HRESULT ImeModule::registerServer(wchar_t* name, const CLSID& textServiceClsid, const GUID& profileGuid, LANGID languageId) {
+HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID languageId) {
 	// write info of our COM text service component to the registry
 	// path: HKEY_CLASS_ROOT\\CLSID\\{xxxx-xxxx-xxxx-xx....}
 	// This reguires Administrator permimssion to write to the registery
@@ -54,7 +55,7 @@ HRESULT ImeModule::registerServer(wchar_t* name, const CLSID& textServiceClsid, 
 
 	wstring regPath = L"CLSID\\";
 	LPOLESTR clsidStr = NULL;
-	if(StringFromCLSID(textServiceClsid, &clsidStr) != ERROR_SUCCESS)
+	if(StringFromCLSID(textServiceClsid_, &clsidStr) != ERROR_SUCCESS)
 		return E_FAIL;
 	regPath += clsidStr;
 	CoTaskMemFree(clsidStr);
@@ -85,8 +86,8 @@ HRESULT ImeModule::registerServer(wchar_t* name, const CLSID& textServiceClsid, 
 		result = E_FAIL;
 		ITfInputProcessorProfiles *inputProcessProfiles = NULL;
 		if(CoCreateInstance(CLSID_TF_InputProcessorProfiles, NULL, CLSCTX_INPROC_SERVER, IID_ITfInputProcessorProfiles, (void**)&inputProcessProfiles) == S_OK) {
-			if(inputProcessProfiles->Register(textServiceClsid) == S_OK) {
-				if(inputProcessProfiles->AddLanguageProfile(textServiceClsid, languageId, profileGuid,
+			if(inputProcessProfiles->Register(textServiceClsid_) == S_OK) {
+				if(inputProcessProfiles->AddLanguageProfile(textServiceClsid_, languageId, profileGuid,
 											name, -1, modulePath, modulePathLen, 0) == S_OK) {
 					result = S_OK;
 				}
@@ -99,13 +100,13 @@ HRESULT ImeModule::registerServer(wchar_t* name, const CLSID& textServiceClsid, 
 	if(result == S_OK) {
 		ITfCategoryMgr *categoryMgr = NULL;
 		if(CoCreateInstance(CLSID_TF_CategoryMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfCategoryMgr, (void**)&categoryMgr) == S_OK) {
-			if(categoryMgr->RegisterCategory(textServiceClsid, GUID_TFCAT_TIP_KEYBOARD, textServiceClsid) != S_OK) {
+			if(categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_TIP_KEYBOARD, textServiceClsid_) != S_OK) {
 				result = E_FAIL;
 			}
 
 			// register ourself as a display attribute provider
 			// so later we can set change the look and feels of composition string.
-			//if(categoryMgr->RegisterCategory(textServiceClsid, GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, textServiceClsid) != S_OK) {
+			//if(categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, textServiceClsid) != S_OK) {
 			//	result = E_FAIL;
 			//}
 			categoryMgr->Release();
@@ -114,7 +115,7 @@ HRESULT ImeModule::registerServer(wchar_t* name, const CLSID& textServiceClsid, 
 	return result;
 }
 
-HRESULT ImeModule::unregisterServer(const CLSID& textServiceClsid, const GUID& profileGuid) {
+HRESULT ImeModule::unregisterServer(const GUID& profileGuid) {
 	return S_OK;
 }
 

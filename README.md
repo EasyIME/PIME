@@ -5,7 +5,7 @@ Implement chewing in Windows via Text Services Framework:
 *   ChewingTextService contains an implementation of Windows text service for libchewing using libIME.
 *   chewingwrapper contains a C++ wrapper for libchewing.
 
-All parts are licensed under GNU LGPLv2 license.
+All parts are licensed under GNU LGPL v2.1 license.
 
 # Development
 

@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 2.8.8)
-
 project(windows-chewing-tsf)
 
 # http://www.utf8everywhere.org/
@@ -8,8 +7,12 @@ add_definitions(/D_UNICODE=1 /DUNICODE=1)
 enable_testing()
 
 set(PROJECT_LIBCHEWING ${PROJECT_SOURCE_DIR}/libchewing)
+set(CHEWING_DATA_PREFIX ${PROJECT_BINARY_DIR}/libchewing/data)
+
 add_subdirectory(${PROJECT_LIBCHEWING})
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/libIME)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/ChewingTextService)
+
+add_subdirectory(chewingwrapper)

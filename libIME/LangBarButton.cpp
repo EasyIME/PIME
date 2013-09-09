@@ -50,9 +50,13 @@ void LangBarButton::setText(const wchar_t* text) {
 
 void LangBarButton::setText(UINT stringId) {
 	const wchar_t* str;
-	::LoadStringW(textService_->module()->hInstance(), stringId, (LPTSTR)&str, 0);
-	if(str)
-		setText(str);
+	int len = ::LoadStringW(textService_->module()->hInstance(), stringId, (LPTSTR)&str, 0);
+	if(str) {
+		if(len > (TF_LBI_DESC_MAXLEN - 1))
+			len = TF_LBI_DESC_MAXLEN - 1;
+		wcsncpy(info_.szDescription, str, len);
+		update(TF_LBI_TEXT);
+	}
 }
 
 // public methods
@@ -69,9 +73,13 @@ void LangBarButton::setTooltip(const wchar_t* tooltip) {
 
 void LangBarButton::setTooltip(UINT tooltipId) {
 	const wchar_t* str;
-	::LoadStringW(textService_->module()->hInstance(), tooltipId, (LPTSTR)&str, 0);
-	if(str)
-		setTooltip(str);
+	int len = ::LoadStringW(textService_->module()->hInstance(), tooltipId, (LPTSTR)&str, 0);
+	if(str) {
+		tooltip_ = (wchar_t*)malloc((len + 1) * sizeof(wchar_t));
+		wcsncpy(tooltip_, str, len);
+		tooltip_[len] = 0;
+		update(TF_LBI_TOOLTIP);
+	}
 }
 
 HICON LangBarButton::icon() const {

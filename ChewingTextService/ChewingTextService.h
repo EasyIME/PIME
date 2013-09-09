@@ -4,6 +4,7 @@
 #include <LibIME/TextService.h>
 #include <LibIME/CandidateWindow.h>
 #include <LibIME/EditSession.h>
+#include <LibIME/LangBarButton.h>
 #include <chewing.h>
 
 namespace Chewing {
@@ -47,6 +48,9 @@ private:
 	ChewingContext* chewingContext_;
 	Ime::CandidateWindow* candidateWindow_;
 	bool showingCandidates_;
+
+	Ime::LangBarButton* switchLangButton_;
+	Ime::LangBarButton* switchShapeButton_;
 };
 
 }

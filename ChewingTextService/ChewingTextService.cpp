@@ -6,6 +6,7 @@
 #include <libIME/Dialog.h>
 #include "ChewingImeModule.h"
 #include "resource.h"
+#include <Shellapi.h>
 
 using namespace Chewing;
 using namespace std;
@@ -30,21 +31,19 @@ TextService::TextService(ImeModule* module):
 
 	// add language bar buttons
 	// siwtch Chinese/English modes
-	Ime::LangBarButton* button = new Ime::LangBarButton(this, g_modeButtonGuid);
-	button->setTooltip(IDS_SWITCH_LANG);
-	button->setIcon(IDI_CHI);
-	addButton(button);
-	button->Release();
+	switchLangButton_ = new Ime::LangBarButton(this, g_modeButtonGuid, ID_SWITCH_LANG);
+	switchLangButton_->setTooltip(IDS_SWITCH_LANG);
+	switchLangButton_->setIcon(IDI_CHI);
+	addButton(switchLangButton_);
 
 	// toggle full shape/half shape
-	button = new Ime::LangBarButton(this, g_shapeTypeButtonGuid);
-	button->setTooltip(IDS_SWITCH_SHAPE);
-	button->setIcon(IDI_HALF_SHAPE);
-	addButton(button);
-	button->Release();
+	switchShapeButton_ = new Ime::LangBarButton(this, g_shapeTypeButtonGuid, ID_SWITCH_SHAPE);
+	switchShapeButton_->setTooltip(IDS_SWITCH_SHAPE);
+	switchShapeButton_->setIcon(IDI_HALF_SHAPE);
+	addButton(switchShapeButton_);
 
 	// settings and others, may open a popup menu
-	button = new Ime::LangBarButton(this, g_settingsButtonGuid);
+	Ime::LangBarButton* button = new Ime::LangBarButton(this, g_settingsButtonGuid);
 	button->setTooltip(IDS_SETTINGS);
 	button->setIcon(IDI_CONFIG);
 	HMENU menu = ::LoadMenuW(this->module()->hInstance(), LPCTSTR(IDR_MENU));
@@ -57,6 +56,11 @@ TextService::TextService(ImeModule* module):
 TextService::~TextService(void) {
 	if(candidateWindow_)
 		delete candidateWindow_;
+
+	if(switchLangButton_)
+		switchLangButton_->Release();
+	if(switchShapeButton_)
+		switchShapeButton_->Release();
 
 	if(chewingContext_)
 		::chewing_delete(chewingContext_);
@@ -266,11 +270,43 @@ bool TextService::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 // virtual
 bool TextService::onCommand(UINT id) {
 	switch(id) {
-	case ID_ABOUT: {
-		Ime::Dialog dlg;
-		dlg.showModal(this->module()->hInstance(), IDD_ABOUT);
+	case ID_SWITCH_LANG:
+		// TODO: switch between Chinses and English modes
+		// switchLangButton_->setIcon(IDI_ENG);
 		break;
-	}
+	case ID_SWITCH_SHAPE:
+		// TODO: switch between half shape and full shape modes
+		// switchShapeButton_->setIcon(IDI_FULL_SHAPE);
+		break;
+	case ID_ABOUT: { // show about dialog
+			Ime::Dialog dlg;
+			dlg.showModal(this->module()->hInstance(), IDD_ABOUT);
+	    }
+		break;
+	case ID_WEBSITE: // visit chewing website
+		::ShellExecuteW(NULL, NULL, L"http://chewing.im/", NULL, NULL, SW_SHOWNORMAL);
+		break;
+	case ID_GROUP: // visit chewing google groups website
+		::ShellExecuteW(NULL, NULL, L"http://groups.google.com/group/chewing-devel", NULL, NULL, SW_SHOWNORMAL);
+		break;
+	case ID_BUGREPORT: // visit bug tracker page
+		::ShellExecuteW(NULL, NULL, L"http://code.google.com/p/chewing/issues/list", NULL, NULL, SW_SHOWNORMAL);
+		break;
+	case ID_MOEDICT: // a very awesome online Chinese dictionary
+		::ShellExecuteW(NULL, NULL, L"https://www.moedict.tw/", NULL, NULL, SW_SHOWNORMAL);
+		break;
+	case ID_DICT: // online Chinese dictonary
+		::ShellExecuteW(NULL, NULL, L"http://dict.revised.moe.edu.tw/", NULL, NULL, SW_SHOWNORMAL);
+		break;
+	case ID_SIMPDICT: // a simplified version of the online dictonary
+		::ShellExecuteW(NULL, NULL, L"http://dict.concised.moe.edu.tw/main/cover/main.htm", NULL, NULL, SW_SHOWNORMAL);
+		break;
+	case ID_LITTLEDICT: // a simplified dictionary for little children
+		::ShellExecuteW(NULL, NULL, L"http://dict.mini.moe.edu.tw/cgi-bin/gdic/gsweb.cgi?o=ddictionary", NULL, NULL, SW_SHOWNORMAL);
+		break;
+	case ID_PROVERBDICT: // a dictionary for proverbs (seems to be broken at the moment?)
+		::ShellExecuteW(NULL, NULL, L"http://dict.idioms.moe.edu.tw/?", NULL, NULL, SW_SHOWNORMAL);
+		break;
 	default:
 		return false;
 	}

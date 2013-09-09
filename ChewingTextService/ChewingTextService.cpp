@@ -264,7 +264,14 @@ bool TextService::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 
 // virtual
 bool TextService::onCommand(UINT id) {
-	return false;
+	switch(id) {
+	case ID_ABOUT:
+		// TODO: show about dialog
+		break;
+	default:
+		return false;
+	}
+	return true;
 }
 
 

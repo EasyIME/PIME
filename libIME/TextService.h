@@ -66,6 +66,9 @@ public:
 	virtual bool filterKeyUp(KeyEvent& keyEvent);
 	virtual bool onKeyUp(KeyEvent& keyEvent, EditSession* session);
 
+	// called when a language button or menu item is clicked
+	virtual bool onCommand(UINT id);
+
 	// COM related stuff
 public:
     // IUnknown
@@ -136,9 +139,6 @@ protected:
 	HRESULT doKeyEditSession(TfEditCookie cookie, KeyEditSession* session);
 	HRESULT doStartCompositionEditSession(TfEditCookie cookie, StartCompositionEditSession* session);
 	HRESULT doEndCompositionEditSession(TfEditCookie cookie, EndCompositionEditSession* session);
-
-	void addButtons(LangBarButton** button, int count);
-	void removeButtons(LangBarButton** button, int count);
 
 private:
 	ImeModule* module_;

@@ -25,6 +25,8 @@ public:
 	virtual bool filterKeyUp(Ime::KeyEvent& keyEvent);
 	virtual bool onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session);
 
+	virtual bool onCommand(UINT id);
+
 	ChewingContext* chewingContext() {
 		return chewingContext_;
 	}

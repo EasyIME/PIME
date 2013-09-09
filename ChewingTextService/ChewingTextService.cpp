@@ -4,6 +4,7 @@
 #include <libIME/Utils.h>
 #include <libIME/LangBarButton.h>
 #include "ChewingImeModule.h"
+#include "resource.h"
 
 using namespace Chewing;
 using namespace std;
@@ -26,15 +27,28 @@ TextService::TextService(ImeModule* module):
 	candidateWindow_(NULL),
 	chewingContext_(NULL) {
 
-	Ime::LangBarButton* button = new Ime::LangBarButton(this, g_modeButtonGuid, L"");
+	// add language bar buttons
+	// siwtch Chinese/English modes
+	Ime::LangBarButton* button = new Ime::LangBarButton(this, g_modeButtonGuid);
+	button->setTooltip(IDS_SWITCH_LANG);
+	button->setIcon(IDI_CHI);
 	addButton(button);
 	button->Release();
 
-	button = new Ime::LangBarButton(this, g_shapeTypeButtonGuid, L"");
+	// toggle full shape/half shape
+	button = new Ime::LangBarButton(this, g_shapeTypeButtonGuid);
+	button->setTooltip(IDS_SWITCH_SHAPE);
+	button->setIcon(IDI_HALF_SHAPE);
 	addButton(button);
 	button->Release();
 
-	button = new Ime::LangBarButton(this, g_settingsButtonGuid, L"");
+	// settings and others, may open a popup menu
+	button = new Ime::LangBarButton(this, g_settingsButtonGuid);
+	button->setTooltip(IDS_SETTINGS);
+	button->setIcon(IDI_CONFIG);
+	HMENU menu = ::LoadMenuW(this->module()->hInstance(), LPCTSTR(IDR_MENU));
+	HMENU popup = ::GetSubMenu(menu, 0);
+	button->setMenu(popup);
 	addButton(button);
 	button->Release();
 }
@@ -246,6 +260,12 @@ bool TextService::filterKeyUp(Ime::KeyEvent& keyEvent) {
 bool TextService::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	return true;
 }
+
+// virtual
+bool TextService::onCommand(UINT id) {
+	return false;
+}
+
 
 void TextService::updateCandidates(Ime::EditSession* session) {
 	assert(candidateWindow_);

@@ -25,6 +25,13 @@ TextService::TextService(ImeModule* module):
 TextService::~TextService(void) {
 	if(candidateWindow_)
 		delete candidateWindow_;
+
+	if(!langBarButtons_.empty()) {
+		for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
+			LangBarButton* button = *it;
+			button->Release();
+		}
+	}
 }
 
 // public methods
@@ -48,6 +55,11 @@ void TextService::addButton(LangBarButton* button) {
 		langBarButtons_.push_back(button);
 		button->AddRef();
 		if(isActivated()) {
+			ITfLangBarItemMgr* langBarItemMgr;
+			if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
+				langBarItemMgr->AddItem(button);
+				langBarItemMgr->Release();
+			}
 		}
 	}
 }
@@ -57,19 +69,17 @@ void TextService::removeButton(LangBarButton* button) {
 		vector<LangBarButton*>::iterator it;
 		it = find(langBarButtons_.begin(), langBarButtons_.end(), button);
 		if(it != langBarButtons_.end()) {
-			(*it)->Release();
+			if(isActivated()) {
+				ITfLangBarItemMgr* langBarItemMgr;
+				if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
+					langBarItemMgr->RemoveItem(button);
+					langBarItemMgr->Release();
+				}
+			}
+			button->Release();
 			langBarButtons_.erase(it);
 		}
-
-		if(isActivated()) {
-		}
 	}
-}
-
-void addButtons(LangBarButton** button, int count) {
-}
-
-void removeButtons(LangBarButton** button, int count) {
 }
 
 
@@ -224,6 +234,10 @@ bool TextService::onKeyUp(KeyEvent& keyEvent, EditSession* session) {
 void TextService::onFocus() {
 }
 
+bool TextService::onCommand(UINT id) {
+	return false;
+}
+
 
 // COM stuff
 
@@ -293,6 +307,18 @@ STDMETHODIMP TextService::Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClient
 
 	// ITfCompositionSink
 
+	// initialize language bar
+	if(!langBarButtons_.empty()) {
+		ITfLangBarItemMgr *langBarItemMgr;
+		if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
+			for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
+				LangBarButton* button = *it;
+				langBarItemMgr->AddItem(button);
+			}
+			langBarItemMgr->Release();
+		}
+	}
+
 	onActivate();
 
 	return S_OK;
@@ -305,6 +331,18 @@ OnError:
 STDMETHODIMP TextService::Deactivate() {
 
 	onDeactivate();
+
+	// uninitialize language bar
+	if(!langBarButtons_.empty()) {
+		ITfLangBarItemMgr *langBarItemMgr;
+		if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
+			for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
+				LangBarButton* button = *it;
+				langBarItemMgr->RemoveItem(button);
+			}
+			langBarItemMgr->Release();
+		}
+	}
 
 	// unadvice event sinks
 

@@ -1,13 +1,18 @@
 #include "LangBarButton.h"
 #include "TextService.h"
 #include "ImeModule.h"
+#include <OleCtl.h>
 #include <assert.h>
+#include <stdlib.h>
 
 using namespace Ime;
 
-LangBarButton::LangBarButton(TextService* service, const GUID& guid, wchar_t* text, DWORD style):
+LangBarButton::LangBarButton(TextService* service, const GUID& guid, UINT commandId, wchar_t* text, DWORD style):
 	textService_(service),
 	tooltip_(NULL),
+	commandId_(commandId),
+	menu_(NULL),
+	icon_(NULL),
 	refCount_(1) {
 
 	assert(service && service->module());
@@ -24,6 +29,8 @@ LangBarButton::LangBarButton(TextService* service, const GUID& guid, wchar_t* te
 LangBarButton::~LangBarButton(void) {
 	if(textService_)
 		textService_->Release();
+	if(menu_)
+		::DestroyMenu(menu_);
 	if(tooltip_) // allocated by wcsdup()
 		::free(tooltip_);
 }
@@ -32,13 +39,20 @@ const wchar_t* LangBarButton::text() const {
 	return info_.szDescription;
 }
 
-void LangBarButton::setText(wchar_t* text) {
+void LangBarButton::setText(const wchar_t* text) {
 	if(text) {
 		wcsncpy(info_.szDescription, text, TF_LBI_DESC_MAXLEN - 1);
 	}
 	else
 		*info_.szDescription = 0;
 	// FIXME: do we need to inform TSF to update the UI?
+}
+
+void LangBarButton::setText(UINT stringId) {
+	const wchar_t* str;
+	::LoadStringW(textService_->module()->hInstance(), stringId, (LPTSTR)&str, 0);
+	if(str)
+		setText(str);
 }
 
 // public methods
@@ -49,10 +63,16 @@ const wchar_t* LangBarButton::tooltip() const {
 void LangBarButton::setTooltip(const wchar_t* tooltip) {
 	if(tooltip_)
 		free(tooltip_);
-	tooltip = _wcsdup(tooltip);
+	tooltip_ = _wcsdup(tooltip);
 	// FIXME: do we need to inform TSF to update the UI?
 }
 
+void LangBarButton::setTooltip(UINT tooltipId) {
+	const wchar_t* str;
+	::LoadStringW(textService_->module()->hInstance(), tooltipId, (LPTSTR)&str, 0);
+	if(str)
+		setTooltip(str);
+}
 
 HICON LangBarButton::icon() const {
 	return icon_;
@@ -61,6 +81,36 @@ HICON LangBarButton::icon() const {
 void LangBarButton::setIcon(HICON icon) {
 	icon_ = icon;
 }
+
+void LangBarButton::setIcon(UINT iconId) {
+	HICON icon = ::LoadIconW(textService_->module()->hInstance(), (LPCTSTR)iconId);
+	if(icon)
+		setIcon(icon);
+}
+
+UINT LangBarButton::commandId() const {
+	return commandId_;
+}
+
+void LangBarButton::setCommandId(UINT id) {
+	commandId_ = id;
+}
+
+HMENU LangBarButton::menu() const {
+	return menu_;
+}
+
+void LangBarButton::setMenu(HMENU menu) {
+	if(menu_) {
+		::DestroyMenu(menu_);
+	}
+	menu_ = menu;
+	if(menu)
+		info_.dwStyle = TF_LBI_STYLE_BTN_MENU;
+	else
+		info_.dwStyle &= ~TF_LBI_STYLE_BTN_MENU;
+}
+
 
 // COM stuff
 
@@ -112,19 +162,28 @@ STDMETHODIMP LangBarButton::Show(BOOL fShow) {
 }
 
 STDMETHODIMP LangBarButton::GetTooltipString(BSTR *pbstrToolTip) {
-	return S_OK;
+	if(tooltip_) {
+		*pbstrToolTip = ::SysAllocString(tooltip_);
+		return *pbstrToolTip ? S_OK : E_FAIL;
+	}
+	return E_FAIL;
 }
 
 // ITfLangBarItemButton
 STDMETHODIMP LangBarButton::OnClick(TfLBIClick click, POINT pt, const RECT *prcArea) {
+	textService_->onCommand(commandId_);
 	return S_OK;
 }
 
 STDMETHODIMP LangBarButton::InitMenu(ITfMenu *pMenu) {
+	if(!menu_)
+		return E_FAIL;
+	buildITfMenu(pMenu, menu_);
 	return S_OK;
 }
 
 STDMETHODIMP LangBarButton::OnMenuSelect(UINT wID) {
+	textService_->onCommand(wID);
 	return S_OK;
 }
 
@@ -140,10 +199,76 @@ STDMETHODIMP LangBarButton::GetText(BSTR *pbstrText) {
 
 // ITfSource
 STDMETHODIMP LangBarButton::AdviseSink(REFIID riid, IUnknown *punk, DWORD *pdwCookie) {
-	return S_OK;
+    if(IsEqualIID(riid, IID_ITfLangBarItemSink)) {
+		ITfLangBarItemSink* langBarItemSink;
+		if(punk->QueryInterface(IID_ITfLangBarItemSink, (void **)&langBarItemSink) == S_OK) {
+		    *pdwCookie = (DWORD)rand();
+			sinks_[*pdwCookie] = langBarItemSink;
+			return S_OK;
+		}
+		else
+			return E_NOINTERFACE;
+	}
+    return CONNECT_E_CANNOTCONNECT;
 }
 
 STDMETHODIMP LangBarButton::UnadviseSink(DWORD dwCookie) {
-	return S_OK;
+	std::map<DWORD, ITfLangBarItemSink*>::iterator it = sinks_.find(dwCookie);
+	if(it != sinks_.end()) {
+		ITfLangBarItemSink* langBarItemSink = (ITfLangBarItemSink*)it->second;
+		langBarItemSink->Release();
+		sinks_.erase(it);
+		return S_OK;
+	}
+	return CONNECT_E_NOCONNECTION;
 }
 
+
+// build ITfMenu according to the content of HMENU
+void LangBarButton::buildITfMenu(ITfMenu* menu, HMENU templ) {
+	int n = ::GetMenuItemCount(templ);
+	for(int i = 0; i < n; ++i) {
+		MENUITEMINFO mi;
+		wchar_t textBuffer[256];
+		memset(&mi, 0, sizeof(mi));
+		mi.cbSize = sizeof(mi);
+		mi.dwTypeData = (LPTSTR)textBuffer;
+		mi.cch = 255;
+		mi.fMask = MIIM_FTYPE|MIIM_ID|MIIM_STATE|MIIM_STRING|MIIM_SUBMENU;
+		if(::GetMenuItemInfoW(templ, i, TRUE, &mi)) {
+			UINT flags = 0;
+			wchar_t* text;
+			ULONG textLen = 0;
+			ITfMenu* subMenu = NULL;
+			ITfMenu** pSubMenu = NULL;
+			if(mi.hSubMenu) { // has submenu
+				pSubMenu = &subMenu;
+				flags |= TF_LBMENUF_SUBMENU;
+			}
+			if(mi.fType == MFT_STRING) { // text item
+				text = (wchar_t*)mi.dwTypeData;
+				textLen = mi.cch;
+			}
+			else if(mi.fType == MFT_SEPARATOR) { // separator item
+				flags |= TF_LBMENUF_SEPARATOR;
+			}
+			else // other types are not supported
+				continue;
+
+			if(mi.fState & MFS_CHECKED) // checked
+				flags |= TF_LBMENUF_CHECKED;
+			if(mi.fState & (MFS_GRAYED|MFS_DISABLED)) // disabled
+				flags |= TF_LBMENUF_GRAYED;
+			
+			if(menu->AddMenuItem(mi.wID, flags, NULL, 0, text, textLen, pSubMenu) == S_OK) {
+				if(subMenu) {
+					buildITfMenu(subMenu, mi.hSubMenu);
+					subMenu->Release();
+				}
+			}
+		}
+		else {
+			DWORD error = ::GetLastError();
+		}
+	}
+}

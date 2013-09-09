@@ -5,6 +5,12 @@ if(NOT DEFINED PROJECT_LIBCHEWING OR NOT DEFINED CHEWING_DATA_PREFIX)
 	message(FATAL_ERROR "PROJECT_LIBCHEWING and CHEWING_DATA_PREFIX must be provided")
 endif()
 
+# /wd4819
+# Without BOM, Visual Studio does not treat source file as UTF-8 encoding, thus
+# it will complain about invalid character. Use /wd4819 can suppress this
+# warning.
+set(CMAKE_C_FLAGS "/wd4819 ${CMAKE_C_FLAGS}")
+
 include_directories(
 	${PROJECT_SOURCE_DIR}/include
 	${PROJECT_LIBCHEWING}/include

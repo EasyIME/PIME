@@ -3,6 +3,7 @@
 #include <string>
 #include <libIME/Utils.h>
 #include <libIME/LangBarButton.h>
+#include <libIME/Dialog.h>
 #include "ChewingImeModule.h"
 #include "resource.h"
 
@@ -265,9 +266,11 @@ bool TextService::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 // virtual
 bool TextService::onCommand(UINT id) {
 	switch(id) {
-	case ID_ABOUT:
-		// TODO: show about dialog
+	case ID_ABOUT: {
+		Ime::Dialog dlg;
+		dlg.showModal(this->module()->hInstance(), IDD_ABOUT);
 		break;
+	}
 	default:
 		return false;
 	}

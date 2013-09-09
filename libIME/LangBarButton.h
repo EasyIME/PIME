@@ -62,6 +62,7 @@ public:
 
 private:
 	void buildITfMenu(ITfMenu* menu, HMENU templ);
+	void update(DWORD flags = TF_LBI_BTNALL);
 
 private:
 	int refCount_;

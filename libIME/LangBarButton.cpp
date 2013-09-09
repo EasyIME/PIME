@@ -45,7 +45,7 @@ void LangBarButton::setText(const wchar_t* text) {
 	}
 	else
 		*info_.szDescription = 0;
-	// FIXME: do we need to inform TSF to update the UI?
+	update(TF_LBI_TEXT);
 }
 
 void LangBarButton::setText(UINT stringId) {
@@ -64,7 +64,7 @@ void LangBarButton::setTooltip(const wchar_t* tooltip) {
 	if(tooltip_)
 		free(tooltip_);
 	tooltip_ = _wcsdup(tooltip);
-	// FIXME: do we need to inform TSF to update the UI?
+	update(TF_LBI_TOOLTIP);
 }
 
 void LangBarButton::setTooltip(UINT tooltipId) {
@@ -80,6 +80,7 @@ HICON LangBarButton::icon() const {
 
 void LangBarButton::setIcon(HICON icon) {
 	icon_ = icon;
+	update(TF_LBI_ICON);
 }
 
 void LangBarButton::setIcon(UINT iconId) {
@@ -105,10 +106,11 @@ void LangBarButton::setMenu(HMENU menu) {
 		::DestroyMenu(menu_);
 	}
 	menu_ = menu;
+	// FIXME: how to handle toggle buttons?
 	if(menu)
 		info_.dwStyle = TF_LBI_STYLE_BTN_MENU;
 	else
-		info_.dwStyle &= ~TF_LBI_STYLE_BTN_MENU;
+		info_.dwStyle = TF_LBI_STYLE_BTN_BUTTON;
 }
 
 
@@ -269,6 +271,17 @@ void LangBarButton::buildITfMenu(ITfMenu* menu, HMENU templ) {
 		}
 		else {
 			DWORD error = ::GetLastError();
+		}
+	}
+}
+
+// call all sinks to generate update notifications
+void LangBarButton::update(DWORD flags) {
+	if(!sinks_.empty()) {
+		std::map<DWORD, ITfLangBarItemSink*>::iterator it;
+		for(it = sinks_.begin(); it != sinks_.end(); ++it) {
+			ITfLangBarItemSink* sink = it->second;
+			sink->OnUpdate(flags);
 		}
 	}
 }

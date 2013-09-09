@@ -65,7 +65,7 @@ public:
 
 protected:
 	static LRESULT _wndProc(HWND hwnd , UINT msg, WPARAM wp , LPARAM lp);
-	LRESULT virtual wndProc(UINT msg, WPARAM wp , LPARAM lp);
+	virtual LRESULT wndProc(UINT msg, WPARAM wp , LPARAM lp);
 
 protected:
 	HWND hwnd_;

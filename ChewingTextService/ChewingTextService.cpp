@@ -151,6 +151,7 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 			break;
 		case VK_DOWN:
 			::chewing_handle_Down(chewingContext_);
+			break;
 		case VK_LEFT:
 			::chewing_handle_Left(chewingContext_);
 			break;

@@ -108,14 +108,14 @@ bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
 // virtual
 bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	assert(chewingContext_);
-    /*
-     * FIXME: the following keys are not handled:
-     * shift left		VK_LSHIFT
-     * shift right		VK_RSHIFT
-     * caps lock		VK_CAPITAL
-     * ctrl num
-     * shift space
-     * numlock num		VK_NUMLOCK
+	/*
+	 * FIXME: the following keys are not handled:
+	 * shift left		VK_LSHIFT
+	 * shift right		VK_RSHIFT
+	 * caps lock		VK_CAPITAL
+	 * ctrl num
+	 * shift space
+	 * numlock num		VK_NUMLOCK
 	 */
 
 	Ime::KeyState shiftState(VK_SHIFT);
@@ -129,50 +129,50 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 			::chewing_handle_Default(chewingContext_, tolower(charCode));
 		else
 			::chewing_handle_Default(chewingContext_, charCode);
-    } else {
+	} else {
 		switch(keyEvent.keyCode()) {
-            case VK_SPACE:
-                ::chewing_handle_Space(chewingContext_);
-                break;
-            case VK_ESCAPE:
-                ::chewing_handle_Esc(chewingContext_);
-                break;
-            case VK_RETURN:
-                ::chewing_handle_Enter(chewingContext_);
-                break;
-            case VK_DELETE:
-                ::chewing_handle_Del(chewingContext_);
-                break;
-            case VK_BACK:
-                ::chewing_handle_Backspace(chewingContext_);
-                break;
-            case VK_UP:
-                ::chewing_handle_Up(chewingContext_);
-                break;
-            case VK_DOWN:
-                ::chewing_handle_Down(chewingContext_);
-            case VK_LEFT:
-                ::chewing_handle_Left(chewingContext_);
-                break;
-            case VK_RIGHT:
-                ::chewing_handle_Right(chewingContext_);
-                break;
-            case VK_HOME:
-                ::chewing_handle_Home(chewingContext_);
-                break;
-            case VK_END:
-                ::chewing_handle_End(chewingContext_);
-                break;
-			case VK_PRIOR:
-				::chewing_handle_PageUp(chewingContext_);
-				break;
-			case VK_NEXT:
-				::chewing_handle_PageDown(chewingContext_);
-				break;
-            default:
-                return S_OK;
-        }
-    }
+		case VK_SPACE:
+			::chewing_handle_Space(chewingContext_);
+			break;
+		case VK_ESCAPE:
+			::chewing_handle_Esc(chewingContext_);
+			break;
+		case VK_RETURN:
+			::chewing_handle_Enter(chewingContext_);
+			break;
+		case VK_DELETE:
+			::chewing_handle_Del(chewingContext_);
+			break;
+		case VK_BACK:
+			::chewing_handle_Backspace(chewingContext_);
+			break;
+		case VK_UP:
+			::chewing_handle_Up(chewingContext_);
+			break;
+		case VK_DOWN:
+			::chewing_handle_Down(chewingContext_);
+		case VK_LEFT:
+			::chewing_handle_Left(chewingContext_);
+			break;
+		case VK_RIGHT:
+			::chewing_handle_Right(chewingContext_);
+			break;
+		case VK_HOME:
+			::chewing_handle_Home(chewingContext_);
+			break;
+		case VK_END:
+			::chewing_handle_End(chewingContext_);
+			break;
+		case VK_PRIOR:
+			::chewing_handle_PageUp(chewingContext_);
+			break;
+		case VK_NEXT:
+			::chewing_handle_PageDown(chewingContext_);
+			break;
+		default:
+			return S_OK;
+		}
+	}
 
 	if(::chewing_keystroke_CheckIgnore(chewingContext_))
 		return false;

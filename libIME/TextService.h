@@ -44,6 +44,10 @@ public:
 	void addButton(LangBarButton* button);
 	void removeButton(LangBarButton* button);
 
+	// preserved keys
+	void addPreservedKey(UINT keyCode, UINT modifiers, const GUID& guid);
+	void removePreservedKey(const GUID& guid);
+
 	// text composition handling
 	bool isComposing();
 	bool isInsertionAllowed(EditSession* session);
@@ -63,8 +67,11 @@ public:
 
 	virtual bool filterKeyDown(KeyEvent& keyEvent);
 	virtual bool onKeyDown(KeyEvent& keyEvent, EditSession* session);
+	
 	virtual bool filterKeyUp(KeyEvent& keyEvent);
 	virtual bool onKeyUp(KeyEvent& keyEvent, EditSession* session);
+
+	virtual bool onPreservedKey(const GUID& guid);
 
 	// called when a language button or menu item is clicked
 	virtual bool onCommand(UINT id);
@@ -140,6 +147,10 @@ protected:
 	HRESULT doStartCompositionEditSession(TfEditCookie cookie, StartCompositionEditSession* session);
 	HRESULT doEndCompositionEditSession(TfEditCookie cookie, EndCompositionEditSession* session);
 
+	struct PreservedKey : public TF_PRESERVEDKEY {
+		GUID guid;
+	};
+
 private:
 	ImeModule* module_;
 	ITfThreadMgr *threadMgr_;
@@ -153,6 +164,8 @@ private:
 	ITfComposition* composition_; // acquired when starting composition, released when ending composition
 	CandidateWindow* candidateWindow_;
 	std::vector<LangBarButton*> langBarButtons_;
+	std::vector<PreservedKey> preservedKeys_;
+
 	long refCount_; // reference counting
 };
 

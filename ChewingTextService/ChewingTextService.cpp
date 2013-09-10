@@ -25,6 +25,14 @@ static const GUID g_shapeTypeButtonGuid = // half shape/full shape switch
 static const GUID g_settingsButtonGuid = // settings button/menu
 { 0x4fafa520, 0x2104, 0x407e, { 0xa5, 0x32, 0x9f, 0x1a, 0xab, 0x77, 0x51, 0xcd } };
 
+// {C77A44F5-DB21-474E-A2A2-A17242217AB3}
+static const GUID g_shiftSpaceGuid = // shift + space
+{ 0xc77a44f5, 0xdb21, 0x474e, { 0xa2, 0xa2, 0xa1, 0x72, 0x42, 0x21, 0x7a, 0xb3 } };
+
+// {A39B40FD-479C-4DBE-B865-EFC8969A518D}
+static const GUID g_shiftUpGuid = // shift alone, key up
+{ 0xa39b40fd, 0x479c, 0x4dbe, { 0xb8, 0x65, 0xef, 0xc8, 0x96, 0x9a, 0x51, 0x8d } };
+
 TextService::TextService(ImeModule* module):
 	Ime::TextService(module),
 	showingCandidates_(false),
@@ -32,6 +40,10 @@ TextService::TextService(ImeModule* module):
 	shapeMode_(-1),
 	candidateWindow_(NULL),
 	chewingContext_(NULL) {
+
+	// add preserved keys
+	addPreservedKey(VK_SPACE, TF_MOD_SHIFT, g_shiftSpaceGuid); // shift + space
+	addPreservedKey(VK_SHIFT, TF_MOD_ON_KEYUP, g_shiftUpGuid); // shift alone, key up
 
 	// add language bar buttons
 	// siwtch Chinese/English modes
@@ -146,10 +158,7 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 	} else {
 		switch(keyEvent.keyCode()) {
 		case VK_SPACE:
-			if(shiftState.isDown()) // shift + space
-				::chewing_set_ShapeMode(chewingContext_, !shapeMode_);
-			else // space key
-				::chewing_handle_Space(chewingContext_);
+			::chewing_handle_Space(chewingContext_);
 			break;
 		case VK_ESCAPE:
 			::chewing_handle_Esc(chewingContext_);
@@ -280,6 +289,26 @@ bool TextService::filterKeyUp(Ime::KeyEvent& keyEvent) {
 bool TextService::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	return true;
 }
+
+// virtual
+bool TextService::onPreservedKey(const GUID& guid) {
+	if(::IsEqualIID(guid, g_shiftSpaceGuid)) { // shift + space is pressed
+		if(chewingContext_) {
+			::chewing_set_ShapeMode(chewingContext_, !shapeMode_);
+			updateLangButtons();
+		}
+		return true;
+	}
+	else if(::IsEqualGUID(guid, g_shiftUpGuid)) { // shift alone, key up
+		// FIXME: this event is also fired when Shift + <other keys>
+		// is pressed and then released.
+		// we have to detect if only shift key along is pressed and then released
+		// and no other key events happened during keyDown and keyUp.
+		return false;
+	}
+	return false;
+}
+
 
 // virtual
 bool TextService::onCommand(UINT id) {

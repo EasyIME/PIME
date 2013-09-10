@@ -82,6 +82,40 @@ void TextService::removeButton(LangBarButton* button) {
 	}
 }
 
+// preserved key
+void TextService::addPreservedKey(UINT keyCode, UINT modifiers, const GUID& guid) {
+	PreservedKey preservedKey;
+	preservedKey.guid = guid;
+	preservedKey.uVKey = keyCode;
+	preservedKey.uModifiers = modifiers;
+	preservedKeys_.push_back(preservedKey);
+	if(threadMgr_) { // our text service is activated
+		ITfKeystrokeMgr *keystrokeMgr;
+		if (threadMgr_->QueryInterface(IID_ITfKeystrokeMgr, (void **)&keystrokeMgr) == S_OK) {
+			keystrokeMgr->PreserveKey(clientId_, guid, &preservedKey, NULL, 0);
+			keystrokeMgr->Release();
+		}
+	}
+}
+
+void TextService::removePreservedKey(const GUID& guid) {
+	vector<PreservedKey>::iterator it;
+	for(it = preservedKeys_.begin(); it != preservedKeys_.end(); ++it) {
+		PreservedKey& preservedKey = *it;
+		if(::IsEqualIID(preservedKey.guid, guid)) {
+			if(threadMgr_) { // our text service is activated
+				ITfKeystrokeMgr *keystrokeMgr;
+				if (threadMgr_->QueryInterface(IID_ITfKeystrokeMgr, (void **)&keystrokeMgr) == S_OK) {
+					keystrokeMgr->UnpreserveKey(preservedKey.guid, &preservedKey);
+					keystrokeMgr->Release();
+				}
+			}
+			preservedKeys_.erase(it);
+			break;
+		}
+	}
+}
+
 
 // text composition
 
@@ -231,6 +265,11 @@ bool TextService::onKeyUp(KeyEvent& keyEvent, EditSession* session) {
 }
 
 // virtual
+bool TextService::onPreservedKey(const GUID& guid) {
+	return false;
+}
+
+// virtual
 void TextService::onFocus() {
 }
 
@@ -303,6 +342,15 @@ STDMETHODIMP TextService::Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClient
 	if (threadMgr_->QueryInterface(IID_ITfKeystrokeMgr, (void **)&keystrokeMgr) != S_OK)
 		goto OnError;
 	keystrokeMgr->AdviseKeyEventSink(clientId_, (ITfKeyEventSink*)this, TRUE);
+
+	// register preserved keys
+	if(!preservedKeys_.empty()) {
+		vector<PreservedKey>::iterator it;
+		for(it = preservedKeys_.begin(); it != preservedKeys_.end(); ++it) {
+			PreservedKey& preservedKey = *it;
+			keystrokeMgr->PreserveKey(clientId_, preservedKey.guid, &preservedKey, NULL, 0);
+		}
+	}
 	keystrokeMgr->Release();
 
 	// ITfCompositionSink
@@ -360,6 +408,16 @@ STDMETHODIMP TextService::Deactivate() {
 	ITfKeystrokeMgr *keystrokeMgr;
 	if (threadMgr_->QueryInterface(IID_ITfKeystrokeMgr, (void **)&keystrokeMgr) == S_OK) {
 		keystrokeMgr->UnadviseKeyEventSink(clientId_);
+
+		// unregister preserved keys
+		if(!preservedKeys_.empty()) {
+			vector<PreservedKey>::iterator it;
+			for(it = preservedKeys_.begin(); it != preservedKeys_.end(); ++it) {
+				PreservedKey& preservedKey = *it;
+				keystrokeMgr->UnpreserveKey(preservedKey.guid, &preservedKey);
+			}
+		}
+
 		keystrokeMgr->Release();
 	}
 
@@ -459,6 +517,7 @@ STDMETHODIMP TextService::OnKeyUp(ITfContext *pContext, WPARAM wParam, LPARAM lP
 }
 
 STDMETHODIMP TextService::OnPreservedKey(ITfContext *pContext, REFGUID rguid, BOOL *pfEaten) {
+	*pfEaten = (BOOL)onPreservedKey(rguid);
 	return S_OK;
 }
 

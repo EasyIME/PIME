@@ -23,8 +23,11 @@ public:
 
 	virtual bool filterKeyDown(Ime::KeyEvent& keyEvent);
 	virtual bool onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session);
+
 	virtual bool filterKeyUp(Ime::KeyEvent& keyEvent);
 	virtual bool onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session);
+
+	virtual bool onPreservedKey(const GUID& guid);
 
 	virtual bool onCommand(UINT id);
 

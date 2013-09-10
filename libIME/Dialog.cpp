@@ -2,7 +2,8 @@
 
 using namespace Ime;
 
-Dialog::Dialog(void) {
+Dialog::Dialog(void):
+	Window() {
 }
 
 Dialog::~Dialog(void) {
@@ -19,14 +20,18 @@ UINT Dialog::showModal(HINSTANCE hinstance, UINT dialogId, HWND parent) { // mod
 
 // static
 INT_PTR CALLBACK Dialog::_dlgProc(HWND hwnd , UINT msg, WPARAM wp , LPARAM lp) {
-	Dialog* pThis = (Dialog*)::GetWindowLongPtr(hwnd, GWLP_USERDATA);
-	if(pThis)
-		return pThis->wndProc(msg, wp, lp);
+	Dialog* pThis = (Dialog*)hwndMap_[hwnd];
+	if(pThis) {
+		INT_PTR result = pThis->wndProc(msg, wp, lp);
+		if(msg == WM_NCDESTROY)
+			hwndMap_.erase(hwnd);
+		return result;
+	}
 	else {
 		if(msg == WM_INITDIALOG) {
 			Dialog* pThis = (Dialog*)lp;
 			pThis->hwnd_ = hwnd;
-			::SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pThis);
+			hwndMap_[hwnd] = pThis;
 			pThis->wndProc(msg, wp, lp);
 			return TRUE;
 		}

@@ -5,6 +5,8 @@ using namespace Ime;
 static TCHAR g_imeWindowClassName[] = _T("LibImeWindow");
 static HINSTANCE g_hinstance = NULL;
 
+std::map<HWND, Window*> Window::hwndMap_;
+
 Window::Window():
 	hwnd_(NULL) {
 }
@@ -18,8 +20,8 @@ bool Window::create(HWND parent, DWORD style, DWORD exStyle) {
 	hwnd_ = CreateWindowEx(exStyle, g_imeWindowClassName, NULL, style,
 					0, 0, 0, 0, parent, NULL, g_hinstance, NULL);
 	if(hwnd_) {
-		// store our this pointer in user data of the window
-		::SetWindowLongPtr(hwnd_, GWLP_USERDATA, LONG_PTR(this));
+		// associate this object with the hwnd
+		hwndMap_[hwnd_] = this;
 		return true;
 	}
 	return false;
@@ -34,12 +36,16 @@ void Window::destroy(void) {
 // static
 LRESULT Window::_wndProc(HWND hwnd , UINT msg, WPARAM wp , LPARAM lp) {
 	// get object pointer from the hwnd
-	Window* window = (Window*)::GetWindowLongPtr(hwnd, GWLP_USERDATA);
+	Window* window = (Window*)hwndMap_[hwnd];
 	// FIXME: we cannot handle WM_CREATE in Window::wndProc member function
 	// because the message is sent before CreateWindow returns, and
 	// we do SetWindowLongPtr() only after CreateWindow().
-	if(window)
-		return window->wndProc(msg, wp, lp);
+	if(window) {
+		LRESULT result = window->wndProc(msg, wp, lp);
+		if(msg == WM_NCDESTROY)
+			hwndMap_.erase(hwnd);
+		return result;
+	}
 	return ::DefWindowProc(hwnd, msg, wp, lp);
 }
 

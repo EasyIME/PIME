@@ -4,9 +4,11 @@
 #include <libIME/Utils.h>
 #include <libIME/LangBarButton.h>
 #include <libIME/Dialog.h>
+#include <libIME/PropertyDialog.h>
 #include "ChewingImeModule.h"
 #include "resource.h"
 #include <Shellapi.h>
+#include "TypingPage.h"
 
 using namespace Chewing;
 using namespace std;
@@ -277,6 +279,13 @@ bool TextService::onCommand(UINT id) {
 	case ID_SWITCH_SHAPE:
 		// TODO: switch between half shape and full shape modes
 		// switchShapeButton_->setIcon(IDI_FULL_SHAPE);
+		break;
+	case ID_CONFIG: { // show config dialog
+			Ime::PropertyDialog dlg;
+			TypingPage* typingPage = new TypingPage();
+			dlg.addPage(typingPage);
+			dlg.showModal(this->module()->hInstance(), (LPCTSTR)IDS_CONFIG_TITLE);
+		}
 		break;
 	case ID_ABOUT: { // show about dialog
 			Ime::Dialog dlg;

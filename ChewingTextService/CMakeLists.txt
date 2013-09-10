@@ -15,12 +15,16 @@ include_directories(
 )
 
 add_library(ChewingTextService SHARED
+    # core IME implementation
     ${PROJECT_SOURCE_DIR}/ChewingImeModule.cpp
     ${PROJECT_SOURCE_DIR}/ChewingImeModule.h
     ${PROJECT_SOURCE_DIR}/ChewingTextService.cpp
     ${PROJECT_SOURCE_DIR}/ChewingTextService.def
     ${PROJECT_SOURCE_DIR}/ChewingTextService.h
     ${PROJECT_SOURCE_DIR}/DllEntry.cpp
+	# Configuration dialog
+    ${PROJECT_SOURCE_DIR}/TypingPage.cpp
+    ${PROJECT_SOURCE_DIR}/TypingPage.h
     # resources
     ${PROJECT_SOURCE_DIR}/ChewingTextService.rc
     ${PROJECT_SOURCE_DIR}/mainicon.ico

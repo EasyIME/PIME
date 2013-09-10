@@ -11,6 +11,7 @@
 
 #include <windows.h>
 #include <tchar.h>
+#include <map>
 
 namespace Ime {
 
@@ -69,6 +70,7 @@ protected:
 
 protected:
 	HWND hwnd_;
+	static std::map<HWND, Window*> hwndMap_;
 };
 
 }

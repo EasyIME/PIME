@@ -292,6 +292,7 @@ bool TextService::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 
 // virtual
 bool TextService::onPreservedKey(const GUID& guid) {
+	// some preserved keys registered in ctor are pressed
 	if(::IsEqualIID(guid, g_shiftSpaceGuid)) { // shift + space is pressed
 		if(chewingContext_) {
 			::chewing_set_ShapeMode(chewingContext_, !shapeMode_);

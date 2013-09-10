@@ -2,6 +2,7 @@
 #include <string>
 #include <ObjBase.h>
 #include <msctf.h>
+#include <Shlwapi.h>
 #include <assert.h>
 #include "Window.h"
 
@@ -116,6 +117,28 @@ HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID
 }
 
 HRESULT ImeModule::unregisterServer(const GUID& profileGuid) {
+	// unregister the language profile
+	ITfInputProcessorProfiles *inputProcessProfiles = NULL;
+	if(CoCreateInstance(CLSID_TF_InputProcessorProfiles, NULL, CLSCTX_INPROC_SERVER, IID_ITfInputProcessorProfiles, (void**)&inputProcessProfiles) == S_OK) {
+		inputProcessProfiles->Unregister(textServiceClsid_);
+		inputProcessProfiles->Release();
+	}
+
+	// unregister categories
+	ITfCategoryMgr *categoryMgr = NULL;
+	if(CoCreateInstance(CLSID_TF_CategoryMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfCategoryMgr, (void**)&categoryMgr) == S_OK) {
+		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_TIP_KEYBOARD, textServiceClsid_);
+		categoryMgr->Release();
+	}
+
+	// delete the registry key
+	wstring regPath = L"CLSID\\";
+	LPOLESTR clsidStr = NULL;
+	if(StringFromCLSID(textServiceClsid_, &clsidStr) == ERROR_SUCCESS) {
+		regPath += clsidStr;
+		CoTaskMemFree(clsidStr);
+		::SHDeleteKey(HKEY_CLASSES_ROOT, regPath.c_str());
+	}
 	return S_OK;
 }
 

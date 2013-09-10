@@ -47,4 +47,5 @@ add_library(libIME_static STATIC
 
 target_link_libraries(libIME_static
     comctl32.lib
+    shlwapi.lib
 )

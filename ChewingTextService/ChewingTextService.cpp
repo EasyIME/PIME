@@ -28,6 +28,8 @@ static const GUID g_settingsButtonGuid = // settings button/menu
 TextService::TextService(ImeModule* module):
 	Ime::TextService(module),
 	showingCandidates_(false),
+	langMode_(-1),
+	shapeMode_(-1),
 	candidateWindow_(NULL),
 	chewingContext_(NULL) {
 
@@ -35,13 +37,11 @@ TextService::TextService(ImeModule* module):
 	// siwtch Chinese/English modes
 	switchLangButton_ = new Ime::LangBarButton(this, g_modeButtonGuid, ID_SWITCH_LANG);
 	switchLangButton_->setTooltip(IDS_SWITCH_LANG);
-	switchLangButton_->setIcon(IDI_CHI);
 	addButton(switchLangButton_);
 
 	// toggle full shape/half shape
 	switchShapeButton_ = new Ime::LangBarButton(this, g_shapeTypeButtonGuid, ID_SWITCH_SHAPE);
 	switchShapeButton_->setTooltip(IDS_SWITCH_SHAPE);
-	switchShapeButton_->setIcon(IDI_HALF_SHAPE);
 	addButton(switchShapeButton_);
 
 	// settings and others, may open a popup menu
@@ -74,6 +74,7 @@ void TextService::onActivate() {
 		chewingContext_ = ::chewing_new();
 		::chewing_set_maxChiSymbolLen(chewingContext_, 50);
 	}
+	updateLangButtons();
 	if(!candidateWindow_) {
 		candidateWindow_ = new Ime::CandidateWindow();
 	}
@@ -98,11 +99,17 @@ void TextService::onFocus() {
 // virtual
 bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
 	assert(chewingContext_);
-	// TODO: check if we're in Chinses or English mode
+	// check if we're in Chinses or English mode
+	if(langMode_ != CHINESE_MODE) // don't do anything in English mode
+		return false;
+
 	if(!isComposing()) {
 		// when not composing, we only cares about Bopomopho
 		// FIXME: we should check if the key is mapped to a phonetic symbol instead
 		// FIXME: we need to handle Shift, Alt, and Ctrl, ...etc.
+		Ime::KeyState shiftState(VK_SHIFT);
+		Ime::KeyState ctrlState(VK_CONTROL);
+		Ime::KeyState altState(VK_MENU);
 		if(keyEvent.isChar() && isgraph(keyEvent.charCode())) {
 			// this is a key mapped to a printable char. we want it!
 			return true;
@@ -139,7 +146,10 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 	} else {
 		switch(keyEvent.keyCode()) {
 		case VK_SPACE:
-			::chewing_handle_Space(chewingContext_);
+			if(shiftState.isDown()) // shift + space
+				::chewing_set_ShapeMode(chewingContext_, !shapeMode_);
+			else // space key
+				::chewing_handle_Space(chewingContext_);
 			break;
 		case VK_ESCAPE:
 			::chewing_handle_Esc(chewingContext_);
@@ -181,6 +191,8 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 			return S_OK;
 		}
 	}
+
+	updateLangButtons();
 
 	if(::chewing_keystroke_CheckIgnore(chewingContext_))
 		return false;
@@ -365,4 +377,21 @@ void TextService::hideCandidates() {
 	candidateWindow_->hide();
 	candidateWindow_->clear();
 	showingCandidates_ = false;
+}
+
+void TextService::updateLangButtons() {
+	if(!chewingContext_)
+		return;
+
+	int langMode = ::chewing_get_ChiEngMode(chewingContext_);
+	if(langMode != langMode_) {
+		langMode_ = langMode;
+		switchLangButton_->setIcon(langMode == CHINESE_MODE ? IDI_CHI : IDI_ENG);
+	}
+
+	int shapeMode = ::chewing_get_ShapeMode(chewingContext_);
+	if(shapeMode != shapeMode_) {
+		shapeMode_ = shapeMode;
+		switchShapeButton_->setIcon(shapeMode == FULLSHAPE_MODE ? IDI_FULL_SHAPE : IDI_HALF_SHAPE);
+	}
 }

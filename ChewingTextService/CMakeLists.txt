@@ -22,6 +22,8 @@ add_library(ChewingTextService SHARED
     ${PROJECT_SOURCE_DIR}/ChewingTextService.def
     ${PROJECT_SOURCE_DIR}/ChewingTextService.h
     ${PROJECT_SOURCE_DIR}/DllEntry.cpp
+	${PROJECT_SOURCE_DIR}/ChewingConfig.cpp
+	${PROJECT_SOURCE_DIR}/ChewingConfig.h
 	# Configuration dialog
     ${PROJECT_SOURCE_DIR}/TypingPage.cpp
     ${PROJECT_SOURCE_DIR}/TypingPage.h

@@ -44,6 +44,7 @@ public:
 	void updateCandidates(Ime::EditSession* session);
 	void hideCandidates();
 
+	void updateLangButtons();
 private:
 	ChewingContext* chewingContext_;
 	Ime::CandidateWindow* candidateWindow_;
@@ -51,6 +52,9 @@ private:
 
 	Ime::LangBarButton* switchLangButton_;
 	Ime::LangBarButton* switchShapeButton_;
+
+	int langMode_;
+	int shapeMode_;
 };
 
 }

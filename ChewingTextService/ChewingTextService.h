@@ -6,10 +6,9 @@
 #include <LibIME/EditSession.h>
 #include <LibIME/LangBarButton.h>
 #include <chewing.h>
+#include "ChewingImeModule.h"
 
 namespace Chewing {
-
-class ImeModule;
 
 class TextService: public Ime::TextService {
 public:
@@ -33,6 +32,10 @@ public:
 
 	ChewingContext* chewingContext() {
 		return chewingContext_;
+	}
+
+	Config& config() {
+		return static_cast<ImeModule*>(module())->config();
 	}
 
 	bool hasCandidates() {

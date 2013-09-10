@@ -10,7 +10,10 @@ const CLSID g_textServiceClsid = {
 };
 
 ImeModule::ImeModule(HMODULE module):
-	Ime::ImeModule(module, g_textServiceClsid) {
+	Ime::ImeModule(module, g_textServiceClsid),
+	config_() {
+	// load configurations
+	config_.load();
 }
 
 ImeModule::~ImeModule(void) {

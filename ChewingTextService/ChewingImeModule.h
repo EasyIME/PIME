@@ -2,6 +2,7 @@
 #define CHEWING_IME_MODULE_H
 
 #include <LibIME/ImeModule.h>
+#include "ChewingConfig.h"
 
 namespace Chewing {
 
@@ -11,6 +12,13 @@ public:
 	virtual ~ImeModule(void);
 
 	virtual Ime::TextService* createTextService();
+
+	Config& config() {
+		return config_;
+	}
+
+private:
+	Config config_;
 };
 
 }

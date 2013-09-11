@@ -144,6 +144,11 @@ HRESULT ImeModule::unregisterServer(const GUID& profileGuid) {
 	ITfCategoryMgr *categoryMgr = NULL;
 	if(CoCreateInstance(CLSID_TF_CategoryMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfCategoryMgr, (void**)&categoryMgr) == S_OK) {
 		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_TIP_KEYBOARD, textServiceClsid_);
+
+		// Windows 8 support
+		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT, textServiceClsid_);
+		categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT, textServiceClsid_);
+
 		categoryMgr->Release();
 	}
 

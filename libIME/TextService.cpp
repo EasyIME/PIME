@@ -323,25 +323,21 @@ STDMETHODIMP_(ULONG) TextService::Release(void) {
 STDMETHODIMP TextService::Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClientId) {
 	// store tsf manager & client id
 	threadMgr_ = pThreadMgr;
-	threadMgr_->AddRef();
 	clientId_ = tfClientId;
 
 	// advice event sinks (set up event listeners)
 	
 	// ITfThreadMgrEventSink
-	ITfSource *source;
-	if(threadMgr_->QueryInterface(IID_ITfSource, (void **)&source) != S_OK)
-		goto OnError;
-	source->AdviseSink(IID_ITfThreadMgrEventSink, (ITfThreadMgrEventSink *)this, &threadMgrEventSinkCookie_);
-	source->Release();
+	ComQIPtr<ITfSource> source = threadMgr_;
+	if(source)
+		source->AdviseSink(IID_ITfThreadMgrEventSink, (ITfThreadMgrEventSink *)this, &threadMgrEventSinkCookie_);
 
 	// ITfTextEditSink,
 
 	// ITfKeyEventSink
-	ITfKeystrokeMgr *keystrokeMgr;
-	if (threadMgr_->QueryInterface(IID_ITfKeystrokeMgr, (void **)&keystrokeMgr) != S_OK)
-		goto OnError;
-	keystrokeMgr->AdviseKeyEventSink(clientId_, (ITfKeyEventSink*)this, TRUE);
+	ComQIPtr<ITfKeystrokeMgr> keystrokeMgr = threadMgr_;
+	if(keystrokeMgr)
+		keystrokeMgr->AdviseKeyEventSink(clientId_, (ITfKeyEventSink*)this, TRUE);
 
 	// register preserved keys
 	if(!preservedKeys_.empty()) {
@@ -351,29 +347,23 @@ STDMETHODIMP TextService::Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClient
 			keystrokeMgr->PreserveKey(clientId_, preservedKey.guid, &preservedKey, NULL, 0);
 		}
 	}
-	keystrokeMgr->Release();
 
 	// ITfCompositionSink
 
 	// initialize language bar
 	if(!langBarButtons_.empty()) {
-		ITfLangBarItemMgr *langBarItemMgr;
+		ComPtr<ITfLangBarItemMgr> langBarItemMgr;
 		if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
 			for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
 				LangBarButton* button = *it;
 				langBarItemMgr->AddItem(button);
 			}
-			langBarItemMgr->Release();
 		}
 	}
 
 	onActivate();
 
 	return S_OK;
-
-OnError:
-	Deactivate();
-	return E_FAIL;
 }
 
 STDMETHODIMP TextService::Deactivate() {
@@ -382,33 +372,30 @@ STDMETHODIMP TextService::Deactivate() {
 
 	// uninitialize language bar
 	if(!langBarButtons_.empty()) {
-		ITfLangBarItemMgr *langBarItemMgr;
+		ComPtr<ITfLangBarItemMgr> langBarItemMgr;
 		if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
 			for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
 				LangBarButton* button = *it;
 				langBarItemMgr->RemoveItem(button);
 			}
-			langBarItemMgr->Release();
 		}
 	}
 
 	// unadvice event sinks
 
 	// ITfThreadMgrEventSink
-	ITfSource *source;
-	if(threadMgr_->QueryInterface(IID_ITfSource, (void **)&source) == S_OK) {
+	ComQIPtr<ITfSource> source = threadMgr_;
+	if(source) {
 		source->UnadviseSink(threadMgrEventSinkCookie_);
-		source->Release();
 		threadMgrEventSinkCookie_ = TF_INVALID_COOKIE;
 	}
 
 	// ITfTextEditSink,
 
 	// ITfKeyEventSink
-	ITfKeystrokeMgr *keystrokeMgr;
-	if (threadMgr_->QueryInterface(IID_ITfKeystrokeMgr, (void **)&keystrokeMgr) == S_OK) {
+	ComQIPtr<ITfKeystrokeMgr> keystrokeMgr = threadMgr_;
+	if(keystrokeMgr) {
 		keystrokeMgr->UnadviseKeyEventSink(clientId_);
-
 		// unregister preserved keys
 		if(!preservedKeys_.empty()) {
 			vector<PreservedKey>::iterator it;
@@ -417,16 +404,11 @@ STDMETHODIMP TextService::Deactivate() {
 				keystrokeMgr->UnpreserveKey(preservedKey.guid, &preservedKey);
 			}
 		}
-
-		keystrokeMgr->Release();
 	}
 
 	// ITfCompositionSink
 
-	if(threadMgr_) {
-		threadMgr_->Release();
-		threadMgr_ = NULL;
-	}
+	threadMgr_ = NULL;
 	clientId_ = TF_CLIENTID_NULL;
 	return S_OK;
 }

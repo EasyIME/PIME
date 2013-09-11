@@ -5,6 +5,8 @@
 #include <msctf.h>
 #include "EditSession.h"
 #include "KeyEvent.h"
+#include "ComPtr.h"
+
 #include <vector>
 
 namespace Ime {
@@ -153,7 +155,7 @@ protected:
 
 private:
 	ImeModule* module_;
-	ITfThreadMgr *threadMgr_;
+	ComPtr<ITfThreadMgr> threadMgr_;
 	TfClientId clientId_;
 
 	// event sink cookies

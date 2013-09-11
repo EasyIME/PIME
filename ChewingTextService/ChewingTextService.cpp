@@ -150,36 +150,56 @@ bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
 // virtual
 bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	assert(chewingContext_);
-	/*
-	 * FIXME: the following keys are not handled:
-	 * shift left		VK_LSHIFT
-	 * shift right		VK_RSHIFT
-	 * caps lock		VK_CAPITAL
-	 * ctrl num
-	 * shift space
-	 * numlock num		VK_NUMLOCK
-	 */
+	// FIXME: the following keys are not handled:
+	// shift + left		VK_LSHIFT
+	// shift + right		VK_RSHIFT
+	// do we really need to support this feature?
 
 	// set this to true or false according to the status of Shift key
 	::chewing_set_easySymbolInput(chewingContext_, keyEvent.isKeyDown(VK_SHIFT));
 
 	UINT charCode = keyEvent.charCode();
-	if(charCode && isgraph(charCode) && !keyEvent.isExtended()) { // printable characters (exclude extended keys?)
-		// FIXME: should we treat numpad keys differently?
-		if(isalpha(charCode))
-			::chewing_handle_Default(chewingContext_, tolower(charCode));
-		else
-			::chewing_handle_Default(chewingContext_, charCode);
-	} else {
+	if(charCode && isprint(charCode)) { // printable characters (exclude extended keys?)
+
+		// If Caps lock is on, temporarily change to English mode
+		if(keyEvent.isKeyToggled(VK_CAPITAL) || langMode_ == SYMBOL_MODE) {
+			int oldLangMode = ::chewing_get_ChiEngMode(chewingContext_);
+			::chewing_set_ChiEngMode(chewingContext_, SYMBOL_MODE); // change to English mode temporarily
+			if(isalpha(charCode)) { // a-z
+				// reverse upper and lower case
+				if(isupper(charCode))
+					::chewing_handle_Default(chewingContext_, tolower(charCode));
+				else
+					::chewing_handle_Default(chewingContext_, toupper(charCode));
+			}
+			else
+				::chewing_handle_Default(chewingContext_, charCode);
+			::chewing_set_ChiEngMode(chewingContext_, oldLangMode); // restore previous mode
+		}
+		else { // Chinese mode
+			if(isalpha(charCode)) // alphabets: A-Z
+				::chewing_handle_Default(chewingContext_, tolower(charCode));
+			else if(keyEvent.keyCode() == VK_SPACE) // space key
+				::chewing_handle_Space(chewingContext_);
+			else if(keyEvent.isKeyDown(VK_CONTROL) && isdigit(charCode)) // Ctrl + number (0~9)
+				::chewing_handle_CtrlNum(chewingContext_, charCode);
+			else if(keyEvent.isKeyToggled(VK_NUMLOCK) && keyEvent.keyCode() >= VK_NUMPAD0 && keyEvent.keyCode() <= VK_DIVIDE)
+				// numlock is on, handle numpad keys
+				::chewing_handle_Numlock(chewingContext_, charCode);
+			else { // other keys, no special handling is needed
+				::chewing_handle_Default(chewingContext_, charCode);
+			}
+		}
+	} else { // non-printable keys
 		switch(keyEvent.keyCode()) {
-		case VK_SPACE:
-			::chewing_handle_Space(chewingContext_);
-			break;
 		case VK_ESCAPE:
 			::chewing_handle_Esc(chewingContext_);
 			break;
 		case VK_RETURN:
 			::chewing_handle_Enter(chewingContext_);
+			break;
+		case VK_TAB:
+			::chewing_handle_Tab(chewingContext_);
 			break;
 		case VK_DELETE:
 			::chewing_handle_Del(chewingContext_);
@@ -211,8 +231,6 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 		case VK_NEXT:
 			::chewing_handle_PageDown(chewingContext_);
 			break;
-		default:
-			return S_OK;
 		}
 	}
 

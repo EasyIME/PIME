@@ -110,18 +110,34 @@ void TextService::onFocus() {
 
 // virtual
 bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
+	// return false if we don't need this key
 	assert(chewingContext_);
+
 	// check if we're in Chinses or English mode
 	if(langMode_ != CHINESE_MODE) // don't do anything in English mode
 		return false;
 
 	if(!isComposing()) {
+		if(keyEvent.isKeyToggled(VK_CAPITAL)) { // Caps lock is on => English mode
+			// FIXME: should we change chewing mode to ENGLISH_MODE?
+			return false; // bypass IME
+		}
+
+		if(keyEvent.isKeyToggled(VK_NUMLOCK)) { // NumLock is on
+			// if this key is Num pad 0-9, +, -, *, /, pass it back to the system
+			if(keyEvent.keyCode() >= VK_NUMPAD0 && keyEvent.keyCode() <= VK_DIVIDE)
+				return false; // bypass IME
+		}
+
+		if(keyEvent.isKeyDown(VK_CONTROL) || keyEvent.isKeyDown(VK_MENU)) { // if Ctrl or Alt key is down
+			if(isComposing()) {
+				// FIXME: we need Ctrl + num in libchewing?
+			}
+			return false; // bypass IME. This might be a shortcut key used in the application
+		}
+
 		// when not composing, we only cares about Bopomopho
 		// FIXME: we should check if the key is mapped to a phonetic symbol instead
-		// FIXME: we need to handle Shift, Alt, and Ctrl, ...etc.
-		Ime::KeyState shiftState(VK_SHIFT);
-		Ime::KeyState ctrlState(VK_CONTROL);
-		Ime::KeyState altState(VK_MENU);
 		if(keyEvent.isChar() && isgraph(keyEvent.charCode())) {
 			// this is a key mapped to a printable char. we want it!
 			return true;
@@ -144,9 +160,8 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 	 * numlock num		VK_NUMLOCK
 	 */
 
-	Ime::KeyState shiftState(VK_SHIFT);
 	// set this to true or false according to the status of Shift key
-	::chewing_set_easySymbolInput(chewingContext_, shiftState.isDown());
+	::chewing_set_easySymbolInput(chewingContext_, keyEvent.isKeyDown(VK_SHIFT));
 
 	UINT charCode = keyEvent.charCode();
 	if(charCode && isgraph(charCode) && !keyEvent.isExtended()) { // printable characters (exclude extended keys?)

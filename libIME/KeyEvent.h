@@ -46,6 +46,18 @@ public:
 		return (lParam_ & (1<<24)) != 0;
 	}
 
+	bool isKeyDown(UINT code) const {
+		return (keyStates_[code] & (1 << 8)) != 0;
+	}
+
+	bool isKeyToggled(UINT code) const {
+		return (keyStates_[code] & 1) != 0;
+	}
+
+	const BYTE* keyStates() const {
+		return keyStates_;
+	}
+
 private:
 	KeyEvent(void) {}
 
@@ -54,8 +66,12 @@ private:
 	UINT keyCode_;
 	UINT charCode_;
 	LPARAM lParam_;
+	BYTE keyStates_[256];
 };
 
+// Try to use KeyEvent::isKeyDown() and KeyEvent::isKeyToggled() whenever possible.
+// If a KeyEvent object is not available, then build a KeyState object as an alternative
+// to get key states
 class KeyState {
 public:
 	KeyState(int keyCode, bool sync = true) {

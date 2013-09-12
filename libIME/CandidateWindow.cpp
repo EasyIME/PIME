@@ -1,5 +1,7 @@
 #include "CandidateWindow.h"
 #include "DrawUtils.h"
+#include "TextService.h"
+#include "EditSession.h"
 
 #include <tchar.h>
 #include <windows.h>
@@ -23,11 +25,17 @@ void CandidateWindow::updateFont() {
 */
 }
 
-CandidateWindow::CandidateWindow() {
+CandidateWindow::CandidateWindow(TextService* service, EditSession* session):
+	isImmersive_(service->isImmersive()) {
     font_size = 0;
     updateFont();
 
-	create(NULL, WS_POPUP|WS_CLIPCHILDREN, WS_EX_TOOLWINDOW);
+	HWND parent;
+	if(isImmersive_)
+		parent = service->compositionWindow(session);
+	else
+		parent = HWND_DESKTOP;
+	create(parent, WS_POPUP|WS_CLIPCHILDREN, WS_EX_TOOLWINDOW);
 }
 
 CandidateWindow::~CandidateWindow(void) {
@@ -73,6 +81,9 @@ static void _DecideCandStringcolor(DWORD &CandIndex, DWORD &CandBody, BOOL bCand
 }
 
 void CandidateWindow::onPaint(WPARAM wp, LPARAM lp) {
+	// TODO: check isImmersive_, and draw the window differently
+	// in Windows 8 app immersive mode to follow windows 8 UX guidelines
+
 /*
 	if (g_isWinLogon)
 		return;

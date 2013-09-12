@@ -42,6 +42,15 @@ public:
 		return (threadMgr() != NULL);
 	}
 
+	DWORD activateFlags() const {
+		return activateFlags_;
+	}
+
+	// running in Windows 8 app mode
+	bool isImmersive() const {
+		return (activateFlags_ & TF_TMF_IMMERSIVEMODE) != 0;
+	}
+
 	// language bar buttons
 	void addButton(LangBarButton* button);
 	void removeButton(LangBarButton* button);
@@ -57,6 +66,7 @@ public:
 	void endComposition(ITfContext* context);
 	bool compositionRect(EditSession* session, RECT* rect);
 	bool selectionRect(EditSession* session, RECT* rect);
+	HWND compositionWindow(EditSession* session);
 
 	void setCompositionString(EditSession* session, const wchar_t* str, int len);
 	void setCompositionCursor(EditSession* session, int pos);
@@ -157,6 +167,7 @@ private:
 	ImeModule* module_;
 	ComPtr<ITfThreadMgr> threadMgr_;
 	TfClientId clientId_;
+	DWORD activateFlags_;
 
 	// event sink cookies
 	DWORD threadMgrEventSinkCookie_;

@@ -14,6 +14,7 @@ TextService::TextService(ImeModule* module):
 	module_(module),
 	threadMgr_(NULL),
 	clientId_(TF_CLIENTID_NULL),
+	activateFlags_(0),
 	threadMgrEventSinkCookie_(TF_INVALID_COOKIE),
 	textEditSinkCookie_(TF_INVALID_COOKIE),
 	compositionSinkCookie_(TF_INVALID_COOKIE),
@@ -325,6 +326,12 @@ STDMETHODIMP TextService::Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClient
 	threadMgr_ = pThreadMgr;
 	clientId_ = tfClientId;
 
+	activateFlags_ = 0;
+	ComQIPtr<ITfThreadMgrEx> threadMgrEx = threadMgr_;
+	if(threadMgrEx) {
+		threadMgrEx->GetActiveFlags(&activateFlags_);
+	}
+
 	// advice event sinks (set up event listeners)
 	
 	// ITfThreadMgrEventSink
@@ -350,13 +357,15 @@ STDMETHODIMP TextService::Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClient
 
 	// ITfCompositionSink
 
-	// initialize language bar
-	if(!langBarButtons_.empty()) {
-		ComPtr<ITfLangBarItemMgr> langBarItemMgr;
-		if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
-			for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
-				LangBarButton* button = *it;
-				langBarItemMgr->AddItem(button);
+	if(!isImmersive()) { // avoid language bar in Win 8 immersive mode
+		// initialize language bar
+		if(!langBarButtons_.empty()) {
+			ComPtr<ITfLangBarItemMgr> langBarItemMgr;
+			if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
+				for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
+					LangBarButton* button = *it;
+					langBarItemMgr->AddItem(button);
+				}
 			}
 		}
 	}
@@ -370,13 +379,15 @@ STDMETHODIMP TextService::Deactivate() {
 
 	onDeactivate();
 
-	// uninitialize language bar
-	if(!langBarButtons_.empty()) {
-		ComPtr<ITfLangBarItemMgr> langBarItemMgr;
-		if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
-			for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
-				LangBarButton* button = *it;
-				langBarItemMgr->RemoveItem(button);
+	if(!isImmersive()) {
+		// uninitialize language bar
+		if(!langBarButtons_.empty()) {
+			ComPtr<ITfLangBarItemMgr> langBarItemMgr;
+			if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
+				for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
+					LangBarButton* button = *it;
+					langBarItemMgr->RemoveItem(button);
+				}
 			}
 		}
 	}
@@ -410,6 +421,7 @@ STDMETHODIMP TextService::Deactivate() {
 
 	threadMgr_ = NULL;
 	clientId_ = TF_CLIENTID_NULL;
+	activateFlags_ = 0;
 	return S_OK;
 }
 
@@ -616,16 +628,14 @@ ITfContext* TextService::currentContext() {
 bool TextService::compositionRect(EditSession* session, RECT* rect) {
 	bool ret = false;
 	if(isComposing()) {
-		ITfContextView* view;
+		ComPtr<ITfContextView> view;
 		if(session->context()->GetActiveView(&view) == S_OK) {
 			BOOL clipped;
-			ITfRange* range;
+			ComPtr<ITfRange> range;
 			if(composition_->GetRange(&range) == S_OK) {
 				if(view->GetTextExt(session->editCookie(), range, rect, &clipped) == S_OK)
 					ret = true;
-				range->Release();
 			}
-			view->Release();
 		}
 	}
 	return ret;
@@ -634,7 +644,7 @@ bool TextService::compositionRect(EditSession* session, RECT* rect) {
 bool TextService::selectionRect(EditSession* session, RECT* rect) {
 	bool ret = false;
 	if(isComposing()) {
-		ITfContextView* view;
+		ComPtr<ITfContextView> view;
 		if(session->context()->GetActiveView(&view) == S_OK) {
 			BOOL clipped;
 			TF_SELECTION selection;
@@ -644,8 +654,19 @@ bool TextService::selectionRect(EditSession* session, RECT* rect) {
 					ret = true;
 				selection.range->Release();
 			}
-			view->Release();
 		}
 	}
 	return ret;
+}
+
+HWND TextService::compositionWindow(EditSession* session) {
+	HWND hwnd = NULL;
+	ComPtr<ITfContextView> view;
+	if(session->context()->GetActiveView(&view) == S_OK) {
+		// get current composition window
+		if(view->GetWnd(&hwnd) != S_OK) {
+			hwnd = ::GetFocus();
+		}
+	}
+	return hwnd;
 }

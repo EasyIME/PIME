@@ -88,9 +88,6 @@ void TextService::onActivate() {
 	}
 
 	updateLangButtons();
-	if(!candidateWindow_) {
-		candidateWindow_ = new Ime::CandidateWindow();
-	}
 }
 
 // virtual
@@ -363,14 +360,16 @@ bool TextService::onCommand(UINT id) {
 		// TODO: switch between half shape and full shape modes
 		// switchShapeButton_->setIcon(IDI_FULL_SHAPE);
 		break;
-	case ID_CONFIG: { // show config dialog
+	case ID_CONFIG: // show config dialog
+		if(!isImmersive()) { // only do this in desktop app mode
 			Ime::PropertyDialog dlg;
 			TypingPage* typingPage = new TypingPage();
 			dlg.addPage(typingPage);
 			dlg.showModal(this->module()->hInstance(), (LPCTSTR)IDS_CONFIG_TITLE);
 		}
 		break;
-	case ID_ABOUT: { // show about dialog
+	case ID_ABOUT: // show about dialog
+		if(!isImmersive()) { // only do this in desktop app mode
 			Ime::Dialog dlg;
 			dlg.showModal(this->module()->hInstance(), IDD_ABOUT);
 	    }
@@ -434,8 +433,18 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 void TextService::showCandidates(Ime::EditSession* session) {
 	// TODO: implement ITfCandidateListUIElement interface to support UI less mode
 	// Great reference: http://msdn.microsoft.com/en-us/library/windows/desktop/aa966970(v=vs.85).aspx
-	assert(candidateWindow_);
 
+	// NOTE: in Windows 8 store apps, candidate window should be owned by
+	// composition window, which can be returned by TextService::compositionWindow().
+	// Otherwise, the candidate window cannot be shown.
+	// Ime::CandidateWindow handles this internally. If you create your own
+	// candidate window, you need to call TextService::isImmersive() to check
+	// if we're in a Windows store app. If isImmersive() returns true,
+	// The candidate window created should be a child window of the composition window.
+	// Please see Ime::CandidateWindow::CandidateWindow() for an example.
+	if(!candidateWindow_) {
+		candidateWindow_ = new Ime::CandidateWindow(this, session);
+	}
 	updateCandidates(session);
 	candidateWindow_->show();
 	showingCandidates_ = true;
@@ -444,9 +453,10 @@ void TextService::showCandidates(Ime::EditSession* session) {
 // hide candidate list window
 void TextService::hideCandidates() {
 	assert(candidateWindow_);
-
-	candidateWindow_->hide();
-	candidateWindow_->clear();
+	if(candidateWindow_) {
+		delete candidateWindow_;
+		candidateWindow_ = NULL;
+	}
 	showingCandidates_ = false;
 }
 

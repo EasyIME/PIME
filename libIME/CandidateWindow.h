@@ -6,9 +6,13 @@
 
 namespace Ime {
 
+class TextService;
+class EditSession;
+
+// TODO: make the candidate window looks different in immersive mode
 class CandidateWindow : public ImeWindow {
 public:
-	CandidateWindow(void);
+	CandidateWindow(TextService* service, EditSession* session);
 	~CandidateWindow(void);
 
 	void setFont(HFONT f){
@@ -44,6 +48,7 @@ private:
     HFONT font;
     int   font_size;
 	std::vector<std::wstring> items_;
+	bool isImmersive_;
 };
 
 }

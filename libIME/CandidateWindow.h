@@ -16,7 +16,7 @@ public:
 	~CandidateWindow(void);
 
 	void setFont(HFONT f){
-		font = f;
+		font_ = f;
 	}
 
 	const std::vector<std::wstring>& items() const {
@@ -38,15 +38,18 @@ public:
 	}
 
 	void recalculateSize();
-    void updateFont();
+	void updateFont();
 
 protected:
 	LRESULT wndProc(UINT msg, WPARAM wp , LPARAM lp);
 	void onPaint(WPARAM wp, LPARAM lp);
 
 private:
-    HFONT font;
-    int   font_size;
+	HFONT font_;
+	int fontSize_;
+	int margin_;
+	int spacing_;
+
 	std::vector<std::wstring> items_;
 	bool isImmersive_;
 };

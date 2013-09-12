@@ -357,15 +357,14 @@ STDMETHODIMP TextService::Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClient
 
 	// ITfCompositionSink
 
-	if(!isImmersive()) { // avoid language bar in Win 8 immersive mode
-		// initialize language bar
-		if(!langBarButtons_.empty()) {
-			ComPtr<ITfLangBarItemMgr> langBarItemMgr;
-			if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
-				for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
-					LangBarButton* button = *it;
-					langBarItemMgr->AddItem(button);
-				}
+	// initialize language bar
+	// Note: language bar has no effects in Win 8 immersive mode
+	if(!langBarButtons_.empty()) {
+		ComPtr<ITfLangBarItemMgr> langBarItemMgr;
+		if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
+			for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
+				LangBarButton* button = *it;
+				langBarItemMgr->AddItem(button);
 			}
 		}
 	}
@@ -379,15 +378,13 @@ STDMETHODIMP TextService::Deactivate() {
 
 	onDeactivate();
 
-	if(!isImmersive()) {
-		// uninitialize language bar
-		if(!langBarButtons_.empty()) {
-			ComPtr<ITfLangBarItemMgr> langBarItemMgr;
-			if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
-				for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
-					LangBarButton* button = *it;
-					langBarItemMgr->RemoveItem(button);
-				}
+	// uninitialize language bar
+	if(!langBarButtons_.empty()) {
+		ComPtr<ITfLangBarItemMgr> langBarItemMgr;
+		if(threadMgr_->QueryInterface(IID_ITfLangBarItemMgr, (void**)&langBarItemMgr) == S_OK) {
+			for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
+				LangBarButton* button = *it;
+				langBarItemMgr->RemoveItem(button);
 			}
 		}
 	}

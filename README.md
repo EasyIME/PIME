@@ -33,6 +33,8 @@ All parts are licensed under GNU LGPL v2.1 license.
 ## References
 *   [Text Services Framework](http://msdn.microsoft.com/en-us/library/windows/desktop/ms629032%28v=vs.85%29.aspx)
 *   [Guidelines and checklist for IME development (Windows Store apps)](http://msdn.microsoft.com/en-us/library/windows/apps/hh967425.aspx)
+*   [Input Method Editors (Windows Store apps)] (http://msdn.microsoft.com/en-us/library/windows/apps/hh967426.aspx)
+*   [Third-party input method editors] (http://msdn.microsoft.com/en-us/library/windows/desktop/hh848069(v=vs.85).aspx)
 *   [Strategies for App Communication between Windows 8 UI and Windows 8 Desktop](http://software.intel.com/en-us/articles/strategies-for-app-communication-between-windows-8-ui-and-windows-8-desktop)
 *   [TSF Aware, Dictation, Windows Speech Recognition, and Text Services Framework. (blog)](http://blogs.msdn.com/b/tsfaware/?Redirected=true)
 

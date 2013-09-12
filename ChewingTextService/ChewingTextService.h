@@ -30,6 +30,9 @@ public:
 
 	virtual bool onCommand(UINT id);
 
+	// called when config dialog needs to be launched
+	virtual bool onConfigure(HWND hwndParent);
+
 	ChewingContext* chewingContext() {
 		return chewingContext_;
 	}

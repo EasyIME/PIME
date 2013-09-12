@@ -278,6 +278,11 @@ bool TextService::onCommand(UINT id) {
 	return false;
 }
 
+// virtual
+bool TextService::onConfigure(HWND hwndParent) {
+	return true;
+}
+
 
 // COM stuff
 
@@ -289,8 +294,10 @@ STDMETHODIMP TextService::QueryInterface(REFIID riid, void **ppvObj) {
 		*ppvObj = (ITfTextInputProcessor*)this;
 	else if(IsEqualIID(riid, IID_ITfDisplayAttributeProvider))
 		*ppvObj = (ITfDisplayAttributeProvider*)this;
-	else if(IsEqualIID(riid, IID_ITfThreadMgrEventSink))
-		*ppvObj = (ITfThreadMgrEventSink*)this;
+	else if(IsEqualIID(riid, IID_ITfDisplayAttributeProvider))
+		*ppvObj = (ITfDisplayAttributeProvider*)this;
+	else if(IsEqualIID(riid, IID_ITfFnConfigure ))
+		*ppvObj = (ITfFnConfigure *)this;
 	else if(IsEqualIID(riid, IID_ITfTextEditSink))
 		*ppvObj = (ITfTextEditSink*)this;
 	else if(IsEqualIID(riid, IID_ITfKeyEventSink))
@@ -422,6 +429,17 @@ STDMETHODIMP TextService::Deactivate() {
 	return S_OK;
 }
 
+
+// ITfFnConfigure
+STDMETHODIMP TextService::Show(HWND hwndParent, LANGID langid, REFGUID rguidProfile) {
+	return onConfigure(hwndParent) ? S_OK : E_FAIL;
+}
+
+// ITfFunction
+STDMETHODIMP TextService::GetDisplayName(BSTR *pbstrName) {
+	*pbstrName = ::SysAllocString(L"Configuration");
+	return S_OK;
+}
 
 // ITfThreadMgrEventSink
 STDMETHODIMP TextService::OnInitDocumentMgr(ITfDocumentMgr *pDocMgr) {

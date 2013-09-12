@@ -3,11 +3,17 @@
 
 #include "libIME.h"
 #include <msctf.h>
+#include <Ctffunc.h>
 #include "EditSession.h"
 #include "KeyEvent.h"
 #include "ComPtr.h"
 
 #include <vector>
+
+// for Windows 8 support
+#ifndef TF_TMF_IMMERSIVEMODE // this is defined in Win 8 SDK
+#define TF_TMF_IMMERSIVEMODE	0x40000000
+#endif
 
 namespace Ime {
 
@@ -19,6 +25,7 @@ class TextService:
 	// TSF interfaces
 	public ITfTextInputProcessor,
 	public ITfDisplayAttributeProvider,
+	public ITfFnConfigure,
 	// event sinks
 	public ITfThreadMgrEventSink,
 	public ITfTextEditSink,
@@ -88,6 +95,9 @@ public:
 	// called when a language button or menu item is clicked
 	virtual bool onCommand(UINT id);
 
+	// called when config dialog needs to be launched
+	virtual bool onConfigure(HWND hwndParent);
+
 	// COM related stuff
 public:
     // IUnknown
@@ -98,6 +108,16 @@ public:
     // ITfTextInputProcessor
     STDMETHODIMP Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClientId);
     STDMETHODIMP Deactivate();
+
+    // ITfDisplayAttributeProvider
+    STDMETHODIMP EnumDisplayAttributeInfo(IEnumTfDisplayAttributeInfo **ppEnum);
+    STDMETHODIMP GetDisplayAttributeInfo(REFGUID guidInfo, ITfDisplayAttributeInfo **ppInfo);
+
+	// ITfFnConfigure
+	STDMETHODIMP Show(HWND hwndParent, LANGID langid, REFGUID rguidProfile);
+
+	// ITfFunction
+	STDMETHODIMP GetDisplayName(BSTR *pbstrName);
 
     // ITfThreadMgrEventSink
     STDMETHODIMP OnInitDocumentMgr(ITfDocumentMgr *pDocMgr);
@@ -119,10 +139,6 @@ public:
 
     // ITfCompositionSink
     STDMETHODIMP OnCompositionTerminated(TfEditCookie ecWrite, ITfComposition *pComposition);
-
-    // ITfDisplayAttributeProvider
-    STDMETHODIMP EnumDisplayAttributeInfo(IEnumTfDisplayAttributeInfo **ppEnum);
-    STDMETHODIMP GetDisplayAttributeInfo(REFGUID guidInfo, ITfDisplayAttributeInfo **ppInfo);
 
 protected:
 	// edit session classes, used with TSF

@@ -362,10 +362,7 @@ bool TextService::onCommand(UINT id) {
 		break;
 	case ID_CONFIG: // show config dialog
 		if(!isImmersive()) { // only do this in desktop app mode
-			Ime::PropertyDialog dlg;
-			TypingPage* typingPage = new TypingPage();
-			dlg.addPage(typingPage);
-			dlg.showModal(this->module()->hInstance(), (LPCTSTR)IDS_CONFIG_TITLE);
+			onConfigure(HWND_DESKTOP);
 		}
 		break;
 	case ID_ABOUT: // show about dialog
@@ -401,6 +398,20 @@ bool TextService::onCommand(UINT id) {
 	default:
 		return false;
 	}
+	return true;
+}
+
+// virtual
+bool TextService::onConfigure(HWND hwndParent) {
+	// FIXME: alternatively, should we make the configuration
+	//        dialog a separate program and launch it instead?
+
+	// FIXME: something wrong causing crashes here.
+	// I'm not sure what's the problem yet.
+	Ime::PropertyDialog dlg;
+	TypingPage* typingPage = new TypingPage();
+	dlg.addPage(typingPage);
+	dlg.showModal(this->module()->hInstance(), (LPCTSTR)IDS_CONFIG_TITLE, 0, hwndParent);
 	return true;
 }
 

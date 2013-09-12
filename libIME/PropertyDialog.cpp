@@ -6,7 +6,7 @@
 using namespace Ime;
 using namespace std;
 
-typedef INT_PTR (*PropertySheetFunc)(LPCPROPSHEETHEADER lppsph);
+typedef INT_PTR (WINAPI *PropertySheetFunc)(LPCPROPSHEETHEADER lppsph);
 static PropertySheetFunc g_PropertySheetW = NULL;
 
 PropertyDialog::PropertyDialog(void) {
@@ -21,7 +21,7 @@ PropertyDialog::~PropertyDialog(void) {
 	}
 }
 
-INT_PTR PropertyDialog::showModal(HINSTANCE hInstance, LPCTSTR captionId, LPCTSTR iconId, DWORD flags, HWND parent) {
+INT_PTR PropertyDialog::showModal(HINSTANCE hInstance, LPCTSTR captionId, LPCTSTR iconId, HWND parent, DWORD flags) {
 	assert(pages_.size() > 0);
 
 	// Windows 8 does not allow linking to comctl32.dll

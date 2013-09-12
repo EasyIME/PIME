@@ -22,7 +22,7 @@ public:
 
 	void addPage(PropertyPage* page);
 	void removePage(PropertyPage* page);
-	INT_PTR showModal(HINSTANCE hInstance, LPCTSTR captionId = 0, LPCTSTR iconId = 0, DWORD flags = PSH_NOAPPLYNOW | PSH_USEICONID | PSH_PROPSHEETPAGE, HWND parent = HWND_DESKTOP);
+	INT_PTR showModal(HINSTANCE hInstance, LPCTSTR captionId = 0, LPCTSTR iconId = 0, HWND parent = HWND_DESKTOP, DWORD flags = PSH_NOAPPLYNOW | PSH_USEICONID | PSH_PROPSHEETPAGE);
 
 private:
 	std::vector<PropertyPage*> pages_;

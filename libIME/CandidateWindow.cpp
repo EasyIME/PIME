@@ -142,6 +142,8 @@ void CandidateWindow::recalculateSize() {
 	HDC hDC = ::GetWindowDC(hwnd());
 	int height = 0;
 	int width = 0;
+
+	HGDIOBJ oldFont = ::SelectObject(hDC, font_);
 	vector<wstring>::const_iterator it;
 	for(int i = 0, n = items_.size(); i < n; ++i) {
 		wstring& item = items_.at(i);
@@ -160,6 +162,7 @@ void CandidateWindow::recalculateSize() {
 	}
 	width += margin_ * 2;
 	height += margin_ * 2;
+	::SelectObject(hDC, oldFont);
 	::ReleaseDC(hwnd(), hDC);
 	resize(width, height);
 }

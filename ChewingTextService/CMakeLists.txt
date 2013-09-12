@@ -22,13 +22,16 @@ add_library(ChewingTextService SHARED
     ${PROJECT_SOURCE_DIR}/ChewingTextService.def
     ${PROJECT_SOURCE_DIR}/ChewingTextService.h
     ${PROJECT_SOURCE_DIR}/DllEntry.cpp
-	${PROJECT_SOURCE_DIR}/ChewingConfig.cpp
-	${PROJECT_SOURCE_DIR}/ChewingConfig.h
-	# Configuration dialog
+    ${PROJECT_SOURCE_DIR}/ChewingConfig.cpp
+    ${PROJECT_SOURCE_DIR}/ChewingConfig.h
+    # Configuration dialog
     ${PROJECT_SOURCE_DIR}/TypingPage.cpp
     ${PROJECT_SOURCE_DIR}/TypingPage.h
     # resources
     ${PROJECT_SOURCE_DIR}/ChewingTextService.rc
     ${PROJECT_SOURCE_DIR}/mainicon.ico
 )
-target_link_libraries(ChewingTextService chewing_static libIME_static)
+target_link_libraries(ChewingTextService
+    chewing_static
+    libIME_static
+)

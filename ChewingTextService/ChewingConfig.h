@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CHEWING_CONFIG_H
+#define CHEWING_CONFIG_H
 
 #include <Windows.h>
 
@@ -46,3 +47,4 @@ public:
 
 }
 
+#endif

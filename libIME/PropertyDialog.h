@@ -10,6 +10,11 @@ namespace Ime {
 
 class PropertyPage;
 
+// Create a property sheet which contains tabbed interface
+// for a configuration dialog
+// This class should only be used in desktop app mode.
+// Otherwise, your IME might be blocked by Windows 8. (not sure?)
+
 class PropertyDialog {
 public:
 	PropertyDialog(void);

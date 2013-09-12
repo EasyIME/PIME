@@ -51,6 +51,7 @@ public:
 	void hideCandidates();
 
 	void updateLangButtons();
+
 private:
 	ChewingContext* chewingContext_;
 	Ime::CandidateWindow* candidateWindow_;

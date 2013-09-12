@@ -86,6 +86,7 @@ void TextService::onActivate() {
 		chewingContext_ = ::chewing_new();
 		::chewing_set_maxChiSymbolLen(chewingContext_, 50);
 	}
+
 	updateLangButtons();
 	if(!candidateWindow_) {
 		candidateWindow_ = new Ime::CandidateWindow();
@@ -98,6 +99,7 @@ void TextService::onDeactivate() {
 		::chewing_delete(chewingContext_);
 		chewingContext_ = NULL;
 	}
+
 	if(candidateWindow_) {
 		delete candidateWindow_;
 		candidateWindow_ = NULL;
@@ -309,7 +311,13 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 	if(isComposing()) {
 		setCompositionCursor(session, ::chewing_cursor_Current(chewingContext_));
 	}
-
+/*
+	Ime::ComQIPtr<ITfInsertAtSelection> sel = session->context();
+	if(sel) {
+		Ime::ComPtr<ITfRange> range;
+		sel->InsertTextAtSelection(session->editCookie(), 0, L"TEXT", 4, &range);
+	}
+*/
 	return true;
 }
 

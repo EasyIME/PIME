@@ -1,17 +1,19 @@
 #include "DisplayAttributeInfoEnum.h"
-#include "TextService.h"
+#include "DisplayAttributeProvider.h"
+#include "ImeModule.h"
 #include <assert.h>
 
 using namespace Ime;
 
-DisplayAttributeInfoEnum::DisplayAttributeInfoEnum(TextService* service):
-	textService_(service),
+DisplayAttributeInfoEnum::DisplayAttributeInfoEnum(DisplayAttributeProvider* provider):
+	provider_(provider),
 	refCount_(1) {
-	iterator_ = service->displayAttrInfos_.begin();
+	std::list<DisplayAttributeInfo*>& displayAttrInfos = provider_->imeModule_->displayAttrInfos();
+	iterator_ = displayAttrInfos.begin();
 }
 
 DisplayAttributeInfoEnum::DisplayAttributeInfoEnum(const DisplayAttributeInfoEnum& other):
-	textService_(other.textService_),
+	provider_(other.provider_),
 	iterator_(other.iterator_) {
 }
 
@@ -56,8 +58,9 @@ STDMETHODIMP DisplayAttributeInfoEnum::Clone(IEnumTfDisplayAttributeInfo **ppEnu
 
 STDMETHODIMP DisplayAttributeInfoEnum::Next(ULONG ulCount, ITfDisplayAttributeInfo **rgInfo, ULONG *pcFetched) {
 	ULONG i = 0;
+	std::list<DisplayAttributeInfo*>& displayAttrInfos = provider_->imeModule_->displayAttrInfos();
 	for(; i < ulCount; ++i) {
-		if(iterator_ != textService_->displayAttrInfos_.end()) {
+		if(iterator_ != displayAttrInfos.end()) {
 			DisplayAttributeInfo* info = *iterator_;
 			info->AddRef();
 			rgInfo[i] = info;
@@ -72,12 +75,14 @@ STDMETHODIMP DisplayAttributeInfoEnum::Next(ULONG ulCount, ITfDisplayAttributeIn
 }
 
 STDMETHODIMP DisplayAttributeInfoEnum::Reset() {
-	iterator_ = textService_->displayAttrInfos_.begin();
+	std::list<DisplayAttributeInfo*>& displayAttrInfos = provider_->imeModule_->displayAttrInfos();
+	iterator_ = displayAttrInfos.begin();
 	return S_OK;
 }
 
 STDMETHODIMP DisplayAttributeInfoEnum::Skip(ULONG ulCount) {
-	if(iterator_ != textService_->displayAttrInfos_.end())
+	std::list<DisplayAttributeInfo*>& displayAttrInfos = provider_->imeModule_->displayAttrInfos();
+	if(iterator_ != displayAttrInfos.end())
 		++iterator_;
 	return S_OK;
 }

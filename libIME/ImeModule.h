@@ -3,10 +3,12 @@
 
 #include <Unknwn.h>
 #include <Windows.h>
+#include <list>
 
 namespace Ime {
 
 class TextService;
+class DisplayAttributeInfo;
 
 class ImeModule: public IClassFactory {
 public:
@@ -28,7 +30,23 @@ public:
 	HRESULT registerServer(wchar_t* name, const GUID& profileGuid, LANGID languageId);
 	HRESULT unregisterServer(const GUID& profileGuid);
 
+	// should be override by IME implementors
 	virtual TextService* createTextService() = 0;
+
+	// display attributes for composition string
+	std::list<DisplayAttributeInfo*>& displayAttrInfos() {
+		return displayAttrInfos_;
+	}
+
+	bool registerDisplayAttributeInfos();
+
+	DisplayAttributeInfo* inputAttrib() {
+		return inputAttrib_;
+	}
+
+	DisplayAttributeInfo* convertedAttrib() {
+		return convertedAttrib_;
+	}
 
 	// COM-related stuff
 
@@ -47,6 +65,11 @@ private:
 	HINSTANCE hInstance_;
 	CLSID textServiceClsid_;
 	wchar_t* tooltip_;
+
+	// display attributes
+	std::list<DisplayAttributeInfo*> displayAttrInfos_; // display attribute info
+	DisplayAttributeInfo* inputAttrib_;
+	DisplayAttributeInfo* convertedAttrib_;
 };
 
 }

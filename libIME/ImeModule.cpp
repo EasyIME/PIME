@@ -6,6 +6,7 @@
 #include <assert.h>
 #include "Window.h"
 #include "TextService.h"
+#include "DisplayAttributeProvider.h"
 
 using namespace Ime;
 using namespace std;
@@ -21,6 +22,16 @@ static const GUID GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT =
 { 0x25504FB4, 0x7BAB, 0x4BC1, { 0x9C, 0x69, 0xCF, 0x81, 0x89, 0x0F, 0x0E, 0xF5 } };
 #endif
 
+// display attribute GUIDs
+
+// {2A2574D6-2841-4F27-82BD-D7B0F23855F8}
+static const GUID g_inputDisplayAttributeGuid = 
+{ 0x2a2574d6, 0x2841, 0x4f27, { 0x82, 0xbd, 0xd7, 0xb0, 0xf2, 0x38, 0x55, 0xf8 } };
+
+// {E1270AA5-A6B1-4112-9AC7-F5E476C3BD63}
+static const GUID g_convertedDisplayAttributeGuid = 
+{ 0xe1270aa5, 0xa6b1, 0x4112, { 0x9a, 0xc7, 0xf5, 0xe4, 0x76, 0xc3, 0xbd, 0x63 } };
+
 
 ImeModule::ImeModule(HMODULE module, const CLSID& textServiceClsid):
 	hInstance_(HINSTANCE(module)),
@@ -28,9 +39,29 @@ ImeModule::ImeModule(HMODULE module, const CLSID& textServiceClsid):
 	refCount_(1) {
 
 	Window::registerClass(hInstance_);
+
+	// regiser default display attributes
+	inputAttrib_ = new DisplayAttributeInfo(g_inputDisplayAttributeGuid);
+	inputAttrib_->setTextColor(COLOR_WINDOWTEXT);
+	inputAttrib_->setLineStyle(TF_LS_DOT);
+	inputAttrib_->setLineColor(COLOR_WINDOWTEXT);
+	displayAttrInfos_.push_back(inputAttrib_);
+	convertedAttrib_ = new DisplayAttributeInfo(g_convertedDisplayAttributeGuid);
+	displayAttrInfos_.push_back(convertedAttrib_);
+
+	registerDisplayAttributeInfos();
 }
 
 ImeModule::~ImeModule(void) {
+
+	// display attributes
+	if(!displayAttrInfos_.empty()) {
+		list<DisplayAttributeInfo*>::iterator it;
+		for(it = displayAttrInfos_.begin(); it != displayAttrInfos_.end(); ++it) {
+			DisplayAttributeInfo* info = *it;
+			info->Release();
+		}
+	}
 }
 
 // Dll entry points implementations
@@ -178,6 +209,24 @@ HRESULT ImeModule::unregisterServer(const GUID& profileGuid) {
 	return S_OK;
 }
 
+
+// display attributes stuff
+bool ImeModule::registerDisplayAttributeInfos() {
+
+	// register display attributes
+	ComPtr<ITfCategoryMgr> categoryMgr;
+	if(::CoCreateInstance(CLSID_TF_CategoryMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfCategoryMgr, (void**)&categoryMgr) == S_OK) {
+		TfGuidAtom atom;
+		categoryMgr->RegisterGUID(g_inputDisplayAttributeGuid, &atom);
+		inputAttrib_->setAtom(atom);
+		categoryMgr->RegisterGUID(g_convertedDisplayAttributeGuid, &atom);
+		convertedAttrib_->setAtom(atom);
+		return true;
+	}
+	return false;
+}
+
+
 // COM related stuff
 
 // IUnknown
@@ -218,15 +267,24 @@ STDMETHODIMP_(ULONG) ImeModule::Release(void) {
 
 // IClassFactory
 STDMETHODIMP ImeModule::CreateInstance(IUnknown *pUnkOuter, REFIID riid, void **ppvObj) {
-	// FIXME: do we need to check riid here?
-	TextService* service = createTextService();
-	// FIXME: we should split DisplayAttributeProvider into another class
-	// Otherwise, everytime a new TextService object is created just for enumerating display attributes.
-	// This is really a waste and may cause potential side effects.
-	if(service) {
-		service->QueryInterface(riid, ppvObj);
-		service->Release();
-		return S_OK;
+	if(::IsEqualIID(riid, IID_ITfDisplayAttributeProvider)) {
+		DisplayAttributeProvider* provider = new DisplayAttributeProvider(this);
+		if(provider) {
+			provider->QueryInterface(riid, ppvObj);
+			provider->Release();
+			return S_OK;
+		}
+	}
+	else {
+		TextService* service = createTextService();
+		// FIXME: we should split DisplayAttributeProvider into another class
+		// Otherwise, everytime a new TextService object is created just for enumerating display attributes.
+		// This is really a waste and may cause potential side effects.
+		if(service) {
+			service->QueryInterface(riid, ppvObj);
+			service->Release();
+			return S_OK;
+		}
 	}
 	return S_FALSE;
 }

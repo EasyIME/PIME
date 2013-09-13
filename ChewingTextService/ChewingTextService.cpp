@@ -60,7 +60,7 @@ TextService::TextService(ImeModule* module):
 	Ime::LangBarButton* button = new Ime::LangBarButton(this, g_settingsButtonGuid);
 	button->setTooltip(IDS_SETTINGS);
 	button->setIcon(IDI_CONFIG);
-	HMENU menu = ::LoadMenuW(this->module()->hInstance(), LPCTSTR(IDR_MENU));
+	HMENU menu = ::LoadMenuW(this->imeModule()->hInstance(), LPCTSTR(IDR_MENU));
 	HMENU popup = ::GetSubMenu(menu, 0);
 	button->setMenu(popup);
 	addButton(button);
@@ -368,7 +368,7 @@ bool TextService::onCommand(UINT id) {
 	case ID_ABOUT: // show about dialog
 		if(!isImmersive()) { // only do this in desktop app mode
 			Ime::Dialog dlg;
-			dlg.showModal(this->module()->hInstance(), IDD_ABOUT);
+			dlg.showModal(this->imeModule()->hInstance(), IDD_ABOUT);
 	    }
 		break;
 	case ID_WEBSITE: // visit chewing website
@@ -411,7 +411,7 @@ bool TextService::onConfigure(HWND hwndParent) {
 	Ime::PropertyDialog dlg;
 	TypingPage* typingPage = new TypingPage();
 	dlg.addPage(typingPage);
-	dlg.showModal(this->module()->hInstance(), (LPCTSTR)IDS_CONFIG_TITLE, 0, hwndParent);
+	dlg.showModal(this->imeModule()->hInstance(), (LPCTSTR)IDS_CONFIG_TITLE, 0, hwndParent);
 	return true;
 }
 

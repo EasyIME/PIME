@@ -8,11 +8,11 @@
 
 namespace Ime {
 
-class TextService;
+class DisplayAttributeProvider;
 
 class DisplayAttributeInfoEnum : public IEnumTfDisplayAttributeInfo {
 public:
-	DisplayAttributeInfoEnum(TextService* service);
+	DisplayAttributeInfoEnum(DisplayAttributeProvider* provider);
 	DisplayAttributeInfoEnum(const DisplayAttributeInfoEnum& other);
 	virtual ~DisplayAttributeInfoEnum(void);
 
@@ -30,7 +30,7 @@ public:
 private:
 	int refCount_;
 	std::list<DisplayAttributeInfo*>::iterator iterator_;
-	ComPtr<TextService> textService_;
+	ComPtr<DisplayAttributeProvider> provider_;
 };
 
 }

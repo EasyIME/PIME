@@ -15,6 +15,8 @@ public:
 	}
 
 	ComPtr(T* p): p_(p) {
+		if(p_)
+			p_->AddRef();
 	}
 
 	ComPtr(const ComPtr& other): p_(other.p_) {

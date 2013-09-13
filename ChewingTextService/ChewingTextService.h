@@ -38,7 +38,7 @@ public:
 	}
 
 	Config& config() {
-		return static_cast<ImeModule*>(module())->config();
+		return static_cast<ImeModule*>(imeModule())->config();
 	}
 
 	bool hasCandidates() {

@@ -15,11 +15,11 @@ LangBarButton::LangBarButton(TextService* service, const GUID& guid, UINT comman
 	icon_(NULL),
 	refCount_(1) {
 
-	assert(service && service->module());
+	assert(service && service->imeModule());
 
 	textService_->AddRef();
 
-	info_.clsidService = service->module()->textServiceClsid();
+	info_.clsidService = service->imeModule()->textServiceClsid();
 	info_.guidItem = guid;
 	info_.dwStyle = style;
 	info_.ulSort = 0;
@@ -51,7 +51,7 @@ void LangBarButton::setText(const wchar_t* text) {
 
 void LangBarButton::setText(UINT stringId) {
 	const wchar_t* str;
-	int len = ::LoadStringW(textService_->module()->hInstance(), stringId, (LPTSTR)&str, 0);
+	int len = ::LoadStringW(textService_->imeModule()->hInstance(), stringId, (LPTSTR)&str, 0);
 	if(str) {
 		if(len > (TF_LBI_DESC_MAXLEN - 1))
 			len = TF_LBI_DESC_MAXLEN - 1;
@@ -75,7 +75,7 @@ void LangBarButton::setTooltip(const wchar_t* tooltip) {
 
 void LangBarButton::setTooltip(UINT tooltipId) {
 	const wchar_t* str;
-	int len = ::LoadStringW(textService_->module()->hInstance(), tooltipId, (LPTSTR)&str, 0);
+	int len = ::LoadStringW(textService_->imeModule()->hInstance(), tooltipId, (LPTSTR)&str, 0);
 	if(str) {
 		tooltip_ = (wchar_t*)malloc((len + 1) * sizeof(wchar_t));
 		wcsncpy(tooltip_, str, len);
@@ -94,7 +94,7 @@ void LangBarButton::setIcon(HICON icon) {
 }
 
 void LangBarButton::setIcon(UINT iconId) {
-	HICON icon = ::LoadIconW(textService_->module()->hInstance(), (LPCTSTR)iconId);
+	HICON icon = ::LoadIconW(textService_->imeModule()->hInstance(), (LPCTSTR)iconId);
 	if(icon)
 		setIcon(icon);
 }

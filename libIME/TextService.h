@@ -31,15 +31,14 @@ class TextService:
 	public ITfThreadMgrEventSink,
 	public ITfTextEditSink,
 	public ITfKeyEventSink,
-	public ITfCompositionSink,
-	public ITfDisplayAttributeProvider {
+	public ITfCompositionSink {
 public:
 
 	TextService(ImeModule* module);
 	virtual ~TextService(void);
 
 	// public methods
-	ImeModule* module() const;
+	ImeModule* imeModule() const;
 
 	ITfThreadMgr* threadMgr() const;
 
@@ -113,10 +112,6 @@ public:
     STDMETHODIMP Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClientId);
     STDMETHODIMP Deactivate();
 
-    // ITfDisplayAttributeProvider
-    STDMETHODIMP EnumDisplayAttributeInfo(IEnumTfDisplayAttributeInfo **ppEnum);
-    STDMETHODIMP GetDisplayAttributeInfo(REFGUID guidInfo, ITfDisplayAttributeInfo **ppInfo);
-
 	// ITfFnConfigure
 	STDMETHODIMP Show(HWND hwndParent, LANGID langid, REFGUID rguidProfile);
 
@@ -184,7 +179,7 @@ protected:
 	};
 
 private:
-	ImeModule* module_;
+	ComPtr<ImeModule> module_;
 	ComPtr<ITfThreadMgr> threadMgr_;
 	TfClientId clientId_;
 	DWORD activateFlags_;
@@ -198,10 +193,6 @@ private:
 	CandidateWindow* candidateWindow_;
 	std::vector<LangBarButton*> langBarButtons_;
 	std::vector<PreservedKey> preservedKeys_;
-
-	std::list<DisplayAttributeInfo*> displayAttrInfos_; // display attribute info
-	DisplayAttributeInfo* inputAttrib_;
-	DisplayAttributeInfo* convertedAttrib_;
 
 	long refCount_; // reference counting
 };

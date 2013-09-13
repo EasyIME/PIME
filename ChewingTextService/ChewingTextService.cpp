@@ -131,11 +131,11 @@ bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
 	// return false if we don't need this key
 	assert(chewingContext_);
 
-	// check if we're in Chinses or English mode
-	if(langMode_ != CHINESE_MODE) // don't do anything in English mode
-		return false;
+	if(!isComposing()) { // we're not composing now
+		// check if we're in Chinses or English mode
+		if(langMode_ != CHINESE_MODE) // don't do further handling in English mode
+			return false;
 
-	if(!isComposing()) {
 		if(keyEvent.isKeyToggled(VK_CAPITAL)) { // Caps lock is on => English mode
 			// FIXME: should we change chewing mode to ENGLISH_MODE?
 			return false; // bypass IME
@@ -183,7 +183,8 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 		if(keyEvent.isKeyToggled(VK_CAPITAL) || langMode_ == SYMBOL_MODE) {
 			int oldLangMode = ::chewing_get_ChiEngMode(chewingContext_);
 			::chewing_set_ChiEngMode(chewingContext_, SYMBOL_MODE); // change to English mode temporarily
-			if(isalpha(charCode)) { // a-z
+			if(oldLangMode != SYMBOL_MODE && isalpha(charCode)) { // a-z
+				// we're NOT in English mode, but Capslock is on, so we treat it as English mode
 				// reverse upper and lower case
 				if(isupper(charCode))
 					::chewing_handle_Default(chewingContext_, tolower(charCode));
@@ -373,14 +374,17 @@ bool TextService::onPreservedKey(const GUID& guid) {
 
 // virtual
 bool TextService::onCommand(UINT id) {
+	assert(chewingContext_);
 	switch(id) {
 	case ID_SWITCH_LANG:
-		// TODO: switch between Chinses and English modes
-		// switchLangButton_->setIcon(IDI_ENG);
+		// switch between Chinses and English modes
+		::chewing_set_ChiEngMode(chewingContext_, !::chewing_get_ChiEngMode(chewingContext_));
+		updateLangButtons();
 		break;
 	case ID_SWITCH_SHAPE:
-		// TODO: switch between half shape and full shape modes
-		// switchShapeButton_->setIcon(IDI_FULL_SHAPE);
+		// switch between half shape and full shape modes
+		::chewing_set_ShapeMode(chewingContext_, !::chewing_get_ShapeMode(chewingContext_));
+		updateLangButtons();
 		break;
 	case ID_CONFIG: // show config dialog
 		if(!isImmersive()) { // only do this in desktop app mode

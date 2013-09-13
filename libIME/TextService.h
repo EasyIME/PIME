@@ -83,7 +83,8 @@ public:
 	virtual void onActivate();
 	virtual void onDeactivate();
 
-	virtual void onFocus();
+	virtual void onSetFocus();
+	virtual void onKillFocus();
 
 	virtual bool filterKeyDown(KeyEvent& keyEvent);
 	virtual bool onKeyDown(KeyEvent& keyEvent, EditSession* session);

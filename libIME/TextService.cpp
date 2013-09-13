@@ -265,7 +265,11 @@ bool TextService::onPreservedKey(const GUID& guid) {
 }
 
 // virtual
-void TextService::onFocus() {
+void TextService::onSetFocus() {
+}
+
+// virtual
+void TextService::onKillFocus() {
 }
 
 bool TextService::onCommand(UINT id) {
@@ -455,13 +459,52 @@ STDMETHODIMP TextService::OnPopContext(ITfContext *pContext) {
 
 // ITfTextEditSink
 STDMETHODIMP TextService::OnEndEdit(ITfContext *pContext, TfEditCookie ecReadOnly, ITfEditRecord *pEditRecord) {
+	// This method is called by the TSF whenever an edit operation ends.
+	// It's possible for a document to have multiple composition strings at the
+	// same time and it's possible for other text services to edit the same
+	// document. Though such a complicated senario rarely exist, it indeed happen.
+
+	// NOTE: I don't really know why this is needed and tests yielded no obvious effect
+	// of this piece of code, but from MS TSF samples, this is needed.
+	BOOL selChanged;
+	if(pEditRecord->GetSelectionStatus(&selChanged) == S_OK) {
+		if(selChanged && isComposing()) {
+			// we need to check if current selection is in our composition string.
+			// if after others' editing the selection (insertion point) has been changed and
+			// fell outside our composition area, terminate the composition.
+			TF_SELECTION selection;
+			ULONG selectionNum;
+			if(pContext->GetSelection(ecReadOnly, TF_DEFAULT_SELECTION, 1, &selection, &selectionNum) == S_OK) {
+				ComPtr<ITfRange> compRange;
+				if(composition_->GetRange(&compRange) == S_OK) {
+					// check if two ranges overlaps
+					// check if current selection is covered by composition range
+					LONG compareResult1;
+					LONG compareResult2;
+					if(compRange->CompareStart(ecReadOnly, selection.range, TF_ANCHOR_START, &compareResult1) == S_OK
+						&& compRange->CompareEnd(ecReadOnly, selection.range, TF_ANCHOR_END, &compareResult2) == S_OK) {
+						if(compareResult1 == +1 || compareResult2 == -1) {
+							// the selection is not entirely in composion
+							// end compositon here
+							endComposition(pContext);
+						}
+					}
+				}
+				selection.range->Release();
+			}
+		}
+	}
+
 	return S_OK;
 }
 
 
 // ITfKeyEventSink
 STDMETHODIMP TextService::OnSetFocus(BOOL fForeground) {
-	onFocus();
+	if(fForeground)
+		onSetFocus();
+	else
+		onKillFocus();
 	return S_OK;
 }
 

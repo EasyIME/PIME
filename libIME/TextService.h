@@ -7,8 +7,10 @@
 #include "EditSession.h"
 #include "KeyEvent.h"
 #include "ComPtr.h"
+#include "DisplayAttributeInfo.h"
 
 #include <vector>
+#include <list>
 
 // for Windows 8 support
 #ifndef TF_TMF_IMMERSIVEMODE // this is defined in Win 8 SDK
@@ -24,13 +26,13 @@ class LangBarButton;
 class TextService:
 	// TSF interfaces
 	public ITfTextInputProcessor,
-	public ITfDisplayAttributeProvider,
 	public ITfFnConfigure,
 	// event sinks
 	public ITfThreadMgrEventSink,
 	public ITfTextEditSink,
 	public ITfKeyEventSink,
-	public ITfCompositionSink {
+	public ITfCompositionSink,
+	public ITfDisplayAttributeProvider {
 public:
 
 	TextService(ImeModule* module);
@@ -100,6 +102,8 @@ public:
 
 	// COM related stuff
 public:
+	friend class DisplayAttributeInfoEnum;
+
     // IUnknown
     STDMETHODIMP QueryInterface(REFIID riid, void **ppvObj);
 	STDMETHODIMP_(ULONG) AddRef(void);
@@ -194,6 +198,10 @@ private:
 	CandidateWindow* candidateWindow_;
 	std::vector<LangBarButton*> langBarButtons_;
 	std::vector<PreservedKey> preservedKeys_;
+
+	std::list<DisplayAttributeInfo*> displayAttrInfos_; // display attribute info
+	DisplayAttributeInfo* inputAttrib_;
+	DisplayAttributeInfo* convertedAttrib_;
 
 	long refCount_; // reference counting
 };

@@ -5,6 +5,7 @@
 #include <Shlwapi.h>
 #include <assert.h>
 #include "Window.h"
+#include "TextService.h"
 
 using namespace Ime;
 using namespace std;
@@ -119,9 +120,9 @@ HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID
 
 			// register ourself as a display attribute provider
 			// so later we can set change the look and feels of composition string.
-			//if(categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, textServiceClsid) != S_OK) {
-			//	result = E_FAIL;
-			//}
+			if(categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, textServiceClsid_) != S_OK) {
+				result = E_FAIL;
+			}
 
 			// for Windows 8 store app support
 			// TODO: according to a exhaustive Google search, I found that
@@ -157,6 +158,7 @@ HRESULT ImeModule::unregisterServer(const GUID& profileGuid) {
 	ITfCategoryMgr *categoryMgr = NULL;
 	if(CoCreateInstance(CLSID_TF_CategoryMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfCategoryMgr, (void**)&categoryMgr) == S_OK) {
 		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_TIP_KEYBOARD, textServiceClsid_);
+		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, textServiceClsid_);
 
 		// Windows 8 support
 		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT, textServiceClsid_);
@@ -218,8 +220,12 @@ STDMETHODIMP_(ULONG) ImeModule::Release(void) {
 STDMETHODIMP ImeModule::CreateInstance(IUnknown *pUnkOuter, REFIID riid, void **ppvObj) {
 	// FIXME: do we need to check riid here?
 	TextService* service = createTextService();
+	// FIXME: we should split DisplayAttributeProvider into another class
+	// Otherwise, everytime a new TextService object is created just for enumerating display attributes.
+	// This is really a waste and may cause potential side effects.
 	if(service) {
-		*ppvObj = (void*)service;
+		service->QueryInterface(riid, ppvObj);
+		service->Release();
 		return S_OK;
 	}
 	return S_FALSE;

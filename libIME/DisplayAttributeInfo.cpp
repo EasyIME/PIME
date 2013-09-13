@@ -3,12 +3,20 @@
 
 using namespace Ime;
 
-DisplayAttributeInfo::DisplayAttributeInfo(void):
+DisplayAttributeInfo::DisplayAttributeInfo(const GUID& guid):
+	atom_(0),
+	guid_(guid),
+	desc_(NULL),
 	refCount_(1) {
+
+	Reset();
 }
 
 DisplayAttributeInfo::~DisplayAttributeInfo(void) {
+	if(desc_)
+		free(desc_);
 }
+
 
 // COM stuff
 
@@ -43,21 +51,35 @@ STDMETHODIMP_(ULONG) DisplayAttributeInfo::Release(void) {
 
 // ITfDisplayAttributeInfo
 STDMETHODIMP DisplayAttributeInfo::GetGUID(GUID *pguid) {
+	*pguid = guid_;
 	return S_OK;
 }
 
 STDMETHODIMP DisplayAttributeInfo::GetDescription(BSTR *pbstrDesc) {
-	return S_OK;
+	if(desc_) {
+		*pbstrDesc = ::SysAllocString(desc_);
+		return S_OK;
+	}
+	*pbstrDesc = NULL;
+	return E_FAIL;
 }
 
 STDMETHODIMP DisplayAttributeInfo::GetAttributeInfo(TF_DISPLAYATTRIBUTE *ptfDisplayAttr) {
+	*ptfDisplayAttr = attrib_;
 	return S_OK;
 }
 
 STDMETHODIMP DisplayAttributeInfo::SetAttributeInfo(const TF_DISPLAYATTRIBUTE *ptfDisplayAttr) {
+	attrib_ = *ptfDisplayAttr;
 	return S_OK;
 }
 
 STDMETHODIMP DisplayAttributeInfo::Reset() {
+	attrib_.bAttr = TF_ATTR_INPUT;
+	attrib_.crBk.type = TF_CT_NONE;
+	attrib_.crLine.type = TF_CT_NONE;
+	attrib_.crText.type = TF_CT_NONE;
+	attrib_.fBoldLine = FALSE;
+	attrib_.lsStyle = TF_LS_NONE;
 	return S_OK;
 }

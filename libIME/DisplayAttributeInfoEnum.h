@@ -1,16 +1,20 @@
 #ifndef ENUM_DISPLAY_ATTRIBUTE_INFO_H
 #define ENUM_DISPLAY_ATTRIBUTE_INFO_H
 
-#include "msctf.h"
+#include <msctf.h>
+#include <list>
+#include "DisplayAttributeInfo.h"
+#include "ComPtr.h"
 
 namespace Ime {
 
 class TextService;
 
-class EnumDisplayAttributeInfo : public IEnumTfDisplayAttributeInfo {
+class DisplayAttributeInfoEnum : public IEnumTfDisplayAttributeInfo {
 public:
-	EnumDisplayAttributeInfo(TextService* service);
-	virtual ~EnumDisplayAttributeInfo(void);
+	DisplayAttributeInfoEnum(TextService* service);
+	DisplayAttributeInfoEnum(const DisplayAttributeInfoEnum& other);
+	virtual ~DisplayAttributeInfoEnum(void);
 
     // IUnknown
     STDMETHODIMP QueryInterface(REFIID riid, void **ppvObj);
@@ -25,6 +29,8 @@ public:
 
 private:
 	int refCount_;
+	std::list<DisplayAttributeInfo*>::iterator iterator_;
+	ComPtr<TextService> textService_;
 };
 
 }

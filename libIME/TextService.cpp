@@ -2,6 +2,7 @@
 #include "EditSession.h"
 #include "CandidateWindow.h"
 #include "LangBarButton.h"
+#include "DisplayAttributeInfoEnum.h"
 
 #include <assert.h>
 #include <string>
@@ -9,6 +10,14 @@
 
 using namespace Ime;
 using namespace std;
+
+// {2A2574D6-2841-4F27-82BD-D7B0F23855F8}
+static const GUID g_inputDisplayAttributeGuid = 
+{ 0x2a2574d6, 0x2841, 0x4f27, { 0x82, 0xbd, 0xd7, 0xb0, 0xf2, 0x38, 0x55, 0xf8 } };
+
+// {E1270AA5-A6B1-4112-9AC7-F5E476C3BD63}
+static const GUID g_convertedDisplayAttributeGuid = 
+{ 0xe1270aa5, 0xa6b1, 0x4112, { 0x9a, 0xc7, 0xf5, 0xe4, 0x76, 0xc3, 0xbd, 0x63 } };
 
 TextService::TextService(ImeModule* module):
 	module_(module),
@@ -21,11 +30,31 @@ TextService::TextService(ImeModule* module):
 	composition_(NULL),
 	candidateWindow_(NULL),
 	refCount_(1) {
+
+	// regiser default display attributes
+	inputAttrib_ = new DisplayAttributeInfo(g_inputDisplayAttributeGuid);
+	inputAttrib_->setTextColor(COLOR_WINDOWTEXT);
+	inputAttrib_->setLineStyle(TF_LS_DOT);
+	inputAttrib_->setLineColor(COLOR_WINDOWTEXT);
+	displayAttrInfos_.push_back(inputAttrib_);
+	convertedAttrib_ = new DisplayAttributeInfo(g_convertedDisplayAttributeGuid);
+	displayAttrInfos_.push_back(convertedAttrib_);
+
+	// FIXME: we should put the display attribute provider in another class instead.
+	// Otherwise, the class factory needs to create a TextService object
+	// just to query display attributes, which is quite a waste.
 }
 
 TextService::~TextService(void) {
 	if(candidateWindow_)
 		delete candidateWindow_;
+
+	if(!displayAttrInfos_.empty()) {
+		for(list<DisplayAttributeInfo*>::iterator it; it != displayAttrInfos_.end(); ++it) {
+			DisplayAttributeInfo* info = *it;
+			info->Release();
+		}
+	}
 
 	if(!langBarButtons_.empty()) {
 		for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
@@ -176,25 +205,9 @@ void TextService::setCompositionString(EditSession* session, const wchar_t* str,
 		ULONG selectionNum;
 		// get current selection/insertion point
 		if(context->GetSelection(editCookie, TF_DEFAULT_SELECTION, 1, &selection, &selectionNum) == S_OK) {
-			ITfRange* compositionRange;
+			ComPtr<ITfRange> compositionRange;
 			if(composition_->GetRange(&compositionRange) == S_OK) {
-# if 0
-				// FIXME: according to the TSF examples and other TSF implementations,
-				// we have to test if the selection range is covered by composition range.
-				// However, in our IME this does not work. So I disable it until I know
-				// what's wrong and how to fix it. :-(
-				bool selPosInComposition = false;
-				LONG compareResult1;
-				LONG compareResult2;
-				// check if current selection is covered by composition range
-				if(selection.range->CompareStart(editCookie, compositionRange, TF_ANCHOR_START, &compareResult1) == S_OK
-					&& selection.range->CompareStart(editCookie, compositionRange, TF_ANCHOR_END, &compareResult2) == S_OK) {
-					if(compareResult1 <= 0 && compareResult2 >= 0)
-						selPosInComposition = true;
-				}
-#endif
 				bool selPosInComposition = true;
-
 				// if current insertion point is not covered by composition, we cannot insert text here.
 				if(selPosInComposition) {
 					// replace context of composion area with the new string.
@@ -204,7 +217,15 @@ void TextService::setCompositionString(EditSession* session, const wchar_t* str,
 					selection.range->Collapse(editCookie, TF_ANCHOR_END);
 					context->SetSelection(editCookie, 1, &selection);
 				}
-				compositionRange->Release();
+
+				// set display attribute to the composition range
+				ComPtr<ITfProperty> dispAttrProp;
+				if(context->GetProperty(GUID_PROP_ATTRIBUTE, &dispAttrProp) == S_OK) {
+					VARIANT val;
+					val.vt = VT_I4;
+					val.lVal = inputAttrib_->atom();
+					dispAttrProp->SetValue(editCookie, compositionRange, &val);
+				}
 			}
 			selection.range->Release();
 		}
@@ -294,8 +315,6 @@ STDMETHODIMP TextService::QueryInterface(REFIID riid, void **ppvObj) {
 		*ppvObj = (ITfTextInputProcessor*)this;
 	else if(IsEqualIID(riid, IID_ITfDisplayAttributeProvider))
 		*ppvObj = (ITfDisplayAttributeProvider*)this;
-	else if(IsEqualIID(riid, IID_ITfDisplayAttributeProvider))
-		*ppvObj = (ITfDisplayAttributeProvider*)this;
 	else if(IsEqualIID(riid, IID_ITfFnConfigure ))
 		*ppvObj = (ITfFnConfigure *)this;
 	else if(IsEqualIID(riid, IID_ITfTextEditSink))
@@ -374,6 +393,16 @@ STDMETHODIMP TextService::Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClient
 				langBarItemMgr->AddItem(button);
 			}
 		}
+	}
+
+	// register display attributes
+	ComPtr<ITfCategoryMgr> categoryMgr;
+	if(::CoCreateInstance(CLSID_TF_CategoryMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfCategoryMgr, (void**)&categoryMgr) == S_OK) {
+		TfGuidAtom atom;
+		categoryMgr->RegisterGUID(g_inputDisplayAttributeGuid, &atom);
+		inputAttrib_->setAtom(atom);
+		categoryMgr->RegisterGUID(g_convertedDisplayAttributeGuid, &atom);
+		convertedAttrib_->setAtom(atom);
 	}
 
 	onActivate();
@@ -539,11 +568,21 @@ STDMETHODIMP TextService::OnCompositionTerminated(TfEditCookie ecWrite, ITfCompo
 
 // ITfDisplayAttributeProvider
 STDMETHODIMP TextService::EnumDisplayAttributeInfo(IEnumTfDisplayAttributeInfo **ppEnum) {
+	*ppEnum = (IEnumTfDisplayAttributeInfo*)new DisplayAttributeInfoEnum(this);
 	return S_OK;
 }
 
 STDMETHODIMP TextService::GetDisplayAttributeInfo(REFGUID guidInfo, ITfDisplayAttributeInfo **ppInfo) {
-	return S_OK;
+	list<DisplayAttributeInfo*>::iterator it;
+	for(it = displayAttrInfos_.begin(); it != displayAttrInfos_.end(); ++it) {
+		DisplayAttributeInfo* info = *it;
+		if(::IsEqualGUID(info->guid(), guidInfo)) {
+			*ppInfo = info;
+			info->AddRef();
+			return S_OK;
+		}
+	}
+	return E_INVALIDARG;
 }
 
 // edit session handling

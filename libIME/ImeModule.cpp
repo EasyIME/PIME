@@ -9,6 +9,18 @@
 using namespace Ime;
 using namespace std;
 
+// these values are not defined in older TSF SDK (windows xp)
+#ifndef TF_IPP_CAPS_IMMERSIVESUPPORT
+// for Windows 8
+// GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT {13A016DF-560B-46CD-947A-4C3AF1E0E35D}
+static const GUID GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT =
+{ 0x13A016DF, 0x560B, 0x46CD, { 0x94, 0x7A, 0x4C, 0x3A, 0xF1, 0xE0, 0xE3, 0x5D } };
+// GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT {25504FB4-7BAB-4BC1-9C69-CF81890F0EF5}
+static const GUID GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT =
+{ 0x25504FB4, 0x7BAB, 0x4BC1, { 0x9C, 0x69, 0xCF, 0x81, 0x89, 0x0F, 0x0E, 0xF5 } };
+#endif
+
+
 ImeModule::ImeModule(HMODULE module, const CLSID& textServiceClsid):
 	hInstance_(HINSTANCE(module)),
 	textServiceClsid_(textServiceClsid),
@@ -116,7 +128,7 @@ HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID
 			// TF_IPP_CAPS_IMMERSIVESUPPORT is required to make the IME work with Windows 8.
 			// http://social.msdn.microsoft.com/Forums/windowsapps/en-US/4c422cf1-ceb4-413b-8a7c-6881946a4c63/how-to-set-a-flag-indicating-tsf-components-compatibility
 			// Quote from the page: "To indicate that your IME is compatible with Windows Store apps, call RegisterCategory with GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT."
-/*
+
 			// declare supporting immersive mode
 			if(categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT, textServiceClsid_) != S_OK) {
 				result = E_FAIL;
@@ -126,7 +138,7 @@ HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID
 			if(categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT, textServiceClsid_) != S_OK) {
 				result = E_FAIL;
 			}
-*/
+
 			categoryMgr->Release();
 		}
 	}
@@ -147,8 +159,8 @@ HRESULT ImeModule::unregisterServer(const GUID& profileGuid) {
 		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_TIP_KEYBOARD, textServiceClsid_);
 
 		// Windows 8 support
-//		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT, textServiceClsid_);
-//		categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT, textServiceClsid_);
+		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT, textServiceClsid_);
+		categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT, textServiceClsid_);
 
 		categoryMgr->Release();
 	}

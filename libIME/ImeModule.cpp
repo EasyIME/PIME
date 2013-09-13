@@ -59,6 +59,13 @@ ImeModule::ImeModule(HMODULE module, const CLSID& textServiceClsid):
 
 	Window::registerClass(hInstance_);
 
+	// check Windows version (windows 8 is 6.2, and 7 is 6.1)
+	DWORD winVer = ::GetVersion();
+	DWORD majorVersion = (DWORD)(LOBYTE(LOWORD(winVer)));
+    DWORD minorVersion = (DWORD)(HIBYTE(LOWORD(winVer)));
+	if(majorVersion > 6 || (majorVersion == 6 && minorVersion >= 2))
+		isWindows8Above_ = true;
+
 	// regiser default display attributes
 	inputAttrib_ = new DisplayAttributeInfo(g_inputDisplayAttributeGuid);
 	inputAttrib_->setTextColor(COLOR_WINDOWTEXT);
@@ -101,7 +108,7 @@ HRESULT ImeModule::getClassObject(REFCLSID rclsid, REFIID riid, void **ppvObj) {
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID languageId) {
+HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID languageId, int iconIndex) {
 	// write info of our COM text service component to the registry
 	// path: HKEY_CLASS_ROOT\\CLSID\\{xxxx-xxxx-xxxx-xx....}
 	// This reguires Administrator permimssion to write to the registery
@@ -152,7 +159,7 @@ HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID
 		if(CoCreateInstance(CLSID_TF_InputProcessorProfiles, NULL, CLSCTX_INPROC_SERVER, IID_ITfInputProcessorProfiles, (void**)&inputProcessProfiles) == S_OK) {
 			if(inputProcessProfiles->Register(textServiceClsid_) == S_OK) {
 				if(inputProcessProfiles->AddLanguageProfile(textServiceClsid_, languageId, profileGuid,
-											name, -1, modulePath, modulePathLen, 0) == S_OK) {
+											name, -1, modulePath, modulePathLen, iconIndex) == S_OK) {
 					result = S_OK;
 				}
 			}

@@ -43,10 +43,14 @@ public:
 		return textServiceClsid_;
 	}
 
+	bool isWindows8Above() {
+		return isWindows8Above_;
+	}
+
 	// Dll entry points implementations
 	HRESULT canUnloadNow();
 	HRESULT getClassObject(REFCLSID rclsid, REFIID riid, void **ppvObj);
-	HRESULT registerServer(wchar_t* name, const GUID& profileGuid, LANGID languageId);
+	HRESULT registerServer(wchar_t* name, const GUID& profileGuid, LANGID languageId, int iconIndex);
 	HRESULT unregisterServer(const GUID& profileGuid);
 
 	// should be override by IME implementors
@@ -89,6 +93,8 @@ private:
 	std::list<DisplayAttributeInfo*> displayAttrInfos_; // display attribute info
 	DisplayAttributeInfo* inputAttrib_;
 	DisplayAttributeInfo* convertedAttrib_;
+
+	bool isWindows8Above_;
 };
 
 }

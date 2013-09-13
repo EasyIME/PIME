@@ -27,6 +27,7 @@ void CandidateWindow::updateFont() {
 
 CandidateWindow::CandidateWindow(TextService* service, EditSession* session):
 	fontSize_(16),
+	selKeyWidth_(0),
 	isImmersive_(service->isImmersive()) {
 
 	if(isImmersive_) { // windows 8 app mode
@@ -121,17 +122,32 @@ void CandidateWindow::onPaint(WPARAM wp, LPARAM lp) {
 	RECT textRect = {margin_, margin_, rc.right - margin_, 0};
 	vector<wstring>::const_iterator it;
 	for(int i = 0, n = items_.size(); i < n; ++i) {
-		wstring& item = items_.at(i);
-		wchar_t numStr[10];
-		wstring line = _itow(i + 1, numStr, 10);
-		line += L". ";
-		line += item;
+		SIZE selKeySize;
+		int lineHeight = 0;
+		// the selection key string
+		wchar_t selKey[] = L"?. ";
+		selKey[0] = selKeys_[i];
+		::GetTextExtentPoint32W(hDC, selKey, 3, &selKeySize); // calculate size
+		textRect.left = margin_;
+		textRect.bottom = textRect.top + selKeySize.cy;
+		textRect.right = textRect.left + selKeyWidth_;
+		// FIXME: make the color of strings configurable.
+		COLORREF oldColor = ::SetTextColor(hDC, RGB(0, 0, 255));
+		// paint the selection key
+		::ExtTextOut(hDC, textRect.left, textRect.top, ETO_OPAQUE, &textRect, selKey, 3, NULL);
+		::SetTextColor(hDC, oldColor);
 
-		SIZE size;
-		::GetTextExtentPoint32W(hDC, line.c_str(), line.length(), &size);
-		textRect.bottom = textRect.top + size.cy;
-		::ExtTextOut(hDC, textRect.left, textRect.top, ETO_OPAQUE, &textRect, line.c_str(), line.length(), NULL);
-		textRect.top = textRect.bottom + spacing_;
+		// the candidate string
+		SIZE candidateSize;
+		wstring& item = items_.at(i);
+		::GetTextExtentPoint32W(hDC, item.c_str(), item.length(), &candidateSize);
+		textRect.left += selKeyWidth_;
+		textRect.bottom = textRect.top + candidateSize.cy;
+		// paint the candidate string
+		::ExtTextOut(hDC, textRect.left, textRect.top, ETO_OPAQUE, &textRect, item.c_str(), item.length(), NULL);
+
+		textRect.top += max(candidateSize.cy, selKeySize.cy);
+		textRect.top += spacing_;
 	}
 
 	SelectObject(hDC, oldFont);
@@ -139,28 +155,38 @@ void CandidateWindow::onPaint(WPARAM wp, LPARAM lp) {
 }
 
 void CandidateWindow::recalculateSize() {
+	if(items_.empty()) {
+		resize(margin_ * 2, margin_ * 2);
+	}
+
 	HDC hDC = ::GetWindowDC(hwnd());
 	int height = 0;
 	int width = 0;
+	selKeyWidth_ = 0;
 
 	HGDIOBJ oldFont = ::SelectObject(hDC, font_);
 	vector<wstring>::const_iterator it;
 	for(int i = 0, n = items_.size(); i < n; ++i) {
-		wstring& item = items_.at(i);
-		wchar_t numStr[10];
-		wstring line = _itow(i + 1, numStr, 10);
-		line += L". ";
-		line += item;
+		SIZE selKeySize;
+		int lineHeight = 0;
+		// the selection key string
+		wchar_t selKey[] = L"?. ";
+		selKey[0] = selKeys_[i];
+		::GetTextExtentPoint32W(hDC, selKey, 3, &selKeySize);
+		if(selKeySize.cx > selKeyWidth_)
+			selKeyWidth_ = selKeySize.cx;
 
-		SIZE size;
-		::GetTextExtentPoint32W(hDC, line.c_str(), line.length(), &size);
-		height += size.cy;
+		// the candidate string
+		SIZE candidateSize;
+		wstring& item = items_.at(i);
+		::GetTextExtentPoint32W(hDC, item.c_str(), item.length(), &candidateSize);
+		height += max(candidateSize.cy, selKeySize.cy);
 		height += spacing_;
 
-		if(size.cx > width)
-			width = size.cx;
+		if(candidateSize.cx > width)
+			width = candidateSize.cx;
 	}
-	width += margin_ * 2;
+	width += (margin_ * 2 + selKeyWidth_);
 	height += margin_ * 2;
 	::SelectObject(hDC, oldFont);
 	::ReleaseDC(hwnd(), hDC);

@@ -287,7 +287,10 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 			int len;
 			wchar_t* wbuf = ::utf8ToUtf16(buf, &len);
 			::chewing_free(buf);
-			compositionBuf += wbuf;
+			// put bopomofo symbols at insertion point
+			// FIXME: alternatively, should we show it in an additional floating window?
+			int pos = ::chewing_cursor_Current(chewingContext_);
+			compositionBuf.insert(pos, wbuf);
 			delete []wbuf;
 		}
 	}
@@ -421,14 +424,17 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 	candidateWindow_->clear();
 
 	::chewing_cand_Enumerate(chewingContext_);
-	int n = ::chewing_cand_ChoicePerPage(chewingContext_);
-	for(; n > 0 && ::chewing_cand_hasNext(chewingContext_); --n) {
+	int* selKeys = ::chewing_get_selKey(chewingContext_); // keys used to select candidates
+	int n = ::chewing_cand_ChoicePerPage(chewingContext_); // candidate string shown per page
+	int i;
+	for(i = 0; i < n && ::chewing_cand_hasNext(chewingContext_); ++i) {
 		char* str = ::chewing_cand_String(chewingContext_);
 		wchar_t* wstr = utf8ToUtf16(str);
 		::chewing_free(str);
-		candidateWindow_->add(wstr);
+		candidateWindow_->add(wstr, (wchar_t)selKeys[i]);
 		delete []wstr;
 	}
+	::chewing_free(selKeys);
 	candidateWindow_->recalculateSize();
 	candidateWindow_->refresh();
 

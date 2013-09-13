@@ -23,18 +23,21 @@ public:
 		return items_;
 	}
 
-	void setItems(const std::vector<std::wstring>& items) {
+	void setItems(const std::vector<std::wstring>& items, const std::vector<wchar_t>& sekKeys) {
 		items_ = items;
+		selKeys_ = selKeys_;
 		recalculateSize();
 		refresh();
 	}
 
-	void add(std::wstring item) {
+	void add(std::wstring item, wchar_t selKey) {
 		items_.push_back(item);
+		selKeys_.push_back(selKey);
 	}
 
 	void clear() {
 		items_.clear();
+		selKeys_.clear();
 	}
 
 	void recalculateSize();
@@ -49,7 +52,9 @@ private:
 	int fontSize_;
 	int margin_;
 	int spacing_;
+	int selKeyWidth_;
 
+	std::vector<wchar_t> selKeys_;
 	std::vector<std::wstring> items_;
 	bool isImmersive_;
 };

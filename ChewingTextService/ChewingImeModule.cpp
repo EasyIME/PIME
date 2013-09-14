@@ -19,6 +19,8 @@
 
 #include "ChewingImeModule.h"
 #include "ChewingTextService.h"
+#include <string>
+#include <ShlObj.h>
 
 using namespace Chewing;
 
@@ -31,6 +33,30 @@ const CLSID g_textServiceClsid = {
 ImeModule::ImeModule(HMODULE module):
 	Ime::ImeModule(module, g_textServiceClsid),
 	config_() {
+
+	// override default location of chewing data directories
+	std::wstring env;
+	wchar_t path[MAX_PATH];
+	if(::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path) == S_OK) {
+		wcscat(path, L"\\ChewingTextService\\Dictionary");
+		env = L"CHEWING_PATH=";
+		env += path;
+		_wputenv(env.c_str());
+	}
+
+	if(::GetEnvironmentVariableW(L"USERPROFILE", path, MAX_PATH)) {
+		userDir_ = path;
+		userDir_ += L"\\ChewingTextService";
+		// create the user directory if not exists
+		// NOTE: this call will fail in Windows 8 store apps
+		// We need a way to create the dir in desktop mode and
+		// set proper ACL, so later we can access it inside apps.
+		::CreateDirectoryW(userDir_.c_str(), NULL);
+		env = L"CHEWING_USER_PATH=";
+		env += userDir_;
+		_wputenv(env.c_str());
+	}
+
 	// load configurations
 	config_.load();
 }

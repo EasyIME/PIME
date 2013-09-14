@@ -22,6 +22,7 @@
 
 #include <LibIME/ImeModule.h>
 #include "ChewingConfig.h"
+#include <string>
 
 namespace Chewing {
 
@@ -38,6 +39,7 @@ public:
 
 private:
 	Config config_;
+	std::wstring userDir_;
 };
 
 }

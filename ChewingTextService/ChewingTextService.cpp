@@ -440,8 +440,7 @@ bool TextService::onConfigure(HWND hwndParent) {
 	dlg.showModal(this->imeModule()->hInstance(), (LPCTSTR)IDS_CONFIG_TITLE, 0, hwndParent);
 	return true;
 }
-
-
+#include <ShlObj.h>
 void TextService::updateCandidates(Ime::EditSession* session) {
 	assert(candidateWindow_);
 	candidateWindow_->clear();

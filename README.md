@@ -48,12 +48,20 @@ All parts are licensed under GNU LGPL v2.1 license.
 *   [Creating a DACL](http://msdn.microsoft.com/en-us/library/windows/apps/ms717798.aspx)
 
 # Install
-*   Copy `libchewing/data/*.dat` to `%WINDIR%/chewing`
+*   Copy `ChewingTextService.dll` to C:\Program Files\ChewingTextService.
+*   Copy `libchewing/data/*.dat` to `C:\Program Files\ChewingTextService\Dictionary`
 *   Use `regsvr32` to register `ChewingService.dll`. 64-bit system need to register both 32-bit and 64-bit `ChewingService.dll`
 
-        regsvr32 ChewingService.dll (run as administrator)
+        regsvr32 C:\Program Files\ChewingTextService\ChewingTextService.dll (run as administrator)
 
 *   NOTICE: the `regsvr32` command needs to be run as Administrator. Otherwise you'll get access denied error.
+# For Windows 8, you also need to do this:
+*   Create C:\Users\<user_name>\ChewingTextService directory manually before using the input method.
+*   Set ACLs for the created directory so it can be accessible from Windows store apps
+
+        cacls C:\Users\<user_name>\ChewingTextService /e /t /g "ALL APPLICATION PACKAGE:f"
+
+*   Warning: this will give full access of this folder to all metro apps. This may not be the optimized permission settings. Further study on ACL is required here.
 
 # Uninstall
 *   Remove `%WINDIR%/chewing`

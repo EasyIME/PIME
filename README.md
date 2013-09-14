@@ -55,19 +55,21 @@ All parts are licensed under GNU LGPL v2.1 license.
         regsvr32 C:\Program Files\ChewingTextService\ChewingTextService.dll (run as administrator)
 
 *   NOTICE: the `regsvr32` command needs to be run as Administrator. Otherwise you'll get access denied error.
+*   In Windows 8, if you put the dlls in places other than C:\Windows or C:\Program Files, they will not be accessible in metro apps.
+
 # For Windows 8, you also need to do this:
 *   Create C:\Users\<user_name>\ChewingTextService directory manually before using the input method.
 *   Set ACLs for the created directory so it can be accessible from Windows store apps
 
-        cacls C:\Users\<user_name>\ChewingTextService /e /t /g "ALL APPLICATION PACKAGE:f"
+        cacls C:\Users\<user_name>\ChewingTextService /e /t /g "ALL APPLICATION PACKAGES:f"
 
 *   Warning: this will give full access of this folder to all metro apps. This may not be the optimized permission settings. Further study on ACL is required here.
 
 # Uninstall
 *   Remove `%WINDIR%/chewing`
-*   Use `regsvr32` to unregister `ChewingService.dll`. 64-bit system need to register both 32-bit and 64-bit `ChewingService.dll`
+*   Use `regsvr32` to unregister `ChewingTextService.dll`. 64-bit system need to register both 32-bit and 64-bit `ChewingTextService.dll`
 
-        regsvr32 /u ChewingService.dll (run as administrator)
+        regsvr32 /u ChewingTextService.dll (run as administrator)
 
 *   NOTICE: the `regsvr32` command needs to be run as Administrator. Otherwise you'll get access denied error.
 

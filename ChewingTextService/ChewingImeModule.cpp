@@ -37,7 +37,7 @@ ImeModule::ImeModule(HMODULE module):
 	// override default location of chewing data directories
 	std::wstring env;
 	wchar_t path[MAX_PATH];
-	if(::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path) == S_OK) {
+	if(::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILESX86, NULL, 0, path) == S_OK) {
 		wcscat(path, L"\\ChewingTextService\\Dictionary");
 		env = L"CHEWING_PATH=";
 		env += path;

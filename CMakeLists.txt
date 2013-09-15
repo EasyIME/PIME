@@ -7,7 +7,10 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX	${CMAKE_CURRENT_SOURCE_DIR}/cmake/cxx_fla
 project(windows-chewing-tsf)
 
 # http://www.utf8everywhere.org/
-add_definitions(/D_UNICODE=1 /DUNICODE=1)
+add_definitions(
+	/D_UNICODE=1 /DUNICODE=1 # do Unicode build
+	/GR- # turn off C++ RTTI
+)
 
 enable_testing()
 

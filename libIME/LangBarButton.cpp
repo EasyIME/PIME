@@ -24,7 +24,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-using namespace Ime;
+namespace Ime {
 
 LangBarButton::LangBarButton(TextService* service, const GUID& guid, UINT commandId, wchar_t* text, DWORD style):
 	textService_(service),
@@ -314,3 +314,6 @@ void LangBarButton::update(DWORD flags) {
 		}
 	}
 }
+
+} // namespace Ime
+

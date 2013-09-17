@@ -25,8 +25,9 @@
 #include <tchar.h>
 #include <windows.h>
 
-using namespace Ime;
 using namespace std;
+
+namespace Ime {
 
 void CandidateWindow::updateFont() {
 /*
@@ -211,3 +212,5 @@ void CandidateWindow::recalculateSize() {
 	::ReleaseDC(hwnd(), hDC);
 	resize(width, height);
 }
+
+} // namespace Ime

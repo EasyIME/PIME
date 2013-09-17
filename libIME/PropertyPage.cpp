@@ -19,7 +19,7 @@
 
 #include "PropertyPage.h"
 
-using namespace Ime;
+namespace Ime {
 
 PropertyPage::PropertyPage(LPCTSTR dialogId):
 	Dialog(),
@@ -77,3 +77,5 @@ void PropertyPage::onOK() {
 void PropertyPage::onCancel() {
 	::SetWindowLongPtr(hwnd_, DWLP_MSGRESULT, PSNRET_NOERROR);
 }
+
+} // namespace Ime

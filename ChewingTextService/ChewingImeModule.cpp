@@ -22,7 +22,7 @@
 #include <string>
 #include <ShlObj.h>
 
-using namespace Chewing;
+namespace Chewing {
 
 // CLSID of our Text service
 // {13F2EF08-575C-4D8C-88E0-F67BB8052B84}
@@ -69,3 +69,5 @@ Ime::TextService* ImeModule::createTextService() {
 	TextService* service = new Chewing::TextService(this);
 	return service;
 }
+
+} // namespace Chewing

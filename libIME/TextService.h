@@ -50,7 +50,8 @@ class TextService:
 	public ITfThreadMgrEventSink,
 	public ITfTextEditSink,
 	public ITfKeyEventSink,
-	public ITfCompositionSink {
+	public ITfCompositionSink,
+	public ITfCompartmentEventSink {
 public:
 
 	TextService(ImeModule* module);
@@ -88,6 +89,14 @@ public:
 
 	// text composition handling
 	bool isComposing();
+
+	// is keyboard disabled for the context (NULL means current context)
+	bool isKeyboardDisabled(ITfContext* context = NULL);
+	
+	// is keyboard opened for the whole thread
+	bool isKeyboardOpened() const;
+	void setKeyboardOpen(bool open);
+
 	bool isInsertionAllowed(EditSession* session);
 	void startComposition(ITfContext* context);
 	void endComposition(ITfContext* context);
@@ -97,6 +106,19 @@ public:
 
 	void setCompositionString(EditSession* session, const wchar_t* str, int len);
 	void setCompositionCursor(EditSession* session, int pos);
+
+	// compartment handling
+	ComPtr<ITfCompartment> globalCompartment(const GUID& key);
+	ComPtr<ITfCompartment> threadCompartment(const GUID& key);
+	ComPtr<ITfCompartment> contextCompartment(const GUID& key, ITfContext* context = NULL);
+
+	DWORD globalCompartmentValue(const GUID& key);
+	DWORD threadCompartmentValue(const GUID& key);
+	DWORD contextCompartmentValue(const GUID& key, ITfContext* context = NULL);
+
+	void setGlobalCompartmentValue(const GUID& key, DWORD value);
+	void setThreadCompartmentValue(const GUID& key, DWORD value);
+	void setContextCompartmentValue(const GUID& key, DWORD value, ITfContext* context = NULL);
 
 	// virtual functions that IME implementors may need to override
 	virtual void onActivate();
@@ -118,6 +140,9 @@ public:
 
 	// called when config dialog needs to be launched
 	virtual bool onConfigure(HWND hwndParent);
+
+	// called when a value in the global or thread compartment changed.
+	virtual void onCompartmentChanged(const GUID& key);
 
 	// COM related stuff
 public:
@@ -158,6 +183,9 @@ public:
 
     // ITfCompositionSink
     STDMETHODIMP OnCompositionTerminated(TfEditCookie ecWrite, ITfComposition *pComposition);
+
+	// ITfCompartmentEventSink
+	STDMETHODIMP OnChange(REFGUID rguid);
 
 protected:
 	// edit session classes, used with TSF
@@ -203,11 +231,14 @@ private:
 	ComPtr<ITfThreadMgr> threadMgr_;
 	TfClientId clientId_;
 	DWORD activateFlags_;
+	bool isKeyboardOpened_;
 
 	// event sink cookies
 	DWORD threadMgrEventSinkCookie_;
 	DWORD textEditSinkCookie_;
 	DWORD compositionSinkCookie_;
+	DWORD keyboardOpenEventSinkCookie_;
+	DWORD globalCompartmentEventSinkCookie_;
 
 	ITfComposition* composition_; // acquired when starting composition, released when ending composition
 	CandidateWindow* candidateWindow_;

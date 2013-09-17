@@ -22,7 +22,7 @@
 #include "ImeModule.h"
 #include <assert.h>
 
-using namespace Ime;
+namespace Ime {
 
 DisplayAttributeInfoEnum::DisplayAttributeInfoEnum(DisplayAttributeProvider* provider):
 	provider_(provider),
@@ -105,3 +105,6 @@ STDMETHODIMP DisplayAttributeInfoEnum::Skip(ULONG ulCount) {
 		++iterator_;
 	return S_OK;
 }
+
+} // namespace Ime
+

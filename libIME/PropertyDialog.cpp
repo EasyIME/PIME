@@ -22,8 +22,9 @@
 #include <assert.h>
 #include <algorithm>
 
-using namespace Ime;
 using namespace std;
+
+namespace Ime {
 
 typedef INT_PTR (WINAPI *PropertySheetFunc)(LPCPROPSHEETHEADER lppsph);
 static PropertySheetFunc g_PropertySheetW = NULL;
@@ -83,3 +84,5 @@ void PropertyDialog::removePage(PropertyPage* page) {
 	if(it != pages_.end())
 		pages_.erase(it);
 }
+
+} // namespace Ime

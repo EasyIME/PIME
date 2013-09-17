@@ -19,7 +19,7 @@
 
 #include "KeyEvent.h"
 
-using namespace Ime;
+namespace Ime {
 
 KeyEvent::KeyEvent(UINT type, WPARAM wp, LPARAM lp):
 	type_(type),
@@ -48,3 +48,5 @@ KeyEvent::KeyEvent(const KeyEvent& other):
 
 KeyEvent::~KeyEvent(void) {
 }
+
+} // namespace Ime

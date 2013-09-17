@@ -19,7 +19,7 @@
 
 #include "ImeWindow.h"
 
-using namespace Ime;
+namespace Ime {
 
 ImeWindow::ImeWindow() {
 }
@@ -72,3 +72,6 @@ bool ImeWindow::workingArea(RECT* rc, HWND app_wnd) {
 		*rc = mi.rcWork;
 	return true;
 }
+
+} // namespace Ime
+

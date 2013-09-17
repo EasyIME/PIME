@@ -29,8 +29,9 @@
 #include <Shellapi.h>
 #include "TypingPage.h"
 
-using namespace Chewing;
 using namespace std;
+
+namespace Chewing {
 
 // {B59D51B9-B832-40D2-9A8D-56959372DDC7}
 static const GUID g_modeButtonGuid = // English/Chinses mode switch
@@ -519,3 +520,5 @@ void TextService::updateLangButtons() {
 		switchShapeButton_->setIcon(shapeMode == FULLSHAPE_MODE ? IDI_FULL_SHAPE : IDI_HALF_SHAPE);
 	}
 }
+
+} // namespace Chewing

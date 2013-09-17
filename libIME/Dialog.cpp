@@ -19,7 +19,7 @@
 
 #include "Dialog.h"
 
-using namespace Ime;
+namespace Ime {
 
 Dialog::Dialog(void):
 	Window() {
@@ -90,3 +90,6 @@ void Dialog::onOK() {
 void Dialog::onCancel() {
 	endDialog(IDCANCEL);
 }
+
+} // namespace Ime
+

@@ -23,8 +23,9 @@
 #include "ImeModule.h"
 #include <assert.h>
 
-using namespace Ime;
 using namespace std;
+
+namespace Ime {
 
 DisplayAttributeProvider::DisplayAttributeProvider(ImeModule* module):
 	imeModule_(module),
@@ -86,3 +87,5 @@ STDMETHODIMP DisplayAttributeProvider::GetDisplayAttributeInfo(REFGUID guidInfo,
 	}
 	return E_INVALIDARG;
 }
+
+} // namespace Ime

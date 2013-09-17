@@ -27,8 +27,9 @@
 #include "TextService.h"
 #include "DisplayAttributeProvider.h"
 
-using namespace Ime;
 using namespace std;
+
+namespace Ime {
 
 // these values are not defined in older TSF SDK (windows xp)
 #ifndef TF_IPP_CAPS_IMMERSIVESUPPORT
@@ -323,3 +324,5 @@ STDMETHODIMP ImeModule::LockServer(BOOL fLock) {
 		Release();
 	return S_OK;
 }
+
+} // namespace Ime

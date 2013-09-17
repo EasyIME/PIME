@@ -19,7 +19,7 @@
 
 #include "ChewingConfig.h"
 
-using namespace Chewing;
+namespace Chewing {
 
 #define DEF_FONT_SIZE           16
 
@@ -167,3 +167,5 @@ void Config::save() {
 	// Luckily, TSF global compartment sink is a perfect way to do this.
 	// So no complicated IPC is needed here.
 }
+
+} // namespace Chewing

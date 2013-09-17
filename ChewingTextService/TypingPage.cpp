@@ -21,7 +21,7 @@
 #include "resource.h"
 #include <WindowsX.h>
 
-using namespace Chewing;
+namespace Chewing {
 
 TypingPage::TypingPage(Config* config):
 	Ime::PropertyPage((LPCTSTR)IDD_TYPING),
@@ -87,3 +87,4 @@ void TypingPage::onOK() {
 	PropertyPage::onOK();
 }
 
+} // namespace Chewing

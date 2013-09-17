@@ -21,7 +21,7 @@
 #include "TextService.h"
 #include <assert.h>
 
-using namespace Ime;
+namespace Ime {
 
 EditSession::EditSession(TextService* service, ITfContext* context):
 	textService_(service),
@@ -77,3 +77,5 @@ STDMETHODIMP EditSession::DoEditSession(TfEditCookie ec) {
 	editCookie_ = ec;
 	return S_OK;
 }
+
+} // namespace Ime

@@ -20,7 +20,7 @@
 #include "DisplayAttributeInfo.h"
 #include <assert.h>
 
-using namespace Ime;
+namespace Ime {
 
 DisplayAttributeInfo::DisplayAttributeInfo(const GUID& guid):
 	atom_(0),
@@ -102,3 +102,5 @@ STDMETHODIMP DisplayAttributeInfo::Reset() {
 	attrib_.lsStyle = TF_LS_NONE;
 	return S_OK;
 }
+
+} // namespace Ime

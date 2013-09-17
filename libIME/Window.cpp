@@ -19,7 +19,7 @@
 
 #include "Window.h"
 
-using namespace Ime;
+namespace Ime {
 
 static TCHAR g_imeWindowClassName[] = _T("LibImeWindow");
 static HINSTANCE g_hinstance = NULL;
@@ -95,3 +95,5 @@ bool Window::registerClass(HINSTANCE hinstance) {
 		return false;
 	return true;
 }
+
+} // namespace Ime

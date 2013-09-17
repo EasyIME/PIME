@@ -9,6 +9,7 @@ project(windows-chewing-tsf)
 # http://www.utf8everywhere.org/
 add_definitions(
 	/D_UNICODE=1 /DUNICODE=1 # do Unicode build
+  /D_CRT_SECURE_NO_WARNINGS # disable warnings about old libc functions
 	/GR- # turn off C++ RTTI
 )
 

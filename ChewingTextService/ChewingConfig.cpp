@@ -66,7 +66,6 @@ Config::Config(void) {
 Config::~Config(void) {
 }
 
-
 void Config::load() {
 /*
 	#define KB_TYPE_NUM 9
@@ -81,7 +80,7 @@ void Config::load() {
 	#define KB_HANYU_PINYING 8
 */
 	HKEY hk = NULL;
-	if(ERROR_SUCCESS == ::RegOpenKeyW(HKEY_CURRENT_USER, L"Software\\ChewingTextService", &hk)) {
+	if(ERROR_SUCCESS == ::RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\ChewingTextService", 0, KEY_READ, &hk)) {
 		DWORD size = sizeof(DWORD);
 		DWORD type = REG_DWORD;
 		::RegQueryValueEx(hk, L"KeyboardLayout", 0, &type, (LPBYTE)&keyboardLayout, &size);		

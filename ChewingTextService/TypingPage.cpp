@@ -23,72 +23,70 @@
 
 using namespace Chewing;
 
-TypingPage::TypingPage(void):
-	Ime::PropertyPage((LPCTSTR)IDD_TYPING) {
+TypingPage::TypingPage(Config* config):
+	Ime::PropertyPage((LPCTSTR)IDD_TYPING),
+	config_(config) {
 }
 
 TypingPage::~TypingPage(void) {
 }
 
 LRESULT TypingPage::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
-#if 0
 	switch(msg) {
 	case WM_INITDIALOG: {
-			CheckRadioButton(hwnd_, IDC_KB1, IDC_KB9, IDC_KB1 + g_keyboardLayout);
+			CheckRadioButton(hwnd_, IDC_KB1, IDC_KB9, IDC_KB1 + config_->keyboardLayout);
 
-			CheckDlgButton(hwnd_, IDC_SPACESEL, g_spaceAsSelection);
-			CheckDlgButton(hwnd_, IDC_ENABLE_SHIFT, g_enableShift);
-			CheckDlgButton(hwnd_, IDC_SHIFT_CAPITAL, g_shiftCapital);
-			CheckDlgButton(hwnd_, IDC_ADD_PHRASE_FORWARD, g_addPhraseForward);
-			CheckDlgButton(hwnd_, IDC_ADV_AFTER_SEL, g_AdvanceAfterSelection);
-			CheckDlgButton(hwnd_, IDC_CURSOR_CANDLIST, g_cursorCandList);
-			CheckDlgButton(hwnd_, IDC_ENABLE_CAPSLOCK, g_enableCapsLock);
-			CheckDlgButton(hwnd_, IDC_SHIFT_FULLSHAPE, g_shiftFullShape);
-			CheckDlgButton(hwnd_, IDC_ESC_CLEAN_ALL_BUF, g_escCleanAllBuf);
-			CheckDlgButton(hwnd_, IDC_SHIFT_SYMBOL, g_shiftSymbol);
-			CheckDlgButton(hwnd_, IDC_CTRL_SYMBOL, g_ctrlSymbol);
-			CheckDlgButton(hwnd_, IDC_ENABLE_Simp, g_enableSimp);
+			CheckDlgButton(hwnd_, IDC_SPACESEL, config_->spaceAsSelection);
+			CheckDlgButton(hwnd_, IDC_ENABLE_SHIFT, config_->enableShift);
+			CheckDlgButton(hwnd_, IDC_SHIFT_CAPITAL, config_->shiftCapital);
+			CheckDlgButton(hwnd_, IDC_ADD_PHRASE_FORWARD, config_->addPhraseForward);
+			CheckDlgButton(hwnd_, IDC_ADV_AFTER_SEL, config_->advanceAfterSelection);
+			CheckDlgButton(hwnd_, IDC_CURSOR_CANDLIST, config_->cursorCandList);
+			CheckDlgButton(hwnd_, IDC_ENABLE_CAPSLOCK, config_->enableCapsLock);
+			CheckDlgButton(hwnd_, IDC_SHIFT_FULLSHAPE, config_->shiftFullShape);
+			CheckDlgButton(hwnd_, IDC_ESC_CLEAN_ALL_BUF, config_->escCleanAllBuf);
+			CheckDlgButton(hwnd_, IDC_SHIFT_SYMBOL, config_->shiftSymbol);
+			CheckDlgButton(hwnd_, IDC_CTRL_SYMBOL, config_->ctrlSymbol);
+			CheckDlgButton(hwnd_, IDC_ENABLE_Simp, config_->enableSimp);
 
 			HWND combo = GetDlgItem(hwnd_, IDC_SELKEYS);
-			const TCHAR** pselkeys = g_selKeyNames;
-			while(*pselkeys)
-				ComboBox_AddString(combo, *(pselkeys++));
-			ComboBox_SetCurSel(combo, g_selKeyType);
+			// const TCHAR** pselkeys = config_->selKeyNames;
+			// while(*pselkeys)
+			//	ComboBox_AddString(combo, *(pselkeys++));
+			// ComboBox_SetCurSel(combo, config_->selKeyType);
 		}
 		return TRUE;
 	case WM_NOTIFY:
 		if(LPNMHDR(lp)->code == PSN_APPLY) {
 			for(UINT id = IDC_KB1; id <= IDC_KB9; ++id)	{
 				if(IsDlgButtonChecked(hwnd_, id))	{
-					g_keyboardLayout = (id - IDC_KB1);
+					config_->keyboardLayout = (id - IDC_KB1);
 					break;
 				}
 			}
 
-			g_selKeyType = ComboBox_GetCurSel(GetDlgItem(hwnd_, IDC_SELKEYS));
-			if(g_selKeyType < 0)
-				g_selKeyType = 0;
+			config_->selKeyType = ComboBox_GetCurSel(GetDlgItem(hwnd_, IDC_SELKEYS));
+			if(config_->selKeyType < 0)
+				config_->selKeyType = 0;
 
-			g_spaceAsSelection = IsDlgButtonChecked(hwnd_, IDC_SPACESEL);
-			g_enableShift = IsDlgButtonChecked(hwnd_, IDC_ENABLE_SHIFT);
-			g_shiftCapital = IsDlgButtonChecked(hwnd_, IDC_SHIFT_CAPITAL);
-			g_addPhraseForward = IsDlgButtonChecked(hwnd_, IDC_ADD_PHRASE_FORWARD);
-			g_AdvanceAfterSelection = IsDlgButtonChecked(hwnd_, IDC_ADV_AFTER_SEL);
-			g_cursorCandList = IsDlgButtonChecked(hwnd_, IDC_CURSOR_CANDLIST);
-			g_enableCapsLock = IsDlgButtonChecked(hwnd_, IDC_ENABLE_CAPSLOCK);
-			g_shiftFullShape = IsDlgButtonChecked(hwnd_, IDC_SHIFT_FULLSHAPE);
-			g_escCleanAllBuf = IsDlgButtonChecked(hwnd_, IDC_ESC_CLEAN_ALL_BUF);
-			if (g_chewing!=NULL)
-				g_chewing->SetAdvanceAfterSelection((g_AdvanceAfterSelection!=0)?true: false);
-			g_shiftSymbol = IsDlgButtonChecked(hwnd_, IDC_SHIFT_SYMBOL);
-			g_ctrlSymbol = IsDlgButtonChecked(hwnd_, IDC_CTRL_SYMBOL);
-			g_enableSimp = IsDlgButtonChecked(hwnd_, IDC_ENABLE_Simp);
+			config_->spaceAsSelection = IsDlgButtonChecked(hwnd_, IDC_SPACESEL);
+			config_->enableShift = IsDlgButtonChecked(hwnd_, IDC_ENABLE_SHIFT);
+			config_->shiftCapital = IsDlgButtonChecked(hwnd_, IDC_SHIFT_CAPITAL);
+			config_->addPhraseForward = IsDlgButtonChecked(hwnd_, IDC_ADD_PHRASE_FORWARD);
+			config_->advanceAfterSelection = IsDlgButtonChecked(hwnd_, IDC_ADV_AFTER_SEL);
+			config_->cursorCandList = IsDlgButtonChecked(hwnd_, IDC_CURSOR_CANDLIST);
+			config_->enableCapsLock = IsDlgButtonChecked(hwnd_, IDC_ENABLE_CAPSLOCK);
+			config_->shiftFullShape = IsDlgButtonChecked(hwnd_, IDC_SHIFT_FULLSHAPE);
+			config_->escCleanAllBuf = IsDlgButtonChecked(hwnd_, IDC_ESC_CLEAN_ALL_BUF);
+			// if (config_->chewing!=NULL)
+			// 	config_->chewing->SetAdvanceAfterSelection((config_->AdvanceAfterSelection!=0)?true: false);
+			config_->shiftSymbol = IsDlgButtonChecked(hwnd_, IDC_SHIFT_SYMBOL);
+			config_->ctrlSymbol = IsDlgButtonChecked(hwnd_, IDC_CTRL_SYMBOL);
+			config_->enableSimp = IsDlgButtonChecked(hwnd_, IDC_ENABLE_Simp);
 
 			SetWindowLongPtr(hwnd_, DWLP_MSGRESULT, PSNRET_NOERROR);
 			return TRUE;
 		}
-			break;
 	}
-#endif
 	return PropertyPage::wndProc(msg, wp, lp);
 }

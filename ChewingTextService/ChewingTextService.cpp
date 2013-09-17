@@ -434,13 +434,14 @@ bool TextService::onConfigure(HWND hwndParent) {
 
 	// FIXME: something wrong causing crashes here.
 	// I'm not sure what's the problem yet.
+	Config& config = ((Chewing::ImeModule*)imeModule())->config();
 	Ime::PropertyDialog dlg;
-	TypingPage* typingPage = new TypingPage();
+	TypingPage* typingPage = new TypingPage(&config);
 	dlg.addPage(typingPage);
 	dlg.showModal(this->imeModule()->hInstance(), (LPCTSTR)IDS_CONFIG_TITLE, 0, hwndParent);
 	return true;
 }
-#include <ShlObj.h>
+
 void TextService::updateCandidates(Ime::EditSession* session) {
 	assert(candidateWindow_);
 	candidateWindow_->clear();

@@ -56,10 +56,14 @@ INT_PTR CALLBACK PropertyPage::_dlgProc(HWND hwnd , UINT msg, WPARAM wp , LPARAM
 LRESULT PropertyPage::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
 	switch(msg) {
 	case WM_NOTIFY:
-		if(LPNMHDR(lp)->code == PSN_APPLY) {
+		switch(LPNMHDR(lp)->code) {
+		case PSN_APPLY:
 			onOK();
+			return TRUE;
+		case PSN_QUERYCANCEL:
+			onCancel();
+			return TRUE;
 		}
-		return TRUE;
 	}
 	return Dialog::wndProc(msg, wp, lp);
 }

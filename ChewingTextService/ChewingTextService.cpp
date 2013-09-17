@@ -323,8 +323,11 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 		setCompositionString(session, compositionBuf.c_str(), compositionBuf.length());
 	}
 	else { // nothing left in composition buffer, terminate composition status
-		if(isComposing())
+		if(isComposing()) {
+			// clean composition before end it
+			setCompositionString(session, compositionBuf.c_str(), compositionBuf.length());
 			endComposition(session->context());
+		}
 	}
 
 	// update cursor pos

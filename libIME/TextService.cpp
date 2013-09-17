@@ -879,6 +879,12 @@ HRESULT TextService::doEndCompositionEditSession(TfEditCookie cookie, EndComposi
 		// move current insertion point to end of the composition string
 		ITfRange* compositionRange;
 		if(composition_->GetRange(&compositionRange) == S_OK) {
+			// clear display attribute for the composition range
+			ComPtr<ITfProperty> dispAttrProp;
+			if(session->context()->GetProperty(GUID_PROP_ATTRIBUTE, &dispAttrProp) == S_OK) {
+				dispAttrProp->Clear(cookie, compositionRange);
+			}
+
 			TF_SELECTION selection;
 			ULONG selectionNum;
 			if(session->context()->GetSelection(cookie, TF_DEFAULT_SELECTION, 1, &selection, &selectionNum) == S_OK) {

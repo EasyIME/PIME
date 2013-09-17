@@ -35,6 +35,9 @@ public:
 protected:
 	void setup(PROPSHEETPAGE& page);
 	static INT_PTR CALLBACK _dlgProc(HWND hwnd , UINT msg, WPARAM wp , LPARAM lp);
+	virtual LRESULT wndProc(UINT msg, WPARAM wp, LPARAM lp);
+	virtual void onOK();
+	virtual void onCancel();
 
 private:
 	LPCTSTR dialogId_;

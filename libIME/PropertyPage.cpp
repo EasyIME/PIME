@@ -51,3 +51,25 @@ INT_PTR CALLBACK PropertyPage::_dlgProc(HWND hwnd , UINT msg, WPARAM wp , LPARAM
 	}
 	return Dialog::_dlgProc(hwnd, msg, wp, lp);
 }
+
+// virtual
+LRESULT PropertyPage::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
+	switch(msg) {
+	case WM_NOTIFY:
+		if(LPNMHDR(lp)->code == PSN_APPLY) {
+			onOK();
+		}
+		return TRUE;
+	}
+	return Dialog::wndProc(msg, wp, lp);
+}
+
+// virtual
+void PropertyPage::onOK() {
+	::SetWindowLongPtr(hwnd_, DWLP_MSGRESULT, PSNRET_NOERROR);
+}
+
+// virtual
+void PropertyPage::onCancel() {
+	::SetWindowLongPtr(hwnd_, DWLP_MSGRESULT, PSNRET_NOERROR);
+}

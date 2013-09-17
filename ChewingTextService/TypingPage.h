@@ -31,7 +31,8 @@ public:
 	virtual ~TypingPage(void);
 
 protected:
-	LRESULT wndProc(UINT msg, WPARAM wp, LPARAM lp);
+	virtual bool onInitDialog();
+	virtual void onOK();
 
 private:
 	Config* config_;

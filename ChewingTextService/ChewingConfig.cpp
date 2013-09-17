@@ -23,13 +23,13 @@ using namespace Chewing;
 
 #define DEF_FONT_SIZE           16
 
-const char* Config::selKeys[]={
-	"1234567890",
-	"asdfghjkl;",
-	"asdfzxcv89",
-	"asdfjkl789",
-	"aoeuhtn789",
-    "1234qweras",
+const wchar_t* Config::selKeys[]={
+	L"1234567890",
+	L"asdfghjkl;",
+	L"asdfzxcv89",
+	L"asdfjkl789",
+	L"aoeuhtn789",
+    L"1234qweras",
 	NULL
 };
 
@@ -162,4 +162,8 @@ void Config::save() {
 		::RegSetValueEx(hk, L"CheckNewVersion", 0, REG_DWORD, (LPBYTE)&checkNewVersion, sizeof(DWORD));
 		::RegCloseKey(hk);
 	}
+
+	// TODO: notify the world about the change and ask other text service instances to reload!
+	// Luckily, TSF global compartment sink is a perfect way to do this.
+	// So no complicated IPC is needed here.
 }

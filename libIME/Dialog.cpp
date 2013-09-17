@@ -51,8 +51,7 @@ INT_PTR CALLBACK Dialog::_dlgProc(HWND hwnd , UINT msg, WPARAM wp , LPARAM lp) {
 			Dialog* pThis = (Dialog*)lp;
 			pThis->hwnd_ = hwnd;
 			hwndMap_[hwnd] = pThis;
-			pThis->wndProc(msg, wp, lp);
-			return TRUE;
+			return pThis->wndProc(msg, wp, lp);
 		}
 	}
 	return FALSE;
@@ -62,9 +61,32 @@ INT_PTR CALLBACK Dialog::_dlgProc(HWND hwnd , UINT msg, WPARAM wp , LPARAM lp) {
 LRESULT Dialog::wndProc(UINT msg, WPARAM wp , LPARAM lp) {
 	switch(msg) {
 	case WM_COMMAND:
-		if(wp == IDOK || wp == IDCANCEL)
-			endDialog(wp);
+		switch(wp) {
+		case IDOK:
+			onOK();
+			return TRUE;
+		case IDCANCEL:
+			onCancel();
+			return TRUE;
+		}
 		break;
+	case WM_INITDIALOG:
+		return onInitDialog();
 	}
 	return FALSE;
+}
+
+// virtual
+bool Dialog::onInitDialog() {
+	return true;
+}
+
+// virtual
+void Dialog::onOK() {
+	endDialog(IDOK);
+}
+
+// virtual
+void Dialog::onCancel() {
+	endDialog(IDCANCEL);
 }

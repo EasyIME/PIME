@@ -61,7 +61,7 @@ public:
 	DWORD ctrlSymbol;
 	DWORD checkNewVersion;	// Enable update notifier
 
-	static const char* selKeys[];
+	static const wchar_t* selKeys[];
 };
 
 }

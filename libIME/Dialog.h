@@ -41,6 +41,10 @@ protected:
 	static INT_PTR CALLBACK _dlgProc(HWND hwnd , UINT msg, WPARAM wp , LPARAM lp);
 	virtual LRESULT wndProc(UINT msg, WPARAM wp , LPARAM lp);
 
+	virtual bool onInitDialog();
+	virtual void onOK();
+	virtual void onCancel();
+
 private:
 };
 

@@ -55,6 +55,7 @@ static const GUID g_convertedDisplayAttributeGuid =
 ImeModule::ImeModule(HMODULE module, const CLSID& textServiceClsid):
 	hInstance_(HINSTANCE(module)),
 	textServiceClsid_(textServiceClsid),
+	isWindows8Above_(false),
 	refCount_(1) {
 
 	Window::registerClass(hInstance_);

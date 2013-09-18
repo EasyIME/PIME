@@ -94,7 +94,6 @@ private:
 
 	int langMode_;
 	int shapeMode_;
-	DWORD lastConfigStamp_;
 };
 
 }

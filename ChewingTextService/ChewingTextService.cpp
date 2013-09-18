@@ -62,7 +62,6 @@ TextService::TextService(ImeModule* module):
 	showingCandidates_(false),
 	langMode_(-1),
 	shapeMode_(-1),
-	lastConfigStamp_(Config::INVALID_TIMESTAMP),
 	candidateWindow_(NULL),
 	chewingContext_(NULL) {
 
@@ -117,13 +116,8 @@ void TextService::onActivate() {
 	if(!chewingContext_) {
 		chewingContext_ = ::chewing_new();
 		::chewing_set_maxChiSymbolLen(chewingContext_, 50);
-		applyConfig();
 	}
-	else {
-		// do not apply the config again if we're already up to date.
-		if(lastConfigStamp_ != config().stamp)
-			applyConfig();
-	}
+	applyConfig();
 
 	updateLangButtons();
 }
@@ -474,8 +468,7 @@ void TextService::onCompartmentChanged(const GUID& key) {
 		// changes of configuration are detected
 		DWORD stamp = globalCompartmentValue(g_configChangedGuid);
 		config().reloadIfNeeded(stamp);
-		if(lastConfigStamp_ != stamp) // if our config is out of date
-			applyConfig(); // apply the latest config
+		applyConfig(); // apply the latest config
 	}
 	else
 		Ime::TextService::onCompartmentChanged(key);
@@ -483,7 +476,6 @@ void TextService::onCompartmentChanged(const GUID& key) {
 
 void TextService::applyConfig() {
 	Config& cfg = config();
-	lastConfigStamp_ = cfg.stamp;
 
 	// apply the new configurations
 	if(chewingContext_) {

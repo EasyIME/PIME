@@ -368,13 +368,39 @@ DWORD TextService::contextCompartmentValue(const GUID& key, ITfContext* context)
 }
 
 void TextService::setGlobalCompartmentValue(const GUID& key, DWORD value) {
-	ComPtr<ITfCompartment> compartment = globalCompartment(key);
-	if(compartment) {
-		VARIANT var;
-		::VariantInit(&var);
-		var.vt = VT_I4;
-		var.lVal = value;
-		compartment->SetValue(clientId_, &var);
+	if(threadMgr_) {
+		ComPtr<ITfCompartment> compartment = globalCompartment(key);
+		if(compartment) {
+			VARIANT var;
+			::VariantInit(&var);
+			var.vt = VT_I4;
+			var.lVal = value;
+			compartment->SetValue(clientId_, &var);
+		}
+	}
+	else {
+		// if we don't have a thread manager (this is possible when we try to set
+		// a global compartment value while the text service is not activated)
+		ComPtr<ITfThreadMgr> threadMgr;
+		if(::CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgr, (void**)&threadMgr) == S_OK) {
+			if(threadMgr) {
+				ComPtr<ITfCompartmentMgr> compartmentMgr;
+				if(threadMgr->GetGlobalCompartment(&compartmentMgr) == S_OK) {
+					ComPtr<ITfCompartment> compartment;
+					if(compartmentMgr->GetCompartment(key, &compartment) == S_OK && compartment) {
+						TfClientId id;
+						if(threadMgr->Activate(&id) == S_OK) {
+							VARIANT var;
+							::VariantInit(&var);
+							var.vt = VT_I4;
+							var.lVal = value;
+							compartment->SetValue(id, &var);
+							threadMgr->Deactivate();
+						}
+					}
+				}
+			}
+		}
 	}
 }
 

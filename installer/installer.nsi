@@ -105,6 +105,17 @@ ${EndIf}
 
 ;Store installation folder in the registry
 WriteRegStr HKLM "Software\ChewingTextService" "" $INSTDIR
+;Write an entry to Add & Remove applications
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChewingTextService" \
+                 "DisplayName" "新酷音輸入法 (TSF)"
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChewingTextService" \
+                 "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChewingTextService" \
+                 "Publisher" "新酷音輸入法開發團隊"
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChewingTextService" \
+                 "DisplayIcon" "$INSTDIR\x86\ChewingTextService.dll"
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChewingTextService" \
+                 "URLInfoAbout" "http://chewing.im/"
 WriteUninstaller "$INSTDIR\Uninstall.exe" ;Create uninstaller
 SectionEnd
 
@@ -122,6 +133,7 @@ Section "Uninstall"
 ; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\ChewingTextService.dll"'
 ${If} ${RunningX64} 
+    SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 	ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x64\ChewingTextService.dll"'
 	RMDir /r "$INSTDIR\x64"
 ${EndIf}
@@ -130,10 +142,12 @@ RMDir /r "$INSTDIR\x86"
 RMDir /r "$INSTDIR\Dictionary"
 Delete "$INSTDIR\SetupChewing.bat"
 
+DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChewingTextService"
+DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "SetupChewing"
+DeleteRegKey /ifempty HKLM "Software\ChewingTextService"
+
 Delete "$INSTDIR\Uninstall.exe"
 RMDir "$INSTDIR"
 
-DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "SetupChewing"
-DeleteRegKey /ifempty HKLM "Software\ChewingTextService"
 SectionEnd
 

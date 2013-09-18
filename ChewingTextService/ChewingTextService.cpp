@@ -53,11 +53,16 @@ static const GUID g_shiftSpaceGuid = // shift + space
 static const GUID g_shiftUpGuid = // shift alone, key up
 { 0xa39b40fd, 0x479c, 0x4dbe, { 0xb8, 0x65, 0xef, 0xc8, 0x96, 0x9a, 0x51, 0x8d } };
 
+// {F4D1E543-FB2C-48D7-B78D-20394F355381} // global compartment GUID for config change notification
+static const GUID g_configChangedGuid = 
+{ 0xf4d1e543, 0xfb2c, 0x48d7, { 0xb7, 0x8d, 0x20, 0x39, 0x4f, 0x35, 0x53, 0x81 } };
+
 TextService::TextService(ImeModule* module):
 	Ime::TextService(module),
 	showingCandidates_(false),
 	langMode_(-1),
 	shapeMode_(-1),
+	lastConfigStamp_(Config::INVALID_TIMESTAMP),
 	candidateWindow_(NULL),
 	chewingContext_(NULL) {
 
@@ -85,6 +90,9 @@ TextService::TextService(ImeModule* module):
 	button->setMenu(popup);
 	addButton(button);
 	button->Release();
+
+	// global compartment stuff
+	addCompartmentMonitor(g_configChangedGuid, true);
 }
 
 TextService::~TextService(void) {
@@ -102,9 +110,19 @@ TextService::~TextService(void) {
 
 // virtual
 void TextService::onActivate() {
+
+	DWORD configStamp = globalCompartmentValue(g_configChangedGuid);
+	config().reloadIfNeeded(configStamp);
+
 	if(!chewingContext_) {
 		chewingContext_ = ::chewing_new();
 		::chewing_set_maxChiSymbolLen(chewingContext_, 50);
+		applyConfig();
+	}
+	else {
+		// do not apply the config again if we're already up to date.
+		if(lastConfigStamp_ != config().stamp)
+			applyConfig();
 	}
 
 	updateLangButtons();
@@ -433,17 +451,70 @@ bool TextService::onCommand(UINT id) {
 
 // virtual
 bool TextService::onConfigure(HWND hwndParent) {
-	// FIXME: alternatively, should we make the configuration
-	//        dialog a separate program and launch it instead?
-
-	// FIXME: something wrong causing crashes here.
-	// I'm not sure what's the problem yet.
 	Config& config = ((Chewing::ImeModule*)imeModule())->config();
 	Ime::PropertyDialog dlg;
 	TypingPage* typingPage = new TypingPage(&config);
 	dlg.addPage(typingPage);
-	dlg.showModal(this->imeModule()->hInstance(), (LPCTSTR)IDS_CONFIG_TITLE, 0, hwndParent);
+	INT_PTR ret = dlg.showModal(this->imeModule()->hInstance(), (LPCTSTR)IDS_CONFIG_TITLE, 0, hwndParent);
+	if(ret) { // the user clicks OK button
+		// get current time stamp and set the value to global compartment to notify all
+		// text service instances to reload their config.
+		// TextService::onCompartmentChanged() of all other instances will be triggered.
+		DWORD stamp = ::GetTickCount();
+		if(stamp == Config::INVALID_TIMESTAMP) // this is almost impossible
+			stamp = 0;
+		setGlobalCompartmentValue(g_configChangedGuid, stamp);
+	}
 	return true;
+}
+
+// virtual
+void TextService::onCompartmentChanged(const GUID& key) {
+	if(::IsEqualGUID(key, g_configChangedGuid)) {
+		// changes of configuration are detected
+		DWORD stamp = globalCompartmentValue(g_configChangedGuid);
+		config().reloadIfNeeded(stamp);
+		if(lastConfigStamp_ != stamp) // if our config is out of date
+			applyConfig(); // apply the latest config
+	}
+	else
+		Ime::TextService::onCompartmentChanged(key);
+}
+
+void TextService::applyConfig() {
+	Config& cfg = config();
+	lastConfigStamp_ = cfg.stamp;
+
+	// apply the new configurations
+	if(chewingContext_) {
+		// Configuration
+		::chewing_set_addPhraseDirection(chewingContext_, cfg.addPhraseForward);
+		::chewing_set_autoShiftCur(chewingContext_, cfg.advanceAfterSelection);
+		::chewing_set_candPerPage(chewingContext_, cfg.candPerPage);
+		::chewing_set_escCleanAllBuf(chewingContext_, cfg.escCleanAllBuf);
+		::chewing_set_KBType(chewingContext_, cfg.keyboardLayout);
+		::chewing_set_spaceAsSelection(chewingContext_, cfg.spaceAsSelection);
+		int selKeys[10];
+		for(int i = 0; i < 10; ++i)
+			selKeys[i] = (int)Config::selKeys[cfg.selKeyType][i];
+		::chewing_set_selKey(chewingContext_, selKeys, 10);
+		// cfg.candPerRow;
+		// cfg.defaultEnglish;
+		// cfg.defaultFullSpace;
+		// cfg.enableShift;
+		// cfg.shiftCapital;
+		// cfg.enableSimp;
+		// cfg.fixCompWnd;
+		// cfg.colorCandWnd;
+		// cfg.coloredCompCursor;
+		// cfg.fontSize;
+		// cfg.cursorCandList;
+		// cfg.enableCapsLock;
+		// cfg.shiftFullShape;
+		// cfg.phraseMark;
+		// cfg.shiftSymbol;
+		// cfg.ctrlSymbol;
+	}
 }
 
 void TextService::updateCandidates(Ime::EditSession* session) {
@@ -520,5 +591,6 @@ void TextService::updateLangButtons() {
 		switchShapeButton_->setIcon(shapeMode == FULLSHAPE_MODE ? IDI_FULL_SHAPE : IDI_HALF_SHAPE);
 	}
 }
+
 
 } // namespace Chewing

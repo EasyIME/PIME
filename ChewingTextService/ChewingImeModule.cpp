@@ -56,9 +56,6 @@ ImeModule::ImeModule(HMODULE module):
 		env += userDir_;
 		_wputenv(env.c_str());
 	}
-
-	// load configurations
-	config_.load();
 }
 
 ImeModule::~ImeModule(void) {

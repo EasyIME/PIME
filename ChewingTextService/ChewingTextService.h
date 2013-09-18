@@ -52,6 +52,9 @@ public:
 	// called when config dialog needs to be launched
 	virtual bool onConfigure(HWND hwndParent);
 
+	// called when a compartment value is changed
+	virtual void onCompartmentChanged(const GUID& key);
+
 	ChewingContext* chewingContext() {
 		return chewingContext_;
 	}
@@ -60,6 +63,7 @@ public:
 		return static_cast<ImeModule*>(imeModule())->config();
 	}
 
+private:
 	bool hasCandidates() {
 		return ::chewing_cand_TotalChoice(chewingContext_) > 0;
 	}
@@ -74,6 +78,12 @@ public:
 
 	void updateLangButtons();
 
+	// reload configurations if changes are detected
+	void reloadConfigIfNeeded();
+
+	// apply current configurations to chewing context
+	void applyConfig();
+
 private:
 	ChewingContext* chewingContext_;
 	Ime::CandidateWindow* candidateWindow_;
@@ -84,6 +94,7 @@ private:
 
 	int langMode_;
 	int shapeMode_;
+	DWORD lastConfigStamp_;
 };
 
 }

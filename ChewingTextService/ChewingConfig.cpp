@@ -61,6 +61,8 @@ Config::Config(void) {
 	shiftSymbol = 0;
 	ctrlSymbol = 0;
 	checkNewVersion = true;	// Enable update notifier
+
+	stamp = INVALID_TIMESTAMP;
 }
 
 Config::~Config(void) {
@@ -166,6 +168,14 @@ void Config::save() {
 	// TODO: notify the world about the change and ask other text service instances to reload!
 	// Luckily, TSF global compartment sink is a perfect way to do this.
 	// So no complicated IPC is needed here.
+}
+
+
+void Config::reloadIfNeeded(DWORD timestamp) {
+	if(stamp != timestamp) {
+		load();
+		stamp = timestamp;
+	}
 }
 
 } // namespace Chewing

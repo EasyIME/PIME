@@ -32,7 +32,14 @@ public:
 	void load();
 	void save();
 
+	// reload configurations if changes are detected (if timestamp is different from this->stamp)
+	void reloadIfNeeded(DWORD timestamp);
+
 public:
+	enum {
+		INVALID_TIMESTAMP = (DWORD)-1
+	};
+
 	// Configuration
 	DWORD keyboardLayout;
 	DWORD candPerRow;
@@ -60,6 +67,8 @@ public:
 	DWORD shiftSymbol;
 	DWORD ctrlSymbol;
 	DWORD checkNewVersion;	// Enable update notifier
+
+	DWORD stamp;
 
 	static const wchar_t* selKeys[];
 };

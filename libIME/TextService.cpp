@@ -641,6 +641,12 @@ STDMETHODIMP TextService::Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClient
 }
 
 STDMETHODIMP TextService::Deactivate() {
+	// terminate composition properly
+	if(isComposing()) {
+		ITfContext* context = currentContext();
+		endComposition(context);
+		context->Release();
+	}
 
 	onDeactivate();
 

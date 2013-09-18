@@ -124,6 +124,7 @@ void TextService::onActivate() {
 
 // virtual
 void TextService::onDeactivate() {
+	
 	if(chewingContext_) {
 		::chewing_delete(chewingContext_);
 		chewingContext_ = NULL;

@@ -18,6 +18,7 @@
 //
 
 #include "ChewingConfig.h"
+#include "ChewingImeModule.h"
 #include <AccCtrl.h>
 #include <Aclapi.h>
 
@@ -35,7 +36,8 @@ const wchar_t* Config::selKeys[]={
 	NULL
 };
 
-Config::Config(void) {
+Config::Config(ImeModule* module):
+	module_(module) {
 	// Configuration
 	keyboardLayout = 0;
 	candPerRow = 4;
@@ -119,31 +121,13 @@ void Config::load() {
 
 	if(selKeyType > ((sizeof(selKeys)/sizeof(char*))-1))
 		selKeyType = 0;
-
-	//if(selAreaLen > 55 || selAreaLen < 40)
-	//	selAreaLen = 40;
-#if 0
-	if(chewing)
-		chewing->SelKey((char*)selKeys[selKeyType]);
-    if (chewing!=NULL)
-        chewing->SetAdvanceAfterSelection((AdvanceAfterSelection!=0)?true: false);
-    if (FontSize>64 || FontSize<4)
-        FontSize = DEF_FONT_SIZE;
-#endif
 }
-
 
 void Config::save() {
 	HKEY hk = NULL;
-	SECURITY_DESCRIPTOR sd;
-	createSecurityDesc(sd);
-
-	SECURITY_ATTRIBUTES sa = {0};
-	sa.nLength = sizeof(sa);
-	sa.lpSecurityDescriptor = &sd;
-
-	if(ERROR_SUCCESS == ::RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\ChewingTextService", 0, 
-			NULL, 0, KEY_WRITE , &sa, &hk, NULL)) {
+	LSTATUS ret = ::RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\ChewingTextService", 0, 
+						NULL, 0, KEY_READ|KEY_WRITE , NULL, &hk, NULL);
+	if(ERROR_SUCCESS == ret) {
 		::RegSetValueEx(hk, L"KeyboardLayout", 0, REG_DWORD, (LPBYTE)&keyboardLayout, sizeof(DWORD));
 		::RegSetValueEx(hk, L"CandPerRow", 0, REG_DWORD, (LPBYTE)&candPerRow, sizeof(DWORD));
 		::RegSetValueEx(hk, L"DefaultEnglish", 0, REG_DWORD, (LPBYTE)&defaultEnglish, sizeof(DWORD));
@@ -172,13 +156,12 @@ void Config::save() {
 
 		::RegSetValueEx(hk, L"CheckNewVersion", 0, REG_DWORD, (LPBYTE)&checkNewVersion, sizeof(DWORD));
 		::RegCloseKey(hk);
+
+		// grant access to app containers in Windows 8
+		if(module_->isWindows8Above())
+			grantAppContainerAccess(L"CURRENT_USER\\Software\\ChewingTextService", KEY_READ);
 	}
-
-	// TODO: notify the world about the change and ask other text service instances to reload!
-	// Luckily, TSF global compartment sink is a perfect way to do this.
-	// So no complicated IPC is needed here.
 }
-
 
 void Config::reloadIfNeeded(DWORD timestamp) {
 	if(stamp != timestamp) {
@@ -187,51 +170,57 @@ void Config::reloadIfNeeded(DWORD timestamp) {
 	}
 }
 
-// create a security descriptor to enable access to app containers
-// Reference: http://msdn.microsoft.com/en-us/library/windows/desktop/hh448493(v=vs.85).aspx
+// enable access to app containers
+// Reference: http://msdn.microsoft.com/en-us/library/windows/desktop/aa379283(v=vs.85).aspx
+//            http://msdn.microsoft.com/en-us/library/windows/desktop/hh448493(v=vs.85).aspx
 //            http://www.codeproject.com/Articles/10042/The-Windows-Access-Control-Model-Part-1
 //            http://www.codeproject.com/Articles/10200/The-Windows-Access-Control-Model-Part-2
-/* static */ bool Config::createSecurityDesc(SECURITY_DESCRIPTOR& sd) {
 
-	bool ret = false;
-	// Create a well-known SID for the all appcontainers group.
-	SID_IDENTIFIER_AUTHORITY ApplicationAuthority = SECURITY_APP_PACKAGE_AUTHORITY;
-	PSID pAllAppsSID = NULL;
-    if(::AllocateAndInitializeSid(&ApplicationAuthority, 
-            SECURITY_BUILTIN_APP_PACKAGE_RID_COUNT,
-            SECURITY_APP_PACKAGE_BASE_RID,
-            SECURITY_BUILTIN_PACKAGE_ANY_PACKAGE,
-            0, 0, 0, 0, 0, 0,
-            &pAllAppsSID))
-    {
-		EXPLICIT_ACCESS ea = {0};
-		// Initialize an EXPLICIT_ACCESS structure for an ACE.
-		ea.grfAccessPermissions = STANDARD_RIGHTS_READ | SYNCHRONIZE | MUTEX_MODIFY_STATE;
-		ea.grfAccessMode = SET_ACCESS;
-		ea.grfInheritance= NO_INHERITANCE;
-		ea.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-		ea.Trustee.TrusteeType = TRUSTEE_IS_GROUP;
-		ea.Trustee.ptstrName  = (LPTSTR)pAllAppsSID;
-
-		// Create a new ACL that contains the new ACE.
-		PACL pACL = NULL;
-		if(::SetEntriesInAcl(1, &ea, NULL, &pACL) == ERROR_SUCCESS) {
-			// Initialize a security descriptor.
-			if(::InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION)) {
-				// Add the ACL to the security descriptor.
-				if(::SetSecurityDescriptorDacl(&sd, TRUE, pACL, FALSE)) {
-					ret = true;
+// static
+bool Config::grantAppContainerAccess(wchar_t* object, DWORD access) {
+    bool ret = false;
+    PACL oldAcl = NULL, newAcl = NULL;
+    PSECURITY_DESCRIPTOR sd = NULL;
+	::MessageBox(0, L"grant access", 0, 0);
+	// get old security descriptor
+	if(::GetNamedSecurityInfo(object, SE_REGISTRY_KEY, DACL_SECURITY_INFORMATION,
+			NULL, NULL, &oldAcl, NULL, &sd) == ERROR_SUCCESS) {
+		// Create a well-known SID for the all appcontainers group.
+		SID_IDENTIFIER_AUTHORITY ApplicationAuthority = SECURITY_APP_PACKAGE_AUTHORITY;
+		PSID pAllAppsSID = NULL;
+		if(::AllocateAndInitializeSid(&ApplicationAuthority, 
+				SECURITY_BUILTIN_APP_PACKAGE_RID_COUNT,
+				SECURITY_APP_PACKAGE_BASE_RID,
+				SECURITY_BUILTIN_PACKAGE_ANY_PACKAGE,
+				0, 0, 0, 0, 0, 0, &pAllAppsSID)) {
+			EXPLICIT_ACCESS ea;
+			memset(&ea, 0, sizeof(ea));
+			ea.grfAccessPermissions = access;
+			ea.grfAccessMode = SET_ACCESS;
+			ea.grfInheritance= SUB_CONTAINERS_AND_OBJECTS_INHERIT;
+			ea.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+			ea.Trustee.TrusteeType = TRUSTEE_IS_GROUP;
+			ea.Trustee.ptstrName  = (LPTSTR) pAllAppsSID;
+			::MessageBoxW(0, (LPCTSTR)pAllAppsSID, 0, 0);
+			// add the new entry to the existing DACL
+			if(::SetEntriesInAcl(1, &ea, oldAcl, &newAcl) == ERROR_SUCCESS) {
+				// set the new DACL back to the object
+				::MessageBoxW(0, L"SetEntriesInAcl", 0, 0);
+				if(::SetNamedSecurityInfo(object, SE_REGISTRY_KEY,
+					DACL_SECURITY_INFORMATION, NULL, NULL, newAcl, NULL) == ERROR_SUCCESS) {
+						ret = true;
+					::MessageBoxW(0, L"SetNamedSecurityInfo", 0, 0);
 				}
 			}
+			::FreeSid(pAllAppsSID);
 		}
-		if(pACL)
-			::LocalFree(pACL);
-    }
-	if(pAllAppsSID)
-		::FreeSid(pAllAppsSID);
+	}
+	if(sd != NULL) 
+		::LocalFree((HLOCAL)sd); 
+    if(newAcl != NULL) 
+        ::LocalFree((HLOCAL)newAcl); 
 
 	return ret;
 }
-
 
 } // namespace Chewing

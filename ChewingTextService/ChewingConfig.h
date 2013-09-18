@@ -24,9 +24,11 @@
 
 namespace Chewing {
 
+class ImeModule;
+
 class Config {
 public:
-	Config(void);
+	Config(ImeModule* module);
 	~Config(void);
 
 	void load();
@@ -34,6 +36,8 @@ public:
 
 	// reload configurations if changes are detected (if timestamp is different from this->stamp)
 	void reloadIfNeeded(DWORD timestamp);
+
+	static bool grantAppContainerAccess(wchar_t* object, DWORD access);
 
 private:
 	static bool createSecurityDesc(SECURITY_DESCRIPTOR& sd);
@@ -74,6 +78,7 @@ public:
 	DWORD stamp;
 
 	static const wchar_t* selKeys[];
+	Chewing::ImeModule* module_;
 };
 
 }

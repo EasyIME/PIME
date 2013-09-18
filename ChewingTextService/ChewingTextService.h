@@ -94,6 +94,7 @@ private:
 
 	int langMode_;
 	int shapeMode_;
+	UINT lastKeyDownCode_;
 };
 
 }

@@ -50,7 +50,7 @@ static const GUID g_shiftSpaceGuid = // shift + space
 { 0xc77a44f5, 0xdb21, 0x474e, { 0xa2, 0xa2, 0xa1, 0x72, 0x42, 0x21, 0x7a, 0xb3 } };
 
 // {A39B40FD-479C-4DBE-B865-EFC8969A518D}
-static const GUID g_shiftUpGuid = // shift alone, key up
+static const GUID g_ctrlSpaceGuid = // ctrl + space (only used in Windows 8)
 { 0xa39b40fd, 0x479c, 0x4dbe, { 0xb8, 0x65, 0xef, 0xc8, 0x96, 0x9a, 0x51, 0x8d } };
 
 // {F4D1E543-FB2C-48D7-B78D-20394F355381} // global compartment GUID for config change notification
@@ -62,12 +62,15 @@ TextService::TextService(ImeModule* module):
 	showingCandidates_(false),
 	langMode_(-1),
 	shapeMode_(-1),
+	lastKeyDownCode_(0),
 	candidateWindow_(NULL),
 	chewingContext_(NULL) {
 
 	// add preserved keys
 	addPreservedKey(VK_SPACE, TF_MOD_SHIFT, g_shiftSpaceGuid); // shift + space
-	addPreservedKey(VK_SHIFT, TF_MOD_ON_KEYUP, g_shiftUpGuid); // shift alone, key up
+
+	if(imeModule()->isWindows8Above())
+		addPreservedKey(VK_SPACE, TF_MOD_CONTROL, g_ctrlSpaceGuid); // Ctrl + space
 
 	// add language bar buttons
 	// siwtch Chinese/English modes
@@ -124,7 +127,8 @@ void TextService::onActivate() {
 
 // virtual
 void TextService::onDeactivate() {
-	
+
+	lastKeyDownCode_ = 0;
 	if(chewingContext_) {
 		::chewing_delete(chewingContext_);
 		chewingContext_ = NULL;
@@ -142,9 +146,9 @@ void TextService::onFocus() {
 
 // virtual
 bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
+	lastKeyDownCode_ = keyEvent.keyCode();
 	// return false if we don't need this key
 	assert(chewingContext_);
-
 	if(!isComposing()) { // we're not composing now
 		// check if we're in Chinses or English mode
 		if(langMode_ != CHINESE_MODE) // don't do further handling in English mode
@@ -360,6 +364,13 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 
 // virtual
 bool TextService::filterKeyUp(Ime::KeyEvent& keyEvent) {
+	if(lastKeyDownCode_ == VK_SHIFT && keyEvent.keyCode() == VK_SHIFT) {
+		// last key down event is also shift key
+		// a <Shift> key down + key up pair was detected
+		// switch language
+		::chewing_set_ChiEngMode(chewingContext_, !langMode_);
+		updateLangButtons();
+	}
 	return false;
 }
 
@@ -378,12 +389,23 @@ bool TextService::onPreservedKey(const GUID& guid) {
 		}
 		return true;
 	}
-	else if(::IsEqualGUID(guid, g_shiftUpGuid)) { // shift alone, key up
-		// FIXME: this event is also fired when Shift + <other keys>
-		// is pressed and then released.
-		// we have to detect if only shift key along is pressed and then released
-		// and no other key events happened during keyDown and keyUp.
-		return false;
+	else if(::IsEqualIID(guid, g_ctrlSpaceGuid)) { // ctrl + space is pressed
+		// this only happens under Windows 8
+		bool open = !isKeyboardOpened();
+		if(!open) { // if we're going to close the keyboard
+			if(isComposing()) {
+				// end current composition if needed
+				ITfContext* context = currentContext();
+				if(context) {
+					endComposition(context);
+					context->Release();
+				}
+			}
+		}
+		// FIXME: should we clear chewing buf before closing the keyboard?
+		setKeyboardOpen(open);
+		// FIXME: do we need to update the language bar to reflect
+		// the state of keyboard?
 	}
 	return false;
 }
@@ -477,9 +499,26 @@ void TextService::onCompartmentChanged(const GUID& key) {
 		DWORD stamp = globalCompartmentValue(g_configChangedGuid);
 		config().reloadIfNeeded(stamp);
 		applyConfig(); // apply the latest config
+		return;
 	}
-	else
-		Ime::TextService::onCompartmentChanged(key);
+
+	Ime::TextService::onCompartmentChanged(key);
+	if(::IsEqualIID(key, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE)) {
+		// keyboard open/close state is changed
+		if(isKeyboardOpened()) { // keyboard is closed
+			if(!chewingContext_) { // free chewing context
+				chewingContext_ = ::chewing_new();
+				::chewing_set_maxChiSymbolLen(chewingContext_, 50);
+				applyConfig();
+			}
+		}
+		else { // keyboard is opened
+			if(chewingContext_) { // create chewing context if needed
+				::chewing_delete(chewingContext_);
+				chewingContext_ = NULL;
+			}
+		}
+	}
 }
 
 void TextService::applyConfig() {

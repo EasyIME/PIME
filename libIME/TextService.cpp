@@ -644,8 +644,10 @@ STDMETHODIMP TextService::Deactivate() {
 	// terminate composition properly
 	if(isComposing()) {
 		ITfContext* context = currentContext();
-		endComposition(context);
-		context->Release();
+		if(context) {
+			endComposition(context);
+			context->Release();
+		}
 	}
 
 	onDeactivate();

@@ -422,6 +422,9 @@ bool TextService::onCommand(UINT id) {
 	case ID_BUGREPORT: // visit bug tracker page
 		::ShellExecuteW(NULL, NULL, L"http://code.google.com/p/chewing/issues/list", NULL, NULL, SW_SHOWNORMAL);
 		break;
+	case ID_DICT_BUGREPORT:
+		::ShellExecuteW(NULL, NULL, L"https://github.com/chewing/libchewing-data/issues", NULL, NULL, SW_SHOWNORMAL);
+		break;
 	case ID_MOEDICT: // a very awesome online Chinese dictionary
 		::ShellExecuteW(NULL, NULL, L"https://www.moedict.tw/", NULL, NULL, SW_SHOWNORMAL);
 		break;
@@ -436,6 +439,10 @@ bool TextService::onCommand(UINT id) {
 		break;
 	case ID_PROVERBDICT: // a dictionary for proverbs (seems to be broken at the moment?)
 		::ShellExecuteW(NULL, NULL, L"http://dict.idioms.moe.edu.tw/?", NULL, NULL, SW_SHOWNORMAL);
+		break;
+	case ID_CHEWING_HELP:
+		// TODO: open help file here
+		// Need to update the old ChewingIME docs
 		break;
 	default:
 		return false;

@@ -35,6 +35,9 @@ public:
 	// reload configurations if changes are detected (if timestamp is different from this->stamp)
 	void reloadIfNeeded(DWORD timestamp);
 
+private:
+	static bool createSecurityDesc(SECURITY_DESCRIPTOR& sd);
+
 public:
 	enum {
 		INVALID_TIMESTAMP = (DWORD)-1

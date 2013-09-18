@@ -18,6 +18,8 @@
 //
 
 #include "ChewingConfig.h"
+#include <AccCtrl.h>
+#include <Aclapi.h>
 
 namespace Chewing {
 
@@ -133,8 +135,15 @@ void Config::load() {
 
 void Config::save() {
 	HKEY hk = NULL;
+	SECURITY_DESCRIPTOR sd;
+	createSecurityDesc(sd);
+
+	SECURITY_ATTRIBUTES sa = {0};
+	sa.nLength = sizeof(sa);
+	sa.lpSecurityDescriptor = &sd;
+
 	if(ERROR_SUCCESS == ::RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\ChewingTextService", 0, 
-			NULL, 0, KEY_ALL_ACCESS , NULL, &hk, NULL)) {
+			NULL, 0, KEY_WRITE , &sa, &hk, NULL)) {
 		::RegSetValueEx(hk, L"KeyboardLayout", 0, REG_DWORD, (LPBYTE)&keyboardLayout, sizeof(DWORD));
 		::RegSetValueEx(hk, L"CandPerRow", 0, REG_DWORD, (LPBYTE)&candPerRow, sizeof(DWORD));
 		::RegSetValueEx(hk, L"DefaultEnglish", 0, REG_DWORD, (LPBYTE)&defaultEnglish, sizeof(DWORD));
@@ -177,5 +186,52 @@ void Config::reloadIfNeeded(DWORD timestamp) {
 		stamp = timestamp;
 	}
 }
+
+// create a security descriptor to enable access to app containers
+// Reference: http://msdn.microsoft.com/en-us/library/windows/desktop/hh448493(v=vs.85).aspx
+//            http://www.codeproject.com/Articles/10042/The-Windows-Access-Control-Model-Part-1
+//            http://www.codeproject.com/Articles/10200/The-Windows-Access-Control-Model-Part-2
+/* static */ bool Config::createSecurityDesc(SECURITY_DESCRIPTOR& sd) {
+
+	bool ret = false;
+	// Create a well-known SID for the all appcontainers group.
+	SID_IDENTIFIER_AUTHORITY ApplicationAuthority = SECURITY_APP_PACKAGE_AUTHORITY;
+	PSID pAllAppsSID = NULL;
+    if(::AllocateAndInitializeSid(&ApplicationAuthority, 
+            SECURITY_BUILTIN_APP_PACKAGE_RID_COUNT,
+            SECURITY_APP_PACKAGE_BASE_RID,
+            SECURITY_BUILTIN_PACKAGE_ANY_PACKAGE,
+            0, 0, 0, 0, 0, 0,
+            &pAllAppsSID))
+    {
+		EXPLICIT_ACCESS ea = {0};
+		// Initialize an EXPLICIT_ACCESS structure for an ACE.
+		ea.grfAccessPermissions = STANDARD_RIGHTS_READ | SYNCHRONIZE | MUTEX_MODIFY_STATE;
+		ea.grfAccessMode = SET_ACCESS;
+		ea.grfInheritance= NO_INHERITANCE;
+		ea.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+		ea.Trustee.TrusteeType = TRUSTEE_IS_GROUP;
+		ea.Trustee.ptstrName  = (LPTSTR)pAllAppsSID;
+
+		// Create a new ACL that contains the new ACE.
+		PACL pACL = NULL;
+		if(::SetEntriesInAcl(1, &ea, NULL, &pACL) == ERROR_SUCCESS) {
+			// Initialize a security descriptor.
+			if(::InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION)) {
+				// Add the ACL to the security descriptor.
+				if(::SetSecurityDescriptorDacl(&sd, TRUE, pACL, FALSE)) {
+					ret = true;
+				}
+			}
+		}
+		if(pACL)
+			::LocalFree(pACL);
+    }
+	if(pAllAppsSID)
+		::FreeSid(pAllAppsSID);
+
+	return ret;
+}
+
 
 } // namespace Chewing

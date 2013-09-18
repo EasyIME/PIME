@@ -181,7 +181,6 @@ bool Config::grantAppContainerAccess(wchar_t* object, DWORD access) {
     bool ret = false;
     PACL oldAcl = NULL, newAcl = NULL;
     PSECURITY_DESCRIPTOR sd = NULL;
-	::MessageBox(0, L"grant access", 0, 0);
 	// get old security descriptor
 	if(::GetNamedSecurityInfo(object, SE_REGISTRY_KEY, DACL_SECURITY_INFORMATION,
 			NULL, NULL, &oldAcl, NULL, &sd) == ERROR_SUCCESS) {
@@ -201,15 +200,12 @@ bool Config::grantAppContainerAccess(wchar_t* object, DWORD access) {
 			ea.Trustee.TrusteeForm = TRUSTEE_IS_SID;
 			ea.Trustee.TrusteeType = TRUSTEE_IS_GROUP;
 			ea.Trustee.ptstrName  = (LPTSTR) pAllAppsSID;
-			::MessageBoxW(0, (LPCTSTR)pAllAppsSID, 0, 0);
 			// add the new entry to the existing DACL
 			if(::SetEntriesInAcl(1, &ea, oldAcl, &newAcl) == ERROR_SUCCESS) {
 				// set the new DACL back to the object
-				::MessageBoxW(0, L"SetEntriesInAcl", 0, 0);
 				if(::SetNamedSecurityInfo(object, SE_REGISTRY_KEY,
 					DACL_SECURITY_INFORMATION, NULL, NULL, newAcl, NULL) == ERROR_SUCCESS) {
 						ret = true;
-					::MessageBoxW(0, L"SetNamedSecurityInfo", 0, 0);
 				}
 			}
 			::FreeSid(pAllAppsSID);

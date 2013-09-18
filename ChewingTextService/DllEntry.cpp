@@ -1,4 +1,5 @@
 #include "ChewingImeModule.h"
+#include "ChewingConfig.h"
 #include "resource.h"
 
 Chewing::ImeModule* g_imeModule = NULL;
@@ -48,4 +49,13 @@ STDAPI DllRegisterServer(void) {
 		name,
 		g_profileGuid,
 		MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL), iconIndex);
+}
+
+STDAPI ChewingSetup() {
+	// The directory is already created when the ImeModule object is constructed.
+	if(g_imeModule->isWindows8Above()) {
+		// Grant permission to app containers
+		Chewing::Config::grantAppContainerAccess(g_imeModule->userDir().c_str(), SE_FILE_OBJECT, GENERIC_READ|GENERIC_WRITE|GENERIC_EXECUTE|DELETE);
+	}
+	return S_OK;
 }

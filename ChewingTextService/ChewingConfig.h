@@ -21,6 +21,7 @@
 #define CHEWING_CONFIG_H
 
 #include <Windows.h>
+#include <AccCtrl.h>
 
 namespace Chewing {
 
@@ -37,7 +38,7 @@ public:
 	// reload configurations if changes are detected (if timestamp is different from this->stamp)
 	void reloadIfNeeded(DWORD timestamp);
 
-	static bool grantAppContainerAccess(wchar_t* object, DWORD access);
+	static bool grantAppContainerAccess(const wchar_t* object, SE_OBJECT_TYPE type, DWORD access);
 
 private:
 	static bool createSecurityDesc(SECURITY_DESCRIPTOR& sd);

@@ -19,7 +19,6 @@
 
 #include "ChewingConfig.h"
 #include "ChewingImeModule.h"
-#include <AccCtrl.h>
 #include <Aclapi.h>
 
 namespace Chewing {
@@ -159,7 +158,7 @@ void Config::save() {
 
 		// grant access to app containers in Windows 8
 		if(module_->isWindows8Above())
-			grantAppContainerAccess(L"CURRENT_USER\\Software\\ChewingTextService", KEY_READ);
+			grantAppContainerAccess(L"CURRENT_USER\\Software\\ChewingTextService", SE_REGISTRY_KEY, KEY_READ);
 	}
 }
 
@@ -177,12 +176,12 @@ void Config::reloadIfNeeded(DWORD timestamp) {
 //            http://www.codeproject.com/Articles/10200/The-Windows-Access-Control-Model-Part-2
 
 // static
-bool Config::grantAppContainerAccess(wchar_t* object, DWORD access) {
+bool Config::grantAppContainerAccess(const wchar_t* object, SE_OBJECT_TYPE type, DWORD access) {
     bool ret = false;
     PACL oldAcl = NULL, newAcl = NULL;
     PSECURITY_DESCRIPTOR sd = NULL;
 	// get old security descriptor
-	if(::GetNamedSecurityInfo(object, SE_REGISTRY_KEY, DACL_SECURITY_INFORMATION,
+	if(::GetNamedSecurityInfo(object, type, DACL_SECURITY_INFORMATION,
 			NULL, NULL, &oldAcl, NULL, &sd) == ERROR_SUCCESS) {
 		// Create a well-known SID for the all appcontainers group.
 		SID_IDENTIFIER_AUTHORITY ApplicationAuthority = SECURITY_APP_PACKAGE_AUTHORITY;
@@ -203,7 +202,7 @@ bool Config::grantAppContainerAccess(wchar_t* object, DWORD access) {
 			// add the new entry to the existing DACL
 			if(::SetEntriesInAcl(1, &ea, oldAcl, &newAcl) == ERROR_SUCCESS) {
 				// set the new DACL back to the object
-				if(::SetNamedSecurityInfo(object, SE_REGISTRY_KEY,
+				if(::SetNamedSecurityInfo((LPWSTR)object, type,
 					DACL_SECURITY_INFORMATION, NULL, NULL, newAcl, NULL) == ERROR_SUCCESS) {
 						ret = true;
 				}

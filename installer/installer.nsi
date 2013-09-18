@@ -95,8 +95,14 @@ ${EndIf}
 ; Special handling for Windows 8
 ${If} ${AtLeastWin8}
 	File SetupChewing.bat
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "SetupChewing" "$INSTDIR\SetupChewing.bat"
-	
+	${If} ${RunningX64}
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "SetupChewing"
+			'rundll32.exe "$INSTDIR\x64\ChewingTextService.dll",ChewingSetup'
+	${Else}
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "SetupChewing"
+			'rundll32.exe "$INSTDIR\x86\ChewingTextService.dll",ChewingSetup'
+	${EndIf}
+
 	; Run SetupChewing.bat as current user (ask explorer to open it for us)
 	; Reference: http:;mdb-blog.blogspot.tw/2013/01/nsis-lunch-program-as-user-from-uac.html
 	; Though it's more reliable to use the UAC plugin, I think this hack is enough for most cases.

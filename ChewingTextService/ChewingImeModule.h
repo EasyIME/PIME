@@ -37,6 +37,10 @@ public:
 		return config_;
 	}
 
+	std::wstring& userDir () {
+		return userDir_;
+	}
+
 private:
 	Config config_;
 	std::wstring userDir_;

@@ -46,11 +46,26 @@ TextService::TextService(ImeModule* module):
 	composition_(NULL),
 	candidateWindow_(NULL),
 	refCount_(1) {
+
+	addCompartmentMonitor(GUID_COMPARTMENT_KEYBOARD_OPENCLOSE, false);
 }
 
 TextService::~TextService(void) {
 	if(candidateWindow_)
 		delete candidateWindow_;
+
+	// This should only happen in rare cases
+	if(!compartmentMonitors_.empty()) {
+		vector<CompartmentMonitor>::iterator it;
+		for(it = compartmentMonitors_.begin(); it != compartmentMonitors_.end(); ++it) {
+			ComQIPtr<ITfSource> source;
+			if(it->isGlobal)
+				source = globalCompartment(it->guid);
+			else
+				source = threadCompartment(it->guid);
+			source->UnadviseSink(it->cookie);
+		}
+	}
 
 	if(!langBarButtons_.empty()) {
 		for(vector<LangBarButton*>::iterator it = langBarButtons_.begin(); it != langBarButtons_.end(); ++it) {
@@ -156,7 +171,7 @@ bool TextService::isKeyboardDisabled(ITfContext* context) {
 }
 
 // is keyboard opened for the whole thread
-bool TextService::isKeyboardOpened() const {
+bool TextService::isKeyboardOpened() {
 	return isKeyboardOpened_;
 }
 
@@ -331,8 +346,11 @@ DWORD TextService::threadCompartmentValue(const GUID& key) {
 	ComPtr<ITfCompartment> compartment = threadCompartment(key);
 	if(compartment) {
 		VARIANT var;
-		if(compartment->GetValue(&var) == S_OK && var.vt == VT_I4) {
-			return (DWORD)var.lVal;
+		::VariantInit(&var);
+		HRESULT r = compartment->GetValue(&var);
+		if(r == S_OK) {
+			if(var.vt == VT_I4)
+				return (DWORD)var.lVal;
 		}
 	}
 	return 0;
@@ -379,6 +397,42 @@ void TextService::setContextCompartmentValue(const GUID& key, DWORD value, ITfCo
 		var.vt = VT_I4;
 		var.lVal = value;
 		compartment->SetValue(clientId_, &var);
+	}
+}
+
+
+void TextService::addCompartmentMonitor(const GUID key, bool isGlobal) {
+	CompartmentMonitor monitor;
+	monitor.guid = key;
+	monitor.cookie = 0;
+	monitor.isGlobal = isGlobal;
+	// if the text service is activated
+	if(threadMgr_) {
+		ComQIPtr<ITfSource> source;
+		if(isGlobal)
+			source = globalCompartment(key);
+		else
+			source = threadCompartment(key);
+		if(source) {
+			source->AdviseSink(IID_ITfCompartmentEventSink, (ITfCompartmentEventSink*)this, &monitor.cookie);
+		}
+	}
+	compartmentMonitors_.push_back(monitor);
+}
+
+void TextService::removeCompartmentMonitor(const GUID key) {
+	vector<CompartmentMonitor>::iterator it;
+	it = find(compartmentMonitors_.begin(), compartmentMonitors_.end(), key);
+	if(it != compartmentMonitors_.end()) {
+		if(threadMgr_) {
+			ComQIPtr<ITfSource> source;
+			if(it->isGlobal)
+				source = globalCompartment(key);
+			else
+				source = threadCompartment(key);
+			source->UnadviseSink(it->cookie);
+		}
+		compartmentMonitors_.erase(it);
 	}
 }
 
@@ -523,28 +577,25 @@ STDMETHODIMP TextService::Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClient
 	// ITfCompositionSink
 
 	// ITfCompartmentEventSink
-	// thread specific compartment
-	ComPtr<ITfCompartment> compartment = threadCompartment(GUID_COMPARTMENT_KEYBOARD_OPENCLOSE);
-	if(compartment) {
-		VARIANT var;
-		::VariantInit(&var);
-		compartment->GetValue(&var);
-		isKeyboardOpened_ = (var.vt == VT_I4 && var.lVal) ? true : false;
-
-		ComQIPtr<ITfSource> compartmentSource = compartment;
-		if(compartmentSource)
-			compartmentSource->AdviseSink(IID_ITfCompartmentEventSink, (ITfCompartmentEventSink*)this, &keyboardOpenEventSinkCookie_);
+	// get current keyboard state
+	if(!compartmentMonitors_.empty()) {
+		vector<CompartmentMonitor>::iterator it;
+		for(it = compartmentMonitors_.begin(); it != compartmentMonitors_.end(); ++it) {
+			ComQIPtr<ITfSource> compartmentSource;
+			if(it->isGlobal)	// global compartment
+				compartmentSource = globalCompartment(it->guid);
+			else 	// thread specific compartment
+				compartmentSource = threadCompartment(it->guid);
+			compartmentSource->AdviseSink(IID_ITfCompartmentEventSink, (ITfCompartmentEventSink*)this, &it->cookie);
+		}
 	}
+	isKeyboardOpened_ = threadCompartmentValue(GUID_COMPARTMENT_KEYBOARD_OPENCLOSE);
 
-/*
-	// global compartment
-	compartment = globalCompartment(XXX_GUID);
-	if(compartment) {
-		ComQIPtr<ITfSource> compartmentSource = compartment;
-		if(compartmentSource)
-			compartmentSource->AdviseSink(IID_ITfCompartmentEventSink, (ITfCompartmentEventSink*)this, &globalCompartmentEventSinkCookie_);
-	}
-*/
+	// FIXME: under Windows 7, it seems that the keyboard is closed every time
+	// our text service is activated. The value in the compartment is always empty. :-(
+	// So, we open the keyboard manually here, but I'm not sure if this is the correct behavior.
+	if(!isKeyboardOpened_)
+		setKeyboardOpen(true);
 
 	// initialize language bar
 	// Note: language bar has no effects in Win 8 immersive mode

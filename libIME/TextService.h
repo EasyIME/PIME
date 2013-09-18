@@ -94,7 +94,7 @@ public:
 	bool isKeyboardDisabled(ITfContext* context = NULL);
 	
 	// is keyboard opened for the whole thread
-	bool isKeyboardOpened() const;
+	bool isKeyboardOpened();
 	void setKeyboardOpen(bool open);
 
 	bool isInsertionAllowed(EditSession* session);
@@ -119,6 +119,10 @@ public:
 	void setGlobalCompartmentValue(const GUID& key, DWORD value);
 	void setThreadCompartmentValue(const GUID& key, DWORD value);
 	void setContextCompartmentValue(const GUID& key, DWORD value, ITfContext* context = NULL);
+
+	// manage sinks to global or thread compartment (context specific compartment is not used)
+	void addCompartmentMonitor(const GUID key, bool isGlobal = false);
+	void removeCompartmentMonitor(const GUID key);
 
 	// virtual functions that IME implementors may need to override
 	virtual void onActivate();
@@ -226,6 +230,16 @@ protected:
 		GUID guid;
 	};
 
+	struct CompartmentMonitor {
+		GUID guid;
+		DWORD cookie;
+		bool isGlobal;
+
+		bool operator == (const GUID& other) {
+			return ::IsEqualGUID(guid, other);
+		}
+	};
+
 private:
 	ComPtr<ImeModule> module_;
 	ComPtr<ITfThreadMgr> threadMgr_;
@@ -244,6 +258,7 @@ private:
 	CandidateWindow* candidateWindow_;
 	std::vector<LangBarButton*> langBarButtons_;
 	std::vector<PreservedKey> preservedKeys_;
+	std::vector<CompartmentMonitor> compartmentMonitors_;
 
 	long refCount_; // reference counting
 };

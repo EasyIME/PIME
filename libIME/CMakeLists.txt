@@ -26,8 +26,6 @@ add_library(libIME_static STATIC
     ${PROJECT_SOURCE_DIR}/DisplayAttributeInfoEnum.h
     ${PROJECT_SOURCE_DIR}/DisplayAttributeProvider.cpp
     ${PROJECT_SOURCE_DIR}/DisplayAttributeProvider.h
-    ${PROJECT_SOURCE_DIR}/CompartmentEventSink.cpp
-    ${PROJECT_SOURCE_DIR}/CompartmentEventSink.h
     ${PROJECT_SOURCE_DIR}/LangBarButton.cpp
     ${PROJECT_SOURCE_DIR}/LangBarButton.h
     ${PROJECT_SOURCE_DIR}/Utils.cpp

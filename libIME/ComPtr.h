@@ -120,7 +120,7 @@ public:
 	}
 
 	ComQIPtr& operator = (IUnknown* p) {
-		*this = NULL;
+		ComPtr<T>::operator = (NULL);
 		if(p) {
 			p->QueryInterface(__uuidof(T), (void**)&p_);
 		}

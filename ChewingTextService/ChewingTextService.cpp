@@ -351,13 +351,15 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 	if(isComposing()) {
 		setCompositionCursor(session, ::chewing_cursor_Current(chewingContext_));
 	}
-/*
-	Ime::ComQIPtr<ITfInsertAtSelection> sel = session->context();
-	if(sel) {
-		Ime::ComPtr<ITfRange> range;
-		sel->InsertTextAtSelection(session->editCookie(), 0, L"TEXT", 4, &range);
+
+	// show aux info
+	if(::chewing_aux_Check(chewingContext_)) {
+		char* str = ::chewing_aux_String(chewingContext_);
+		wchar_t* wstr = utf8ToUtf16(str, NULL);
+		::chewing_free(str);
+		// TODO: show the message to the user
+		delete []wstr;
 	}
-*/
 	return true;
 }
 

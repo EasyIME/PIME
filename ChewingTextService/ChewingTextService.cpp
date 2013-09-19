@@ -106,8 +106,7 @@ TextService::~TextService(void) {
 	if(switchShapeButton_)
 		switchShapeButton_->Release();
 
-	if(chewingContext_)
-		::chewing_delete(chewingContext_);
+	freeChewingContext();
 }
 
 // virtual
@@ -116,23 +115,14 @@ void TextService::onActivate() {
 	DWORD configStamp = globalCompartmentValue(g_configChangedGuid);
 	config().reloadIfNeeded(configStamp);
 
-	if(!chewingContext_) {
-		chewingContext_ = ::chewing_new();
-		::chewing_set_maxChiSymbolLen(chewingContext_, 50);
-	}
-	applyConfig();
-
+	initChewingContext();
 	updateLangButtons();
 }
 
 // virtual
 void TextService::onDeactivate() {
-
 	lastKeyDownCode_ = 0;
-	if(chewingContext_) {
-		::chewing_delete(chewingContext_);
-		chewingContext_ = NULL;
-	}
+	freeChewingContext();
 
 	if(candidateWindow_) {
 		delete candidateWindow_;
@@ -172,7 +162,7 @@ bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
 			return false; // bypass IME. This might be a shortcut key used in the application
 		}
 
-		// when not composing, we only cares about Bopomopho
+		// when not composing, we only cares about Bopomofo
 		// FIXME: we should check if the key is mapped to a phonetic symbol instead
 		if(keyEvent.isChar() && isgraph(keyEvent.charCode())) {
 			// this is a key mapped to a printable char. we want it!
@@ -186,32 +176,39 @@ bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
 // virtual
 bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	assert(chewingContext_);
-	// FIXME: the following keys are not handled:
-	// shift + left		VK_LSHIFT
-	// shift + right		VK_RSHIFT
-	// do we really need to support this feature?
-
+	Config& cfg = config();
+#if 0 // What's easy symbol input??
 	// set this to true or false according to the status of Shift key
-	::chewing_set_easySymbolInput(chewingContext_, keyEvent.isKeyDown(VK_SHIFT));
+	// alternatively, should we set this when onKeyDown and onKeyUp receive VK_SHIFT or VK_CONTROL?
+	bool easySymbols = false;
+	if(cfg.easySymbolsWithShift)
+		easySymbols = keyEvent.isKeyDown(VK_SHIFT);
+	if(!easySymbols && cfg.easySymbolsWithCtrl)
+		easySymbols = keyEvent.isKeyDown(VK_CONTROL);
+	::chewing_set_easySymbolInput(chewingContext_, 0);
+#endif
 
 	UINT charCode = keyEvent.charCode();
 	if(charCode && isprint(charCode)) { // printable characters (exclude extended keys?)
+		langMode_ = ::chewing_get_ChiEngMode(chewingContext_);
 
+		bool temporaryEnglishMode = false;
 		// If Caps lock is on, temporarily change to English mode
-		if(keyEvent.isKeyToggled(VK_CAPITAL) || langMode_ == SYMBOL_MODE) {
-			int oldLangMode = ::chewing_get_ChiEngMode(chewingContext_);
+		if(cfg.enableCapsLock && keyEvent.isKeyToggled(VK_CAPITAL))
+			temporaryEnglishMode = true;
+
+		if(langMode_ == SYMBOL_MODE) { // English mode
+			::chewing_handle_Default(chewingContext_, charCode);
+		}
+		else if(temporaryEnglishMode) { // temporary English mode
 			::chewing_set_ChiEngMode(chewingContext_, SYMBOL_MODE); // change to English mode temporarily
-			if(oldLangMode != SYMBOL_MODE && isalpha(charCode)) { // a-z
-				// we're NOT in English mode, but Capslock is on, so we treat it as English mode
+			if(isalpha(charCode)) { // a-z
+				// we're NOT in real English mode, but Capslock is on, so we treat it as English mode
 				// reverse upper and lower case
-				if(isupper(charCode))
-					::chewing_handle_Default(chewingContext_, tolower(charCode));
-				else
-					::chewing_handle_Default(chewingContext_, toupper(charCode));
+				charCode = isupper(charCode) ? tolower(charCode) : toupper(charCode);
 			}
-			else
-				::chewing_handle_Default(chewingContext_, charCode);
-			::chewing_set_ChiEngMode(chewingContext_, oldLangMode); // restore previous mode
+			::chewing_handle_Default(chewingContext_, charCode);
+			::chewing_set_ChiEngMode(chewingContext_, langMode_); // restore previous mode
 		}
 		else { // Chinese mode
 			if(isalpha(charCode)) // alphabets: A-Z
@@ -368,8 +365,7 @@ bool TextService::filterKeyUp(Ime::KeyEvent& keyEvent) {
 		// last key down event is also shift key
 		// a <Shift> key down + key up pair was detected
 		// switch language
-		::chewing_set_ChiEngMode(chewingContext_, !langMode_);
-		updateLangButtons();
+		toggleLanguageMode();
 	}
 	lastKeyDownCode_ = 0;
 	return false;
@@ -385,10 +381,7 @@ bool TextService::onPreservedKey(const GUID& guid) {
 	lastKeyDownCode_ = 0;
 	// some preserved keys registered in ctor are pressed
 	if(::IsEqualIID(guid, g_shiftSpaceGuid)) { // shift + space is pressed
-		if(chewingContext_) {
-			::chewing_set_ShapeMode(chewingContext_, !shapeMode_);
-			updateLangButtons();
-		}
+		toggleShapeMode();
 		return true;
 	}
 	else if(::IsEqualIID(guid, g_ctrlSpaceGuid)) { // ctrl + space is pressed
@@ -418,14 +411,10 @@ bool TextService::onCommand(UINT id) {
 	assert(chewingContext_);
 	switch(id) {
 	case ID_SWITCH_LANG:
-		// switch between Chinses and English modes
-		::chewing_set_ChiEngMode(chewingContext_, !::chewing_get_ChiEngMode(chewingContext_));
-		updateLangButtons();
+		toggleLanguageMode();
 		break;
 	case ID_SWITCH_SHAPE:
-		// switch between half shape and full shape modes
-		::chewing_set_ShapeMode(chewingContext_, !::chewing_get_ShapeMode(chewingContext_));
-		updateLangButtons();
+		toggleShapeMode();
 		break;
 	case ID_CONFIG: // show config dialog
 		if(!isImmersive()) { // only do this in desktop app mode
@@ -508,18 +497,31 @@ void TextService::onCompartmentChanged(const GUID& key) {
 	if(::IsEqualIID(key, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE)) {
 		// keyboard open/close state is changed
 		if(isKeyboardOpened()) { // keyboard is closed
-			if(!chewingContext_) { // free chewing context
-				chewingContext_ = ::chewing_new();
-				::chewing_set_maxChiSymbolLen(chewingContext_, 50);
-				applyConfig();
-			}
+			initChewingContext();
 		}
 		else { // keyboard is opened
-			if(chewingContext_) { // create chewing context if needed
-				::chewing_delete(chewingContext_);
-				chewingContext_ = NULL;
-			}
+			freeChewingContext();
 		}
+	}
+}
+
+void TextService::initChewingContext() {
+	if(!chewingContext_) {
+		chewingContext_ = ::chewing_new();
+		::chewing_set_maxChiSymbolLen(chewingContext_, 50);
+		Config& cfg = config();
+		if(cfg.defaultEnglish)
+			::chewing_set_ChiEngMode(chewingContext_, SYMBOL_MODE);
+		if(cfg.defaultFullSpace)
+			::chewing_set_ShapeMode(chewingContext_, FULLSHAPE_MODE);
+	}
+	applyConfig();
+}
+
+void TextService::freeChewingContext() {
+	if(chewingContext_) {
+		::chewing_delete(chewingContext_);
+		chewingContext_ = NULL;
 	}
 }
 
@@ -529,32 +531,51 @@ void TextService::applyConfig() {
 	// apply the new configurations
 	if(chewingContext_) {
 		// Configuration
+
+		// add user phrase before or after the cursor
 		::chewing_set_addPhraseDirection(chewingContext_, cfg.addPhraseForward);
+
+		// automatically shift cursor to the next char after choosing a candidate
 		::chewing_set_autoShiftCur(chewingContext_, cfg.advanceAfterSelection);
+
+		// candiate strings per page
 		::chewing_set_candPerPage(chewingContext_, cfg.candPerPage);
+
+		// clean the composition buffer by Esc key
 		::chewing_set_escCleanAllBuf(chewingContext_, cfg.escCleanAllBuf);
+
+		// keyboard type
 		::chewing_set_KBType(chewingContext_, cfg.keyboardLayout);
-		::chewing_set_spaceAsSelection(chewingContext_, cfg.spaceAsSelection);
+
+		// Use space key to open candidate window.
+		::chewing_set_spaceAsSelection(chewingContext_, cfg.showCandWithSpaceKey);
+
+		// FIXME: what's this?
+		// ::chewing_set_phraseChoiceRearward(chewingContext_, true);
+
+		// keys use to select candidate strings (default: 123456789)
 		int selKeys[10];
 		for(int i = 0; i < 10; ++i)
 			selKeys[i] = (int)Config::selKeys[cfg.selKeyType][i];
 		::chewing_set_selKey(chewingContext_, selKeys, 10);
-		// cfg.candPerRow;
-		// cfg.defaultEnglish;
-		// cfg.defaultFullSpace;
-		// cfg.enableShift;
-		// cfg.shiftCapital;
-		// cfg.enableSimp;
-		// cfg.fixCompWnd;
-		// cfg.colorCandWnd;
-		// cfg.coloredCompCursor;
-		// cfg.fontSize;
-		// cfg.cursorCandList;
-		// cfg.enableCapsLock;
-		// cfg.shiftFullShape;
-		// cfg.phraseMark;
-		// cfg.shiftSymbol;
-		// cfg.ctrlSymbol;
+	}
+}
+
+// toggle between English and Chinese
+void TextService::toggleLanguageMode() {
+	// switch between Chinses and English modes
+	if(chewingContext_) {
+		::chewing_set_ChiEngMode(chewingContext_, !::chewing_get_ChiEngMode(chewingContext_));
+		updateLangButtons();
+	}
+}
+
+// toggle between full shape and half shape
+void TextService::toggleShapeMode() {
+	// switch between half shape and full shape modes
+	if(chewingContext_) {
+		::chewing_set_ShapeMode(chewingContext_, !::chewing_get_ShapeMode(chewingContext_));
+		updateLangButtons();
 	}
 }
 

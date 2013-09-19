@@ -64,6 +64,9 @@ public:
 	}
 
 private:
+	void initChewingContext(); // initialize chewing context
+	void freeChewingContext(); // free chewing context
+
 	bool hasCandidates() {
 		return ::chewing_cand_TotalChoice(chewingContext_) > 0;
 	}
@@ -72,17 +75,21 @@ private:
 		return showingCandidates_;
 	}
 
+	// candidate window
 	void showCandidates(Ime::EditSession* session);
 	void updateCandidates(Ime::EditSession* session);
 	void hideCandidates();
 
-	void updateLangButtons();
+	void updateLangButtons(); // update status of language bar buttons
 
 	// reload configurations if changes are detected
 	void reloadConfigIfNeeded();
 
 	// apply current configurations to chewing context
 	void applyConfig();
+
+	void toggleLanguageMode(); // toggle between English and Chinese
+	void toggleShapeMode(); // toggle between full shape and half shape
 
 private:
 	ChewingContext* chewingContext_;

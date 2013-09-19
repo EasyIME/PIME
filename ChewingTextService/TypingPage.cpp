@@ -35,18 +35,17 @@ TypingPage::~TypingPage(void) {
 bool TypingPage::onInitDialog() {
 	CheckRadioButton(hwnd_, IDC_KB1, IDC_KB9, IDC_KB1 + config_->keyboardLayout);
 
-	CheckDlgButton(hwnd_, IDC_SPACESEL, config_->spaceAsSelection);
-	CheckDlgButton(hwnd_, IDC_ENABLE_SHIFT, config_->enableShift);
-	CheckDlgButton(hwnd_, IDC_SHIFT_CAPITAL, config_->shiftCapital);
+	CheckDlgButton(hwnd_, IDC_SPACESEL, config_->showCandWithSpaceKey);
+	CheckDlgButton(hwnd_, IDC_ENABLE_SHIFT, config_->switchLangWithShift);
 	CheckDlgButton(hwnd_, IDC_ADD_PHRASE_FORWARD, config_->addPhraseForward);
 	CheckDlgButton(hwnd_, IDC_ADV_AFTER_SEL, config_->advanceAfterSelection);
 	CheckDlgButton(hwnd_, IDC_CURSOR_CANDLIST, config_->cursorCandList);
 	CheckDlgButton(hwnd_, IDC_ENABLE_CAPSLOCK, config_->enableCapsLock);
-	CheckDlgButton(hwnd_, IDC_SHIFT_FULLSHAPE, config_->shiftFullShape);
+	CheckDlgButton(hwnd_, IDC_SHIFT_FULLSHAPE, config_->fullShapeSymbols);
 	CheckDlgButton(hwnd_, IDC_ESC_CLEAN_ALL_BUF, config_->escCleanAllBuf);
-	CheckDlgButton(hwnd_, IDC_SHIFT_SYMBOL, config_->shiftSymbol);
-	CheckDlgButton(hwnd_, IDC_CTRL_SYMBOL, config_->ctrlSymbol);
-	CheckDlgButton(hwnd_, IDC_ENABLE_Simp, config_->enableSimp);
+	CheckDlgButton(hwnd_, IDC_SHIFT_SYMBOL, config_->easySymbolsWithShift);
+	CheckDlgButton(hwnd_, IDC_CTRL_SYMBOL, config_->easySymbolsWithCtrl);
+	CheckDlgButton(hwnd_, IDC_ENABLE_Simp, config_->outputSimpChinese);
 
 	HWND combo = GetDlgItem(hwnd_, IDC_SELKEYS);
 	for(const wchar_t** pselkeys = config_->selKeys; *pselkeys; ++pselkeys)
@@ -68,20 +67,17 @@ void TypingPage::onOK() {
 	if(config_->selKeyType < 0)
 		config_->selKeyType = 0;
 
-	config_->spaceAsSelection = IsDlgButtonChecked(hwnd_, IDC_SPACESEL);
-	config_->enableShift = IsDlgButtonChecked(hwnd_, IDC_ENABLE_SHIFT);
-	config_->shiftCapital = IsDlgButtonChecked(hwnd_, IDC_SHIFT_CAPITAL);
+	config_->showCandWithSpaceKey = IsDlgButtonChecked(hwnd_, IDC_SPACESEL);
+	config_->switchLangWithShift = IsDlgButtonChecked(hwnd_, IDC_ENABLE_SHIFT);
 	config_->addPhraseForward = IsDlgButtonChecked(hwnd_, IDC_ADD_PHRASE_FORWARD);
 	config_->advanceAfterSelection = IsDlgButtonChecked(hwnd_, IDC_ADV_AFTER_SEL);
 	config_->cursorCandList = IsDlgButtonChecked(hwnd_, IDC_CURSOR_CANDLIST);
 	config_->enableCapsLock = IsDlgButtonChecked(hwnd_, IDC_ENABLE_CAPSLOCK);
-	config_->shiftFullShape = IsDlgButtonChecked(hwnd_, IDC_SHIFT_FULLSHAPE);
+	config_->fullShapeSymbols = IsDlgButtonChecked(hwnd_, IDC_SHIFT_FULLSHAPE);
 	config_->escCleanAllBuf = IsDlgButtonChecked(hwnd_, IDC_ESC_CLEAN_ALL_BUF);
-	// if (config_->chewing!=NULL)
-	// 	config_->chewing->SetAdvanceAfterSelection((config_->AdvanceAfterSelection!=0)?true: false);
-	config_->shiftSymbol = IsDlgButtonChecked(hwnd_, IDC_SHIFT_SYMBOL);
-	config_->ctrlSymbol = IsDlgButtonChecked(hwnd_, IDC_CTRL_SYMBOL);
-	config_->enableSimp = IsDlgButtonChecked(hwnd_, IDC_ENABLE_Simp);
+	config_->easySymbolsWithShift = IsDlgButtonChecked(hwnd_, IDC_SHIFT_SYMBOL);
+	config_->easySymbolsWithCtrl = IsDlgButtonChecked(hwnd_, IDC_CTRL_SYMBOL);
+	config_->outputSimpChinese = IsDlgButtonChecked(hwnd_, IDC_ENABLE_Simp);
 
 	config_->save();
 	PropertyPage::onOK();

@@ -32,6 +32,7 @@ LangBarButton::LangBarButton(TextService* service, const GUID& guid, UINT comman
 	commandId_(commandId),
 	menu_(NULL),
 	icon_(NULL),
+	status_(0),
 	refCount_(1) {
 
 	assert(service && service->imeModule());
@@ -142,6 +143,29 @@ void LangBarButton::setMenu(HMENU menu) {
 		info_.dwStyle = TF_LBI_STYLE_BTN_BUTTON;
 }
 
+bool LangBarButton::enabled() const {
+	return !(status_ & TF_LBI_STATUS_DISABLED);
+}
+
+void LangBarButton::setEnabled(bool enable) {
+	if(enabled() != enable) {
+		status_ |= TF_LBI_STATUS_DISABLED;
+		update(TF_LBI_STATUS);
+	}
+}
+
+// need to create the button with TF_LBI_STYLE_BTN_TOGGLE style
+bool LangBarButton::toggled() const {
+	return (status_ & TF_LBI_STATUS_BTN_TOGGLED) ? true : false;
+}
+
+void LangBarButton::setToggled(bool toggle) {
+	if(toggled() != toggle) {
+		status_ |= TF_LBI_STATUS_BTN_TOGGLED;
+		update(TF_LBI_STATUS);
+	}
+}
+
 
 // COM stuff
 
@@ -184,7 +208,7 @@ STDMETHODIMP LangBarButton::GetInfo(TF_LANGBARITEMINFO *pInfo) {
 }
 
 STDMETHODIMP LangBarButton::GetStatus(DWORD *pdwStatus) {
-	*pdwStatus = 0;
+	*pdwStatus = status_;
 	return S_OK;
 }
 

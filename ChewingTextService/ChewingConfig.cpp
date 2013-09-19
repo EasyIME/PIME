@@ -55,28 +55,22 @@ Config::Config(ImeModule* module):
 	candPerRow = 4;
 	defaultEnglish = false;
 	defaultFullSpace = false;
-	spaceAsSelection = false;
-	enableShift = true;
-	shiftCapital = false;
-	enableSimp = false;
+	showCandWithSpaceKey = false;
+	switchLangWithShift = true;
+	outputSimpChinese = false;
 	addPhraseForward = true;
-	hideStatusWnd = false;
-	fixCompWnd = false;
 	colorCandWnd = true;
-	coloredCompCursor = false;
 	advanceAfterSelection = true;
 	fontSize = DEF_FONT_SIZE;
 	selKeyType = 0;
-	// selAreaLen = 50;
 	candPerPage = 9;
 	cursorCandList = 1;
-	enableCapsLock = 0;
-	shiftFullShape = 1;
+	enableCapsLock = 1;
+	fullShapeSymbols = 1;
 	phraseMark = 1;
 	escCleanAllBuf = 0;
-	shiftSymbol = 0;
-	ctrlSymbol = 0;
-	checkNewVersion = true;	// Enable update notifier
+	easySymbolsWithShift = 1;
+	easySymbolsWithCtrl = 0;
 
 	stamp = INVALID_TIMESTAMP;
 }
@@ -105,29 +99,22 @@ void Config::load() {
 		::RegQueryValueEx(hk, L"CandPerRow", 0, &type, (LPBYTE)&candPerRow, &size);
 		::RegQueryValueEx(hk, L"DefaultEnglish", 0, &type, (LPBYTE)&defaultEnglish, &size);
 		::RegQueryValueEx(hk, L"DefaultFullSpace", 0, &type, (LPBYTE)&defaultFullSpace, &size);
-		::RegQueryValueEx(hk, L"SpaceAsSelection", 0, &type, (LPBYTE)&spaceAsSelection, &size);
-		::RegQueryValueEx(hk, L"EnableShift", 0, &type, (LPBYTE)&enableShift, &size);
-		::RegQueryValueEx(hk, L"ShiftCapital", 0, &type, (LPBYTE)&shiftCapital, &size);
-		::RegQueryValueEx(hk, L"EnableSimp", 0, &type, (LPBYTE)&enableSimp, &size);
+		::RegQueryValueEx(hk, L"ShowCandWithSpaceKey", 0, &type, (LPBYTE)&showCandWithSpaceKey, &size);
+		::RegQueryValueEx(hk, L"SwitchLangWithShift", 0, &type, (LPBYTE)&switchLangWithShift, &size);
+		::RegQueryValueEx(hk, L"OutputSimpChinese", 0, &type, (LPBYTE)&outputSimpChinese, &size);
 		::RegQueryValueEx(hk, L"AddPhraseForward", 0, &type, (LPBYTE)&addPhraseForward, &size);
-		::RegQueryValueEx(hk, L"FixCompWnd", 0, &type, (LPBYTE)&fixCompWnd, &size);
-		::RegQueryValueEx(hk, L"HideStatusWnd", 0, &type, (LPBYTE)&hideStatusWnd, &size);
 		::RegQueryValueEx(hk, L"ColorCandWnd", 0, &type, (LPBYTE)&colorCandWnd, &size);
-		::RegQueryValueEx(hk, L"ColorCompCursor", 0, &type, (LPBYTE)&coloredCompCursor, &size);
 		::RegQueryValueEx(hk, L"AdvanceAfterSelection", 0, &type, (LPBYTE)&advanceAfterSelection, &size);
         ::RegQueryValueEx(hk, L"DefFontSize", 0, &type, (LPBYTE)&fontSize, &size);
 		::RegQueryValueEx(hk, L"SelKeyType", 0, &type, (LPBYTE)&selKeyType, &size);
-		//::RegQueryValueEx(hk, L"SelAreaLen", 0, &type, (LPBYTE)&selAreaLen, &size);
 		::RegQueryValueEx(hk, L"SelAreaLen", 0, &type, (LPBYTE)&candPerPage, &size);
 		::RegQueryValueEx(hk, L"CursorCandList", 0, &type, (LPBYTE)&cursorCandList, &size);
 		::RegQueryValueEx(hk, L"EnableCapsLock", 0, &type, (LPBYTE)&enableCapsLock, &size);
-		::RegQueryValueEx(hk, L"ShiftFullShape", 0, &type, (LPBYTE)&shiftFullShape, &size);
+		::RegQueryValueEx(hk, L"FullShapeSymbols", 0, &type, (LPBYTE)&fullShapeSymbols, &size);
 		::RegQueryValueEx(hk, L"PhraseMark", 0, &type, (LPBYTE)&phraseMark, &size);
 		::RegQueryValueEx(hk, L"EscCleanAllBuf", 0, &type, (LPBYTE)&escCleanAllBuf, &size);
-		::RegQueryValueEx(hk, L"ShiftSymbol", 0, &type, (LPBYTE)&shiftSymbol, &size);
-		::RegQueryValueEx(hk, L"CtrlSymbol", 0, &type, (LPBYTE)&ctrlSymbol, &size);
-
-		::RegQueryValueEx(hk, L"CheckNewVersion", 0, &type, (LPBYTE)&checkNewVersion, &size);
+		::RegQueryValueEx(hk, L"EasySymbolsWithShift", 0, &type, (LPBYTE)&easySymbolsWithShift, &size);
+		::RegQueryValueEx(hk, L"EasySymbolsWithCtrl", 0, &type, (LPBYTE)&easySymbolsWithCtrl, &size);
 		::RegCloseKey(hk);
 	}
 
@@ -144,29 +131,22 @@ void Config::save() {
 		::RegSetValueEx(hk, L"CandPerRow", 0, REG_DWORD, (LPBYTE)&candPerRow, sizeof(DWORD));
 		::RegSetValueEx(hk, L"DefaultEnglish", 0, REG_DWORD, (LPBYTE)&defaultEnglish, sizeof(DWORD));
 		::RegSetValueEx(hk, L"DefaultFullSpace", 0, REG_DWORD, (LPBYTE)&defaultFullSpace, sizeof(DWORD));
-		::RegSetValueEx(hk, L"SpaceAsSelection", 0, REG_DWORD, (LPBYTE)&spaceAsSelection, sizeof(DWORD));
-		::RegSetValueEx(hk, L"EnableShift", 0, REG_DWORD, (LPBYTE)&enableShift, sizeof(DWORD));
-		::RegSetValueEx(hk, L"ShiftCapital", 0, REG_DWORD, (LPBYTE)&shiftCapital, sizeof(DWORD));
-		::RegSetValueEx(hk, L"EnableSimp", 0, REG_DWORD, (LPBYTE)&enableSimp, sizeof(DWORD));
+		::RegSetValueEx(hk, L"ShowCandWithSpaceKey", 0, REG_DWORD, (LPBYTE)&showCandWithSpaceKey, sizeof(DWORD));
+		::RegSetValueEx(hk, L"SwitchLangWithShift", 0, REG_DWORD, (LPBYTE)&switchLangWithShift, sizeof(DWORD));
+		::RegSetValueEx(hk, L"OutputSimpChinese", 0, REG_DWORD, (LPBYTE)&outputSimpChinese, sizeof(DWORD));
 		::RegSetValueEx(hk, L"AddPhraseForward", 0, REG_DWORD, (LPBYTE)&addPhraseForward, sizeof(DWORD));
-		::RegSetValueEx(hk, L"FixCompWnd", 0, REG_DWORD, (LPBYTE)&fixCompWnd, sizeof(DWORD));
-		::RegSetValueEx(hk, L"HideStatusWnd", 0, REG_DWORD, (LPBYTE)&hideStatusWnd, sizeof(DWORD));
 		::RegSetValueEx(hk, L"ColorCandWnd", 0, REG_DWORD, (LPBYTE)&colorCandWnd, sizeof(DWORD));
-		::RegSetValueEx(hk, L"ColorCompCursor", 0, REG_DWORD, (LPBYTE)&coloredCompCursor, sizeof(DWORD));
 		::RegSetValueEx(hk, L"AdvanceAfterSelection", 0, REG_DWORD, (LPBYTE)&advanceAfterSelection, sizeof(DWORD));
 		::RegSetValueEx(hk, L"DefFontSize", 0, REG_DWORD, (LPBYTE)&fontSize, sizeof(DWORD));
 		::RegSetValueEx(hk, L"SelKeyType", 0, REG_DWORD, (LPBYTE)&selKeyType, sizeof(DWORD));
-		//::RegSetValueEx(hk, L"SelAreaLen", 0, REG_DWORD, (LPBYTE)&selAreaLen, sizeof(DWORD));
 		::RegSetValueEx(hk, L"SelAreaLen", 0, REG_DWORD, (LPBYTE)&candPerPage, sizeof(DWORD));
 		::RegSetValueEx(hk, L"CursorCandList", 0, REG_DWORD, (LPBYTE)&cursorCandList, sizeof(DWORD));
 		::RegSetValueEx(hk, L"EnableCapsLock", 0, REG_DWORD, (LPBYTE)&enableCapsLock, sizeof(DWORD));
-		::RegSetValueEx(hk, L"ShiftFullShape", 0, REG_DWORD, (LPBYTE)&shiftFullShape, sizeof(DWORD));
+		::RegSetValueEx(hk, L"FullShapeSymbols", 0, REG_DWORD, (LPBYTE)&fullShapeSymbols, sizeof(DWORD));
 		::RegSetValueEx(hk, L"PhraseMark", 0, REG_DWORD, (LPBYTE)&phraseMark, sizeof(DWORD));
 		::RegSetValueEx(hk, L"EscCleanAllBuf", 0, REG_DWORD, (LPBYTE)&escCleanAllBuf, sizeof(DWORD));
-		::RegSetValueEx(hk, L"ShiftSymbol", 0, REG_DWORD, (LPBYTE)&shiftSymbol, sizeof(DWORD));
-		::RegSetValueEx(hk, L"CtrlSymbol", 0, REG_DWORD, (LPBYTE)&ctrlSymbol, sizeof(DWORD));
-
-		::RegSetValueEx(hk, L"CheckNewVersion", 0, REG_DWORD, (LPBYTE)&checkNewVersion, sizeof(DWORD));
+		::RegSetValueEx(hk, L"EasySymbolsWithShift", 0, REG_DWORD, (LPBYTE)&easySymbolsWithShift, sizeof(DWORD));
+		::RegSetValueEx(hk, L"EasySymbolsWithCtrl", 0, REG_DWORD, (LPBYTE)&easySymbolsWithCtrl, sizeof(DWORD));
 		::RegCloseKey(hk);
 
 		// grant access to app containers in Windows 8

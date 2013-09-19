@@ -55,6 +55,13 @@ public:
 	HMENU menu() const;
 	void setMenu(HMENU menu);
 
+	bool enabled() const;
+	void setEnabled(bool enable);
+
+	// need to create the button with TF_LBI_STYLE_BTN_TOGGLE style
+	bool toggled() const;
+	void setToggled(bool toggle);
+
 	// COM-related stuff
 
 	// IUnknown
@@ -92,6 +99,7 @@ private:
 	HICON icon_;
 	HMENU menu_;
 	std::map<DWORD, ITfLangBarItemSink*> sinks_;
+	DWORD status_;
 };
 
 }

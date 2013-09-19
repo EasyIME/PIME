@@ -49,36 +49,31 @@ public:
 	};
 
 	// Configuration
-	DWORD keyboardLayout;
-	DWORD candPerRow;
-	DWORD defaultEnglish;
-	DWORD defaultFullSpace;
-	DWORD spaceAsSelection;
-	DWORD enableShift;
-	DWORD shiftCapital;
-	DWORD enableSimp;
-	DWORD addPhraseForward;
-	DWORD hideStatusWnd;
-	DWORD fixCompWnd;
-	DWORD colorCandWnd;
-	DWORD coloredCompCursor;
-	DWORD advanceAfterSelection;
-	DWORD fontSize;
-	DWORD selKeyType;
-	//DWORD selAreaLen;
-	DWORD candPerPage;
-	DWORD cursorCandList;
-	DWORD enableCapsLock;
-	DWORD shiftFullShape;
-	DWORD phraseMark;
-	DWORD escCleanAllBuf;
-	DWORD shiftSymbol;
-	DWORD ctrlSymbol;
-	DWORD checkNewVersion;	// Enable update notifier
+	DWORD keyboardLayout; // keyboard type
+	DWORD candPerRow; // candidate string per row (not supported yet)
+	DWORD defaultEnglish; // English mode by default
+	DWORD defaultFullSpace; // full space mode by default
+	DWORD showCandWithSpaceKey; // Use space key to open candidate window.
+	DWORD switchLangWithShift; // switch language mode by Shift key
+	DWORD outputSimpChinese; // output simplified Chinese (not supported yet)
+	DWORD addPhraseForward; // add user phrase before or after the cursor
+	DWORD colorCandWnd; // use colorful candidate windows (not supported yet)
+	DWORD advanceAfterSelection; // automatically shift cursor to the next char after choosing a candidate
+	DWORD fontSize; // font size of candidate window and tip window (not supported yet)
+	DWORD selKeyType; // keys use to select candidate strings (default: 123456789)
+	DWORD candPerPage; // number of candiate strings per page
+	DWORD cursorCandList; // use cursor to select items in the candidate window (not supported yet)
+	DWORD enableCapsLock; // use capslock to Change language mode
+	DWORD fullShapeSymbols; // output fullshape symbols when Shift key is down
+	DWORD phraseMark; // not supported yet
+	DWORD escCleanAllBuf; // clean the composition buffer by Esc key
+	DWORD easySymbolsWithShift; // output easy symbols when Shift is pressed
+	DWORD easySymbolsWithCtrl; // output easy symbols when Ctrl is pressed
 
-	DWORD stamp;
+	static const wchar_t* selKeys[]; // keys used to select candidate strings.
 
-	static const wchar_t* selKeys[];
+private:
+	DWORD stamp; // timestamp used to check if the config values are up to date
 	Chewing::ImeModule* module_;
 };
 

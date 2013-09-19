@@ -17,22 +17,44 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#include "Tooltip.h"
+#include "MessageWindow.h"
+#include "TextService.h"
 #include "DrawUtils.h"
 
 namespace Ime {
 
-Tooltip::Tooltip(void):
-	autoDestroy_(true),
-	timerId_(0) {
+MessageWindow::MessageWindow(TextService* service, EditSession* session):
+	textService_(service) {
+	HWND parent;
+	if(session && service->isImmersive())
+		parent = service->compositionWindow(session);
+	else
+		parent = HWND_DESKTOP;
+	create(parent, WS_POPUP|WS_CLIPCHILDREN, WS_EX_TOOLWINDOW);
 }
 
-Tooltip::~Tooltip(void) {
-	if(timerId_)
-		KillTimer(hwnd_, timerId_);
+MessageWindow::~MessageWindow(void) {
 }
 
-LRESULT Tooltip::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
+void MessageWindow::setText(std::wstring text) {
+	// FIXMEl: use different appearance under immersive mode
+	int margin = 4;
+	text_ = text;
+	SIZE size = {0};
+	HDC dc = GetDC(hwnd_);
+	HGDIOBJ old_font = SelectObject(dc, GetStockObject(DEFAULT_GUI_FONT));
+	GetTextExtentPointW(dc, text_.c_str(), text_.length(), &size);
+	SelectObject(dc, old_font);
+	ReleaseDC(hwnd_, dc);
+
+	SetWindowPos(hwnd_, HWND_TOPMOST, 0, 0,
+		size.cx + margin * 2, size.cy + margin * 2, SWP_NOACTIVATE|SWP_NOMOVE);
+	if(IsWindowVisible(hwnd_))
+		InvalidateRect(hwnd_, NULL, TRUE);
+}
+
+
+LRESULT MessageWindow::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
 	switch(msg) {
 	case WM_PAINT: {
 			PAINTSTRUCT ps;
@@ -41,17 +63,6 @@ LRESULT Tooltip::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
 			EndPaint(hwnd_, &ps);
 		}
 		break;
-	case WM_TIMER:
-		hideTip();
-		if(autoDestroy_) {
-			::DestroyWindow(hwnd_);
-		}
-		break;
-	case WM_NCDESTROY:
-		if(autoDestroy_) {
-			delete this;
-			return 0;
-		}
 	case WM_MOUSEACTIVATE:
 		return MA_NOACTIVATE;
 	default:
@@ -60,8 +71,8 @@ LRESULT Tooltip::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
 	return 0;
 }
 
-void Tooltip::onPaint(PAINTSTRUCT& ps) {
-	int len = text.length();
+void MessageWindow::onPaint(PAINTSTRUCT& ps) {
+	int len = text_.length();
 	RECT rc, textrc = {0};
 	GetClientRect(hwnd_, &rc);
 	::FillSolidRect(ps.hdc, &rc, ::GetSysColor(COLOR_INFOBK));
@@ -72,41 +83,12 @@ void Tooltip::onPaint(PAINTSTRUCT& ps) {
 	HGDIOBJ old_font = SelectObject(ps.hdc, GetStockObject(DEFAULT_GUI_FONT));
 
 	SIZE size;
-	GetTextExtentPoint32W(ps.hdc, text.c_str(), len, &size);
+	GetTextExtentPoint32W(ps.hdc, text_.c_str(), len, &size);
 	rc.top += (rc.bottom - size.cy)/2;
 	rc.left += (rc.right - size.cx)/2;
-	ExtTextOutW(ps.hdc, rc.left, rc.top, 0, &textrc, text.c_str(), len, NULL);
+	ExtTextOutW(ps.hdc, rc.left, rc.top, 0, &textrc, text_.c_str(), len, NULL);
 
 	SelectObject(ps.hdc, old_font);
-}
-
-void Tooltip::showTip(int x, int y, std::wstring tip_text, int duration) {
-	text = tip_text;
-	SIZE size = {0};
-	HDC dc = GetDC(hwnd_);
-	HGDIOBJ old_font = SelectObject(dc, GetStockObject(DEFAULT_GUI_FONT));
-	GetTextExtentPointW(dc, text.c_str(), text.length(), &size);
-	SelectObject(dc, old_font);
-	ReleaseDC(hwnd_, dc);
-
-	SetWindowPos(hwnd_, HWND_TOPMOST, x, y, size.cx + 4, size.cy + 4, SWP_NOACTIVATE);
-	if(IsWindowVisible(hwnd_))
-		InvalidateRect(hwnd_, NULL, TRUE);
-	else
-		ShowWindow(hwnd_, SW_SHOWNA);
-	if(duration > 0) {
-		if(timerId_)
-			KillTimer(hwnd_, timerId_);
-		timerId_ = SetTimer(hwnd_, 1, duration, NULL);
-	}
-}
-
-void Tooltip::hideTip(void) {
-	if(timerId_) {
-		KillTimer(hwnd_, timerId_);
-		timerId_ = 0;
-	}
-	hide();
 }
 
 } // namespace Ime

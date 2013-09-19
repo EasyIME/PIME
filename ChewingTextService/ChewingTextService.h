@@ -22,6 +22,7 @@
 
 #include <LibIME/TextService.h>
 #include <LibIME/CandidateWindow.h>
+#include <LibIME/MessageWindow.h>
 #include <LibIME/EditSession.h>
 #include <LibIME/LangBarButton.h>
 #include <chewing.h>
@@ -80,6 +81,12 @@ private:
 	void updateCandidates(Ime::EditSession* session);
 	void hideCandidates();
 
+	// message window
+	void showMessage(Ime::EditSession* session, std::wstring message, int duration = 3);
+	void hideMessage();
+	void onMessageTimeout();
+	static void CALLBACK onMessageTimeout(HWND hwnd, UINT msg, UINT_PTR id, DWORD time);
+
 	void updateLangButtons(); // update status of language bar buttons
 
 	// reload configurations if changes are detected
@@ -95,6 +102,9 @@ private:
 	ChewingContext* chewingContext_;
 	Ime::CandidateWindow* candidateWindow_;
 	bool showingCandidates_;
+
+	Ime::MessageWindow* messageWindow_;
+	UINT messageTimerId_;
 
 	Ime::LangBarButton* switchLangButton_;
 	Ime::LangBarButton* switchShapeButton_;

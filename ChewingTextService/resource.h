@@ -109,12 +109,6 @@
 #define IDC_BUTTON41                    1069
 #define IDC_BUTTON42                    1073
 #define IDC_BUTTON43                    1074
-#define IDI_APPLICATION                 32512
-#define IDI_HAND                        32513
-#define IDI_QUESTION                    32514
-#define IDI_EXCLAMATION                 32515
-#define IDI_ASTERISK                    32516
-#define IDI_WINLOGO                     32517
 #define ID_SETTINGS_                    40003
 #define ID_ABOUT                        40005
 #define ID_CHECK_NEW_VER                40006

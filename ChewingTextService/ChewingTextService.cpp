@@ -63,6 +63,8 @@ TextService::TextService(ImeModule* module):
 	langMode_(-1),
 	shapeMode_(-1),
 	lastKeyDownCode_(0),
+	messageWindow_(NULL),
+	messageTimerId_(0),
 	candidateWindow_(NULL),
 	chewingContext_(NULL) {
 
@@ -101,6 +103,9 @@ TextService::~TextService(void) {
 	if(candidateWindow_)
 		delete candidateWindow_;
 
+	if(messageWindow_)
+		hideMessage();
+
 	if(switchLangButton_)
 		switchLangButton_->Release();
 	if(switchShapeButton_)
@@ -111,7 +116,6 @@ TextService::~TextService(void) {
 
 // virtual
 void TextService::onActivate() {
-
 	DWORD configStamp = globalCompartmentValue(g_configChangedGuid);
 	config().reloadIfNeeded(configStamp);
 
@@ -123,6 +127,8 @@ void TextService::onActivate() {
 void TextService::onDeactivate() {
 	lastKeyDownCode_ = 0;
 	freeChewingContext();
+
+	hideMessage();
 
 	if(candidateWindow_) {
 		delete candidateWindow_;
@@ -267,6 +273,8 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 		case VK_NEXT:
 			::chewing_handle_PageDown(chewingContext_);
 			break;
+		default: // we don't know this key. ignore it!
+			return false;
 		}
 	}
 
@@ -357,7 +365,10 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 		char* str = ::chewing_aux_String(chewingContext_);
 		wchar_t* wstr = utf8ToUtf16(str, NULL);
 		::chewing_free(str);
-		// TODO: show the message to the user
+		// show the message to the user
+		// FIXME: sometimes libchewing shows the same aux info
+		// for subsequent key events... I think this is a bug.
+		showMessage(session, wstr);
 		delete []wstr;
 	}
 	return true;
@@ -642,6 +653,56 @@ void TextService::hideCandidates() {
 	}
 	showingCandidates_ = false;
 }
+
+
+// message window
+void TextService::showMessage(Ime::EditSession* session, std::wstring message, int duration) {
+	// remove previous message if there's any
+	hideMessage();
+	// FIXME: reuse the window whenever possible
+	messageWindow_ = new Ime::MessageWindow(this, session);
+	messageWindow_->setText(message);
+	
+	int x = 0, y = 0;
+	if(isComposing()) {
+		RECT rc;
+		if(selectionRect(session, &rc)) {
+			x = rc.left;
+			y = rc.bottom;
+		}
+	}
+	messageWindow_->move(x, y);
+	messageWindow_->show();
+
+	messageTimerId_ = ::SetTimer(messageWindow_->hwnd(), 1, duration * 1000, (TIMERPROC)TextService::onMessageTimeout);
+}
+
+void TextService::hideMessage() {
+	if(messageTimerId_) {
+		::KillTimer(messageWindow_->hwnd(), messageTimerId_);
+		messageTimerId_ = 0;
+	}
+	if(messageWindow_) {
+		delete messageWindow_;
+		messageWindow_ = NULL;
+	}
+}
+
+// called when the message window timeout
+void TextService::onMessageTimeout() {
+	hideMessage();
+}
+
+// static
+void CALLBACK TextService::onMessageTimeout(HWND hwnd, UINT msg, UINT_PTR id, DWORD time) {
+	Ime::MessageWindow* messageWindow = (Ime::MessageWindow*)Ime::Window::fromHwnd(hwnd);
+	assert(messageWindow);
+	if(messageWindow) {
+		TextService* pThis = (Chewing::TextService*)messageWindow->textService();
+		pThis->onMessageTimeout();
+	}
+}
+
 
 void TextService::updateLangButtons() {
 	if(!chewingContext_)

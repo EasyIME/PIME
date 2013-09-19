@@ -23,19 +23,26 @@
 #ifndef IME_TOOLTIP_H
 #define IME_TOOLTIP_H
 
-#include "imewindow.h"
+#include "ImeWindow.h"
+#include "EditSession.h"
 #include <string>
 
 namespace Ime {
 
-class Tooltip :	public ImeWindow {
+class TextService;
+
+class MessageWindow : public ImeWindow {
 public:
-	Tooltip(void);
-	virtual ~Tooltip(void);
-	void showTip(int x, int y, std::wstring tip_text, int duration = 0);
-	void hideTip(void);
-	void setAutoDestroy(bool autoDestroy = true) {
-		autoDestroy_ = autoDestroy;
+	MessageWindow(TextService* service, EditSession* session = NULL);
+	virtual ~MessageWindow(void);
+
+	std::wstring text() {
+		return text_;
+	}
+	void setText(std::wstring text);
+
+	TextService* textService() {
+		return textService_;
 	}
 
 protected:
@@ -43,9 +50,8 @@ protected:
 	void onPaint(PAINTSTRUCT& ps);
 
 private:
-	UINT timerId_;
-	std::wstring text;
-	bool autoDestroy_;
+	std::wstring text_;
+	TextService* textService_;
 };
 
 }

@@ -66,7 +66,7 @@ public:
 	}
 
 	bool isKeyDown(UINT code) const {
-		return (keyStates_[code] & (1 << 8)) != 0;
+		return (keyStates_[code] & (1 << 7)) != 0;
 	}
 
 	bool isKeyToggled(UINT code) const {
@@ -98,7 +98,7 @@ public:
 	}
 
 	bool isDown() {
-		return ((state_ & (1 << 16)) != 0);
+		return ((state_ & (1 << 15)) != 0);
 	}
 
 	bool isToggled() {

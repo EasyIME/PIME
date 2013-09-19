@@ -190,11 +190,13 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 
 	UINT charCode = keyEvent.charCode();
 	if(charCode && isprint(charCode)) { // printable characters (exclude extended keys?)
-		langMode_ = ::chewing_get_ChiEngMode(chewingContext_);
-
+		int oldLangMode = ::chewing_get_ChiEngMode(chewingContext_);
 		bool temporaryEnglishMode = false;
 		// If Caps lock is on, temporarily change to English mode
 		if(cfg.enableCapsLock && keyEvent.isKeyToggled(VK_CAPITAL))
+			temporaryEnglishMode = true;
+		// If Shift is pressed, but we don't want to enter full shape symbols
+		if(!cfg.fullShapeSymbols && keyEvent.isKeyDown(VK_SHIFT))
 			temporaryEnglishMode = true;
 
 		if(langMode_ == SYMBOL_MODE) { // English mode
@@ -208,7 +210,7 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 				charCode = isupper(charCode) ? tolower(charCode) : toupper(charCode);
 			}
 			::chewing_handle_Default(chewingContext_, charCode);
-			::chewing_set_ChiEngMode(chewingContext_, langMode_); // restore previous mode
+			::chewing_set_ChiEngMode(chewingContext_, oldLangMode); // restore previous mode
 		}
 		else { // Chinese mode
 			if(isalpha(charCode)) // alphabets: A-Z

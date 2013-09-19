@@ -371,6 +371,7 @@ bool TextService::filterKeyUp(Ime::KeyEvent& keyEvent) {
 		::chewing_set_ChiEngMode(chewingContext_, !langMode_);
 		updateLangButtons();
 	}
+	lastKeyDownCode_ = 0;
 	return false;
 }
 
@@ -381,6 +382,7 @@ bool TextService::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 
 // virtual
 bool TextService::onPreservedKey(const GUID& guid) {
+	lastKeyDownCode_ = 0;
 	// some preserved keys registered in ctor are pressed
 	if(::IsEqualIID(guid, g_shiftSpaceGuid)) { // shift + space is pressed
 		if(chewingContext_) {

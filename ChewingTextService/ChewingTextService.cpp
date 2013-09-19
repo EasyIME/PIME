@@ -185,7 +185,7 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 		easySymbols = keyEvent.isKeyDown(VK_SHIFT);
 	if(!easySymbols && cfg.easySymbolsWithCtrl)
 		easySymbols = keyEvent.isKeyDown(VK_CONTROL);
-	::chewing_set_easySymbolInput(chewingContext_, 0);
+	::chewing_set_easySymbolInput(chewingContext_, easySymbols);
 #endif
 
 	UINT charCode = keyEvent.charCode();
@@ -391,7 +391,9 @@ bool TextService::onPreservedKey(const GUID& guid) {
 	else if(::IsEqualIID(guid, g_ctrlSpaceGuid)) { // ctrl + space is pressed
 		// this only happens under Windows 8
 		bool open = !isKeyboardOpened();
-		if(!open) { // if we're going to close the keyboard
+		if(open) // open the keyboard (input method)
+			initChewingContext();
+		else { // if we're going to close the keyboard
 			if(isComposing()) {
 				// end current composition if needed
 				ITfContext* context = currentContext();
@@ -400,8 +402,8 @@ bool TextService::onPreservedKey(const GUID& guid) {
 					context->Release();
 				}
 			}
+			freeChewingContext(); // IME is closed, chewingContext is not needed
 		}
-		// FIXME: should we clear chewing buf before closing the keyboard?
 		setKeyboardOpen(open);
 		// FIXME: do we need to update the language bar to reflect
 		// the state of keyboard?

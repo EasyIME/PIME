@@ -52,10 +52,6 @@ static const GUID g_settingsButtonGuid = // settings button/menu
 static const GUID g_shiftSpaceGuid = // shift + space
 { 0xc77a44f5, 0xdb21, 0x474e, { 0xa2, 0xa2, 0xa1, 0x72, 0x42, 0x21, 0x7a, 0xb3 } };
 
-// {A39B40FD-479C-4DBE-B865-EFC8969A518D}
-static const GUID g_ctrlSpaceGuid = // ctrl + space (only used in Windows 8)
-{ 0xa39b40fd, 0x479c, 0x4dbe, { 0xb8, 0x65, 0xef, 0xc8, 0x96, 0x9a, 0x51, 0x8d } };
-
 // {F4D1E543-FB2C-48D7-B78D-20394F355381} // global compartment GUID for config change notification
 static const GUID g_configChangedGuid = 
 { 0xf4d1e543, 0xfb2c, 0x48d7, { 0xb7, 0x8d, 0x20, 0x39, 0x4f, 0x35, 0x53, 0x81 } };
@@ -79,9 +75,6 @@ TextService::TextService(ImeModule* module):
 
 	// add preserved keys
 	addPreservedKey(VK_SPACE, TF_MOD_SHIFT, g_shiftSpaceGuid); // shift + space
-
-	if(imeModule()->isWindows8Above())
-		addPreservedKey(VK_SPACE, TF_MOD_CONTROL, g_ctrlSpaceGuid); // Ctrl + space
 
 	// add language bar buttons
 	// siwtch Chinese/English modes
@@ -141,7 +134,7 @@ void TextService::onActivate() {
 	config().reloadIfNeeded(configStamp);
 	initChewingContext();
 	updateLangButtons();
-	if(imeModeIcon_) // disable windows 8 IME mode icon
+	if(imeModeIcon_) // windows 8 IME mode icon
 		imeModeIcon_->setEnabled(isKeyboardOpened());
 }
 
@@ -441,28 +434,6 @@ bool TextService::onPreservedKey(const GUID& guid) {
 		toggleShapeMode();
 		return true;
 	}
-	else if(::IsEqualIID(guid, g_ctrlSpaceGuid)) { // ctrl + space is pressed
-		// this only happens under Windows 8
-		bool open = !isKeyboardOpened();
-		if(open) // open the keyboard (input method)
-			initChewingContext();
-		else { // if we're going to close the keyboard
-			if(isComposing()) {
-				// end current composition if needed
-				ITfContext* context = currentContext();
-				if(context) {
-					endComposition(context);
-					context->Release();
-				}
-			}
-			if(showingCandidates()) // disable candidate window if it's opened
-				hideCandidates();
-			freeChewingContext(); // IME is closed, chewingContext is not needed
-		}
-		setKeyboardOpen(open);
-		// FIXME: do we need to update the language bar to reflect
-		// the state of keyboard?
-	}
 	return false;
 }
 
@@ -581,8 +552,20 @@ void TextService::onCompartmentChanged(const GUID& key) {
 			initChewingContext();
 		}
 		else { // keyboard is opened
-			freeChewingContext();
+			if(isComposing()) {
+				// end current composition if needed
+				ITfContext* context = currentContext();
+				if(context) {
+					endComposition(context);
+					context->Release();
+				}
+			}
+			if(showingCandidates()) // disable candidate window if it's opened
+				hideCandidates();
+			hideMessage(); // hide message window, if there's any
+			freeChewingContext(); // IME is closed, chewingContext is not needed
 		}
+
 		if(imeModeIcon_)
 			imeModeIcon_->setEnabled(opened);
 		// FIXME: should we also disable other language bar buttons as well?

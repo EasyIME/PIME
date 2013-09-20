@@ -52,7 +52,7 @@ Config::Config(ImeModule* module):
 	module_(module) {
 	// Configuration
 	keyboardLayout = 0;
-	candPerRow = 4;
+	candPerRow = 5;
 	defaultEnglish = false;
 	defaultFullSpace = false;
 	showCandWithSpaceKey = false;

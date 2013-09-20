@@ -17,41 +17,26 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#ifndef IME_IME_WINDOW_H
-#define IME_IME_WINDOW_H
+#ifndef CHEWING_UI_PROPERTY_PAGE_H
+#define CHEWING_UI_PROPERTY_PAGE_H
+#pragma once
 
-#include <windows.h>
-#include "window.h"
-#include "TextService.h"
+#include <libIME/PropertyPage.h>
+#include "ChewingConfig.h"
 
-namespace Ime {
+namespace Chewing {
 
-class TextService;
-
-// base class for all IME windows (candidate, tooltip, ...etc)
-class ImeWindow: public Window {
+class UiPropertyPage : public Ime::PropertyPage {
 public:
-	ImeWindow(TextService* service);
-	virtual ~ImeWindow(void);
-	void move(int x, int y);
-	bool isImmersive() {
-		return textService_->isImmersive();
-	}
-
-	static bool workingArea(RECT* rc, HWND app_wnd);
-	void setFont(HFONT f);
+	UiPropertyPage(Config* config);
+	virtual ~UiPropertyPage(void);
 
 protected:
-	void onLButtonDown(WPARAM wp, LPARAM lp);
-	void onLButtonUp(WPARAM wp, LPARAM lp);
-	void onMouseMove(WPARAM wp, LPARAM lp);
+	virtual bool onInitDialog();
+	virtual void onOK();
 
-protected:
-	TextService* textService_;
-	POINTS oldPos;
-	HFONT font_;
-	int fontSize_;
-	int margin_;
+private:
+	Config* config_;
 };
 
 }

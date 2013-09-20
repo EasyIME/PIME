@@ -27,11 +27,9 @@ ImeWindow::ImeWindow(TextService* service):
 
 	if(service->isImmersive()) { // windows 8 app mode
 		margin_ = 10;
-		spacing_ = 8;
 	}
 	else { // desktop mode
 		margin_ = 5;
-		spacing_ = 4;
 	}
 
 	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);

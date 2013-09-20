@@ -17,22 +17,22 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#include "TypingPage.h"
+#include "TypingPropertyPage.h"
 #include "resource.h"
 #include <WindowsX.h>
 
 namespace Chewing {
 
-TypingPage::TypingPage(Config* config):
+TypingPropertyPage::TypingPropertyPage(Config* config):
 	Ime::PropertyPage((LPCTSTR)IDD_TYPING),
 	config_(config) {
 }
 
-TypingPage::~TypingPage(void) {
+TypingPropertyPage::~TypingPropertyPage(void) {
 }
 
 // virtual
-bool TypingPage::onInitDialog() {
+bool TypingPropertyPage::onInitDialog() {
 	CheckRadioButton(hwnd_, IDC_KB1, IDC_KB9, IDC_KB1 + config_->keyboardLayout);
 
 	CheckDlgButton(hwnd_, IDC_SPACESEL, config_->showCandWithSpaceKey);
@@ -55,7 +55,7 @@ bool TypingPage::onInitDialog() {
 }
 
 // virtual
-void TypingPage::onOK() {
+void TypingPropertyPage::onOK() {
 	for(UINT id = IDC_KB1; id <= IDC_KB9; ++id)	{
 		if(IsDlgButtonChecked(hwnd_, id))	{
 			config_->keyboardLayout = (id - IDC_KB1);
@@ -79,7 +79,6 @@ void TypingPage::onOK() {
 	config_->easySymbolsWithCtrl = IsDlgButtonChecked(hwnd_, IDC_CTRL_SYMBOL);
 	config_->outputSimpChinese = IsDlgButtonChecked(hwnd_, IDC_ENABLE_Simp);
 
-	config_->save();
 	PropertyPage::onOK();
 }
 

@@ -17,11 +17,8 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-// FIXME: this class is taken from old ChewingIME and the 
-// interface really needs some redesign. It's not ready for use yet.
-
-#ifndef IME_TOOLTIP_H
-#define IME_TOOLTIP_H
+#ifndef IME_MESSAGE_WINDOW_H
+#define IME_MESSAGE_WINDOW_H
 
 #include "ImeWindow.h"
 #include "EditSession.h"

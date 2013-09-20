@@ -73,7 +73,8 @@ private:
 	int textWidth_;
 	int itemHeight_;
 	int candPerRow_;
-
+	int colSpacing_;
+	int rowSpacing_;
 	std::vector<wchar_t> selKeys_;
 	std::vector<std::wstring> items_;
 };

@@ -17,18 +17,18 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#ifndef CHEWING_TYPING_PAGE_H
-#define CHEWING_TYPING_PAGE_H
+#ifndef CHEWING_TYPING_PROPERTY_PAGE_H
+#define CHEWING_TYPING_PROPERTY_PAGE_H
 
 #include <libIME/PropertyPage.h>
 #include "ChewingConfig.h"
 
 namespace Chewing {
 
-class TypingPage : public Ime::PropertyPage {
+class TypingPropertyPage : public Ime::PropertyPage {
 public:
-	TypingPage(Config* config);
-	virtual ~TypingPage(void);
+	TypingPropertyPage(Config* config);
+	virtual ~TypingPropertyPage(void);
 
 protected:
 	virtual bool onInitDialog();

@@ -36,6 +36,17 @@ CandidateWindow::CandidateWindow(TextService* service, EditSession* session):
 	itemHeight_(0),
 	selKeyWidth_(0) {
 
+	if(service->isImmersive()) { // windows 8 app mode
+		margin_ = 10;
+		rowSpacing_ = 8;
+		colSpacing_ = 12;
+	}
+	else { // desktop mode
+		margin_ = 5;
+		rowSpacing_ = 4;
+		colSpacing_ = 8;
+	}
+
 	HWND parent;
 	if(isImmersive())
 		parent = service->compositionWindow(session);
@@ -128,11 +139,11 @@ void CandidateWindow::onPaint(WPARAM wp, LPARAM lp) {
 		if(col >= candPerRow_) {
 			col = 0;
 			textRect.left = margin_;
-			textRect.top = textRect.bottom + spacing_;
+			textRect.top = textRect.bottom + rowSpacing_;
 			textRect.bottom = textRect.top + itemHeight_;
 		}
 		else {
-			textRect.left = textRect.right + spacing_;
+			textRect.left = textRect.right + colSpacing_;
 		}
 	}
 	SelectObject(hDC, oldFont);
@@ -178,18 +189,18 @@ void CandidateWindow::recalculateSize() {
 
 	if(items_.size() <= candPerRow_) {
 		width = items_.size() * (selKeyWidth_ + textWidth_);
-		width += spacing_ * (items_.size() - 1);
+		width += colSpacing_ * (items_.size() - 1);
 		width += margin_ * 2;
 		height = itemHeight_ + margin_ * 2;
 	}
 	else {
 		width = candPerRow_ * (selKeyWidth_ + textWidth_);
-		width += spacing_ * (candPerRow_ - 1);
+		width += colSpacing_ * (candPerRow_ - 1);
 		width += margin_ * 2;
 		int rowCount = items_.size() / candPerRow_;
 		if(items_.size() % candPerRow_)
 			++rowCount;
-		height = itemHeight_ * rowCount + spacing_ * (rowCount - 1) + margin_ * 2;
+		height = itemHeight_ * rowCount + rowSpacing_ * (rowCount - 1) + margin_ * 2;
 	}
 	resize(width, height);
 }

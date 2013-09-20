@@ -27,7 +27,8 @@
 #include "ChewingImeModule.h"
 #include "resource.h"
 #include <Shellapi.h>
-#include "TypingPage.h"
+#include "TypingPropertyPage.h"
+#include "UiPropertyPage.h"
 
 using namespace std;
 
@@ -485,13 +486,17 @@ bool TextService::onCommand(UINT id) {
 bool TextService::onConfigure(HWND hwndParent) {
 	Config& config = ((Chewing::ImeModule*)imeModule())->config();
 	Ime::PropertyDialog dlg;
-	TypingPage* typingPage = new TypingPage(&config);
+	TypingPropertyPage* typingPage = new TypingPropertyPage(&config);
+	UiPropertyPage* uiPage = new UiPropertyPage(&config);
 	dlg.addPage(typingPage);
+	dlg.addPage(uiPage);
 	INT_PTR ret = dlg.showModal(this->imeModule()->hInstance(), (LPCTSTR)IDS_CONFIG_TITLE, 0, hwndParent);
 	if(ret) { // the user clicks OK button
 		// get current time stamp and set the value to global compartment to notify all
 		// text service instances to reload their config.
 		// TextService::onCompartmentChanged() of all other instances will be triggered.
+		config.save();
+
 		DWORD stamp = ::GetTickCount();
 		if(stamp == Config::INVALID_TIMESTAMP) // this is almost impossible
 			stamp = 0;
@@ -599,6 +604,7 @@ void TextService::toggleShapeMode() {
 void TextService::updateCandidates(Ime::EditSession* session) {
 	assert(candidateWindow_);
 	candidateWindow_->clear();
+	candidateWindow_->setCandPerRow(config().candPerRow);
 
 	::chewing_cand_Enumerate(chewingContext_);
 	int* selKeys = ::chewing_get_selKey(chewingContext_); // keys used to select candidates

@@ -94,5 +94,14 @@ bool ImeWindow::workingArea(RECT* rc, HWND app_wnd) {
 	return true;
 }
 
+void ImeWindow::setFont(HFONT f) {
+	if(font_)
+		::DeleteObject(font_);
+	font_ = f;
+	if(isVisible())
+		::InvalidateRect(hwnd_, NULL, TRUE);
+}
+
+
 } // namespace Ime
 

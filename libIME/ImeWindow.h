@@ -39,6 +39,7 @@ public:
 	}
 
 	static bool workingArea(RECT* rc, HWND app_wnd);
+	void setFont(HFONT f);
 
 protected:
 	void onLButtonDown(WPARAM wp, LPARAM lp);

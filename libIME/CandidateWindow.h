@@ -35,10 +35,6 @@ public:
 	CandidateWindow(TextService* service, EditSession* session);
 	~CandidateWindow(void);
 
-	void setFont(HFONT f){
-		font_ = f;
-	}
-
 	const std::vector<std::wstring>& items() const {
 		return items_;
 	}
@@ -60,15 +56,23 @@ public:
 		selKeys_.clear();
 	}
 
+	int candPerRow() const {
+		return candPerRow_;
+	}
+	void setCandPerRow(int n);
+
 	void recalculateSize();
-	void updateFont();
 
 protected:
 	LRESULT wndProc(UINT msg, WPARAM wp , LPARAM lp);
 	void onPaint(WPARAM wp, LPARAM lp);
+	// void paintItem(wchar_t selKey, std::wstring& str);
 
 private:
 	int selKeyWidth_;
+	int textWidth_;
+	int itemHeight_;
+	int candPerRow_;
 
 	std::vector<wchar_t> selKeys_;
 	std::vector<std::wstring> items_;

@@ -44,8 +44,8 @@ add_library(libIME_static STATIC
     ${PROJECT_SOURCE_DIR}/PropertyPage.h
     ${PROJECT_SOURCE_DIR}/ImeWindow.cpp
     ${PROJECT_SOURCE_DIR}/ImeWindow.h
-    ${PROJECT_SOURCE_DIR}/Tooltip.cpp
-    ${PROJECT_SOURCE_DIR}/Tooltip.h
+    ${PROJECT_SOURCE_DIR}/MessageWindow.cpp
+    ${PROJECT_SOURCE_DIR}/MessageWindow.h
     ${PROJECT_SOURCE_DIR}/CandidateWindow.h
     ${PROJECT_SOURCE_DIR}/CandidateWindow.cpp
 )

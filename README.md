@@ -10,7 +10,7 @@ All parts are licensed under GNU LGPL v2.1 license.
 # Development
 
 ## Tool Requirements
-*   [CMake](http://www.cmake.org/) >= 2.8.8
+*   [CMake](http://www.cmake.org/) >= 2.8.11
 *   [Visual Studio Express 2012](http://www.microsoft.com/visualstudio/eng/products/visual-studio-express-products)
 *   [git](http://windows.github.com/)
 *   Editor with [EditorConfig](http://editorconfig.org/) supported
@@ -25,8 +25,10 @@ All parts are licensed under GNU LGPL v2.1 license.
 
 *   Use one of the following CMake commands to generate Visual Studio project
 
-        cmake -G "Visual Studio 11" <path to windows-chewing-tsf>
-        cmake -G "Visual Studio 11 Win64" <path to windows-chewing-tsf>
+        cmake -G "Visual Studio 11" -T "v110_xp" <path to windows-chewing-tsf>
+        cmake -G "Visual Studio 11 Win64" -T "v110_xp" <path to windows-chewing-tsf>
+		
+*	NOTICE: The cmake command line argument -T "v110_xp" is required. Otherwise the compiled program won't run on Windows xp. (requires cmake 2.8.11 and VS express 2012 update)
 
 *   Open generated project with Visual Studio and build it
 
@@ -61,9 +63,11 @@ All parts are licensed under GNU LGPL v2.1 license.
 *   Create C:\Users\<user_name>\ChewingTextService directory manually before using the input method.
 *   Set ACLs for the created directory so it can be accessible from Windows store apps
 
-        cacls C:\Users\<user_name>\ChewingTextService /e /t /g "ALL APPLICATION PACKAGES:f"
+        cacls C:\Users\<user_name>\ChewingTextService /e /t /g "ALL APPLICATION PACKAGES:c"
 
 *   Warning: this will give full access of this folder to all metro apps. This may not be the optimized permission settings. Further study on ACL is required here.
+*   Open regedit and enable read access to HKCU\Software\ChewingTextService for "ALL APPLICATION PACKAGES".
+*   The NSIS installer automatically does the preceding changes for you
 
 # Uninstall
 *   Remove `%WINDIR%/chewing`

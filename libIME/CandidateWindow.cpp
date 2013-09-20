@@ -46,28 +46,11 @@ void CandidateWindow::updateFont() {
 }
 
 CandidateWindow::CandidateWindow(TextService* service, EditSession* session):
-	fontSize_(16),
-	selKeyWidth_(0),
-	isImmersive_(service->isImmersive()) {
-
-	if(isImmersive_) { // windows 8 app mode
-		margin_ = 10;
-		spacing_ = 8;
-	}
-	else { // desktop mode
-		margin_ = 5;
-		spacing_ = 4;
-	}
-
-	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
-	LOGFONT lf;
-	GetObject(font_, sizeof(lf), &lf);
-	lf.lfHeight = fontSize_;
-	lf.lfWeight = FW_NORMAL;
-	font_ = CreateFontIndirect(&lf);
+	ImeWindow(service),
+	selKeyWidth_(0) {
 
 	HWND parent;
-	if(isImmersive_)
+	if(isImmersive())
 		parent = service->compositionWindow(session);
 	else
 		parent = HWND_DESKTOP;
@@ -75,7 +58,6 @@ CandidateWindow::CandidateWindow(TextService* service, EditSession* session):
 }
 
 CandidateWindow::~CandidateWindow(void) {
-	::DeleteObject(font_);
 }
 
 LRESULT CandidateWindow::wndProc(UINT msg, WPARAM wp , LPARAM lp) {
@@ -106,11 +88,6 @@ LRESULT CandidateWindow::wndProc(UINT msg, WPARAM wp , LPARAM lp) {
 void CandidateWindow::onPaint(WPARAM wp, LPARAM lp) {
 	// TODO: check isImmersive_, and draw the window differently
 	// in Windows 8 app immersive mode to follow windows 8 UX guidelines
-
-/*
-	if (g_isWinLogon)
-		return;
-*/
 	PAINTSTRUCT ps;
 	BeginPaint(hwnd_, &ps);
 	HDC hDC = ps.hdc;
@@ -126,7 +103,7 @@ void CandidateWindow::onPaint(WPARAM wp, LPARAM lp) {
 
 	// draw a flat black border in Windows 8 app immersive mode
 	// draw a 3d border in desktop mode
-	if(isImmersive_) {
+	if(isImmersive()) {
 		HPEN pen = ::CreatePen(PS_SOLID, 3, RGB(0, 0, 0));
 		HGDIOBJ oldPen = ::SelectObject(hDC, pen);
 		::Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);

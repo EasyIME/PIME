@@ -68,15 +68,10 @@ protected:
 	void onPaint(WPARAM wp, LPARAM lp);
 
 private:
-	HFONT font_;
-	int fontSize_;
-	int margin_;
-	int spacing_;
 	int selKeyWidth_;
 
 	std::vector<wchar_t> selKeys_;
 	std::vector<std::wstring> items_;
-	bool isImmersive_;
 };
 
 }

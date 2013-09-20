@@ -51,7 +51,6 @@ protected:
 
 private:
 	std::wstring text_;
-	TextService* textService_;
 };
 
 }

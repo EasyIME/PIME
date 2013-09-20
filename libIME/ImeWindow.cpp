@@ -21,10 +21,31 @@
 
 namespace Ime {
 
-ImeWindow::ImeWindow() {
+ImeWindow::ImeWindow(TextService* service):
+	textService_(service),
+	fontSize_(16) {
+
+	if(service->isImmersive()) { // windows 8 app mode
+		margin_ = 10;
+		spacing_ = 8;
+	}
+	else { // desktop mode
+		margin_ = 5;
+		spacing_ = 4;
+	}
+
+	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+	LOGFONT lf;
+	GetObject(font_, sizeof(lf), &lf);
+	lf.lfHeight = fontSize_;
+	lf.lfWeight = FW_NORMAL;
+	font_ = CreateFontIndirect(&lf);
+
 }
 
 ImeWindow::~ImeWindow(void) {
+	if(font_)
+		::DeleteObject(font_);
 }
 
 void ImeWindow::onLButtonDown(WPARAM wp, LPARAM lp) {

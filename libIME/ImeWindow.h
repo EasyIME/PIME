@@ -22,15 +22,21 @@
 
 #include <windows.h>
 #include "window.h"
+#include "TextService.h"
 
 namespace Ime {
+
+class TextService;
 
 // base class for all IME windows (candidate, tooltip, ...etc)
 class ImeWindow: public Window {
 public:
-	ImeWindow();
+	ImeWindow(TextService* service);
 	virtual ~ImeWindow(void);
 	void move(int x, int y);
+	bool isImmersive() {
+		return textService_->isImmersive();
+	}
 
 	static bool workingArea(RECT* rc, HWND app_wnd);
 
@@ -40,7 +46,12 @@ protected:
 	void onMouseMove(WPARAM wp, LPARAM lp);
 
 protected:
+	TextService* textService_;
 	POINTS oldPos;
+	HFONT font_;
+	int fontSize_;
+	int margin_;
+	int spacing_;
 };
 
 }

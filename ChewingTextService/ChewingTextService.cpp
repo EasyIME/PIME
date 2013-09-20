@@ -368,7 +368,7 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 		// show the message to the user
 		// FIXME: sometimes libchewing shows the same aux info
 		// for subsequent key events... I think this is a bug.
-		showMessage(session, wstr);
+		showMessage(session, wstr, 2);
 		delete []wstr;
 	}
 	return true;

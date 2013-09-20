@@ -24,9 +24,10 @@
 namespace Ime {
 
 MessageWindow::MessageWindow(TextService* service, EditSession* session):
-	textService_(service) {
+	ImeWindow(service) {
+
 	HWND parent;
-	if(session && service->isImmersive())
+	if(session && isImmersive())
 		parent = service->compositionWindow(session);
 	else
 		parent = HWND_DESKTOP;
@@ -42,7 +43,7 @@ void MessageWindow::setText(std::wstring text) {
 	text_ = text;
 	SIZE size = {0};
 	HDC dc = GetDC(hwnd_);
-	HGDIOBJ old_font = SelectObject(dc, GetStockObject(DEFAULT_GUI_FONT));
+	HGDIOBJ old_font = SelectObject(dc, font_);
 	GetTextExtentPointW(dc, text_.c_str(), text_.length(), &size);
 	SelectObject(dc, old_font);
 	ReleaseDC(hwnd_, dc);
@@ -75,20 +76,37 @@ void MessageWindow::onPaint(PAINTSTRUCT& ps) {
 	int len = text_.length();
 	RECT rc, textrc = {0};
 	GetClientRect(hwnd_, &rc);
-	::FillSolidRect(ps.hdc, &rc, ::GetSysColor(COLOR_INFOBK));
-	Draw3DBorder(ps.hdc, &rc, GetSysColor(COLOR_BTNFACE), GetSysColor(COLOR_3DDKSHADOW), 1);
 
-	SetBkMode(ps.hdc, TRANSPARENT);
-	SetTextColor(ps.hdc, GetSysColor(COLOR_INFOTEXT));
-	HGDIOBJ old_font = SelectObject(ps.hdc, GetStockObject(DEFAULT_GUI_FONT));
+	// draw a flat black border in Windows 8 app immersive mode
+	// draw a 3d border in desktop mode
+	HDC hDC = ps.hdc;
+	HFONT oldFont = (HFONT)SelectObject(hDC, font_);
+
+	SetBkMode(hDC, TRANSPARENT);
+	if(isImmersive()) {
+		SetTextColor(hDC, GetSysColor(COLOR_WINDOWTEXT));
+		SetBkColor(hDC, GetSysColor(COLOR_WINDOW));
+		HPEN pen = ::CreatePen(PS_SOLID, 3, RGB(0, 0, 0));
+		HGDIOBJ oldPen = ::SelectObject(hDC, pen);
+		::Rectangle(hDC, rc.left, rc.top, rc.right, rc.bottom);
+		::SelectObject(hDC, oldPen);
+		::DeleteObject(pen);
+	}
+	else {
+		SetTextColor(hDC, GetSysColor(COLOR_INFOTEXT));
+		SetBkColor(hDC, GetSysColor(COLOR_INFOBK));
+		// draw a 3d border in desktop mode
+		::FillSolidRect(hDC, &rc, ::GetSysColor(COLOR_INFOBK));
+		::Draw3DBorder(hDC, &rc, GetSysColor(COLOR_3DFACE), 0);
+	}
 
 	SIZE size;
-	GetTextExtentPoint32W(ps.hdc, text_.c_str(), len, &size);
+	GetTextExtentPoint32W(hDC, text_.c_str(), len, &size);
 	rc.top += (rc.bottom - size.cy)/2;
 	rc.left += (rc.right - size.cx)/2;
-	ExtTextOutW(ps.hdc, rc.left, rc.top, 0, &textrc, text_.c_str(), len, NULL);
+	ExtTextOutW(hDC, rc.left, rc.top, 0, &textrc, text_.c_str(), len, NULL);
 
-	SelectObject(ps.hdc, old_font);
+	SelectObject(hDC, oldFont);
 }
 
 } // namespace Ime

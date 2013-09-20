@@ -51,7 +51,8 @@ class TextService:
 	public ITfTextEditSink,
 	public ITfKeyEventSink,
 	public ITfCompositionSink,
-	public ITfCompartmentEventSink {
+	public ITfCompartmentEventSink,
+	public ITfLangBarEventSink {
 public:
 
 	TextService(ImeModule* module);
@@ -78,6 +79,8 @@ public:
 	bool isImmersive() const {
 		return (activateFlags_ & TF_TMF_IMMERSIVEMODE) != 0;
 	}
+
+	bool isLangBarHidden() const;
 
 	// language bar buttons
 	void addButton(LangBarButton* button);
@@ -191,6 +194,14 @@ public:
 	// ITfCompartmentEventSink
 	STDMETHODIMP OnChange(REFGUID rguid);
 
+	// ITfLangBarEventSink 
+    STDMETHODIMP OnSetFocus(DWORD dwThreadId);
+    STDMETHODIMP OnThreadTerminate(DWORD dwThreadId);
+    STDMETHODIMP OnThreadItemChange(DWORD dwThreadId);
+    STDMETHODIMP OnModalInput(DWORD dwThreadId, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    STDMETHODIMP ShowFloating(DWORD dwFlags);
+    STDMETHODIMP GetItemFloatingRect(DWORD dwThreadId, REFGUID rguid, RECT *prc);
+
 protected:
 	// edit session classes, used with TSF
 	class KeyEditSession: public EditSession {
@@ -253,9 +264,11 @@ private:
 	DWORD compositionSinkCookie_;
 	DWORD keyboardOpenEventSinkCookie_;
 	DWORD globalCompartmentEventSinkCookie_;
+	DWORD langBarSinkCookie_;
 
 	ITfComposition* composition_; // acquired when starting composition, released when ending composition
 	CandidateWindow* candidateWindow_;
+	ComPtr<ITfLangBarMgr> langBarMgr_;
 	std::vector<LangBarButton*> langBarButtons_;
 	std::vector<PreservedKey> preservedKeys_;
 	std::vector<CompartmentMonitor> compartmentMonitors_;

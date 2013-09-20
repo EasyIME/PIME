@@ -43,6 +43,7 @@ TextService::TextService(ImeModule* module):
 	compositionSinkCookie_(TF_INVALID_COOKIE),
 	keyboardOpenEventSinkCookie_(TF_INVALID_COOKIE),
 	globalCompartmentEventSinkCookie_(TF_INVALID_COOKIE),
+	langBarSinkCookie_(TF_INVALID_COOKIE),
 	composition_(NULL),
 	candidateWindow_(NULL),
 	refCount_(1) {
@@ -73,6 +74,10 @@ TextService::~TextService(void) {
 			button->Release();
 		}
 	}
+	if(langBarMgr_) {
+		langBarMgr_->UnadviseEventSink(langBarSinkCookie_);
+	}
+	langBarMgr_ = NULL;
 }
 
 // public methods
@@ -91,6 +96,16 @@ TfClientId TextService::clientId() const {
 
 
 // language bar
+bool TextService::isLangBarHidden() const {
+	if(langBarMgr_) {
+		DWORD status;
+		if(langBarMgr_->GetShowFloatingStatus(&status) == S_OK) {
+			return !!(status & TF_SFT_HIDDEN);
+		}
+	}
+	return false;
+}
+
 void TextService::addButton(LangBarButton* button) {
 	if(button) {
 		langBarButtons_.push_back(button);
@@ -534,6 +549,8 @@ STDMETHODIMP TextService::QueryInterface(REFIID riid, void **ppvObj) {
 		*ppvObj = (ITfTextInputProcessor*)this;
 	else if(IsEqualIID(riid, IID_ITfFnConfigure ))
 		*ppvObj = (ITfFnConfigure *)this;
+	//else if(IsEqualIID(riid, IID_ITfThreadMgrEventSink))
+	//	*ppvObj = (ITfThreadMgrEventSink*)this;
 	else if(IsEqualIID(riid, IID_ITfTextEditSink))
 		*ppvObj = (ITfTextEditSink*)this;
 	else if(IsEqualIID(riid, IID_ITfKeyEventSink))
@@ -542,6 +559,8 @@ STDMETHODIMP TextService::QueryInterface(REFIID riid, void **ppvObj) {
 		*ppvObj = (ITfCompositionSink*)this;
 	else if(IsEqualIID(riid, IID_ITfCompartmentEventSink))
 		*ppvObj = (ITfCompartmentEventSink*)this;
+	else if(IsEqualIID(riid, IID_ITfLangBarEventSink))
+		*ppvObj = (ITfLangBarEventSink*)this;
 	else
 		*ppvObj = NULL;
 
@@ -624,6 +643,11 @@ STDMETHODIMP TextService::Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClient
 		setKeyboardOpen(true);
 
 	// initialize language bar
+	::CoCreateInstance(CLSID_TF_LangBarMgr, NULL, CLSCTX_INPROC_SERVER,
+                      IID_ITfLangBarMgr, (void**)&langBarMgr_);
+	if(langBarMgr_) {
+		langBarMgr_->AdviseEventSink(this, NULL, 0, &langBarSinkCookie_);
+	}
 	// Note: language bar has no effects in Win 8 immersive mode
 	if(!langBarButtons_.empty()) {
 		ComPtr<ITfLangBarItemMgr> langBarItemMgr;
@@ -661,6 +685,11 @@ STDMETHODIMP TextService::Deactivate() {
 				langBarItemMgr->RemoveItem(button);
 			}
 		}
+	}
+	if(langBarMgr_) {
+		langBarMgr_->UnadviseEventSink(langBarSinkCookie_);
+		langBarSinkCookie_ = TF_INVALID_COOKIE;
+		langBarMgr_ = NULL;
 	}
 
 	// unadvice event sinks
@@ -895,6 +924,31 @@ STDMETHODIMP TextService::OnChange(REFGUID rguid) {
 
 	onCompartmentChanged(rguid);
 	return S_OK;
+}
+
+// ITfLangBarEventSink 
+STDMETHODIMP TextService::OnSetFocus(DWORD dwThreadId) {
+	return E_NOTIMPL;
+}
+
+STDMETHODIMP TextService::OnThreadTerminate(DWORD dwThreadId) {
+	return E_NOTIMPL;
+}
+
+STDMETHODIMP TextService::OnThreadItemChange(DWORD dwThreadId) {
+	return E_NOTIMPL;
+}
+
+STDMETHODIMP TextService::OnModalInput(DWORD dwThreadId, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	return E_NOTIMPL;
+}
+
+STDMETHODIMP TextService::ShowFloating(DWORD dwFlags) {
+	return E_NOTIMPL;
+}
+
+STDMETHODIMP TextService::GetItemFloatingRect(DWORD dwThreadId, REFGUID rguid, RECT *prc) {
+	return E_NOTIMPL;
 }
 
 

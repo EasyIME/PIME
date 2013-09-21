@@ -59,6 +59,11 @@ static const GUID g_ctrlSpaceGuid = // ctrl + space (only used in Windows 8)
 static const GUID g_configChangedGuid = 
 { 0xf4d1e543, 0xfb2c, 0x48d7, { 0xb7, 0x8d, 0x20, 0x39, 0x4f, 0x35, 0x53, 0x81 } };
 
+// this is the GUID of the IME mode icon in Windows 8
+// the value is not available in older SDK versions, so let's define it ourselves.
+static const GUID _GUID_LBI_INPUTMODE =
+{ 0x2C77A81E, 0x41CC, 0x4178, { 0xA3, 0xA7, 0x5F, 0x8A, 0x98, 0x75, 0x68, 0xE6 } };
+
 TextService::TextService(ImeModule* module):
 	Ime::TextService(module),
 	showingCandidates_(false),
@@ -100,7 +105,7 @@ TextService::TextService(ImeModule* module):
 
 	// Windows 8 systray IME mode icon
 	if(imeModule()->isWindows8Above()) {
-		imeModeIcon_ = new Ime::LangBarButton(this, GUID_LBI_INPUTMODE, ID_MODE_ICON);
+		imeModeIcon_ = new Ime::LangBarButton(this, _GUID_LBI_INPUTMODE, ID_MODE_ICON);
 		imeModeIcon_->setIcon(IDI_ENG);
 		addButton(imeModeIcon_);
 	}

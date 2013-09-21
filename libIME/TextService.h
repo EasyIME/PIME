@@ -80,7 +80,7 @@ public:
 		return (activateFlags_ & TF_TMF_IMMERSIVEMODE) != 0;
 	}
 
-	bool isLangBarHidden() const;
+	DWORD langBarStatus() const;
 
 	// language bar buttons
 	void addButton(LangBarButton* button);
@@ -150,6 +150,8 @@ public:
 
 	// called when a value in the global or thread compartment changed.
 	virtual void onCompartmentChanged(const GUID& key);
+
+	virtual void onLangBarStatusChanged(int newStatus);
 
 	// COM related stuff
 public:

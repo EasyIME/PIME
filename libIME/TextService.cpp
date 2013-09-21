@@ -96,14 +96,14 @@ TfClientId TextService::clientId() const {
 
 
 // language bar
-bool TextService::isLangBarHidden() const {
+DWORD TextService::langBarStatus() const {
 	if(langBarMgr_) {
 		DWORD status;
 		if(langBarMgr_->GetShowFloatingStatus(&status) == S_OK) {
-			return !!(status & TF_SFT_HIDDEN);
+			return status;
 		}
 	}
-	return false;
+	return 0;
 }
 
 void TextService::addButton(LangBarButton* button) {
@@ -538,6 +538,9 @@ void TextService::onCompartmentChanged(const GUID& key) {
 	}
 }
 
+// virtual
+void TextService::onLangBarStatusChanged(int newStatus) {
+}
 
 // COM stuff
 
@@ -944,7 +947,8 @@ STDMETHODIMP TextService::OnModalInput(DWORD dwThreadId, UINT uMsg, WPARAM wPara
 }
 
 STDMETHODIMP TextService::ShowFloating(DWORD dwFlags) {
-	return E_NOTIMPL;
+	onLangBarStatusChanged(dwFlags);
+	return S_OK;
 }
 
 STDMETHODIMP TextService::GetItemFloatingRect(DWORD dwThreadId, REFGUID rguid, RECT *prc) {

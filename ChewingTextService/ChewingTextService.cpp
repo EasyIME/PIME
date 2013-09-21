@@ -96,6 +96,13 @@ TextService::TextService(ImeModule* module):
 	addButton(button);
 	button->Release();
 
+	// Windows 8 systray IME mode icon
+	if(imeModule()->isWindows8Above()) {
+		imeModeIcon_ = new Ime::LangBarButton(this, GUID_LBI_INPUTMODE, ID_SWITCH_LANG);
+		imeModeIcon_->setIcon(IDI_ENG);
+		addButton(imeModeIcon_);
+	}
+
 	// global compartment stuff
 	addCompartmentMonitor(g_configChangedGuid, true);
 }
@@ -111,6 +118,8 @@ TextService::~TextService(void) {
 		switchLangButton_->Release();
 	if(switchShapeButton_)
 		switchShapeButton_->Release();
+	if(imeModeIcon_)
+		imeModeIcon_->Release();
 
 	freeChewingContext();
 }
@@ -119,9 +128,10 @@ TextService::~TextService(void) {
 void TextService::onActivate() {
 	DWORD configStamp = globalCompartmentValue(g_configChangedGuid);
 	config().reloadIfNeeded(configStamp);
-
 	initChewingContext();
 	updateLangButtons();
+	if(imeModeIcon_) // disable windows 8 IME mode icon
+		imeModeIcon_->setEnabled(isKeyboardOpened());
 }
 
 // virtual
@@ -518,12 +528,16 @@ void TextService::onCompartmentChanged(const GUID& key) {
 	Ime::TextService::onCompartmentChanged(key);
 	if(::IsEqualIID(key, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE)) {
 		// keyboard open/close state is changed
-		if(isKeyboardOpened()) { // keyboard is closed
+		bool opened = isKeyboardOpened();
+		if(opened) { // keyboard is closed
 			initChewingContext();
 		}
 		else { // keyboard is opened
 			freeChewingContext();
 		}
+		if(imeModeIcon_)
+			imeModeIcon_->setEnabled(opened);
+		// FIXME: should we also disable other language bar buttons as well?
 	}
 }
 
@@ -718,6 +732,11 @@ void TextService::updateLangButtons() {
 	if(langMode != langMode_) {
 		langMode_ = langMode;
 		switchLangButton_->setIcon(langMode == CHINESE_MODE ? IDI_CHI : IDI_ENG);
+		if(imeModeIcon_) {
+			// FIXME: we need a better set of icons to meet the 
+			//        WIndows 8 IME guideline and UX guidelines.
+			imeModeIcon_->setIcon(langMode == CHINESE_MODE ? IDI_CHI : IDI_ENG);
+		}
 	}
 
 	int shapeMode = ::chewing_get_ShapeMode(chewingContext_);
@@ -725,6 +744,7 @@ void TextService::updateLangButtons() {
 		shapeMode_ = shapeMode;
 		switchShapeButton_->setIcon(shapeMode == FULLSHAPE_MODE ? IDI_FULL_SHAPE : IDI_HALF_SHAPE);
 	}
+
 }
 
 

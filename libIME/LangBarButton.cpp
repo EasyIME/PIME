@@ -149,7 +149,10 @@ bool LangBarButton::enabled() const {
 
 void LangBarButton::setEnabled(bool enable) {
 	if(enabled() != enable) {
-		status_ |= TF_LBI_STATUS_DISABLED;
+		if(enable)
+			status_ &= ~TF_LBI_STATUS_DISABLED;
+		else
+			status_ |= TF_LBI_STATUS_DISABLED;
 		update(TF_LBI_STATUS);
 	}
 }
@@ -161,7 +164,10 @@ bool LangBarButton::toggled() const {
 
 void LangBarButton::setToggled(bool toggle) {
 	if(toggled() != toggle) {
-		status_ |= TF_LBI_STATUS_BTN_TOGGLED;
+		if(toggle)
+			status_ |= TF_LBI_STATUS_BTN_TOGGLED;
+		else
+			status_ &= ~TF_LBI_STATUS_BTN_TOGGLED;
 		update(TF_LBI_STATUS);
 	}
 }

@@ -108,6 +108,7 @@ private:
 
 	Ime::LangBarButton* switchLangButton_;
 	Ime::LangBarButton* switchShapeButton_;
+	Ime::LangBarButton* imeModeIcon_; // IME mode icon, a special language button (Windows 8 only)
 
 	int langMode_;
 	int shapeMode_;

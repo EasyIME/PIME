@@ -33,7 +33,6 @@ TypingPropertyPage::~TypingPropertyPage(void) {
 
 // virtual
 bool TypingPropertyPage::onInitDialog() {
-	CheckRadioButton(hwnd_, IDC_KB1, IDC_KB9, IDC_KB1 + config_->keyboardLayout);
 
 	CheckDlgButton(hwnd_, IDC_SPACESEL, config_->showCandWithSpaceKey);
 	CheckDlgButton(hwnd_, IDC_ENABLE_SHIFT, config_->switchLangWithShift);
@@ -45,7 +44,10 @@ bool TypingPropertyPage::onInitDialog() {
 	CheckDlgButton(hwnd_, IDC_ESC_CLEAN_ALL_BUF, config_->escCleanAllBuf);
 	CheckDlgButton(hwnd_, IDC_SHIFT_SYMBOL, config_->easySymbolsWithShift);
 	CheckDlgButton(hwnd_, IDC_CTRL_SYMBOL, config_->easySymbolsWithCtrl);
+	CheckDlgButton(hwnd_, IDC_SHIFT_UPPERCASE, config_->upperCaseWithShift);
 	CheckDlgButton(hwnd_, IDC_ENABLE_Simp, config_->outputSimpChinese);
+	CheckDlgButton(hwnd_, IDC_DEFAULT_ENG, config_->defaultEnglish);
+	CheckDlgButton(hwnd_, IDC_DEFAULT_FS, config_->defaultFullSpace);
 
 	HWND combo = GetDlgItem(hwnd_, IDC_SELKEYS);
 	for(const wchar_t** pselkeys = config_->selKeys; *pselkeys; ++pselkeys)
@@ -56,12 +58,7 @@ bool TypingPropertyPage::onInitDialog() {
 
 // virtual
 void TypingPropertyPage::onOK() {
-	for(UINT id = IDC_KB1; id <= IDC_KB9; ++id)	{
-		if(IsDlgButtonChecked(hwnd_, id))	{
-			config_->keyboardLayout = (id - IDC_KB1);
-			break;
-		}
-	}
+
 
 	config_->selKeyType = ComboBox_GetCurSel(GetDlgItem(hwnd_, IDC_SELKEYS));
 	if(config_->selKeyType < 0)
@@ -77,8 +74,10 @@ void TypingPropertyPage::onOK() {
 	config_->escCleanAllBuf = IsDlgButtonChecked(hwnd_, IDC_ESC_CLEAN_ALL_BUF);
 	config_->easySymbolsWithShift = IsDlgButtonChecked(hwnd_, IDC_SHIFT_SYMBOL);
 	config_->easySymbolsWithCtrl = IsDlgButtonChecked(hwnd_, IDC_CTRL_SYMBOL);
+	config_->upperCaseWithShift = IsDlgButtonChecked(hwnd_, IDC_SHIFT_UPPERCASE);
 	config_->outputSimpChinese = IsDlgButtonChecked(hwnd_, IDC_ENABLE_Simp);
-
+	config_->defaultEnglish = IsDlgButtonChecked(hwnd_, IDC_DEFAULT_ENG);
+	config_->defaultFullSpace = IsDlgButtonChecked(hwnd_, IDC_DEFAULT_FS);
 	PropertyPage::onOK();
 }
 

@@ -29,6 +29,7 @@
 #include <Shellapi.h>
 #include "TypingPropertyPage.h"
 #include "UiPropertyPage.h"
+#include "KeyboardPropertyPage.h"
 
 using namespace std;
 
@@ -67,6 +68,7 @@ TextService::TextService(ImeModule* module):
 	messageWindow_(NULL),
 	messageTimerId_(0),
 	candidateWindow_(NULL),
+	imeModeIcon_(NULL),
 	chewingContext_(NULL) {
 
 	// add preserved keys
@@ -212,19 +214,25 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 	if(charCode && isprint(charCode)) { // printable characters (exclude extended keys?)
 		int oldLangMode = ::chewing_get_ChiEngMode(chewingContext_);
 		bool temporaryEnglishMode = false;
+		bool invertCase = false;
 		// If Caps lock is on, temporarily change to English mode
-		if(cfg.enableCapsLock && keyEvent.isKeyToggled(VK_CAPITAL))
+		if(cfg.enableCapsLock && keyEvent.isKeyToggled(VK_CAPITAL)) {
 			temporaryEnglishMode = true;
+			invertCase = true; // need to convert upper case to lower, and vice versa.
+		}
 		// If Shift is pressed, but we don't want to enter full shape symbols
-		if(!cfg.fullShapeSymbols && keyEvent.isKeyDown(VK_SHIFT))
+		if(keyEvent.isKeyDown(VK_SHIFT) && (!cfg.fullShapeSymbols || isalpha(charCode))) {
 			temporaryEnglishMode = true;
+			if(!cfg.upperCaseWithShift)
+				invertCase = true; // need to convert upper case to lower, and vice versa.
+		}
 
 		if(langMode_ == SYMBOL_MODE) { // English mode
 			::chewing_handle_Default(chewingContext_, charCode);
 		}
 		else if(temporaryEnglishMode) { // temporary English mode
 			::chewing_set_ChiEngMode(chewingContext_, SYMBOL_MODE); // change to English mode temporarily
-			if(isalpha(charCode)) { // a-z
+			if(invertCase) { // need to invert upper case and lower case
 				// we're NOT in real English mode, but Capslock is on, so we treat it as English mode
 				// reverse upper and lower case
 				charCode = isupper(charCode) ? tolower(charCode) : toupper(charCode);
@@ -514,8 +522,10 @@ bool TextService::onConfigure(HWND hwndParent) {
 	Ime::PropertyDialog dlg;
 	TypingPropertyPage* typingPage = new TypingPropertyPage(&config);
 	UiPropertyPage* uiPage = new UiPropertyPage(&config);
+	KeyboardPropertyPage* keyboardPage = new KeyboardPropertyPage(&config);
 	dlg.addPage(typingPage);
 	dlg.addPage(uiPage);
+	dlg.addPage(keyboardPage);
 	INT_PTR ret = dlg.showModal(this->imeModule()->hInstance(), (LPCTSTR)IDS_CONFIG_TITLE, 0, hwndParent);
 	if(ret) { // the user clicks OK button
 		// get current time stamp and set the value to global compartment to notify all

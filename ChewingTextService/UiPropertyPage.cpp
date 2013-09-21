@@ -39,8 +39,6 @@ bool UiPropertyPage::onInitDialog() {
 	::SendMessage(spin, UDM_SETPOS, 0, 
                     (LPARAM) MAKELONG ((short) config_->fontSize , 0));
 
-	CheckDlgButton(hwnd_, IDC_DEFAULT_ENG, config_->defaultEnglish);
-	CheckDlgButton(hwnd_, IDC_DEFAULT_FS, config_->defaultFullSpace);
 	CheckDlgButton(hwnd_, IDC_PHRASE_MARK, config_->phraseMark);
 	// CheckDlgButton(hwnd_, IDC_BLOCK_CURSOR, config_->ColoredCompCursor);
 	CheckDlgButton(hwnd_, IDC_COLOR_CANDIDATE, config_->colorCandWnd);
@@ -66,8 +64,6 @@ void UiPropertyPage::onOK() {
 	config_->fontSize = tFontSize;
 
 	config_->phraseMark = IsDlgButtonChecked(hwnd_, IDC_PHRASE_MARK);
-	config_->defaultEnglish = IsDlgButtonChecked(hwnd_, IDC_DEFAULT_ENG);
-	config_->defaultFullSpace = IsDlgButtonChecked(hwnd_, IDC_DEFAULT_FS);
 	// config_->coloredCompCursor = IsDlgButtonChecked(hwnd_, IDC_BLOCK_CURSOR);
 	config_->colorCandWnd = IsDlgButtonChecked(hwnd_, IDC_COLOR_CANDIDATE);
 

@@ -71,6 +71,7 @@ Config::Config(ImeModule* module):
 	escCleanAllBuf = 0;
 	easySymbolsWithShift = 1;
 	easySymbolsWithCtrl = 0;
+	upperCaseWithShift = 0;
 
 	stamp = INVALID_TIMESTAMP;
 }
@@ -115,6 +116,8 @@ void Config::load() {
 		::RegQueryValueEx(hk, L"EscCleanAllBuf", 0, &type, (LPBYTE)&escCleanAllBuf, &size);
 		::RegQueryValueEx(hk, L"EasySymbolsWithShift", 0, &type, (LPBYTE)&easySymbolsWithShift, &size);
 		::RegQueryValueEx(hk, L"EasySymbolsWithCtrl", 0, &type, (LPBYTE)&easySymbolsWithCtrl, &size);
+		::RegQueryValueEx(hk, L"UpperCaseWithShift", 0, &type, (LPBYTE)&upperCaseWithShift, &size);
+
 		::RegCloseKey(hk);
 	}
 
@@ -147,6 +150,8 @@ void Config::save() {
 		::RegSetValueEx(hk, L"EscCleanAllBuf", 0, REG_DWORD, (LPBYTE)&escCleanAllBuf, sizeof(DWORD));
 		::RegSetValueEx(hk, L"EasySymbolsWithShift", 0, REG_DWORD, (LPBYTE)&easySymbolsWithShift, sizeof(DWORD));
 		::RegSetValueEx(hk, L"EasySymbolsWithCtrl", 0, REG_DWORD, (LPBYTE)&easySymbolsWithCtrl, sizeof(DWORD));
+		::RegSetValueEx(hk, L"UpperCaseWithShift", 0, REG_DWORD, (LPBYTE)&upperCaseWithShift, sizeof(DWORD));
+
 		::RegCloseKey(hk);
 
 		// grant access to app containers in Windows 8

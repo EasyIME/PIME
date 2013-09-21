@@ -64,9 +64,10 @@ public:
 	DWORD candPerPage; // number of candiate strings per page
 	DWORD cursorCandList; // use cursor to select items in the candidate window (not supported yet)
 	DWORD enableCapsLock; // use capslock to Change language mode
-	DWORD fullShapeSymbols; // output fullshape symbols when Shift key is down
 	DWORD phraseMark; // not supported yet
 	DWORD escCleanAllBuf; // clean the composition buffer by Esc key
+	DWORD fullShapeSymbols; // output fullshape symbols when Shift key is down
+	DWORD upperCaseWithShift; // output upper case English characters when shift is pressed
 	DWORD easySymbolsWithShift; // output easy symbols when Shift is pressed
 	DWORD easySymbolsWithCtrl; // output easy symbols when Ctrl is pressed
 

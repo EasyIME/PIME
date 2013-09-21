@@ -349,12 +349,10 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 			startComposition(session->context());
 
 		char* buf = ::chewing_commit_String(chewingContext_);
-		int len;
-		wchar_t* wbuf = utf8ToUtf16(buf, &len);
+		std::wstring wbuf = utf8ToUtf16(buf);
 		::chewing_free(buf);
 		// commit the text, replace currently selected text with our commit string
-		setCompositionString(session, wbuf, len);
-		delete []wbuf;
+		setCompositionString(session, wbuf.c_str(), wbuf.length());
 
 		if(isComposing())
 			endComposition(session->context());
@@ -363,13 +361,10 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 	wstring compositionBuf;
 	if(::chewing_buffer_Check(chewingContext_)) {
 		char* buf = ::chewing_buffer_String(chewingContext_);
-		int len;
-		wchar_t* wbuf;
 		if(buf) {
-			wbuf = ::utf8ToUtf16(buf, &len);
+			std::wstring wbuf = ::utf8ToUtf16(buf);
 			::chewing_free(buf);
 			compositionBuf += wbuf;
-			delete []wbuf;
 		}
 	}
 
@@ -377,14 +372,12 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 		int zuinNum;
 		char* buf = ::chewing_zuin_String(chewingContext_, &zuinNum);
 		if(buf) {
-			int len;
-			wchar_t* wbuf = ::utf8ToUtf16(buf, &len);
+			std::wstring wbuf = ::utf8ToUtf16(buf);
 			::chewing_free(buf);
 			// put bopomofo symbols at insertion point
 			// FIXME: alternatively, should we show it in an additional floating window?
 			int pos = ::chewing_cursor_Current(chewingContext_);
 			compositionBuf.insert(pos, wbuf);
-			delete []wbuf;
 		}
 	}
 
@@ -411,13 +404,12 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 	// show aux info
 	if(::chewing_aux_Check(chewingContext_)) {
 		char* str = ::chewing_aux_String(chewingContext_);
-		wchar_t* wstr = utf8ToUtf16(str, NULL);
+		std::wstring wstr = utf8ToUtf16(str);
 		::chewing_free(str);
 		// show the message to the user
 		// FIXME: sometimes libchewing shows the same aux info
 		// for subsequent key events... I think this is a bug.
 		showMessage(session, wstr, 2);
-		delete []wstr;
 	}
 	return true;
 }
@@ -679,10 +671,9 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 	int i;
 	for(i = 0; i < n && ::chewing_cand_hasNext(chewingContext_); ++i) {
 		char* str = ::chewing_cand_String(chewingContext_);
-		wchar_t* wstr = utf8ToUtf16(str);
+		std::wstring wstr = utf8ToUtf16(str);
 		::chewing_free(str);
 		candidateWindow_->add(wstr, (wchar_t)selKeys[i]);
-		delete []wstr;
 	}
 	::chewing_free(selKeys);
 	candidateWindow_->recalculateSize();

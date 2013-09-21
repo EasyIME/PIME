@@ -19,9 +19,12 @@
 
 #ifndef IME_UTILS_H
 #define IME_UTILS_H
+#pragma once
 
-wchar_t* utf8ToUtf16(const char* text, int* outLen = 0);
+#include <string>
 
-char* utf16ToUtf8(const wchar_t* wtext, int* outLen = 0);
+std::wstring utf8ToUtf16(const char* text);
+
+std::string utf16ToUtf8(const wchar_t* wtext);
 
 #endif

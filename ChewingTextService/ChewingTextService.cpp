@@ -30,6 +30,7 @@
 #include "TypingPropertyPage.h"
 #include "UiPropertyPage.h"
 #include "KeyboardPropertyPage.h"
+#include "AboutDialog.h"
 
 using namespace std;
 
@@ -500,7 +501,7 @@ bool TextService::onCommand(UINT id, CommandType type) {
 		break;
 	case ID_ABOUT: // show about dialog
 		if(!isImmersive()) { // only do this in desktop app mode
-			Ime::Dialog dlg;
+			AboutDialog dlg;
 			dlg.showModal(this->imeModule()->hInstance(), IDD_ABOUT);
 	    }
 		break;

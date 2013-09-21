@@ -35,7 +35,6 @@ MessageWindow::~MessageWindow(void) {
 
 void MessageWindow::setText(std::wstring text) {
 	// FIXMEl: use different appearance under immersive mode
-	int margin = 4;
 	text_ = text;
 	SIZE size = {0};
 	HDC dc = GetDC(hwnd_);
@@ -45,7 +44,7 @@ void MessageWindow::setText(std::wstring text) {
 	ReleaseDC(hwnd_, dc);
 
 	SetWindowPos(hwnd_, HWND_TOPMOST, 0, 0,
-		size.cx + margin * 2, size.cy + margin * 2, SWP_NOACTIVATE|SWP_NOMOVE);
+		size.cx + margin_ * 2, size.cy + margin_ * 2, SWP_NOACTIVATE|SWP_NOMOVE);
 	if(IsWindowVisible(hwnd_))
 		InvalidateRect(hwnd_, NULL, TRUE);
 }

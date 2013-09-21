@@ -232,7 +232,12 @@ STDMETHODIMP LangBarButton::GetTooltipString(BSTR *pbstrToolTip) {
 
 // ITfLangBarItemButton
 STDMETHODIMP LangBarButton::OnClick(TfLBIClick click, POINT pt, const RECT *prcArea) {
-	textService_->onCommand(commandId_);
+	TextService::CommandType type;
+	if(click == TF_LBI_CLK_RIGHT)
+		type = TextService::COMMAND_RIGHT_CLICK;
+	else
+		type = TextService::COMMAND_LEFT_CLICK;
+	textService_->onCommand(commandId_, type);
 	return S_OK;
 }
 
@@ -244,7 +249,7 @@ STDMETHODIMP LangBarButton::InitMenu(ITfMenu *pMenu) {
 }
 
 STDMETHODIMP LangBarButton::OnMenuSelect(UINT wID) {
-	textService_->onCommand(wID);
+	textService_->onCommand(wID, TextService::COMMAND_MENU);
 	return S_OK;
 }
 

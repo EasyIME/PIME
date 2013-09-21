@@ -91,14 +91,14 @@ TextService::TextService(ImeModule* module):
 	button->setTooltip(IDS_SETTINGS);
 	button->setIcon(IDI_CONFIG);
 	HMENU menu = ::LoadMenuW(this->imeModule()->hInstance(), LPCTSTR(IDR_MENU));
-	HMENU popup = ::GetSubMenu(menu, 0);
-	button->setMenu(popup);
+	popupMenu_ = ::GetSubMenu(menu, 0);
+	button->setMenu(popupMenu_);
 	addButton(button);
 	button->Release();
 
 	// Windows 8 systray IME mode icon
 	if(imeModule()->isWindows8Above()) {
-		imeModeIcon_ = new Ime::LangBarButton(this, GUID_LBI_INPUTMODE, ID_SWITCH_LANG);
+		imeModeIcon_ = new Ime::LangBarButton(this, GUID_LBI_INPUTMODE, ID_MODE_ICON);
 		imeModeIcon_->setIcon(IDI_ENG);
 		addButton(imeModeIcon_);
 	}
@@ -108,6 +108,9 @@ TextService::TextService(ImeModule* module):
 }
 
 TextService::~TextService(void) {
+	if(popupMenu_)
+		::DestroyMenu(popupMenu_);
+
 	if(candidateWindow_)
 		delete candidateWindow_;
 
@@ -435,7 +438,7 @@ bool TextService::onPreservedKey(const GUID& guid) {
 
 
 // virtual
-bool TextService::onCommand(UINT id) {
+bool TextService::onCommand(UINT id, CommandType type) {
 	assert(chewingContext_);
 	switch(id) {
 	case ID_SWITCH_LANG:
@@ -443,6 +446,19 @@ bool TextService::onCommand(UINT id) {
 		break;
 	case ID_SWITCH_SHAPE:
 		toggleShapeMode();
+		break;
+	case ID_MODE_ICON: // Windows 8 IME mode icon
+		if(type == COMMAND_RIGHT_CLICK) {
+			Ime::Window window; // TrackPopupMenu requires a window to work, so let's build a transient one.
+			window.create(HWND_DESKTOP, 0);
+			POINT pos = {0};
+			::GetCursorPos(&pos);
+			UINT ret = ::TrackPopupMenu(popupMenu_, TPM_NONOTIFY|TPM_RETURNCMD|TPM_LEFTALIGN|TPM_BOTTOMALIGN, pos.x, pos.y, 0, window.hwnd(), NULL);
+			if(ret > 0)
+				onCommand(ret, COMMAND_MENU);
+		}
+		else
+			toggleLanguageMode();
 		break;
 	case ID_CONFIG: // show config dialog
 		if(!isImmersive()) { // only do this in desktop app mode

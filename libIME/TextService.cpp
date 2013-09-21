@@ -519,7 +519,7 @@ void TextService::onSetFocus() {
 void TextService::onKillFocus() {
 }
 
-bool TextService::onCommand(UINT id) {
+bool TextService::onCommand(UINT id, CommandType type) {
 	return false;
 }
 

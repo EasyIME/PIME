@@ -48,7 +48,7 @@ public:
 
 	virtual bool onPreservedKey(const GUID& guid);
 
-	virtual bool onCommand(UINT id);
+	virtual bool onCommand(UINT id, CommandType type);
 
 	// called when config dialog needs to be launched
 	virtual bool onConfigure(HWND hwndParent);
@@ -109,6 +109,7 @@ private:
 	Ime::LangBarButton* switchLangButton_;
 	Ime::LangBarButton* switchShapeButton_;
 	Ime::LangBarButton* imeModeIcon_; // IME mode icon, a special language button (Windows 8 only)
+	HMENU popupMenu_;
 
 	int langMode_;
 	int shapeMode_;

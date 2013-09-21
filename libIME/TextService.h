@@ -55,6 +55,12 @@ class TextService:
 	public ITfLangBarEventSink {
 public:
 
+	enum CommandType { // used in onCommand()
+		COMMAND_LEFT_CLICK,
+		COMMAND_RIGHT_CLICK,
+		COMMAND_MENU
+	};
+
 	TextService(ImeModule* module);
 	virtual ~TextService(void);
 
@@ -143,7 +149,7 @@ public:
 	virtual bool onPreservedKey(const GUID& guid);
 
 	// called when a language button or menu item is clicked
-	virtual bool onCommand(UINT id);
+	virtual bool onCommand(UINT id, CommandType type);
 
 	// called when config dialog needs to be launched
 	virtual bool onConfigure(HWND hwndParent);

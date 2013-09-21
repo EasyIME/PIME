@@ -28,6 +28,7 @@ namespace Ime {
 
 class TextService;
 class EditSession;
+class KeyEvent;
 
 // TODO: make the candidate window looks different in immersive mode
 class CandidateWindow : public ImeWindow {
@@ -51,10 +52,7 @@ public:
 		selKeys_.push_back(selKey);
 	}
 
-	void clear() {
-		items_.clear();
-		selKeys_.clear();
-	}
+	void clear();
 
 	int candPerRow() const {
 		return candPerRow_;
@@ -63,10 +61,32 @@ public:
 
 	void recalculateSize();
 
+	bool filterKeyEvent(KeyEvent& keyEvent);
+
+	int currentSel() const {
+		return currentSel_;
+	}
+	void setCurrentSel(int sel);
+
+	wchar_t currentSelKey() const {
+		return selKeys_.at(currentSel_);
+	}
+
+	bool hasResult() const {
+		return hasResult_;
+	}
+
+	bool useCursor() const {
+		return useCursor_;
+	}
+
+	void setUseCursor(bool use);
+
 protected:
 	LRESULT wndProc(UINT msg, WPARAM wp , LPARAM lp);
 	void onPaint(WPARAM wp, LPARAM lp);
-	// void paintItem(wchar_t selKey, std::wstring& str);
+	void paintItem(HDC hDC, int i, int x, int y);
+	void itemRect(int i, RECT& rect);
 
 private:
 	int selKeyWidth_;
@@ -77,6 +97,9 @@ private:
 	int rowSpacing_;
 	std::vector<wchar_t> selKeys_;
 	std::vector<std::wstring> items_;
+	int currentSel_;
+	bool hasResult_;
+	bool useCursor_;
 };
 
 }

@@ -34,6 +34,9 @@ CandidateWindow::CandidateWindow(TextService* service, EditSession* session):
 	candPerRow_(1),
 	textWidth_(0),
 	itemHeight_(0),
+	currentSel_(0),
+	hasResult_(false),
+	useCursor_(true),
 	selKeyWidth_(0) {
 
 	if(service->isImmersive()) { // windows 8 app mode
@@ -52,7 +55,7 @@ CandidateWindow::CandidateWindow(TextService* service, EditSession* session):
 		parent = service->compositionWindow(session);
 	else
 		parent = HWND_DESKTOP;
-	create(parent, WS_POPUP|WS_CLIPCHILDREN, WS_EX_TOOLWINDOW);
+	create(parent, WS_POPUP|WS_CLIPCHILDREN, WS_EX_TOOLWINDOW|WS_EX_TOPMOST);
 }
 
 CandidateWindow::~CandidateWindow(void) {
@@ -98,6 +101,7 @@ void CandidateWindow::onPaint(WPARAM wp, LPARAM lp) {
 	SetTextColor(hDC, GetSysColor(COLOR_WINDOWTEXT));
 	SetBkColor(hDC, GetSysColor(COLOR_WINDOW));
 
+	// paint window background and border
 	// draw a flat black border in Windows 8 app immersive mode
 	// draw a 3d border in desktop mode
 	if(isImmersive()) {
@@ -113,37 +117,19 @@ void CandidateWindow::onPaint(WPARAM wp, LPARAM lp) {
 		::Draw3DBorder(hDC, &rc, GetSysColor(COLOR_3DFACE), 0);
 	}
 
-	RECT textRect = {margin_, margin_, rc.right - margin_, margin_ + itemHeight_};
-	vector<wstring>::const_iterator it;
+	// paint items
 	int col = 0;
+	int x = margin_, y = margin_;
 	for(int i = 0, n = items_.size(); i < n; ++i) {
-		SIZE selKeySize;
-		int lineHeight = 0;
-		// the selection key string
-		wchar_t selKey[] = L"?. ";
-		selKey[0] = selKeys_[i];
-		textRect.right = textRect.left + selKeyWidth_;
-		// FIXME: make the color of strings configurable.
-		COLORREF oldColor = ::SetTextColor(hDC, RGB(0, 0, 255));
-		// paint the selection key
-		::ExtTextOut(hDC, textRect.left, textRect.top, ETO_OPAQUE, &textRect, selKey, 3, NULL);
-		::SetTextColor(hDC, oldColor); // restore text color
-		// paint the candidate string
-		SIZE candidateSize;
-		wstring& item = items_.at(i);
-		textRect.left += selKeyWidth_;
-		textRect.right = textRect.left + textWidth_;
-		// paint the candidate string
-		::ExtTextOut(hDC, textRect.left, textRect.top, ETO_OPAQUE, &textRect, item.c_str(), item.length(), NULL);
+		paintItem(hDC, i, x, y);
 		++col; // go to next column
 		if(col >= candPerRow_) {
 			col = 0;
-			textRect.left = margin_;
-			textRect.top = textRect.bottom + rowSpacing_;
-			textRect.bottom = textRect.top + itemHeight_;
+			x = margin_;
+			y += itemHeight_ + rowSpacing_;
 		}
 		else {
-			textRect.left = textRect.right + colSpacing_;
+			x += colSpacing_ + selKeyWidth_ + textWidth_;
 		}
 	}
 	SelectObject(hDC, oldFont);
@@ -210,6 +196,105 @@ void CandidateWindow::setCandPerRow(int n) {
 		candPerRow_ = n;
 		recalculateSize();
 	}
+}
+
+bool CandidateWindow::filterKeyEvent(KeyEvent& keyEvent) {
+	// select item with arrow keys
+	int oldSel = currentSel_;
+	switch(keyEvent.keyCode()) {
+	case VK_UP:
+		if(currentSel_ - candPerRow_ >=0)
+			currentSel_ -= candPerRow_;
+		break;
+	case VK_DOWN:
+		if(currentSel_ + candPerRow_ < items_.size())
+			currentSel_ += candPerRow_;
+		break;
+	case VK_LEFT:
+		if(currentSel_ - 1 >=0)
+			--currentSel_;
+		break;
+	case VK_RIGHT:
+		if(currentSel_ + 1 < items_.size())
+			++currentSel_;
+		break;
+	case VK_RETURN:
+		hasResult_ = true;
+		return true;
+	default:
+		return false;
+	}
+	// if currently selected item is changed, redraw
+	if(currentSel_ != oldSel) {
+		// repaint the old and new items
+		RECT rect;
+		itemRect(oldSel, rect);
+		::InvalidateRect(hwnd_, &rect, TRUE);
+		itemRect(currentSel_, rect);
+		::InvalidateRect(hwnd_, &rect, TRUE);
+		return true;
+	}
+	return false;
+}
+
+void CandidateWindow::setCurrentSel(int sel) {
+	if(sel >= items_.size())
+		sel = 0;
+	currentSel_ = sel;
+	if(isVisible())
+		::InvalidateRect(hwnd_, NULL, TRUE);
+}
+
+void CandidateWindow::clear() {
+	items_.clear();
+	selKeys_.clear();
+	currentSel_ = 0;
+	hasResult_ = false;
+}
+
+void CandidateWindow::setUseCursor(bool use) {
+	useCursor_ = use;
+	if(isVisible())
+		::InvalidateRect(hwnd_, NULL, TRUE);
+}
+
+void CandidateWindow::paintItem(HDC hDC, int i,  int x, int y) {
+	RECT textRect = {x, y, 0, y + itemHeight_};
+	wchar_t selKey[] = L"?. ";
+	selKey[0] = selKeys_[i];
+	textRect.right = textRect.left + selKeyWidth_;
+	// FIXME: make the color of strings configurable.
+	COLORREF selKeyColor = RGB(0, 0, 255);
+	COLORREF oldColor = ::SetTextColor(hDC, selKeyColor);
+	// paint the selection key
+	::ExtTextOut(hDC, textRect.left, textRect.top, ETO_OPAQUE, &textRect, selKey, 3, NULL);
+	::SetTextColor(hDC, oldColor); // restore text color
+
+	// paint the candidate string
+	SIZE candidateSize;
+	wstring& item = items_.at(i);
+	textRect.left += selKeyWidth_;
+	textRect.right = textRect.left + textWidth_;
+	// paint the candidate string
+	::ExtTextOut(hDC, textRect.left, textRect.top, ETO_OPAQUE, &textRect, item.c_str(), item.length(), NULL);
+
+	if(useCursor_ && i == currentSel_) { // invert the selected item
+		int left = textRect.left; // - selKeyWidth_;
+		int top = textRect.top;
+		int width = textRect.right - left;
+		int height = itemHeight_;
+		::BitBlt(hDC, left, top, width, itemHeight_, hDC, left, top, NOTSRCCOPY);
+	}
+}
+
+void CandidateWindow::itemRect(int i, RECT& rect) {
+	int row, col;
+	row = i / candPerRow_;
+	col = i % candPerRow_;
+	rect.left = margin_ + col * (selKeyWidth_ + textWidth_ + colSpacing_);
+	rect.top = margin_ + row * (itemHeight_ + rowSpacing_);
+	rect.right = rect.left + (selKeyWidth_ + textWidth_);
+	rect.bottom = rect.top + itemHeight_;
 }
 
 

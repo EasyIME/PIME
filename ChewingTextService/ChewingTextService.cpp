@@ -260,48 +260,68 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 			}
 		}
 	} else { // non-printable keys
-		switch(keyEvent.keyCode()) {
-		case VK_ESCAPE:
-			::chewing_handle_Esc(chewingContext_);
-			break;
-		case VK_RETURN:
-			::chewing_handle_Enter(chewingContext_);
-			break;
-		case VK_TAB:
-			::chewing_handle_Tab(chewingContext_);
-			break;
-		case VK_DELETE:
-			::chewing_handle_Del(chewingContext_);
-			break;
-		case VK_BACK:
-			::chewing_handle_Backspace(chewingContext_);
-			break;
-		case VK_UP:
-			::chewing_handle_Up(chewingContext_);
-			break;
-		case VK_DOWN:
-			::chewing_handle_Down(chewingContext_);
-			break;
-		case VK_LEFT:
-			::chewing_handle_Left(chewingContext_);
-			break;
-		case VK_RIGHT:
-			::chewing_handle_Right(chewingContext_);
-			break;
-		case VK_HOME:
-			::chewing_handle_Home(chewingContext_);
-			break;
-		case VK_END:
-			::chewing_handle_End(chewingContext_);
-			break;
-		case VK_PRIOR:
-			::chewing_handle_PageUp(chewingContext_);
-			break;
-		case VK_NEXT:
-			::chewing_handle_PageDown(chewingContext_);
-			break;
-		default: // we don't know this key. ignore it!
-			return false;
+		bool keyHandled = false;
+		// if we want to use the arrow keys to select candidate strings
+		if(config().cursorCandList && showingCandidates() && candidateWindow_) {
+			// if the candidate window is open, let it handle the key first
+			if(candidateWindow_->filterKeyEvent(keyEvent)) {
+				// the user selected a string from the candidate list already
+				if(candidateWindow_->hasResult()) {
+					wchar_t selKey = candidateWindow_->currentSelKey();
+					// pass the selKey to libchewing.
+					::chewing_handle_Default(chewingContext_, selKey);
+					keyHandled = true;
+				}
+				else // no candidate has been choosen yet
+					return true; // eat the key and don't pass it to libchewing at all
+			}
+		}
+
+		if(!keyHandled) {
+			// the candidate window does not need the key. pass it to libchewing.
+			switch(keyEvent.keyCode()) {
+			case VK_ESCAPE:
+				::chewing_handle_Esc(chewingContext_);
+				break;
+			case VK_RETURN:
+				::chewing_handle_Enter(chewingContext_);
+				break;
+			case VK_TAB:
+				::chewing_handle_Tab(chewingContext_);
+				break;
+			case VK_DELETE:
+				::chewing_handle_Del(chewingContext_);
+				break;
+			case VK_BACK:
+				::chewing_handle_Backspace(chewingContext_);
+				break;
+			case VK_UP:
+				::chewing_handle_Up(chewingContext_);
+				break;
+			case VK_DOWN:
+				::chewing_handle_Down(chewingContext_);
+				break;
+			case VK_LEFT:
+				::chewing_handle_Left(chewingContext_);
+				break;
+			case VK_RIGHT:
+				::chewing_handle_Right(chewingContext_);
+				break;
+			case VK_HOME:
+				::chewing_handle_Home(chewingContext_);
+				break;
+			case VK_END:
+				::chewing_handle_End(chewingContext_);
+				break;
+			case VK_PRIOR:
+				::chewing_handle_PageUp(chewingContext_);
+				break;
+			case VK_NEXT:
+				::chewing_handle_PageDown(chewingContext_);
+				break;
+			default: // we don't know this key. ignore it!
+				return false;
+			}
 		}
 	}
 
@@ -649,6 +669,7 @@ void TextService::toggleShapeMode() {
 void TextService::updateCandidates(Ime::EditSession* session) {
 	assert(candidateWindow_);
 	candidateWindow_->clear();
+	candidateWindow_->setUseCursor(config().cursorCandList);
 	candidateWindow_->setCandPerRow(config().candPerRow);
 
 	::chewing_cand_Enumerate(chewingContext_);
@@ -704,7 +725,6 @@ void TextService::hideCandidates() {
 	}
 	showingCandidates_ = false;
 }
-
 
 // message window
 void TextService::showMessage(Ime::EditSession* session, std::wstring message, int duration) {

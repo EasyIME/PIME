@@ -31,7 +31,7 @@ MessageWindow::MessageWindow(TextService* service, EditSession* session):
 		parent = service->compositionWindow(session);
 	else
 		parent = HWND_DESKTOP;
-	create(parent, WS_POPUP|WS_CLIPCHILDREN, WS_EX_TOOLWINDOW);
+	create(parent, WS_POPUP|WS_CLIPCHILDREN, WS_EX_TOOLWINDOW|WS_EX_TOPMOST);
 }
 
 MessageWindow::~MessageWindow(void) {

@@ -50,8 +50,8 @@ RequestExecutionLevel admin
 !insertmacro MUI_PAGE_INSTFILES
 
 ; finish page
-!define MUI_FINISHPAGE_LINK_LOCATION "http:;chewing.im/"
-!define MUI_FINISHPAGE_LINK "$(VISIT_WEBSITE) ${MUI_FINISHPAGE_LINK_LOCATION}"
+!define MUI_FINISHPAGE_LINK_LOCATION "http://chewing.im/"
+!define MUI_FINISHPAGE_LINK "新酷音專案網頁 ${MUI_FINISHPAGE_LINK_LOCATION}"
 !insertmacro MUI_PAGE_FINISH
 
 ; uninstallation pages

@@ -50,11 +50,7 @@ CandidateWindow::CandidateWindow(TextService* service, EditSession* session):
 		colSpacing_ = 8;
 	}
 
-	HWND parent;
-	if(isImmersive())
-		parent = service->compositionWindow(session);
-	else
-		parent = HWND_DESKTOP;
+	HWND parent = service->compositionWindow(session);
 	create(parent, WS_POPUP|WS_CLIPCHILDREN, WS_EX_TOOLWINDOW|WS_EX_TOPMOST);
 }
 

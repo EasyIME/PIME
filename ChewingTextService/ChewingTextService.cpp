@@ -153,6 +153,7 @@ void TextService::onDeactivate() {
 	hideMessage();
 
 	if(candidateWindow_) {
+		showingCandidates_ = false;
 		delete candidateWindow_;
 		candidateWindow_ = NULL;
 	}
@@ -173,8 +174,10 @@ bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
 			return false;
 
 		if(keyEvent.isKeyToggled(VK_CAPITAL)) { // Caps lock is on => English mode
-			// FIXME: should we change chewing mode to ENGLISH_MODE?
-			return false; // bypass IME
+			// We need to handle this key because in onKeyDown(),
+			// the upper case chars need to be converted to lower case
+			// before doing output to the applications.
+			return true;
 		}
 
 		if(keyEvent.isKeyToggled(VK_NUMLOCK)) { // NumLock is on
@@ -331,6 +334,9 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 	if(::chewing_keystroke_CheckIgnore(chewingContext_))
 		return false;
 
+	if(!isComposing()) // start the composition
+		startComposition(session->context());
+
 	// handle candidates
 	if(hasCandidates()) {
 		if(!showingCandidates())
@@ -345,9 +351,6 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 
 	// has something to commit
 	if(::chewing_commit_Check(chewingContext_)) {
-		if(!isComposing()) // start the composition
-			startComposition(session->context());
-
 		char* buf = ::chewing_commit_String(chewingContext_);
 		std::wstring wbuf = utf8ToUtf16(buf);
 		::chewing_free(buf);
@@ -453,6 +456,8 @@ bool TextService::onPreservedKey(const GUID& guid) {
 					context->Release();
 				}
 			}
+			if(showingCandidates()) // disable candidate window if it's opened
+				hideCandidates();
 			freeChewingContext(); // IME is closed, chewingContext is not needed
 		}
 		setKeyboardOpen(open);

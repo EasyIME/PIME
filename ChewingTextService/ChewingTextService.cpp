@@ -387,7 +387,12 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 		if(isComposing()) {
 			// clean composition before end it
 			setCompositionString(session, compositionBuf.c_str(), compositionBuf.length());
-			endComposition(session->context());
+
+			// We also need to make sure that the candidate window is not currently shown.
+			// When typing symbols with ` key, it's possible that the composition string empty,
+			// while the candidate window is shown. We should not terminate the composition in this case.
+			if(!showingCandidates())
+				endComposition(session->context());
 		}
 	}
 

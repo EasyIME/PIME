@@ -23,7 +23,7 @@
 
 namespace Chewing {
 
-typedef BOOL (*InitCommonControlsExFunc)(const LPINITCOMMONCONTROLSEX lpInitCtrls);
+typedef BOOL (WINAPI *InitCommonControlsExFunc)(const LPINITCOMMONCONTROLSEX lpInitCtrls);
 static InitCommonControlsExFunc pInitCommonControlsEx = NULL;
 static HMODULE comctl = NULL;
 

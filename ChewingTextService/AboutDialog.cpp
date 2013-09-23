@@ -37,7 +37,7 @@ AboutDialog::AboutDialog(void): Ime::Dialog() {
 			icc.dwSize = sizeof(icc);
 			icc.dwICC = ICC_LINK_CLASS;
 			// initialize syslink control
-			::InitCommonControlsEx(&icc);
+			pInitCommonControlsEx(&icc);
 		}
 	}
 }

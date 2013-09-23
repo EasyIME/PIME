@@ -165,6 +165,7 @@ void TextService::onFocus() {
 
 // virtual
 bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
+	Config& cfg = config();
 	lastKeyDownCode_ = keyEvent.keyCode();
 	// return false if we don't need this key
 	assert(chewingContext_);
@@ -172,8 +173,9 @@ bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
 		// check if we're in Chinses or English mode
 		if(langMode_ != CHINESE_MODE) // don't do further handling in English mode
 			return false;
-
-		if(keyEvent.isKeyToggled(VK_CAPITAL)) { // Caps lock is on => English mode
+		
+		// Caps lock is on => English mode
+		if(cfg.enableCapsLock && keyEvent.isKeyToggled(VK_CAPITAL)) {
 			// We need to handle this key because in onKeyDown(),
 			// the upper case chars need to be converted to lower case
 			// before doing output to the applications.
@@ -187,9 +189,6 @@ bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
 		}
 
 		if(keyEvent.isKeyDown(VK_CONTROL) || keyEvent.isKeyDown(VK_MENU)) { // if Ctrl or Alt key is down
-			if(isComposing()) {
-				// FIXME: we need Ctrl + num in libchewing?
-			}
 			return false; // bypass IME. This might be a shortcut key used in the application
 		}
 

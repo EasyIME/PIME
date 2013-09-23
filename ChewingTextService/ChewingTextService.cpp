@@ -172,7 +172,10 @@ bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
 			// We need to handle this key because in onKeyDown(),
 			// the upper case chars need to be converted to lower case
 			// before doing output to the applications.
-			return true;
+			if(keyEvent.isChar() && isalpha(keyEvent.charCode()))
+				return true; // this is an English alphabet
+			else
+				return false;
 		}
 
 		if(keyEvent.isKeyToggled(VK_NUMLOCK)) { // NumLock is on

@@ -33,6 +33,8 @@ const CLSID g_textServiceClsid = {
 ImeModule::ImeModule(HMODULE module):
 	Ime::ImeModule(module, g_textServiceClsid),
 	config_(windowsVersion()) {
+	
+	config_.load(); // load configurations
 
 	// override default location of chewing data directories
 	std::wstring env;

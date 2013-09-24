@@ -81,9 +81,9 @@ Config::~Config(void) {
 void Config::load() {
 	// ensure that we always access 64 bit registry if running under WOW64
 	HANDLE process = ::GetCurrentProcess();
-	BOOL is64Bit = FALSE;
-	::IsWow64Process(process, &is64Bit);
-	DWORD regFlags = is64Bit ? KEY_WOW64_64KEY : 0;
+	BOOL isWow64 = FALSE;
+	::IsWow64Process(process, &isWow64);
+	DWORD regFlags = isWow64 ? KEY_WOW64_64KEY : 0;
 /*
 	#define KB_TYPE_NUM 9
 	#define KB_DEFAULT 0
@@ -132,9 +132,9 @@ void Config::load() {
 void Config::save() {
 	// ensure that we always access 64 bit registry if running under WOW64
 	HANDLE process = ::GetCurrentProcess();
-	BOOL is64Bit = FALSE;
-	::IsWow64Process(process, &is64Bit);
-	DWORD regFlags = is64Bit ? KEY_WOW64_64KEY : 0;
+	BOOL isWow64 = FALSE;
+	::IsWow64Process(process, &isWow64);
+	DWORD regFlags = isWow64 ? KEY_WOW64_64KEY : 0;
 
 	HKEY hk = NULL;
 	LSTATUS ret = ::RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\ChewingTextService", 0, 

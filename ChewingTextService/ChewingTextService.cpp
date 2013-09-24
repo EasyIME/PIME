@@ -413,11 +413,13 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 
 // virtual
 bool TextService::filterKeyUp(Ime::KeyEvent& keyEvent) {
-	if(lastKeyDownCode_ == VK_SHIFT && keyEvent.keyCode() == VK_SHIFT) {
-		// last key down event is also shift key
-		// a <Shift> key down + key up pair was detected
-		// switch language
-		toggleLanguageMode();
+	if(config().switchLangWithShift) {
+		if(lastKeyDownCode_ == VK_SHIFT && keyEvent.keyCode() == VK_SHIFT) {
+			// last key down event is also shift key
+			// a <Shift> key down + key up pair was detected
+			// switch language
+			toggleLanguageMode();
+		}
 	}
 	lastKeyDownCode_ = 0;
 	return false;

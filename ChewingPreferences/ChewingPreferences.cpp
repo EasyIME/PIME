@@ -39,6 +39,7 @@ static const GUID g_configChangedGuid =
 void configDialog(HINSTANCE hInstance) {
 	Ime::WindowsVersion winVer;
 	Config config(winVer);
+	config.load();
 
 	Ime::PropertyDialog dlg;
 	TypingPropertyPage* typingPage = new TypingPropertyPage(&config);

@@ -79,6 +79,11 @@ Config::~Config(void) {
 }
 
 void Config::load() {
+	// ensure that we always access 64 bit registry if running under WOW64
+	HANDLE process = ::GetCurrentProcess();
+	BOOL is64Bit = FALSE;
+	::IsWow64Process(process, &is64Bit);
+	DWORD regFlags = is64Bit ? KEY_WOW64_64KEY : 0;
 /*
 	#define KB_TYPE_NUM 9
 	#define KB_DEFAULT 0
@@ -92,7 +97,7 @@ void Config::load() {
 	#define KB_HANYU_PINYING 8
 */
 	HKEY hk = NULL;
-	if(ERROR_SUCCESS == ::RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\ChewingTextService", 0, KEY_READ, &hk)) {
+	if(ERROR_SUCCESS == ::RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\ChewingTextService", 0, regFlags|KEY_READ, &hk)) {
 		DWORD size = sizeof(DWORD);
 		DWORD type = REG_DWORD;
 		::RegQueryValueEx(hk, L"KeyboardLayout", 0, &type, (LPBYTE)&keyboardLayout, &size);		
@@ -125,9 +130,15 @@ void Config::load() {
 }
 
 void Config::save() {
+	// ensure that we always access 64 bit registry if running under WOW64
+	HANDLE process = ::GetCurrentProcess();
+	BOOL is64Bit = FALSE;
+	::IsWow64Process(process, &is64Bit);
+	DWORD regFlags = is64Bit ? KEY_WOW64_64KEY : 0;
+
 	HKEY hk = NULL;
 	LSTATUS ret = ::RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\ChewingTextService", 0, 
-						NULL, 0, KEY_READ|KEY_WRITE , NULL, &hk, NULL);
+						NULL, 0, regFlags|KEY_READ|KEY_WRITE , NULL, &hk, NULL);
 	if(ERROR_SUCCESS == ret) {
 		::RegSetValueEx(hk, L"KeyboardLayout", 0, REG_DWORD, (LPBYTE)&keyboardLayout, sizeof(DWORD));
 		::RegSetValueEx(hk, L"CandPerRow", 0, REG_DWORD, (LPBYTE)&candPerRow, sizeof(DWORD));

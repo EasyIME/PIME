@@ -22,14 +22,13 @@
 
 #include <Windows.h>
 #include <AccCtrl.h>
+#include <libIME/WindowsVersion.h>
 
 namespace Chewing {
 
-class ImeModule;
-
 class Config {
 public:
-	Config(ImeModule* module);
+	Config(Ime::WindowsVersion winver);
 	~Config(void);
 
 	void load();
@@ -75,7 +74,7 @@ public:
 
 private:
 	DWORD stamp; // timestamp used to check if the config values are up to date
-	Chewing::ImeModule* module_;
+	Ime::WindowsVersion winVer_;
 };
 
 }

@@ -56,17 +56,9 @@ static const GUID g_convertedDisplayAttributeGuid =
 ImeModule::ImeModule(HMODULE module, const CLSID& textServiceClsid):
 	hInstance_(HINSTANCE(module)),
 	textServiceClsid_(textServiceClsid),
-	isWindows8Above_(false),
 	refCount_(1) {
 
 	Window::registerClass(hInstance_);
-
-	// check Windows version (windows 8 is 6.2, and 7 is 6.1)
-	DWORD winVer = ::GetVersion();
-	DWORD majorVersion = (DWORD)(LOBYTE(LOWORD(winVer)));
-    DWORD minorVersion = (DWORD)(HIBYTE(LOWORD(winVer)));
-	if(majorVersion > 6 || (majorVersion == 6 && minorVersion >= 2))
-		isWindows8Above_ = true;
 
 	// regiser default display attributes
 	inputAttrib_ = new DisplayAttributeInfo(g_inputDisplayAttributeGuid);

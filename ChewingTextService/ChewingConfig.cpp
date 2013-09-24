@@ -18,7 +18,6 @@
 //
 
 #include "ChewingConfig.h"
-#include "ChewingImeModule.h"
 #include <Aclapi.h>
 
 namespace Chewing {
@@ -48,8 +47,8 @@ const wchar_t* Config::selKeys[]={
 #define SECURITY_BUILTIN_PACKAGE_ANY_PACKAGE 0x00000001L
 #endif
 
-Config::Config(ImeModule* module):
-	module_(module) {
+Config::Config(Ime::WindowsVersion winver):
+	winVer_(winver) {
 	// Configuration
 	keyboardLayout = 0;
 	candPerRow = 5;
@@ -155,7 +154,7 @@ void Config::save() {
 		::RegCloseKey(hk);
 
 		// grant access to app containers in Windows 8
-		if(module_->isWindows8Above())
+		if(winVer_.isWindows8Above())
 			grantAppContainerAccess(L"CURRENT_USER\\Software\\ChewingTextService", SE_REGISTRY_KEY, KEY_READ);
 	}
 }

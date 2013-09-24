@@ -23,6 +23,7 @@
 #include <Unknwn.h>
 #include <Windows.h>
 #include <list>
+#include "WindowsVersion.h"
 
 namespace Ime {
 
@@ -44,7 +45,11 @@ public:
 	}
 
 	bool isWindows8Above() {
-		return isWindows8Above_;
+		return winVer_.isWindows8Above();
+	}
+
+	WindowsVersion windowsVersion() const {
+		return winVer_;
 	}
 
 	// Dll entry points implementations
@@ -94,7 +99,7 @@ private:
 	DisplayAttributeInfo* inputAttrib_;
 	DisplayAttributeInfo* convertedAttrib_;
 
-	bool isWindows8Above_;
+	WindowsVersion winVer_;
 };
 
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include <libIME/PropertyPage.h>
-#include "ChewingConfig.h"
+#include <ChewingTextService/ChewingConfig.h>
 
 namespace Chewing {
 

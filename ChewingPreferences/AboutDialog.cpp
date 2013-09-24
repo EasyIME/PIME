@@ -23,22 +23,15 @@
 
 namespace Chewing {
 
-typedef BOOL (WINAPI *InitCommonControlsExFunc)(const LPINITCOMMONCONTROLSEX lpInitCtrls);
-static InitCommonControlsExFunc pInitCommonControlsEx = NULL;
-static HMODULE comctl = NULL;
-
 AboutDialog::AboutDialog(void): Ime::Dialog() {
-	// we don't link to comctl32.dll directly since Win8 metro seems to block it.
-	if(!comctl) {
-		comctl = ::LoadLibraryW(L"Comctl32.dll");
-		if(comctl) {
-			pInitCommonControlsEx = (InitCommonControlsExFunc)::GetProcAddress(comctl, "InitCommonControlsEx");
-			INITCOMMONCONTROLSEX icc;
-			icc.dwSize = sizeof(icc);
-			icc.dwICC = ICC_LINK_CLASS;
-			// initialize syslink control
-			pInitCommonControlsEx(&icc);
-		}
+	static bool initSysLink = false;
+	if(!initSysLink) {
+		// we don't link to comctl32.dll directly since Win8 metro seems to block it.
+		INITCOMMONCONTROLSEX icc;
+		icc.dwSize = sizeof(icc);
+		icc.dwICC = ICC_LINK_CLASS;
+		// initialize syslink control
+		initSysLink = (bool)InitCommonControlsEx(&icc);
 	}
 }
 

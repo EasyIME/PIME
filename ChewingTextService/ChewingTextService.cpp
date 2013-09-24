@@ -22,15 +22,9 @@
 #include <string>
 #include <libIME/Utils.h>
 #include <libIME/LangBarButton.h>
-#include <libIME/Dialog.h>
-#include <libIME/PropertyDialog.h>
 #include "ChewingImeModule.h"
 #include "resource.h"
 #include <Shellapi.h>
-#include "TypingPropertyPage.h"
-#include "UiPropertyPage.h"
-#include "KeyboardPropertyPage.h"
-#include "AboutDialog.h"
 
 using namespace std;
 
@@ -476,8 +470,10 @@ bool TextService::onCommand(UINT id, CommandType type) {
 		break;
 	case ID_ABOUT: // show about dialog
 		if(!isImmersive()) { // only do this in desktop app mode
-			AboutDialog dlg;
-			dlg.showModal(this->imeModule()->hInstance(), IDD_ABOUT);
+			// show about dialog
+			std::wstring path = static_cast<ImeModule*>(imeModule())->programDir();
+			path += L"\\ChewingPreferences.exe";
+			::ShellExecuteW(NULL, L"open", path.c_str(), L"/about", NULL, SW_SHOWNORMAL);
 	    }
 		break;
 	case ID_WEBSITE: // visit chewing website
@@ -519,26 +515,10 @@ bool TextService::onCommand(UINT id, CommandType type) {
 
 // virtual
 bool TextService::onConfigure(HWND hwndParent) {
-	Config& config = ((Chewing::ImeModule*)imeModule())->config();
-	Ime::PropertyDialog dlg;
-	TypingPropertyPage* typingPage = new TypingPropertyPage(&config);
-	UiPropertyPage* uiPage = new UiPropertyPage(&config);
-	KeyboardPropertyPage* keyboardPage = new KeyboardPropertyPage(&config);
-	dlg.addPage(typingPage);
-	dlg.addPage(uiPage);
-	dlg.addPage(keyboardPage);
-	INT_PTR ret = dlg.showModal(this->imeModule()->hInstance(), (LPCTSTR)IDS_CONFIG_TITLE, 0, hwndParent);
-	if(ret) { // the user clicks OK button
-		// get current time stamp and set the value to global compartment to notify all
-		// text service instances to reload their config.
-		// TextService::onCompartmentChanged() of all other instances will be triggered.
-		config.save();
-
-		DWORD stamp = ::GetTickCount();
-		if(stamp == Config::INVALID_TIMESTAMP) // this is almost impossible
-			stamp = 0;
-		setGlobalCompartmentValue(g_configChangedGuid, stamp);
-	}
+	// launch ChewingPreferences
+	std::wstring path = static_cast<ImeModule*>(imeModule())->programDir();
+	path += L"\\ChewingPreferences.exe";
+	::ShellExecuteW(hwndParent, L"open", path.c_str(), NULL, NULL, SW_SHOWNORMAL);
 	return true;
 }
 

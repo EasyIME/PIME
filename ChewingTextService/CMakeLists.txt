@@ -24,16 +24,6 @@ add_library(ChewingTextService SHARED
     ${PROJECT_SOURCE_DIR}/DllEntry.cpp
     ${PROJECT_SOURCE_DIR}/ChewingConfig.cpp
     ${PROJECT_SOURCE_DIR}/ChewingConfig.h
-    # About dialog
-    ${PROJECT_SOURCE_DIR}/AboutDialog.cpp
-    ${PROJECT_SOURCE_DIR}/AboutDialog.h
-    # Configuration dialog
-    ${PROJECT_SOURCE_DIR}/TypingPropertyPage.cpp
-    ${PROJECT_SOURCE_DIR}/TypingPropertyPage.h
-    ${PROJECT_SOURCE_DIR}/UiPropertyPage.cpp
-    ${PROJECT_SOURCE_DIR}/UiPropertyPage.h
-    ${PROJECT_SOURCE_DIR}/KeyboardPropertyPage.cpp
-    ${PROJECT_SOURCE_DIR}/KeyboardPropertyPage.h
     # resources
     ${PROJECT_SOURCE_DIR}/ChewingTextService.rc
     ${PROJECT_SOURCE_DIR}/mainicon.ico

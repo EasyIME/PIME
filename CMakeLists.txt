@@ -22,6 +22,8 @@ add_subdirectory(${PROJECT_LIBCHEWING})
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/libIME)
 
+add_subdirectory(chewingwrapper)
+
 add_subdirectory(${PROJECT_SOURCE_DIR}/ChewingTextService)
 
-add_subdirectory(chewingwrapper)
+add_subdirectory(${PROJECT_SOURCE_DIR}/ChewingPreferences)

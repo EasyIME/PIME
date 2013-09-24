@@ -41,9 +41,14 @@ public:
 		return userDir_;
 	}
 
+	std::wstring& programDir() {
+		return programDir_;
+	}
+
 private:
 	Config config_;
 	std::wstring userDir_;
+	std::wstring programDir_;
 };
 
 }

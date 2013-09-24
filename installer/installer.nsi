@@ -75,6 +75,9 @@ File /r "x86" ; put 32-bit ChewingTextService.dll in x86 folder
 ; Install dictionary files
 File /r Dictionary ; put all dictionary files here
 
+; Configuration Tool
+File ChewingPreferences.exe
+
 ; Register COM objects (NSIS RegDLL command is broken and cannot be used)
 ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x86\ChewingTextService.dll"'
 ${If} ${RunningX64} 
@@ -147,6 +150,7 @@ ${EndIf}
 RMDir /r "$INSTDIR\x86"
 RMDir /r "$INSTDIR\Dictionary"
 Delete "$INSTDIR\SetupChewing.bat"
+Delete "$INSTDIR\ChewingPreferences.exe"
 
 DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChewingTextService"
 DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "SetupChewing"

@@ -169,29 +169,42 @@ bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
 	// return false if we don't need this key
 	assert(chewingContext_);
 	if(!isComposing()) { // we're not composing now
-		// check if we're in Chinses or English mode
-		if(langMode_ != CHINESE_MODE) // don't do further handling in English mode
+		// don't do further handling in English + half shape mode
+		if(langMode_ != CHINESE_MODE && shapeMode_ != FULLSHAPE_MODE)
 			return false;
-		
-		// Caps lock is on => English mode
-		if(cfg.enableCapsLock && keyEvent.isKeyToggled(VK_CAPITAL)) {
-			// We need to handle this key because in onKeyDown(),
-			// the upper case chars need to be converted to lower case
-			// before doing output to the applications.
-			if(keyEvent.isChar() && isalpha(keyEvent.charCode()))
-				return true; // this is an English alphabet
-			else
-				return false;
+
+		// if Ctrl or Alt key is down
+		if(keyEvent.isKeyDown(VK_CONTROL) || keyEvent.isKeyDown(VK_MENU)) {
+			// bypass IME. This might be a shortcut key used in the application
+			// FIXME: we only need Ctrl in composition mode for adding user phrases.
+			// However, if we turn on easy symbol input with Ctrl support later,
+			// we'll need th Ctrl key then.
+			return false;
 		}
 
-		if(keyEvent.isKeyToggled(VK_NUMLOCK)) { // NumLock is on
-			// if this key is Num pad 0-9, +, -, *, /, pass it back to the system
-			if(keyEvent.keyCode() >= VK_NUMPAD0 && keyEvent.keyCode() <= VK_DIVIDE)
-				return false; // bypass IME
-		}
+		// we always need further processing in full shape mode since all English chars,
+		// numbers, and symbols need to be converted to full shape Chinese chars.
+		if(shapeMode_ != FULLSHAPE_MODE) {
+			// Caps lock is on => English mode
+			if(cfg.enableCapsLock && keyEvent.isKeyToggled(VK_CAPITAL)) {
+				// We need to handle this key because in onKeyDown(),
+				// the upper case chars need to be converted to lower case
+				// before doing output to the applications.
+				if(keyEvent.isChar() && isalpha(keyEvent.charCode()))
+					return true; // this is an English alphabet
+				else
+					return false;
+			}
 
-		if(keyEvent.isKeyDown(VK_CONTROL) || keyEvent.isKeyDown(VK_MENU)) { // if Ctrl or Alt key is down
-			return false; // bypass IME. This might be a shortcut key used in the application
+			if(keyEvent.isKeyToggled(VK_NUMLOCK)) { // NumLock is on
+				// if this key is Num pad 0-9, +, -, *, /, pass it back to the system
+				if(keyEvent.keyCode() >= VK_NUMPAD0 && keyEvent.keyCode() <= VK_DIVIDE)
+					return false; // bypass IME
+			}
+		}
+		else { // full shape mode
+			if(keyEvent.keyCode() == VK_SPACE) // we need to convert space to fullshape.
+				return true;
 		}
 
 		// when not composing, we only cares about Bopomofo
@@ -505,7 +518,7 @@ bool TextService::onCommand(UINT id, CommandType type) {
 		::ShellExecuteW(NULL, NULL, L"http://groups.google.com/group/chewing-devel", NULL, NULL, SW_SHOWNORMAL);
 		break;
 	case ID_BUGREPORT: // visit bug tracker page
-		::ShellExecuteW(NULL, NULL, L"http://code.google.com/p/chewing/issues/list", NULL, NULL, SW_SHOWNORMAL);
+		::ShellExecuteW(NULL, NULL, L"https://github.com/chewing/windows-chewing-tsf/issues?state=open", NULL, NULL, SW_SHOWNORMAL);
 		break;
 	case ID_DICT_BUGREPORT:
 		::ShellExecuteW(NULL, NULL, L"https://github.com/chewing/libchewing-data/issues", NULL, NULL, SW_SHOWNORMAL);

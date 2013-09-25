@@ -27,6 +27,7 @@
 #include <LibIME/LangBarButton.h>
 #include <chewing.h>
 #include "ChewingImeModule.h"
+#include <sys/types.h>
 
 namespace Chewing {
 
@@ -118,6 +119,8 @@ private:
 	bool outputSimpChinese_; // output simplified Chinese
 	int langMode_;
 	int shapeMode_;
+	time_t symbolsFileTime_; // mtime of symbols.dat file
+
 	UINT lastKeyDownCode_;
 };
 

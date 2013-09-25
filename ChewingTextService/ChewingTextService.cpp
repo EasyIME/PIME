@@ -25,6 +25,7 @@
 #include "ChewingImeModule.h"
 #include "resource.h"
 #include <Shellapi.h>
+#include <sys/stat.h>
 
 using namespace std;
 
@@ -66,6 +67,7 @@ TextService::TextService(ImeModule* module):
 	messageTimerId_(0),
 	candidateWindow_(NULL),
 	imeModeIcon_(NULL),
+	symbolsFileTime_(0),
 	chewingContext_(NULL) {
 
 	// add preserved keys
@@ -563,7 +565,27 @@ void TextService::onCompartmentChanged(const GUID& key) {
 		// changes of configuration are detected
 		DWORD stamp = globalCompartmentValue(g_configChangedGuid);
 		config().reloadIfNeeded(stamp);
-		applyConfig(); // apply the latest config
+
+		// check if chewing context needs to be reloaded
+		bool chewingNeedsReload = false;
+		Chewing::ImeModule* module = static_cast<Chewing::ImeModule*>(imeModule());
+		// check if symbols.dat file is changed
+		// get last mtime of symbols.dat file
+		std::wstring file = module->userDir() + L"\\symbols.dat";
+		struct _stat64 stbuf;
+		if(_wstat64(file.c_str(), &stbuf) == 0 && symbolsFileTime_ != stbuf.st_mtime) {
+			symbolsFileTime_ = stbuf.st_mtime;
+			chewingNeedsReload = true;
+		}
+
+		// re-create a new chewing context if needed
+		if(chewingNeedsReload && chewingContext_) {
+			freeChewingContext();
+			initChewingContext();
+		}
+		else {
+			applyConfig(); // apply the latest config
+		}
 		return;
 	}
 	Ime::TextService::onCompartmentChanged(key);
@@ -605,6 +627,13 @@ void TextService::initChewingContext() {
 			::chewing_set_ChiEngMode(chewingContext_, SYMBOL_MODE);
 		if(cfg.defaultFullSpace)
 			::chewing_set_ShapeMode(chewingContext_, FULLSHAPE_MODE);
+
+		// get last mtime of symbols.dat file
+		Chewing::ImeModule* module = static_cast<Chewing::ImeModule*>(imeModule());
+		std::wstring file = module->userDir() + L"\\symbols.dat";
+		struct _stat64 stbuf;
+		if(_wstat64(file.c_str(), &stbuf) == 0)
+			symbolsFileTime_ = stbuf.st_mtime;
 	}
 
 	outputSimpChinese_ = config().outputSimpChinese;

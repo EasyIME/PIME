@@ -25,9 +25,10 @@
 #include "TypingPropertyPage.h"
 #include "UiPropertyPage.h"
 #include "KeyboardPropertyPage.h"
+#include "SymbolsPropertyPage.h"
 #include "AboutDialog.h"
 #include "resource.h"
-
+#include <CommCtrl.h>
 #include <Msctf.h>
 
 namespace Chewing {
@@ -36,7 +37,20 @@ namespace Chewing {
 static const GUID g_configChangedGuid = 
 { 0xf4d1e543, 0xfb2c, 0x48d7, { 0xb7, 0x8d, 0x20, 0x39, 0x4f, 0x35, 0x53, 0x81 } };
 
-void configDialog(HINSTANCE hInstance) {
+static void initControls() {
+	INITCOMMONCONTROLSEX ic;
+	ic.dwSize = sizeof(ic);
+	ic.dwICC = ICC_UPDOWN_CLASS;
+	::InitCommonControlsEx(&ic);
+
+	// Init RichEdit 2.0
+	// HMODULE riched20;
+	// riched20 = LoadLibraryA("RICHED20.DLL");
+}
+
+static void configDialog(HINSTANCE hInstance) {
+	initControls();
+
 	Ime::WindowsVersion winVer;
 	Config config(winVer);
 	config.load();
@@ -45,9 +59,11 @@ void configDialog(HINSTANCE hInstance) {
 	TypingPropertyPage* typingPage = new TypingPropertyPage(&config);
 	UiPropertyPage* uiPage = new UiPropertyPage(&config);
 	KeyboardPropertyPage* keyboardPage = new KeyboardPropertyPage(&config);
+	SymbolsPropertyPage* symbolsPage = new SymbolsPropertyPage(&config);
 	dlg.addPage(typingPage);
 	dlg.addPage(uiPage);
 	dlg.addPage(keyboardPage);
+	dlg.addPage(symbolsPage);
 	INT_PTR ret = dlg.showModal(hInstance, (LPCTSTR)IDS_CONFIG_TITLE, 0, HWND_DESKTOP);
 	if(ret) { // the user clicks OK button
 		// get current time stamp and set the value to global compartment to notify all
@@ -82,7 +98,7 @@ void configDialog(HINSTANCE hInstance) {
 	}
 }
 
-void aboutDialog(HINSTANCE hInstance) {
+static void aboutDialog(HINSTANCE hInstance) {
 	AboutDialog dlg;
 	dlg.showModal(hInstance, IDD_ABOUT);
 }

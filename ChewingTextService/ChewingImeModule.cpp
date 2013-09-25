@@ -68,7 +68,7 @@ ImeModule::ImeModule(HMODULE module):
 		_wputenv(env.c_str());
 	}
 
-	// get the program directory
+	// get the program data directory
 	// try C:\program files (x86) first
 	result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILESX86, NULL, 0, path);
 	if(result != S_OK) // failed, fall back to C:\program files

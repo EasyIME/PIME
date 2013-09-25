@@ -10,12 +10,14 @@ include_directories(
 )
 
 add_executable(ChewingPreferences WIN32
-	# Entry point
-	${PROJECT_SOURCE_DIR}/ChewingPreferences.cpp
-	# Configurations
+    # Entry point
+    ${PROJECT_SOURCE_DIR}/ChewingPreferences.cpp
+    # Configurations
     ${CMAKE_SOURCE_DIR}/ChewingTextService/ChewingConfig.cpp
     ${CMAKE_SOURCE_DIR}/ChewingTextService/ChewingConfig.h
-	# libIME UI code
+    # libIME UI code
+    ${CMAKE_SOURCE_DIR}/libIME/Utils.cpp
+    ${CMAKE_SOURCE_DIR}/libIME/Utils.h
     ${CMAKE_SOURCE_DIR}/libIME/Window.cpp
     ${CMAKE_SOURCE_DIR}/libIME/Window.h
     ${CMAKE_SOURCE_DIR}/libIME/Dialog.cpp
@@ -31,9 +33,11 @@ add_executable(ChewingPreferences WIN32
     ${PROJECT_SOURCE_DIR}/UiPropertyPage.h
     ${PROJECT_SOURCE_DIR}/KeyboardPropertyPage.cpp
     ${PROJECT_SOURCE_DIR}/KeyboardPropertyPage.h
-	# About dialog
-	${PROJECT_SOURCE_DIR}/AboutDialog.cpp
-	${PROJECT_SOURCE_DIR}/AboutDialog.h
+    ${PROJECT_SOURCE_DIR}/SymbolsPropertyPage.cpp
+    ${PROJECT_SOURCE_DIR}/SymbolsPropertyPage.h
+    # About dialog
+    ${PROJECT_SOURCE_DIR}/AboutDialog.cpp
+    ${PROJECT_SOURCE_DIR}/AboutDialog.h
     # resources
     ${PROJECT_SOURCE_DIR}/ChewingPreferences.rc
 	${PROJECT_SOURCE_DIR}/ChewingPreferences.exe.manifest

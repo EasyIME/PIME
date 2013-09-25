@@ -17,37 +17,31 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#include "KeyboardPropertyPage.h"
-#include "resource.h"
-#include <WindowsX.h>
+#ifndef CHEWING_SYMBOLS_PROPERTY_PAGE
+#define CHEWING_SYMBOLS_PROPERTY_PAGE
+#pragma once
+
+#include <libIME/PropertyPage.h>
+#include <ChewingTextService/ChewingConfig.h>
+#include <string>
 
 namespace Chewing {
 
-KeyboardPropertyPage::KeyboardPropertyPage(Config* config):
-	Ime::PropertyPage((LPCTSTR)IDD_KBLAYOUT),
-	config_(config) {
-}
+class SymbolsPropertyPage : public Ime::PropertyPage {
+public:
+	SymbolsPropertyPage(Config* config);
+	virtual ~SymbolsPropertyPage(void);
 
-KeyboardPropertyPage::~KeyboardPropertyPage(void) {
-}
+protected:
+	virtual bool onInitDialog();
+	virtual void onOK();
 
-
-// virtual
-bool KeyboardPropertyPage::onInitDialog() {
-	CheckRadioButton(hwnd_, IDC_KB1, IDC_KB11, IDC_KB1 + config_->keyboardLayout);
-	return PropertyPage::onInitDialog();
-}
-
-// virtual
-void KeyboardPropertyPage::onOK() {
-	for(UINT id = IDC_KB1; id <= IDC_KB11; ++id) {
-		if(IsDlgButtonChecked(hwnd_, id)) {
-			config_->keyboardLayout = (id - IDC_KB1);
-			break;
-		}
-	}
-	PropertyPage::onOK();
-}
-
+private:
+	Config* config_;
+	std::wstring userDir_;
+};
 
 } // namespace Chewing
+
+#endif
+

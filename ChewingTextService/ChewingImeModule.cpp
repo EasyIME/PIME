@@ -41,20 +41,8 @@ ImeModule::ImeModule(HMODULE module):
 	wchar_t path[MAX_PATH];
 
 	HRESULT result;
-	// try C:\program files (x86) first
-	result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILESX86, NULL, 0, path);
-	if(result != S_OK) // failed, fall back to C:\program files
-		result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
-	if(result == S_OK) { // program files folder is found
-		programDir_ = path;
-		programDir_ += L"\\ChewingTextService";
 
-		env = L"CHEWING_PATH=";
-		env += programDir_;
-		env += L"\\Dictionary";
-		_wputenv(env.c_str());
-	}
-
+	// get user profile directory
 	if(::GetEnvironmentVariableW(L"USERPROFILE", path, MAX_PATH)) {
 		userDir_ = path;
 		userDir_ += L"\\ChewingTextService";
@@ -79,6 +67,26 @@ ImeModule::ImeModule(HMODULE module):
 		env += userDir_;
 		_wputenv(env.c_str());
 	}
+
+	// get the program directory
+	// try C:\program files (x86) first
+	result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILESX86, NULL, 0, path);
+	if(result != S_OK) // failed, fall back to C:\program files
+		result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
+	if(result == S_OK) { // program files folder is found
+		programDir_ = path;
+		programDir_ += L"\\ChewingTextService";
+		env = L"CHEWING_PATH=";
+		// prepend user dir path to program path, so user-specific files, if they exist,
+		// can take precedence over built-in ones. (for ex: symbols.dat)
+		env += userDir_;
+		env += ';'; // add ; to separate two dir paths
+		// add program dir after user profile dir
+		env += programDir_;
+		env += L"\\Dictionary";
+		_wputenv(env.c_str());
+	}
+
 }
 
 ImeModule::~ImeModule(void) {

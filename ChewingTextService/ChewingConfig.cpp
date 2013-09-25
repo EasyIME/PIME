@@ -51,7 +51,7 @@ Config::Config(Ime::WindowsVersion winver):
 	winVer_(winver) {
 	// Configuration
 	keyboardLayout = 0;
-	candPerRow = 5;
+	candPerRow = 3;
 	defaultEnglish = false;
 	defaultFullSpace = false;
 	showCandWithSpaceKey = false;

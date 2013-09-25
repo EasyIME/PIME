@@ -544,33 +544,34 @@ void TextService::onCompartmentChanged(const GUID& key) {
 		applyConfig(); // apply the latest config
 		return;
 	}
-
 	Ime::TextService::onCompartmentChanged(key);
-	if(::IsEqualIID(key, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE)) {
-		// keyboard open/close state is changed
-		bool opened = isKeyboardOpened();
-		if(opened) { // keyboard is closed
-			initChewingContext();
-		}
-		else { // keyboard is opened
-			if(isComposing()) {
-				// end current composition if needed
-				ITfContext* context = currentContext();
-				if(context) {
-					endComposition(context);
-					context->Release();
-				}
-			}
-			if(showingCandidates()) // disable candidate window if it's opened
-				hideCandidates();
-			hideMessage(); // hide message window, if there's any
-			freeChewingContext(); // IME is closed, chewingContext is not needed
-		}
+}
 
-		if(imeModeIcon_)
-			imeModeIcon_->setEnabled(opened);
-		// FIXME: should we also disable other language bar buttons as well?
+// called when the keyboard is opened or closed
+// virtual
+void TextService::onKeyboardStatusChanged(bool opened) {
+	Ime::TextService::onKeyboardStatusChanged(opened);
+	if(opened) { // keyboard is opened
+		initChewingContext();
 	}
+	else { // keyboard is closed
+		if(isComposing()) {
+			// end current composition if needed
+			ITfContext* context = currentContext();
+			if(context) {
+				endComposition(context);
+				context->Release();
+			}
+		}
+		if(showingCandidates()) // disable candidate window if it's opened
+			hideCandidates();
+		hideMessage(); // hide message window, if there's any
+		freeChewingContext(); // IME is closed, chewingContext is not needed
+	}
+
+	if(imeModeIcon_)
+		imeModeIcon_->setEnabled(opened);
+	// FIXME: should we also disable other language bar buttons as well?
 }
 
 void TextService::initChewingContext() {

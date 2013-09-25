@@ -535,11 +535,17 @@ void TextService::onCompartmentChanged(const GUID& key) {
 	// http://blogs.msdn.com/b/tsfaware/archive/2007/05/30/what-is-a-keyboard.aspx
 	if(::IsEqualGUID(key, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE)) {
 		isKeyboardOpened_ = threadCompartmentValue(key) ? true : false;
+		onKeyboardStatusChanged(isKeyboardOpened_);
 	}
 }
 
 // virtual
 void TextService::onLangBarStatusChanged(int newStatus) {
+}
+
+// called when the keyboard is opened or closed
+// virtual
+void TextService::onKeyboardStatusChanged(bool opened) {
 }
 
 // COM stuff

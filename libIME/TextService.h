@@ -159,6 +159,9 @@ public:
 
 	virtual void onLangBarStatusChanged(int newStatus);
 
+	// called when the keyboard is opened or closed
+	virtual void onKeyboardStatusChanged(bool opened);
+
 	// COM related stuff
 public:
 	friend class DisplayAttributeInfoEnum;

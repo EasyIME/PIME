@@ -60,6 +60,7 @@ TextService::TextService(ImeModule* module):
 	showingCandidates_(false),
 	langMode_(-1),
 	shapeMode_(-1),
+	outputSimpChinese_(false),
 	lastKeyDownCode_(0),
 	messageWindow_(NULL),
 	messageTimerId_(0),
@@ -354,6 +355,11 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 		char* buf = ::chewing_commit_String(chewingContext_);
 		std::wstring wbuf = utf8ToUtf16(buf);
 		::chewing_free(buf);
+
+		// FIXME: this should be per-instance rather than a global setting.
+		if(outputSimpChinese_) // convert output to simplified Chinese
+			wbuf = tradToSimpChinese(wbuf);
+
 		// commit the text, replace currently selected text with our commit string
 		setCompositionString(session, wbuf.c_str(), wbuf.length());
 
@@ -481,6 +487,9 @@ bool TextService::onCommand(UINT id, CommandType type) {
 			onConfigure(HWND_DESKTOP);
 		}
 		break;
+	case ID_OUTPUT_SIMP_CHINESE: // toggle output traditional or simplified Chinese
+		toggleSimplifiedChinese();
+		break;
 	case ID_ABOUT: // show about dialog
 		if(!isImmersive()) { // only do this in desktop app mode
 			// show about dialog
@@ -584,6 +593,12 @@ void TextService::initChewingContext() {
 		if(cfg.defaultFullSpace)
 			::chewing_set_ShapeMode(chewingContext_, FULLSHAPE_MODE);
 	}
+
+	outputSimpChinese_ = config().outputSimpChinese;
+	// update popup menu to check/uncheck the simplified Chinese item
+	DWORD checkFlags = outputSimpChinese_ ?  MF_CHECKED : MF_UNCHECKED;
+	::CheckMenuItem(popupMenu_, ID_OUTPUT_SIMP_CHINESE, MF_BYCOMMAND|checkFlags);
+
 	applyConfig();
 }
 
@@ -659,6 +674,14 @@ void TextService::toggleShapeMode() {
 		::chewing_set_ShapeMode(chewingContext_, !::chewing_get_ShapeMode(chewingContext_));
 		updateLangButtons();
 	}
+}
+
+// toggle output traditional or simplified Chinese
+void TextService::toggleSimplifiedChinese() {
+	outputSimpChinese_ = !outputSimpChinese_;
+	// update popup menu to check/uncheck the simplified Chinese item
+	DWORD checkFlags = outputSimpChinese_ ?  MF_CHECKED : MF_UNCHECKED;
+	::CheckMenuItem(popupMenu_, ID_OUTPUT_SIMP_CHINESE, MF_BYCOMMAND|checkFlags);
 }
 
 void TextService::updateCandidates(Ime::EditSession* session) {

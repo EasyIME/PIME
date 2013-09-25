@@ -100,6 +100,7 @@ private:
 
 	void toggleLanguageMode(); // toggle between English and Chinese
 	void toggleShapeMode(); // toggle between full shape and half shape
+	void toggleSimplifiedChinese(); // toggle output traditional or simplified Chinese
 
 private:
 	ChewingContext* chewingContext_;
@@ -114,6 +115,7 @@ private:
 	Ime::LangBarButton* imeModeIcon_; // IME mode icon, a special language button (Windows 8 only)
 	HMENU popupMenu_;
 
+	bool outputSimpChinese_; // output simplified Chinese
 	int langMode_;
 	int shapeMode_;
 	UINT lastKeyDownCode_;

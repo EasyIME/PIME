@@ -19,6 +19,7 @@
 
 #include "Utils.h"
 #include <Windows.h>
+#include <Winnls.h>
 
 std::wstring utf8ToUtf16(const char* text) {
 	std::wstring wtext;
@@ -40,4 +41,13 @@ std::string utf16ToUtf8(const wchar_t* wtext) {
 		len = ::WideCharToMultiByte(CP_UTF8, 0, wtext, -1, &text[0], len, NULL, NULL);
 	}
 	return text;
+}
+
+std::wstring tradToSimpChinese(const std::wstring& trad) {
+	int len = ::LCMapStringW(0x0404, LCMAP_SIMPLIFIED_CHINESE, trad.c_str(), trad.length(), NULL, 0);
+	std::wstring simp;
+	simp.resize(len);
+	if(::LCMapStringW(0x0404, LCMAP_SIMPLIFIED_CHINESE, trad.c_str(), trad.length(), &simp[0], len))
+		return simp;
+	return trad;
 }

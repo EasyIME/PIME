@@ -27,4 +27,7 @@ std::wstring utf8ToUtf16(const char* text);
 
 std::string utf16ToUtf8(const wchar_t* wtext);
 
+// convert traditional Chinese to simplified Chinese
+std::wstring tradToSimpChinese(const std::wstring& trad);
+
 #endif

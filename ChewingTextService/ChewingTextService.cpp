@@ -499,7 +499,7 @@ bool TextService::onCommand(UINT id, CommandType type) {
 		break;
 	case ID_CONFIG: // show config dialog
 		if(!isImmersive()) { // only do this in desktop app mode
-			onConfigure(HWND_DESKTOP);
+			imeModule()->onConfigure(HWND_DESKTOP);
 		}
 		break;
 	case ID_OUTPUT_SIMP_CHINESE: // toggle output traditional or simplified Chinese
@@ -547,15 +547,6 @@ bool TextService::onCommand(UINT id, CommandType type) {
 	default:
 		return false;
 	}
-	return true;
-}
-
-// virtual
-bool TextService::onConfigure(HWND hwndParent) {
-	// launch ChewingPreferences
-	std::wstring path = static_cast<ImeModule*>(imeModule())->programDir();
-	path += L"\\ChewingPreferences.exe";
-	::ShellExecuteW(hwndParent, L"open", path.c_str(), NULL, NULL, SW_SHOWNORMAL);
 	return true;
 }
 

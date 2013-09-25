@@ -98,4 +98,14 @@ Ime::TextService* ImeModule::createTextService() {
 	return service;
 }
 
+// virtual
+bool ImeModule::onConfigure(HWND hwndParent) {
+	// launch ChewingPreferences
+	std::wstring path = programDir_;
+	path += L"\\ChewingPreferences.exe";
+	::ShellExecuteW(hwndParent, L"open", path.c_str(), NULL, NULL, SW_SHOWNORMAL);
+	return true;
+}
+
+
 } // namespace Chewing

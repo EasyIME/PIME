@@ -256,6 +256,11 @@ void ImeModule::freeTextService(TextService* service) {
 	delete service;
 }
 
+// virtual
+bool ImeModule::onConfigure(HWND hwndParent) {
+	return true;
+}
+
 
 // COM related stuff
 
@@ -266,6 +271,8 @@ STDMETHODIMP ImeModule::QueryInterface(REFIID riid, void **ppvObj) {
 
 	if(IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_IClassFactory))
 		*ppvObj = (IClassFactory*)this;
+	else if(IsEqualIID(riid, IID_ITfFnConfigure))
+	 	*ppvObj = (ITfFnConfigure*)this;
 	else
 		*ppvObj = NULL;
 
@@ -297,13 +304,17 @@ STDMETHODIMP_(ULONG) ImeModule::Release(void) {
 
 // IClassFactory
 STDMETHODIMP ImeModule::CreateInstance(IUnknown *pUnkOuter, REFIID riid, void **ppvObj) {
+	*ppvObj = NULL;
 	if(::IsEqualIID(riid, IID_ITfDisplayAttributeProvider)) {
 		DisplayAttributeProvider* provider = new DisplayAttributeProvider(this);
 		if(provider) {
 			provider->QueryInterface(riid, ppvObj);
 			provider->Release();
-			return S_OK;
 		}
+	}
+	else if(::IsEqualIID(riid, IID_ITfFnConfigure)) {
+		// ourself implement this interface.
+		this->QueryInterface(riid, ppvObj);
 	}
 	else {
 		TextService* service = createTextService();
@@ -314,11 +325,9 @@ STDMETHODIMP ImeModule::CreateInstance(IUnknown *pUnkOuter, REFIID riid, void **
 			textServices_.push_back(service);
 			service->QueryInterface(riid, ppvObj);
 			service->Release();
-			if(*ppvObj)
-				return S_OK;
 		}
 	}
-	return E_NOINTERFACE;
+	return *ppvObj ? S_OK : E_NOINTERFACE;
 }
 
 STDMETHODIMP ImeModule::LockServer(BOOL fLock) {
@@ -326,6 +335,17 @@ STDMETHODIMP ImeModule::LockServer(BOOL fLock) {
 		AddRef();
 	else
 		Release();
+	return S_OK;
+}
+
+// ITfFnConfigure
+STDMETHODIMP ImeModule::Show(HWND hwndParent, LANGID langid, REFGUID rguidProfile) {
+	return onConfigure(hwndParent) ? S_OK : E_FAIL;
+}
+
+// ITfFunction
+STDMETHODIMP ImeModule::GetDisplayName(BSTR *pbstrName) {
+	*pbstrName = ::SysAllocString(L"Configuration");
 	return S_OK;
 }
 

@@ -51,9 +51,6 @@ public:
 
 	virtual bool onCommand(UINT id, CommandType type);
 
-	// called when config dialog needs to be launched
-	virtual bool onConfigure(HWND hwndParent);
-
 	// called when a compartment value is changed
 	virtual void onCompartmentChanged(const GUID& key);
 

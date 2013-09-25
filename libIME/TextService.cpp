@@ -524,11 +524,6 @@ bool TextService::onCommand(UINT id, CommandType type) {
 }
 
 // virtual
-bool TextService::onConfigure(HWND hwndParent) {
-	return true;
-}
-
-// virtual
 void TextService::onCompartmentChanged(const GUID& key) {
 	// keyboard status changed, this is threadMgr specific
 	// See explanations on TSF aware blog:
@@ -556,8 +551,6 @@ STDMETHODIMP TextService::QueryInterface(REFIID riid, void **ppvObj) {
         return E_INVALIDARG;
 	if(IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_ITfTextInputProcessor))
 		*ppvObj = (ITfTextInputProcessor*)this;
-	else if(IsEqualIID(riid, IID_ITfFnConfigure ))
-	 	*ppvObj = (ITfFnConfigure *)this;
 	//else if(IsEqualIID(riid, IID_ITfThreadMgrEventSink))
 	//	*ppvObj = (ITfThreadMgrEventSink*)this;
 	else if(IsEqualIID(riid, IID_ITfTextEditSink))
@@ -758,17 +751,6 @@ STDMETHODIMP TextService::Deactivate() {
 	return S_OK;
 }
 
-
-// ITfFnConfigure
-STDMETHODIMP TextService::Show(HWND hwndParent, LANGID langid, REFGUID rguidProfile) {
-	return onConfigure(hwndParent) ? S_OK : E_FAIL;
-}
-
-// ITfFunction
-STDMETHODIMP TextService::GetDisplayName(BSTR *pbstrName) {
-	*pbstrName = ::SysAllocString(L"Configuration");
-	return S_OK;
-}
 
 // ITfThreadMgrEventSink
 STDMETHODIMP TextService::OnInitDocumentMgr(ITfDocumentMgr *pDocMgr) {

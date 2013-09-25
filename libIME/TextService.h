@@ -22,7 +22,6 @@
 
 #include "libIME.h"
 #include <msctf.h>
-#include <Ctffunc.h>
 #include "EditSession.h"
 #include "KeyEvent.h"
 #include "ComPtr.h"
@@ -45,7 +44,6 @@ class LangBarButton;
 class TextService:
 	// TSF interfaces
 	public ITfTextInputProcessor,
-	public ITfFnConfigure,
 	// event sinks
 	public ITfThreadMgrEventSink,
 	public ITfTextEditSink,
@@ -151,9 +149,6 @@ public:
 	// called when a language button or menu item is clicked
 	virtual bool onCommand(UINT id, CommandType type);
 
-	// called when config dialog needs to be launched
-	virtual bool onConfigure(HWND hwndParent);
-
 	// called when a value in the global or thread compartment changed.
 	virtual void onCompartmentChanged(const GUID& key);
 
@@ -174,12 +169,6 @@ public:
     // ITfTextInputProcessor
     STDMETHODIMP Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClientId);
     STDMETHODIMP Deactivate();
-
-	// ITfFnConfigure
-	STDMETHODIMP Show(HWND hwndParent, LANGID langid, REFGUID rguidProfile);
-
-	// ITfFunction
-	STDMETHODIMP GetDisplayName(BSTR *pbstrName);
 
     // ITfThreadMgrEventSink
     STDMETHODIMP OnInitDocumentMgr(ITfDocumentMgr *pDocMgr);

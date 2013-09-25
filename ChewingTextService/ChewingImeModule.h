@@ -45,6 +45,9 @@ public:
 		return programDir_;
 	}
 
+	// called when config dialog needs to be launched
+	virtual bool onConfigure(HWND hwndParent);
+
 private:
 	Config config_;
 	std::wstring userDir_;

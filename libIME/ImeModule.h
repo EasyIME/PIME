@@ -22,6 +22,7 @@
 
 #include <Unknwn.h>
 #include <Windows.h>
+#include <Ctffunc.h>
 #include <list>
 #include "WindowsVersion.h"
 
@@ -30,7 +31,9 @@ namespace Ime {
 class TextService;
 class DisplayAttributeInfo;
 
-class ImeModule: public IClassFactory {
+class ImeModule:
+	public IClassFactory,
+	public ITfFnConfigure {
 public:
 	ImeModule(HMODULE module, const CLSID& textServiceClsid);
 	virtual ~ImeModule(void);
@@ -62,6 +65,9 @@ public:
 	virtual TextService* createTextService() = 0;
 	void freeTextService(TextService* service);
 
+	// called when config dialog needs to be launched
+	virtual bool onConfigure(HWND hwndParent);
+
 	// display attributes for composition string
 	std::list<DisplayAttributeInfo*>& displayAttrInfos() {
 		return displayAttrInfos_;
@@ -92,6 +98,12 @@ protected:
     // IClassFactory
     STDMETHODIMP CreateInstance(IUnknown *pUnkOuter, REFIID riid, void **ppvObj);
     STDMETHODIMP LockServer(BOOL fLock);
+
+	// ITfFunction
+	STDMETHODIMP GetDisplayName(BSTR *pbstrName);
+
+	// ITfFnConfigure
+	STDMETHODIMP Show(HWND hwndParent, LANGID langid, REFGUID rguidProfile);
 
 private:
 	volatile unsigned long refCount_;

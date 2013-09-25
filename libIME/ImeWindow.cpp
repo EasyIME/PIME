@@ -22,8 +22,7 @@
 namespace Ime {
 
 ImeWindow::ImeWindow(TextService* service):
-	textService_(service),
-	fontSize_(16) {
+	textService_(service) {
 
 	if(service->isImmersive()) { // windows 8 app mode
 		margin_ = 10;
@@ -33,17 +32,16 @@ ImeWindow::ImeWindow(TextService* service):
 	}
 
 	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+/*
 	LOGFONT lf;
 	GetObject(font_, sizeof(lf), &lf);
 	lf.lfHeight = fontSize_;
 	lf.lfWeight = FW_NORMAL;
 	font_ = CreateFontIndirect(&lf);
-
+*/
 }
 
 ImeWindow::~ImeWindow(void) {
-	if(font_)
-		::DeleteObject(font_);
 }
 
 void ImeWindow::onLButtonDown(WPARAM wp, LPARAM lp) {
@@ -96,10 +94,14 @@ void ImeWindow::setFont(HFONT f) {
 	if(font_)
 		::DeleteObject(font_);
 	font_ = f;
+	recalculateSize();
 	if(isVisible())
 		::InvalidateRect(hwnd_, NULL, TRUE);
 }
 
+// virtual
+void ImeWindow::recalculateSize() {
+}
 
 } // namespace Ime
 

@@ -26,8 +26,8 @@ using namespace std;
 
 namespace Ime {
 
-typedef INT_PTR (WINAPI *PropertySheetFunc)(LPCPROPSHEETHEADER lppsph);
-static PropertySheetFunc g_PropertySheetW = NULL;
+//typedef INT_PTR (WINAPI *PropertySheetFunc)(LPCPROPSHEETHEADER lppsph);
+//static PropertySheetFunc g_PropertySheetW = NULL;
 
 PropertyDialog::PropertyDialog(void) {
 }
@@ -47,10 +47,10 @@ INT_PTR PropertyDialog::showModal(HINSTANCE hInstance, LPCTSTR captionId, LPCTST
 	// Windows 8 does not allow linking to comctl32.dll
 	// when running in app containers.
 	// We use LoadLibrary here, but this should only be used in desktop app mode.
-	if(!g_PropertySheetW) {
-		HMODULE mod = ::LoadLibraryW(L"comctl32.dll");
-		g_PropertySheetW = (PropertySheetFunc)::GetProcAddress(mod, "PropertySheetW");
-	}
+	// if(!g_PropertySheetW) {
+	// 	HMODULE mod = ::LoadLibraryW(L"comctl32.dll");
+	// 	g_PropertySheetW = (PropertySheetFunc)::GetProcAddress(mod, "PropertySheetW");
+	// }
 
 	PROPSHEETPAGE* pages = new PROPSHEETPAGE[pages_.size()];
 	for(int i = 0; i < pages_.size(); ++i) {
@@ -68,8 +68,8 @@ INT_PTR PropertyDialog::showModal(HINSTANCE hInstance, LPCTSTR captionId, LPCTST
 	psh.ppsp = pages;
 	psh.pszCaption = (LPCTSTR)captionId;
 
-	assert(g_PropertySheetW);
-	INT_PTR result = g_PropertySheetW(&psh);
+	// INT_PTR result = g_PropertySheetW(&psh);
+	INT_PTR result =::PropertySheetW(&psh);
 	delete []pages;
 
 	return result;

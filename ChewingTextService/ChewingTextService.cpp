@@ -100,6 +100,14 @@ TextService::TextService(ImeModule* module):
 
 	// global compartment stuff
 	addCompartmentMonitor(g_configChangedGuid, true);
+
+	// font for candidate and mesasge windows
+	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+	LOGFONT lf;
+	GetObject(font_, sizeof(lf), &lf);
+	lf.lfHeight = config().fontSize;
+	lf.lfWeight = FW_NORMAL;
+	font_ = CreateFontIndirect(&lf);
 }
 
 TextService::~TextService(void) {
@@ -111,6 +119,9 @@ TextService::~TextService(void) {
 
 	if(messageWindow_)
 		hideMessage();
+
+	if(font_)
+		::DeleteObject(font_);
 
 	if(switchLangButton_)
 		switchLangButton_->Release();
@@ -616,6 +627,19 @@ void TextService::applyConfig() {
 			selKeys[i] = (int)Config::selKeys[cfg.selKeyType][i];
 		::chewing_set_selKey(chewingContext_, selKeys, 10);
 	}
+
+	// font for candidate and mesasge windows
+	LOGFONT lf;
+	GetObject(font_, sizeof(lf), &lf);
+	if(lf.lfHeight != cfg.fontSize) { // font size is changed
+		::DeleteObject(font_); // delete old font
+		lf.lfHeight = cfg.fontSize; // apply the new size
+		font_ = CreateFontIndirect(&lf); // create new font
+		if(messageWindow_)
+			messageWindow_->setFont(font_);
+		if(candidateWindow_)
+			candidateWindow_->setFont(font_);
+	}
 }
 
 // toggle between English and Chinese
@@ -679,6 +703,7 @@ void TextService::showCandidates(Ime::EditSession* session) {
 	// Please see Ime::CandidateWindow::CandidateWindow() for an example.
 	if(!candidateWindow_) {
 		candidateWindow_ = new Ime::CandidateWindow(this, session);
+		candidateWindow_->setFont(font_);
 	}
 	updateCandidates(session);
 	candidateWindow_->show();
@@ -701,6 +726,7 @@ void TextService::showMessage(Ime::EditSession* session, std::wstring message, i
 	hideMessage();
 	// FIXME: reuse the window whenever possible
 	messageWindow_ = new Ime::MessageWindow(this, session);
+	messageWindow_->setFont(font_);
 	messageWindow_->setText(message);
 	
 	int x = 0, y = 0;

@@ -33,9 +33,8 @@ MessageWindow::MessageWindow(TextService* service, EditSession* session):
 MessageWindow::~MessageWindow(void) {
 }
 
-void MessageWindow::setText(std::wstring text) {
-	// FIXMEl: use different appearance under immersive mode
-	text_ = text;
+// virtual
+void MessageWindow::recalculateSize() {
 	SIZE size = {0};
 	HDC dc = GetDC(hwnd_);
 	HGDIOBJ old_font = SelectObject(dc, font_);
@@ -45,10 +44,15 @@ void MessageWindow::setText(std::wstring text) {
 
 	SetWindowPos(hwnd_, HWND_TOPMOST, 0, 0,
 		size.cx + margin_ * 2, size.cy + margin_ * 2, SWP_NOACTIVATE|SWP_NOMOVE);
+}
+
+void MessageWindow::setText(std::wstring text) {
+	// FIXMEl: use different appearance under immersive mode
+	text_ = text;
+	recalculateSize();
 	if(IsWindowVisible(hwnd_))
 		InvalidateRect(hwnd_, NULL, TRUE);
 }
-
 
 LRESULT MessageWindow::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
 	switch(msg) {

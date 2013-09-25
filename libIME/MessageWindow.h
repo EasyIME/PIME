@@ -42,6 +42,7 @@ public:
 		return textService_;
 	}
 
+	virtual void recalculateSize();
 protected:
 	LRESULT wndProc(UINT msg, WPARAM wp, LPARAM lp);
 	void onPaint(PAINTSTRUCT& ps);

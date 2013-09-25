@@ -59,7 +59,7 @@ public:
 	}
 	void setCandPerRow(int n);
 
-	void recalculateSize();
+	virtual void recalculateSize();
 
 	bool filterKeyEvent(KeyEvent& keyEvent);
 

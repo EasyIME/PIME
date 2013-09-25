@@ -102,9 +102,9 @@ private:
 	ChewingContext* chewingContext_;
 	Ime::CandidateWindow* candidateWindow_;
 	bool showingCandidates_;
-
 	Ime::MessageWindow* messageWindow_;
 	UINT messageTimerId_;
+	HFONT font_;
 
 	Ime::LangBarButton* switchLangButton_;
 	Ime::LangBarButton* switchShapeButton_;

@@ -40,6 +40,7 @@ public:
 
 	static bool workingArea(RECT* rc, HWND app_wnd);
 	void setFont(HFONT f);
+	virtual void recalculateSize();
 
 protected:
 	void onLButtonDown(WPARAM wp, LPARAM lp);
@@ -50,7 +51,6 @@ protected:
 	TextService* textService_;
 	POINTS oldPos;
 	HFONT font_;
-	int fontSize_;
 	int margin_;
 };
 

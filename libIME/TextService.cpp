@@ -557,7 +557,7 @@ STDMETHODIMP TextService::QueryInterface(REFIID riid, void **ppvObj) {
 	if(IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_ITfTextInputProcessor))
 		*ppvObj = (ITfTextInputProcessor*)this;
 	else if(IsEqualIID(riid, IID_ITfFnConfigure ))
-		*ppvObj = (ITfFnConfigure *)this;
+	 	*ppvObj = (ITfFnConfigure *)this;
 	//else if(IsEqualIID(riid, IID_ITfThreadMgrEventSink))
 	//	*ppvObj = (ITfThreadMgrEventSink*)this;
 	else if(IsEqualIID(riid, IID_ITfTextEditSink))

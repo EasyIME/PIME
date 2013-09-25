@@ -41,7 +41,7 @@ STDAPI DllUnregisterServer(void) {
 STDAPI DllRegisterServer(void) {
 	wchar_t name[32];
 	::LoadStringW(g_imeModule->hInstance(), IDS_CHEWING, name, 32);
-	int iconIndex = 0;
+	int iconIndex = 0; // use classic icon
 	if(g_imeModule->isWindows8Above())
 		iconIndex = 1; // use Windows 8 style IME icon
 

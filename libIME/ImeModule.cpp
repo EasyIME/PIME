@@ -176,20 +176,22 @@ HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID
 				result = E_FAIL;
 			}
 
-			// for Windows 8 store app support
-			// TODO: according to a exhaustive Google search, I found that
-			// TF_IPP_CAPS_IMMERSIVESUPPORT is required to make the IME work with Windows 8.
-			// http://social.msdn.microsoft.com/Forums/windowsapps/en-US/4c422cf1-ceb4-413b-8a7c-6881946a4c63/how-to-set-a-flag-indicating-tsf-components-compatibility
-			// Quote from the page: "To indicate that your IME is compatible with Windows Store apps, call RegisterCategory with GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT."
+			if(isWindows8Above()) {
+				// for Windows 8 store app support
+				// TODO: according to a exhaustive Google search, I found that
+				// TF_IPP_CAPS_IMMERSIVESUPPORT is required to make the IME work with Windows 8.
+				// http://social.msdn.microsoft.com/Forums/windowsapps/en-US/4c422cf1-ceb4-413b-8a7c-6881946a4c63/how-to-set-a-flag-indicating-tsf-components-compatibility
+				// Quote from the page: "To indicate that your IME is compatible with Windows Store apps, call RegisterCategory with GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT."
 
-			// declare supporting immersive mode
-			if(categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT, textServiceClsid_) != S_OK) {
-				result = E_FAIL;
-			}
+				// declare supporting immersive mode
+				if(categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT, textServiceClsid_) != S_OK) {
+					result = E_FAIL;
+				}
 
-			// declare compatibility with Windows 8 system tray
-			if(categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT, textServiceClsid_) != S_OK) {
-				result = E_FAIL;
+				// declare compatibility with Windows 8 system tray
+				if(categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT, textServiceClsid_) != S_OK) {
+					result = E_FAIL;
+				}
 			}
 
 			categoryMgr->Release();
@@ -212,9 +214,11 @@ HRESULT ImeModule::unregisterServer(const GUID& profileGuid) {
 		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_TIP_KEYBOARD, textServiceClsid_);
 		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, textServiceClsid_);
 
-		// Windows 8 support
-		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT, textServiceClsid_);
-		categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT, textServiceClsid_);
+		if(isWindows8Above()) {
+			// Windows 8 support
+			categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT, textServiceClsid_);
+			categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT, textServiceClsid_);
+		}
 
 		categoryMgr->Release();
 	}
@@ -310,10 +314,11 @@ STDMETHODIMP ImeModule::CreateInstance(IUnknown *pUnkOuter, REFIID riid, void **
 			textServices_.push_back(service);
 			service->QueryInterface(riid, ppvObj);
 			service->Release();
-			return S_OK;
+			if(*ppvObj)
+				return S_OK;
 		}
 	}
-	return S_FALSE;
+	return E_NOINTERFACE;
 }
 
 STDMETHODIMP ImeModule::LockServer(BOOL fLock) {

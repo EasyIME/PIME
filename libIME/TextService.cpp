@@ -588,8 +588,11 @@ STDMETHODIMP_(ULONG) TextService::AddRef(void) {
 STDMETHODIMP_(ULONG) TextService::Release(void) {
 	assert(refCount_ > 0);
 	--refCount_;
-	if(0 == refCount_)
-		delete this;
+	if(0 == refCount_) {
+		// We do not call "delete this" since ImeModule needs to do
+		// some clean up before deleting the TextService object.
+		module_->freeTextService(this);
+	}
 	return refCount_;
 }
 

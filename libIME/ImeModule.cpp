@@ -19,6 +19,7 @@
 
 #include "ImeModule.h"
 #include <string>
+#include <algorithm>
 #include <ObjBase.h>
 #include <msctf.h>
 #include <Shlwapi.h>
@@ -246,6 +247,11 @@ bool ImeModule::registerDisplayAttributeInfos() {
 	return false;
 }
 
+void ImeModule::freeTextService(TextService* service) {
+	textServices_.remove(service);
+	delete service;
+}
+
 
 // COM related stuff
 
@@ -301,6 +307,7 @@ STDMETHODIMP ImeModule::CreateInstance(IUnknown *pUnkOuter, REFIID riid, void **
 		// Otherwise, everytime a new TextService object is created just for enumerating display attributes.
 		// This is really a waste and may cause potential side effects.
 		if(service) {
+			textServices_.push_back(service);
 			service->QueryInterface(riid, ppvObj);
 			service->Release();
 			return S_OK;

@@ -60,6 +60,7 @@ public:
 
 	// should be override by IME implementors
 	virtual TextService* createTextService() = 0;
+	void freeTextService(TextService* service);
 
 	// display attributes for composition string
 	std::list<DisplayAttributeInfo*>& displayAttrInfos() {
@@ -74,6 +75,10 @@ public:
 
 	DisplayAttributeInfo* convertedAttrib() {
 		return convertedAttrib_;
+	}
+
+	const std::list<TextService*>& textServices() const {
+		return textServices_;
 	}
 
 	// COM-related stuff
@@ -100,6 +105,7 @@ private:
 	DisplayAttributeInfo* convertedAttrib_;
 
 	WindowsVersion winVer_;
+	std::list<TextService*> textServices_;
 };
 
 }

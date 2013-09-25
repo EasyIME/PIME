@@ -66,28 +66,24 @@ void ImeWindow::onMouseMove(WPARAM wp, LPARAM lp) {
 void ImeWindow::move(int x, int y) {
 	int w, h;
 	size(&w, &h);
-
-	RECT rc;
-	workingArea( &rc, hwnd_);
-	if( x < rc.left )
-		x = rc.left;
-	else if( (x + w) > rc.right )
-		x = rc.right - w;
-
-	if( y < rc.top )
-		y = rc.top;
-	else if( (y + h) > rc.bottom )
-		y = rc.bottom - h;
-	::MoveWindow(hwnd_, x, y, w, h, TRUE);
-}
-
-bool ImeWindow::workingArea(RECT* rc, HWND app_wnd) {
-	HMONITOR mon = MonitorFromWindow( app_wnd, MONITOR_DEFAULTTONEAREST);
+	// ensure that the window does not fall outside of the screen.
+	RECT rc = {x, y, x + w, y + h}; // current window rect
+	// get the nearest monitor
+	HMONITOR monitor = ::MonitorFromRect(&rc, MONITOR_DEFAULTTONEAREST);
 	MONITORINFO mi;
 	mi.cbSize = sizeof(mi);
-	if( GetMonitorInfo(mon, &mi) )
-		*rc = mi.rcWork;
-	return true;
+	if(GetMonitorInfo(monitor, &mi))
+		rc = mi.rcWork;
+	if(x < rc.left)
+		x = rc.left;
+	else if((x + w) > rc.right)
+		x = rc.right - w;
+
+	if(y < rc.top)
+		y = rc.top;
+	else if((y + h) > rc.bottom)
+		y = rc.bottom - h;
+	::MoveWindow(hwnd_, x, y, w, h, TRUE);
 }
 
 void ImeWindow::setFont(HFONT f) {

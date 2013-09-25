@@ -38,7 +38,6 @@ public:
 		return textService_->isImmersive();
 	}
 
-	static bool workingArea(RECT* rc, HWND app_wnd);
 	void setFont(HFONT f);
 	virtual void recalculateSize();
 

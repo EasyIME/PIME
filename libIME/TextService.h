@@ -157,6 +157,12 @@ public:
 	// called when the keyboard is opened or closed
 	virtual void onKeyboardStatusChanged(bool opened);
 
+	// called just before current composition is terminated for doing cleanup.
+	// if forced is true, the composition is terminated by others, such as
+	// the input focus is grabbed by another application.
+	// if forced is false, the composition is terminated gracefully by endComposition().
+	virtual void onCompositionTerminated(bool forced);
+
 	// COM related stuff
 public:
 	friend class DisplayAttributeInfoEnum;

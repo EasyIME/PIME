@@ -609,6 +609,36 @@ void TextService::onKeyboardStatusChanged(bool opened) {
 	// FIXME: should we also disable other language bar buttons as well?
 }
 
+// called just before current composition is terminated for doing cleanup.
+// if forced is true, the composition is terminated by others, such as
+// the input focus is grabbed by another application.
+// if forced is false, the composition is terminated gracefully by endComposition().
+// virtual
+void TextService::onCompositionTerminated(bool forced) {
+	// we do special handling here for forced composition termination.
+	if(forced) {
+		// we're still editing our composition and have something in the preedit buffer.
+		// however, some other applications grabs the focus and force us to terminate
+		// our composition. Since there are no public APIs in libchewing to clear 
+		// pre-edit buffer or close the cancidate list, we generate fake key events
+		// for this purpose.
+		if(chewingContext_) {
+			if(showingCandidates()) {
+				// Use a fake Esc key event to ask libchewing for closing the candidate window
+				chewing_handle_Esc(chewingContext_);
+				hideCandidates(); // really hide the candidate window
+			}
+			if(chewing_zuin_Check(chewingContext_) == 0) { // we have bopomofo in the buffer
+				chewing_handle_Esc(chewingContext_); // clear bopomofo with a fake Esc key
+			}
+			if(chewing_buffer_Check(chewingContext_)) {
+				// emulate Enter key to commit current buffer in libchewing.
+				chewing_handle_Enter(chewingContext_);
+			}
+		}
+	}
+}
+
 void TextService::initChewingContext() {
 	if(!chewingContext_) {
 		chewingContext_ = ::chewing_new();

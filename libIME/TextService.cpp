@@ -543,6 +543,14 @@ void TextService::onLangBarStatusChanged(int newStatus) {
 void TextService::onKeyboardStatusChanged(bool opened) {
 }
 
+// called just before current composition is terminated for doing cleanup.
+// if forced is true, the composition is terminated by others, such as
+// the input focus is grabbed by another application.
+// if forced is false, the composition is terminated gracefully by endComposition().
+// virtual
+void TextService::onCompositionTerminated(bool forced) {
+}
+
 // COM stuff
 
 // IUnknown
@@ -899,6 +907,17 @@ STDMETHODIMP TextService::OnPreservedKey(ITfContext *pContext, REFGUID rguid, BO
 
 // ITfCompositionSink
 STDMETHODIMP TextService::OnCompositionTerminated(TfEditCookie ecWrite, ITfComposition *pComposition) {
+	// This is called by TSF when our composition is terminated by others.
+	// For example, when the user click on another text editor and the input focus is 
+	// grabbed by others, we're ``forced'' to terminate current composition.
+	// If we end the composition by calling ITfComposition::EndComposition() ourselves,
+	// this event is not triggered.
+	onCompositionTerminated(true);
+
+	if(composition_) {
+		composition_->Release();
+		composition_ = NULL;
+	}
 	return S_OK;
 }
 
@@ -1031,6 +1050,8 @@ HRESULT TextService::doEndCompositionEditSession(TfEditCookie cookie, EndComposi
 		}
 		// end composition and clean up
 		composition_->EndComposition(cookie);
+		// do some cleanup in the derived class here
+		onCompositionTerminated(false);
 		composition_->Release();
 		composition_ = NULL;
 	}

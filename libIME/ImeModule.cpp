@@ -313,14 +313,11 @@ STDMETHODIMP ImeModule::CreateInstance(IUnknown *pUnkOuter, REFIID riid, void **
 		}
 	}
 	else if(::IsEqualIID(riid, IID_ITfFnConfigure)) {
-		// ourself implement this interface.
+		// ourselves implement this interface.
 		this->QueryInterface(riid, ppvObj);
 	}
 	else {
 		TextService* service = createTextService();
-		// FIXME: we should split DisplayAttributeProvider into another class
-		// Otherwise, everytime a new TextService object is created just for enumerating display attributes.
-		// This is really a waste and may cause potential side effects.
 		if(service) {
 			textServices_.push_back(service);
 			service->QueryInterface(riid, ppvObj);

@@ -477,15 +477,8 @@ bool TextService::onPreservedKey(const GUID& guid) {
 // virtual
 bool TextService::onCommand(UINT id, CommandType type) {
 	assert(chewingContext_);
-	switch(id) {
-	case ID_SWITCH_LANG:
-		toggleLanguageMode();
-		break;
-	case ID_SWITCH_SHAPE:
-		toggleShapeMode();
-		break;
-	case ID_MODE_ICON: // Windows 8 IME mode icon
-		if(type == COMMAND_RIGHT_CLICK) {
+	if(type == COMMAND_RIGHT_CLICK) {
+		if(id == ID_MODE_ICON) { // Windows 8 IME mode icon
 			Ime::Window window; // TrackPopupMenu requires a window to work, so let's build a transient one.
 			window.create(HWND_DESKTOP, 0);
 			POINT pos = {0};
@@ -494,58 +487,72 @@ bool TextService::onCommand(UINT id, CommandType type) {
 			if(ret > 0)
 				onCommand(ret, COMMAND_MENU);
 		}
-		else
-			toggleLanguageMode();
-		break;
-	case ID_CONFIG: // show config dialog
-		if(!isImmersive()) { // only do this in desktop app mode
-			imeModule()->onConfigure(HWND_DESKTOP);
+		else {
+			// we only handle right click in Windows 8 for the IME mode icon
+			return false;
 		}
-		break;
-	case ID_OUTPUT_SIMP_CHINESE: // toggle output traditional or simplified Chinese
-		toggleSimplifiedChinese();
-		break;
-	case ID_ABOUT: // show about dialog
-		if(!isImmersive()) { // only do this in desktop app mode
-			// show about dialog
-			std::wstring path = static_cast<ImeModule*>(imeModule())->programDir();
-			path += L"\\ChewingPreferences.exe";
-			::ShellExecuteW(NULL, L"open", path.c_str(), L"/about", NULL, SW_SHOWNORMAL);
-	    }
-		break;
-	case ID_WEBSITE: // visit chewing website
-		::ShellExecuteW(NULL, NULL, L"http://chewing.im/", NULL, NULL, SW_SHOWNORMAL);
-		break;
-	case ID_GROUP: // visit chewing google groups website
-		::ShellExecuteW(NULL, NULL, L"http://groups.google.com/group/chewing-devel", NULL, NULL, SW_SHOWNORMAL);
-		break;
-	case ID_BUGREPORT: // visit bug tracker page
-		::ShellExecuteW(NULL, NULL, L"https://github.com/chewing/windows-chewing-tsf/issues?state=open", NULL, NULL, SW_SHOWNORMAL);
-		break;
-	case ID_DICT_BUGREPORT:
-		::ShellExecuteW(NULL, NULL, L"https://github.com/chewing/libchewing-data/issues", NULL, NULL, SW_SHOWNORMAL);
-		break;
-	case ID_MOEDICT: // a very awesome online Chinese dictionary
-		::ShellExecuteW(NULL, NULL, L"https://www.moedict.tw/", NULL, NULL, SW_SHOWNORMAL);
-		break;
-	case ID_DICT: // online Chinese dictonary
-		::ShellExecuteW(NULL, NULL, L"http://dict.revised.moe.edu.tw/", NULL, NULL, SW_SHOWNORMAL);
-		break;
-	case ID_SIMPDICT: // a simplified version of the online dictonary
-		::ShellExecuteW(NULL, NULL, L"http://dict.concised.moe.edu.tw/main/cover/main.htm", NULL, NULL, SW_SHOWNORMAL);
-		break;
-	case ID_LITTLEDICT: // a simplified dictionary for little children
-		::ShellExecuteW(NULL, NULL, L"http://dict.mini.moe.edu.tw/cgi-bin/gdic/gsweb.cgi?o=ddictionary", NULL, NULL, SW_SHOWNORMAL);
-		break;
-	case ID_PROVERBDICT: // a dictionary for proverbs (seems to be broken at the moment?)
-		::ShellExecuteW(NULL, NULL, L"http://dict.idioms.moe.edu.tw/?", NULL, NULL, SW_SHOWNORMAL);
-		break;
-	case ID_CHEWING_HELP:
-		// TODO: open help file here
-		// Need to update the old ChewingIME docs
-		break;
-	default:
-		return false;
+	}
+	else {
+		switch(id) {
+		case ID_SWITCH_LANG:
+			toggleLanguageMode();
+			break;
+		case ID_SWITCH_SHAPE:
+			toggleShapeMode();
+			break;
+		case ID_MODE_ICON: // Windows 8 IME mode icon
+			toggleLanguageMode();
+			break;
+		case ID_CONFIG: // show config dialog
+			if(!isImmersive()) { // only do this in desktop app mode
+				imeModule()->onConfigure(HWND_DESKTOP);
+			}
+			break;
+		case ID_OUTPUT_SIMP_CHINESE: // toggle output traditional or simplified Chinese
+			toggleSimplifiedChinese();
+			break;
+		case ID_ABOUT: // show about dialog
+			if(!isImmersive()) { // only do this in desktop app mode
+				// show about dialog
+				std::wstring path = static_cast<ImeModule*>(imeModule())->programDir();
+				path += L"\\ChewingPreferences.exe";
+				::ShellExecuteW(NULL, L"open", path.c_str(), L"/about", NULL, SW_SHOWNORMAL);
+			}
+			break;
+		case ID_WEBSITE: // visit chewing website
+			::ShellExecuteW(NULL, NULL, L"http://chewing.im/", NULL, NULL, SW_SHOWNORMAL);
+			break;
+		case ID_GROUP: // visit chewing google groups website
+			::ShellExecuteW(NULL, NULL, L"http://groups.google.com/group/chewing-devel", NULL, NULL, SW_SHOWNORMAL);
+			break;
+		case ID_BUGREPORT: // visit bug tracker page
+			::ShellExecuteW(NULL, NULL, L"https://github.com/chewing/windows-chewing-tsf/issues?state=open", NULL, NULL, SW_SHOWNORMAL);
+			break;
+		case ID_DICT_BUGREPORT:
+			::ShellExecuteW(NULL, NULL, L"https://github.com/chewing/libchewing-data/issues", NULL, NULL, SW_SHOWNORMAL);
+			break;
+		case ID_MOEDICT: // a very awesome online Chinese dictionary
+			::ShellExecuteW(NULL, NULL, L"https://www.moedict.tw/", NULL, NULL, SW_SHOWNORMAL);
+			break;
+		case ID_DICT: // online Chinese dictonary
+			::ShellExecuteW(NULL, NULL, L"http://dict.revised.moe.edu.tw/", NULL, NULL, SW_SHOWNORMAL);
+			break;
+		case ID_SIMPDICT: // a simplified version of the online dictonary
+			::ShellExecuteW(NULL, NULL, L"http://dict.concised.moe.edu.tw/main/cover/main.htm", NULL, NULL, SW_SHOWNORMAL);
+			break;
+		case ID_LITTLEDICT: // a simplified dictionary for little children
+			::ShellExecuteW(NULL, NULL, L"http://dict.mini.moe.edu.tw/cgi-bin/gdic/gsweb.cgi?o=ddictionary", NULL, NULL, SW_SHOWNORMAL);
+			break;
+		case ID_PROVERBDICT: // a dictionary for proverbs (seems to be broken at the moment?)
+			::ShellExecuteW(NULL, NULL, L"http://dict.idioms.moe.edu.tw/?", NULL, NULL, SW_SHOWNORMAL);
+			break;
+		case ID_CHEWING_HELP:
+			// TODO: open help file here
+			// Need to update the old ChewingIME docs
+			break;
+		default:
+			return false;
+		}
 	}
 	return true;
 }

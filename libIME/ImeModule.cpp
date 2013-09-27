@@ -176,6 +176,11 @@ HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID
 				result = E_FAIL;
 			}
 
+			// enable UI less mode
+			if(categoryMgr->RegisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_INPUTMODECOMPARTMENT, textServiceClsid_) != S_OK) {
+				result  = E_FAIL;
+			}
+
 			if(isWindows8Above()) {
 				// for Windows 8 store app support
 				// TODO: according to a exhaustive Google search, I found that
@@ -213,6 +218,8 @@ HRESULT ImeModule::unregisterServer(const GUID& profileGuid) {
 	if(CoCreateInstance(CLSID_TF_CategoryMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfCategoryMgr, (void**)&categoryMgr) == S_OK) {
 		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_TIP_KEYBOARD, textServiceClsid_);
 		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, textServiceClsid_);
+		// UI less mode
+		categoryMgr->UnregisterCategory(textServiceClsid_, GUID_TFCAT_TIPCAP_INPUTMODECOMPARTMENT, textServiceClsid_);
 
 		if(isWindows8Above()) {
 			// Windows 8 support

@@ -559,6 +559,8 @@ STDMETHODIMP TextService::QueryInterface(REFIID riid, void **ppvObj) {
         return E_INVALIDARG;
 	if(IsEqualIID(riid, IID_IUnknown) || IsEqualIID(riid, IID_ITfTextInputProcessor))
 		*ppvObj = (ITfTextInputProcessor*)this;
+	else if(IsEqualIID(riid, IID_ITfTextInputProcessorEx))
+		*ppvObj = (ITfTextInputProcessorEx*)this;
 	//else if(IsEqualIID(riid, IID_ITfThreadMgrEventSink))
 	//	*ppvObj = (ITfThreadMgrEventSink*)this;
 	else if(IsEqualIID(riid, IID_ITfTextEditSink))
@@ -759,6 +761,11 @@ STDMETHODIMP TextService::Deactivate() {
 	return S_OK;
 }
 
+// ITfTextInputProcessorEx
+STDMETHODIMP TextService::ActivateEx(ITfThreadMgr *ptim, TfClientId tid, DWORD dwFlags) {
+	Activate(ptim, tid);
+	return S_OK;
+}
 
 // ITfThreadMgrEventSink
 STDMETHODIMP TextService::OnInitDocumentMgr(ITfDocumentMgr *pDocMgr) {

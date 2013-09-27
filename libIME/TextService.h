@@ -44,6 +44,7 @@ class LangBarButton;
 class TextService:
 	// TSF interfaces
 	public ITfTextInputProcessor,
+	public ITfTextInputProcessorEx,
 	// event sinks
 	public ITfThreadMgrEventSink,
 	public ITfTextEditSink,
@@ -175,6 +176,9 @@ public:
     // ITfTextInputProcessor
     STDMETHODIMP Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClientId);
     STDMETHODIMP Deactivate();
+
+	// ITfTextInputProcessorEx
+	STDMETHODIMP ActivateEx(ITfThreadMgr *ptim, TfClientId tid, DWORD dwFlags);
 
     // ITfThreadMgrEventSink
     STDMETHODIMP OnInitDocumentMgr(ITfDocumentMgr *pDocMgr);

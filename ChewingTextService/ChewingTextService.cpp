@@ -733,6 +733,13 @@ void TextService::toggleLanguageMode() {
 	// switch between Chinses and English modes
 	if(chewingContext_) {
 		::chewing_set_ChiEngMode(chewingContext_, !::chewing_get_ChiEngMode(chewingContext_));
+		if(::chewing_zuin_Check(chewingContext_) == 0) {
+			// if there is bopomofo in the buffer, send a fake Esc key to clear it.
+			::chewing_handle_Esc(chewingContext_);
+			// FIXME: We should reset the composition string here, but a new edit session
+			// is required for this task. We need to make the TextService API better to 
+			// avoid touching TSF directly too much.
+		}
 		updateLangButtons();
 	}
 }

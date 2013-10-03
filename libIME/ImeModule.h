@@ -78,10 +78,12 @@ public:
 	DisplayAttributeInfo* inputAttrib() {
 		return inputAttrib_;
 	}
-
+	
+	/*
 	DisplayAttributeInfo* convertedAttrib() {
 		return convertedAttrib_;
 	}
+	*/
 
 	const std::list<TextService*>& textServices() const {
 		return textServices_;
@@ -114,7 +116,7 @@ private:
 	// display attributes
 	std::list<DisplayAttributeInfo*> displayAttrInfos_; // display attribute info
 	DisplayAttributeInfo* inputAttrib_;
-	DisplayAttributeInfo* convertedAttrib_;
+	// DisplayAttributeInfo* convertedAttrib_;
 
 	WindowsVersion winVer_;
 	std::list<TextService*> textServices_;

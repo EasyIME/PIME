@@ -50,8 +50,8 @@ static const GUID g_inputDisplayAttributeGuid =
 { 0x2a2574d6, 0x2841, 0x4f27, { 0x82, 0xbd, 0xd7, 0xb0, 0xf2, 0x38, 0x55, 0xf8 } };
 
 // {E1270AA5-A6B1-4112-9AC7-F5E476C3BD63}
-static const GUID g_convertedDisplayAttributeGuid = 
-{ 0xe1270aa5, 0xa6b1, 0x4112, { 0x9a, 0xc7, 0xf5, 0xe4, 0x76, 0xc3, 0xbd, 0x63 } };
+// static const GUID g_convertedDisplayAttributeGuid = 
+// { 0xe1270aa5, 0xa6b1, 0x4112, { 0x9a, 0xc7, 0xf5, 0xe4, 0x76, 0xc3, 0xbd, 0x63 } };
 
 
 ImeModule::ImeModule(HMODULE module, const CLSID& textServiceClsid):
@@ -66,9 +66,10 @@ ImeModule::ImeModule(HMODULE module, const CLSID& textServiceClsid):
 	inputAttrib_->setTextColor(COLOR_WINDOWTEXT);
 	inputAttrib_->setLineStyle(TF_LS_DOT);
 	inputAttrib_->setLineColor(COLOR_WINDOWTEXT);
+	inputAttrib_->setBackgroundColor(COLOR_WINDOW);
 	displayAttrInfos_.push_back(inputAttrib_);
-	convertedAttrib_ = new DisplayAttributeInfo(g_convertedDisplayAttributeGuid);
-	displayAttrInfos_.push_back(convertedAttrib_);
+	// convertedAttrib_ = new DisplayAttributeInfo(g_convertedDisplayAttributeGuid);
+	// displayAttrInfos_.push_back(convertedAttrib_);
 
 	registerDisplayAttributeInfos();
 }
@@ -251,8 +252,8 @@ bool ImeModule::registerDisplayAttributeInfos() {
 		TfGuidAtom atom;
 		categoryMgr->RegisterGUID(g_inputDisplayAttributeGuid, &atom);
 		inputAttrib_->setAtom(atom);
-		categoryMgr->RegisterGUID(g_convertedDisplayAttributeGuid, &atom);
-		convertedAttrib_->setAtom(atom);
+		// categoryMgr->RegisterGUID(g_convertedDisplayAttributeGuid, &atom);
+		// convertedAttrib_->setAtom(atom);
 		return true;
 	}
 	return false;

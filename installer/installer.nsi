@@ -98,6 +98,12 @@ FunctionEnd
 
 ; Called during installer initialization
 Function .onInit
+	; Currently, we're not able to support Windows xp since it has an incomplete TSF.
+	${IfNot} ${AtLeastWinVista}
+		MessageBox MB_ICONSTOP|MB_OK "抱歉，本程式目前只能支援 Windows Vista 以上版本"
+		Quit
+	${EndIf}
+
 	${If} ${RunningX64} 
 		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 	${EndIf}

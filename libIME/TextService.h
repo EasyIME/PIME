@@ -85,6 +85,21 @@ public:
 		return (activateFlags_ & TF_TMF_IMMERSIVEMODE) != 0;
 	}
 
+	// alias of isImmersive()
+	bool isMetroApp() const {
+		return isImmersive();
+	}
+
+	// UI less mode is enabled (for ex: in fullscreen games)
+	bool isUiLess() const {
+		return (activateFlags_ & TF_TMF_UIELEMENTENABLEDONLY) != 0;
+	}
+
+	// is in console mode
+	bool isConsole() const {
+		return (activateFlags_ & TF_TMF_CONSOLE) != 0;
+	}
+
 	DWORD langBarStatus() const;
 
 	// language bar buttons

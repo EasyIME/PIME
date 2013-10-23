@@ -8,7 +8,6 @@
 namespace Ime {
 
 class CandidateListUIElement:
-	public ITfUIElement,
 	public ITfCandidateListUIElement {
 public:
 	CandidateListUIElement(ITfContext* context);

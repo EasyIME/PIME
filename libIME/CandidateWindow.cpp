@@ -267,7 +267,6 @@ void CandidateWindow::paintItem(HDC hDC, int i,  int x, int y) {
 	::SetTextColor(hDC, oldColor); // restore text color
 
 	// paint the candidate string
-	SIZE candidateSize;
 	wstring& item = items_.at(i);
 	textRect.left += selKeyWidth_;
 	textRect.right = textRect.left + textWidth_;

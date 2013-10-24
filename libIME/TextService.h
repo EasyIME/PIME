@@ -43,7 +43,6 @@ class LangBarButton;
 
 class TextService:
 	// TSF interfaces
-	public ITfTextInputProcessor,
 	public ITfTextInputProcessorEx,
 	// event sinks
 	public ITfThreadMgrEventSink,

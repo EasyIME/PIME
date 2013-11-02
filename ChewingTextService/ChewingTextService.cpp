@@ -392,9 +392,8 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 		}
 	}
 
-	if(!::chewing_zuin_Check(chewingContext_)) {
-		int zuinNum;
-		char* buf = ::chewing_zuin_String(chewingContext_, &zuinNum);
+	if(::chewing_bopomofo_Check(chewingContext_)) {
+		char* buf = ::chewing_bopomofo_String(chewingContext_);
 		if(buf) {
 			std::wstring wbuf = ::utf8ToUtf16(buf);
 			::chewing_free(buf);
@@ -626,21 +625,16 @@ void TextService::onCompositionTerminated(bool forced) {
 	if(forced) {
 		// we're still editing our composition and have something in the preedit buffer.
 		// however, some other applications grabs the focus and force us to terminate
-		// our composition. Since there are no public APIs in libchewing to clear 
-		// pre-edit buffer or close the cancidate list, we generate fake key events
-		// for this purpose.
+		// our composition.
 		if(chewingContext_) {
 			if(showingCandidates()) {
-				// Use a fake Esc key event to ask libchewing for closing the candidate window
-				chewing_handle_Esc(chewingContext_);
-				hideCandidates(); // really hide the candidate window
+				chewing_cand_close(chewingContext_);
 			}
-			if(chewing_zuin_Check(chewingContext_) == 0) { // we have bopomofo in the buffer
-				chewing_handle_Esc(chewingContext_); // clear bopomofo with a fake Esc key
+			if(chewing_bopomofo_Check(chewingContext_)) {
+				chewing_clean_bopomofo_buf(chewingContext_);
 			}
 			if(chewing_buffer_Check(chewingContext_)) {
-				// emulate Enter key to commit current buffer in libchewing.
-				chewing_handle_Enter(chewingContext_);
+				chewing_commit_preedit_buf(chewingContext_);
 			}
 		}
 	}
@@ -733,9 +727,8 @@ void TextService::toggleLanguageMode() {
 	// switch between Chinses and English modes
 	if(chewingContext_) {
 		::chewing_set_ChiEngMode(chewingContext_, !::chewing_get_ChiEngMode(chewingContext_));
-		if(::chewing_zuin_Check(chewingContext_) == 0) {
-			// if there is bopomofo in the buffer, send a fake Esc key to clear it.
-			::chewing_handle_Esc(chewingContext_);
+		if(::chewing_bopomofo_Check(chewingContext_)) {
+			chewing_clean_bopomofo_buf(chewingContext_);
 			// FIXME: We should reset the composition string here, but a new edit session
 			// is required for this task. We need to make the TextService API better to 
 			// avoid touching TSF directly too much.

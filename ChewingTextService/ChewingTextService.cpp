@@ -393,15 +393,11 @@ bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) 
 	}
 
 	if(::chewing_bopomofo_Check(chewingContext_)) {
-		char* buf = ::chewing_bopomofo_String(chewingContext_);
-		if(buf) {
-			std::wstring wbuf = ::utf8ToUtf16(buf);
-			::chewing_free(buf);
-			// put bopomofo symbols at insertion point
-			// FIXME: alternatively, should we show it in an additional floating window?
-			int pos = ::chewing_cursor_Current(chewingContext_);
-			compositionBuf.insert(pos, wbuf);
-		}
+		std::wstring wbuf = ::utf8ToUtf16(::chewing_bopomofo_String_static(chewingContext_));
+		// put bopomofo symbols at insertion point
+		// FIXME: alternatively, should we show it in an additional floating window?
+		int pos = ::chewing_cursor_Current(chewingContext_);
+		compositionBuf.insert(pos, wbuf);
 	}
 
 	// has something in composition buffer

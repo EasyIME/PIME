@@ -21,6 +21,7 @@
 #include "NodeTextService.h"
 #include <string>
 #include <ShlObj.h>
+#include <cpprest/json.h>
 
 namespace Node {
 

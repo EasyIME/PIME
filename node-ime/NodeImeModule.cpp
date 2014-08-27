@@ -17,12 +17,12 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#include "ChewingImeModule.h"
-#include "ChewingTextService.h"
+#include "NodeImeModule.h"
+#include "NodeTextService.h"
 #include <string>
 #include <ShlObj.h>
 
-namespace Chewing {
+namespace Node {
 
 // CLSID of our Text service
 // {13F2EF08-575C-4D8C-88E0-F67BB8052B84}
@@ -31,10 +31,7 @@ const CLSID g_textServiceClsid = {
 };
 
 ImeModule::ImeModule(HMODULE module):
-	Ime::ImeModule(module, g_textServiceClsid),
-	config_(windowsVersion()) {
-	
-	config_.load(); // load configurations
+	Ime::ImeModule(module, g_textServiceClsid) {
 
 	// override default location of chewing data directories
 	std::wstring env;
@@ -94,16 +91,14 @@ ImeModule::~ImeModule(void) {
 
 // virtual
 Ime::TextService* ImeModule::createTextService() {
-	TextService* service = new Chewing::TextService(this);
+	TextService* service = new Node::TextService(this);
 	return service;
 }
 
 // virtual
 bool ImeModule::onConfigure(HWND hwndParent) {
 	// launch ChewingPreferences
-	std::wstring path = programDir_;
-	path += L"\\ChewingPreferences.exe";
-	::ShellExecuteW(hwndParent, L"open", path.c_str(), NULL, NULL, SW_SHOWNORMAL);
+	// ::ShellExecuteW(hwndParent, L"open", path.c_str(), NULL, NULL, SW_SHOWNORMAL);
 	return true;
 }
 

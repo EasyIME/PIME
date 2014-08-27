@@ -1,8 +1,7 @@
-LIBRARY ChewingTextService.dll
+LIBRARY NodeTextService.dll
 
 EXPORTS
     DllGetClassObject               PRIVATE
     DllCanUnloadNow                 PRIVATE
     DllRegisterServer               PRIVATE
     DllUnregisterServer             PRIVATE
-	ChewingSetup                    PRIVATE

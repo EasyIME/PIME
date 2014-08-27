@@ -17,19 +17,18 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#ifndef CHEWING_TEXT_SERVICE_H
-#define CHEWING_TEXT_SERVICE_H
+#ifndef NODE_TEXT_SERVICE_H
+#define NODE_TEXT_SERVICE_H
 
 #include <LibIME/TextService.h>
 #include <LibIME/CandidateWindow.h>
 #include <LibIME/MessageWindow.h>
 #include <LibIME/EditSession.h>
 #include <LibIME/LangBarButton.h>
-#include <chewing.h>
-#include "ChewingImeModule.h"
+#include "NodeImeModule.h"
 #include <sys/types.h>
 
-namespace Chewing {
+namespace Node {
 
 class TextService: public Ime::TextService {
 public:
@@ -63,22 +62,7 @@ public:
 	// if forced is false, the composition is terminated gracefully by endComposition().
 	virtual void onCompositionTerminated(bool forced);
 
-	ChewingContext* chewingContext() {
-		return chewingContext_;
-	}
-
-	Config& config() {
-		return static_cast<ImeModule*>(imeModule())->config();
-	}
-
 private:
-	void initChewingContext(); // initialize chewing context
-	void freeChewingContext(); // free chewing context
-
-	bool hasCandidates() {
-		return ::chewing_cand_TotalChoice(chewingContext_) > 0;
-	}
-
 	bool showingCandidates() {
 		return showingCandidates_;
 	}
@@ -107,7 +91,6 @@ private:
 	void toggleSimplifiedChinese(); // toggle output traditional or simplified Chinese
 
 private:
-	ChewingContext* chewingContext_;
 	Ime::CandidateWindow* candidateWindow_;
 	bool showingCandidates_;
 	Ime::MessageWindow* messageWindow_;
@@ -123,8 +106,6 @@ private:
 	int langMode_;
 	int shapeMode_;
 	time_t symbolsFileTime_; // mtime of symbols.dat file
-
-	UINT lastKeyDownCode_;
 };
 
 }

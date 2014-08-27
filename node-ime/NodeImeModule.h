@@ -17,37 +17,37 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#include "KeyboardPropertyPage.h"
-#include "resource.h"
-#include <WindowsX.h>
+#ifndef NODE_IME_MODULE_H
+#define NODE_IME_MODULE_H
 
-namespace Chewing {
+#include <LibIME/ImeModule.h>
+#include <string>
 
-KeyboardPropertyPage::KeyboardPropertyPage(Config* config):
-	Ime::PropertyPage((LPCTSTR)IDD_KBLAYOUT),
-	config_(config) {
-}
+namespace Node {
 
-KeyboardPropertyPage::~KeyboardPropertyPage(void) {
-}
+class ImeModule : public Ime::ImeModule {
+public:
+	ImeModule(HMODULE module);
+	virtual ~ImeModule(void);
 
+	virtual Ime::TextService* createTextService();
 
-// virtual
-bool KeyboardPropertyPage::onInitDialog() {
-	CheckRadioButton(hwnd_, IDC_KB1, IDC_KB11, IDC_KB1 + config_->keyboardLayout);
-	return PropertyPage::onInitDialog();
-}
-
-// virtual
-void KeyboardPropertyPage::onOK() {
-	for(UINT id = IDC_KB1; id <= IDC_KB11; ++id) {
-		if(IsDlgButtonChecked(hwnd_, id)) {
-			config_->keyboardLayout = (id - IDC_KB1);
-			break;
-		}
+	std::wstring& userDir () {
+		return userDir_;
 	}
-	PropertyPage::onOK();
+
+	std::wstring& programDir() {
+		return programDir_;
+	}
+
+	// called when config dialog needs to be launched
+	virtual bool onConfigure(HWND hwndParent);
+
+private:
+	std::wstring userDir_;
+	std::wstring programDir_;
+};
+
 }
 
-
-} // namespace Chewing
+#endif

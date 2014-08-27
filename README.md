@@ -1,9 +1,9 @@
-# windows-chewing-tsf
+# NodeIME
 
-Implement chewing in Windows via Text Services Framework:
+Implement input methods easily for Windows via Text Services Framework:
 *   LibIME contains a library which aims to be a simple wrapper for Windows Text Service Framework (TSF).
-*   ChewingTextService contains an implementation of Windows text service for libchewing using libIME.
-*   chewingwrapper contains a C++ wrapper for libchewing.
+*   NodeTextService contains an backbone implementation of Windows text service for using libIME.
+*   casablanca contains Microsoft REST C++ SDK (https://casablanca.codeplex.com/) licensed under Apache 2 license.
 
 All parts are licensed under GNU LGPL v2.1 license.
 
@@ -13,13 +13,12 @@ All parts are licensed under GNU LGPL v2.1 license.
 *   [CMake](http://www.cmake.org/) >= 2.8.11
 *   [Visual Studio Express 2012](http://www.microsoft.com/visualstudio/eng/products/visual-studio-express-products)
 *   [git](http://windows.github.com/)
-*   Editor with [EditorConfig](http://editorconfig.org/) supported
 
 ## How to Build
 *   Get source from github
 
         git clone https://github.com/chewing/windows-chewing-tsf.git
-        cd windows-chewing-tsf
+        cd NodeIme
         git submodule init
         git submodule update
 

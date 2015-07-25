@@ -104,7 +104,25 @@ HRESULT ImeModule::getClassObject(REFCLSID rclsid, REFIID riid, void **ppvObj) {
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID languageId, int iconIndex) {
+HRESULT ImeModule::registerLangProfiles(LangProfileInfo* langs, int count) {
+	// register the language profile
+	ComPtr<ITfInputProcessorProfiles> inputProcessProfiles;
+	if(CoCreateInstance(CLSID_TF_InputProcessorProfiles, NULL, CLSCTX_INPROC_SERVER, IID_ITfInputProcessorProfiles, (void**)&inputProcessProfiles) == S_OK) {
+		for(int i = 0; i < count; ++i) {
+			LangProfileInfo& lang = langs[i];
+			if(inputProcessProfiles->Register(textServiceClsid_) == S_OK) {
+				if(inputProcessProfiles->AddLanguageProfile(textServiceClsid_, lang.languageId, lang.profileGuid,
+					lang.name.c_str(), -1, lang.iconFile.empty() ? NULL : lang.iconFile.c_str(),
+					lang.iconFile.length(), lang.iconIndex) != S_OK) {
+					return E_FAIL;
+				}
+			}
+		}
+	}
+	return S_OK;
+}
+
+HRESULT ImeModule::registerServer(wchar_t* imeName, LangProfileInfo* langs, int count) {
 	// write info of our COM text service component to the registry
 	// path: HKEY_CLASS_ROOT\\CLSID\\{xxxx-xxxx-xxxx-xx....}
 	// This reguires Administrator permimssion to write to the registery
@@ -130,7 +148,7 @@ HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID
 	HKEY hkey = NULL;
 	if(::RegCreateKeyExW(HKEY_CLASSES_ROOT, regPath.c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hkey, NULL) == ERROR_SUCCESS) {
 		// write name of our IME
-		::RegSetValueExW(hkey, NULL, 0, REG_SZ, (BYTE*)name, sizeof(wchar_t) * (wcslen(name) + 1));
+		::RegSetValueExW(hkey, NULL, 0, REG_SZ, (BYTE*)imeName, sizeof(wchar_t) * (wcslen(imeName) + 1));
 
 		HKEY inProcServer32Key;
 		if(::RegCreateKeyExW(hkey, L"InprocServer32", 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &inProcServer32Key, NULL) == ERROR_SUCCESS) {
@@ -148,19 +166,9 @@ HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID
 	else
 		result = E_FAIL;
 
-	// register the language profile
+	// register language profiles
 	if(result == S_OK) {
-		result = E_FAIL;
-		ITfInputProcessorProfiles *inputProcessProfiles = NULL;
-		if(CoCreateInstance(CLSID_TF_InputProcessorProfiles, NULL, CLSCTX_INPROC_SERVER, IID_ITfInputProcessorProfiles, (void**)&inputProcessProfiles) == S_OK) {
-			if(inputProcessProfiles->Register(textServiceClsid_) == S_OK) {
-				if(inputProcessProfiles->AddLanguageProfile(textServiceClsid_, languageId, profileGuid,
-											name, -1, modulePath, modulePathLen, iconIndex) == S_OK) {
-					result = S_OK;
-				}
-			}
-			inputProcessProfiles->Release();
-		}
+		result = registerLangProfiles(langs, count);
 	}
 
 	// register category
@@ -206,7 +214,7 @@ HRESULT ImeModule::registerServer(wchar_t* name, const GUID& profileGuid, LANGID
 	return result;
 }
 
-HRESULT ImeModule::unregisterServer(const GUID& profileGuid) {
+HRESULT ImeModule::unregisterServer() {
 	// unregister the language profile
 	ITfInputProcessorProfiles *inputProcessProfiles = NULL;
 	if(CoCreateInstance(CLSID_TF_InputProcessorProfiles, NULL, CLSCTX_INPROC_SERVER, IID_ITfInputProcessorProfiles, (void**)&inputProcessProfiles) == S_OK) {

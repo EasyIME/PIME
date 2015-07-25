@@ -27,6 +27,7 @@
 #include <LibIME/LangBarButton.h>
 #include "NodeImeModule.h"
 #include <sys/types.h>
+#include "NodeClient.h"
 
 namespace Node {
 
@@ -61,6 +62,10 @@ public:
 	// the input focus is grabbed by another application.
 	// if forced is false, the composition is terminated gracefully by endComposition().
 	virtual void onCompositionTerminated(bool forced);
+
+	virtual void onLangProfileActivated(REFIID lang);
+
+	virtual void onLangProfileDeactivated(REFIID lang);
 
 private:
 	bool showingCandidates() {
@@ -106,6 +111,8 @@ private:
 	int langMode_;
 	int shapeMode_;
 	time_t symbolsFileTime_; // mtime of symbols.dat file
+
+	Client* client_; // connection client
 };
 
 }

@@ -58,10 +58,11 @@ static const GUID _GUID_LBI_INPUTMODE =
 
 TextService::TextService(ImeModule* module):
 	Ime::TextService(module),
-	messageWindow_(NULL),
+	client_(nullptr),
+	messageWindow_(nullptr),
 	messageTimerId_(0),
-	candidateWindow_(NULL),
-	imeModeIcon_(NULL) {
+	candidateWindow_(nullptr),
+	imeModeIcon_(nullptr) {
 
 	// add preserved keys
 	addPreservedKey(VK_SPACE, TF_MOD_SHIFT, g_shiftSpaceGuid); // shift + space
@@ -111,6 +112,9 @@ TextService::TextService(ImeModule* module):
 }
 
 TextService::~TextService(void) {
+	if(client_)
+		delete client_;
+
 	if(popupMenu_)
 		::DestroyMenu(popupMenu_);
 
@@ -133,6 +137,10 @@ TextService::~TextService(void) {
 
 // virtual
 void TextService::onActivate() {
+	if(!client_)
+		client_ = new Client(this);
+	client_->onActivate();
+
 	DWORD configStamp = globalCompartmentValue(g_configChangedGuid);
 	updateLangButtons();
 	if(imeModeIcon_) // windows 8 IME mode icon
@@ -141,6 +149,12 @@ void TextService::onActivate() {
 
 // virtual
 void TextService::onDeactivate() {
+	if(client_) {
+		client_->onDeactivate();
+		delete client_;
+		client_ = NULL;
+	}
+
 	hideMessage();
 
 	if(candidateWindow_) {
@@ -156,45 +170,62 @@ void TextService::onFocus() {
 
 // virtual
 bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
-	return true;
+	if(!client_)
+		return false;
+	return client_->filterKeyDown(keyEvent);
 }
 
 // virtual
 bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
-	return true;
+	if(!client_)
+		return false;
+	return client_->onKeyDown(keyEvent, session);
 }
 
 // virtual
 bool TextService::filterKeyUp(Ime::KeyEvent& keyEvent) {
-	return false;
+	if(!client_)
+		return false;
+	return client_->filterKeyUp(keyEvent);
 }
 
 // virtual
 bool TextService::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
-	return true;
+	if(!client_)
+		return false;
+	return client_->onKeyUp(keyEvent, session);
 }
 
 // virtual
 bool TextService::onPreservedKey(const GUID& guid) {
+	if(!client_)
+		return false;
 	// some preserved keys registered in ctor are pressed
-	return false;
+	return client_->onPreservedKey(guid);
 }
 
 
 // virtual
 bool TextService::onCommand(UINT id, CommandType type) {
-	return true;
+	if(!client_)
+		return false;
+	return client_->onCommand(id, type);
 }
 
 // virtual
 void TextService::onCompartmentChanged(const GUID& key) {
 	Ime::TextService::onCompartmentChanged(key);
+	if(client_)
+		client_->onCompartmentChanged(key);
 }
 
 // called when the keyboard is opened or closed
 // virtual
 void TextService::onKeyboardStatusChanged(bool opened) {
 	Ime::TextService::onKeyboardStatusChanged(opened);
+	if(client_)
+		client_->onKeyboardStatusChanged(opened);
+#if 0
 	if(opened) { // keyboard is opened
 	}
 	else { // keyboard is closed
@@ -214,6 +245,7 @@ void TextService::onKeyboardStatusChanged(bool opened) {
 	if(imeModeIcon_)
 		imeModeIcon_->setEnabled(opened);
 	// FIXME: should we also disable other language bar buttons as well?
+#endif
 }
 
 // called just before current composition is terminated for doing cleanup.
@@ -228,6 +260,18 @@ void TextService::onCompositionTerminated(bool forced) {
 		// however, some other applications grabs the focus and force us to terminate
 		// our composition.
 	}
+	if(client_)
+		client_->onCompositionTerminated(forced);
+}
+
+void TextService::onLangProfileActivated(REFIID lang) {
+	if(client_)
+		client_->onLangProfileActivated(lang);
+}
+
+void TextService::onLangProfileDeactivated(REFIID lang) {
+	if(client_)
+		client_->onLangProfileDeactivated(lang);
 }
 
 // show candidate list window

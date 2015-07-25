@@ -44,6 +44,7 @@ TextService::TextService(ImeModule* module):
 	keyboardOpenEventSinkCookie_(TF_INVALID_COOKIE),
 	globalCompartmentEventSinkCookie_(TF_INVALID_COOKIE),
 	langBarSinkCookie_(TF_INVALID_COOKIE),
+	activateLanguageProfileNotifySinkCookie_(TF_INVALID_COOKIE),
 	composition_(NULL),
 	candidateWindow_(NULL),
 	refCount_(1) {
@@ -551,6 +552,14 @@ void TextService::onKeyboardStatusChanged(bool opened) {
 void TextService::onCompositionTerminated(bool forced) {
 }
 
+// called when a language profile is activated (only useful for text services that supports multiple language profiles)
+void TextService::onLangProfileActivated(REFGUID guidProfile) {
+}
+
+// called when a language profile is deactivated
+void TextService::onLangProfileDeactivated(REFGUID guidProfile) {
+}
+
 // COM stuff
 
 // IUnknown
@@ -573,6 +582,8 @@ STDMETHODIMP TextService::QueryInterface(REFIID riid, void **ppvObj) {
 		*ppvObj = (ITfCompartmentEventSink*)this;
 	else if(IsEqualIID(riid, IID_ITfLangBarEventSink))
 		*ppvObj = (ITfLangBarEventSink*)this;
+	else if(IsEqualIID(riid, IID_ITfActiveLanguageProfileNotifySink))
+		*ppvObj = (ITfActiveLanguageProfileNotifySink*)this;
 	else
 		*ppvObj = NULL;
 
@@ -613,10 +624,12 @@ STDMETHODIMP TextService::Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClient
 
 	// advice event sinks (set up event listeners)
 	
-	// ITfThreadMgrEventSink
+	// ITfThreadMgrEventSink, ITfActiveLanguageProfileNotifySink
 	ComQIPtr<ITfSource> source = threadMgr_;
-	if(source)
+	if(source) {
 		source->AdviseSink(IID_ITfThreadMgrEventSink, (ITfThreadMgrEventSink *)this, &threadMgrEventSinkCookie_);
+		source->AdviseSink(IID_ITfActiveLanguageProfileNotifySink, (ITfActiveLanguageProfileNotifySink *)this, &activateLanguageProfileNotifySinkCookie_);
+	}
 
 	// ITfTextEditSink,
 
@@ -675,11 +688,12 @@ STDMETHODIMP TextService::Activate(ITfThreadMgr *pThreadMgr, TfClientId tfClient
 	}
 
 	onActivate();
-
+	::MessageBox(0, L"onActivate", 0, 0);
 	return S_OK;
 }
 
 STDMETHODIMP TextService::Deactivate() {
+	::MessageBox(0, L"Deactivate", 0, 0);
 	// terminate composition properly
 	if(isComposing()) {
 		ITfContext* context = currentContext();
@@ -713,7 +727,9 @@ STDMETHODIMP TextService::Deactivate() {
 	ComQIPtr<ITfSource> source = threadMgr_;
 	if(source) {
 		source->UnadviseSink(threadMgrEventSinkCookie_);
+		source->UnadviseSink(activateLanguageProfileNotifySinkCookie_);
 		threadMgrEventSinkCookie_ = TF_INVALID_COOKIE;
+		activateLanguageProfileNotifySinkCookie_ = TF_INVALID_COOKIE;
 	}
 
 	// ITfTextEditSink,
@@ -972,6 +988,19 @@ STDMETHODIMP TextService::GetItemFloatingRect(DWORD dwThreadId, REFGUID rguid, R
 	return E_NOTIMPL;
 }
 
+
+// ITfActiveLanguageProfileNotifySink
+STDMETHODIMP TextService::OnActivated(REFCLSID clsid, REFGUID guidProfile, BOOL fActivated) {
+	// we only support one text service, so clsid must be the same as that of our text service.
+	// otherwise it's not the notification for our text service, just ignore the event.
+	if(clsid == module_->textServiceClsid()) {
+		if(fActivated)
+			onLangProfileActivated(guidProfile);
+		else
+			onLangProfileDeactivated(guidProfile);
+	}
+	return S_OK;
+}
 
 // edit session handling
 STDMETHODIMP TextService::KeyEditSession::DoEditSession(TfEditCookie ec) {

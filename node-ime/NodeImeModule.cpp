@@ -25,10 +25,9 @@
 namespace Node {
 
 // CLSID of our Text service
-// {13F2EF08-575C-4D8C-88E0-F67BB8052B84}
-const CLSID g_textServiceClsid = {
-	0x13f2ef08, 0x575c, 0x4d8c, { 0x88, 0xe0, 0xf6, 0x7b, 0xb8, 0x5, 0x2b, 0x84 }
-};
+// {35F67E9D-A54D-4177-9697-8B0AB71A9E04}
+const GUID g_textServiceClsid = 
+{ 0x35f67e9d, 0xa54d, 0x4177, { 0x96, 0x97, 0x8b, 0xa, 0xb7, 0x1a, 0x9e, 0x4 } };
 
 ImeModule::ImeModule(HMODULE module):
 	Ime::ImeModule(module, g_textServiceClsid) {
@@ -39,32 +38,6 @@ ImeModule::ImeModule(HMODULE module):
 
 	HRESULT result;
 
-	// get user profile directory
-	if(::GetEnvironmentVariableW(L"USERPROFILE", path, MAX_PATH)) {
-		userDir_ = path;
-		userDir_ += L"\\ChewingTextService";
-		// create the user directory if not exists
-		// NOTE: this call will fail in Windows 8 store apps
-		// We need a way to create the dir in desktop mode and
-		// set proper ACL, so later we can access it inside apps.
-		DWORD attributes = ::GetFileAttributesW(userDir_.c_str());
-		if(attributes == INVALID_FILE_ATTRIBUTES) {
-			// create the directory if it does not exist
-			if(::GetLastError() == ERROR_FILE_NOT_FOUND) {
-				::CreateDirectoryW(userDir_.c_str(), NULL);
-				attributes = ::GetFileAttributesW(userDir_.c_str());
-			}
-		}
-
-		// make the directory hidden
-		if(attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_HIDDEN) == 0)
-			::SetFileAttributesW(userDir_.c_str(), attributes|FILE_ATTRIBUTE_HIDDEN);
-
-		env = L"CHEWING_USER_PATH=";
-		env += userDir_;
-		_wputenv(env.c_str());
-	}
-
 	// get the program data directory
 	// try C:\program files (x86) first
 	result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILESX86, NULL, 0, path);
@@ -72,18 +45,8 @@ ImeModule::ImeModule(HMODULE module):
 		result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
 	if(result == S_OK) { // program files folder is found
 		programDir_ = path;
-		programDir_ += L"\\ChewingTextService";
-		env = L"CHEWING_PATH=";
-		// prepend user dir path to program path, so user-specific files, if they exist,
-		// can take precedence over built-in ones. (for ex: symbols.dat)
-		env += userDir_;
-		env += ';'; // add ; to separate two dir paths
-		// add program dir after user profile dir
-		env += programDir_;
-		env += L"\\Dictionary";
-		_wputenv(env.c_str());
+		programDir_ += L"\\NodeTextService";
 	}
-
 }
 
 ImeModule::~ImeModule(void) {

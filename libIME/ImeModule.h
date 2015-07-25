@@ -25,11 +25,22 @@
 #include <Ctffunc.h>
 #include <list>
 #include "WindowsVersion.h"
+#include <string>
 
 namespace Ime {
 
 class TextService;
 class DisplayAttributeInfo;
+
+// language profile info, used to register new language profiles
+struct LangProfileInfo {
+	std::wstring name; // should not exceed 32 chars
+	GUID profileGuid;
+	LANGID languageId;
+	std::wstring iconFile;
+	int iconIndex;
+};
+
 
 class ImeModule:
 	public IClassFactory,
@@ -58,8 +69,10 @@ public:
 	// Dll entry points implementations
 	HRESULT canUnloadNow();
 	HRESULT getClassObject(REFCLSID rclsid, REFIID riid, void **ppvObj);
-	HRESULT registerServer(wchar_t* name, const GUID& profileGuid, LANGID languageId, int iconIndex);
-	HRESULT unregisterServer(const GUID& profileGuid);
+
+	HRESULT registerServer(wchar_t* imeName, LangProfileInfo* langs, int count);
+	HRESULT registerLangProfiles(LangProfileInfo* langs, int count);
+	HRESULT unregisterServer();
 
 	// should be override by IME implementors
 	virtual TextService* createTextService() = 0;

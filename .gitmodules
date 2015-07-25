@@ -1,3 +1,6 @@
 [submodule "libchewing"]
 	path = libchewing
 	url = https://github.com/chewing/libchewing.git
+[submodule "rapidjson"]
+	path = rapidjson
+	url = https://github.com/miloyip/rapidjson.git

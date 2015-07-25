@@ -50,7 +50,8 @@ class TextService:
 	public ITfKeyEventSink,
 	public ITfCompositionSink,
 	public ITfCompartmentEventSink,
-	public ITfLangBarEventSink {
+	public ITfLangBarEventSink,
+	public ITfActiveLanguageProfileNotifySink {
 public:
 
 	enum CommandType { // used in onCommand()
@@ -178,6 +179,12 @@ public:
 	// if forced is false, the composition is terminated gracefully by endComposition().
 	virtual void onCompositionTerminated(bool forced);
 
+	// called when a language profile is activated (only useful for text services that supports multiple language profiles)
+	virtual void onLangProfileActivated(REFGUID guidProfile);
+
+	// called when a language profile is deactivated
+	virtual void onLangProfileDeactivated(REFGUID guidProfile);
+
 	// COM related stuff
 public:
 	friend class DisplayAttributeInfoEnum;
@@ -225,6 +232,9 @@ public:
     STDMETHODIMP OnModalInput(DWORD dwThreadId, UINT uMsg, WPARAM wParam, LPARAM lParam);
     STDMETHODIMP ShowFloating(DWORD dwFlags);
     STDMETHODIMP GetItemFloatingRect(DWORD dwThreadId, REFGUID rguid, RECT *prc);
+
+	// ITfActiveLanguageProfileNotifySink
+	STDMETHODIMP OnActivated(REFCLSID clsid, REFGUID guidProfile, BOOL fActivated);
 
 protected:
 	// edit session classes, used with TSF
@@ -289,6 +299,7 @@ private:
 	DWORD keyboardOpenEventSinkCookie_;
 	DWORD globalCompartmentEventSinkCookie_;
 	DWORD langBarSinkCookie_;
+	DWORD activateLanguageProfileNotifySinkCookie_;
 
 	ITfComposition* composition_; // acquired when starting composition, released when ending composition
 	CandidateWindow* candidateWindow_;

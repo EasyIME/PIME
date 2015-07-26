@@ -69,10 +69,13 @@ public:
 
 private:
 	bool connectPipe();
-	std::string sendRequest(std::string req);
+	rapidjson::Document sendRequest(std::string req, int seqNo);
 	void closePipe();
+	void init();
 
 	void keyEventToJson(rapidjson::Writer<rapidjson::StringBuffer>& writer, Ime::KeyEvent& keyEvent);
+	int addSeqNum(rapidjson::Writer<rapidjson::StringBuffer>& writer);
+	bool isReplyValid(rapidjson::Document& doc);
 
 	TextService* textService_;
 	HANDLE pipe_;

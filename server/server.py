@@ -9,10 +9,21 @@ import json
 import sys
 
 
-class ImeEngine:
+class TextService:
     def __init__(self, client):
         self.client = client
 
+    def init(self, msg):
+        self.id = msg["id"]
+        self.isWindows8Above = msg["isWindows8Above"]
+        self.isMetroApp = msg["isMetroApp"]
+        self.isUiLess = msg["isUiLess"]
+        self.isUiLess = msg["isConsole"]
+
+    def sendRequest(self, msg):
+        client.pipe
+
+    # methods that should be implemented by derived classes
     def onActivate(self):
         pass
 
@@ -20,16 +31,16 @@ class ImeEngine:
         pass
 
     def filterKeyDown(self):
-        pass
+        return False
 
     def onKeyDown(self):
-        pass
+        return False
 
     def filterKeyUp(self):
-        pass
+        return False
 
     def onKeyUp(self):
-        pass
+        return False
 
     def onCommand(self):
         pass
@@ -40,52 +51,133 @@ class ImeEngine:
     def onKeyboardStatusChanged(self):
         pass
 
-    def onLangProfileActivated(self):
+    # public methods that should not be touched
+    def langBarStatus(self):
         pass
 
-    def onLangProfileDeactivated(self):
+    # language bar buttons
+    def addButton(self, button):
         pass
+
+    def removeButton(self, button):
+        pass
+
+    # preserved keys
+    def addPreservedKey(self, keyCode, modifiers, guid):
+        pass
+
+    def removePreservedKey(self, guid):
+        pass
+
+    # text composition handling
+    def isComposing(self):
+        return False
+
+    # is keyboard disabled for the context (NULL means current context)
+    # bool isKeyboardDisabled(ITfContext* context = NULL);
+
+    # is keyboard opened for the whole thread
+    def isKeyboardOpened(self):
+        return True
+
+    def setKeyboardOpen(self, kb_open):
+        pass
+
+    def startComposition(self, context):
+        pass
+
+    def endComposition(self, context):
+        pass
+
+    def setCompositionString(self, cs, cs_len):
+        pass
+
+    def setCompositionCursor(self, pos):
+        pass
+
+
+
+class DemoTextService(TextService):
+    def __init__(self, client):
+        TextService.__init__(self, client)
+
+    def onActivate(self):
+        pass
+
+    def onDeactivate(self):
+        pass
+
+    def filterKeyDown(self):
+        return True
+
+    def onKeyDown(self):
+        return True
+
+    def filterKeyUp(self):
+        return False
+
+    def onKeyUp(self):
+        return False
+
+    def onCommand(self):
+        pass
+
+    def onCompartmentChanged(self):
+        pass
+
+    def onKeyboardStatusChanged(self):
+        pass
+
+
 
 
 class Client:
     def __init__(self, server, pipe):
         self.pipe= pipe
         self.server = server
-        self.engine = ImeEngine(self)
+        self.service = DemoTextService(self) # FIXME: allow different types of services here
 
 
     def handle_request(self, msg): # msg is a json object
-        ret = dict()
+        success = True
+        reply = dict()
+        ret = None
         method = msg["method"]
         print("handle message: ", method)
-        engine = self.engine
-        if method == "onActivate":
-            engine.onActivate()
+        service = self.service
+        if method == "init":
+            service.init(msg)
+        elif method == "onActivate":
+            service.onActivate()
         elif method == "onDeactivate":
-            engine.onDeactivate()
+            service.onDeactivate()
         elif method == "filterKeyDown":
-            engine.filterKeyDown()
+            ret = service.filterKeyDown()
         elif method == "onKeyDown":
-            engine.onKeyDown()
+            ret = service.onKeyDown()
         elif method == "filterKeyUp":
-            engine.filterKeyUp()
+            ret = service.filterKeyUp()
         elif method == "onKeyUp":
-            engine.onKeyUp()
+            ret = service.onKeyUp()
         elif method == "onPreservedKey":
-            engine.onPreservedKey()
+            ret = service.onPreservedKey()
         elif method == "onCommand":
-            engine.onCommand()
+            service.onCommand()
         elif method == "onCompartmentChanged":
-            engine.onCompartmentChanged()
+            service.onCompartmentChanged()
         elif method == "onKeyboardStatusChanged":
-            engine.onKeyboardStatusChanged()
+            service.onKeyboardStatusChanged()
         elif method == "onCompositionTerminated":
-            engine.onCompositionTerminated()
+            service.onCompositionTerminated()
         elif method == "onLangProfileActivated":
-            engine.onLangProfileActivated()
+            pass
         elif method == "onLangProfileDeactivated":
-            engine.onLangProfileDeactivated()
-        return ret
+            pass
+        reply["success"] = success
+        if ret != None:
+            reply["return"] = ret
+        return reply
+
 
 
 class ClientThread(threading.Thread):
@@ -109,7 +201,7 @@ class ClientThread(threading.Thread):
                 while read_more:
                     (success, data) = ReadFile(pipe, self.buf, None)
                     data = data.decode("UTF-8")
-                    print("data: ", data)
+                    # print("data: ", data)
                     if success == 0: # success
                         msg += data
                         read_more = False

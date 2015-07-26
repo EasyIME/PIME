@@ -22,17 +22,25 @@
 #include <algorithm>
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
+#include "NodeTextService.h"
+#include <cstdlib>
+#include <ctime>
 
 using namespace std;
 using namespace rapidjson;
 
 namespace Node {
 
-	static wchar_t g_pipeName[] = L"\\\\.\\pipe\\mynamedpipe";
+static wchar_t g_pipeName[] = L"\\\\.\\pipe\\mynamedpipe";
 
 Client::Client(TextService* service):
 	textService_(service),
 	pipe_(INVALID_HANDLE_VALUE) {
+
+	static bool init_srand = false;
+	if (!init_srand) {
+		srand(time(NULL));
+	}
 }
 
 Client::~Client(void) {
@@ -42,8 +50,6 @@ Client::~Client(void) {
 // pack a keyEvent object into a json value
 //static
 void Client::keyEventToJson(Writer<StringBuffer>& writer, Ime::KeyEvent& keyEvent) {
-	writer.StartObject();
-
 	writer.String("charCode");
 	writer.Uint(keyEvent.charCode());
 
@@ -66,35 +72,52 @@ void Client::keyEventToJson(Writer<StringBuffer>& writer, Ime::KeyEvent& keyEven
 		writer.Uint(states[i]);
 	}
 	writer.EndArray();
-
-	writer.EndObject();
 }
 
+int Client::addSeqNum(Writer<StringBuffer>& writer) {
+	int seqNum = rand();
+	writer.String("seqNum");
+	writer.Uint(seqNum);
+	return seqNum;
+}
+
+bool Client::isReplyValid(rapidjson::Document& doc) {
+	auto it = doc.FindMember("success");
+	if (it != doc.MemberEnd() && it->value.IsBool())
+		return it->value.GetBool();
+	return false;
+}
 
 // handlers for the text service
 void Client::onActivate() {
 	StringBuffer s;
 	Writer<StringBuffer> writer(s);
 	writer.StartObject();
+	int sn = addSeqNum(writer);
 
 	writer.String("method");
 	writer.String("onActivate");
 
 	writer.EndObject();
 	s.GetString();
-	string ret = sendRequest(s.GetString());
+	Document ret = sendRequest(s.GetString(), sn);
+	if (isReplyValid(ret)) {
+	}
 }
 
 void Client::onDeactivate() {
 	StringBuffer s;
 	Writer<StringBuffer> writer(s);
 	writer.StartObject();
+	int sn = addSeqNum(writer);
 
 	writer.String("method");
 	writer.String("onDeactivate");
 
 	writer.EndObject();
-	string ret = sendRequest(s.GetString());
+	Document ret = sendRequest(s.GetString(), sn);
+	if (isReplyValid(ret)) {
+	}
 }
 
 bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
@@ -102,14 +125,18 @@ bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
 	Writer<StringBuffer> writer(s);
 	writer.StartObject();
 
+	int sn = addSeqNum(writer);
+
 	writer.String("method");
 	writer.String("filterKeyDown");
 
-	writer.String("keyEvent");
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	string ret = sendRequest(s.GetString());
+	Document ret = sendRequest(s.GetString(), sn);
+	if (isReplyValid(ret)) {
+		return ret["return"].GetBool();
+	}
 	return false;
 }
 
@@ -118,15 +145,19 @@ bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	Writer<StringBuffer> writer(s);
 	writer.StartObject();
 
+	int sn = addSeqNum(writer);
+
 	writer.String("method");
 	writer.String("onKeyDown");
 
-	writer.String("keyEvent");
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	string ret = sendRequest(s.GetString());
-	return true;
+	Document ret = sendRequest(s.GetString(), sn);
+	if (isReplyValid(ret)) {
+		return ret["return"].GetBool();
+	}
+	return false;
 }
 
 bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
@@ -134,14 +165,18 @@ bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
 	Writer<StringBuffer> writer(s);
 	writer.StartObject();
 
+	int sn = addSeqNum(writer);
+
 	writer.String("method");
 	writer.String("filterKeyUp");
 
-	writer.String("keyEvent");
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	string ret = sendRequest(s.GetString());
+	Document ret = sendRequest(s.GetString(), sn);
+	if (isReplyValid(ret)) {
+		return ret["return"].GetBool();
+	}
 	return false;
 }
 
@@ -150,14 +185,18 @@ bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	Writer<StringBuffer> writer(s);
 	writer.StartObject();
 
+	int sn = addSeqNum(writer);
+
 	writer.String("method");
 	writer.String("onKeyUp");
 
-	writer.String("keyEvent");
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	string ret = sendRequest(s.GetString());
+	Document ret = sendRequest(s.GetString(), sn);
+	if (isReplyValid(ret)) {
+		return ret["return"].GetBool();
+	}
 	return false;
 }
 
@@ -168,6 +207,8 @@ bool Client::onPreservedKey(const GUID& guid) {
 		Writer<StringBuffer> writer(s);
 		writer.StartObject();
 
+		int sn = addSeqNum(writer);
+
 		writer.String("method");
 		writer.String("onPreservedKey");
 
@@ -176,7 +217,10 @@ bool Client::onPreservedKey(const GUID& guid) {
 		::CoTaskMemFree(str);
 
 		writer.EndObject();
-		string ret = sendRequest(s.GetString());
+		Document ret = sendRequest(s.GetString(), sn);
+		if (isReplyValid(ret)) {
+			return ret["return"].GetBool();
+		}
 	}
 	return false;
 }
@@ -186,12 +230,17 @@ bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
 	Writer<StringBuffer> writer(s);
 	writer.StartObject();
 
+	int sn = addSeqNum(writer);
+
 	writer.String("method");
 	writer.String("onCommand");
 
 	writer.EndObject();
-	string ret = sendRequest(s.GetString());
-	return true;
+	Document ret = sendRequest(s.GetString(), sn);
+	if (isReplyValid(ret)) {
+		return ret["return"].GetBool();
+	}
+	return false;
 }
 
 // called when a compartment value is changed
@@ -202,6 +251,8 @@ void Client::onCompartmentChanged(const GUID& key) {
 		Writer<StringBuffer> writer(s);
 		writer.StartObject();
 
+		int sn = addSeqNum(writer);
+
 		writer.String("method");
 		writer.String("onCompartmentChanged");
 
@@ -210,7 +261,9 @@ void Client::onCompartmentChanged(const GUID& key) {
 		::CoTaskMemFree(str);
 
 		writer.EndObject();
-		string ret = sendRequest(s.GetString());
+		Document ret = sendRequest(s.GetString(), sn);
+		if (isReplyValid(ret)) {
+		}
 	}
 }
 
@@ -220,6 +273,8 @@ void Client::onKeyboardStatusChanged(bool opened) {
 	Writer<StringBuffer> writer(s);
 	writer.StartObject();
 
+	int sn = addSeqNum(writer);
+
 	writer.String("method");
 	writer.String("onKeyboardStatusChanged");
 
@@ -227,7 +282,9 @@ void Client::onKeyboardStatusChanged(bool opened) {
 	writer.Bool(opened);
 
 	writer.EndObject();
-	string ret = sendRequest(s.GetString());
+	Document ret = sendRequest(s.GetString(), sn);
+	if (isReplyValid(ret)) {
+	}
 }
 
 // called just before current composition is terminated for doing cleanup.
@@ -236,6 +293,8 @@ void Client::onCompositionTerminated(bool forced) {
 	Writer<StringBuffer> writer(s);
 	writer.StartObject();
 
+	int sn = addSeqNum(writer);
+
 	writer.String("method");
 	writer.String("onCompositionTerminated");
 
@@ -243,10 +302,13 @@ void Client::onCompositionTerminated(bool forced) {
 	writer.Bool(forced);
 
 	writer.EndObject();
-	string ret = sendRequest(s.GetString());
+	Document ret = sendRequest(s.GetString(), sn);
+	if (isReplyValid(ret)) {
+	}
 }
 
 void Client::onLangProfileActivated(REFIID lang) {
+	/*
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
 		StringBuffer s;
@@ -263,9 +325,11 @@ void Client::onLangProfileActivated(REFIID lang) {
 		writer.EndObject();
 		string ret = sendRequest(s.GetString());
 	}
+	*/
 }
 
 void Client::onLangProfileDeactivated(REFIID lang) {
+	/*
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
 		StringBuffer s;
@@ -282,9 +346,41 @@ void Client::onLangProfileDeactivated(REFIID lang) {
 		writer.EndObject();
 		string ret = sendRequest(s.GetString());
 	}
+	*/
 }
 
-std::string Client::sendRequest(std::string req) {
+void Client::init() {
+	StringBuffer s;
+	Writer<StringBuffer> writer(s);
+	writer.StartObject();
+
+	int sn = addSeqNum(writer);
+
+	writer.String("method");
+	writer.String("init");
+
+	writer.String("id"); // id of the input method
+	writer.String("");
+
+	writer.String("isWindows8Above");
+	writer.Bool(textService_->imeModule()->isWindows8Above());
+
+	writer.String("isMetroApp");
+	writer.Bool(textService_->isMetroApp());
+
+	writer.String("isUiLess");
+	writer.Bool(textService_->isUiLess());
+
+	writer.String("isConsole");
+	writer.Bool(textService_->isConsole());
+
+	writer.EndObject();
+	Document ret = sendRequest(s.GetString(), sn);
+	if (isReplyValid(ret)) {
+	}
+}
+
+Document Client::sendRequest(std::string req, int seqNo) {
 	std::string ret;
 	if (connectPipe()) { // ensure that we're connected
 		char buf[1024];
@@ -309,7 +405,10 @@ std::string Client::sendRequest(std::string req) {
 			}
 		}
 	}
-	return ret;
+
+	Document d;
+	d.Parse(ret.c_str());
+	return d;
 }
 
 bool Client::connectPipe() {
@@ -331,6 +430,7 @@ bool Client::connectPipe() {
 			closePipe();
 			return false;
 		}
+		init(); // send initialization info to the server
 	}
 	return true;
 }

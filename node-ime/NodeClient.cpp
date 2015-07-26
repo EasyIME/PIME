@@ -37,22 +37,7 @@ Client::Client(TextService* service):
 
 Client::~Client(void) {
 	closePipe();
-
-	if(!token_.empty()) {
-	}
 }
-
-#if 0
-// packing current status into a json object
-json::value Client::statusData() {
-	json::value data = json::value::object();
-	data[L"token"] = std::move(json::value::string(token_));
-	// data[L""] = json::value
-	return std::move(data);
-}
-
-
-#endif
 
 // pack a keyEvent object into a json value
 //static
@@ -90,316 +75,241 @@ void Client::keyEventToJson(Writer<StringBuffer>& writer, Ime::KeyEvent& keyEven
 void Client::onActivate() {
 	StringBuffer s;
 	Writer<StringBuffer> writer(s);
-	if (token_.empty()) { // request a token
-		writer.StartObject();
-
-		writer.String("method");
-		writer.String("getToken");
-
-		writer.EndObject();
-		string ret = sendRequest(s.GetString());
-		if (ret.empty())
-			return;
-		token_ = ret;
-	}
-
-	s.Clear();
 	writer.StartObject();
-
-	writer.String("token");
-	writer.String(token_);
 
 	writer.String("method");
 	writer.String("onActivate");
 
 	writer.EndObject();
 	s.GetString();
+	string ret = sendRequest(s.GetString());
 }
 
 void Client::onDeactivate() {
-	if (!token_.empty()) {
-		StringBuffer s;
-		Writer<StringBuffer> writer(s);
-		writer.StartObject();
+	StringBuffer s;
+	Writer<StringBuffer> writer(s);
+	writer.StartObject();
 
-		writer.String("token");
-		writer.String(token_);
+	writer.String("method");
+	writer.String("onDeactivate");
 
-		writer.String("method");
-		writer.String("onDeactivate");
-
-		writer.EndObject();
-		string ret = sendRequest(s.GetString());
-	}
+	writer.EndObject();
+	string ret = sendRequest(s.GetString());
 }
 
 bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
-	if (!token_.empty()) {
-		StringBuffer s;
-		Writer<StringBuffer> writer(s);
-		writer.StartObject();
+	StringBuffer s;
+	Writer<StringBuffer> writer(s);
+	writer.StartObject();
 
-		writer.String("token");
-		writer.String(token_);
+	writer.String("method");
+	writer.String("filterKeyDown");
 
-		writer.String("method");
-		writer.String("filterKeyDown");
+	writer.String("keyEvent");
+	keyEventToJson(writer, keyEvent);
 
-		writer.String("keyEvent");
-		writer.StartObject();
-		keyEventToJson(writer, keyEvent);
-		writer.EndObject();
-
-		writer.EndObject();
-		string ret = sendRequest(s.GetString());
-	}
+	writer.EndObject();
+	string ret = sendRequest(s.GetString());
 	return false;
 }
 
 bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
-	if (!token_.empty()) {
-		StringBuffer s;
-		Writer<StringBuffer> writer(s);
-		writer.StartObject();
+	StringBuffer s;
+	Writer<StringBuffer> writer(s);
+	writer.StartObject();
 
-		writer.String("token");
-		writer.String(token_);
+	writer.String("method");
+	writer.String("onKeyDown");
 
-		writer.String("method");
-		writer.String("onKeyDown");
+	writer.String("keyEvent");
+	keyEventToJson(writer, keyEvent);
 
-		writer.String("keyEvent");
-		writer.StartObject();
-		keyEventToJson(writer, keyEvent);
-		writer.EndObject();
-
-		writer.EndObject();
-		string ret = sendRequest(s.GetString());
-	}
+	writer.EndObject();
+	string ret = sendRequest(s.GetString());
 	return true;
 }
 
 bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
-	if (!token_.empty()) {
-		StringBuffer s;
-		Writer<StringBuffer> writer(s);
-		writer.StartObject();
+	StringBuffer s;
+	Writer<StringBuffer> writer(s);
+	writer.StartObject();
 
-		writer.String("token");
-		writer.String(token_);
+	writer.String("method");
+	writer.String("filterKeyUp");
 
-		writer.String("method");
-		writer.String("filterKeyUp");
+	writer.String("keyEvent");
+	keyEventToJson(writer, keyEvent);
 
-		writer.String("keyEvent");
-		writer.StartObject();
-		keyEventToJson(writer, keyEvent);
-		writer.EndObject();
-
-		writer.EndObject();
-		string ret = sendRequest(s.GetString());
-	}
+	writer.EndObject();
+	string ret = sendRequest(s.GetString());
 	return false;
 }
 
 bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
-	if (!token_.empty()) {
-		StringBuffer s;
-		Writer<StringBuffer> writer(s);
-		writer.StartObject();
+	StringBuffer s;
+	Writer<StringBuffer> writer(s);
+	writer.StartObject();
 
-		writer.String("token");
-		writer.String(token_);
+	writer.String("method");
+	writer.String("onKeyUp");
 
-		writer.String("method");
-		writer.String("onKeyUp");
+	writer.String("keyEvent");
+	keyEventToJson(writer, keyEvent);
 
-		writer.String("keyEvent");
-		writer.StartObject();
-		keyEventToJson(writer, keyEvent);
-		writer.EndObject();
-
-		writer.EndObject();
-		string ret = sendRequest(s.GetString());
-	}
+	writer.EndObject();
+	string ret = sendRequest(s.GetString());
 	return false;
 }
 
 bool Client::onPreservedKey(const GUID& guid) {
-	if (!token_.empty()) {
-		LPOLESTR str = NULL;
-		if (SUCCEEDED(::StringFromCLSID(guid, &str))) {
-			StringBuffer s;
-			Writer<StringBuffer> writer(s);
-			writer.StartObject();
+	LPOLESTR str = NULL;
+	if (SUCCEEDED(::StringFromCLSID(guid, &str))) {
+		StringBuffer s;
+		Writer<StringBuffer> writer(s);
+		writer.StartObject();
 
-			writer.String("token");
-			writer.String(token_);
+		writer.String("method");
+		writer.String("onPreservedKey");
 
-			writer.String("method");
-			writer.String("onPreservedKey");
+		writer.String("guid");
+		writer.String(utf16ToUtf8(str));
+		::CoTaskMemFree(str);
 
-			writer.String("guid");
-			writer.String(utf16ToUtf8(str));
-			::CoTaskMemFree(str);
-
-			writer.EndObject();
-			string ret = sendRequest(s.GetString());
-		}
+		writer.EndObject();
+		string ret = sendRequest(s.GetString());
 	}
 	return false;
 }
 
 bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
-	if (!token_.empty()) {
-		StringBuffer s;
-		Writer<StringBuffer> writer(s);
-		writer.StartObject();
+	StringBuffer s;
+	Writer<StringBuffer> writer(s);
+	writer.StartObject();
 
-		writer.String("token");
-		writer.String(token_);
+	writer.String("method");
+	writer.String("onCommand");
 
-		writer.String("method");
-		writer.String("onCommand");
-
-		writer.EndObject();
-		string ret = sendRequest(s.GetString());
-	}
+	writer.EndObject();
+	string ret = sendRequest(s.GetString());
 	return true;
 }
 
 // called when a compartment value is changed
 void Client::onCompartmentChanged(const GUID& key) {
-	if (!token_.empty()) {
-		LPOLESTR str = NULL;
-		if (SUCCEEDED(::StringFromCLSID(key, &str))) {
-			StringBuffer s;
-			Writer<StringBuffer> writer(s);
-			writer.StartObject();
+	LPOLESTR str = NULL;
+	if (SUCCEEDED(::StringFromCLSID(key, &str))) {
+		StringBuffer s;
+		Writer<StringBuffer> writer(s);
+		writer.StartObject();
 
-			writer.String("token");
-			writer.String(token_);
+		writer.String("method");
+		writer.String("onCompartmentChanged");
 
-			writer.String("method");
-			writer.String("onCompartmentChanged");
+		writer.String("key");
+		writer.String(utf16ToUtf8(str));
+		::CoTaskMemFree(str);
 
-			writer.String("key");
-			writer.String(utf16ToUtf8(str));
-			::CoTaskMemFree(str);
-
-			writer.EndObject();
-			string ret = sendRequest(s.GetString());
-		}
+		writer.EndObject();
+		string ret = sendRequest(s.GetString());
 	}
 }
 
 // called when the keyboard is opened or closed
 void Client::onKeyboardStatusChanged(bool opened) {
-	if (!token_.empty()) {
-		StringBuffer s;
-		Writer<StringBuffer> writer(s);
-		writer.StartObject();
+	StringBuffer s;
+	Writer<StringBuffer> writer(s);
+	writer.StartObject();
 
-		writer.String("token");
-		writer.String(token_);
+	writer.String("method");
+	writer.String("onKeyboardStatusChanged");
 
-		writer.String("method");
-		writer.String("onKeyboardStatusChanged");
+	writer.String("opened");
+	writer.Bool(opened);
 
-		writer.String("opened");
-		writer.Bool(opened);
-
-		writer.EndObject();
-		string ret = sendRequest(s.GetString());
-	}
+	writer.EndObject();
+	string ret = sendRequest(s.GetString());
 }
 
 // called just before current composition is terminated for doing cleanup.
 void Client::onCompositionTerminated(bool forced) {
-	if (!token_.empty()) {
+	StringBuffer s;
+	Writer<StringBuffer> writer(s);
+	writer.StartObject();
+
+	writer.String("method");
+	writer.String("onCompositionTerminated");
+
+	writer.String("forced");
+	writer.Bool(forced);
+
+	writer.EndObject();
+	string ret = sendRequest(s.GetString());
+}
+
+void Client::onLangProfileActivated(REFIID lang) {
+	LPOLESTR str = NULL;
+	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
 		StringBuffer s;
 		Writer<StringBuffer> writer(s);
 		writer.StartObject();
 
-		writer.String("token");
-		writer.String(token_);
-
 		writer.String("method");
-		writer.String("onCompositionTerminated");
+		writer.String("onLangProfileActivated");
 
-		writer.String("forced");
-		writer.Bool(forced);
+		writer.String("lang");
+		writer.String(utf16ToUtf8(str));
+		::CoTaskMemFree(str);
 
 		writer.EndObject();
 		string ret = sendRequest(s.GetString());
 	}
 }
 
-void Client::onLangProfileActivated(REFIID lang) {
-	if (!token_.empty()) {
-		LPOLESTR str = NULL;
-		if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
-			StringBuffer s;
-			Writer<StringBuffer> writer(s);
-			writer.StartObject();
-
-			writer.String("token");
-			writer.String(token_);
-
-			writer.String("method");
-			writer.String("onCompartmentChanged");
-
-			writer.String("lang");
-			writer.String(utf16ToUtf8(str));
-			::CoTaskMemFree(str);
-
-			writer.EndObject();
-			string ret = sendRequest(s.GetString());
-		}
-	}
-}
-
 void Client::onLangProfileDeactivated(REFIID lang) {
-	if (!token_.empty()) {
-		LPOLESTR str = NULL;
-		if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
-			StringBuffer s;
-			Writer<StringBuffer> writer(s);
-			writer.StartObject();
+	LPOLESTR str = NULL;
+	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
+		StringBuffer s;
+		Writer<StringBuffer> writer(s);
+		writer.StartObject();
 
-			writer.String("token");
-			writer.String(token_);
+		writer.String("method");
+		writer.String("onLangProfileDeactivated");
 
-			writer.String("method");
-			writer.String("onLangProfileDeactivated");
+		writer.String("lang");
+		writer.String(utf16ToUtf8(str));
+		::CoTaskMemFree(str);
 
-			writer.String("lang");
-			writer.String(utf16ToUtf8(str));
-			::CoTaskMemFree(str);
-
-			writer.EndObject();
-			string ret = sendRequest(s.GetString());
-		}
+		writer.EndObject();
+		string ret = sendRequest(s.GetString());
 	}
 }
 
 std::string Client::sendRequest(std::string req) {
-	// FIXME: ensure that we're connected
-	if (connectPipe()) {
+	std::string ret;
+	if (connectPipe()) { // ensure that we're connected
 		char buf[1024];
 		DWORD rlen = 0;
 		if(TransactNamedPipe(pipe_, (void*)req.c_str(), req.length(), buf, 1023, &rlen, NULL)) {
 			buf[rlen] = '\0';
-			return buf;
+			ret = buf;
 		}
 		else { // error!
 			if (GetLastError() != ERROR_MORE_DATA) {
 				// unknown error happens, reset the pipe?
 				closePipe();
 			}
+			buf[rlen] = '\0';
+			ret = buf;
+			for (;;) {
+				BOOL success = ReadFile(pipe_, buf, 1023, &rlen, NULL);
+				if (!success && (GetLastError() != ERROR_MORE_DATA))
+					break;
+				buf[rlen] = '\0';
+				ret += buf;
+			}
 		}
 	}
-	return std::string();
+	return ret;
 }
 
 bool Client::connectPipe() {

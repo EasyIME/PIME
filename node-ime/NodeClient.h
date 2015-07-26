@@ -73,16 +73,7 @@ private:
 	void closePipe();
 
 	void keyEventToJson(rapidjson::Writer<rapidjson::StringBuffer>& writer, Ime::KeyEvent& keyEvent);
-#if 0
-private:
-	web::json::value statusData();
-	void updateStatus(web::json::value& data);
-	static web::json::value keyEventToJson(Ime::KeyEvent& keyEvent);
 
-private:
-
-#endif
-	std::string token_; // token used to access the server
 	TextService* textService_;
 	HANDLE pipe_;
 };

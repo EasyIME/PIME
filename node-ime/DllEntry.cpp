@@ -1,8 +1,14 @@
 #include "NodeImeModule.h"
 #include "resource.h"
 #include <iostream>
+#include <cstdio>
 #include <vector>
 #include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/filereadstream.h"
+#include "../libIME/Utils.h"
+
+using namespace rapidjson;
 
 Node::ImeModule* g_imeModule = NULL;
 
@@ -41,21 +47,24 @@ STDAPI DllUnregisterServer(void) {
 }
 
 static Ime::LangProfileInfo langProfileFromJson(std::wstring file) {
-#if 0
 	// load the json file to get the info of input method
-	std::ifstream stream(file.c_str());
-	if(stream.is_open()) {
-		web::json::value json = web::json::value::parse(stream);
-		stream.close();
-		auto name = json[L"name"].as_string();
-		auto guidStr = json[L"guid"].as_string();
+	std::FILE* fp = _wfopen(file.c_str(), L"r");
+	if(fp) {
+		Document json;
+		char buf[1024];
+		FileReadStream stream(fp, buf, sizeof(buf));
+		json.ParseStream(stream);
+		fclose(fp);
+		auto name = utf8ToUtf16(json["name"].GetString());
+		auto guidStr = utf8ToUtf16(json["guid"].GetString());
 		CLSID guid = {0};
 		CLSIDFromString (guidStr.c_str(), &guid);
 		// convert locale name to lanid
-		LCID lcid = LocaleNameToLCID(json[L"locale"].as_string().c_str(), 0);
+		auto locale = utf8ToUtf16(json["locale"].GetString());
+		LCID lcid = LocaleNameToLCID(locale.c_str(), 0);
 		LANGID langid = LANGIDFROMLCID(lcid);
 
-		auto iconFile = json[L"icon"].as_string();
+		auto iconFile = utf8ToUtf16(json["icon"].GetString());
 		Ime::LangProfileInfo langProfile = {
 			name,
 			guid,
@@ -64,7 +73,6 @@ static Ime::LangProfileInfo langProfileFromJson(std::wstring file) {
 		};
 		return std::move(langProfile);
 	}
-#endif
 	return std::move(Ime::LangProfileInfo());
 }
 
@@ -93,8 +101,7 @@ STDAPI DllRegisterServer(void) {
 					std::wstring imejson = dirPath;
 					imejson += '\\';
 					imejson += findData.cFileName;
-					imejson += '\\';
-					imejson += L"ime.json";
+					imejson += L"\\ime.json";
 					// load the json file to get the info of input method
 					langProfiles.push_back(std::move(langProfileFromJson(imejson)));
 				}

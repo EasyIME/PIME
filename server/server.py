@@ -4,9 +4,26 @@ from win32security import *
 from win32event import *
 from win32file import *
 from winerror import *
+from win32con import * # for VK_XXX constants
 import threading
 import json
 import sys
+
+
+class KeyEvent:
+    def __init__(self, msg):
+        self.charCode = msg["charCode"]
+        self.keyCode = msg["keyCode"]
+        self.repeatCount = msg["repeatCount"]
+        self.scanCode = msg["scanCode"]
+        self.isExtended = msg["isExtended"]
+        self.keyStates = msg["keyStates"]
+
+    def isKeyDown(self, code):
+        return (self.keyStates[code] & (1 << 7)) != 0
+
+    def isKeyToggled(self, code):
+        return (self.keyStates[code] & 1) != 0
 
 
 class TextService:
@@ -30,16 +47,16 @@ class TextService:
     def onDeactivate(self):
         pass
 
-    def filterKeyDown(self):
+    def filterKeyDown(self, keyEvent):
         return False
 
-    def onKeyDown(self):
+    def onKeyDown(self, keyEvent):
         return False
 
-    def filterKeyUp(self):
+    def filterKeyUp(self, keyEvent):
         return False
 
-    def onKeyUp(self):
+    def onKeyUp(self, keyEvent):
         return False
 
     def onCommand(self):
@@ -107,16 +124,20 @@ class DemoTextService(TextService):
     def onDeactivate(self):
         pass
 
-    def filterKeyDown(self):
+    def filterKeyDown(self, keyEvent):
+        if keyEvent.isKeyToggled(VK_CAPITAL):
+            return False
         return True
 
-    def onKeyDown(self):
+    def onKeyDown(self, keyEvent):
+        if keyEvent.isKeyToggled(VK_CAPITAL):
+            return False
         return True
 
-    def filterKeyUp(self):
+    def filterKeyUp(self, keyEvent):
         return False
 
-    def onKeyUp(self):
+    def onKeyUp(self, keyEvent):
         return False
 
     def onCommand(self):
@@ -152,13 +173,17 @@ class Client:
         elif method == "onDeactivate":
             service.onDeactivate()
         elif method == "filterKeyDown":
-            ret = service.filterKeyDown()
+            keyEvent = KeyEvent(msg)
+            ret = service.filterKeyDown(keyEvent)
         elif method == "onKeyDown":
-            ret = service.onKeyDown()
+            keyEvent = KeyEvent(msg)
+            ret = service.onKeyDown(keyEvent)
         elif method == "filterKeyUp":
-            ret = service.filterKeyUp()
+            keyEvent = KeyEvent(msg)
+            ret = service.filterKeyUp(keyEvent)
         elif method == "onKeyUp":
-            ret = service.onKeyUp()
+            keyEvent = KeyEvent(msg)
+            ret = service.onKeyUp(keyEvent)
         elif method == "onPreservedKey":
             ret = service.onPreservedKey()
         elif method == "onCommand":

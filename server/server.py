@@ -36,9 +36,17 @@ class TextService:
         self.isMetroApp = msg["isMetroApp"]
         self.isUiLess = msg["isUiLess"]
         self.isUiLess = msg["isConsole"]
+        self.keyboardOpen = False
+        self.isComposing = False
+        self.showCandidates = False
 
-    def sendRequest(self, msg):
-        client.pipe
+    def updateStatus(self, msg):
+        if "keyboardOpen" in msg
+            self.keyboardOpen = msg["keyboardOpen"]
+        if "isComposing" in msg
+            self.keyboardOpen = msg["isComposing"]
+        if "showCandidates" in msg
+            self.keyboardOpen = msg["showCandidates"]
 
     # methods that should be implemented by derived classes
     def onActivate(self):
@@ -86,31 +94,33 @@ class TextService:
     def removePreservedKey(self, guid):
         pass
 
-    # text composition handling
-    def isComposing(self):
-        return False
-
     # is keyboard disabled for the context (NULL means current context)
     # bool isKeyboardDisabled(ITfContext* context = NULL);
 
     # is keyboard opened for the whole thread
     def isKeyboardOpened(self):
-        return True
+        return self.keyboardOpen
 
     def setKeyboardOpen(self, kb_open):
-        pass
+        self.keyboardOpen = kb_open
 
-    def startComposition(self, context):
-        pass
+    def startComposition(self):
+        self.isComposing = True
 
-    def endComposition(self, context):
-        pass
+    def endComposition(self):
+        self.isComposing = False
 
-    def setCompositionString(self, cs, cs_len):
-        pass
+    def setCompositionString(self, s):
+        self.compositionString = s
 
     def setCompositionCursor(self, pos):
-        pass
+        self.compositionCursor = s
+
+    def setCommitString(self, s):
+        self.commitString = s
+
+    def setCandidateList(self, cand):
+        self.candidateList = cand
 
 
 
@@ -140,12 +150,6 @@ class DemoTextService(TextService):
     def onKeyUp(self, keyEvent):
         return False
 
-    def onCommand(self):
-        pass
-
-    def onCompartmentChanged(self):
-        pass
-
     def onKeyboardStatusChanged(self):
         pass
 
@@ -165,7 +169,10 @@ class Client:
         ret = None
         method = msg["method"]
         print("handle message: ", method)
+
         service = self.service
+        service.updateStatus(msg)
+
         if method == "init":
             service.init(msg)
         elif method == "onActivate":

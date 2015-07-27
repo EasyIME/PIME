@@ -41,11 +41,11 @@ class TextService:
         self.showCandidates = False
 
     def updateStatus(self, msg):
-        if "keyboardOpen" in msg
+        if "keyboardOpen" in msg:
             self.keyboardOpen = msg["keyboardOpen"]
-        if "isComposing" in msg
+        if "isComposing" in msg:
             self.keyboardOpen = msg["isComposing"]
-        if "showCandidates" in msg
+        if "showCandidates" in msg:
             self.keyboardOpen = msg["showCandidates"]
 
     # methods that should be implemented by derived classes
@@ -264,6 +264,76 @@ class ClientThread(threading.Thread):
         CloseHandle(pipe)
         server.remove_client(client)
 
+def createSecurityAttributes():
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/hh448449(v=vs.85).aspx
+    # define new Win 8 app related constants
+    SECURITY_APP_PACKAGE_AUTHORITY = (0,0,0,0,0,15)
+    SECURITY_APP_PACKAGE_BASE_RID = 0x00000002
+    SECURITY_BUILTIN_APP_PACKAGE_RID_COUNT = 2
+    SECURITY_APP_PACKAGE_RID_COUNT = 8
+    SECURITY_CAPABILITY_BASE_RID = 0x00000003
+    SECURITY_BUILTIN_CAPABILITY_RID_COUNT = 2
+    SECURITY_CAPABILITY_RID_COUNT = 5
+    SECURITY_BUILTIN_PACKAGE_ANY_PACKAGE = 0x00000001
+
+    explicit_accesses = []
+    # Create a well-known SID for the Everyone group.
+    # FIXME: we should limit the access to current user only
+    everyoneSID = SID()
+    SECURITY_WORLD_SID_AUTHORITY = (0,0,0,0,0,1)
+    everyoneSID.Initialize(SECURITY_WORLD_SID_AUTHORITY, 1)
+    everyoneSID.SetSubAuthority(0, SECURITY_WORLD_RID)
+
+    # https://services.land.vic.gov.au/ArcGIS10.1/edESRIArcGIS10_01_01_3143/Python/pywin32/PLATLIB/win32/Demos/security/explicit_entries.py
+    ea = {
+        "AccessPermissions": GENERIC_ALL,
+        "AccessMode": SET_ACCESS,
+        "Inheritance": SUB_CONTAINERS_AND_OBJECTS_INHERIT,
+        "Trustee": {
+            "MultipleTrustee": None,
+            "MultipleTrusteeOperation": 0,
+            "TrusteeForm": TRUSTEE_IS_SID,
+            "TrusteeType": TRUSTEE_IS_WELL_KNOWN_GROUP,
+            "Identifier": everyoneSID
+        }
+    }
+    explicit_accesses.append(ea)
+
+    # create SID for app containers
+    allAppsSID = SID()
+    allAppsSID.Initialize(SECURITY_APP_PACKAGE_AUTHORITY, SECURITY_BUILTIN_APP_PACKAGE_RID_COUNT)
+    allAppsSID.SetSubAuthority(0, SECURITY_APP_PACKAGE_BASE_RID)
+    allAppsSID.SetSubAuthority(1, SECURITY_BUILTIN_PACKAGE_ANY_PACKAGE)
+
+    ea = {
+        "AccessPermissions": GENERIC_ALL,
+        "AccessMode": SET_ACCESS,
+        "Inheritance": SUB_CONTAINERS_AND_OBJECTS_INHERIT,
+        "Trustee": {
+            "MultipleTrustee": None,
+            "MultipleTrusteeOperation": 0,
+            "TrusteeForm": TRUSTEE_IS_SID,
+            "TrusteeType": TRUSTEE_IS_GROUP,
+            "Identifier": allAppsSID
+        }
+    }
+    explicit_accesses.append(ea)
+
+    # create DACL
+    acl = ACL()
+    acl.Initialize()
+    acl.SetEntriesInAcl(explicit_accesses)
+
+    # security descriptor
+    sd = SECURITY_DESCRIPTOR()
+    sd.Initialize()
+    sd.SetDacl(True, acl, False)
+
+    sa = SECURITY_ATTRIBUTES()
+    sa.SECURITY_DESCRIPTOR = sd
+    return sa
+
+
 
 # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365588(v=vs.85).aspx
 class Server:
@@ -276,10 +346,9 @@ class Server:
     # This function creates a pipe instance and connects to the client.
     def create_pipe(self):
         name = "\\\\.\\pipe\\mynamedpipe"
-        sa = SECURITY_ATTRIBUTES()
         buffer_size = 1024
-        sa = None
         # create the pipe
+        sa = createSecurityAttributes()
         pipe = CreateNamedPipe(name,
                                PIPE_ACCESS_DUPLEX,
                                PIPE_TYPE_MESSAGE|PIPE_READMODE_MESSAGE|PIPE_WAIT,
@@ -288,6 +357,7 @@ class Server:
                                buffer_size,
                                NMPWAIT_USE_DEFAULT_WAIT,
                                sa)
+        # grantAppContainerAccess(pipe, SE_KERNEL_OBJECT, STANDARD_RIGHTS_ALL)
         return pipe
 
 
@@ -333,6 +403,9 @@ class Server:
         self.clients.remove(client)
         print("client disconnected")
         self.lock.release()
+
+
+
 
 
 def main():

@@ -405,7 +405,6 @@ Document Client::sendRequest(std::string req, int seqNo) {
 			}
 		}
 	}
-
 	Document d;
 	d.Parse(ret.c_str());
 	return d;

@@ -19,7 +19,7 @@
 
 #ifndef _NODE_CLIENT_H_
 #define _NODE_CLIENT_H_
-
+#define NDEBUG
 #include <libIME/TextService.h>
 #include <libIME/KeyEvent.h>
 #include <libIME/EditSession.h>

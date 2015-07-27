@@ -45,9 +45,9 @@ static const GUID GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT =
 
 // display attribute GUIDs
 
-// {2A2574D6-2841-4F27-82BD-D7B0F23855F8}
+// {05814A20-00B3-4B73-A3D0-2C521EFA8BE5}
 static const GUID g_inputDisplayAttributeGuid = 
-{ 0x2a2574d6, 0x2841, 0x4f27, { 0x82, 0xbd, 0xd7, 0xb0, 0xf2, 0x38, 0x55, 0xf8 } };
+{ 0x5814a20, 0xb3, 0x4b73, { 0xa3, 0xd0, 0x2c, 0x52, 0x1e, 0xfa, 0x8b, 0xe5 } };
 
 // {E1270AA5-A6B1-4112-9AC7-F5E476C3BD63}
 // static const GUID g_convertedDisplayAttributeGuid = 
@@ -111,6 +111,8 @@ HRESULT ImeModule::registerLangProfiles(LangProfileInfo* langs, int count) {
 		for(int i = 0; i < count; ++i) {
 			LangProfileInfo& lang = langs[i];
 			if(inputProcessProfiles->Register(textServiceClsid_) == S_OK) {
+				wstring t = (lang.name + L"\n" + lang.iconFile + L"\n....");
+				::MessageBox(0, t.c_str(), 0, 0);
 				if(inputProcessProfiles->AddLanguageProfile(textServiceClsid_, lang.languageId, lang.profileGuid,
 					lang.name.c_str(), -1, lang.iconFile.empty() ? NULL : lang.iconFile.c_str(),
 					lang.iconFile.length(), lang.iconIndex) != S_OK) {

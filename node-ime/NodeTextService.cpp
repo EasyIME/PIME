@@ -112,8 +112,8 @@ TextService::TextService(ImeModule* module):
 }
 
 TextService::~TextService(void) {
-	if(client_)
-		delete client_;
+	//if(client_)
+	//	delete client_;
 
 	if(popupMenu_)
 		::DestroyMenu(popupMenu_);
@@ -170,6 +170,8 @@ void TextService::onFocus() {
 
 // virtual
 bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
+	// if (keyEvent.isKeyToggled(VK_CAPITAL))
+	//	return true;
 	if(!client_)
 		return false;
 	return client_->filterKeyDown(keyEvent);
@@ -177,7 +179,9 @@ bool TextService::filterKeyDown(Ime::KeyEvent& keyEvent) {
 
 // virtual
 bool TextService::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
-	if(!client_)
+	//if (keyEvent.isKeyToggled(VK_CAPITAL))
+	//	return true;
+	if (!client_)
 		return false;
 	return client_->onKeyDown(keyEvent, session);
 }

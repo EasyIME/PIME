@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cstdio>
 #include <vector>
+#include <ShlObj.h>
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/filereadstream.h"
@@ -12,16 +13,11 @@ using namespace rapidjson;
 
 Node::ImeModule* g_imeModule = NULL;
 
-// GUID of our language profile
-// {CE45F71D-CE79-41D1-967D-640B65A380E3}
-static const GUID g_profileGuid = {
-	0xce45f71d, 0xce79, 0x41d1, { 0x96, 0x7d, 0x64, 0xb, 0x65, 0xa3, 0x80, 0xe3 }
-};
-
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
 	switch (ul_reason_for_call) {
 	case DLL_PROCESS_ATTACH:
 		::DisableThreadLibraryCalls(hModule); // disable DllMain calls due to new thread creation
+		//::MessageBox(0, L"X!", 0, 0);
 		g_imeModule = new Node::ImeModule(hModule);
 		break;
 	case DLL_PROCESS_DETACH:
@@ -51,7 +47,7 @@ static Ime::LangProfileInfo langProfileFromJson(std::wstring file) {
 	std::FILE* fp = _wfopen(file.c_str(), L"r");
 	if(fp) {
 		Document json;
-		char buf[1024];
+		char buf[4096];
 		FileReadStream stream(fp, buf, sizeof(buf));
 		json.ParseStream(stream);
 		fclose(fp);
@@ -63,8 +59,9 @@ static Ime::LangProfileInfo langProfileFromJson(std::wstring file) {
 		auto locale = utf8ToUtf16(json["locale"].GetString());
 		LCID lcid = LocaleNameToLCID(locale.c_str(), 0);
 		LANGID langid = LANGIDFROMLCID(lcid);
-
+		::MessageBox(0, name.c_str(), 0, 0);
 		auto iconFile = utf8ToUtf16(json["icon"].GetString());
+		::MessageBox(0, iconFile.c_str(), 0, 0);
 		Ime::LangProfileInfo langProfile = {
 			name,
 			guid,
@@ -89,25 +86,34 @@ STDAPI DllRegisterServer(void) {
 	modulePath[len] = '\0';
 	// std::wstring dirPath = modulePath;
 	std::vector<Ime::LangProfileInfo> langProfiles;
-	std::wstring dirPath = L"D:\\node-ime\\server\\input-methods";
-
-	// scan the dir for lang profile definition files
-	WIN32_FIND_DATA findData = {0};
-	HANDLE hFind = ::FindFirstFile((dirPath + L"\\*").c_str(), &findData);
-	if(hFind != INVALID_HANDLE_VALUE) {
-		do {
-			if(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { // this is a subdir
-				if(findData.cFileName[0] != '.') {
-					std::wstring imejson = dirPath;
-					imejson += '\\';
-					imejson += findData.cFileName;
-					imejson += L"\\ime.json";
-					// load the json file to get the info of input method
-					langProfiles.push_back(std::move(langProfileFromJson(imejson)));
+	std::wstring dirPath;
+	// get the program data directory
+	// try C:\program files (x86) first
+	wchar_t path[MAX_PATH];
+	HRESULT result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILESX86, NULL, 0, path);
+	if (result != S_OK) // failed, fall back to C:\program files
+		result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
+	if (result == S_OK) { // program files folder is found
+		dirPath = path;
+		dirPath += L"\\PIme\\server\\input-methods";
+		// scan the dir for lang profile definition files
+		WIN32_FIND_DATA findData = {0};
+		HANDLE hFind = ::FindFirstFile((dirPath + L"\\*").c_str(), &findData);
+		if(hFind != INVALID_HANDLE_VALUE) {
+			do {
+				if(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { // this is a subdir
+					if(findData.cFileName[0] != '.') {
+						std::wstring imejson = dirPath;
+						imejson += '\\';
+						imejson += findData.cFileName;
+						imejson += L"\\ime.json";
+						// load the json file to get the info of input method
+						langProfiles.push_back(std::move(langProfileFromJson(imejson)));
+					}
 				}
-			}
-		} while(::FindNextFile(hFind, &findData));
-		CloseHandle(hFind);
+			} while(::FindNextFile(hFind, &findData));
+			CloseHandle(hFind);
+		}
 	}
 	return g_imeModule->registerServer(L"NodeTextService", langProfiles.data(), langProfiles.size());
 }

@@ -40,6 +40,12 @@ class TextService:
         self.isComposing = False
         self.showCandidates = False
 
+        self.compositionString = ""
+        self.commitString = ""
+        self.candidateList = []
+        self.compositionCursor = 0
+
+
     def updateStatus(self, msg):
         if "keyboardOpen" in msg:
             self.keyboardOpen = msg["keyboardOpen"]
@@ -47,6 +53,21 @@ class TextService:
             self.keyboardOpen = msg["isComposing"]
         if "showCandidates" in msg:
             self.keyboardOpen = msg["showCandidates"]
+
+        # FIXME: sync the status from client properly
+        self.commitString = ""
+
+
+    # encode current status into an json object
+    def getStatus(self, msg):
+        msg["keyboardOpen"] = self.keyboardOpen
+        msg["isComposing"] = self.isComposing
+        msg["showCandidates"] = self.showCandidates
+        msg["compositionString"] = self.compositionString
+        msg["commitString"] = self.commitString
+        msg["candidateList"] = self.candidateList
+        msg["compositionCursor"] = self.compositionCursor
+
 
     # methods that should be implemented by derived classes
     def onActivate(self):
@@ -71,6 +92,9 @@ class TextService:
         pass
 
     def onCompartmentChanged(self):
+        pass
+
+    def onCompositionTerminated(self):
         pass
 
     def onKeyboardStatusChanged(self):
@@ -135,13 +159,30 @@ class DemoTextService(TextService):
         pass
 
     def filterKeyDown(self, keyEvent):
-        if keyEvent.isKeyToggled(VK_CAPITAL):
-            return False
+        #if keyEvent.isKeyToggled(VK_CAPITAL):
+        #    return False
+        if not self.isComposing:
+            if keyEvent.keyCode == VK_RETURN:
+                return False
         return True
 
     def onKeyDown(self, keyEvent):
-        if keyEvent.isKeyToggled(VK_CAPITAL):
-            return False
+        #if keyEvent.isKeyToggled(VK_CAPITAL):
+        #    return False
+        if self.isComposing:
+            if keyEvent.keyCode == VK_RETURN or len(self.compositionString) > 10:
+                self.setCommitString(self.compositionString)
+                self.setCompositionString("")
+                self.endComposition()
+            else:
+                self.setCompositionString(self.compositionString + "喵")
+        else:
+            if keyEvent.keyCode == VK_RETURN:
+                return False
+            else:
+                if not self.isComposing:
+                    self.startComposition()
+
         return True
 
     def filterKeyUp(self, keyEvent):
@@ -206,6 +247,9 @@ class Client:
         elif method == "onLangProfileDeactivated":
             pass
         reply["success"] = success
+        if success:
+            service.getStatus(reply)
+
         if ret != None:
             reply["return"] = ret
         return reply

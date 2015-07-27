@@ -59,9 +59,9 @@ static Ime::LangProfileInfo langProfileFromJson(std::wstring file) {
 		auto locale = utf8ToUtf16(json["locale"].GetString());
 		LCID lcid = LocaleNameToLCID(locale.c_str(), 0);
 		LANGID langid = LANGIDFROMLCID(lcid);
-		::MessageBox(0, name.c_str(), 0, 0);
+		// ::MessageBox(0, name.c_str(), 0, 0);
 		auto iconFile = utf8ToUtf16(json["icon"].GetString());
-		::MessageBox(0, iconFile.c_str(), 0, 0);
+		// ::MessageBox(0, iconFile.c_str(), 0, 0);
 		Ime::LangProfileInfo langProfile = {
 			name,
 			guid,

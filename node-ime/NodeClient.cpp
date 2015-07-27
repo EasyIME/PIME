@@ -81,11 +81,46 @@ int Client::addSeqNum(Writer<StringBuffer>& writer) {
 	return seqNum;
 }
 
-bool Client::isReplyValid(rapidjson::Document& doc) {
-	auto it = doc.FindMember("success");
-	if (it != doc.MemberEnd() && it->value.IsBool())
-		return it->value.GetBool();
+bool Client::handleReply(rapidjson::Document& msg, Ime::EditSession* session) {
+	auto it = msg.FindMember("success");
+	if (it != msg.MemberEnd() && it->value.IsBool()) {
+		bool success = it->value.GetBool();
+		if (success) {
+			updateStatus(msg, session);
+		}
+		return success;
+	}
 	return false;
+}
+
+void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
+	//auto it = doc.FindMember("");
+	//if (it != doc.MemberEnd() && it->value.IsBool()) {
+	//}
+	bool keyboardOpen = msg["keyboardOpen"].GetBool();
+	bool isComposing = msg["isComposing"].GetBool();
+	bool showCandidates = msg["showCandidates"].GetBool();
+	std::wstring compositionString = utf8ToUtf16(msg["compositionString"].GetString());
+	std::wstring commitString = utf8ToUtf16(msg["commitString"].GetString());
+	// candidateList = msg["candidateList"];
+	int compositionCursor = msg["compositionCursor"].GetInt();
+
+	if (session != nullptr) { // if an edit session is available
+		if (!commitString.empty()) {
+			if (!textService_->isComposing()) {
+				textService_->startComposition(session->context());
+			}
+			textService_->setCompositionString(session, commitString.c_str(), commitString.length());
+			textService_->endComposition(session->context());
+		}
+
+		if (!compositionString.empty()) {
+			if (!textService_->isComposing()) {
+				textService_->startComposition(session->context());
+			}
+			textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
+		}
+	}
 }
 
 // handlers for the text service
@@ -101,7 +136,7 @@ void Client::onActivate() {
 	writer.EndObject();
 	s.GetString();
 	Document ret = sendRequest(s.GetString(), sn);
-	if (isReplyValid(ret)) {
+	if (handleReply(ret)) {
 	}
 }
 
@@ -116,7 +151,7 @@ void Client::onDeactivate() {
 
 	writer.EndObject();
 	Document ret = sendRequest(s.GetString(), sn);
-	if (isReplyValid(ret)) {
+	if (handleReply(ret)) {
 	}
 }
 
@@ -134,7 +169,7 @@ bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
 
 	writer.EndObject();
 	Document ret = sendRequest(s.GetString(), sn);
-	if (isReplyValid(ret)) {
+	if (handleReply(ret)) {
 		return ret["return"].GetBool();
 	}
 	return false;
@@ -154,7 +189,7 @@ bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 
 	writer.EndObject();
 	Document ret = sendRequest(s.GetString(), sn);
-	if (isReplyValid(ret)) {
+	if (handleReply(ret, session)) {
 		return ret["return"].GetBool();
 	}
 	return false;
@@ -174,7 +209,7 @@ bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
 
 	writer.EndObject();
 	Document ret = sendRequest(s.GetString(), sn);
-	if (isReplyValid(ret)) {
+	if (handleReply(ret)) {
 		return ret["return"].GetBool();
 	}
 	return false;
@@ -194,7 +229,7 @@ bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 
 	writer.EndObject();
 	Document ret = sendRequest(s.GetString(), sn);
-	if (isReplyValid(ret)) {
+	if (handleReply(ret, session)) {
 		return ret["return"].GetBool();
 	}
 	return false;
@@ -218,7 +253,7 @@ bool Client::onPreservedKey(const GUID& guid) {
 
 		writer.EndObject();
 		Document ret = sendRequest(s.GetString(), sn);
-		if (isReplyValid(ret)) {
+		if (handleReply(ret)) {
 			return ret["return"].GetBool();
 		}
 	}
@@ -237,7 +272,7 @@ bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
 
 	writer.EndObject();
 	Document ret = sendRequest(s.GetString(), sn);
-	if (isReplyValid(ret)) {
+	if (handleReply(ret)) {
 		return ret["return"].GetBool();
 	}
 	return false;
@@ -262,7 +297,7 @@ void Client::onCompartmentChanged(const GUID& key) {
 
 		writer.EndObject();
 		Document ret = sendRequest(s.GetString(), sn);
-		if (isReplyValid(ret)) {
+		if (handleReply(ret)) {
 		}
 	}
 }
@@ -283,7 +318,7 @@ void Client::onKeyboardStatusChanged(bool opened) {
 
 	writer.EndObject();
 	Document ret = sendRequest(s.GetString(), sn);
-	if (isReplyValid(ret)) {
+	if (handleReply(ret)) {
 	}
 }
 
@@ -303,7 +338,7 @@ void Client::onCompositionTerminated(bool forced) {
 
 	writer.EndObject();
 	Document ret = sendRequest(s.GetString(), sn);
-	if (isReplyValid(ret)) {
+	if (handleReply(ret)) {
 	}
 }
 
@@ -376,7 +411,7 @@ void Client::init() {
 
 	writer.EndObject();
 	Document ret = sendRequest(s.GetString(), sn);
-	if (isReplyValid(ret)) {
+	if (handleReply(ret)) {
 	}
 }
 

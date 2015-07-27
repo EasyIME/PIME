@@ -111,8 +111,8 @@ HRESULT ImeModule::registerLangProfiles(LangProfileInfo* langs, int count) {
 		for(int i = 0; i < count; ++i) {
 			LangProfileInfo& lang = langs[i];
 			if(inputProcessProfiles->Register(textServiceClsid_) == S_OK) {
-				wstring t = (lang.name + L"\n" + lang.iconFile + L"\n....");
-				::MessageBox(0, t.c_str(), 0, 0);
+				//wstring t = (lang.name + L"\n" + lang.iconFile + L"\n....");
+				//::MessageBox(0, t.c_str(), 0, 0);
 				if(inputProcessProfiles->AddLanguageProfile(textServiceClsid_, lang.languageId, lang.profileGuid,
 					lang.name.c_str(), -1, lang.iconFile.empty() ? NULL : lang.iconFile.c_str(),
 					lang.iconFile.length(), lang.iconIndex) != S_OK) {

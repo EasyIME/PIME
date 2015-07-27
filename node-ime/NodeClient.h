@@ -75,7 +75,8 @@ private:
 
 	void keyEventToJson(rapidjson::Writer<rapidjson::StringBuffer>& writer, Ime::KeyEvent& keyEvent);
 	int addSeqNum(rapidjson::Writer<rapidjson::StringBuffer>& writer);
-	bool isReplyValid(rapidjson::Document& doc);
+	bool handleReply(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
+	void updateStatus(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
 
 	TextService* textService_;
 	HANDLE pipe_;

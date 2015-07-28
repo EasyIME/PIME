@@ -31,13 +31,11 @@ class TextService:
         self.client = client
 
     def init(self, msg):
-        self.id = msg["id"]
         self.isWindows8Above = msg["isWindows8Above"]
         self.isMetroApp = msg["isMetroApp"]
         self.isUiLess = msg["isUiLess"]
         self.isUiLess = msg["isConsole"]
         self.keyboardOpen = False
-        self.isComposing = False
         self.showCandidates = False
 
         self.compositionString = ""
@@ -52,16 +50,12 @@ class TextService:
         if "isComposing" in msg:
             self.keyboardOpen = msg["isComposing"]
         if "showCandidates" in msg:
-            self.keyboardOpen = msg["showCandidates"]
-
-        # FIXME: sync the status from client properly
-        self.commitString = ""
+            self.showCandidates = msg["showCandidates"]
 
 
     # encode current status into an json object
     def getStatus(self, msg):
         msg["keyboardOpen"] = self.keyboardOpen
-        msg["isComposing"] = self.isComposing
         msg["showCandidates"] = self.showCandidates
         msg["compositionString"] = self.compositionString
         msg["commitString"] = self.commitString
@@ -95,7 +89,7 @@ class TextService:
         pass
 
     def onCompositionTerminated(self):
-        pass
+        self.commitString = ""
 
     def onKeyboardStatusChanged(self):
         pass
@@ -128,17 +122,11 @@ class TextService:
     def setKeyboardOpen(self, kb_open):
         self.keyboardOpen = kb_open
 
-    def startComposition(self):
-        self.isComposing = True
-
-    def endComposition(self):
-        self.isComposing = False
-
     def setCompositionString(self, s):
         self.compositionString = s
 
     def setCompositionCursor(self, pos):
-        self.compositionCursor = s
+        self.compositionCursor = pos
 
     def setCommitString(self, s):
         self.commitString = s
@@ -146,6 +134,8 @@ class TextService:
     def setCandidateList(self, cand):
         self.candidateList = cand
 
+    def isComposing(self):
+        return (self.compositionString != "")
 
 
 class DemoTextService(TextService):
@@ -153,35 +143,38 @@ class DemoTextService(TextService):
         TextService.__init__(self, client)
 
     def onActivate(self):
-        pass
+        TextService.onActivate(self)
+        msg = {
+            "test":"value"
+        }
+        self.client.sendRequest(msg)
 
     def onDeactivate(self):
-        pass
+        TextService.onDeactivate(self)
 
     def filterKeyDown(self, keyEvent):
-        #if keyEvent.isKeyToggled(VK_CAPITAL):
-        #    return False
-        if not self.isComposing:
-            if keyEvent.keyCode == VK_RETURN:
+        if not self.isComposing():
+            if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
                 return False
+        msg = {
+            "test2":"value2"
+        }
+        self.client.sendRequest(msg)
         return True
 
     def onKeyDown(self, keyEvent):
-        #if keyEvent.isKeyToggled(VK_CAPITAL):
-        #    return False
-        if self.isComposing:
-            if keyEvent.keyCode == VK_RETURN or len(self.compositionString) > 10:
-                self.setCommitString(self.compositionString)
-                self.setCompositionString("")
-                self.endComposition()
-            else:
-                self.setCompositionString(self.compositionString + "喵")
-        else:
-            if keyEvent.keyCode == VK_RETURN:
+        if not self.isComposing():
+            if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
                 return False
-            else:
-                if not self.isComposing:
-                    self.startComposition()
+
+        if keyEvent.keyCode == VK_RETURN or len(self.compositionString) > 10:
+            self.setCommitString(self.compositionString)
+            self.setCompositionString("")
+        elif keyEvent.keyCode == VK_BACK and self.compositionString != "":
+            self.setCompositionString(self.compositionString[:-1])
+        else:
+            self.setCompositionString(self.compositionString + "喵")
+        self.setCompositionCursor(len(self.compositionString))
 
         return True
 
@@ -192,8 +185,7 @@ class DemoTextService(TextService):
         return False
 
     def onKeyboardStatusChanged(self):
-        pass
-
+        TextService.onKeyboardStatusChanged(self)
 
 
 
@@ -204,12 +196,18 @@ class Client:
         self.service = DemoTextService(self) # FIXME: allow different types of services here
 
 
-    def handle_request(self, msg): # msg is a json object
+    def sendRequest(self, msg):
+        msg = json.dumps(msg)
+        reply = TransactNamedPipe(self.pipe, bytes(msg, "UTF-8"), 1024, None)
+        print("reply:", reply)
+
+
+    def handleRequest(self, msg): # msg is a json object
         success = True
         reply = dict()
         ret = None
         method = msg["method"]
-        print("handle message: ", method)
+        print("handle message: ", method, msg["seqNum"])
 
         service = self.service
         service.updateStatus(msg)
@@ -247,6 +245,7 @@ class Client:
         elif method == "onLangProfileDeactivated":
             pass
         reply["success"] = success
+        reply["seqNum"] = msg["seqNum"] # reply with sequence number added
         if success:
             service.getStatus(reply)
 
@@ -294,7 +293,7 @@ class ClientThread(threading.Thread):
                 # print("received msg", success, msg)
 
                 server.acquire_lock() # acquire a lock
-                reply = client.handle_request(msg)
+                reply = client.handleRequest(msg)
                 server.release_lock() # release the lock
 
                 reply = json.dumps(reply) # convert object to json

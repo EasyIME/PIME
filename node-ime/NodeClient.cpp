@@ -98,7 +98,6 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 	//if (it != doc.MemberEnd() && it->value.IsBool()) {
 	//}
 	bool keyboardOpen = msg["keyboardOpen"].GetBool();
-	bool isComposing = msg["isComposing"].GetBool();
 	bool showCandidates = msg["showCandidates"].GetBool();
 	std::wstring compositionString = utf8ToUtf16(msg["compositionString"].GetString());
 	std::wstring commitString = utf8ToUtf16(msg["commitString"].GetString());
@@ -343,12 +342,12 @@ void Client::onCompositionTerminated(bool forced) {
 }
 
 void Client::onLangProfileActivated(REFIID lang) {
-	/*
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
 		StringBuffer s;
 		Writer<StringBuffer> writer(s);
 		writer.StartObject();
+		int sn = addSeqNum(writer);
 
 		writer.String("method");
 		writer.String("onLangProfileActivated");
@@ -358,18 +357,19 @@ void Client::onLangProfileActivated(REFIID lang) {
 		::CoTaskMemFree(str);
 
 		writer.EndObject();
-		string ret = sendRequest(s.GetString());
+		Document ret = sendRequest(s.GetString(), sn);
+		if (handleReply(ret)) {
+		}
 	}
-	*/
 }
 
 void Client::onLangProfileDeactivated(REFIID lang) {
-	/*
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
 		StringBuffer s;
 		Writer<StringBuffer> writer(s);
 		writer.StartObject();
+		int sn = addSeqNum(writer);
 
 		writer.String("method");
 		writer.String("onLangProfileDeactivated");
@@ -379,9 +379,10 @@ void Client::onLangProfileDeactivated(REFIID lang) {
 		::CoTaskMemFree(str);
 
 		writer.EndObject();
-		string ret = sendRequest(s.GetString());
+		Document ret = sendRequest(s.GetString(), sn);
+		if (handleReply(ret)) {
+		}
 	}
-	*/
 }
 
 void Client::init() {
@@ -393,9 +394,6 @@ void Client::init() {
 
 	writer.String("method");
 	writer.String("init");
-
-	writer.String("id"); // id of the input method
-	writer.String("");
 
 	writer.String("isWindows8Above");
 	writer.Bool(textService_->imeModule()->isWindows8Above());
@@ -415,9 +413,47 @@ void Client::init() {
 	}
 }
 
+bool Client::handleServerRequest(rapidjson::Document& msg) {
+	// reply to the request
+	StringBuffer s;
+	Writer<StringBuffer> writer(s);
+	writer.StartObject();
+
+	// parse the request
+	bool success = true;
+	DWORD wlen;
+	auto it = msg.FindMember("method");
+	if (it != msg.MemberEnd()) {
+		string method = it->value.GetString();
+		if (method == "setCompositionString") {
+
+		}
+		else if (method == "setCompositionCursor") {
+		}
+		else if (method == "startComposition") {
+		}
+		else if (method == "endComposition") {
+		}
+		else if (method == "isComposing") {
+		}
+	}
+	else { // unknown format, error!
+		success = false;
+	}
+
+	writer.String("success");
+	writer.Bool(success);
+	writer.EndObject();
+
+	//write the reply to the servver
+	return (bool)WriteFile(pipe_, s.GetString(), s.GetSize(), &wlen, NULL);
+}
+
 Document Client::sendRequest(std::string req, int seqNo) {
 	std::string ret;
+	Document d;
 	if (connectPipe()) { // ensure that we're connected
+#if 0
 		char buf[1024];
 		DWORD rlen = 0;
 		if(TransactNamedPipe(pipe_, (void*)req.c_str(), req.length(), buf, 1023, &rlen, NULL)) {
@@ -439,9 +475,42 @@ Document Client::sendRequest(std::string req, int seqNo) {
 				ret += buf;
 			}
 		}
+#endif
+
+		DWORD wlen;
+		if (WriteFile(pipe_, (void*)(req.c_str()), req.length(), &wlen, NULL)) {
+			bool readMsg = true;
+			char buf[1024];
+			DWORD rlen = 0;
+			while (readMsg) {
+				for (;;) {
+					BOOL success = ReadFile(pipe_, buf, 1023, &rlen, NULL);
+					if (success || (GetLastError() == ERROR_MORE_DATA)) {
+						buf[rlen] = '\0';
+						ret += buf;
+					}
+					if (GetLastError() != ERROR_MORE_DATA)
+						break;
+				}
+				// check if the message is a return value of the current request
+				d.Parse(ret.c_str());
+				auto it = d.FindMember("seqNum");
+				if (it != d.MemberEnd() && it->value.GetInt() == seqNo) {
+					readMsg = false;
+				}
+				else {
+					// dispatch the request from the server
+					handleServerRequest(d);
+				}
+				ret.clear();
+			}
+		}
+		if (GetLastError() == ERROR_BROKEN_PIPE) {
+			closePipe();
+		}
 	}
-	Document d;
-	d.Parse(ret.c_str());
+	// Document d;
+	// d.Parse(ret.c_str());
 	return d;
 }
 

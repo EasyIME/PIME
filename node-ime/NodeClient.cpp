@@ -93,34 +93,6 @@ bool Client::handleReply(rapidjson::Document& msg, Ime::EditSession* session) {
 	return false;
 }
 
-void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
-	//auto it = doc.FindMember("");
-	//if (it != doc.MemberEnd() && it->value.IsBool()) {
-	//}
-	bool keyboardOpen = msg["keyboardOpen"].GetBool();
-	bool showCandidates = msg["showCandidates"].GetBool();
-	std::wstring compositionString = utf8ToUtf16(msg["compositionString"].GetString());
-	std::wstring commitString = utf8ToUtf16(msg["commitString"].GetString());
-	// candidateList = msg["candidateList"];
-	int compositionCursor = msg["compositionCursor"].GetInt();
-
-	if (session != nullptr) { // if an edit session is available
-		if (!commitString.empty()) {
-			if (!textService_->isComposing()) {
-				textService_->startComposition(session->context());
-			}
-			textService_->setCompositionString(session, commitString.c_str(), commitString.length());
-			textService_->endComposition(session->context());
-		}
-
-		if (!compositionString.empty()) {
-			if (!textService_->isComposing()) {
-				textService_->startComposition(session->context());
-			}
-			textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
-		}
-	}
-}
 
 // handlers for the text service
 void Client::onActivate() {
@@ -187,7 +159,7 @@ bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+	Document ret = sendRequest(s.GetString(), sn, session);
 	if (handleReply(ret, session)) {
 		return ret["return"].GetBool();
 	}
@@ -227,7 +199,7 @@ bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+	Document ret = sendRequest(s.GetString(), sn, session);
 	if (handleReply(ret, session)) {
 		return ret["return"].GetBool();
 	}
@@ -413,7 +385,39 @@ void Client::init() {
 	}
 }
 
-bool Client::handleServerRequest(rapidjson::Document& msg) {
+
+
+void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
+#if 0
+	//auto it = doc.FindMember("");
+	//if (it != doc.MemberEnd() && it->value.IsBool()) {
+	//}
+	bool keyboardOpen = msg["keyboardOpen"].GetBool();
+	bool showCandidates = msg["showCandidates"].GetBool();
+	std::wstring compositionString = utf8ToUtf16(msg["compositionString"].GetString());
+	std::wstring commitString = utf8ToUtf16(msg["commitString"].GetString());
+	// candidateList = msg["candidateList"];
+	int compositionCursor = msg["compositionCursor"].GetInt();
+
+	if (session != nullptr) { // if an edit session is available
+		if (!commitString.empty()) {
+			if (!textService_->isComposing()) {
+			}
+			textService_->setCompositionString(session, commitString.c_str(), commitString.length());
+			textService_->endComposition(session->context());
+		}
+
+		if (!compositionString.empty()) {
+			if (!textService_->isComposing()) {
+				textService_->startComposition(session->context());
+			}
+			textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
+		}
+	}
+#endif
+}
+
+bool Client::handleServerRequest(rapidjson::Document& msg, Ime::EditSession* session) {
 	// reply to the request
 	StringBuffer s;
 	Writer<StringBuffer> writer(s);
@@ -426,15 +430,30 @@ bool Client::handleServerRequest(rapidjson::Document& msg) {
 	if (it != msg.MemberEnd()) {
 		string method = it->value.GetString();
 		if (method == "setCompositionString") {
-
+			if (session != nullptr) {
+				wstring str = utf8ToUtf16(msg["str"].GetString());
+				textService_->setCompositionString(session, str.c_str(), str.length());
+			}
 		}
 		else if (method == "setCompositionCursor") {
+			if (session != nullptr) {
+				int pos = msg["pos"].GetInt();
+				textService_->setCompositionCursor(session, pos);
+			}
 		}
 		else if (method == "startComposition") {
+			if (session != nullptr) {
+				textService_->startComposition(session->context());
+			}
 		}
 		else if (method == "endComposition") {
+			if (session != nullptr) {
+				textService_->endComposition(session->context());
+			}
 		}
 		else if (method == "isComposing") {
+			writer.String("return");
+			writer.Bool(textService_->isComposing());
 		}
 	}
 	else { // unknown format, error!
@@ -449,7 +468,7 @@ bool Client::handleServerRequest(rapidjson::Document& msg) {
 	return (bool)WriteFile(pipe_, s.GetString(), s.GetSize(), &wlen, NULL);
 }
 
-Document Client::sendRequest(std::string req, int seqNo) {
+Document Client::sendRequest(std::string req, int seqNo, Ime::EditSession* session) {
 	std::string ret;
 	Document d;
 	if (connectPipe()) { // ensure that we're connected
@@ -500,7 +519,7 @@ Document Client::sendRequest(std::string req, int seqNo) {
 				}
 				else {
 					// dispatch the request from the server
-					handleServerRequest(d);
+					handleServerRequest(d, session);
 				}
 				ret.clear();
 			}

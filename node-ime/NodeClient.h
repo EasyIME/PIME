@@ -69,14 +69,14 @@ public:
 
 private:
 	bool connectPipe();
-	rapidjson::Document sendRequest(std::string req, int seqNo);
+	rapidjson::Document sendRequest(std::string req, int seqNo, Ime::EditSession* session = nullptr);
 	void closePipe();
 	void init();
 
 	void keyEventToJson(rapidjson::Writer<rapidjson::StringBuffer>& writer, Ime::KeyEvent& keyEvent);
 	int addSeqNum(rapidjson::Writer<rapidjson::StringBuffer>& writer);
 	bool handleReply(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
-	bool handleServerRequest(rapidjson::Document& msg);
+	bool handleServerRequest(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
 	void updateStatus(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
 
 	TextService* textService_;

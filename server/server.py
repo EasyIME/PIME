@@ -38,7 +38,7 @@ class TextService:
         self.keyboardOpen = False
         self.showCandidates = False
 
-        self.compositionString = ""
+        self.compStr = ""
         self.commitString = ""
         self.candidateList = []
         self.compositionCursor = 0
@@ -57,7 +57,7 @@ class TextService:
     def getStatus(self, msg):
         msg["keyboardOpen"] = self.keyboardOpen
         msg["showCandidates"] = self.showCandidates
-        msg["compositionString"] = self.compositionString
+        msg["compositionString"] = self.compStr
         msg["commitString"] = self.commitString
         msg["candidateList"] = self.candidateList
         msg["compositionCursor"] = self.compositionCursor
@@ -117,25 +117,52 @@ class TextService:
 
     # is keyboard opened for the whole thread
     def isKeyboardOpened(self):
-        return self.keyboardOpen
+        msg = {"method": "isKeyboardOpened"}
+        reply = self.client.sendRequest(msg)
+        if reply:
+            return reply["return"]
+        return False
+
+
+    def startComposition(self):
+        msg = {"method": "startComposition"}
+        reply = self.client.sendRequest(msg)
+
+
+    def endComposition(self):
+        msg = {"method": "endComposition"}
+        reply = self.client.sendRequest(msg)
+
 
     def setKeyboardOpen(self, kb_open):
-        self.keyboardOpen = kb_open
+        msg = {
+            "method": "setKeyboardOpen",
+            "open": kb_open
+        }
+        reply = self.client.sendRequest(msg)
 
     def setCompositionString(self, s):
-        self.compositionString = s
+        msg = {
+            "method": "setCompositionString",
+            "str": s
+        }
+        reply = self.client.sendRequest(msg)
 
     def setCompositionCursor(self, pos):
-        self.compositionCursor = pos
-
-    def setCommitString(self, s):
-        self.commitString = s
+        msg = {
+            "method": "setCompositionCursor",
+            "pos": pos
+        }
+        reply = self.client.sendRequest(msg)
 
     def setCandidateList(self, cand):
         self.candidateList = cand
 
     def isComposing(self):
-        return (self.compositionString != "")
+        msg = {"method": "isComposing"}
+        reply = self.client.sendRequest(msg)
+        if reply:
+            return reply["return"]
 
 
 class DemoTextService(TextService):
@@ -144,10 +171,6 @@ class DemoTextService(TextService):
 
     def onActivate(self):
         TextService.onActivate(self)
-        msg = {
-            "test":"value"
-        }
-        self.client.sendRequest(msg)
 
     def onDeactivate(self):
         TextService.onDeactivate(self)
@@ -156,10 +179,6 @@ class DemoTextService(TextService):
         if not self.isComposing():
             if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
                 return False
-        msg = {
-            "test2":"value2"
-        }
-        self.client.sendRequest(msg)
         return True
 
     def onKeyDown(self, keyEvent):
@@ -167,14 +186,26 @@ class DemoTextService(TextService):
             if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
                 return False
 
-        if keyEvent.keyCode == VK_RETURN or len(self.compositionString) > 10:
-            self.setCommitString(self.compositionString)
-            self.setCompositionString("")
-        elif keyEvent.keyCode == VK_BACK and self.compositionString != "":
-            self.setCompositionString(self.compositionString[:-1])
+        if keyEvent.keyCode == VK_RETURN or len(self.compStr) > 10:
+            # commit the string in the composition buffer
+            if not self.isComposing():
+                self.startComposition()
+            self.setCompositionString(self.compStr)
+            self.endComposition()
+            self.compStr = ""
+        elif keyEvent.keyCode == VK_BACK and self.compStr != "":
+            self.compStr = self.compStr[:-1]
         else:
-            self.setCompositionString(self.compositionString + "喵")
-        self.setCompositionCursor(len(self.compositionString))
+            self.compStr += "喵"
+
+        if self.compStr:
+            if not self.isComposing():
+                self.startComposition()
+            self.setCompositionString(self.compStr)
+            self.setCompositionCursor(len(self.compStr))
+        else:
+            if self.isComposing():
+                self.endComposition()
 
         return True
 
@@ -198,13 +229,33 @@ class Client:
 
     def sendRequest(self, msg):
         msg = json.dumps(msg)
-        reply = TransactNamedPipe(self.pipe, bytes(msg, "UTF-8"), 1024, None)
-        print("reply:", reply)
+        (success, data) = TransactNamedPipe(self.pipe, bytes(msg, "UTF-8"), 1024, None)
+        reply = ''
+        read_more = True
+        while read_more:
+            data = data.decode("UTF-8")
+            if success == 0: # success
+                reply += data
+                read_more = False
+            elif success == ERROR_MORE_DATA:
+                reply += data
+                (success, data) = ReadFile(self.pipe, 1024, None)
+            elif success == ERROR_IO_PENDING:
+                pass
+            else: # the pipe is broken
+                print("broken pipe")
+                read_more = False
+
+        reply = json.loads(reply)
+        print(msg, " => ", reply)
+        if reply["success"]:
+            return reply
+        return None
 
 
     def handleRequest(self, msg): # msg is a json object
         success = True
-        reply = dict()
+        reply = {}
         ret = None
         method = msg["method"]
         print("handle message: ", method, msg["seqNum"])

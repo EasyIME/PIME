@@ -101,19 +101,18 @@ TextService::TextService(ImeModule* module):
 	addCompartmentMonitor(g_configChangedGuid, true);
 
 	// font for candidate and mesasge windows
-#if 0
 	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 	LOGFONT lf;
 	GetObject(font_, sizeof(lf), &lf);
-	lf.lfHeight = config().fontSize;
+	// lf.lfHeight = config().fontSize;
+	lf.lfHeight = 14; // FIXME: make this configurable
 	lf.lfWeight = FW_NORMAL;
 	font_ = CreateFontIndirect(&lf);
-#endif
 }
 
 TextService::~TextService(void) {
-	//if(client_)
-	//	delete client_;
+	if(client_)
+		delete client_;
 
 	if(popupMenu_)
 		::DestroyMenu(popupMenu_);
@@ -278,6 +277,30 @@ void TextService::onLangProfileDeactivated(REFIID lang) {
 		client_->onLangProfileDeactivated(lang);
 }
 
+void TextService::updateCandidates(Ime::EditSession* session) {
+	assert(candidateWindow_);
+	candidateWindow_->clear();
+	// FIXME: make this configurable
+	candidateWindow_->setUseCursor(false);
+	candidateWindow_->setCandPerRow(1);
+
+	wchar_t selKeys[] = L"1234567890"; // keys used to select candidates
+	int n = 9; // candidate string shown per page
+	int i;
+	for (i = 0; i < n && i < candidates_.size(); ++i) {
+		candidateWindow_->add(candidates_[i], selKeys[i]);
+	}
+	candidateWindow_->recalculateSize();
+	candidateWindow_->refresh();
+
+	RECT textRect;
+	// get the position of composition area from TSF
+	if (selectionRect(session, &textRect)) {
+		// FIXME: where should we put the candidate window?
+		candidateWindow_->move(textRect.left, textRect.bottom);
+	}
+}
+
 // show candidate list window
 void TextService::showCandidates(Ime::EditSession* session) {
 	// TODO: implement ITfCandidateListUIElement interface to support UI less mode
@@ -295,7 +318,7 @@ void TextService::showCandidates(Ime::EditSession* session) {
 		candidateWindow_ = new Ime::CandidateWindow(this, session);
 		candidateWindow_->setFont(font_);
 	}
-	// updateCandidates(session);
+	updateCandidates(session);
 	candidateWindow_->show();
 	showingCandidates_ = true;
 }

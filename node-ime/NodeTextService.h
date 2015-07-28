@@ -32,6 +32,7 @@
 namespace Node {
 
 class TextService: public Ime::TextService {
+	friend class Client;
 public:
 	TextService(ImeModule* module);
 	virtual ~TextService(void);
@@ -98,6 +99,7 @@ private:
 private:
 	Ime::CandidateWindow* candidateWindow_;
 	bool showingCandidates_;
+	std::vector<std::wstring> candidates_; // current candidate list
 	Ime::MessageWindow* messageWindow_;
 	UINT messageTimerId_;
 	HFONT font_;

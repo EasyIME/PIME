@@ -102,7 +102,7 @@ STDAPI DllRegisterServer(void) {
 		result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
 	if (result == S_OK) { // program files folder is found
 		dirPath = path;
-		dirPath += L"\\PIme\\server\\input-methods";
+		dirPath += L"\\PIme\\server\\input_methods";
 		// scan the dir for lang profile definition files
 		WIN32_FIND_DATA findData = {0};
 		HANDLE hFind = ::FindFirstFile((dirPath + L"\\*").c_str(), &findData);

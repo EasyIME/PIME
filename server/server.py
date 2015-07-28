@@ -175,9 +175,17 @@ class DemoTextService(TextService):
             self.setCompositionString("")
         elif keyEvent.keyCode == VK_BACK and self.compositionString != "":
             self.setCompositionString(self.compositionString[:-1])
+        elif keyEvent.keyCode == VK_LEFT:
+            i = self.compositionCursor - 1
+            if i >= 0:
+                self.setCompositionCursor(i)
+        elif keyEvent.keyCode == VK_RIGHT:
+            i = self.compositionCursor + 1
+            if i <= len(self.compositionString):
+                self.setCompositionCursor(i)
         else:
             self.setCompositionString(self.compositionString + "喵")
-        self.setCompositionCursor(len(self.compositionString))
+            self.setCompositionCursor(len(self.compositionString))
 
         return True
 

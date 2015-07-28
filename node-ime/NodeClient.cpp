@@ -119,6 +119,7 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 				textService_->startComposition(session->context());
 			}
 			textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
+			textService_->setCompositionCursor(session, compositionCursor);
 		}
 
 		// handle candidates

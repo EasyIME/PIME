@@ -32,19 +32,31 @@ using namespace rapidjson;
 namespace Node {
 
 static wchar_t g_pipeName[] = L"\\\\.\\pipe\\mynamedpipe";
+static const UINT WM_DISPATCH_QUEUED_MESSAGES = WM_APP + 1;
 
 Client::Client(TextService* service):
 	textService_(service),
-	pipe_(INVALID_HANDLE_VALUE) {
+	eventWindow_(NULL),
+	pipe_(INVALID_HANDLE_VALUE),
+	pipeThread_(INVALID_HANDLE_VALUE),
+	pipeLock_(CreateMutex(NULL, FALSE, NULL)),
+	pendingMessage_(false) {
 
 	static bool init_srand = false;
 	if (!init_srand) {
 		srand(time(NULL));
 	}
+
+	createEventWindow();
 }
 
 Client::~Client(void) {
 	closePipe();
+	if (pipeLock_ != INVALID_HANDLE_VALUE) {
+		CloseHandle(pipeLock_);
+	}
+	if (eventWindow_)
+		DestroyWindow(eventWindow_);
 }
 
 // pack a keyEvent object into a json value
@@ -86,41 +98,11 @@ bool Client::handleReply(rapidjson::Document& msg, Ime::EditSession* session) {
 	if (it != msg.MemberEnd() && it->value.IsBool()) {
 		bool success = it->value.GetBool();
 		if (success) {
-			updateStatus(msg, session);
+			
 		}
 		return success;
 	}
 	return false;
-}
-
-void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
-	//auto it = doc.FindMember("");
-	//if (it != doc.MemberEnd() && it->value.IsBool()) {
-	//}
-	bool keyboardOpen = msg["keyboardOpen"].GetBool();
-	bool isComposing = msg["isComposing"].GetBool();
-	bool showCandidates = msg["showCandidates"].GetBool();
-	std::wstring compositionString = utf8ToUtf16(msg["compositionString"].GetString());
-	std::wstring commitString = utf8ToUtf16(msg["commitString"].GetString());
-	// candidateList = msg["candidateList"];
-	int compositionCursor = msg["compositionCursor"].GetInt();
-
-	if (session != nullptr) { // if an edit session is available
-		if (!commitString.empty()) {
-			if (!textService_->isComposing()) {
-				textService_->startComposition(session->context());
-			}
-			textService_->setCompositionString(session, commitString.c_str(), commitString.length());
-			textService_->endComposition(session->context());
-		}
-
-		if (!compositionString.empty()) {
-			if (!textService_->isComposing()) {
-				textService_->startComposition(session->context());
-			}
-			textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
-		}
-	}
 }
 
 // handlers for the text service
@@ -135,8 +117,10 @@ void Client::onActivate() {
 
 	writer.EndObject();
 	s.GetString();
-	Document ret = sendRequest(s.GetString(), sn);
-	if (handleReply(ret)) {
+	if (Document* ret = sendRequest(s.GetString(), sn)) {
+		if (handleReply(*ret)) {
+		}
+		delete ret;
 	}
 }
 
@@ -150,8 +134,10 @@ void Client::onDeactivate() {
 	writer.String("onDeactivate");
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
-	if (handleReply(ret)) {
+	if (Document* ret = sendRequest(s.GetString(), sn)) {
+		if (handleReply(*ret)) {
+		}
+		delete ret;
 	}
 }
 
@@ -168,9 +154,12 @@ bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
-	if (handleReply(ret)) {
-		return ret["return"].GetBool();
+	if (Document* ret = sendRequest(s.GetString(), sn)) {
+		auto& reply = *ret;
+		if (handleReply(reply)) {
+			return reply["return"].GetBool();
+		}
+		delete ret;
 	}
 	return false;
 }
@@ -188,9 +177,12 @@ bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
-	if (handleReply(ret, session)) {
-		return ret["return"].GetBool();
+	if (Document* ret = sendRequest(s.GetString(), sn)) {
+		auto& reply = *ret;
+		if (handleReply(reply)) {
+			return reply["return"].GetBool();
+		}
+		delete ret;
 	}
 	return false;
 }
@@ -208,9 +200,12 @@ bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
-	if (handleReply(ret)) {
-		return ret["return"].GetBool();
+	if (Document* ret = sendRequest(s.GetString(), sn)) {
+		auto& reply = *ret;
+		if (handleReply(reply)) {
+			return reply["return"].GetBool();
+		}
+		delete ret;
 	}
 	return false;
 }
@@ -228,9 +223,12 @@ bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
-	if (handleReply(ret, session)) {
-		return ret["return"].GetBool();
+	if (Document* ret = sendRequest(s.GetString(), sn)) {
+		auto& reply = *ret;
+		if (handleReply(reply)) {
+			return reply["return"].GetBool();
+		}
+		delete ret;
 	}
 	return false;
 }
@@ -252,9 +250,12 @@ bool Client::onPreservedKey(const GUID& guid) {
 		::CoTaskMemFree(str);
 
 		writer.EndObject();
-		Document ret = sendRequest(s.GetString(), sn);
-		if (handleReply(ret)) {
-			return ret["return"].GetBool();
+		if (Document* ret = sendRequest(s.GetString(), sn)) {
+			auto& reply = *ret;
+			if (handleReply(reply)) {
+				return reply["return"].GetBool();
+			}
+			delete ret;
 		}
 	}
 	return false;
@@ -271,9 +272,12 @@ bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
 	writer.String("onCommand");
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
-	if (handleReply(ret)) {
-		return ret["return"].GetBool();
+	if (Document* ret = sendRequest(s.GetString(), sn)) {
+		auto& reply = *ret;
+		if (handleReply(reply)) {
+			return reply["return"].GetBool();
+		}
+		delete ret;
 	}
 	return false;
 }
@@ -296,8 +300,10 @@ void Client::onCompartmentChanged(const GUID& key) {
 		::CoTaskMemFree(str);
 
 		writer.EndObject();
-		Document ret = sendRequest(s.GetString(), sn);
-		if (handleReply(ret)) {
+		if (Document* ret = sendRequest(s.GetString(), sn)) {
+			if (handleReply(*ret)) {
+			}
+			delete ret;
 		}
 	}
 }
@@ -317,8 +323,10 @@ void Client::onKeyboardStatusChanged(bool opened) {
 	writer.Bool(opened);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
-	if (handleReply(ret)) {
+	if (Document* ret = sendRequest(s.GetString(), sn)) {
+		if (handleReply(*ret)) {
+		}
+		delete ret;
 	}
 }
 
@@ -337,8 +345,10 @@ void Client::onCompositionTerminated(bool forced) {
 	writer.Bool(forced);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
-	if (handleReply(ret)) {
+	if (Document* ret = sendRequest(s.GetString(), sn)) {
+		if (handleReply(*ret)) {
+		}
+		delete ret;
 	}
 }
 
@@ -410,14 +420,17 @@ void Client::init() {
 	writer.Bool(textService_->isConsole());
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
-	if (handleReply(ret)) {
+	if (Document* ret = sendRequest(s.GetString(), sn)) {
+		if (handleReply(*ret)) {
+		}
+		delete ret;
 	}
 }
 
-Document Client::sendRequest(std::string req, int seqNo) {
+Document* Client::sendRequest(std::string req, int seqNo) {
 	std::string ret;
 	if (connectPipe()) { // ensure that we're connected
+#if 0
 		char buf[1024];
 		DWORD rlen = 0;
 		if(TransactNamedPipe(pipe_, (void*)req.c_str(), req.length(), buf, 1023, &rlen, NULL)) {
@@ -439,10 +452,118 @@ Document Client::sendRequest(std::string req, int seqNo) {
 				ret += buf;
 			}
 		}
+#endif
+		DWORD wlen = 0;
+		if (WriteFile(pipe_, req.c_str(), req.length(), &wlen, NULL)) {
+			Document* reply = waitForReturn(seqNo);
+			return reply;
+		}
 	}
-	Document d;
-	d.Parse(ret.c_str());
-	return d;
+	//Document d;
+	//d.Parse(ret.c_str());
+	//return d;
+	return nullptr;
+}
+
+// running in worker thread
+DWORD Client::pipeThreadFunc() {
+	char buf[1024];
+	DWORD rlen = 0;
+	string msg;
+	for (;;) {
+		BOOL ret = ReadFile(pipe_, buf, sizeof(buf) - 1, &rlen, NULL);
+		if (ret) {
+			buf[rlen] = '\0';
+			msg += buf;
+		}
+		else {
+			switch (GetLastError()) {
+			default:
+				break;
+			}
+		}
+		WaitForSingleObject(pipeLock_, INFINITE); // lock the mutex
+		msgQueue_.push_back(msg); // push the msg to queue
+		if (!pendingMessage_) {
+			PostMessage(eventWindow_, WM_DISPATCH_QUEUED_MESSAGES, 0, 0); // schedule a event dispatch
+			pendingMessage_ = true;
+		}
+		ReleaseMutex(pipeLock_); // release the mutex
+		msg.clear();
+	}
+	// FIXME: cleanup
+}
+
+LRESULT Client::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
+	switch (msg) {
+	case WM_DISPATCH_QUEUED_MESSAGES: {
+		WaitForSingleObject(pipeLock_, INFINITE); // lock the mutex
+		while (!msgQueue_.empty()) {
+			// pop a message from the queue
+			string msg = msgQueue_.front();
+			msgQueue_.pop_front();
+			// TODO: dispatch the message
+			handleMessage(msg);
+		}
+		pendingMessage_ = false;
+		ReleaseMutex(pipeLock_); // release the mutex
+		return 0;
+	}
+	default:
+		break;
+	}
+	return DefWindowProc(eventWindow_, msg, wp, lp);
+}
+
+rapidjson::Document* Client::waitForReturn(int seqNo) {
+	MSG msg;
+	while (GetMessage(&msg, eventWindow_, 0, 0)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+		// check for return value
+		auto it = std::find_if(pendingReturn_.begin(), pendingReturn_.end(), [=](Document* doc) {
+			auto v = doc->FindMember("seqNum");
+			if (v != doc->MemberEnd() && v->value.GetInt() == seqNo)
+				return true;
+			return false;
+		});
+		if (it != pendingReturn_.end()) {
+			Document* doc = *it;
+			pendingReturn_.erase(it);
+			return doc;
+		}
+	}
+	return nullptr;
+}
+
+void Client::handleMessage(const std::string& msg) {
+	// TODO: handle the message received from the server
+	Document* doc = new Document();
+	doc->Parse(msg.c_str());
+	if (doc->FindMember("seqNum") != doc->MemberEnd()) {
+		pendingReturn_.push_back(doc);
+	}
+	else {
+		// dispatch method call
+		auto it = doc->FindMember("method");
+		if (it != doc->MemberEnd()) {
+
+		}
+		delete doc;
+	}
+}
+
+void Client::createEventWindow() {
+	static wchar_t wndClass[] = L"PIME_EventWindow";
+	HINSTANCE hinst = HINSTANCE(::GetModuleHandle(NULL));
+	WNDCLASS klass;
+	memset(&klass, 0, sizeof(klass));
+	klass.hInstance = hinst;
+	klass.lpfnWndProc = _wndProc;
+	klass.lpszClassName = wndClass;
+	RegisterClass(&klass);
+	eventWindow_ = CreateWindow(wndClass, NULL, 0, 0, 0, 0, 0, HWND_DESKTOP, NULL, hinst, NULL);
+	SetWindowLongPtr(eventWindow_, GWLP_USERDATA, LONG_PTR(this));
 }
 
 bool Client::connectPipe() {
@@ -464,6 +585,8 @@ bool Client::connectPipe() {
 			closePipe();
 			return false;
 		}
+		// create a thread to read the pipe
+		pipeThread_ = CreateThread(NULL, 0, _pipeThreadFunc, this, 0, NULL);
 		init(); // send initialization info to the server
 	}
 	return true;

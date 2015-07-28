@@ -23,6 +23,8 @@
 #include <libIME/TextService.h>
 #include <libIME/KeyEvent.h>
 #include <libIME/EditSession.h>
+#include <deque>
+#include <vector>
 
 #define RAPIDJSON_HAS_STDSTRING	1
 #include "rapidjson/document.h"
@@ -66,20 +68,41 @@ public:
 
 	void onLangProfileDeactivated(REFIID lang);
 
-
 private:
 	bool connectPipe();
-	rapidjson::Document sendRequest(std::string req, int seqNo);
+	rapidjson::Document* sendRequest(std::string req, int seqNo);
 	void closePipe();
 	void init();
 
 	void keyEventToJson(rapidjson::Writer<rapidjson::StringBuffer>& writer, Ime::KeyEvent& keyEvent);
 	int addSeqNum(rapidjson::Writer<rapidjson::StringBuffer>& writer);
 	bool handleReply(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
-	void updateStatus(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
 
+	static DWORD WINAPI _pipeThreadFunc(void* data) {
+		return static_cast<Client*>(data)->pipeThreadFunc();
+	}
+
+	DWORD pipeThreadFunc();
+	void createEventWindow();
+	static LRESULT CALLBACK _wndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
+		Client* client = reinterpret_cast<Client*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+		if (client)
+			return client->wndProc(msg, wp, lp);
+		return DefWindowProc(hwnd, msg, wp, lp);
+	}
+	LRESULT CALLBACK wndProc(UINT msg, WPARAM wp, LPARAM lp);
+	void handleMessage(const std::string& msg);
+	rapidjson::Document* waitForReturn(int seqNo);
+
+private:
 	TextService* textService_;
+	HWND eventWindow_;
 	HANDLE pipe_;
+	HANDLE pipeThread_;
+	std::deque<std::string> msgQueue_;
+	HANDLE pipeLock_;
+	bool pendingMessage_;
+	std::vector<rapidjson::Document*> pendingReturn_;
 };
 
 }

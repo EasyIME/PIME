@@ -54,9 +54,6 @@ class TextService:
         if "showCandidates" in msg:
             self.keyboardOpen = msg["showCandidates"]
 
-        # FIXME: sync the status from client properly
-        self.commitString = ""
-
 
     # encode current status into an json object
     def getStatus(self, msg):
@@ -95,7 +92,7 @@ class TextService:
         pass
 
     def onCompositionTerminated(self):
-        pass
+        self.commitString = ""
 
     def onKeyboardStatusChanged(self):
         pass
@@ -247,6 +244,7 @@ class Client:
         elif method == "onLangProfileDeactivated":
             pass
         reply["success"] = success
+        reply["seqNum"] = msg["seqNum"] # reply with sequence number added
         if success:
             service.getStatus(reply)
 

@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <vector>
 #include <ShlObj.h>
+#include <Shlwapi.h> // for PathIsRelative
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/filereadstream.h"
@@ -61,6 +62,12 @@ static Ime::LangProfileInfo langProfileFromJson(std::wstring file) {
 		LANGID langid = LANGIDFROMLCID(lcid);
 		// ::MessageBox(0, name.c_str(), 0, 0);
 		auto iconFile = utf8ToUtf16(json["icon"].GetString());
+		if (!iconFile.empty() && PathIsRelative(iconFile.c_str())) {
+			int p = file.rfind('\\');
+			if (p != file.npos) {
+				iconFile = file.substr(0, p + 1) + iconFile;
+			}
+		}
 		// ::MessageBox(0, iconFile.c_str(), 0, 0);
 		Ime::LangProfileInfo langProfile = {
 			name,

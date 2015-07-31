@@ -25,13 +25,12 @@
 #include "NodeTextService.h"
 #include <cstdlib>
 #include <ctime>
+#include <memory>
 
 using namespace std;
 using namespace rapidjson;
 
 namespace Node {
-
-static wchar_t g_pipeName[] = L"\\\\.\\pipe\\mynamedpipe";
 
 Client::Client(TextService* service):
 	textService_(service),
@@ -465,14 +464,33 @@ Document Client::sendRequest(std::string req, int seqNo) {
 
 bool Client::connectPipe() {
 	if (pipe_ == INVALID_HANDLE_VALUE) { // the pipe is not connected
+		wstring pipeName = L"\\\\.\\pipe\\";
+		DWORD len = 0;
+		::GetUserNameW(NULL, &len); // get the required size of the buffer
+		if (len <= 0)
+			return false;
+		// add username to the pipe path so it won't clash with the other users' pipes
+		unique_ptr<wchar_t> username(new wchar_t[len]);
+		if (!::GetUserNameW(username.get(), &len))
+			return false;
+		pipeName += username.get();
+		pipeName += L"\\PIME_pipe";
 		for (;;) {
-			pipe_ = CreateFile(g_pipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-			if (pipe_ != INVALID_HANDLE_VALUE)
-				break;
+			pipe_ = CreateFile(pipeName.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+			if (pipe_ != INVALID_HANDLE_VALUE) {
+				// security check: make sure that we're connecting to the correct server
+				ULONG serverPid;
+				if (GetNamedPipeServerProcessId(pipe_, &serverPid)) {
+					// FIXME: check the command line of the server?
+					// See this: http://www.codeproject.com/Articles/19685/Get-Process-Info-with-NtQueryInformationProcess
+					// Too bad! Undocumented Windows internal API might be needed here. :-(
+					break;
+				}
+			}
 			if (GetLastError() != ERROR_PIPE_BUSY)
 				return false;
 			// All pipe instances are busy, so wait for 10 seconds.
-			if (!WaitNamedPipe(g_pipeName, 10000))
+			if (!WaitNamedPipe(pipeName.c_str(), 10000))
 				return false;
 		}
 		// The pipe is connected; change to message-read mode.

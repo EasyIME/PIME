@@ -331,6 +331,7 @@ def createSecurityAttributes():
     explicit_accesses = []
     # Create a well-known SID for the Everyone group.
     # FIXME: we should limit the access to current user only
+    # See this article for details: https://msdn.microsoft.com/en-us/library/windows/desktop/hh448493(v=vs.85).aspx
     everyoneSID = SID()
     SECURITY_WORLD_SID_AUTHORITY = (0,0,0,0,0,1)
     everyoneSID.Initialize(SECURITY_WORLD_SID_AUTHORITY, 1)
@@ -397,7 +398,9 @@ class Server:
 
     # This function creates a pipe instance and connects to the client.
     def create_pipe(self):
-        name = "\\\\.\\pipe\\mynamedpipe"
+        username = GetUserName()
+        # add username to the pipe path so it will not clash with other users' pipes.
+        name = "\\\\.\\pipe\\%s\\PIME_pipe" % username
         buffer_size = 1024
         # create the pipe
         sa = createSecurityAttributes()
@@ -409,7 +412,6 @@ class Server:
                                buffer_size,
                                NMPWAIT_USE_DEFAULT_WAIT,
                                sa)
-        # grantAppContainerAccess(pipe, SE_KERNEL_OBJECT, STANDARD_RIGHTS_ALL)
         return pipe
 
 

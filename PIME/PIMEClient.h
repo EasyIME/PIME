@@ -29,7 +29,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
-namespace Node {
+namespace PIME {
 
 class TextService;
 

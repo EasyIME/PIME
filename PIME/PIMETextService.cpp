@@ -17,19 +17,19 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#include "NodeTextService.h"
+#include "PIMETextService.h"
 #include <assert.h>
 #include <string>
 #include <libIME/Utils.h>
 #include <libIME/LangBarButton.h>
-#include "NodeImeModule.h"
+#include "PIMEImeModule.h"
 #include "resource.h"
 #include <Shellapi.h>
 #include <sys/stat.h>
 
 using namespace std;
 
-namespace Node {
+namespace PIME {
 
 // {B59D51B9-B832-40D2-9A8D-56959372DDC7}
 static const GUID g_modeButtonGuid = // English/Chinses mode switch
@@ -377,7 +377,7 @@ void CALLBACK TextService::onMessageTimeout(HWND hwnd, UINT msg, UINT_PTR id, DW
 	Ime::MessageWindow* messageWindow = (Ime::MessageWindow*)Ime::Window::fromHwnd(hwnd);
 	assert(messageWindow);
 	if(messageWindow) {
-		TextService* pThis = (Node::TextService*)messageWindow->textService();
+		TextService* pThis = (PIME::TextService*)messageWindow->textService();
 		pThis->onMessageTimeout();
 	}
 }
@@ -387,4 +387,4 @@ void TextService::updateLangButtons() {
 }
 
 
-} // namespace Node
+} // namespace PIME

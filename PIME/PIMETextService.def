@@ -1,4 +1,4 @@
-LIBRARY NodeTextService.dll
+LIBRARY PIMETextService.dll
 
 EXPORTS
     DllGetClassObject               PRIVATE

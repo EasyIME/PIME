@@ -1,9 +1,9 @@
-# NodeIME
+# PIME
 
 Implement input methods easily for Windows via Text Services Framework:
 *   LibIME contains a library which aims to be a simple wrapper for Windows Text Service Framework (TSF).
-*   NodeTextService contains an backbone implementation of Windows text service for using libIME.
-*   casablanca contains Microsoft REST C++ SDK (https://casablanca.codeplex.com/) licensed under Apache 2 license.
+*   PIMETextService contains an backbone implementation of Windows text service for using libIME.
+*   The python server part requires pywin32 package
 
 All parts are licensed under GNU LGPL v2.1 license.
 
@@ -17,8 +17,8 @@ All parts are licensed under GNU LGPL v2.1 license.
 ## How to Build
 *   Get source from github
 
-        git clone https://github.com/chewing/windows-chewing-tsf.git
-        cd NodeIme
+        git clone https://github.com/PIME/PIME.git
+        cd PIME
         git submodule init
         git submodule update
 

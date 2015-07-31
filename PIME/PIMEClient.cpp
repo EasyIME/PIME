@@ -17,12 +17,12 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#include "NodeClient.h"
+#include "PIMEClient.h"
 #include "libIME/Utils.h"
 #include <algorithm>
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
-#include "NodeTextService.h"
+#include "PIMETextService.h"
 #include <cstdlib>
 #include <ctime>
 #include <memory>
@@ -30,7 +30,7 @@
 using namespace std;
 using namespace rapidjson;
 
-namespace Node {
+namespace PIME {
 
 Client::Client(TextService* service):
 	textService_(service),
@@ -513,4 +513,4 @@ void Client::closePipe() {
 }
 
 
-} // namespace Node
+} // namespace PIME

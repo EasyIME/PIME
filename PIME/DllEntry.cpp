@@ -1,4 +1,4 @@
-#include "NodeImeModule.h"
+#include "PIMEImeModule.h"
 #include "resource.h"
 #include <iostream>
 #include <cstdio>
@@ -12,14 +12,14 @@
 
 using namespace rapidjson;
 
-Node::ImeModule* g_imeModule = NULL;
+PIME::ImeModule* g_imeModule = NULL;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
 	switch (ul_reason_for_call) {
 	case DLL_PROCESS_ATTACH:
 		::DisableThreadLibraryCalls(hModule); // disable DllMain calls due to new thread creation
 		//::MessageBox(0, L"X!", 0, 0);
-		g_imeModule = new Node::ImeModule(hModule);
+		g_imeModule = new PIME::ImeModule(hModule);
 		break;
 	case DLL_PROCESS_DETACH:
 		if(g_imeModule) {
@@ -122,5 +122,5 @@ STDAPI DllRegisterServer(void) {
 			CloseHandle(hFind);
 		}
 	}
-	return g_imeModule->registerServer(L"NodeTextService", langProfiles.data(), langProfiles.size());
+	return g_imeModule->registerServer(L"PIMETextService", langProfiles.data(), langProfiles.size());
 }

@@ -25,11 +25,11 @@
 #include <LibIME/MessageWindow.h>
 #include <LibIME/EditSession.h>
 #include <LibIME/LangBarButton.h>
-#include "NodeImeModule.h"
+#include "PIMEImeModule.h"
 #include <sys/types.h>
-#include "NodeClient.h"
+#include "PIMEClient.h"
 
-namespace Node {
+namespace PIME {
 
 class TextService: public Ime::TextService {
 	friend class Client;

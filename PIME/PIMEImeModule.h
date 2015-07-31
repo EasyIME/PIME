@@ -23,7 +23,7 @@
 #include <LibIME/ImeModule.h>
 #include <string>
 
-namespace Node {
+namespace PIME {
 
 class ImeModule : public Ime::ImeModule {
 public:

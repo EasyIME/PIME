@@ -17,12 +17,12 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#include "NodeImeModule.h"
-#include "NodeTextService.h"
+#include "PIMEImeModule.h"
+#include "PIMETextService.h"
 #include <string>
 #include <ShlObj.h>
 
-namespace Node {
+namespace PIME {
 
 // CLSID of our Text service
 // {35F67E9D-A54D-4177-9697-8B0AB71A9E04}
@@ -45,7 +45,7 @@ ImeModule::ImeModule(HMODULE module):
 		result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
 	if(result == S_OK) { // program files folder is found
 		programDir_ = path;
-		programDir_ += L"\\NodeTextService";
+		programDir_ += L"\\PIME";
 	}
 }
 
@@ -54,7 +54,7 @@ ImeModule::~ImeModule(void) {
 
 // virtual
 Ime::TextService* ImeModule::createTextService() {
-	TextService* service = new Node::TextService(this);
+	TextService* service = new PIME::TextService(this);
 	return service;
 }
 

@@ -4,5 +4,7 @@
 	"guid": "{C5F37DA0-274E-4837-9B7C-9BB79FE85D9D}",
 	"locale": "zh-TW",
 	"icon": "icon.ico",
-	"win8_icon": ""
+	"win8_icon": "",
+	"moduleName": "ime_meow",
+	"serviceName": "DemoTextService"
 }

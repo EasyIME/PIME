@@ -5,7 +5,6 @@ from win32security import *
 from win32event import *
 from win32file import *
 from winerror import *
-from win32con import * # for VK_XXX constants
 import threading
 import json
 import sys
@@ -26,194 +25,27 @@ class KeyEvent:
     def isKeyToggled(self, code):
         return (self.keyStates[code] & 1) != 0
 
-
-class TextService:
-    def __init__(self, client):
-        self.client = client
-
-    def init(self, msg):
-        self.isWindows8Above = msg["isWindows8Above"]
-        self.isMetroApp = msg["isMetroApp"]
-        self.isUiLess = msg["isUiLess"]
-        self.isUiLess = msg["isConsole"]
-        self.keyboardOpen = False
-        self.showCandidates = False
-
-        self.compositionString = ""
-        self.commitString = ""
-        self.candidateList = []
-        self.compositionCursor = 0
-
-
-    def updateStatus(self, msg):
-        if "keyboardOpen" in msg:
-            self.keyboardOpen = msg["keyboardOpen"]
-        if "showCandidates" in msg:
-            self.showCandidates = msg["showCandidates"]
-
-
-    # encode current status into an json object
-    def getStatus(self, msg):
-        msg["showCandidates"] = self.showCandidates
-        msg["compositionString"] = self.compositionString
-        msg["commitString"] = self.commitString
-        msg["candidateList"] = self.candidateList
-        msg["compositionCursor"] = self.compositionCursor
-
-
-    # methods that should be implemented by derived classes
-    def onActivate(self):
-        pass
-
-    def onDeactivate(self):
-        pass
-
-    def filterKeyDown(self, keyEvent):
-        return False
-
-    def onKeyDown(self, keyEvent):
-        return False
-
-    def filterKeyUp(self, keyEvent):
-        return False
-
-    def onKeyUp(self, keyEvent):
-        return False
-
-    def onCommand(self):
-        pass
-
-    def onCompartmentChanged(self):
-        pass
-
-    def onCompositionTerminated(self):
-        self.commitString = ""
-
-    def onKeyboardStatusChanged(self):
-        pass
-
-    # public methods that should not be touched
-
-    # language bar buttons
-    def addButton(self, button):
-        pass
-
-    def removeButton(self, button):
-        pass
-
-    # preserved keys
-    def addPreservedKey(self, keyCode, modifiers, guid):
-        pass
-
-    def removePreservedKey(self, guid):
-        pass
-
-    # composition string
-    def setCompositionString(self, s):
-        self.compositionString = s
-
-    def setCompositionCursor(self, pos):
-        self.compositionCursor = pos
-
-    def setCommitString(self, s):
-        self.commitString = s
-
-    def setCandidateList(self, cand):
-        self.candidateList = cand
-
-    def setShowCandidates(self, show):
-        self.showCandidates = show
-
-    def isComposing(self):
-        return (self.compositionString != "")
-
-
-class DemoTextService(TextService):
-    def __init__(self, client):
-        TextService.__init__(self, client)
-
-    def onActivate(self):
-        TextService.onActivate(self)
-
-    def onDeactivate(self):
-        TextService.onDeactivate(self)
-
-    def filterKeyDown(self, keyEvent):
-        if not self.isComposing():
-            if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
-                return False
-        return True
-
-    def onKeyDown(self, keyEvent):
-        candidates = ["喵", "描", "秒", "妙"]
-        # handle candidate list
-        if self.showCandidates:
-            if keyEvent.keyCode == VK_UP or keyEvent.keyCode == VK_ESCAPE:
-                self.setShowCandidates(False)
-            elif keyEvent.keyCode >= ord('1') and keyEvent.keyCode <= ord('4'):
-                i = keyEvent.keyCode - ord('1')
-                cand = candidates[i]
-                i = self.compositionCursor - 1
-                if i < 0:
-                    i = 0
-                s = self.compositionString[0:i] + cand + self.compositionString[i + 1:]
-                self.setCompositionString(s)
-                self.setShowCandidates(False)
-            return True
-        else:
-            self.setCandidateList(candidates)
-            if keyEvent.keyCode == VK_DOWN:
-                self.setShowCandidates(True)
-                return True
-
-        # handle normal keyboard input
-        if not self.isComposing():
-            if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
-                return False
-
-        if keyEvent.keyCode == VK_RETURN or len(self.compositionString) > 10:
-            self.setCommitString(self.compositionString)
-            self.setCompositionString("")
-        elif keyEvent.keyCode == VK_BACK and self.compositionString != "":
-            self.setCompositionString(self.compositionString[:-1])
-        elif keyEvent.keyCode == VK_LEFT:
-            i = self.compositionCursor - 1
-            if i >= 0:
-                self.setCompositionCursor(i)
-        elif keyEvent.keyCode == VK_RIGHT:
-            i = self.compositionCursor + 1
-            if i <= len(self.compositionString):
-                self.setCompositionCursor(i)
-        else:
-            self.setCompositionString(self.compositionString + "喵")
-            self.setCompositionCursor(len(self.compositionString))
-
-        return True
-
-    def filterKeyUp(self, keyEvent):
-        return False
-
-    def onKeyUp(self, keyEvent):
-        return False
-
-    def onKeyboardStatusChanged(self):
-        TextService.onKeyboardStatusChanged(self)
-
-
+from input_methods.serviceManager import IMServiceMgr
 
 class Client:
     def __init__(self, server, pipe):
         self.pipe= pipe
         self.server = server
-        self.service = DemoTextService(self) # FIXME: allow different types of services here
 
+         # FIXME: allow different types of services here
+        self.service = IMServiceMgr.pickOneServiceAndMarkHooked(self)
+
+    def getServiceName(self):
+        assert (not not self.service), "Service should exist !"
+        return self.service.getServiceName()
 
     def handleRequest(self, msg): # msg is a json object
         success = True
         reply = dict()
         ret = None
-        method = msg["method"]
-        print("handle message: ", method, msg["seqNum"])
+        method = msg.get("method", None)
+        seqNum = msg.get("seqNum", 0)
+        print("handle message: ", threading.current_thread().name, method, seqNum)
 
         service = self.service
         service.updateStatus(msg)
@@ -254,7 +86,7 @@ class Client:
             success = False
 
         reply["success"] = success
-        reply["seqNum"] = msg["seqNum"] # reply with sequence number added
+        reply["seqNum"] = seqNum # reply with sequence number added
         if success:
             service.getStatus(reply)
 
@@ -266,7 +98,7 @@ class Client:
 
 class ClientThread(threading.Thread):
     def __init__(self, client):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name=client.getServiceName())
         self.client = client
         self.buf = AllocateReadBuffer(512)
 
@@ -281,7 +113,7 @@ class ClientThread(threading.Thread):
             # http://docs.activestate.com/activepython/3.3/pywin32/win32file__ReadFile_meth.html
             try:
                 read_more = True
-                msg = ''
+                msg = "{}"
                 while read_more:
                     (success, data) = ReadFile(pipe, self.buf, None)
                     data = data.decode("UTF-8")
@@ -308,6 +140,10 @@ class ClientThread(threading.Thread):
                 reply = json.dumps(reply) # convert object to json
                 WriteFile(pipe, bytes(reply, "UTF-8"), None)
             except:
+                import traceback
+                # print callstatck to know where the exceptions is
+                traceback.print_exc()
+
                 print("exception!", sys.exc_info())
                 break
 
@@ -386,15 +222,11 @@ def createSecurityAttributes():
     sa.SECURITY_DESCRIPTOR = sd
     return sa
 
-
-
 # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365588(v=vs.85).aspx
 class Server:
-
     def __init__(self):
         self.lock = threading.Lock()
         self.clients = []
-
 
     # This function creates a pipe instance and connects to the client.
     def create_pipe(self):
@@ -414,16 +246,14 @@ class Server:
                                sa)
         return pipe
 
-
     def acquire_lock(self):
         self.lock.acquire()
-
 
     def release_lock(self):
         self.lock.release()
 
-
     def run(self):
+        numClient = 0
         while True:
             pipe = self.create_pipe()
             if pipe == INVALID_HANDLE_VALUE:
@@ -438,12 +268,14 @@ class Server:
             if not connected:
                 connected = (GetLastError() == ERROR_PIPE_CONNECTED)
 
-            if connected: # client connected
+            # client connected
+            if connected and numClient < IMServiceMgr.getNumOfServices():
                 print("client connected")
                 # create a Client instance for the client
                 client = Client(self, pipe)
                 self.lock.acquire()
                 self.clients.append(client)
+                numClient += 1
                 self.lock.release()
                 # run a separate thread for this client
                 thread = ClientThread(client)
@@ -457,9 +289,6 @@ class Server:
         self.clients.remove(client)
         print("client disconnected")
         self.lock.release()
-
-
-
 
 
 def main():

@@ -1,0 +1,10 @@
+{
+	"name":"汪汪輸入法",
+	"version": "0.1",
+	"guid": "{41f008e0-3a55-11e5-8ba5-bbe3f8b00405}",
+	"locale": "zh-TW",
+	"icon": "icon.ico",
+	"win8_icon": "",
+	"moduleName": "woof",
+	"serviceName": "WoofTextService"
+}

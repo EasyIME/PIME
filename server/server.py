@@ -5,6 +5,7 @@ from win32security import *
 from win32event import *
 from win32file import *
 from winerror import *
+from win32con import *
 import threading
 import json
 import sys
@@ -113,7 +114,7 @@ class ClientThread(threading.Thread):
             # http://docs.activestate.com/activepython/3.3/pywin32/win32file__ReadFile_meth.html
             try:
                 read_more = True
-                msg = "{}"
+                msg = ""
                 while read_more:
                     (success, data) = ReadFile(pipe, self.buf, None)
                     data = data.decode("UTF-8")

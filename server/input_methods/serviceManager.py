@@ -1,3 +1,5 @@
+#! python3
+
 import os
 import threading
 
@@ -14,7 +16,7 @@ class IMServiceManager:
             import json
             # Read the moduleName(xxx.py) & serviceName(class name) from JSON
             jsonData = None
-            with open(jsonFile) as dataFile:
+            with open(jsonFile, encoding = "UTF-8") as dataFile:
                 jsonData = json.load(dataFile)
             if not jsonData:
                 return "", ""
@@ -48,7 +50,7 @@ class IMServiceManager:
         # For Client creation, pick one im service for single client and mark
         # |'hooked' = True| in order to avoid duplicately using.
         with self.__lock:
-            for service, info in self.dicService2CtorHookInfo.iteritems():
+            for service, info in self.dicService2CtorHookInfo.items():
                 if not info["hooked"]:
                     serviceInstance = info["class"](client)
                     self.dicService2CtorHookInfo[service]["hooked"] = True

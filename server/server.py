@@ -10,6 +10,7 @@ import threading
 import json
 import sys
 
+from input_methods.serviceManager import textServiceMgr
 
 class KeyEvent:
     def __init__(self, msg):
@@ -26,13 +27,38 @@ class KeyEvent:
     def isKeyToggled(self, code):
         return (self.keyStates[code] & 1) != 0
 
-from input_methods.serviceManager import IMServiceMgr
 
 class Client:
     def __init__(self, server, pipe):
         self.pipe= pipe
         self.server = server
         self.service = None
+
+    def init(self, msg):
+        self.isWindows8Above = msg["isWindows8Above"]
+        self.isMetroApp = msg["isMetroApp"]
+        self.isUiLess = msg["isUiLess"]
+        self.isUiLess = msg["isConsole"]
+
+    def onActivate(self):
+        pass
+
+    def onDeactivate(self):
+        pass
+
+    def onLangProfileActivated(self, guid):
+        service = self.service
+        # deactivate the current text service
+        if service:
+            service.onDeactivate()
+        service = textServiceMgr.createService(self, guid)
+        self.service = service
+        # activate the new text service
+        if service:
+            service.onActivate()
+
+    def onLangProfileDeactivated(self, guid):
+        pass
 
     def handleRequest(self, msg): # msg is a json object
         success = True
@@ -42,29 +68,25 @@ class Client:
         seqNum = msg.get("seqNum", 0)
         print("handle message: ", threading.current_thread().name, method, seqNum)
 
-        service = self.service
-        if method == "onLangProfileActivated":
+        # these are messages handled by Client
+        if method == "init":
+            self.init(msg)
+        elif method == "onActivate":
+            self.onActivate()
+        elif method == "onDeactivate":
+            self.onDeactivate()
+        elif method == "onLangProfileActivated":
             guid = msg["guid"]
-            if service:
-                service.onDeactivate()
-            service = IMServiceMgr.createService(self, guid)
-            self.service = service
-            if service:
-                service.onActivate()
-            else:
-                success = False
+            self.onLangProfileActivated(guid)
         elif method == "onLangProfileDeactivated":
             guid = msg["guid"]
+            self.onLangProfileDeactivated(guid)
 
+        # these are messages handled by the text service
+        service = self.service
         if service:
             service.updateStatus(msg)
-            if method == "init":
-                service.init(msg)
-            elif method == "onActivate":
-                service.onActivate()
-            elif method == "onDeactivate":
-                service.onDeactivate()
-            elif method == "filterKeyDown":
+            if method == "filterKeyDown":
                 keyEvent = KeyEvent(msg)
                 ret = service.filterKeyDown(keyEvent)
             elif method == "onKeyDown":

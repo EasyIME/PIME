@@ -3,7 +3,6 @@
 class TextService:
     def __init__(self, client):
         self.client = client
-        self.serviceName = "Text"
 
         self.keyboardOpen = False
         self.showCandidates = False
@@ -12,15 +11,6 @@ class TextService:
         self.commitString = ""
         self.candidateList = []
         self.compositionCursor = 0
-
-    def init(self, msg):
-        self.isWindows8Above = msg["isWindows8Above"]
-        self.isMetroApp = msg["isMetroApp"]
-        self.isUiLess = msg["isUiLess"]
-        self.isUiLess = msg["isConsole"]
-
-    def getServiceName(self):
-        return self.serviceName
 
     def updateStatus(self, msg):
         if "keyboardOpen" in msg:

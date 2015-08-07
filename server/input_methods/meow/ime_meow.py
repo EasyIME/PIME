@@ -2,7 +2,7 @@
 from win32con import * # for VK_XXX constants
 from ..textService import TextService
 
-class DemoTextService(TextService):
+class MeowTextService(TextService):
     def __init__(self, client):
         TextService.__init__(self, client)
         self.serviceName = 'DemoText'

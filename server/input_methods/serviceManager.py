@@ -39,11 +39,10 @@ class TextServiceInfo:
 
 
         
-class IMServiceManager:
+class TextServiceManager:
     def __init__(self):
         self.__lock = threading.Lock()
         self.services = {}
-        self.dicService2CtorHookInfo = {}
         self.enumerateServices()
 
     def enumerateServices(self):
@@ -65,4 +64,5 @@ class IMServiceManager:
             return info.createInstance(client)
         return None
 
-IMServiceMgr = IMServiceManager()
+
+textServiceMgr = TextServiceManager()

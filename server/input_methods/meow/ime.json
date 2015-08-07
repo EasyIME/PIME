@@ -6,5 +6,5 @@
 	"icon": "icon.ico",
 	"win8_icon": "",
 	"moduleName": "ime_meow",
-	"serviceName": "DemoTextService"
+	"serviceName": "MeowTextService"
 }

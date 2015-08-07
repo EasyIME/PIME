@@ -32,13 +32,7 @@ class Client:
     def __init__(self, server, pipe):
         self.pipe= pipe
         self.server = server
-
-         # FIXME: allow different types of services here
-        self.service = IMServiceMgr.pickOneServiceAndMarkHooked(self)
-
-    def getServiceName(self):
-        assert (not not self.service), "Service should exist !"
-        return self.service.getServiceName()
+        self.service = None
 
     def handleRequest(self, msg): # msg is a json object
         success = True
@@ -49,46 +43,55 @@ class Client:
         print("handle message: ", threading.current_thread().name, method, seqNum)
 
         service = self.service
-        service.updateStatus(msg)
-
-        if method == "init":
-            service.init(msg)
-        elif method == "onActivate":
-            service.onActivate()
-        elif method == "onDeactivate":
-            service.onDeactivate()
-        elif method == "filterKeyDown":
-            keyEvent = KeyEvent(msg)
-            ret = service.filterKeyDown(keyEvent)
-        elif method == "onKeyDown":
-            keyEvent = KeyEvent(msg)
-            ret = service.onKeyDown(keyEvent)
-        elif method == "filterKeyUp":
-            keyEvent = KeyEvent(msg)
-            ret = service.filterKeyUp(keyEvent)
-        elif method == "onKeyUp":
-            keyEvent = KeyEvent(msg)
-            ret = service.onKeyUp(keyEvent)
-        elif method == "onPreservedKey":
-            ret = service.onPreservedKey()
-        elif method == "onCommand":
-            service.onCommand()
-        elif method == "onCompartmentChanged":
-            service.onCompartmentChanged()
-        elif method == "onKeyboardStatusChanged":
-            service.onKeyboardStatusChanged()
-        elif method == "onCompositionTerminated":
-            service.onCompositionTerminated()
-        elif method == "onLangProfileActivated":
-            pass
+        if method == "onLangProfileActivated":
+            guid = msg["guid"]
+            if service:
+                service.onDeactivate()
+            service = IMServiceMgr.createService(self, guid)
+            self.service = service
+            if service:
+                service.onActivate()
+            else:
+                success = False
         elif method == "onLangProfileDeactivated":
-            pass
-        else:
-            success = False
+            guid = msg["guid"]
+
+        if service:
+            service.updateStatus(msg)
+            if method == "init":
+                service.init(msg)
+            elif method == "onActivate":
+                service.onActivate()
+            elif method == "onDeactivate":
+                service.onDeactivate()
+            elif method == "filterKeyDown":
+                keyEvent = KeyEvent(msg)
+                ret = service.filterKeyDown(keyEvent)
+            elif method == "onKeyDown":
+                keyEvent = KeyEvent(msg)
+                ret = service.onKeyDown(keyEvent)
+            elif method == "filterKeyUp":
+                keyEvent = KeyEvent(msg)
+                ret = service.filterKeyUp(keyEvent)
+            elif method == "onKeyUp":
+                keyEvent = KeyEvent(msg)
+                ret = service.onKeyUp(keyEvent)
+            elif method == "onPreservedKey":
+                ret = service.onPreservedKey()
+            elif method == "onCommand":
+                service.onCommand()
+            elif method == "onCompartmentChanged":
+                service.onCompartmentChanged()
+            elif method == "onKeyboardStatusChanged":
+                service.onKeyboardStatusChanged()
+            elif method == "onCompositionTerminated":
+                service.onCompositionTerminated()
+            else:
+                success = False
 
         reply["success"] = success
         reply["seqNum"] = seqNum # reply with sequence number added
-        if success:
+        if success and service:
             service.getStatus(reply)
 
         if ret != None:
@@ -99,7 +102,7 @@ class Client:
 
 class ClientThread(threading.Thread):
     def __init__(self, client):
-        threading.Thread.__init__(self, name=client.getServiceName())
+        threading.Thread.__init__(self)
         self.client = client
         self.buf = AllocateReadBuffer(512)
 
@@ -254,7 +257,6 @@ class Server:
         self.lock.release()
 
     def run(self):
-        numClient = 0
         while True:
             pipe = self.create_pipe()
             if pipe == INVALID_HANDLE_VALUE:
@@ -270,13 +272,12 @@ class Server:
                 connected = (GetLastError() == ERROR_PIPE_CONNECTED)
 
             # client connected
-            if connected and numClient < IMServiceMgr.getNumOfServices():
+            if connected:
                 print("client connected")
                 # create a Client instance for the client
                 client = Client(self, pipe)
                 self.lock.acquire()
                 self.clients.append(client)
-                numClient += 1
                 self.lock.release()
                 # run a separate thread for this client
                 thread = ClientThread(client)

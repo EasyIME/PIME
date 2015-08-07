@@ -2,59 +2,67 @@
 
 import os
 import threading
+import json
+import importlib
 
+class TextServiceInfo:
+    def __init__(self):
+        self.moduleName = ""
+        self.serviceName = ""
+        self.guid = ""
+        self.ctor = None
+
+    def loadFromJson(self, jsonFile):
+        # Read the moduleName(xxx.py) & serviceName(class name) from JSON
+        jsonData = None
+        with open(jsonFile, encoding = "UTF-8") as dataFile:
+            jsonData = json.load(dataFile)
+        if jsonData:
+            moduleName = jsonData.get("moduleName", "")
+            if moduleName:
+                relpath = os.path.relpath(os.path.dirname(jsonFile)).replace(os.sep, ".")
+                self.moduleName = "%s.%s" % (relpath, moduleName)
+                print(self.moduleName)
+            self.serviceName = jsonData.get("serviceName", "")
+            self.guid = jsonData.get("guid", "").lower()
+
+    def createInstance(self, client):
+        if not self.moduleName or not self.serviceName or not self.guid:
+            return None
+        if not self.ctor: # constructor is not yet imported
+            # import the module
+            mod = importlib.import_module(self.moduleName)
+            self.ctor = getattr(mod, self.serviceName)
+            if not self.ctor:
+                return None
+        return self.ctor(client) # create a new instance for this text service
+
+
+        
 class IMServiceManager:
     def __init__(self):
         self.__lock = threading.Lock()
+        self.services = {}
         self.dicService2CtorHookInfo = {}
-        self.__enumerateServices()
+        self.enumerateServices()
 
-    def __enumerateServices(self):
+    def enumerateServices(self):
         # To enumerate currently installed Input Method
-
-        def getModuleServiceNameFromJSON(jsonFile):
-            import json
-            # Read the moduleName(xxx.py) & serviceName(class name) from JSON
-            jsonData = None
-            with open(jsonFile, encoding = "UTF-8") as dataFile:
-                jsonData = json.load(dataFile)
-            if not jsonData:
-                return "", ""
-            moduleName = jsonData.get("moduleName", "")
-            serviceName = jsonData.get("serviceName", "")
-            return moduleName, serviceName
-
-        import importlib
         currentDir = os.path.dirname(os.path.abspath(__file__))
-        for root, dirs, files in os.walk(currentDir):
-            for filename in files:
-                if filename.lower().endswith(".json"):
-                    absPath = os.path.join(root, filename)
-                    moduleName, serviceName = getModuleServiceNameFromJSON(absPath)
-                    if not moduleName or not serviceName:
-                        continue
+        for subdir in os.listdir(currentDir):
+            filename = os.path.join(currentDir, subdir, "ime.json")
+            if os.path.exists(filename):
+                info = TextServiceInfo()
+                info.loadFromJson(filename)
+                print(info.guid)
+                if info.guid:
+                    self.services[info.guid] = info
 
-                    # Import target im module and store class constructor for
-                    # later instantiation.
-                    relativeModulePath = os.path.relpath(os.path.join(root, moduleName))
-                    module_name = relativeModulePath.replace(os.sep , ".")
-                    module_ = importlib.import_module(module_name)
-                    class_ = getattr(module_, serviceName)
-                    self.dicService2CtorHookInfo[serviceName] = { "class" : class_,
-                                                                  "hooked" : False}
-
-    def getNumOfServices(self):
-        return len(self.dicService2CtorHookInfo)
-
-    def pickOneServiceAndMarkHooked(self, client):
-        # For Client creation, pick one im service for single client and mark
-        # |'hooked' = True| in order to avoid duplicately using.
-        with self.__lock:
-            for service, info in self.dicService2CtorHookInfo.items():
-                if not info["hooked"]:
-                    serviceInstance = info["class"](client)
-                    self.dicService2CtorHookInfo[service]["hooked"] = True
-                    return serviceInstance
+    def createService(self, client, guid):
+        guid = guid.lower()
+        if guid in self.services:
+            info = self.services[guid]
+            return info.createInstance(client)
         return None
 
 IMServiceMgr = IMServiceManager()

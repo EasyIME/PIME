@@ -360,45 +360,47 @@ void Client::onCompositionTerminated(bool forced) {
 }
 
 void Client::onLangProfileActivated(REFIID lang) {
-	/*
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
 		StringBuffer s;
 		Writer<StringBuffer> writer(s);
 		writer.StartObject();
+		int sn = addSeqNum(writer);
 
 		writer.String("method");
 		writer.String("onLangProfileActivated");
 
-		writer.String("lang");
+		writer.String("guid");
 		writer.String(utf16ToUtf8(str));
 		::CoTaskMemFree(str);
 
 		writer.EndObject();
-		string ret = sendRequest(s.GetString());
+		Document ret = sendRequest(s.GetString(), sn);
+		if (handleReply(ret)) {
+		}
 	}
-	*/
 }
 
 void Client::onLangProfileDeactivated(REFIID lang) {
-	/*
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
 		StringBuffer s;
 		Writer<StringBuffer> writer(s);
 		writer.StartObject();
+		int sn = addSeqNum(writer);
 
 		writer.String("method");
 		writer.String("onLangProfileDeactivated");
 
-		writer.String("lang");
+		writer.String("guid");
 		writer.String(utf16ToUtf8(str));
 		::CoTaskMemFree(str);
 
 		writer.EndObject();
-		string ret = sendRequest(s.GetString());
+		Document ret = sendRequest(s.GetString(), sn);
+		if (handleReply(ret)) {
+		}
 	}
-	*/
 }
 
 void Client::init() {

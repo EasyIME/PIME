@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from win32con import * # for VK_XXX constants
 from ..textService import *
+import os.path
 
 class MeowTextService(TextService):
     def __init__(self, client):
@@ -8,12 +9,15 @@ class MeowTextService(TextService):
 
     def onActivate(self):
         TextService.onActivate(self)
+        icon_dir = os.path.dirname(__file__)
+        button_id = "my-button"
+        if self.client.isWindows8Above:  # Windows 8 systray IME mode icon
+            button_id = "windows-mode-icon"
         self.addButton({
-            "id": "test-btn",
-            "guid": "{927E9CB3-2459-463E-BEA4-3F4C10FEB529}",
-            "text": "Test",
+            "id": button_id,
+            "icon": os.path.join(icon_dir, "chi.ico"),
             "tooltip": "Test Button!",
-            "style": TF_LBI_STYLE_BTN_BUTTON,
+            # "style": TF_LBI_STYLE_BTN_BUTTON,
             "commandId": 1
         })
 

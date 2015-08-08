@@ -32,6 +32,11 @@ using namespace rapidjson;
 
 namespace PIME {
 
+// this is the GUID of the IME mode icon in Windows 8
+// the value is not available in older SDK versions, so let's define it ourselves.
+static const GUID _GUID_LBI_INPUTMODE =
+{ 0x2C77A81E, 0x41CC, 0x4178, { 0xA3, 0xA7, 0x5F, 0x8A, 0x98, 0x75, 0x68, 0xE6 } };
+
 Client::Client(TextService* service):
 	textService_(service),
 	pipe_(INVALID_HANDLE_VALUE) {
@@ -100,19 +105,30 @@ bool Client::handleReply(rapidjson::Document& msg, Ime::EditSession* session) {
 }
 
 void Client::updateLangBarButton(Ime::LangBarButton* btn, rapidjson::Value& info) {
+	auto it = info.FindMember("icon");
+	if (it != info.MemberEnd() && it->value.IsString()) {
+		wstring iconPath = utf8ToUtf16(it->value.GetString());
+		HICON icon = (HICON)LoadImageW(NULL, iconPath.c_str(), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_LOADFROMFILE);
+		btn->setIcon(icon);
+	}
 
-	// FIXME: handle icon correctly
-	HICON icon = LoadIcon(NULL, MAKEINTRESOURCE(IDI_WINLOGO));
-	btn->setIcon(icon);
+	it = info.FindMember("commandId");
+	if (it != info.MemberEnd() && it->value.IsUint()) {
+		UINT cmd = it->value.GetUint();
+		btn->setCommandId(cmd);
+	}
 
-	UINT cmd = info["commandId"].GetUint();
-	btn->setCommandId(cmd);
+	it = info.FindMember("text");
+	if (it != info.MemberEnd() && it->value.IsString()) {
+		std::wstring text = utf8ToUtf16(it->value.GetString());
+		btn->setText(text.c_str());
+	}
 
-	std::wstring text = utf8ToUtf16(info["text"].GetString());
-	btn->setText(text.c_str());
-
-	std::wstring tooltip = utf8ToUtf16(info["tooltip"].GetString());
-	btn->setTooltip(tooltip.c_str());
+	it = info.FindMember("tooltip");
+	if (it != info.MemberEnd() && it->value.IsString()) {
+		std::wstring tooltip = utf8ToUtf16(it->value.GetString());
+		btn->setTooltip(tooltip.c_str());
+	}
 }
 
 void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
@@ -186,10 +202,21 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 			rapidjson::Value& btn = *btn_it;
 			if (btn.IsObject()) {
 				string id = btn["id"].GetString();
-				std::wstring guidStr = utf8ToUtf16(btn["guid"].GetString());
-				CLSID guid = { 0 };
-				CLSIDFromString(guidStr.c_str(), &guid);
-				DWORD style = btn["style"].GetUint();
+
+				DWORD style = TF_LBI_STYLE_BTN_BUTTON;
+				auto prop_it = btn.FindMember("style");
+				if (prop_it != btn.MemberEnd())
+					style = prop_it->value.GetUint();
+
+				CLSID guid = { 0 }; // create a new GUID on-the-fly
+				if (id == "windows-mode-icon") {
+					// Windows 8 systray IME mode icon
+					guid = _GUID_LBI_INPUTMODE;
+				}
+				else {
+					CoCreateGuid(&guid);
+				}
+
 				Ime::LangBarButton* langBtn = new Ime::LangBarButton(textService_, guid, 0, NULL, style);
 				buttons_[id] = langBtn; // insert into the map
 				updateLangBarButton(langBtn, btn);

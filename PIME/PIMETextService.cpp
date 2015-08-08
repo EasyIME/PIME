@@ -31,11 +31,6 @@ using namespace std;
 
 namespace PIME {
 
-// this is the GUID of the IME mode icon in Windows 8
-// the value is not available in older SDK versions, so let's define it ourselves.
-static const GUID _GUID_LBI_INPUTMODE =
-{ 0x2C77A81E, 0x41CC, 0x4178, { 0xA3, 0xA7, 0x5F, 0x8A, 0x98, 0x75, 0x68, 0xE6 } };
-
 TextService::TextService(ImeModule* module):
 	Ime::TextService(module),
 	client_(nullptr),
@@ -47,13 +42,6 @@ TextService::TextService(ImeModule* module):
 #if 0
 	// add preserved keys
 	addPreservedKey(VK_SPACE, TF_MOD_SHIFT, g_shiftSpaceGuid); // shift + space
-
-	// Windows 8 systray IME mode icon
-	if(imeModule()->isWindows8Above()) {
-		imeModeIcon_ = new Ime::LangBarButton(this, _GUID_LBI_INPUTMODE, ID_MODE_ICON);
-		imeModeIcon_->setIcon(IDI_ENG);
-		addButton(imeModeIcon_);
-	}
 
 	// global compartment stuff
 	addCompartmentMonitor(g_configChangedGuid, true);

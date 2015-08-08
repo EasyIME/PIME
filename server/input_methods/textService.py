@@ -11,6 +11,18 @@ TF_LBI_STYLE_BTN_BUTTON          = 0x00010000
 TF_LBI_STYLE_BTN_MENU            = 0x00020000
 TF_LBI_STYLE_BTN_TOGGLE          = 0x00040000
 
+# keyboard modifiers used by TSF (from msctf.h of Windows SDK)
+TF_MOD_ALT                       = 0x0001
+TF_MOD_CONTROL                   = 0x0002
+TF_MOD_SHIFT                     = 0x0004
+TF_MOD_RALT                      = 0x0008
+TF_MOD_RCONTROL                  = 0x0010
+TF_MOD_RSHIFT                    = 0x0020
+TF_MOD_LALT                      = 0x0040
+TF_MOD_LCONTROL                  = 0x0080
+TF_MOD_LSHIFT                    = 0x0100
+TF_MOD_ON_KEYUP                  = 0x0200
+TF_MOD_IGNORE_ALL_MODIFIER       = 0x0400
 
 # command type parameter of TextService.onCommand
 COMMAND_LEFT_CLICK  = 0
@@ -79,7 +91,8 @@ class TextService:
             keyEvent = KeyEvent(msg)
             ret = self.onKeyUp(keyEvent)
         elif method == "onPreservedKey":
-            ret = self.onPreservedKey()
+            guid = msg["guid"]
+            ret = self.onPreservedKey(guid)
         elif method == "onCommand":
             commandId = msg["id"]
             commandType = msg["type"]
@@ -114,6 +127,10 @@ class TextService:
     def onKeyUp(self, keyEvent):
         return False
 
+    def onPreservedKey(self, guid):
+        print("onPreservedKey", guid)
+        return False
+
     def onCommand(self, commandId, commandType):
         pass
 
@@ -130,6 +147,8 @@ class TextService:
 
     # language bar buttons
     def addButton(self, button):
+        if "id" not in button:
+            return
         buttons = self.reply.setdefault("addButton", [])
         buttons.append(button)
 

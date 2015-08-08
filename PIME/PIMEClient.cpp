@@ -93,49 +93,66 @@ bool Client::handleReply(rapidjson::Document& msg, Ime::EditSession* session) {
 }
 
 void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
-	//auto it = doc.FindMember("");
-	//if (it != doc.MemberEnd() && it->value.IsBool()) {
-	//}
-	bool showCandidates = msg["showCandidates"].GetBool();
-	std::wstring compositionString = utf8ToUtf16(msg["compositionString"].GetString());
-	std::wstring commitString = utf8ToUtf16(msg["commitString"].GetString());
-	rapidjson::Value& candidateList = msg["candidateList"];
-	int compositionCursor = msg["compositionCursor"].GetInt();
-
 	if (session != nullptr) { // if an edit session is available
 		// commit string
-		if (!commitString.empty()) {
-			if (!textService_->isComposing()) {
-				textService_->startComposition(session->context());
+		auto it = msg.FindMember("commitString");
+		if (it != msg.MemberEnd() && it->value.IsString()) {
+			std::wstring commitString = utf8ToUtf16(it->value.GetString());
+			if (!commitString.empty()) {
+				if (!textService_->isComposing()) {
+					textService_->startComposition(session->context());
+				}
+				textService_->setCompositionString(session, commitString.c_str(), commitString.length());
+				textService_->endComposition(session->context());
 			}
-			textService_->setCompositionString(session, commitString.c_str(), commitString.length());
-			textService_->endComposition(session->context());
 		}
 
 		// composition buffer
-		if (!compositionString.empty()) {
+		it = msg.FindMember("compositionString");
+		if (it != msg.MemberEnd() && it->value.IsString()) {
+			std::wstring compositionString = utf8ToUtf16(it->value.GetString());
+			if (!compositionString.empty()) {
+				if (!textService_->isComposing()) {
+					textService_->startComposition(session->context());
+				}
+				textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
+			}
+		}
+
+		// composition cursor
+		it = msg.FindMember("compositionCursor");
+		if (it != msg.MemberEnd() && it->value.IsInt()) {
+			int compositionCursor = it->value.GetInt();
 			if (!textService_->isComposing()) {
 				textService_->startComposition(session->context());
 			}
-			textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
 			textService_->setCompositionCursor(session, compositionCursor);
 		}
 
 		// handle candidates
-		if (candidateList.IsArray()) {
-			// FIXME: directly access private member is dirty!!!
-			vector<wstring>& candidates = textService_->candidates_;
-			candidates.clear();
-			for (auto it = candidateList.Begin(); it < candidateList.End(); ++it) {
-				wstring cand = utf8ToUtf16(it->GetString());
-				candidates.push_back(cand);
+		it = msg.FindMember("candidateList");
+		if (it != msg.MemberEnd() && it->value.IsArray()) {
+			rapidjson::Value& candidateList = it->value;
+			if (candidateList.IsArray()) {
+				// FIXME: directly access private member is dirty!!!
+				vector<wstring>& candidates = textService_->candidates_;
+				candidates.clear();
+				for (auto it = candidateList.Begin(); it < candidateList.End(); ++it) {
+					wstring cand = utf8ToUtf16(it->GetString());
+					candidates.push_back(cand);
+				}
 			}
 		}
-		if (showCandidates) {
-			textService_->showCandidates(session);
-		}
-		else {
-			textService_->hideCandidates();
+
+		it = msg.FindMember("showCandidates");
+		if (it != msg.MemberEnd() && it->value.IsBool()) {
+			bool showCandidates = it->value.GetBool();
+			if (showCandidates) {
+				textService_->showCandidates(session);
+			}
+			else {
+				textService_->hideCandidates();
+			}
 		}
 	}
 }

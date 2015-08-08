@@ -5,7 +5,6 @@ from ..textService import TextService
 class WoofTextService(TextService):
     def __init__(self, client):
         TextService.__init__(self, client)
-        self.serviceName = 'WoofText'
 
     def onActivate(self):
         TextService.onActivate(self)

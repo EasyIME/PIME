@@ -12,22 +12,6 @@ import sys
 
 from input_methods.serviceManager import textServiceMgr
 
-class KeyEvent:
-    def __init__(self, msg):
-        self.charCode = msg["charCode"]
-        self.keyCode = msg["keyCode"]
-        self.repeatCount = msg["repeatCount"]
-        self.scanCode = msg["scanCode"]
-        self.isExtended = msg["isExtended"]
-        self.keyStates = msg["keyStates"]
-
-    def isKeyDown(self, code):
-        return (self.keyStates[code] & (1 << 7)) != 0
-
-    def isKeyToggled(self, code):
-        return (self.keyStates[code] & 1) != 0
-
-
 class Client:
     def __init__(self, server, pipe):
         self.pipe= pipe
@@ -62,7 +46,6 @@ class Client:
 
     def handleRequest(self, msg): # msg is a json object
         success = True
-        reply = dict()
         ret = None
         method = msg.get("method", None)
         seqNum = msg.get("seqNum", 0)
@@ -82,42 +65,18 @@ class Client:
             guid = msg["guid"]
             self.onLangProfileDeactivated(guid)
 
+        reply = {}
         # these are messages handled by the text service
         service = self.service
         if service:
-            service.updateStatus(msg)
-            if method == "filterKeyDown":
-                keyEvent = KeyEvent(msg)
-                ret = service.filterKeyDown(keyEvent)
-            elif method == "onKeyDown":
-                keyEvent = KeyEvent(msg)
-                ret = service.onKeyDown(keyEvent)
-            elif method == "filterKeyUp":
-                keyEvent = KeyEvent(msg)
-                ret = service.filterKeyUp(keyEvent)
-            elif method == "onKeyUp":
-                keyEvent = KeyEvent(msg)
-                ret = service.onKeyUp(keyEvent)
-            elif method == "onPreservedKey":
-                ret = service.onPreservedKey()
-            elif method == "onCommand":
-                service.onCommand()
-            elif method == "onCompartmentChanged":
-                service.onCompartmentChanged()
-            elif method == "onKeyboardStatusChanged":
-                service.onKeyboardStatusChanged()
-            elif method == "onCompositionTerminated":
-                service.onCompositionTerminated()
-            else:
-                success = False
-
+            (success, ret) = service.handleRequest(method, msg)
+            if success:
+                reply = service.getReply()
+                print(reply)
+            if ret != None:
+                reply["return"] = ret
         reply["success"] = success
         reply["seqNum"] = seqNum # reply with sequence number added
-        if success and service:
-            service.getStatus(reply)
-
-        if ret != None:
-            reply["return"] = ret
         return reply
 
 

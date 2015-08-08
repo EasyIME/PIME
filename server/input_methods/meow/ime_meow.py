@@ -5,7 +5,6 @@ from ..textService import TextService
 class MeowTextService(TextService):
     def __init__(self, client):
         TextService.__init__(self, client)
-        self.serviceName = 'DemoText'
 
     def onActivate(self):
         TextService.onActivate(self)
@@ -36,11 +35,10 @@ class MeowTextService(TextService):
                 self.setShowCandidates(False)
             return True
         else:
-            self.setCandidateList(candidates)
             if keyEvent.keyCode == VK_DOWN:
+                self.setCandidateList(candidates)
                 self.setShowCandidates(True)
                 return True
-            pass
         # handle normal keyboard input
         if not self.isComposing():
             if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:

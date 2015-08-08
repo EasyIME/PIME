@@ -1,5 +1,21 @@
 #! python3
 
+class KeyEvent:
+    def __init__(self, msg):
+        self.charCode = msg["charCode"]
+        self.keyCode = msg["keyCode"]
+        self.repeatCount = msg["repeatCount"]
+        self.scanCode = msg["scanCode"]
+        self.isExtended = msg["isExtended"]
+        self.keyStates = msg["keyStates"]
+
+    def isKeyDown(self, code):
+        return (self.keyStates[code] & (1 << 7)) != 0
+
+    def isKeyToggled(self, code):
+        return (self.keyStates[code] & 1) != 0
+
+
 class TextService:
     def __init__(self, client):
         self.client = client
@@ -7,6 +23,7 @@ class TextService:
         self.keyboardOpen = False
         self.showCandidates = False
 
+        self.reply = {} # reply to the events
         self.compositionString = ""
         self.commitString = ""
         self.candidateList = []
@@ -20,14 +37,44 @@ class TextService:
 
 
     # encode current status into an json object
-    def getStatus(self, msg):
-        msg["showCandidates"] = self.showCandidates
-        msg["compositionString"] = self.compositionString
-        msg["commitString"] = self.commitString
-        msg["candidateList"] = self.candidateList
-        msg["compositionCursor"] = self.compositionCursor
+    def getReply(self):
+        reply = self.reply
+        self.reply = {}
+        return reply
 
 
+    def handleRequest(self, method, msg): # msg is a json object
+        success = True # if the method is successfully handled
+        ret = None # the return value of the method, if any
+
+        self.updateStatus(msg)
+        if method == "filterKeyDown":
+            keyEvent = KeyEvent(msg)
+            ret = self.filterKeyDown(keyEvent)
+        elif method == "onKeyDown":
+            keyEvent = KeyEvent(msg)
+            ret = self.onKeyDown(keyEvent)
+        elif method == "filterKeyUp":
+            keyEvent = KeyEvent(msg)
+            ret = self.filterKeyUp(keyEvent)
+        elif method == "onKeyUp":
+            keyEvent = KeyEvent(msg)
+            ret = self.onKeyUp(keyEvent)
+        elif method == "onPreservedKey":
+            ret = self.onPreservedKey()
+        elif method == "onCommand":
+            self.onCommand()
+        elif method == "onCompartmentChanged":
+            self.onCompartmentChanged()
+        elif method == "onKeyboardStatusChanged":
+            self.onKeyboardStatusChanged()
+        elif method == "onCompositionTerminated":
+            self.onCompositionTerminated()
+        else:
+            success = False
+
+        return success, ret
+        
     # methods that should be implemented by derived classes
     def onActivate(self):
         pass
@@ -78,18 +125,23 @@ class TextService:
     # composition string
     def setCompositionString(self, s):
         self.compositionString = s
+        self.reply["compositionString"] = s
 
     def setCompositionCursor(self, pos):
         self.compositionCursor = pos
+        self.reply["compositionCursor"] = pos
 
     def setCommitString(self, s):
         self.commitString = s
+        self.reply["commitString"] = s
 
     def setCandidateList(self, cand):
         self.candidateList = cand
+        self.reply["candidateList"] = cand
 
     def setShowCandidates(self, show):
         self.showCandidates = show
+        self.reply["showCandidates"] = show
 
     def isComposing(self):
         return (self.compositionString != "")

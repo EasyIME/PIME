@@ -1,5 +1,23 @@
 #! python3
 
+# button style constants used by language buttons (from ctfutb.h of Windows SDK)
+TF_LBI_STYLE_HIDDENSTATUSCONTROL = 0x00000001
+TF_LBI_STYLE_SHOWNINTRAY         = 0x00000002
+TF_LBI_STYLE_HIDEONNOOTHERITEMS  = 0x00000004
+TF_LBI_STYLE_SHOWNINTRAYONLY     = 0x00000008
+TF_LBI_STYLE_HIDDENBYDEFAULT     = 0x00000010
+TF_LBI_STYLE_TEXTCOLORICON       = 0x00000020
+TF_LBI_STYLE_BTN_BUTTON          = 0x00010000
+TF_LBI_STYLE_BTN_MENU            = 0x00020000
+TF_LBI_STYLE_BTN_TOGGLE          = 0x00040000
+
+
+# command type parameter of TextService.onCommand
+COMMAND_LEFT_CLICK  = 0
+COMMAND_RIGHT_CLICK = 1
+COMMAND_MENU        = 2
+
+
 class KeyEvent:
     def __init__(self, msg):
         self.charCode = msg["charCode"]
@@ -63,7 +81,9 @@ class TextService:
         elif method == "onPreservedKey":
             ret = self.onPreservedKey()
         elif method == "onCommand":
-            self.onCommand()
+            commandId = msg["id"]
+            commandType = msg["type"]
+            self.onCommand(commandId, commandType)
         elif method == "onCompartmentChanged":
             self.onCompartmentChanged()
         elif method == "onKeyboardStatusChanged":
@@ -94,7 +114,7 @@ class TextService:
     def onKeyUp(self, keyEvent):
         return False
 
-    def onCommand(self):
+    def onCommand(self, commandId, commandType):
         pass
 
     def onCompartmentChanged(self):
@@ -110,17 +130,28 @@ class TextService:
 
     # language bar buttons
     def addButton(self, button):
-        pass
+        buttons = self.reply.setdefault("addButton", [])
+        buttons.append(button)
 
-    def removeButton(self, button):
-        pass
+    def removeButton(self, button_id):
+        buttons = self.reply.setdefault("removeButton", [])
+        buttons.append(button_id)
+
+    def changeButton(self, button):
+        buttons = self.reply.setdefault("changeButton", [])
+        buttons.append(button)
 
     # preserved keys
     def addPreservedKey(self, keyCode, modifiers, guid):
-        pass
+        keys = self.reply.setdefault("addPreservedKey", [])
+        keys.append({
+            "keyCode" : keyCode,
+            "modifiers": modifiers,
+            "guid": guid.lower()})
 
     def removePreservedKey(self, guid):
-        pass
+        keys = self.reply.setdefault("removePreservedKey", [])
+        keys.append(guid.lower())
 
     # composition string
     def setCompositionString(self, s):

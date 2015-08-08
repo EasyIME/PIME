@@ -17,12 +17,15 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#ifndef _NODE_CLIENT_H_
-#define _NODE_CLIENT_H_
+#ifndef _PIME_CLIENT_H_
+#define _PIME_CLIENT_H_
 #define NDEBUG
 #include <libIME/TextService.h>
 #include <libIME/KeyEvent.h>
 #include <libIME/EditSession.h>
+#include <libIME/LangBarButton.h>
+
+#include <unordered_map>
 
 #define RAPIDJSON_HAS_STDSTRING	1
 #include "rapidjson/document.h"
@@ -77,11 +80,13 @@ private:
 	int addSeqNum(rapidjson::Writer<rapidjson::StringBuffer>& writer);
 	bool handleReply(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
 	void updateStatus(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
+	void updateLangBarButton(Ime::LangBarButton* btn, rapidjson::Value& info);
 
 	TextService* textService_;
 	HANDLE pipe_;
+	std::unordered_map<std::string, Ime::LangBarButton*> buttons_; // map buttons to string IDs
 };
 
 }
 
-#endif // _NODE_CLIENT_H_
+#endif // _PIME_CLIENT_H_

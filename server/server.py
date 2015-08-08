@@ -52,6 +52,7 @@ class Client:
         print("handle message: ", threading.current_thread().name, method, seqNum)
 
         # these are messages handled by Client
+        handled = True
         if method == "init":
             self.init(msg)
         elif method == "onActivate":
@@ -64,19 +65,22 @@ class Client:
         elif method == "onLangProfileDeactivated":
             guid = msg["guid"]
             self.onLangProfileDeactivated(guid)
+        else:
+            handled = False
 
         reply = {}
         # these are messages handled by the text service
         service = self.service
         if service:
-            (success, ret) = service.handleRequest(method, msg)
+            if not handled: # if the request is not yet handled
+                (success, ret) = service.handleRequest(method, msg)
             if success:
                 reply = service.getReply()
-                print(reply)
             if ret != None:
                 reply["return"] = ret
         reply["success"] = success
         reply["seqNum"] = seqNum # reply with sequence number added
+        print("reply: ", reply)
         return reply
 
 

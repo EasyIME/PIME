@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from win32con import * # for VK_XXX constants
-from ..textService import TextService
+from ..textService import *
 
 class MeowTextService(TextService):
     def __init__(self, client):
@@ -8,9 +8,18 @@ class MeowTextService(TextService):
 
     def onActivate(self):
         TextService.onActivate(self)
+        self.addButton({
+            "id": "test-btn",
+            "guid": "{927E9CB3-2459-463E-BEA4-3F4C10FEB529}",
+            "text": "Test",
+            "tooltip": "Test Button!",
+            "style": TF_LBI_STYLE_BTN_BUTTON,
+            "commandId": 1
+        })
 
     def onDeactivate(self):
         TextService.onDeactivate(self)
+        self.removeButton("test-btn")
 
     def filterKeyDown(self, keyEvent):
         if not self.isComposing():
@@ -69,3 +78,6 @@ class MeowTextService(TextService):
 
     def onKeyboardStatusChanged(self):
         TextService.onKeyboardStatusChanged(self)
+
+    def onCommand(self, commandId, commandType):
+        print("onCommand", commandId, commandType)

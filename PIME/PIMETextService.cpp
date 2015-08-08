@@ -31,26 +31,6 @@ using namespace std;
 
 namespace PIME {
 
-// {B59D51B9-B832-40D2-9A8D-56959372DDC7}
-static const GUID g_modeButtonGuid = // English/Chinses mode switch
-{ 0xb59d51b9, 0xb832, 0x40d2, { 0x9a, 0x8d, 0x56, 0x95, 0x93, 0x72, 0xdd, 0xc7 } };
-
-// {5325DBF5-5FBE-467B-ADF0-2395BE9DD2BB}
-static const GUID g_shapeTypeButtonGuid = // half shape/full shape switch
-{ 0x5325dbf5, 0x5fbe, 0x467b, { 0xad, 0xf0, 0x23, 0x95, 0xbe, 0x9d, 0xd2, 0xbb } };
-
-// {4FAFA520-2104-407E-A532-9F1AAB7751CD}
-static const GUID g_settingsButtonGuid = // settings button/menu
-{ 0x4fafa520, 0x2104, 0x407e, { 0xa5, 0x32, 0x9f, 0x1a, 0xab, 0x77, 0x51, 0xcd } };
-
-// {C77A44F5-DB21-474E-A2A2-A17242217AB3}
-static const GUID g_shiftSpaceGuid = // shift + space
-{ 0xc77a44f5, 0xdb21, 0x474e, { 0xa2, 0xa2, 0xa1, 0x72, 0x42, 0x21, 0x7a, 0xb3 } };
-
-// {F4D1E543-FB2C-48D7-B78D-20394F355381} // global compartment GUID for config change notification
-static const GUID g_configChangedGuid = 
-{ 0xf4d1e543, 0xfb2c, 0x48d7, { 0xb7, 0x8d, 0x20, 0x39, 0x4f, 0x35, 0x53, 0x81 } };
-
 // this is the GUID of the IME mode icon in Windows 8
 // the value is not available in older SDK versions, so let's define it ourselves.
 static const GUID _GUID_LBI_INPUTMODE =
@@ -64,30 +44,9 @@ TextService::TextService(ImeModule* module):
 	candidateWindow_(nullptr),
 	imeModeIcon_(nullptr) {
 
+#if 0
 	// add preserved keys
 	addPreservedKey(VK_SPACE, TF_MOD_SHIFT, g_shiftSpaceGuid); // shift + space
-
-	// add language bar buttons
-	// siwtch Chinese/English modes
-#if 0
-	switchLangButton_ = new Ime::LangBarButton(this, g_modeButtonGuid, ID_SWITCH_LANG);
-	switchLangButton_->setTooltip(IDS_SWITCH_LANG);
-	addButton(switchLangButton_);
-
-	// toggle full shape/half shape
-	switchShapeButton_ = new Ime::LangBarButton(this, g_shapeTypeButtonGuid, ID_SWITCH_SHAPE);
-	switchShapeButton_->setTooltip(IDS_SWITCH_SHAPE);
-	addButton(switchShapeButton_);
-
-	// settings and others, may open a popup menu
-	Ime::LangBarButton* button = new Ime::LangBarButton(this, g_settingsButtonGuid);
-	button->setTooltip(IDS_SETTINGS);
-	button->setIcon(IDI_CONFIG);
-	HMENU menu = ::LoadMenuW(this->imeModule()->hInstance(), LPCTSTR(IDR_MENU));
-	popupMenu_ = ::GetSubMenu(menu, 0);
-	button->setMenu(popupMenu_);
-	addButton(button);
-	button->Release();
 
 	// Windows 8 systray IME mode icon
 	if(imeModule()->isWindows8Above()) {
@@ -95,10 +54,10 @@ TextService::TextService(ImeModule* module):
 		imeModeIcon_->setIcon(IDI_ENG);
 		addButton(imeModeIcon_);
 	}
-#endif
 
 	// global compartment stuff
 	addCompartmentMonitor(g_configChangedGuid, true);
+#endif
 
 	// font for candidate and mesasge windows
 	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
@@ -126,10 +85,6 @@ TextService::~TextService(void) {
 	if(font_)
 		::DeleteObject(font_);
 
-	if(switchLangButton_)
-		switchLangButton_->Release();
-	if(switchShapeButton_)
-		switchShapeButton_->Release();
 	if(imeModeIcon_)
 		imeModeIcon_->Release();
 }
@@ -140,8 +95,7 @@ void TextService::onActivate() {
 		client_ = new Client(this);
 	client_->onActivate();
 
-	DWORD configStamp = globalCompartmentValue(g_configChangedGuid);
-	updateLangButtons();
+	// DWORD configStamp = globalCompartmentValue(g_configChangedGuid);
 	if(imeModeIcon_) // windows 8 IME mode icon
 		imeModeIcon_->setEnabled(isKeyboardOpened());
 }

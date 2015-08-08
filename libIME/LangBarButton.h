@@ -33,7 +33,7 @@ class LangBarButton:
 	public ITfLangBarItemButton,
 	public ITfSource {
 public:
-	LangBarButton(TextService* service, const GUID& guid, UINT commandId = 0, wchar_t* text = NULL, DWORD style = TF_LBI_STYLE_BTN_BUTTON);
+	LangBarButton(TextService* service, const GUID& guid, UINT commandId = 0, const wchar_t* text = NULL, DWORD style = TF_LBI_STYLE_BTN_BUTTON);
 	virtual ~LangBarButton(void);
 
 	// public methods

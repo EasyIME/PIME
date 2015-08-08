@@ -26,7 +26,7 @@
 
 namespace Ime {
 
-LangBarButton::LangBarButton(TextService* service, const GUID& guid, UINT commandId, wchar_t* text, DWORD style):
+LangBarButton::LangBarButton(TextService* service, const GUID& guid, UINT commandId, const wchar_t* text, DWORD style):
 	textService_(service),
 	tooltip_(NULL),
 	commandId_(commandId),
@@ -62,7 +62,7 @@ const wchar_t* LangBarButton::text() const {
 void LangBarButton::setText(const wchar_t* text) {
 	if(text) {
 		wcsncpy(info_.szDescription, text, TF_LBI_DESC_MAXLEN - 1);
-		info_.szDescription[TF_LBI_DESC_MAXLEN] = 0;
+		info_.szDescription[TF_LBI_DESC_MAXLEN - 1] = 0;
 	}
 	else
 		*info_.szDescription = 0;
@@ -76,7 +76,7 @@ void LangBarButton::setText(UINT stringId) {
 		if(len > (TF_LBI_DESC_MAXLEN - 1))
 			len = TF_LBI_DESC_MAXLEN - 1;
 		wcsncpy(info_.szDescription, str, len);
-		info_.szDescription[len + 1] = 0;
+		info_.szDescription[len] = 0;
 		update(TF_LBI_TEXT);
 	}
 }

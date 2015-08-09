@@ -29,7 +29,6 @@ COMMAND_LEFT_CLICK  = 0
 COMMAND_RIGHT_CLICK = 1
 COMMAND_MENU        = 2
 
-
 class KeyEvent:
     def __init__(self, msg):
         self.charCode = msg["charCode"]
@@ -44,6 +43,14 @@ class KeyEvent:
 
     def isKeyToggled(self, code):
         return (self.keyStates[code] & 1) != 0
+
+    def isChar(self):
+        return (self.charCode != 0)
+
+    def isPrintableChar(self, includingSpace = False):
+        if includingSpace and self.charCode == ord(' '):
+            return True
+        return self.charCode > 0x1f and self.charCode != 0x7f
 
 
 class TextService:

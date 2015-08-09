@@ -146,19 +146,21 @@ class TextService:
     # public methods that should not be touched
 
     # language bar buttons
-    def addButton(self, button):
-        if "id" not in button:
-            return
+    def addButton(self, button_id, **kwargs):
         buttons = self.reply.setdefault("addButton", [])
-        buttons.append(button)
+        info = kwargs
+        info["id"] = button_id
+        buttons.append(info)
 
     def removeButton(self, button_id):
         buttons = self.reply.setdefault("removeButton", [])
         buttons.append(button_id)
 
-    def changeButton(self, button):
+    def changeButton(self, button_id, **kwargs):
         buttons = self.reply.setdefault("changeButton", [])
-        buttons.append(button)
+        info = kwargs
+        info["id"] = button_id
+        buttons.append(info)
 
     # preserved keys
     def addPreservedKey(self, keyCode, modifiers, guid):
@@ -192,6 +194,17 @@ class TextService:
     def setShowCandidates(self, show):
         self.showCandidates = show
         self.reply["showCandidates"] = show
+
+    def setSelKeys(self, keys):
+        self.reply["setSelKeys"] = keys
+
+    '''
+    Valid arguments:
+    candFontName, cadFontSize, candPerRow, candUseCursor
+    '''
+    def customizeUI(self, **kwargs):
+        data = self.reply.setdefault("customizeUI", {})
+        data.update(kwargs)
 
     def isComposing(self):
         return (self.compositionString != "")

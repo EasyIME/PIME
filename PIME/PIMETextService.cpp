@@ -37,14 +37,18 @@ TextService::TextService(ImeModule* module):
 	messageWindow_(nullptr),
 	messageTimerId_(0),
 	candidateWindow_(nullptr),
+	updateFont_(false),
+	candPerRow_(10),
+	selKeys_(L"1234567890"),
+	candUseCursor_(false),
+	candFontSize_(16),
 	imeModeIcon_(nullptr) {
 
 	// font for candidate and mesasge windows
 	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 	LOGFONT lf;
 	GetObject(font_, sizeof(lf), &lf);
-	// lf.lfHeight = config().fontSize;
-	lf.lfHeight = 14; // FIXME: make this configurable
+	lf.lfHeight = candFontSize_; // FIXME: make this configurable
 	lf.lfWeight = FW_NORMAL;
 	font_ = CreateFontIndirect(&lf);
 }
@@ -214,15 +218,33 @@ void TextService::onLangProfileDeactivated(REFIID lang) {
 void TextService::updateCandidates(Ime::EditSession* session) {
 	assert(candidateWindow_);
 	candidateWindow_->clear();
-	// FIXME: make this configurable
-	candidateWindow_->setUseCursor(false);
-	candidateWindow_->setCandPerRow(1);
 
-	wchar_t selKeys[] = L"1234567890"; // keys used to select candidates
+	// FIXME: is this the right place to do it?
+	if (updateFont_) {
+		// font for candidate and mesasge windows
+		LOGFONT lf;
+		GetObject(font_, sizeof(lf), &lf);
+		::DeleteObject(font_); // delete old font
+		lf.lfHeight = candFontSize_; // apply the new size
+		if (!candFontName_.empty()) { // apply new font name
+			wcsncpy(lf.lfFaceName, candFontName_.c_str(), 31);
+		}
+		font_ = CreateFontIndirect(&lf); // create new font
+		// if (messageWindow_)
+		//	messageWindow_->setFont(font_);
+		if (candidateWindow_)
+			candidateWindow_->setFont(font_);
+		updateFont_ = false;
+	}
+
+	candidateWindow_->setUseCursor(candUseCursor_);
+	candidateWindow_->setCandPerRow(candPerRow_);
+
+	// FIXME: make this configurable
 	int n = 9; // candidate string shown per page
 	int i;
 	for (i = 0; i < n && i < candidates_.size(); ++i) {
-		candidateWindow_->add(candidates_[i], selKeys[i]);
+		candidateWindow_->add(candidates_[i], selKeys_[i]);
 	}
 	candidateWindow_->recalculateSize();
 	candidateWindow_->refresh();

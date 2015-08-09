@@ -81,6 +81,7 @@ private:
 	bool handleReply(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
 	void updateStatus(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
 	void updateLangBarButton(Ime::LangBarButton* btn, rapidjson::Value& info);
+	void updateUI(rapidjson::Value& data);
 	void clearIconCache();
 
 	TextService* textService_;

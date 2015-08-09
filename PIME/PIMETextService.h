@@ -68,7 +68,49 @@ public:
 
 	virtual void onLangProfileDeactivated(REFIID lang);
 
-private:
+	// methods called by PIME::Client
+	int candPerRow() const {
+		return candPerRow_;
+	}
+
+	void setCandPerRow(int candPerRow) {
+		candPerRow_ = candPerRow;
+	}
+
+	std::wstring selKeys() const {
+		return selKeys_;
+	}
+
+	void setSelKeys(std::wstring selKeys) {
+		selKeys_ = selKeys;
+	}
+
+	bool candUseCursor() const {
+		return candUseCursor_;
+	}
+
+	void setCandUseCursor(bool candUseCursor) {
+		candUseCursor_ = candUseCursor;
+	}
+
+	std::wstring candFontName() const {
+		return candFontName_;
+	}
+
+	void setCandFontName(std::wstring candFontName) {
+		candFontName_ = candFontName;
+		updateFont_ = true;
+	}
+
+	int candFontSize() {
+		return candFontSize_;
+	}
+
+	void setCandFontSize(int candFontSize) {
+		candFontSize_ = candFontSize;
+		updateFont_ = true;
+	}
+
 	bool showingCandidates() {
 		return showingCandidates_;
 	}
@@ -81,6 +123,7 @@ private:
 	// message window
 	void showMessage(Ime::EditSession* session, std::wstring message, int duration = 3);
 	void hideMessage();
+private:
 	void onMessageTimeout();
 	static void CALLBACK onMessageTimeout(HWND hwnd, UINT msg, UINT_PTR id, DWORD time);
 
@@ -103,6 +146,12 @@ private:
 	Ime::MessageWindow* messageWindow_;
 	UINT messageTimerId_;
 	HFONT font_;
+	bool updateFont_;
+	int candPerRow_;
+	std::wstring selKeys_;
+	bool candUseCursor_;
+	std::wstring candFontName_;
+	int candFontSize_;
 
 	Ime::LangBarButton* imeModeIcon_; // IME mode icon, a special language button (Windows 8 only)
 	HMENU popupMenu_;

@@ -6,20 +6,19 @@ import os.path
 class MeowTextService(TextService):
     def __init__(self, client):
         TextService.__init__(self, client)
+        self.icon_dir = os.path.abspath(os.path.dirname(__file__))
 
     def onActivate(self):
         TextService.onActivate(self)
-        icon_dir = os.path.dirname(__file__)
-        # button_id = "my-button"
         # Windows 8 systray IME mode icon
-        button_id = "windows-mode-icon"
-        self.addButton({
-            "id": button_id,
-            "icon": os.path.join(icon_dir, "chi.ico"),
-            "tooltip": "Test Button!",
-            # "style": TF_LBI_STYLE_BTN_BUTTON,
-            "commandId": 1
-        })
+        self.addButton("windows-mode-icon",
+            icon = os.path.join(self.icon_dir, "chi.ico"),
+            tooltip = "Test Button!",
+            commandId = 1
+        )
+        self.customizeUI(candFontSize = 24, candPerRow = 1)
+        # self.setSelKeys("1234567890")
+        self.setSelKeys("asdfjkl;")
 
     def onDeactivate(self):
         TextService.onDeactivate(self)
@@ -73,15 +72,6 @@ class MeowTextService(TextService):
             self.setCompositionString(self.compositionString + "喵")
             self.setCompositionCursor(len(self.compositionString))
         return True
-
-    def filterKeyUp(self, keyEvent):
-        return False
-
-    def onKeyUp(self, keyEvent):
-        return False
-
-    def onKeyboardStatusChanged(self):
-        TextService.onKeyboardStatusChanged(self)
 
     def onCommand(self, commandId, commandType):
         print("onCommand", commandId, commandType)

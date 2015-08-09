@@ -140,6 +140,25 @@ void Client::updateLangBarButton(Ime::LangBarButton* btn, rapidjson::Value& info
 	}
 }
 
+void Client::updateUI(rapidjson::Value& data) {
+	for (auto it = data.MemberBegin(); it != data.MemberEnd(); ++it) {
+		const char* name = it->name.GetString();
+		if (it->value.IsString() && strcmp(name, "candFontName") == 0) {
+			wstring fontName = utf8ToUtf16(it->value.GetString());
+			textService_->setCandFontName(fontName);
+		}
+		else if (it->value.IsInt() && strcmp(name, "candFontSize") == 0) {
+			textService_->setCandFontSize(it->value.GetInt());
+		}
+		else if (it->value.IsInt() && strcmp(name, "candPerRow") == 0) {
+			textService_->setCandPerRow(it->value.GetInt());
+		}
+		else if (it->value.IsBool() && strcmp(name, "candUseCursor") == 0) {
+			textService_->setCandUseCursor(it->value.GetBool());
+		}
+	}
+}
+
 void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 	for (auto it = msg.MemberBegin(); it != msg.MemberEnd(); ++it) {
 		const char* name = it->name.GetString();
@@ -285,6 +304,15 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 					textService_->removePreservedKey(guid);
 				}
 			}
+		}
+		else if (it->value.IsString() && strcmp(name, "setSelKeys") == 0) {
+			// keys used to select candidates
+			std::wstring selKeys = utf8ToUtf16(it->value.GetString());
+			textService_->setSelKeys(selKeys);
+		}
+		else if (it->value.IsObject() && strcmp(name, "customizeUI") == 0) {
+			// customize the UI
+			updateUI(it->value);
 		}
 	}
 }

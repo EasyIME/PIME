@@ -205,6 +205,7 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 					wstring cand = utf8ToUtf16(it->GetString());
 					candidates.push_back(cand);
 				}
+				textService_->updateCandidates(session);
 				continue;
 			}
 			else if (it->value.IsBool() && strcmp(name, "showCandidates") == 0) {

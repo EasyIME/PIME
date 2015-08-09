@@ -211,16 +211,22 @@ class ChewingTextService(TextService):
         #    return False
 
         # handle candidates
-        '''
-        if hasCandidates():
-            if !showingCandidates())
-                showCandidates(session)
-            else
-                updateCandidates(session)
-        else :
-            if showingCandidates())
-                hideCandidates()
-        '''
+        if ctx.cand_TotalChoice() > 0: # has candidates
+            # FIXME: avoid updating candidate list everytime if it's not changed
+            candidates = []
+            ctx.cand_Enumerate()
+            n = ctx.cand_ChoicePerPage(); # candidate string shown per page
+            for i in range(0, n):
+                if not ctx.cand_hasNext():
+                    break
+                cand = ctx.cand_String().decode("UTF-8")
+                candidates.append(cand)
+            self.setCandidateList(candidates)
+            if not self.showCandidates:
+                self.setShowCandidates(True)
+        else:
+            if self.showCandidates:
+                self.setShowCandidates(False)
 
         # has something to commit
         if ctx.commit_Check():
@@ -256,7 +262,6 @@ class ChewingTextService(TextService):
             showMessage(session, wstr, 2)
         '''
         return True
-
 
     def onCommand(self, commandId, commandType):
         print("onCommand", commandId, commandType)

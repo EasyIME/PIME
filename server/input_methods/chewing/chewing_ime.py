@@ -114,7 +114,8 @@ class ChewingTextService(TextService):
 
     def onKeyDown(self, keyEvent):
         ctx = self.ctx
-        charStr = chr(keyEvent.charCode)
+        charCode = keyEvent.charCode
+        charStr = chr(charCode)
         if keyEvent.isPrintableChar(): # printable characters (exclude extended keys?)
             oldLangMode = ctx.get_ChiEngMode()
             temporaryEnglishMode = False
@@ -154,10 +155,9 @@ class ChewingTextService(TextService):
                     ctx.handle_CtrlNum(charCode)
                 elif keyEvent.isKeyToggled(VK_NUMLOCK) and keyEvent.keyCode >= VK_NUMPAD0 and keyEvent.keyCode <= VK_DIVIDE:
                     # numlock is on, handle numpad keys
-                    ctx.handle_Numlock(keyEvent.charCode)
+                    ctx.handle_Numlock(charCode)
                 else : # other keys, no special handling is needed
-                    print("handleDefault", charStr)
-                    ctx.handle_Default(keyEvent.charCode)
+                    ctx.handle_Default(charCode)
         else: # non-printable keys
             keyHandled = False
             # if we want to use the arrow keys to select candidate strings

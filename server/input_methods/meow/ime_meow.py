@@ -16,9 +16,9 @@ class MeowTextService(TextService):
             tooltip = "Test Button!",
             commandId = 1
         )
-        self.customizeUI(candFontSize = 24, candPerRow = 1)
-        # self.setSelKeys("1234567890")
-        self.setSelKeys("asdfjkl;")
+        self.customizeUI(candFontSize = 20, candPerRow = 1)
+        self.setSelKeys("1234567890")
+        # self.setSelKeys("asdfjkl;")
 
     def onDeactivate(self):
         TextService.onDeactivate(self)

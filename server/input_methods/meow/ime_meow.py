@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#! python3
 from win32con import * # for VK_XXX constants
 from ..textService import *
 import os.path
@@ -10,9 +10,9 @@ class MeowTextService(TextService):
     def onActivate(self):
         TextService.onActivate(self)
         icon_dir = os.path.dirname(__file__)
-        button_id = "my-button"
-        if self.client.isWindows8Above:  # Windows 8 systray IME mode icon
-            button_id = "windows-mode-icon"
+        # button_id = "my-button"
+        # Windows 8 systray IME mode icon
+        button_id = "windows-mode-icon"
         self.addButton({
             "id": button_id,
             "icon": os.path.join(icon_dir, "chi.ico"),

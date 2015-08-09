@@ -28,7 +28,9 @@ class Client:
         pass
 
     def onDeactivate(self):
-        pass
+        if self.service:
+            self.service.onDeactivate()
+            self.service = None
 
     def onLangProfileActivated(self, guid):
         service = self.service
@@ -80,7 +82,7 @@ class Client:
                 reply["return"] = ret
         reply["success"] = success
         reply["seqNum"] = seqNum # reply with sequence number added
-        # print("reply: ", reply)
+        print("reply: ", reply)
         return reply
 
 

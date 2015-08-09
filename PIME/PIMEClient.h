@@ -81,10 +81,12 @@ private:
 	bool handleReply(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
 	void updateStatus(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
 	void updateLangBarButton(Ime::LangBarButton* btn, rapidjson::Value& info);
+	void clearIconCache();
 
 	TextService* textService_;
 	HANDLE pipe_;
 	std::unordered_map<std::string, Ime::LangBarButton*> buttons_; // map buttons to string IDs
+	std::unordered_map<std::wstring, HICON> iconCache_; // cache loaded icons
 };
 
 }

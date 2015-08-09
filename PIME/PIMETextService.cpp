@@ -39,14 +39,6 @@ TextService::TextService(ImeModule* module):
 	candidateWindow_(nullptr),
 	imeModeIcon_(nullptr) {
 
-#if 0
-	// add preserved keys
-	addPreservedKey(VK_SPACE, TF_MOD_SHIFT, g_shiftSpaceGuid); // shift + space
-
-	// global compartment stuff
-	addCompartmentMonitor(g_configChangedGuid, true);
-#endif
-
 	// font for candidate and mesasge windows
 	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 	LOGFONT lf;

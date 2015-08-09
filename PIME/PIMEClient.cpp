@@ -56,6 +56,7 @@ Client::~Client(void) {
 			textService_->removeButton(it->second);
 		}
 	}
+	clearIconCache();
 }
 
 // pack a keyEvent object into a json value
@@ -108,8 +109,16 @@ void Client::updateLangBarButton(Ime::LangBarButton* btn, rapidjson::Value& info
 	auto it = info.FindMember("icon");
 	if (it != info.MemberEnd() && it->value.IsString()) {
 		wstring iconPath = utf8ToUtf16(it->value.GetString());
-		HICON icon = (HICON)LoadImageW(NULL, iconPath.c_str(), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_LOADFROMFILE);
-		btn->setIcon(icon);
+		HICON icon = NULL;
+		auto icon_it = iconCache_.find(iconPath);
+		if (icon_it != iconCache_.end()) // found in the cache
+			icon = icon_it->second;
+		else { // not in the cache
+			icon = (HICON)LoadImageW(NULL, iconPath.c_str(), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_LOADFROMFILE);
+			iconCache_[iconPath] = icon; // cache the icon
+		}
+		if (icon)
+			btn->setIcon(icon);
 	}
 
 	it = info.FindMember("commandId");
@@ -132,156 +141,149 @@ void Client::updateLangBarButton(Ime::LangBarButton* btn, rapidjson::Value& info
 }
 
 void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
-	rapidjson::Document::MemberIterator it;
-	if (session != nullptr) { // if an edit session is available
-		// commit string
-		it = msg.FindMember("commitString");
-		if (it != msg.MemberEnd() && it->value.IsString()) {
-			std::wstring commitString = utf8ToUtf16(it->value.GetString());
-			if (!commitString.empty()) {
+	for (auto it = msg.MemberBegin(); it != msg.MemberEnd(); ++it) {
+		const char* name = it->name.GetString();
+		if (session != nullptr) { // if an edit session is available
+			// commit string
+			if (it->value.IsString() && strcmp(name, "commitString") == 0) {
+				std::wstring commitString = utf8ToUtf16(it->value.GetString());
+				if (!commitString.empty()) {
+					if (!textService_->isComposing()) {
+						textService_->startComposition(session->context());
+					}
+					textService_->setCompositionString(session, commitString.c_str(), commitString.length());
+					textService_->endComposition(session->context());
+				}
+				continue;
+			}
+			else if (it->value.IsString() && strcmp(name, "compositionString") == 0) {
+				// composition buffer
+				std::wstring compositionString = utf8ToUtf16(it->value.GetString());
+				if (!compositionString.empty()) {
+					if (!textService_->isComposing()) {
+						textService_->startComposition(session->context());
+					}
+					textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
+				}
+				continue;
+			}
+			else if (it->value.IsInt() && strcmp(name, "compositionCursor") == 0) {
+				// composition cursor
+				int compositionCursor = it->value.GetInt();
 				if (!textService_->isComposing()) {
 					textService_->startComposition(session->context());
 				}
-				textService_->setCompositionString(session, commitString.c_str(), commitString.length());
-				textService_->endComposition(session->context());
+				textService_->setCompositionCursor(session, compositionCursor);
+				continue;
 			}
-		}
-
-		// composition buffer
-		it = msg.FindMember("compositionString");
-		if (it != msg.MemberEnd() && it->value.IsString()) {
-			std::wstring compositionString = utf8ToUtf16(it->value.GetString());
-			if (!compositionString.empty()) {
-				if (!textService_->isComposing()) {
-					textService_->startComposition(session->context());
+			else if (it->value.IsArray() && strcmp(name, "candidateList") == 0) {
+				// handle candidates
+				rapidjson::Value& candidateList = it->value;
+				// FIXME: directly access private member is dirty!!!
+				vector<wstring>& candidates = textService_->candidates_;
+				candidates.clear();
+				for (auto it = candidateList.Begin(); it < candidateList.End(); ++it) {
+					wstring cand = utf8ToUtf16(it->GetString());
+					candidates.push_back(cand);
 				}
-				textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
+				continue;
 			}
-		}
-
-		// composition cursor
-		it = msg.FindMember("compositionCursor");
-		if (it != msg.MemberEnd() && it->value.IsInt()) {
-			int compositionCursor = it->value.GetInt();
-			if (!textService_->isComposing()) {
-				textService_->startComposition(session->context());
-			}
-			textService_->setCompositionCursor(session, compositionCursor);
-		}
-
-		// handle candidates
-		it = msg.FindMember("candidateList");
-		if (it != msg.MemberEnd() && it->value.IsArray()) {
-			rapidjson::Value& candidateList = it->value;
-			// FIXME: directly access private member is dirty!!!
-			vector<wstring>& candidates = textService_->candidates_;
-			candidates.clear();
-			for (auto it = candidateList.Begin(); it < candidateList.End(); ++it) {
-				wstring cand = utf8ToUtf16(it->GetString());
-				candidates.push_back(cand);
-			}
-		}
-
-		it = msg.FindMember("showCandidates");
-		if (it != msg.MemberEnd() && it->value.IsBool()) {
-			bool showCandidates = it->value.GetBool();
-			if (showCandidates) {
-				textService_->showCandidates(session);
-			}
-			else {
-				textService_->hideCandidates();
-			}
-		}
-	}
-
-	// language buttons
-	it = msg.FindMember("addButton");
-	if (it != msg.MemberEnd() && it->value.IsArray()) {
-		rapidjson::Value& buttons = it->value;
-		for (auto btn_it = buttons.Begin(); btn_it < buttons.End(); ++btn_it) {
-			rapidjson::Value& btn = *btn_it;
-			if (btn.IsObject()) {
-				string id = btn["id"].GetString();
-
-				DWORD style = TF_LBI_STYLE_BTN_BUTTON;
-				auto prop_it = btn.FindMember("style");
-				if (prop_it != btn.MemberEnd())
-					style = prop_it->value.GetUint();
-
-				CLSID guid = { 0 }; // create a new GUID on-the-fly
-				if (id == "windows-mode-icon") {
-					// Windows 8 systray IME mode icon
-					guid = _GUID_LBI_INPUTMODE;
+			else if (it->value.IsBool() && strcmp(name, "showCandidates") == 0) {
+				bool showCandidates = it->value.GetBool();
+				if (showCandidates) {
+					textService_->showCandidates(session);
 				}
 				else {
-					CoCreateGuid(&guid);
+					textService_->hideCandidates();
 				}
-
-				Ime::LangBarButton* langBtn = new Ime::LangBarButton(textService_, guid, 0, NULL, style);
-				buttons_[id] = langBtn; // insert into the map
-				updateLangBarButton(langBtn, btn);
-				textService_->addButton(langBtn);
-				langBtn->Release();
+				continue;
 			}
 		}
-	}
 
-	it = msg.FindMember("removeButton");
-	if (it != msg.MemberEnd() && it->value.IsArray()) {
-		rapidjson::Value& buttons = it->value;
-		for (auto btn_it = buttons.Begin(); btn_it < buttons.End(); ++btn_it) {
-			if (btn_it->IsString()) {
-				string id = btn_it->GetString();
-				auto map_it = buttons_.find(id);
-				if (map_it != buttons_.end()) {
-					textService_->removeButton(map_it->second);
-					buttons_.erase(map_it); // remove from the map
-				}
-			}
-		}
-	}
+		// language buttons
+		if (it->value.IsArray() && strcmp(name, "addButton") == 0) {
+			rapidjson::Value& buttons = it->value;
+			for (auto btn_it = buttons.Begin(); btn_it < buttons.End(); ++btn_it) {
+				rapidjson::Value& btn = *btn_it;
+				if (btn.IsObject()) {
+					string id = btn["id"].GetString();
 
-	it = msg.FindMember("changeButton");
-	if (it != msg.MemberEnd() && it->value.IsArray()) {
-		rapidjson::Value& buttons = it->value;
-		for (auto btn_it = buttons.Begin(); btn_it < buttons.End(); ++btn_it) {
-			rapidjson::Value& btn = *btn_it;
-			if (btn.IsObject()) {
-				string id = btn["id"].GetString();
-				auto map_it = buttons_.find(id);
-				if (map_it != buttons_.end()) {
-					updateLangBarButton(map_it->second, btn);
+					DWORD style = TF_LBI_STYLE_BTN_BUTTON;
+					auto prop_it = btn.FindMember("style");
+					if (prop_it != btn.MemberEnd())
+						style = prop_it->value.GetUint();
+
+					CLSID guid = { 0 }; // create a new GUID on-the-fly
+					if (id == "windows-mode-icon") {
+						// Windows 8 systray IME mode icon
+						guid = _GUID_LBI_INPUTMODE;
+					}
+					else {
+						CoCreateGuid(&guid);
+					}
+
+
+					// FIXME: when to clear the id <=> button map??
+					Ime::LangBarButton* langBtn = new Ime::LangBarButton(textService_, guid, 0, NULL, style);
+					buttons_[id] = langBtn; // insert into the map
+					updateLangBarButton(langBtn, btn);
+					textService_->addButton(langBtn);
+					langBtn->Release();
 				}
 			}
 		}
-	}
-
-	// preserved keys
-	it = msg.FindMember("addPreservedKey");
-	if (it != msg.MemberEnd() && it->value.IsArray()) {
-		rapidjson::Value& keys = it->value;
-		for (auto key_it = keys.Begin(); key_it < keys.End(); ++key_it) {
-			rapidjson::Value& key = *key_it;
-			if (key.IsObject()) {
-				std::wstring guidStr = utf8ToUtf16(key["guid"].GetString());
-				CLSID guid = { 0 };
-				CLSIDFromString(guidStr.c_str(), &guid);
-				UINT keyCode = key["keyCode"].GetUint();
-				UINT modifiers = key["modifiers"].GetUint();
-				textService_->addPreservedKey(keyCode, modifiers, guid);
+		else if (it->value.IsArray() && strcmp(name, "removeButton") == 0) {
+			// FIXME: handle windows-mode-icon
+			rapidjson::Value& buttons = it->value;
+			for (auto btn_it = buttons.Begin(); btn_it < buttons.End(); ++btn_it) {
+				if (btn_it->IsString()) {
+					string id = btn_it->GetString();
+					auto map_it = buttons_.find(id);
+					if (map_it != buttons_.end()) {
+						textService_->removeButton(map_it->second);
+						buttons_.erase(map_it); // remove from the map
+					}
+				}
 			}
 		}
-	}
-
-	it = msg.FindMember("removePreservedKey");
-	if (it != msg.MemberEnd() && it->value.IsArray()) {
-		rapidjson::Value& keys = it->value;
-		for (auto key_it = keys.Begin(); key_it < keys.End(); ++key_it) {
-			if (key_it->IsString()) {
-				std::wstring guidStr = utf8ToUtf16(key_it->GetString());
-				CLSID guid = { 0 };
-				CLSIDFromString(guidStr.c_str(), &guid);
-				textService_->removePreservedKey(guid);
+		else if (it->value.IsArray() && strcmp(name, "changeButton") == 0) {
+			// FIXME: handle windows-mode-icon
+			rapidjson::Value& buttons = it->value;
+			for (auto btn_it = buttons.Begin(); btn_it < buttons.End(); ++btn_it) {
+				rapidjson::Value& btn = *btn_it;
+				if (btn.IsObject()) {
+					string id = btn["id"].GetString();
+					auto map_it = buttons_.find(id);
+					if (map_it != buttons_.end()) {
+						updateLangBarButton(map_it->second, btn);
+					}
+				}
+			}
+		}
+		else if (it->value.IsArray() && strcmp(name, "addPreservedKey") == 0) {
+			// preserved keys
+			rapidjson::Value& keys = it->value;
+			for (auto key_it = keys.Begin(); key_it < keys.End(); ++key_it) {
+				rapidjson::Value& key = *key_it;
+				if (key.IsObject()) {
+					std::wstring guidStr = utf8ToUtf16(key["guid"].GetString());
+					CLSID guid = { 0 };
+					CLSIDFromString(guidStr.c_str(), &guid);
+					UINT keyCode = key["keyCode"].GetUint();
+					UINT modifiers = key["modifiers"].GetUint();
+					textService_->addPreservedKey(keyCode, modifiers, guid);
+				}
+			}
+		}
+		else if (it->value.IsArray() && strcmp(name, "removePreservedKey") == 0) {
+			rapidjson::Value& keys = it->value;
+			for (auto key_it = keys.Begin(); key_it < keys.End(); ++key_it) {
+				if (key_it->IsString()) {
+					std::wstring guidStr = utf8ToUtf16(key_it->GetString());
+					CLSID guid = { 0 };
+					CLSIDFromString(guidStr.c_str(), &guid);
+					textService_->removePreservedKey(guid);
+				}
 			}
 		}
 	}
@@ -317,6 +319,7 @@ void Client::onDeactivate() {
 	Document ret = sendRequest(s.GetString(), sn);
 	if (handleReply(ret)) {
 	}
+	clearIconCache();
 }
 
 bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
@@ -515,6 +518,7 @@ void Client::onCompositionTerminated(bool forced) {
 void Client::onLangProfileActivated(REFIID lang) {
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
+
 		StringBuffer s;
 		Writer<StringBuffer> writer(s);
 		writer.StartObject();
@@ -554,6 +558,7 @@ void Client::onLangProfileDeactivated(REFIID lang) {
 		if (handleReply(ret)) {
 		}
 	}
+	clearIconCache();
 }
 
 void Client::init() {
@@ -664,7 +669,15 @@ void Client::closePipe() {
 	if (pipe_ != INVALID_HANDLE_VALUE) {
 		DisconnectNamedPipe(pipe_);
 		CloseHandle(pipe_);
+		clearIconCache();
 	}
+}
+
+void Client::clearIconCache() {
+	for (auto it = iconCache_.begin(); it != iconCache_.end(); ++it) {
+		DestroyIcon(it->second);
+	}
+	iconCache_.clear();
 }
 
 

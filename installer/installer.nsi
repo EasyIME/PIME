@@ -126,7 +126,7 @@ FunctionEnd
 ;FunctionEnd
 
 ;Installer Sections
-Section "新酷音輸入法" SecMain
+Section "PIME 輸入法" SecMain
 
 	; TODO: may be we can automatically rebuild the dlls here.
 	; http://stackoverflow.com/questions/24580/how-do-you-automate-a-visual-studio-build
@@ -145,8 +145,10 @@ Section "新酷音輸入法" SecMain
 	; ExecWait "$0"
 
 	; Install the python server and input method modules
-	File /r /x __pycache__ ..\server
-	; File PIMELauncher.exe
+	File /r /x "__pycache__" "..\server"
+
+    ; Install the launcher and monitor of the server
+	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
 
     ; Install the text service dlls
 	${If} ${RunningX64} ; This is a 64-bit Windows system
@@ -199,7 +201,7 @@ Section "Uninstall"
 
 	RMDir /r "$INSTDIR\x86"
 	RMDir /r "$INSTDIR\server"
-	; Delete "$INSTDIR\PIMELauncher.exe"
+	Delete "$INSTDIR\PIMELauncher.exe"
 
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"

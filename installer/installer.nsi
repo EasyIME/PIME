@@ -1,5 +1,5 @@
-;
-;	Copyright (C) 2013 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+ï»¿;
+;	Copyright (C) 2013 - 2015 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 ;
 ;	This library is free software; you can redistribute it and/or
 ;	modify it under the terms of the GNU Library General Public
@@ -23,7 +23,8 @@
 !include "LogicLib.nsh" ; for ${If}, ${Switch} commands
 
 Unicode true ; turn on Unicode (This requires NSIS 3.0)
-SetCompressor lzma ; use LZMA for best compression ratio
+SetCompressor /SOLID lzma ; use LZMA for best compression ratio
+SetCompressorDictSize 16 ; larger dictionary size for better compression ratio
 AllowSkipFiles off ; cannot skip a file
 
 ; icons of the generated installer and uninstaller
@@ -31,15 +32,16 @@ AllowSkipFiles off ; cannot skip a file
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\orange-uninstall.ico"
 !define PRODUCT_VERSION "git"
 
-!define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChewingTextService"
+!define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
+!define HOMEPAGE_URL "https://github.com/EasyIME/"
 
-Name "·s»Å­µ¿é¤Jªk"
-BrandingText "·s»Å­µ¿é¤Jªk"
+Name "PIME è¼¸å…¥æ³•"
+BrandingText "PIME è¼¸å…¥æ³•"
 
-OutFile "windows-chewing-tsf.exe" ; The generated installer file name
+OutFile "PIME-${PRODUCT_VERSION}-setup.exe" ; The generated installer file name
 
 ; We install everything to C:\Program Files (x86)
-InstallDir "$PROGRAMFILES32\ChewingTextService"
+InstallDir "$PROGRAMFILES32\PIME"
 
 ;Request application privileges (need administrator to install)
 RequestExecutionLevel admin
@@ -55,8 +57,8 @@ RequestExecutionLevel admin
 !insertmacro MUI_PAGE_INSTFILES
 
 ; finish page
-!define MUI_FINISHPAGE_LINK_LOCATION "http://chewing.im/"
-!define MUI_FINISHPAGE_LINK "·s»Å­µ±M®×ºô­¶ ${MUI_FINISHPAGE_LINK_LOCATION}"
+!define MUI_FINISHPAGE_LINK_LOCATION "${HOMEPAGE_URL}"
+!define MUI_FINISHPAGE_LINK "PIME å°ˆæ¡ˆç¶²é  ${MUI_FINISHPAGE_LINK_LOCATION}"
 !insertmacro MUI_PAGE_FINISH
 
 ; uninstallation pages
@@ -73,7 +75,7 @@ Function uninstallOldVersion
 	ReadRegStr $R0 HKLM "${PRODUCT_UNINST_KEY}" "UninstallString"
 	${If} $R0 != ""
 		ClearErrors
-		MessageBox MB_OKCANCEL|MB_ICONQUESTION "°»´ú¨ì¤w¦w¸ËÂÂª©¡A¬O§_­n²¾°£ÂÂª©«áÄ~Äò¦w¸Ë·sª©¡H" IDOK +2
+		MessageBox MB_OKCANCEL|MB_ICONQUESTION "åµæ¸¬åˆ°å·²å®‰è£èˆŠç‰ˆï¼Œæ˜¯å¦è¦ç§»é™¤èˆŠç‰ˆå¾Œç¹¼çºŒå®‰è£æ–°ç‰ˆï¼Ÿ" IDOK +2
 			Abort ; this is skipped if the user select OK
 
 		CopyFiles "$INSTDIR\Uninstall.exe" "$TEMP"
@@ -84,11 +86,11 @@ Function uninstallOldVersion
 	;ClearErrors
 	; Ensure that old files are all deleted
 	;${If} ${RunningX64}
-	;	${If} ${FileExists} "$INSTDIR\x64\ChewingTextService.dll"
+	;	${If} ${FileExists} "$INSTDIR\x64\PIMETextService.dll"
 	;		Call onInstError
 	;	${EndIf}			
 	;${EndIf}
-	;${If} ${FileExists} "$INSTDIR\x86\ChewingTextService.dll"
+	;${If} ${FileExists} "$INSTDIR\x86\PIMETextService.dll"
 	;	Call onInstError
 	;${EndIf}			
 	;${If} ${FileExists} "$INSTDIR\Dictionary\*.dat"
@@ -100,7 +102,7 @@ FunctionEnd
 Function .onInit
 	; Currently, we're not able to support Windows xp since it has an incomplete TSF.
 	${IfNot} ${AtLeastWinVista}
-		MessageBox MB_ICONSTOP|MB_OK "©êºp¡A¥»µ{¦¡¥Ø«e¥u¯à¤ä´© Windows Vista ¥H¤Wª©¥»"
+		MessageBox MB_ICONSTOP|MB_OK "æŠ±æ­‰ï¼Œæœ¬ç¨‹å¼ç›®å‰åªèƒ½æ”¯æ´ Windows Vista ä»¥ä¸Šç‰ˆæœ¬"
 		Quit
 	${EndIf}
 
@@ -114,57 +116,65 @@ FunctionEnd
 
 ; called to show an error message when errors happen
 Function .onInstFailed
-	MessageBox MB_ICONSTOP|MB_OK "¦w¸Ëµo¥Í¿ù»~¡AµLªk§¹¦¨¡C$\n$\n¥i¯à¦³ÀÉ®×¥¿¦b¨Ï¥Î¤¤¡A¼È®ÉµLªk§R°£©ÎÂĞ¼g$\n$\n«ØÄ³­«·s¶}¾÷«á¡A¦A¦¸°õ¦æ¦w¸Ëµ{¦¡¡C"
+	MessageBox MB_ICONSTOP|MB_OK "å®‰è£ç™¼ç”ŸéŒ¯èª¤ï¼Œç„¡æ³•å®Œæˆã€‚$\n$\nå¯èƒ½æœ‰æª”æ¡ˆæ­£åœ¨ä½¿ç”¨ä¸­ï¼Œæš«æ™‚ç„¡æ³•åˆªé™¤æˆ–è¦†å¯«$\n$\nå»ºè­°é‡æ–°é–‹æ©Ÿå¾Œï¼Œå†æ¬¡åŸ·è¡Œå®‰è£ç¨‹å¼ã€‚"
 FunctionEnd
 
 ; called to show an error message when errors happen
 ;Function onInstError
-;	MessageBox MB_ICONSTOP|MB_OK "¦w¸Ëµo¥Í¿ù»~¡AÂÂª©¥i¯à¦³ÀÉ®×¥¿¦b¨Ï¥Î¤¤¡A¼È®ÉµLªkÂĞ¼g$\n$\n½Ğ­«¶}¾÷«á¡A¦A¦¸°õ¦æ¦w¸Ëµ{¦¡¡C"
+;	MessageBox MB_ICONSTOP|MB_OK "å®‰è£ç™¼ç”ŸéŒ¯èª¤ï¼ŒèˆŠç‰ˆå¯èƒ½æœ‰æª”æ¡ˆæ­£åœ¨ä½¿ç”¨ä¸­ï¼Œæš«æ™‚ç„¡æ³•è¦†å¯«$\n$\nè«‹é‡é–‹æ©Ÿå¾Œï¼Œå†æ¬¡åŸ·è¡Œå®‰è£ç¨‹å¼ã€‚"
 ;	Abort
 ;FunctionEnd
 
 ;Installer Sections
-Section "·s»Å­µ¿é¤Jªk" SecMain
-	SetOutPath "$INSTDIR"
+Section "æ–°é…·éŸ³è¼¸å…¥æ³•" SecMain
+
+	; TODO: may be we can automatically rebuild the dlls here.
+	; http://stackoverflow.com/questions/24580/how-do-you-automate-a-visual-studio-build
+	; For example, we can build the Visual Studio solution with the following command line.
+	; C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\IDE\devenv.com "..\build\PIME.sln" /build Release
+
 	SetOverwrite on ; overwrite existing files
-	${If} ${RunningX64}
-		File /r "x64" ; put 64-bit ChewingTextService.dll in x64 folder
+	SetOutPath "$INSTDIR"
+	; FIXME: install python and pywin32 automatically as needed
+	; Download and install python 3.4.3
+	; nsisdl::download https://www.python.org/ftp/python/3.4.3/python-3.4.3.msi $0
+	; ExecWait '"msiexec" /i "$0"'
+
+	; Download and install pywin32
+	; nsisdl::download http://downloads.sourceforge.net/project/pywin32/pywin32/Build%20219/pywin32-219.win32-py3.4.exe?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fpywin32%2Ffiles%2Fpywin32%2FBuild%2520219%2F&ts=1439740165 $0
+	; ExecWait "$0"
+
+	; Install the python server and input method modules
+	File /r /x __pycache__ ..\server
+	; File PIMELauncher.exe
+
+    ; Install the text service dlls
+	${If} ${RunningX64} ; This is a 64-bit Windows system
+		SetOutPath "$INSTDIR\x64"
+		File "..\build64\pime\Release\PIMETextService.dll" ; put 64-bit PIMETextService.dll in x64 folder
 	${EndIf}
-	File /r "x86" ; put 32-bit ChewingTextService.dll in x86 folder
-	File /r Dictionary ; Install dictionary files
-	File ChewingPreferences.exe ; Configuration Tool
+	SetOutPath "$INSTDIR\x86"
+	File "..\build\pime\Release\PIMETextService.dll" ; put 32-bit PIMETextService.dll in x86 folder
 
 	; Register COM objects (NSIS RegDLL command is broken and cannot be used)
-	ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x86\ChewingTextService.dll"'
+	ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x86\PIMETextService.dll"'
 	${If} ${RunningX64} 
-		ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x64\ChewingTextService.dll"'
+		ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x64\PIMETextService.dll"'
 	${EndIf}
 
-	; Special handling for Windows 8
-	${If} ${AtLeastWin8}
-		File SetupChewing.bat
-		${If} ${RunningX64}
-			WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "SetupChewing" \
-				"rundll32.exe $\"$INSTDIR\x64\ChewingTextService.dll$\",ChewingSetup"
-		${Else}
-			WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "SetupChewing" \
-				"rundll32.exe $\"$INSTDIR\x86\ChewingTextService.dll$\",ChewingSetup"
-		${EndIf}
-		; Run SetupChewing.bat as current user (ask explorer to open it for us)
-		; Reference: http:;mdb-blog.blogspot.tw/2013/01/nsis-lunch-program-as-user-from-uac.html
-		; Though it's more reliable to use the UAC plugin, I think this hack is enough for most cases.
-		ExecWait 'explorer.exe "$INSTDIR\SetupChewing.bat"'
-	${EndIf}
+	; Launch the python server on startup
+    ; TODO: write the PIMELauncher program
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher" "$INSTDIR\PIMELauncher.exe"
 
 	;Store installation folder in the registry
-	WriteRegStr HKLM "Software\ChewingTextService" "" $INSTDIR
+	WriteRegStr HKLM "Software\PIME" "" $INSTDIR
 	;Write an entry to Add & Remove applications
-	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayName" "·s»Å­µ¿é¤Jªk (TSF)"
+	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayName" "PIME è¼¸å…¥æ³•"
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "Publisher" "·s»Å­µ¿é¤Jªk¶}µo¹Î¶¤"
-	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\x86\ChewingTextService.dll"
+	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "Publisher" "PIME é–‹ç™¼åœ˜éšŠ"
+	; WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\x86\PIMETextService.dll"
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
-	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "http://chewing.im/"
+	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${HOMEPAGE_URL}"
 	WriteUninstaller "$INSTDIR\Uninstall.exe" ;Create uninstaller
 SectionEnd
 
@@ -180,21 +190,20 @@ LangString DESC_SecMain ${LANG_ENGLISH} "A test section." ; What's this??
 Section "Uninstall"
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
-	ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\ChewingTextService.dll"'
+	ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'
 	${If} ${RunningX64} 
 		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
-		ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x64\ChewingTextService.dll"'
+		ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x64\PIMETextService.dll"'
 		RMDir /r "$INSTDIR\x64"
 	${EndIf}
 
 	RMDir /r "$INSTDIR\x86"
-	RMDir /r "$INSTDIR\Dictionary"
-	Delete "$INSTDIR\SetupChewing.bat"
-	Delete "$INSTDIR\ChewingPreferences.exe"
+	RMDir /r "$INSTDIR\server"
+	; Delete "$INSTDIR\PIMELauncher.exe"
 
-	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChewingTextService"
-	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "SetupChewing"
-	DeleteRegKey /ifempty HKLM "Software\ChewingTextService"
+	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
+	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
+	DeleteRegKey /ifempty HKLM "Software\PIME"
 
 	Delete "$INSTDIR\Uninstall.exe"
 	RMDir "$INSTDIR"

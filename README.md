@@ -3,7 +3,7 @@
 Implement input methods easily for Windows via Text Services Framework:
 *   LibIME contains a library which aims to be a simple wrapper for Windows Text Service Framework (TSF).
 *   PIMETextService contains an backbone implementation of Windows text service for using libIME.
-*   The python server part requires pywin32 package
+*   The python server part requires python 3.x and pywin32 package.
 
 All parts are licensed under GNU LGPL v2.1 license.
 
@@ -17,17 +17,17 @@ All parts are licensed under GNU LGPL v2.1 license.
 ## How to Build
 *   Get source from github
 
-        git clone https://github.com/PIME/PIME.git
+        git clone https://github.com/EasyIME/PIME.git
         cd PIME
         git submodule init
         git submodule update
 
 *   Use one of the following CMake commands to generate Visual Studio project
 
-        cmake -G "Visual Studio 11" -T "v110_xp" <path to windows-chewing-tsf>
-        cmake -G "Visual Studio 11 Win64" -T "v110_xp" <path to windows-chewing-tsf>
-		
-*	NOTICE: The cmake command line argument -T "v110_xp" is required. Otherwise the compiled program won't run on Windows xp. (requires cmake 2.8.11 and VS express 2012 update)
+        cmake -G "Visual Studio 11" -T "v110_xp" <path to PIME source folder>
+        cmake -G "Visual Studio 11 Win64" -T "v110_xp" <path to PIME source folder>
+
+*   NOTICE: The cmake command line argument -T "v110_xp" is required. Otherwise the compiled program won't run on Windows xp. (requires cmake 2.8.11 and VS express 2012 update)
 
 *   Open generated project with Visual Studio and build it
 
@@ -50,32 +50,25 @@ All parts are licensed under GNU LGPL v2.1 license.
 *   [Creating a DACL](http://msdn.microsoft.com/en-us/library/windows/apps/ms717798.aspx)
 
 # Install
-*   Copy `ChewingTextService.dll` to C:\Program Files (X86)\ChewingTextService.
-*   Copy `libchewing/data/*.dat` to `C:\Program Files (X86)\ChewingTextService\Dictionary`
-*   Use `regsvr32` to register `ChewingService.dll`. 64-bit system need to register both 32-bit and 64-bit `ChewingService.dll`
+*   Copy `PIMETextService.dll` to C:\Program Files (X86)\PIME\x86\.
+*   Copy `PIMETextService.dll` to C:\Program Files (X86)\PIME\x64\.
+*   Copy the folder `server` to `C:\Program Files (X86)\PIME\`
+*   Use `regsvr32` to register `ChewingService.dll`. 64-bit system need to register both 32-bit and 64-bit `PIMETextService.dll`
 
-        regsvr32 "C:\Program Files (X86)\ChewingTextService\ChewingTextService.dll" (run as administrator)
+        regsvr32 "C:\Program Files (X86)\PIME\x86\PIMETextService.dll" (run as administrator)
+        regsvr32 "C:\Program Files (X86)\PIME\x64\PIMETextService.dll" (run as administrator)
 
 *   NOTICE: the `regsvr32` command needs to be run as Administrator. Otherwise you'll get access denied error.
 *   In Windows 8, if you put the dlls in places other than C:\Windows or C:\Program Files, they will not be accessible in metro apps.
-
-# For Windows 8, you also need to do this:
-*   Create C:\Users\<user_name>\ChewingTextService directory manually before using the input method.
-*   Set ACLs for the created directory so it can be accessible from Windows store apps
-
-        cacls C:\Users\<user_name>\ChewingTextService /e /t /g "ALL APPLICATION PACKAGES:c"
-
-*   Warning: this will give full access of this folder to all metro apps. This may not be the optimized permission settings. Further study on ACL is required here.
-*   Open regedit and enable read access to HKCU\Software\ChewingTextService for "ALL APPLICATION PACKAGES".
-*   The NSIS installer automatically does the preceding changes for you
 
 # Uninstall
 *   Remove `%WINDIR%/chewing`
 *   Use `regsvr32` to unregister `ChewingTextService.dll`. 64-bit system need to register both 32-bit and 64-bit `ChewingTextService.dll`
 
-        regsvr32 /u "C:\Program Files (X86)\ChewingTextService\ChewingTextService.dll" (run as administrator)
+        regsvr32 /u "C:\Program Files (X86)\PIME\x86\PIMETextService.dll" (run as administrator)
+        regsvr32 /u "C:\Program Files (X86)\PIME\x64\PIMETextService.dll" (run as administrator)
 
 *   NOTICE: the `regsvr32` command needs to be run as Administrator. Otherwise you'll get access denied error.
 
 # Bug Report
-Please report any issue to [here](https://github.com/chewing/windows-chewing-tsf/issues).
+Please report any issue to [here](https://github.com/EasyIME/PIME/issues).

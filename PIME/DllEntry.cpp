@@ -114,8 +114,12 @@ STDAPI DllRegisterServer(void) {
 						imejson += '\\';
 						imejson += findData.cFileName;
 						imejson += L"\\ime.json";
-						// load the json file to get the info of input method
-						langProfiles.push_back(std::move(langProfileFromJson(imejson)));
+						// Make sure the file exists
+						DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
+						if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
+							// load the json file to get the info of input method
+							langProfiles.push_back(std::move(langProfileFromJson(imejson)));
+						}
 					}
 				}
 			} while(::FindNextFile(hFind, &findData));

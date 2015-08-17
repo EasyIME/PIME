@@ -114,7 +114,7 @@ HRESULT ImeModule::registerLangProfiles(LangProfileInfo* langs, int count) {
 				//wstring t = (lang.name + L"\n" + lang.iconFile + L"\n....");
 				//::MessageBox(0, t.c_str(), 0, 0);
 				if(inputProcessProfiles->AddLanguageProfile(textServiceClsid_, lang.languageId, lang.profileGuid,
-					lang.name.c_str(), -1, lang.iconFile.empty() ? NULL : lang.iconFile.c_str(),
+					lang.name.c_str(), lang.name.length(), lang.iconFile.empty() ? NULL : lang.iconFile.c_str(),
 					lang.iconFile.length(), lang.iconIndex) != S_OK) {
 					return E_FAIL;
 				}

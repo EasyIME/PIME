@@ -154,15 +154,13 @@ Section "PIME 輸入法" SecMain
 	${If} ${RunningX64} ; This is a 64-bit Windows system
 		SetOutPath "$INSTDIR\x64"
 		File "..\build64\pime\Release\PIMETextService.dll" ; put 64-bit PIMETextService.dll in x64 folder
+		; Register COM objects (NSIS RegDLL command is broken and cannot be used)
+		ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x64\PIMETextService.dll"'
 	${EndIf}
 	SetOutPath "$INSTDIR\x86"
 	File "..\build\pime\Release\PIMETextService.dll" ; put 32-bit PIMETextService.dll in x86 folder
-
 	; Register COM objects (NSIS RegDLL command is broken and cannot be used)
 	ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x86\PIMETextService.dll"'
-	${If} ${RunningX64} 
-		ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x64\PIMETextService.dll"'
-	${EndIf}
 
 	; Launch the python server on startup
     ; TODO: write the PIMELauncher program

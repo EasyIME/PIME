@@ -5,8 +5,14 @@ import sys
 _libchewing = None
 if sys.platform == "win32": # Windows
     import os.path
+    import platform
     # find in current dir first
-    dll_path = os.path.join(os.path.dirname(__file__), "chewing.dll")
+    dll_path = os.path.dirname(__file__)
+    # load different dll files for 64 bit and 32 bit python
+    if platform.architecture()[0] == "64bit":
+        dll_path = os.path.join(dll_path, "x64\\chewing.dll")
+    else:
+        dll_path = os.path.join(dll_path, "x86\\chewing.dll")
     if not os.path.exists(dll_path):
         dll_path = "chewing.dll" # search in system path
     _libchewing = CDLL(dll_path)

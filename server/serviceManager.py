@@ -1,5 +1,4 @@
 #! python3
-
 import os
 import threading
 import json
@@ -48,8 +47,9 @@ class TextServiceManager:
     def enumerateServices(self):
         # To enumerate currently installed Input Method
         currentDir = os.path.dirname(os.path.abspath(__file__))
-        for subdir in os.listdir(currentDir):
-            filename = os.path.join(currentDir, subdir, "ime.json")
+        input_methods_dir = os.path.join(currentDir, "input_methods")
+        for subdir in os.listdir(input_methods_dir):
+            filename = os.path.join(input_methods_dir, subdir, "ime.json")
             if os.path.exists(filename):
                 info = TextServiceInfo()
                 info.loadFromJson(filename)

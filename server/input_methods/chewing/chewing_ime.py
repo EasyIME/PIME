@@ -1,9 +1,9 @@
 #! python3
-from ..keycodes import * # for VK_XXX constants
-from ..textService import *
+from keycodes import * # for VK_XXX constants
+from textService import *
 import os.path
 import string
-from .libchewing import * # FIXME: we cannot do import libchewing directly. why?
+from . import libchewing
 
 # from libchewing/include/global.h
 CHINESE_MODE = 1
@@ -29,7 +29,7 @@ class ChewingTextService(TextService):
         TextService.onActivate(self)
         # load libchewing context
         datadir = self.datadir.encode("UTF-8")
-        ctx = ChewingContext(syspath = datadir, userpath = None)
+        ctx = libchewing.ChewingContext(syspath = datadir, userpath = None)
         self.ctx = ctx
 
         ctx.set_maxChiSymbolLen(50)

@@ -4,16 +4,17 @@ import json
 import sys
 import os
 from ctypes import *
+from serviceManager import textServiceMgr
 
-# define Win32 error codes for named pipe I/O
-ERROR_MORE_DATA = 234
-ERROR_IO_PENDING = 997
 
 # import libpipe
 dll_path = os.path.join(os.path.dirname(__file__), "libpipe.dll")
 libpipe = CDLL(dll_path)
 
-from input_methods.serviceManager import textServiceMgr
+# define Win32 error codes for named pipe I/O
+ERROR_MORE_DATA = 234
+ERROR_IO_PENDING = 997
+
 
 class Client:
     def __init__(self, server, pipe):

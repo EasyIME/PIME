@@ -1,6 +1,6 @@
 #! python3
-from ..keycodes import * # for VK_XXX constants
-from ..textService import *
+from keycodes import * # for VK_XXX constants
+from textService import *
 import os.path
 
 class MeowTextService(TextService):

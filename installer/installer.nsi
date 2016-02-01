@@ -1,5 +1,5 @@
 ﻿;
-;	Copyright (C) 2013 - 2015 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+;	Copyright (C) 2013 - 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 ;
 ;	This library is free software; you can redistribute it and/or
 ;	modify it under the terms of the GNU Library General Public
@@ -119,12 +119,6 @@ Function .onInstFailed
 	MessageBox MB_ICONSTOP|MB_OK "安裝發生錯誤，無法完成。$\n$\n可能有檔案正在使用中，暫時無法刪除或覆寫$\n$\n建議重新開機後，再次執行安裝程式。"
 FunctionEnd
 
-; called to show an error message when errors happen
-;Function onInstError
-;	MessageBox MB_ICONSTOP|MB_OK "安裝發生錯誤，舊版可能有檔案正在使用中，暫時無法覆寫$\n$\n請重開機後，再次執行安裝程式。"
-;	Abort
-;FunctionEnd
-
 ;Installer Sections
 Section "PIME 輸入法" SecMain
 
@@ -135,16 +129,12 @@ Section "PIME 輸入法" SecMain
 
 	SetOverwrite on ; overwrite existing files
 	SetOutPath "$INSTDIR"
-	; FIXME: install python and pywin32 automatically as needed
-	; Download and install python 3.4.3
-	; nsisdl::download https://www.python.org/ftp/python/3.4.3/python-3.4.3.msi $0
-	; ExecWait '"msiexec" /i "$0"'
-
-	; Download and install pywin32
-	; nsisdl::download http://downloads.sourceforge.net/project/pywin32/pywin32/Build%20219/pywin32-219.win32-py3.4.exe?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fpywin32%2Ffiles%2Fpywin32%2FBuild%2520219%2F&ts=1439740165 $0
-	; ExecWait "$0"
+    
+    ; Install an embedable version of python 3.
+    File /r "..\python"
 
 	; Install the python server and input method modules
+    ; FIXME: maybe we should install the pyc files later?
 	File /r /x "__pycache__" "..\server"
 
     ; Install the launcher and monitor of the server
@@ -163,7 +153,6 @@ Section "PIME 輸入法" SecMain
 	ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x86\PIMETextService.dll"'
 
 	; Launch the python server on startup
-    ; TODO: write the PIMELauncher program
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher" "$INSTDIR\PIMELauncher.exe"
 
 	;Store installation folder in the registry
@@ -199,6 +188,7 @@ Section "Uninstall"
 
 	RMDir /r "$INSTDIR\x86"
 	RMDir /r "$INSTDIR\server"
+    RMDIR /r "$INSTDIR\python"
 	Delete "$INSTDIR\PIMELauncher.exe"
 
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"

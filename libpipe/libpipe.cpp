@@ -123,17 +123,17 @@ void close_pipe(HANDLE pipe) {
 
 int read_pipe(HANDLE pipe, char* buf, unsigned long len, unsigned long* error) {
 	DWORD read_len = 0;
-	ReadFile(pipe, buf, len, &read_len, NULL);
+	BOOL success = ReadFile(pipe, buf, len, &read_len, NULL);
 	if (error != nullptr)
-		*error = (unsigned long)GetLastError();
+		*error = success ? 0 : (unsigned long)GetLastError();
 	return (int)read_len;
 }
 
 int write_pipe(HANDLE pipe, const char* data, unsigned long len, unsigned long* error) {
 	DWORD write_len = 0;
-	WriteFile(pipe, data, len, &write_len, NULL);
+	BOOL success = WriteFile(pipe, data, len, &write_len, NULL);
 	if (error != nullptr)
-		*error = (unsigned long)GetLastError();
+		*error = success ? 0 : (unsigned long)GetLastError();
 	return (int)write_len;
 }
 

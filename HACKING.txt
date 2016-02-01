@@ -15,8 +15,11 @@ Directory structure
 * PIME:
   The main TSF text service dll written in C++.
   This will be loaded into every app process that uses PIME input methods.
+  Therefore the dll must support the same CPU architecture as the app processes.
+  So, you need to build both 64-bit and 32-bit versions of the dll.
+  Please refer to README.md for details about how to do it with cmake.
 
-*	server:
+* server:
   The main server process in which all input methods should be implemented.
   Ideally this can be written in any languages and currently the implementation
   is in python 3.
@@ -25,7 +28,7 @@ Directory structure
   All input method modules should go here. If you're trying to implement your
   own input method, you should put your module in this directory.
 
-*	PIMELauncher:
+* PIMELauncher:
   Launches and monitors the python server process.
   When the python server process crashes accidentally, the launcher tries to restart it.
   If the server process crashes too often (exceeds 10 times), the launcher will stop
@@ -35,22 +38,23 @@ Directory structure
 * cmake:
   Contains some cmake rules used to override the default configurations.
 
-*	installer:
+* installer:
   A nice GUI windows installer written with NSIS.
   This will handle all the details of registering TSF input methods to Windows and
   write some config values to the Windows registry.
 
-*	libIME:
+* libIME:
   A nice C++ wrapper library for TSF. If you want to implement a TSF input method,
   consider using this library instead of do all the hard work yourself.
+  This is an independent library which can be used outside PIME.
   
-*	libpipe:
+* libpipe:
   The IPC mechanism used by PIME server and client is Windows named pipe.
   It's not provided by standard python. This library implement simple IPC
   over named pipe and expose some public APIs for use with ctypes.
   With this, we don't need to do Windows API programming in python.
 
-*	python:
+* python:
   The embedable version of python 3.5 32-bit.
   We force the use of this version to avoid any potential conflicts with 
   existing python installations.

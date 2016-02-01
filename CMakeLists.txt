@@ -16,3 +16,4 @@ add_definitions(
 add_subdirectory(${PROJECT_SOURCE_DIR}/libIME)
 add_subdirectory(${PROJECT_SOURCE_DIR}/PIME)
 add_subdirectory(${PROJECT_SOURCE_DIR}/PIMELauncher)
+add_subdirectory(${PROJECT_SOURCE_DIR}/libpipe)

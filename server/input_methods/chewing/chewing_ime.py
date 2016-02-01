@@ -1,5 +1,5 @@
 #! python3
-from win32con import * # for VK_XXX constants
+from ..keycodes import * # for VK_XXX constants
 from ..textService import *
 import os.path
 import string

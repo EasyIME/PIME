@@ -22,6 +22,11 @@
 !include "Winver.nsh" ; Windows version detection
 !include "LogicLib.nsh" ; for ${If}, ${Switch} commands
 
+; We need the StdUtils plugin
+!addincludedir "StdUtils.2015-11-16\Include"
+!addplugindir /x86-unicode "StdUtils.2015-11-16\Plugins\Release_Unicode"
+!include "StdUtils.nsh" ; for ExecShellAsUser()
+
 Unicode true ; turn on Unicode (This requires NSIS 3.0)
 SetCompressor /SOLID lzma ; use LZMA for best compression ratio
 SetCompressorDictSize 16 ; larger dictionary size for better compression ratio
@@ -165,6 +170,9 @@ Section "PIME 輸入法" SecMain
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${HOMEPAGE_URL}"
 	WriteUninstaller "$INSTDIR\Uninstall.exe" ;Create uninstaller
+
+    ; Launch the python server as current user (non-elevated process)
+    ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\PIMELauncher.exe" "open" ""
 SectionEnd
 
 ;Language strings

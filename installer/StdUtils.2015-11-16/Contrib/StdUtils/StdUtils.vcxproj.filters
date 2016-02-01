@@ -1,0 +1,165 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ResourceCompile Include="StdUtils.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{7c93e62c-ed44-4c3a-a941-8ed82d3bea7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{3f8a68cf-c183-4be6-80f4-6fe86b2e15f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\RHash">
+      <UniqueIdentifier>{7ad9bcf2-1b22-4446-8221-7d660545f63c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\RHash">
+      <UniqueIdentifier>{bd95cfc3-398a-4744-ad0d-977a8dd90d32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Blake2">
+      <UniqueIdentifier>{770975d8-35c8-4f28-960a-65c863ce4974}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Blake2">
+      <UniqueIdentifier>{9bd8f713-7d3e-4c65-84d9-c8fa048bed68}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\DetectOsVersion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\InvokeShellVerb.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ParameterParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ShellExecAsUser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\StdUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UnicodeSupport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ComUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FileUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rhash\sha3.c">
+      <Filter>Source Files\RHash</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rhash\byte_order.c">
+      <Filter>Source Files\RHash</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HashUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rhash\sha256.c">
+      <Filter>Source Files\RHash</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rhash\sha512.c">
+      <Filter>Source Files\RHash</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rhash\sha1.c">
+      <Filter>Source Files\RHash</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rhash\crc32.c">
+      <Filter>Source Files\RHash</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rhash\md5.c">
+      <Filter>Source Files\RHash</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ByteToHex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\blake2\blake2.cpp">
+      <Filter>Source Files\Blake2</Filter>
+    </ClCompile>
+    <ClCompile Include="src\RandUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CleanUp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TimerUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ShellDispatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\ComUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DetectOsVersion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\InvokeShellVerb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ParameterParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ShellExecAsUser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\StdUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UnicodeSupport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\RandUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\WinUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\FileUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rhash\sha3.h">
+      <Filter>Header Files\RHash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rhash\byte_order.h">
+      <Filter>Header Files\RHash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HashUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rhash\sha256.h">
+      <Filter>Header Files\RHash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rhash\sha512.h">
+      <Filter>Header Files\RHash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rhash\sha1.h">
+      <Filter>Header Files\RHash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rhash\crc32.h">
+      <Filter>Header Files\RHash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rhash\md5.h">
+      <Filter>Header Files\RHash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\blake2\blake2.h">
+      <Filter>Header Files\Blake2</Filter>
+    </ClInclude>
+    <ClInclude Include="src\CleanUp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TimerUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ShellDispatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,4 @@
+StdUtils plug-in LGPL Exception
+-------------------------------
+
+The author of the StdUtils plug-in Library for NSIS adds the following clarification to the GNU Lesser General Public License version 2.1: Installer programs (executables) created with NSIS (Nullsoft Scriptable Install System) that make use of the StdUtils plug-in Library (strictly through the NSIS plug-in interface) and that contain/distribute verbatim copies of the StdUtils plug-in Library are considered a "work that uses the Library"; they do NOT represent a derivative of the Library.

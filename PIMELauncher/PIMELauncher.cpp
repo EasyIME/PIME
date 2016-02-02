@@ -19,6 +19,7 @@
 
 #include <Windows.h>
 #include <ShlObj.h>
+#include <Shellapi.h>
 #include <cstring>
 #include <string>
 
@@ -26,67 +27,170 @@ using namespace std;
 
 static const int MAX_CRASHES = 10;
 static const int MAX_FAILURES = 10;
+static const wchar_t wnd_class_name[] = L"PIME_Launcher";
 
-int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hprev, LPSTR cmd, int show) {
-	// FIXME: we should only allow running one instance of PIMELauncher
-	bool debug = false;
-	if (cmd && strstr(cmd, "/debug"))
-		debug = true;
+static HWND server_hwnd = NULL;
+static bool debug_mode = false;
+static int n_failures = 0;
+static int n_crashes = 0;
+static wchar_t dir_path[MAX_PATH];
+static wchar_t python_path[MAX_PATH];
+static wchar_t server_path[MAX_PATH + 3];
+static HANDLE server_process = INVALID_HANDLE_VALUE;
+static bool pending_restart = false;
 
-	int n_failures = 0;
-	int n_crashes = 0;
-	wchar_t dir_path[MAX_PATH];
+
+static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
+
+static HWND createWindow(HINSTANCE hinst) {
+	HWND hwnd = NULL;
+	WNDCLASS wc = {0};
+	if (!GetClassInfo(hinst, wnd_class_name, &wc)) {
+		wc.hInstance = hinst;
+		wc.lpfnWndProc = wndProc;
+		wc.lpszClassName = wnd_class_name;
+		RegisterClass(&wc);
+	}
+	hwnd = CreateWindow(wnd_class_name, NULL, 0, 0, 0, 0, 0, HWND_DESKTOP, NULL, hinst, NULL);
+	return hwnd;
+}
+
+static bool initPaths() {
 	DWORD len = GetModuleFileNameW(NULL, dir_path, MAX_PATH);
 	dir_path[len] = '\0';
 	wchar_t* p = wcsrchr(dir_path, '\\');
 	if (!p)
-		return 1;
+		return false;
 	*p = '\0';
 
 	// when debugging, we use the console version of python
-	wchar_t python_path[MAX_PATH];
 	wcscpy(python_path, dir_path);
-	wcscat(python_path, debug ? L"\\python\\python.exe" : L"\\python\\pythonw.exe");
+	wcscat(python_path, debug_mode ? L"\\python\\python.exe" : L"\\python\\pythonw.exe");
 	// build the full path of the server directory
 	wcscat(dir_path, L"\\server");
 
 	// build the full path of the server.py file and make it quoted
-	wchar_t server_path[MAX_PATH + 3];
 	wsprintf(server_path, L"\"%s\\server.py\"", dir_path);
 
-	// launch the python server again if it crashes
-	for (;;) {
-		SHELLEXECUTEINFOW info = { 0 };
-		info.cbSize = sizeof(info);
-		info.fMask = SEE_MASK_NOCLOSEPROCESS;
-		info.lpVerb = L"open";
-		info.lpFile = python_path;
-		info.lpParameters = server_path;
-		info.lpDirectory = dir_path;
-		info.nShow = SW_SHOWNORMAL;
+	return true;
+}
 
-		if (ShellExecuteExW(&info)) {
-			// wait for the python server process to terminate
-			WaitForSingleObject(info.hProcess, INFINITE);
-			DWORD code;
-			GetExitCodeProcess(info.hProcess, &code);
-			CloseHandle(info.hProcess);
-			if (code != 0) {
-				++n_crashes; // the server crashes
-				Sleep(500); // sleep for 500 ms
-				if (n_crashes > MAX_CRASHES) { // crash too many times
+static HANDLE launchProcess(wchar_t* file, wchar_t* params, wchar_t* workingDir) {
+	HANDLE process = INVALID_HANDLE_VALUE;
+	SHELLEXECUTEINFOW info = { 0 };
+	info.cbSize = sizeof(info);
+	info.fMask = SEE_MASK_NOCLOSEPROCESS;
+	info.lpVerb = L"open";
+	info.lpFile = file;
+	info.lpParameters = params;
+	info.lpDirectory = workingDir;
+	info.nShow = SW_SHOWNORMAL;
+	if (ShellExecuteExW(&info))
+		process = info.hProcess;
+	return process;
+}
+
+static void scheduleRestartServer() {
+	if (!pending_restart) {
+		SetTimer(server_hwnd, 1, 3000, NULL);
+		pending_restart = true;
+	}
+}
+
+static void launchServer() {
+	server_process = launchProcess(python_path, server_path, dir_path);
+	if (server_process == INVALID_HANDLE_VALUE) {
+		++n_failures;
+		if (n_failures > MAX_FAILURES) { // fail too many times
+			ExitProcess(1); // quit the launcher
+		}
+		else {
+			scheduleRestartServer();
+		}
+	}
+}
+
+
+int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hprev, LPSTR cmd, int show) {
+	bool quit = true;
+	int argc;
+	wchar_t** argv = CommandLineToArgvW(GetCommandLine(), &argc);
+	// parse command line options
+	for (int i = 1; i < argc; ++i) {
+		const wchar_t* arg = argv[i];
+		if (wcscmp(arg, L"/debug") == 0)
+			debug_mode = true;
+		else if (wcscmp(arg, L"/quit") == 0)
+			quit = true;
+	}
+	LocalFree(argv);
+
+	// we only allow running one instance of PIMELauncher
+	server_hwnd = FindWindow(wnd_class_name, NULL); // find existing instance
+	if (server_hwnd) {
+		if (quit) {
+			// ask the existing instance to terminate by closing its window
+			PostMessage(server_hwnd, WM_CLOSE, 0, 0);
+		}
+		return 0; // only one instance of PIME launcher is allowed
+	}
+
+	// this is the first instance
+	if (!initPaths())
+		return 1;
+
+	server_hwnd = createWindow(hinst); // create the server window
+	launchServer(); // try to launch the server process
+
+	// monitor the server process and launch it again on crashes
+	for (;;) {
+		int n_handles = (server_process != INVALID_HANDLE_VALUE ? 1 : 0);
+		DWORD event = MsgWaitForMultipleObjects(n_handles, &server_process, FALSE, INFINITE, QS_ALLEVENTS);
+		if (event == (WAIT_OBJECT_0 + n_handles - 1)) { // the process is terminated
+			// check the exit status of the server
+			DWORD exit_code;
+			GetExitCodeProcess(server_process, &exit_code);
+			CloseHandle(server_process);
+			server_process = INVALID_HANDLE_VALUE;
+			if (exit_code != 0) { // the server crashes
+				++n_crashes; 
+				if (n_crashes > MAX_CRASHES) // crash too many times, stop watching and quit
 					return 1;
-				}
+				scheduleRestartServer(); // schedule a timer to launch it again
 			}
 		}
-		else { // launching the server failed
-			MessageBox(0, L"Launching PIME server failed.", 0, 0);
-			++n_failures;
-			Sleep(500); // sleep for 500 ms
-			if (n_failures > MAX_FAILURES) { // fail too many times
-				return 1;
+		else if (event == (WAIT_OBJECT_0 + n_handles)) { // got window messages
+			MSG msg;
+			if (GetMessage(&msg, NULL, 0, 0)) {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+			else { // no more messages
+				break;
 			}
 		}
 	}
 	return 0;
+}
+
+static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
+	switch (msg) {
+	case WM_TIMER:
+		// try to restart the server
+		KillTimer(server_hwnd, 1);
+		pending_restart = false;
+		launchServer();
+		break;
+	case WM_DESTROY:
+		// kill the server process and then quit
+		if (server_process != INVALID_HANDLE_VALUE) {
+			TerminateProcess(server_process, 0);
+			CloseHandle(server_process);
+		}
+		PostQuitMessage(0);
+		break;
+	default:
+		break;
+	}
+	return DefWindowProc(hwnd, msg, wp, lp);
 }

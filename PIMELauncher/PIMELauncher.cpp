@@ -112,7 +112,7 @@ static void launchServer() {
 
 
 int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hprev, LPSTR cmd, int show) {
-	bool quit = true;
+	bool quit = false;
 	int argc;
 	wchar_t** argv = CommandLineToArgvW(GetCommandLine(), &argc);
 	// parse command line options

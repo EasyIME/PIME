@@ -35,7 +35,7 @@ AllowSkipFiles off ; cannot skip a file
 ; icons of the generated installer and uninstaller
 !define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\orange-install.ico"
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\orange-uninstall.ico"
-!define PRODUCT_VERSION "git"
+!define PRODUCT_VERSION "0.03"
 
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 !define HOMEPAGE_URL "https://github.com/EasyIME/"
@@ -186,6 +186,11 @@ LangString DESC_SecMain ${LANG_ENGLISH} "A test section." ; What's this??
 ;Uninstaller Section
 Section "Uninstall"
 
+	; Try to terminate running PIMELauncher and the server process
+	; Otherwise we cannot replace it.
+	ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
+	Delete "$INSTDIR\PIMELauncher.exe"
+
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 	ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'
 	${If} ${RunningX64} 
@@ -197,7 +202,6 @@ Section "Uninstall"
 	RMDir /r "$INSTDIR\x86"
 	RMDir /r "$INSTDIR\server"
     RMDIR /r "$INSTDIR\python"
-	Delete "$INSTDIR\PIMELauncher.exe"
 
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"

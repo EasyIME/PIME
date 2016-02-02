@@ -129,7 +129,16 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hprev, LPSTR cmd, int show) {
 	server_hwnd = FindWindow(wnd_class_name, NULL); // find existing instance
 	if (server_hwnd) {
 		if (quit) { // ask the existing instance to terminate by closing its window
-			SendMessage(server_hwnd, WM_CLOSE, 0, 0);
+			DWORD pid;
+			HANDLE process = INVALID_HANDLE_VALUE;
+			if (GetWindowThreadProcessId(server_hwnd, &pid)) {
+				process = OpenProcess(SYNCHRONIZE, FALSE, pid);
+			}
+			PostMessage(server_hwnd, WM_CLOSE, 0, 0); // post a request to close the window
+			if (process != INVALID_HANDLE_VALUE) {
+				WaitForSingleObject(process, 10000); // wait for the existing instance to terminate
+				CloseHandle(process);
+			}
 		}
 		return 0; // only one instance of PIME launcher is allowed
 	}

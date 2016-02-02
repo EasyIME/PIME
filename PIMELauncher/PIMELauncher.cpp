@@ -128,11 +128,14 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hprev, LPSTR cmd, int show) {
 	// we only allow running one instance of PIMELauncher
 	server_hwnd = FindWindow(wnd_class_name, NULL); // find existing instance
 	if (server_hwnd) {
-		if (quit) {
-			// ask the existing instance to terminate by closing its window
+		if (quit) { // ask the existing instance to terminate by closing its window
 			PostMessage(server_hwnd, WM_CLOSE, 0, 0);
 		}
 		return 0; // only one instance of PIME launcher is allowed
+	}
+	else if (quit) {
+		// ask for existing instance to quit, but we cannot find an existing instance.
+		return 0;
 	}
 
 	// this is the first instance

@@ -7,10 +7,25 @@ from . import libchewing
 
 # from libchewing/include/global.h
 CHINESE_MODE = 1
-SYMBOL_MODE = 0
+ENGLISH_MODE = 0
 FULLSHAPE_MODE = 1
 HALFSHAPE_MODE = 0
 
+keyNames = {
+    VK_ESCAPE: "Esc",
+    VK_RETURN: "Enter",
+    VK_TAB: "Tab",
+    VK_DELETE: "Del",
+    VK_BACK: "Backspace",
+    VK_UP: "Up",
+    VK_DOWN: "Down",
+    VK_LEFT: "Left",
+    VK_RIGHT: "Right",
+    VK_HOME: "Home",
+    VK_END: "End",
+    VK_PRIOR: "PageUp",
+    VK_NEXT: "PageDown"
+}
 
 class ChewingTextService(TextService):
     def __init__(self, client):
@@ -133,10 +148,10 @@ class ChewingTextService(TextService):
                 # if !cfg.upperCaseWithShift)
                 #    invertCase = True # need to convert upper case to lower, and vice versa.
 
-            if self.langMode_ == SYMBOL_MODE: # English mode
+            if self.langMode_ == ENGLISH_MODE: # English mode
                 ctx.handle_Default(charCode)
             elif temporaryEnglishMode: # temporary English mode
-                ctx.set_ChiEngMode(SYMBOL_MODE) # change to English mode temporarily
+                ctx.set_ChiEngMode(ENGLISH_MODE) # change to English mode temporarily
                 if invertCase: # need to invert upper case and lower case
                     # we're NOT in real English mode, but Capslock is on, so we treat it as English mode
                     # reverse upper and lower case
@@ -177,32 +192,10 @@ class ChewingTextService(TextService):
             '''
             if not keyHandled:
                 # the candidate window does not need the key. pass it to libchewing.
-                if keyEvent.keyCode == VK_ESCAPE:
-                    ctx.handle_Esc()
-                elif keyEvent.keyCode == VK_RETURN:
-                    ctx.handle_Enter()
-                elif keyEvent.keyCode == VK_TAB:
-                    ctx.handle_Tab()
-                elif keyEvent.keyCode == VK_DELETE:
-                    ctx.handle_Del()
-                elif keyEvent.keyCode == VK_BACK:
-                    ctx.handle_Backspace()
-                elif keyEvent.keyCode == VK_UP:
-                    ctx.handle_Up()
-                elif keyEvent.keyCode == VK_DOWN:
-                    ctx.handle_Down()
-                elif keyEvent.keyCode == VK_LEFT:
-                    ctx.handle_Left()
-                elif keyEvent.keyCode == VK_RIGHT:
-                    ctx.handle_Right()
-                elif keyEvent.keyCode == VK_HOME:
-                    ctx.handle_Home()
-                elif keyEvent.keyCode == VK_END:
-                    ctx.handle_End()
-                elif keyEvent.keyCode == VK_PRIOR:
-                    ctx.handle_PageUp()
-                elif keyEvent.keyCode == VK_NEXT:
-                    ctx.handle_PageDown()
+                keyName = keyNames.get(keyEvent.keyCode)
+                if keyName: # call libchewing method for the key
+                    methodName = "handle_" + keyName
+                    getattr(ctx, methodName)()
                 else: # we don't know this key. ignore it!
                     return False
         # updateLangButtons()

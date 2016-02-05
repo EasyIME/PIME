@@ -13,12 +13,12 @@ if sys.platform == "win32": # Windows
 else: # UNIX-like systems
     _libchewing = CDLL('libchewing.so.3')
 
-_libchewing.chewing_commit_String.restype = c_char_p
-_libchewing.chewing_buffer_String.restype = c_char_p
-_libchewing.chewing_cand_String.restype = c_char_p
-_libchewing.chewing_zuin_String.restype = c_char_p
-_libchewing.chewing_aux_String.restype = c_char_p
-_libchewing.chewing_get_KBString.restype = c_char_p
+_libchewing.chewing_commit_String_static.restype = c_char_p
+_libchewing.chewing_buffer_String_static.restype = c_char_p
+_libchewing.chewing_cand_String_static.restype = c_char_p
+_libchewing.chewing_bopomofo_String_static.restype = c_char_p
+_libchewing.chewing_aux_String_static.restype = c_char_p
+_libchewing.chewing_kbtype_String_static.restype = c_char_p
 
 
 def Init(datadir, userdir):
@@ -43,6 +43,9 @@ class ChewingContext:
 
     def __getattr__(self, name):
         func = 'chewing_' + name
+        # force the use of the APIs returning const char* to avoid memory leaks
+        if name.endswith("_String"):
+            func += "_static"
         if func in _libchewing.__dict__:
             wrap = partial(_libchewing.__dict__[func], self.ctx)
             setattr(self, name, wrap)

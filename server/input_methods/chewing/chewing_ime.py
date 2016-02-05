@@ -235,7 +235,7 @@ class ChewingTextService(TextService):
 
         if ctx.bopomofo_Check():
             bopomofoStr = ""
-            bopomofoStr = ctx.zuin_String(None).decode("UTF-8")
+            bopomofoStr = ctx.bopomofo_String(None).decode("UTF-8")
             # put bopomofo symbols at insertion point
             pos = ctx.cursor_Current()
             compStr = compStr[:pos] + bopomofoStr + compStr[pos:]

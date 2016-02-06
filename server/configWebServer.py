@@ -6,6 +6,9 @@ from serviceManager import textServiceMgr
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
+        # we only allow requests from localhost
+        if self.request.remote_ip not in ("::1", "127.0.0.1"):
+            return
         # FIXME: this is extremely ugly...
         self.write("PIME configurations<hr/>")
         for guid, info in textServiceMgr.services.items():
@@ -18,7 +21,7 @@ class ConfigWebServer:
         handlers = [(r"/", MainHandler)]
         for guid, info in textServiceMgr.services.items():
             if info.configHandlerClass:
-                handlers.append((r"/%s/.*" % info.dirName, info.configHandlerClass))
+                handlers.append((r"/%s/?.*" % info.dirName, info.configHandlerClass))
         self.app = tornado.web.Application(handlers)
 
     def run(self):

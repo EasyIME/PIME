@@ -5,6 +5,7 @@
         <title>設定新酷音輸入法</title>
     </head>
     <body>
+    設定新酷音輸入法<br/>
     <form method="POST" action="">
     keyboardLayout: <input value="{{ cfg.keyboardLayout }}"/><br />
     candPerRow: <input value="{{ cfg.candPerRow }}"/><br />
@@ -27,8 +28,8 @@
     easySymbolsWithShift: <input value="{{ cfg.easySymbolsWithShift }}"/><br />
     easySymbolsWithCtrl: <input value="{{ cfg.easySymbolsWithCtrl }}"/><br />
     upperCaseWithShift: <input value="{{ cfg.upperCaseWithShift }}"/><br />
-    <button value="OK"/>確定</button>
-    <button value="Cancel"/>取消</button>
+    <button value="Submit"/>確定</button>
+    <button value="Reset" onclick="window.close(); return false;" />取消</button>
     </form>
     </body>
 </html>

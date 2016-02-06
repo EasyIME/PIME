@@ -54,7 +54,9 @@ RequestExecutionLevel admin
 
 ;Pages
 ; license page
-!insertmacro MUI_PAGE_LICENSE "..\COPYING.txt"
+!insertmacro MUI_PAGE_LICENSE "..\LGPL-2.0.txt" ; for PIME
+!insertmacro MUI_PAGE_LICENSE "..\APACHE-2.0.txt" ; for tornado
+!insertmacro MUI_PAGE_LICENSE "..\PSF.txt" ; for python
 
 ; !insertmacro MUI_PAGE_COMPONENTS
 
@@ -137,10 +139,13 @@ Section "PIME 輸入法" SecMain
     
     ; Install an embedable version of python 3.
     File /r "..\python"
+    
+    ; FIXME: maybe we should setup firewall rules for pyton 3 exe since we need web.
+    ; For ex: http://nsis.sourceforge.net/NSIS_Simple_Firewall_Plugin
 
 	; Install the python server and input method modules
     ; FIXME: maybe we should install the pyc files later?
-	File /r /x "__pycache__" "..\server"
+	File /r /x "__pycache__" /x "meow" "..\server"
 
     ; Install the launcher and monitor of the server
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"

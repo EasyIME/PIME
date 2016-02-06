@@ -70,3 +70,10 @@ class ChewingConfig:
                 js = json.dump(self.__dict__, f, indent=4)
         except Exception:
             pass # FIXME: handle I/O errors?
+
+
+# globally shared config object
+# load configurations from a user-specific config file
+# FIXME: should we share this among all ChewingTextService instances?
+# FIXME: how to reload the configurations properly when they are changed?
+chewingConfig = ChewingConfig()

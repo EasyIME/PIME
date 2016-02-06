@@ -3,11 +3,9 @@ import threading
 import json
 import sys
 import os
-import tornado
-import tornado.web
 from ctypes import *
 from serviceManager import textServiceMgr
-
+from configWebServer import ConfigWebServer
 
 # import libpipe
 dll_path = os.path.join(os.path.dirname(__file__), "libpipe.dll")
@@ -205,20 +203,11 @@ class ServerThread(threading.Thread):
         self.lock.release()
 
 
-class MainHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.write("TODO: PIME configurations")
-
-def make_app():
-    return tornado.web.Application([
-        (r"/", MainHandler),
-    ])
-
 if __name__ == "__main__":
+    # run a separate thread to listen to incoming pipe connections
     server_thread = ServerThread()
     server_thread.start()
 
     # run a tiny local web server for configuration UI
-    app = make_app()
-    app.listen(8888)
-    tornado.ioloop.IOLoop.current().start()
+    config_server = ConfigWebServer()
+    config_server.run()

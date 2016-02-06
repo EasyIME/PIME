@@ -3,7 +3,7 @@ from keycodes import * # for VK_XXX constants
 from textService import *
 import os.path
 from .libchewing import ChewingContext
-from .chewing_config import ChewingConfig
+from .chewing_config import chewingConfig
 
 # from libchewing/include/global.h
 CHINESE_MODE = 1
@@ -40,13 +40,8 @@ class ChewingTextService(TextService):
         self.outputSimpChinese_ = False
         self.lastKeyDownCode_ = 0
 
-        # load configurations from a user-specific config file
-        # FIXME: should we share this among all ChewingTextService instances?
-        # FIXME: how to reload the configurations properly when they are changed?
-        self.config = ChewingConfig()
-
     def onActivate(self):
-        cfg = self.config
+        cfg = chewingConfig # globally shared config object
         TextService.onActivate(self)
         # load libchewing context
         datadir = self.datadir.encode("UTF-8")

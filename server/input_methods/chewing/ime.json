@@ -6,5 +6,7 @@
 	"icon": "icon.ico",
 	"win8_icon": "",
 	"moduleName": "chewing_ime",
-	"serviceName": "ChewingTextService"
+	"serviceName": "ChewingTextService",
+    "configModule": "config_handler",
+    "configHandlerName": "ConfigHandler"
 }

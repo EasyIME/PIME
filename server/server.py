@@ -3,6 +3,8 @@ import threading
 import json
 import sys
 import os
+import tornado
+import tornado.web
 from ctypes import *
 from serviceManager import textServiceMgr
 
@@ -164,8 +166,10 @@ class ClientThread(threading.Thread):
         server.remove_client(client)
 
 
-class Server:
+# thread used to listen to incoming named pipe connections
+class ServerThread(threading.Thread):
     def __init__(self):
+        threading.Thread.__init__(self)
         self.lock = threading.Lock()
         self.clients = []
 
@@ -201,10 +205,20 @@ class Server:
         self.lock.release()
 
 
-def main():
-    server = Server()
-    server.run()
+class MainHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write("TODO: PIME configurations")
 
+def make_app():
+    return tornado.web.Application([
+        (r"/", MainHandler),
+    ])
 
 if __name__ == "__main__":
-    main()
+    server_thread = ServerThread()
+    server_thread.start()
+
+    # run a tiny local web server for configuration UI
+    app = make_app()
+    app.listen(8888)
+    tornado.ioloop.IOLoop.current().start()

@@ -52,7 +52,7 @@ class ChewingConfig:
         return os.path.join(self.getConfigDir(), "config.json")
 
     def getUserPhrase(self):
-        return os.path.join(cfg.getConfigDir(), DB_NAME)
+        return os.path.join(self.getConfigDir(), DB_NAME)
         
     def getSelKeys(self):
         return selKeys[self.selKeyType]

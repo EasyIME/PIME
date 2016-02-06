@@ -2,14 +2,17 @@
 from keycodes import * # for VK_XXX constants
 from textService import *
 import os.path
-import string
-from . import libchewing
+from .libchewing import ChewingContext
+from .chewing_config import ChewingConfig
 
 # from libchewing/include/global.h
 CHINESE_MODE = 1
 ENGLISH_MODE = 0
 FULLSHAPE_MODE = 1
 HALFSHAPE_MODE = 0
+
+# from libchewing/include/internal/userphrase-private.h
+DB_NAME	= "chewing.sqlite3"
 
 keyNames = {
     VK_ESCAPE: "Esc",
@@ -40,40 +43,51 @@ class ChewingTextService(TextService):
         self.outputSimpChinese_ = False
         self.lastKeyDownCode_ = 0
 
+        # load configurations from a user-specific config file
+        # FIXME: should we share this among all ChewingTextService instances?
+        # FIXME: how to reload the configurations properly when they are changed?
+        self.config = ChewingConfig()
+
     def onActivate(self):
+        cfg = self.config
         TextService.onActivate(self)
         # load libchewing context
         datadir = self.datadir.encode("UTF-8")
-        ctx = libchewing.ChewingContext(syspath = datadir, userpath = None)
+        user_phrase = os.path.join(cfg.getConfigDir(), DB_NAME).encode("UTF-8")
+        ctx = ChewingContext(syspath = datadir, userpath = user_phrase)
         self.ctx = ctx
 
         ctx.set_maxChiSymbolLen(50)
 
         # add user phrase before or after the cursor
-        # cxt.set_addPhraseDirection(cfg.addPhraseForward);
+        ctx.set_addPhraseDirection(cfg.addPhraseForward);
 
         # automatically shift cursor to the next char after choosing a candidate
-        # ctx.set_autoShiftCur(cfg.advanceAfterSelection);
+        ctx.set_autoShiftCur(cfg.advanceAfterSelection);
 
         # candiate strings per page
-        # ctx.set_candPerPage(cfg.candPerPage);
+        ctx.set_candPerPage(cfg.candPerPage);
 
         # clean the composition buffer by Esc key
-        # ctx.set_escCleanAllBuf(cfg.escCleanAllBuf);
+        ctx.set_escCleanAllBuf(cfg.escCleanAllBuf);
 
         # keyboard type
-        # ctx.set_KBType(cfg.keyboardLayout);
+        ctx.set_KBType(cfg.keyboardLayout);
 
         # Use space key to open candidate window.
-        # ctx.set_spaceAsSelection(cfg.showCandWithSpaceKey);
+        ctx.set_spaceAsSelection(cfg.showCandWithSpaceKey);
 
-        self.customizeUI(candFontSize = 20, candPerRow = 1)
-        self.selKeys = "1234567890"
-        ctx.set_selKey(self.selKeys)
-        self.setSelKeys(self.selKeys)
-        
+        self.customizeUI(candFontSize = cfg.fontSize, candPerRow = cfg.candPerRow)
+        self.setSelKeys(cfg.getSelKeys())
+
         self.langMode_ = CHINESE_MODE
         ctx.set_ChiEngMode(CHINESE_MODE)
+
+    def setSelKeys(self, selKeys):
+        TextService.setSelKeys(self, selKeys)
+        self.selKeys = selKeys
+        if self.ctx:
+            self.ctx.set_selKey(selKeys)
 
     def onDeactivate(self):
         TextService.onDeactivate(self)

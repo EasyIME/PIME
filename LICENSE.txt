@@ -1,0 +1,17 @@
+PIME is composed of several parts with different licenses.
+
+Code in these directories are licensed under LGPL 2.0:
+  cmake
+  installer
+  libIME
+  libpipe
+  PIME
+  PIMELauncher
+  server
+
+The following components are from other projects:
+  python: Embeddable version of python 3.5 is licensed under PSF.
+
+  python/tornado: Tornado web framework licensed under Apache 2.0.
+
+  rapidjson: C++ library used to parse and write json data licensed under BSD.

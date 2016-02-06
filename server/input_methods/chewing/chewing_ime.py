@@ -11,9 +11,6 @@ ENGLISH_MODE = 0
 FULLSHAPE_MODE = 1
 HALFSHAPE_MODE = 0
 
-# from libchewing/include/internal/userphrase-private.h
-DB_NAME	= "chewing.sqlite3"
-
 keyNames = {
     VK_ESCAPE: "Esc",
     VK_RETURN: "Enter",
@@ -53,7 +50,7 @@ class ChewingTextService(TextService):
         TextService.onActivate(self)
         # load libchewing context
         datadir = self.datadir.encode("UTF-8")
-        user_phrase = os.path.join(cfg.getConfigDir(), DB_NAME).encode("UTF-8")
+        user_phrase = cfg.getUserPhrase().encode("UTF-8")
         ctx = ChewingContext(syspath = datadir, userpath = user_phrase)
         self.ctx = ctx
 

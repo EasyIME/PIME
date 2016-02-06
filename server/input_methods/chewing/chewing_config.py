@@ -4,6 +4,9 @@ import os
 
 DEF_FONT_SIZE = 16
 
+# from libchewing/include/internal/userphrase-private.h
+DB_NAME	= "chewing.sqlite3"
+
 selKeys=(
     "1234567890",
     "asdfghjkl;",
@@ -48,6 +51,9 @@ class ChewingConfig:
     def getConfigFile(self):
         return os.path.join(self.getConfigDir(), "config.json")
 
+    def getUserPhrase(self):
+        return os.path.join(cfg.getConfigDir(), DB_NAME)
+        
     def getSelKeys(self):
         return selKeys[self.selKeyType]
 

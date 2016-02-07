@@ -35,13 +35,15 @@ AllowSkipFiles off ; cannot skip a file
 ; icons of the generated installer and uninstaller
 !define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\orange-install.ico"
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\orange-uninstall.ico"
-!define PRODUCT_VERSION "0.03"
+
+!define PRODUCT_NAME "PIME 輸入法"
+!define PRODUCT_VERSION "0.04"
 
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 !define HOMEPAGE_URL "https://github.com/EasyIME/"
 
-Name "PIME 輸入法"
-BrandingText "PIME 輸入法"
+Name "${PRODUCT_NAME}"
+BrandingText "${PRODUCT_NAME}"
 
 OutFile "PIME-${PRODUCT_VERSION}-setup.exe" ; The generated installer file name
 
@@ -174,6 +176,11 @@ Section "PIME 輸入法" SecMain
 
     ; Launch the python server as current user (non-elevated process)
     ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\PIMELauncher.exe" "open" ""
+
+    ; Create shortcuts
+    CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
+    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk" "$INSTDIR\server\input_methods\chewing\config\config.hta"
+    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
 
 ;Language strings
@@ -202,11 +209,16 @@ Section "Uninstall"
 
 	RMDir /r "$INSTDIR\x86"
 	RMDir /r "$INSTDIR\server"
-    RMDIR /r "$INSTDIR\python"
+    RMDir /r "$INSTDIR\python"
 
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
 	DeleteRegKey /ifempty HKLM "Software\PIME"
+
+    ; Delete shortcuts
+    Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
+    Delete "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk"
+    RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
 
 	Delete "$INSTDIR\Uninstall.exe"
 	RMDir "$INSTDIR"

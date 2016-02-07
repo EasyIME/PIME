@@ -29,9 +29,7 @@ class TextServiceInfo:
         self.guid = ""
         self.textServiceClass = None
         self.modulPrefix = ""
-        self.configModule = ""
-        self.configHandlerName = ""
-        self.configHandlerClass = None
+        self.configTool = ""
 
     def loadFromJson(self, jsonFile):
         dirName = os.path.dirname(jsonFile)
@@ -50,19 +48,7 @@ class TextServiceInfo:
                 print(self.moduleName)
             self.serviceName = jsonData.get("serviceName", "")
             self.guid = jsonData.get("guid", "").lower()
-
-            # config module
-            # FIXME: is it really a good idea to load all config modules 
-            # at the same time?
-            configModule = jsonData.get("configModule", "")
-            self.configHandlerName = jsonData.get("configHandlerName", "")
-            if configModule:
-                self.configModule = "%s.%s" % (self.modulePrefix, configModule)
-                # import the module
-                mod = importlib.import_module(self.configModule)
-                if self.configHandlerName:
-                    self.configHandlerClass = getattr(mod, self.configHandlerName)
-
+            self.configTool = jsonData.get("configTool", "")
 
     def createInstance(self, client):
         if not self.moduleName or not self.serviceName or not self.guid:

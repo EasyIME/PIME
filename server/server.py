@@ -21,7 +21,6 @@ import sys
 import os
 from ctypes import *
 from serviceManager import textServiceMgr
-from configWebServer import ConfigWebServer
 
 # import libpipe
 dll_path = os.path.join(os.path.dirname(__file__), "libpipe.dll")
@@ -180,10 +179,9 @@ class ClientThread(threading.Thread):
         server.remove_client(client)
 
 
-# thread used to listen to incoming named pipe connections
-class ServerThread(threading.Thread):
+# listen to incoming named pipe connections
+class Server():
     def __init__(self):
-        threading.Thread.__init__(self)
         self.lock = threading.Lock()
         self.clients = []
 
@@ -220,10 +218,6 @@ class ServerThread(threading.Thread):
 
 
 if __name__ == "__main__":
-    # run a separate thread to listen to incoming pipe connections
-    server_thread = ServerThread()
-    server_thread.start()
-
-    # run a tiny local web server for configuration UI
-    config_server = ConfigWebServer()
-    config_server.run()
+    # listen to incoming pipe connections
+    server = Server()
+    server.run()

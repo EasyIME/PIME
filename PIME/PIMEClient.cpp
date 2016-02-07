@@ -699,6 +699,7 @@ void Client::closePipe() {
 		DisconnectNamedPipe(pipe_);
 		CloseHandle(pipe_);
 		clearIconCache();
+		pipe_ = INVALID_HANDLE_VALUE;
 	}
 }
 

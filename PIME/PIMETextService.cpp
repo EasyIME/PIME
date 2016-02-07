@@ -215,8 +215,15 @@ void TextService::onLangProfileDeactivated(REFIID lang) {
 		client_->onLangProfileDeactivated(lang);
 }
 
+void TextService::createCandidateWindow(Ime::EditSession* session) {
+	if (!candidateWindow_) {
+		candidateWindow_ = new Ime::CandidateWindow(this, session);
+		candidateWindow_->setFont(font_);
+	}
+}
+
 void TextService::updateCandidates(Ime::EditSession* session) {
-	assert(candidateWindow_);
+	createCandidateWindow(session);
 	candidateWindow_->clear();
 
 	// FIXME: is this the right place to do it?
@@ -270,11 +277,7 @@ void TextService::showCandidates(Ime::EditSession* session) {
 	// if we're in a Windows store app. If isImmersive() returns true,
 	// The candidate window created should be a child window of the composition window.
 	// Please see Ime::CandidateWindow::CandidateWindow() for an example.
-	if(!candidateWindow_) {
-		candidateWindow_ = new Ime::CandidateWindow(this, session);
-		candidateWindow_->setFont(font_);
-	}
-	updateCandidates(session);
+	createCandidateWindow(session);
 	candidateWindow_->show();
 	showingCandidates_ = true;
 }

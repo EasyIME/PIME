@@ -79,7 +79,7 @@ public:
 	void freeTextService(TextService* service);
 
 	// called when config dialog needs to be launched
-	virtual bool onConfigure(HWND hwndParent);
+	virtual bool onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile);
 
 	// display attributes for composition string
 	std::list<DisplayAttributeInfo*>& displayAttrInfos() {

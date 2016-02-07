@@ -275,7 +275,7 @@ void ImeModule::freeTextService(TextService* service) {
 }
 
 // virtual
-bool ImeModule::onConfigure(HWND hwndParent) {
+bool ImeModule::onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile) {
 	return true;
 }
 
@@ -355,7 +355,7 @@ STDMETHODIMP ImeModule::LockServer(BOOL fLock) {
 
 // ITfFnConfigure
 STDMETHODIMP ImeModule::Show(HWND hwndParent, LANGID langid, REFGUID rguidProfile) {
-	return onConfigure(hwndParent) ? S_OK : E_FAIL;
+	return onConfigure(hwndParent, langid, rguidProfile) ? S_OK : E_FAIL;
 }
 
 // ITfFunction

@@ -41,7 +41,7 @@ public:
 	}
 
 	// called when config dialog needs to be launched
-	virtual bool onConfigure(HWND hwndParent);
+	virtual bool onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile);
 
 private:
 	std::wstring userDir_;

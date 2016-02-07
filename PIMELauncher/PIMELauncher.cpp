@@ -195,12 +195,12 @@ static void terminateServerProcess() {
 		// Also, ExitProcess() happens to have the same signature as a thread start routine.
 		// This is quite tricky!!
 		CreateRemoteThread(server_process, NULL, 0, (LPTHREAD_START_ROUTINE)ExitProcess, NULL, 0, NULL);
-		DWORD ret = WaitForSingleObject(server_process, 15 * 1000);
+		DWORD ret = WaitForSingleObject(server_process, 30 * 1000);
 		if (ret != WAIT_OBJECT_0) {
 			// if the safe and cleaner method fails, try the brute force one
 			TerminateProcess(server_process, 0);
 			// wait for the server process to terminate
-			WaitForSingleObject(server_process, 15 * 1000);
+			WaitForSingleObject(server_process, 30 * 1000);
 		}
 		CloseHandle(server_process);
 		server_process = INVALID_HANDLE_VALUE;

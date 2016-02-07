@@ -75,8 +75,11 @@ class ChewingConfig:
 
     def load(self):
         try:
-            with open(self.getConfigFile(), "r") as f:
-                self.__dict__.update(json.load(f))
+            if os.path.exists(self.getConfigFile()):
+                with open(self.getConfigFile(), "r") as f:
+                    self.__dict__.update(json.load(f))
+            else:
+                self.save();
         except Exception:
             pass # FIXME: handle I/O errors?
 

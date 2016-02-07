@@ -55,17 +55,20 @@ class ChewingTextService(TextService):
         self.shapeMode_ = -1
         self.outputSimpChinese_ = False
         self.lastKeyDownCode_ = 0
+        self.configTimeStamp = chewingConfig.lastTime
 
-    def onActivate(self):
+    # check whether the config file is changed and reload it as needed
+    def checkConfigChange(self):
+        chewingConfig.reloadIfNeeded()
+        if self.configTimeStamp != chewingConfig.lastTime:
+            # configurations are changed
+            self.applyConfig()
+
+    def applyConfig(self):
         cfg = chewingConfig # globally shared config object
-        TextService.onActivate(self)
-        # load libchewing context
-        datadir = self.datadir.encode("UTF-8")
-        user_phrase = cfg.getUserPhrase().encode("UTF-8")
-        ctx = ChewingContext(syspath = datadir, userpath = user_phrase)
-        self.ctx = ctx
+        ctx = self.ctx
 
-        ctx.set_maxChiSymbolLen(50)
+        self.configTimeStamp = cfg.lastTime
 
         # add user phrase before or after the cursor
         ctx.set_addPhraseDirection(cfg.addPhraseForward);
@@ -87,6 +90,18 @@ class ChewingTextService(TextService):
 
         self.customizeUI(candFontSize = cfg.fontSize, candPerRow = cfg.candPerRow)
         self.setSelKeys(cfg.getSelKeys())
+
+    def onActivate(self):
+        cfg = chewingConfig # globally shared config object
+        TextService.onActivate(self)
+        # load libchewing context
+        datadir = self.datadir.encode("UTF-8")
+        user_phrase = cfg.getUserPhrase().encode("UTF-8")
+        ctx = ChewingContext(syspath = datadir, userpath = user_phrase)
+        self.ctx = ctx
+
+        ctx.set_maxChiSymbolLen(50)
+        self.applyConfig()
 
         self.langMode_ = CHINESE_MODE
         ctx.set_ChiEngMode(CHINESE_MODE)

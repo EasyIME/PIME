@@ -57,6 +57,7 @@ class ChewingConfig:
         self.easySymbolsWithCtrl = 0
         self.upperCaseWithShift = 0
 
+        self._lastTime = 0 # last modified time
         self.load() # try to load from the config file
 
     def getConfigDir(self):
@@ -74,21 +75,41 @@ class ChewingConfig:
         return selKeys[self.selKeyType]
 
     def load(self):
+        filename = self.getConfigFile()
         try:
-            if os.path.exists(self.getConfigFile()):
-                with open(self.getConfigFile(), "r") as f:
+            if os.path.exists(filename):
+                with open(filename, "r") as f:
                     self.__dict__.update(json.load(f))
+                self.lastTime = os.path.getmtime(filename)
+                print("read config", self.lastTime)
             else:
-                self.save();
+                self.save()
+        except Exception:
+            self.save()
+
+    def save(self):
+        filename = self.getConfigFile()
+        try:
+            with open(filename, "w") as f:
+                json = {key: value for key, value in self.__dict__.items() if not key.startswith("_")}
+                js = json.dump(json, f, indent=4)
+            self.lastTime = os.path.getmtime(filename)
         except Exception:
             pass # FIXME: handle I/O errors?
 
-    def save(self):
+    def reloadIfNeeded(self):
+        print("try reload", self.lastTime)
+        reload = False
+        filename = self.getConfigFile()
         try:
-            with open(self.getConfigFile(), "w") as f:
-                js = json.dump(self.__dict__, f, indent=4)
+            if os.path.getmtime(filename) != self.lastTime:
+                reload = True
         except Exception:
-            pass # FIXME: handle I/O errors?
+            pass # FIXME: handle errors?
+        if reload:
+            print("do reload")
+            self.load()
+        return reload
 
 
 # globally shared config object

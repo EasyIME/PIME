@@ -94,10 +94,15 @@ class TextService:
         self.reply = {}
         return reply
 
+    # This should be implemented in the derived class
+    def checkConfigChange(self):
+        pass
 
     def handleRequest(self, method, msg): # msg is a json object
         success = True # if the method is successfully handled
         ret = None # the return value of the method, if any
+
+        self.checkConfigChange() # check if configurations are changed
 
         self.updateStatus(msg)
         if method == "filterKeyDown":

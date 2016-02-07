@@ -48,10 +48,20 @@ function writeFile(path, data) {
         stream.Charset = "utf-8";
         stream.Open();
         stream.WriteText(data);
-        stream.SaveToFile(path, 2);
+
+        // this trick is used to strip unicode BOM
+        // Reference: http://stackoverflow.com/questions/31435662/vba-save-a-file-with-utf-8-without-bom
+        var binaryStream = new ActiveXObject("ADODB.Stream");
+        binaryStream.Type = 1; // adTypeBinary: this is used to strip unicode BOM
+        binaryStream.Open();
+        stream.Position = 3; // skip unicode BOM
+        stream.CopyTo(binaryStream); // convert the UTF8 data to binary
+        binaryStream.SaveToFile(path, 2);
+        binaryStream.Close();
         stream.Close();
     }
     catch(err) {
+        alert(err);
     }
 }
 

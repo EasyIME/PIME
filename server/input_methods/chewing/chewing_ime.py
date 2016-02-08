@@ -18,6 +18,7 @@
 from keycodes import * # for VK_XXX constants
 from textService import *
 import os.path
+import time
 from .libchewing import ChewingContext
 from .chewing_config import chewingConfig
 
@@ -56,11 +57,13 @@ class ChewingTextService(TextService):
         self.datadir = os.path.join(self.curdir, "data")
         # print(self.datadir)
         self.icon_dir = self.curdir
+        self.ctx = None # libchewing context
 
         self.langMode = -1
         self.shapeMode = -1
         self.outputSimpChinese = False
         self.lastKeyDownCode = 0
+        self.lastKeyDownTime = 0.0
         self.configTimeStamp = chewingConfig.lastTime
 
     # check whether the config file is changed and reload it as needed
@@ -72,9 +75,8 @@ class ChewingTextService(TextService):
 
     def applyConfig(self):
         cfg = chewingConfig # globally shared config object
-        ctx = self.ctx
-
         self.configTimeStamp = cfg.lastTime
+        ctx = self.ctx
 
         # add user phrase before or after the cursor
         ctx.set_addPhraseDirection(cfg.addPhraseForward);
@@ -97,36 +99,51 @@ class ChewingTextService(TextService):
         self.customizeUI(candFontSize = cfg.fontSize, candPerRow = cfg.candPerRow)
         self.setSelKeys(cfg.getSelKeys())
 
-    def onActivate(self):
-        print("onActivate")
-        cfg = chewingConfig # globally shared config object
-        TextService.onActivate(self)
+    def initChewingContext(self):
         # load libchewing context
-        datadir = self.datadir.encode("UTF-8")
-        user_phrase = cfg.getUserPhrase().encode("UTF-8")
-        ctx = ChewingContext(syspath = datadir, userpath = user_phrase)
-        self.ctx = ctx
+        if not self.ctx:
+            cfg = chewingConfig # globally shared config object
+            datadir = self.datadir.encode("UTF-8")
+            user_phrase = cfg.getUserPhrase().encode("UTF-8")
+            ctx = ChewingContext(syspath = datadir, userpath = user_phrase)
+            self.ctx = ctx
+            ctx.set_maxChiSymbolLen(50)
 
-        ctx.set_maxChiSymbolLen(50)
+            self.langMode = ENGLISH_MODE if cfg.defaultEnglish else CHINESE_MODE
+            ctx.set_ChiEngMode(self.langMode)
+
+            self.shapeMode = FULLSHAPE_MODE if cfg.defaultFullSpace else HALFSHAPE_MODE
+            ctx.set_ShapeMode(self.shapeMode)
+
         self.applyConfig()
 
-        self.langMode = CHINESE_MODE
-        ctx.set_ChiEngMode(CHINESE_MODE)
+    def onActivate(self):
+        cfg = chewingConfig # globally shared config object
+        TextService.onActivate(self)
+        self.initChewingContext()
 
         # add preserved keys
         self.addPreservedKey(VK_SPACE, TF_MOD_SHIFT, SHIFT_SPACE_GUID); # shift + space
 
         # add language bar buttons
         # siwtch Chinese/English modes
+        icon_name = "chi.ico" if self.langMode == CHINESE_MODE else "eng.ico"
         self.addButton("switch-lang",
-            icon = os.path.join(self.icon_dir, "chi.ico"),
+            icon = os.path.join(self.icon_dir, icon_name),
             tooltip = "中英文切換",
             commandId = ID_SWITCH_LANG
         )
-
+        # Windows 8 systray IME mode icon
+        if self.client.isWindows8Above:
+            self.addButton("windows-mode-icon",
+                icon = os.path.join(self.icon_dir, icon_name),
+                commandId = ID_MODE_ICON
+            )
+        
         # toggle full shape/half shape
+        icon_name = "full.ico" if self.shapeMode == FULLSHAPE_MODE else "half.ico"
         self.addButton("switch-shape",
-            icon = os.path.join(self.icon_dir, "half.ico"),
+            icon = os.path.join(self.icon_dir, icon_name),
             tooltip = "全形/半形切換",
             commandId = ID_SWITCH_SHAPE
         )
@@ -139,18 +156,11 @@ class ChewingTextService(TextService):
             commandId = ID_SETTINGS
         )
 
-        # Windows 8 systray IME mode icon
-        if self.client.isWindows8Above:
-            self.addButton("windows-mode-icon",
-                icon = os.path.join(self.icon_dir, "eng.ico"),
-                commandId = ID_MODE_ICON
-            )
-
     def onDeactivate(self):
-        print("onDeactivate")
         TextService.onDeactivate(self)
         # unload libchewing context
         self.ctx = None
+        self.lastKeyDownCode = 0
 
         self.removeButton("switch-lang")
         self.removeButton("switch-shape")
@@ -166,6 +176,8 @@ class ChewingTextService(TextService):
 
     def filterKeyDown(self, keyEvent):
         self.lastKeyDownCode = keyEvent.keyCode
+        if self.lastKeyDownTime == 0.0:
+            self.lastKeyDownTime = time.time()
         # return False if we don't need this key
         if not self.isComposing(): # we're not composing now
             # don't do further handling in English + half shape mode
@@ -217,6 +229,16 @@ class ChewingTextService(TextService):
         temporaryEnglishMode = False
         oldLangMode = ctx.get_ChiEngMode()
 
+        """ // What's easy symbol input??
+            // set this to true or false according to the status of Shift key
+            // alternatively, should we set this when onKeyDown and onKeyUp receive VK_SHIFT or VK_CONTROL?
+            bool easySymbols = false;
+            if(cfg.easySymbolsWithShift)
+                easySymbols = keyEvent.isKeyDown(VK_SHIFT);
+            if(!easySymbols && cfg.easySymbolsWithCtrl)
+                easySymbols = keyEvent.isKeyDown(VK_CONTROL);
+            ::chewing_set_easySymbolInput(chewingContext_, easySymbols);
+        """
         if keyEvent.isPrintableChar(): # printable characters (exclude extended keys?)
             invertCase = False
             # If Caps lock is on, temporarily change to English mode
@@ -282,7 +304,8 @@ class ChewingTextService(TextService):
                     getattr(ctx, methodName)()
                 else: # we don't know this key. ignore it!
                     return False
-        # updateLangButtons()
+
+        self.updateLangButtons()
 
         if ctx.keystroke_CheckIgnore():
             if temporaryEnglishMode:
@@ -345,6 +368,26 @@ class ChewingTextService(TextService):
 
         return True
 
+    def filterKeyUp(self, keyEvent):
+        if chewingConfig.switchLangWithShift:
+            if self.lastKeyDownCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
+                # last key down event is also shift key
+                # a <Shift> key down + key up pair was detected switch language
+                pressedDuration = time.time() - self.lastKeyDownTime
+                if pressedDuration < 0.5: # pressed for < 0.5 second
+                    self.toggleLanguageMode()
+        self.lastKeyDownCode = 0
+        self.lastKeyDownTime = 0.0
+        return False
+
+    def onPreservedKey(self, guid):
+        self.lastKeyDownCode = 0;
+        # some preserved keys registered are pressed
+        if guid == SHIFT_SPACE_GUID: # shift + space is pressed
+            toggleShapeMode()
+            return True
+        return False
+        
     def onCommand(self, commandId, commandType):
         print("onCommand", commandId, commandType)
         # FIXME: We should distinguish left and right click using commandType

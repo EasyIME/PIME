@@ -86,9 +86,9 @@ public:
 	STDMETHODIMP AdviseSink(REFIID riid, IUnknown *punk, DWORD *pdwCookie);
 	STDMETHODIMP UnadviseSink(DWORD dwCookie);
 
+	void update(DWORD flags = TF_LBI_BTNALL);
 private:
 	void buildITfMenu(ITfMenu* menu, HMENU templ);
-	void update(DWORD flags = TF_LBI_BTNALL);
 
 private:
 	int refCount_;

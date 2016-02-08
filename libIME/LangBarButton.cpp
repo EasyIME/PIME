@@ -38,7 +38,6 @@ LangBarButton::LangBarButton(TextService* service, const GUID& guid, UINT comman
 	assert(service && service->imeModule());
 
 	textService_->AddRef();
-
 	info_.clsidService = service->imeModule()->textServiceClsid();
 	info_.guidItem = guid;
 	info_.dwStyle = style;

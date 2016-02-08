@@ -46,21 +46,21 @@ keyNames = {
 SHIFT_SPACE_GUID = "{F1DAE0FB-8091-44A7-8A0C-3082A1515447}"
 ID_SWITCH_LANG = 1
 ID_SWITCH_SHAPE = 2
-ID_SWITCH_SETTINGS = 3
+ID_SETTINGS = 3
 ID_MODE_ICON = 4
 
 class ChewingTextService(TextService):
     def __init__(self, client):
         TextService.__init__(self, client)
-        curdir = os.path.abspath(os.path.dirname(__file__))
-        self.datadir = os.path.join(curdir, "data")
+        self.curdir = os.path.abspath(os.path.dirname(__file__))
+        self.datadir = os.path.join(self.curdir, "data")
         # print(self.datadir)
-        self.icon_dir = curdir
-        
-        self.langMode_ = -1
-        self.shapeMode_ = -1
-        self.outputSimpChinese_ = False
-        self.lastKeyDownCode_ = 0
+        self.icon_dir = self.curdir
+
+        self.langMode = -1
+        self.shapeMode = -1
+        self.outputSimpChinese = False
+        self.lastKeyDownCode = 0
         self.configTimeStamp = chewingConfig.lastTime
 
     # check whether the config file is changed and reload it as needed
@@ -98,6 +98,7 @@ class ChewingTextService(TextService):
         self.setSelKeys(cfg.getSelKeys())
 
     def onActivate(self):
+        print("onActivate")
         cfg = chewingConfig # globally shared config object
         TextService.onActivate(self)
         # load libchewing context
@@ -109,7 +110,7 @@ class ChewingTextService(TextService):
         ctx.set_maxChiSymbolLen(50)
         self.applyConfig()
 
-        self.langMode_ = CHINESE_MODE
+        self.langMode = CHINESE_MODE
         ctx.set_ChiEngMode(CHINESE_MODE)
 
         # add preserved keys
@@ -135,7 +136,7 @@ class ChewingTextService(TextService):
         self.addButton("settings",
             icon = os.path.join(self.icon_dir, "config.ico"),
             tooltip = "設定",
-            commandId = ID_SWITCH_SETTINGS
+            commandId = ID_SETTINGS
         )
 
         # Windows 8 systray IME mode icon
@@ -146,17 +147,16 @@ class ChewingTextService(TextService):
             )
 
     def onDeactivate(self):
+        print("onDeactivate")
         TextService.onDeactivate(self)
         # unload libchewing context
         self.ctx = None
 
-        '''
         self.removeButton("switch-lang")
         self.removeButton("switch-shape")
         self.removeButton("settings")
         if self.client.isWindows8Above:
             self.removeButton("windows-mode-icon")
-        '''
 
     def setSelKeys(self, selKeys):
         TextService.setSelKeys(self, selKeys)
@@ -169,7 +169,7 @@ class ChewingTextService(TextService):
         # return False if we don't need this key
         if not self.isComposing(): # we're not composing now
             # don't do further handling in English + half shape mode
-            if self.langMode_ != CHINESE_MODE and self.shapeMode_ != FULLSHAPE_MODE:
+            if self.langMode != CHINESE_MODE and self.shapeMode != FULLSHAPE_MODE:
                 return False
 
             # if Ctrl or Alt key is down
@@ -182,7 +182,7 @@ class ChewingTextService(TextService):
 
             # we always need further processing in full shape mode since all English chars,
             # numbers, and symbols need to be converted to full shape Chinese chars.
-            if self.shapeMode_ != FULLSHAPE_MODE:
+            if self.shapeMode != FULLSHAPE_MODE:
                 # Caps lock is on => English mode
                 # if cfg.enableCapsLock and keyEvent.isKeyToggled(VK_CAPITAL):
                 if keyEvent.isKeyToggled(VK_CAPITAL):
@@ -232,7 +232,7 @@ class ChewingTextService(TextService):
                 # if !cfg.upperCaseWithShift)
                 #    invertCase = True # need to convert upper case to lower, and vice versa.
 
-            if self.langMode_ == ENGLISH_MODE: # English mode
+            if self.langMode == ENGLISH_MODE: # English mode
                 ctx.handle_Default(charCode)
             elif temporaryEnglishMode: # temporary English mode
                 ctx.set_ChiEngMode(ENGLISH_MODE) # change to English mode temporarily
@@ -347,3 +347,60 @@ class ChewingTextService(TextService):
 
     def onCommand(self, commandId, commandType):
         print("onCommand", commandId, commandType)
+        # FIXME: We should distinguish left and right click using commandType
+        if commandId == ID_SWITCH_LANG:
+            self.toggleLanguageMode()
+        elif commandId == ID_SWITCH_SHAPE:
+            self.toggleShapeMode()
+        elif commandId == ID_SETTINGS:
+            # launch our configuration tool
+            # Luckily, there is a Windows-only python call for it
+            config_tool = os.path.join(self.curdir, "config", "config.hta")
+            os.startfile(config_tool)
+        elif commandId == ID_MODE_ICON: # windows 8 mode icon
+            self.toggleLanguageMode()
+
+    def updateLangButtons(self):
+        ctx = self.ctx
+        if not ctx:
+            return
+        langMode = ctx.get_ChiEngMode()
+        if langMode != self.langMode:
+            self.langMode = langMode
+            icon_name = "chi.ico" if langMode == CHINESE_MODE else "eng.ico"
+            icon_path = os.path.join(self.icon_dir, icon_name)
+            self.changeButton("switch-lang", icon=icon_path)
+
+            if self.client.isWindows8Above: # windows 8 mode icon
+                # FIXME: we need a better set of icons to meet the 
+                #        WIndows 8 IME guideline and UX guidelines.
+                self.changeButton("windows-mode-icon", icon=icon_path)
+
+        shapeMode = ctx.get_ShapeMode()
+        if shapeMode != self.shapeMode:
+            self.shapeMode = shapeMode
+            icon_name = "full.ico" if shapeMode == FULLSHAPE_MODE else "half.ico"
+            icon_path = os.path.join(self.icon_dir, icon_name)
+            self.changeButton("switch-shape", icon=icon_path)
+
+    #toggle between English and Chinese
+    def toggleLanguageMode(self):
+        ctx = self.ctx
+        if ctx:
+            if ctx.get_ChiEngMode() == CHINESE_MODE:
+                new_mode = ENGLISH_MODE
+            else:
+                new_mode = CHINESE_MODE
+            ctx.set_ChiEngMode(new_mode)
+            self.updateLangButtons()
+
+    # toggle between full shape and half shape
+    def toggleShapeMode(self):
+        ctx = self.ctx
+        if ctx:
+            if ctx.get_ShapeMode() == HALFSHAPE_MODE:
+                new_mode = FULLSHAPE_MODE
+            else:
+                new_mode = HALFSHAPE_MODE
+            ctx.set_ShapeMode(new_mode)
+            self.updateLangButtons()

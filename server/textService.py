@@ -118,7 +118,7 @@ class TextService:
             keyEvent = KeyEvent(msg)
             ret = self.onKeyUp(keyEvent)
         elif method == "onPreservedKey":
-            guid = msg["guid"]
+            guid = msg["guid"].lower()
             ret = self.onPreservedKey(guid)
         elif method == "onCommand":
             commandId = msg["id"]
@@ -173,6 +173,14 @@ class TextService:
     # public methods that should not be touched
 
     # language bar buttons
+    """
+    allowed arguments:
+    @icon: full path to a *.ico file
+    @commandId: an integer ID which will be passed to onCommand()
+        when the button is clicked.
+    @text: text on the button (optional)
+    @tooltip: (optional)
+    """
     def addButton(self, button_id, **kwargs):
         buttons = self.reply.setdefault("addButton", [])
         info = kwargs
@@ -183,6 +191,9 @@ class TextService:
         buttons = self.reply.setdefault("removeButton", [])
         buttons.append(button_id)
 
+    """
+    See addButton() for allowed arguments.
+    """
     def changeButton(self, button_id, **kwargs):
         buttons = self.reply.setdefault("changeButton", [])
         info = kwargs

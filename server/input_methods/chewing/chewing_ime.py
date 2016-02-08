@@ -168,9 +168,10 @@ class ChewingTextService(TextService):
         ctx = self.ctx
         charCode = keyEvent.charCode
         charStr = chr(charCode)
+        temporaryEnglishMode = False
+        oldLangMode = ctx.get_ChiEngMode()
+
         if keyEvent.isPrintableChar(): # printable characters (exclude extended keys?)
-            oldLangMode = ctx.get_ChiEngMode()
-            temporaryEnglishMode = False
             invertCase = False
             # If Caps lock is on, temporarily change to English mode
             # if cfg.enableCapsLock and keyEvent.isKeyToggled(VK_CAPITAL):
@@ -196,8 +197,8 @@ class ChewingTextService(TextService):
                         charCode = ord(charStr.lower())
                     else:
                         charCode = ord(charStr.upper())
+                print("temp English", charCode)
                 ctx.handle_Default(charCode)
-                ctx.set_ChiEngMode(oldLangMode) # restore previous mode
             else : # Chinese mode
                 if charStr.isalpha(): # alphabets: A-Z
                     ctx.handle_Default(ord(charStr.lower()))
@@ -237,8 +238,10 @@ class ChewingTextService(TextService):
                     return False
         # updateLangButtons()
 
-        # if ctx.keystroke_CheckIgnore():
-        #    return False
+        if ctx.keystroke_CheckIgnore():
+            if temporaryEnglishMode:
+                ctx.set_ChiEngMode(oldLangMode) # restore previous mode
+            return False
 
         # handle candidates
         if ctx.cand_TotalChoice() > 0: # has candidates
@@ -263,7 +266,7 @@ class ChewingTextService(TextService):
             commitStr = ctx.commit_String().decode("UTF-8")
             # commit the text, replace currently selected text with our commit string
             self.setCommitString(commitStr)
-            # print("commit:", commitStr)
+            print("commit:", commitStr)
 
         # composition string
         compStr = ""
@@ -276,7 +279,7 @@ class ChewingTextService(TextService):
             # put bopomofo symbols at insertion point
             pos = ctx.cursor_Current()
             compStr = compStr[:pos] + bopomofoStr + compStr[pos:]
-        # print("compStr:", compStr)
+        print("compStr:", compStr)
         self.setCompositionString(compStr)
         # update cursor pos
         self.setCompositionCursor(ctx.cursor_Current())
@@ -291,6 +294,9 @@ class ChewingTextService(TextService):
             # for subsequent key events... I think this is a bug.
             showMessage(session, wstr, 2)
         '''
+        if temporaryEnglishMode:
+            ctx.set_ChiEngMode(oldLangMode) # restore previous mode
+
         return True
 
     def onCommand(self, commandId, commandType):

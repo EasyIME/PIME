@@ -160,39 +160,26 @@ void Client::updateUI(rapidjson::Value& data) {
 }
 
 void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
+	// We need to handle ordering of some types of the requests.
+	// For example, setCompositionCursor() should happen after setCompositionCursor().
+	rapidjson::Document::ValueType* commitStringVal = nullptr;
+	rapidjson::Document::ValueType* compositionStringVal = nullptr;
+	rapidjson::Document::ValueType* compositionCursorVal = nullptr;
+
 	for (auto it = msg.MemberBegin(); it != msg.MemberEnd(); ++it) {
 		const char* name = it->name.GetString();
 		if (session != nullptr) { // if an edit session is available
 			// commit string
 			if (it->value.IsString() && strcmp(name, "commitString") == 0) {
-				std::wstring commitString = utf8ToUtf16(it->value.GetString());
-				if (!commitString.empty()) {
-					if (!textService_->isComposing()) {
-						textService_->startComposition(session->context());
-					}
-					textService_->setCompositionString(session, commitString.c_str(), commitString.length());
-					textService_->endComposition(session->context());
-				}
+				commitStringVal = &it->value;
 				continue;
 			}
 			else if (it->value.IsString() && strcmp(name, "compositionString") == 0) {
-				// composition buffer
-				std::wstring compositionString = utf8ToUtf16(it->value.GetString());
-				if (!compositionString.empty()) {
-					if (!textService_->isComposing()) {
-						textService_->startComposition(session->context());
-					}
-					textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
-				}
+				compositionStringVal = &it->value;
 				continue;
 			}
 			else if (it->value.IsInt() && strcmp(name, "compositionCursor") == 0) {
-				// composition cursor
-				int compositionCursor = it->value.GetInt();
-				if (!textService_->isComposing()) {
-					textService_->startComposition(session->context());
-				}
-				textService_->setCompositionCursor(session, compositionCursor);
+				compositionCursorVal = &it->value;
 				continue;
 			}
 			else if (it->value.IsArray() && strcmp(name, "candidateList") == 0) {
@@ -314,6 +301,43 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 		else if (it->value.IsObject() && strcmp(name, "customizeUI") == 0) {
 			// customize the UI
 			updateUI(it->value);
+		}
+	}
+
+	// handle comosition and commit strings
+	if (session != nullptr) { // if an edit session is available
+		bool endComposition = false;
+		if (commitStringVal != nullptr) {
+			std::wstring commitString = utf8ToUtf16(commitStringVal->GetString());
+			if (!commitString.empty()) {
+				if (!textService_->isComposing()) {
+					textService_->startComposition(session->context());
+				}
+				textService_->setCompositionString(session, commitString.c_str(), commitString.length());
+				textService_->endComposition(session->context());
+			}
+		}
+		if (compositionStringVal != nullptr) {
+			// composition buffer
+			std::wstring compositionString = utf8ToUtf16(compositionStringVal->GetString());
+			if (!textService_->isComposing()) {
+				textService_->startComposition(session->context());
+			}
+			textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
+			if (compositionString.empty()) {
+				endComposition = true;
+			}
+		}
+		if (compositionCursorVal != nullptr) {
+			// composition cursor
+			int compositionCursor = compositionCursorVal->GetInt();
+			if (!textService_->isComposing()) {
+				textService_->startComposition(session->context());
+			}
+			textService_->setCompositionCursor(session, compositionCursor);
+		}
+		if (endComposition && session != nullptr) {
+			textService_->endComposition(session->context());
 		}
 	}
 }

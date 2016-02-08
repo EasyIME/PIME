@@ -37,7 +37,7 @@ AllowSkipFiles off ; cannot skip a file
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\orange-uninstall.ico"
 
 !define PRODUCT_NAME "PIME 輸入法"
-!define PRODUCT_VERSION "0.04"
+!define PRODUCT_VERSION "0.05"
 
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 !define HOMEPAGE_URL "https://github.com/EasyIME/"

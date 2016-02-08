@@ -26,76 +26,80 @@
 
 using namespace std;
 
-static SECURITY_DESCRIPTOR g_securittyDescriptor = {0};
-static SECURITY_ATTRIBUTES g_securityAttributes = { 0 };
+static PSECURITY_DESCRIPTOR g_securittyDescriptor = NULL;
+static SECURITY_ATTRIBUTES g_securityAttributes = {0};
 static PACL g_acl = NULL;
+static EXPLICIT_ACCESS g_explicitAccesses[2] = {0};
+static PSID g_everyoneSID = NULL;
+static PSID g_allAppsSID = NULL;
 
 extern "C" {
 
 static void init() {
+	// create security attributes for the pipe
 	// http://msdn.microsoft.com/en-us/library/windows/desktop/hh448449(v=vs.85).aspx
 	// define new Win 8 app related constants
-	EXPLICIT_ACCESS explicit_accesses[2];
-	memset(&explicit_accesses, 0, sizeof(explicit_accesses));
+	memset(&g_explicitAccesses, 0, sizeof(g_explicitAccesses));
 	// Create a well-known SID for the Everyone group.
 	// FIXME: we should limit the access to current user only
 	// See this article for details: https://msdn.microsoft.com/en-us/library/windows/desktop/hh448493(v=vs.85).aspx
 
-	PSID everyoneSID = NULL;
 	SID_IDENTIFIER_AUTHORITY worldSidAuthority = SECURITY_WORLD_SID_AUTHORITY;
 	AllocateAndInitializeSid(&worldSidAuthority, 1,
-		SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &everyoneSID);
+		SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &g_everyoneSID);
 
 	// https://services.land.vic.gov.au/ArcGIS10.1/edESRIArcGIS10_01_01_3143/Python/pywin32/PLATLIB/win32/Demos/security/explicit_entries.py
 
-	EXPLICIT_ACCESS& ea = explicit_accesses[0];
-	ea.grfAccessPermissions = GENERIC_ALL;
-	ea.grfAccessMode = SET_ACCESS;
-	ea.grfInheritance = SUB_CONTAINERS_AND_OBJECTS_INHERIT;
-	ea.Trustee.pMultipleTrustee = NULL;
-	ea.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
-	ea.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-	ea.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
-	ea.Trustee.ptstrName = (LPTSTR)everyoneSID;
+	g_explicitAccesses[0].grfAccessPermissions = GENERIC_ALL;
+	g_explicitAccesses[0].grfAccessMode = SET_ACCESS;
+	g_explicitAccesses[0].grfInheritance = SUB_CONTAINERS_AND_OBJECTS_INHERIT;
+	g_explicitAccesses[0].Trustee.pMultipleTrustee = NULL;
+	g_explicitAccesses[0].Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+	g_explicitAccesses[0].Trustee.TrusteeForm = TRUSTEE_IS_SID;
+	g_explicitAccesses[0].Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+	g_explicitAccesses[0].Trustee.ptstrName = (LPTSTR)g_everyoneSID;
 
+	// FIXME: will this work under Windows 7 and Vista?
 	// create SID for app containers
-	PSID allAppsSID = NULL;
 	SID_IDENTIFIER_AUTHORITY appPackageAuthority = SECURITY_APP_PACKAGE_AUTHORITY;
 	AllocateAndInitializeSid(&appPackageAuthority,
 		SECURITY_BUILTIN_APP_PACKAGE_RID_COUNT,
 		SECURITY_APP_PACKAGE_BASE_RID,
 		SECURITY_BUILTIN_PACKAGE_ANY_PACKAGE,
-		0, 0, 0, 0, 0, 0, &allAppsSID);
+		0, 0, 0, 0, 0, 0, &g_allAppsSID);
 
-	ea = explicit_accesses[1];
-	ea.grfAccessPermissions = GENERIC_ALL;
-	ea.grfAccessMode = SET_ACCESS;
-	ea.grfInheritance = SUB_CONTAINERS_AND_OBJECTS_INHERIT;
-	ea.Trustee.pMultipleTrustee = NULL;
-	ea.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
-	ea.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-	ea.Trustee.TrusteeType = TRUSTEE_IS_GROUP;
-	ea.Trustee.ptstrName = (LPTSTR)allAppsSID;
+	g_explicitAccesses[1].grfAccessPermissions = GENERIC_ALL;
+	g_explicitAccesses[1].grfAccessMode = SET_ACCESS;
+	g_explicitAccesses[1].grfInheritance = SUB_CONTAINERS_AND_OBJECTS_INHERIT;
+	g_explicitAccesses[1].Trustee.pMultipleTrustee = NULL;
+	g_explicitAccesses[1].Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+	g_explicitAccesses[1].Trustee.TrusteeForm = TRUSTEE_IS_SID;
+	g_explicitAccesses[1].Trustee.TrusteeType = TRUSTEE_IS_GROUP;
+	g_explicitAccesses[1].Trustee.ptstrName = (LPTSTR)g_allAppsSID;
 
 	// create DACL
-	SetEntriesInAcl(2, explicit_accesses, NULL, &g_acl);
+	DWORD err = SetEntriesInAcl(2, g_explicitAccesses, NULL, &g_acl);
+	if (0 == err) {
+		// security descriptor
+		g_securittyDescriptor = (PSECURITY_DESCRIPTOR)LocalAlloc(LPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
+		InitializeSecurityDescriptor(g_securittyDescriptor, SECURITY_DESCRIPTOR_REVISION);
 
-	// security descriptor
-	InitializeSecurityDescriptor(&g_securittyDescriptor, SECURITY_DESCRIPTOR_REVISION);
-
-	// Add the ACL to the security descriptor. 
-	SetSecurityDescriptorDacl(&g_securittyDescriptor, TRUE, g_acl, FALSE);
+		// Add the ACL to the security descriptor. 
+		SetSecurityDescriptorDacl(g_securittyDescriptor, TRUE, g_acl, FALSE);
+	}
 
 	g_securityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
-	g_securityAttributes.lpSecurityDescriptor = &g_securittyDescriptor;
-	g_securityAttributes.bInheritHandle = FALSE;
-
-	// cleanup
-	FreeSid(everyoneSID);
-	FreeSid(allAppsSID);
+	g_securityAttributes.lpSecurityDescriptor = g_securittyDescriptor;
+	g_securityAttributes.bInheritHandle = TRUE;
 }
 
 static void cleanup() {
+	if(g_everyoneSID != nullptr)
+		FreeSid(g_everyoneSID);
+	if (g_allAppsSID != nullptr)
+		FreeSid(g_allAppsSID);
+	if (g_securittyDescriptor != nullptr)
+		LocalFree(g_securittyDescriptor);
 	if (g_acl != nullptr)
 		LocalFree(g_acl);
 }

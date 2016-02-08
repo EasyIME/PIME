@@ -81,7 +81,7 @@ class ChewingConfig:
                 with open(filename, "r") as f:
                     self.__dict__.update(json.load(f))
                 self.lastTime = os.path.getmtime(filename)
-                print("read config", self.lastTime)
+                # print("read config", self.lastTime)
             else:
                 self.save()
         except Exception:
@@ -98,7 +98,7 @@ class ChewingConfig:
             pass # FIXME: handle I/O errors?
 
     def reloadIfNeeded(self):
-        print("try reload", self.lastTime)
+        # print("try reload", self.lastTime)
         reload = False
         filename = self.getConfigFile()
         try:
@@ -107,7 +107,7 @@ class ChewingConfig:
         except Exception:
             pass # FIXME: handle errors?
         if reload:
-            print("do reload")
+            # print("do reload")
             self.load()
         return reload
 

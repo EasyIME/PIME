@@ -101,7 +101,7 @@ class Client:
                 reply["return"] = ret
         reply["success"] = success
         reply["seqNum"] = seqNum # reply with sequence number added
-        print("reply: ", reply)
+        # print("reply: ", reply)
         return reply
 
 
@@ -128,7 +128,7 @@ class ClientThread(threading.Thread):
                     buf_len = c_ulong(512)
                     read_len = libpipe.read_pipe(pipe, self.buf, buf_len, pointer(error))
                     error = error.value
-                    print("read: ", read_len, "error:", error)
+                    # print("read: ", read_len, "error:", error)
 
                     # convert content in the read buffer to unicode
                     if read_len > 0:
@@ -164,9 +164,8 @@ class ClientThread(threading.Thread):
 
                         data = bytes(reply, "UTF-8") # convert to UTF-8
                         data_len = c_ulong(len(data))
-                        print("write reply:", data_len)
+                        # print("write reply:", data_len)
                         libpipe.write_pipe(pipe, data, data_len, None)
-                        print("written!!")
             except:
                 import traceback
                 # print callstatck to know where the exceptions is

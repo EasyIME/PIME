@@ -247,10 +247,10 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 	candidateWindow_->setUseCursor(candUseCursor_);
 	candidateWindow_->setCandPerRow(candPerRow_);
 
-	// FIXME: make this configurable
-	int n = 9; // candidate string shown per page
-	int i;
-	for (i = 0; i < n && i < candidates_.size(); ++i) {
+	// the items in the candidate list should not exist the
+	// number of available keys used to select them.
+	assert(candidates_.size() <= selKeys_.size());
+	for (int i = 0; i < candidates_.size(); ++i) {
 		candidateWindow_->add(candidates_[i], selKeys_[i]);
 	}
 	candidateWindow_->recalculateSize();

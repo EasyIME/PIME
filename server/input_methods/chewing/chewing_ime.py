@@ -43,6 +43,12 @@ keyNames = {
     VK_NEXT: "PageDown"
 }
 
+SHIFT_SPACE_GUID = "{F1DAE0FB-8091-44A7-8A0C-3082A1515447}"
+ID_SWITCH_LANG = 1
+ID_SWITCH_SHAPE = 2
+ID_SWITCH_SETTINGS = 3
+ID_MODE_ICON = 4
+
 class ChewingTextService(TextService):
     def __init__(self, client):
         TextService.__init__(self, client)
@@ -106,17 +112,57 @@ class ChewingTextService(TextService):
         self.langMode_ = CHINESE_MODE
         ctx.set_ChiEngMode(CHINESE_MODE)
 
-    def setSelKeys(self, selKeys):
-        TextService.setSelKeys(self, selKeys)
-        self.selKeys = selKeys
-        if self.ctx:
-            self.ctx.set_selKey(selKeys)
+        # add preserved keys
+        self.addPreservedKey(VK_SPACE, TF_MOD_SHIFT, SHIFT_SPACE_GUID); # shift + space
+
+        # add language bar buttons
+        # siwtch Chinese/English modes
+        self.addButton("switch-lang",
+            icon = os.path.join(self.icon_dir, "chi.ico"),
+            tooltip = "中英文切換",
+            commandId = ID_SWITCH_LANG
+        )
+
+        # toggle full shape/half shape
+        self.addButton("switch-shape",
+            icon = os.path.join(self.icon_dir, "half.ico"),
+            tooltip = "全形/半形切換",
+            commandId = ID_SWITCH_SHAPE
+        )
+
+        # settings and others, may open a popup menu
+        # FIXME: popup menu is not yet implemented
+        self.addButton("settings",
+            icon = os.path.join(self.icon_dir, "config.ico"),
+            tooltip = "設定",
+            commandId = ID_SWITCH_SETTINGS
+        )
+
+        # Windows 8 systray IME mode icon
+        if self.client.isWindows8Above:
+            self.addButton("windows-mode-icon",
+                icon = os.path.join(self.icon_dir, "eng.ico"),
+                commandId = ID_MODE_ICON
+            )
 
     def onDeactivate(self):
         TextService.onDeactivate(self)
         # unload libchewing context
         self.ctx = None
-        self.removeButton("test-btn")
+
+        '''
+        self.removeButton("switch-lang")
+        self.removeButton("switch-shape")
+        self.removeButton("settings")
+        if self.client.isWindows8Above:
+            self.removeButton("windows-mode-icon")
+        '''
+
+    def setSelKeys(self, selKeys):
+        TextService.setSelKeys(self, selKeys)
+        self.selKeys = selKeys
+        if self.ctx:
+            self.ctx.set_selKey(selKeys)
 
     def filterKeyDown(self, keyEvent):
         self.lastKeyDownCode = keyEvent.keyCode

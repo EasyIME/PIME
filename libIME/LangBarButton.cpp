@@ -108,6 +108,9 @@ HICON LangBarButton::icon() const {
 	return icon_;
 }
 
+// The language button does not take owner ship of the icon
+// That means, when the button is destroyed, it will not destroy
+// the icon automatically.
 void LangBarButton::setIcon(HICON icon) {
 	icon_ = icon;
 	update(TF_LBI_ICON);
@@ -254,7 +257,10 @@ STDMETHODIMP LangBarButton::OnMenuSelect(UINT wID) {
 }
 
 STDMETHODIMP LangBarButton::GetIcon(HICON *phIcon) {
-	*phIcon = icon_;
+	// https://msdn.microsoft.com/zh-tw/library/windows/desktop/ms628718%28v=vs.85%29.aspx
+	// The caller will delete the icon when it's no longer needed.
+	// However, we might still need it. So let's return a copy here.
+	*phIcon = (HICON)CopyImage(icon_, IMAGE_ICON, 0, 0, 0);
 	return S_OK;
 }
 

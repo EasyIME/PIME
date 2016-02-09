@@ -338,7 +338,7 @@ class ChewingTextService(TextService):
             commitStr = ctx.commit_String().decode("UTF-8")
             # commit the text, replace currently selected text with our commit string
             self.setCommitString(commitStr)
-            print("commit:", commitStr)
+            # print("commit:", commitStr)
 
         # composition string
         compStr = ""
@@ -351,7 +351,7 @@ class ChewingTextService(TextService):
             # put bopomofo symbols at insertion point
             pos = ctx.cursor_Current()
             compStr = compStr[:pos] + bopomofoStr + compStr[pos:]
-        print("compStr:", compStr)
+        # print("compStr:", compStr)
         self.setCompositionString(compStr)
         # update cursor pos
         self.setCompositionCursor(ctx.cursor_Current())
@@ -393,7 +393,7 @@ class ChewingTextService(TextService):
         return False
 
     def onCommand(self, commandId, commandType):
-        print("onCommand", commandId, commandType)
+        # print("onCommand", commandId, commandType)
         # FIXME: We should distinguish left and right click using commandType
         if commandId == ID_SWITCH_LANG:
             self.toggleLanguageMode()

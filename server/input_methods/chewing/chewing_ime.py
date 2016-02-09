@@ -64,18 +64,25 @@ class ChewingTextService(TextService):
         self.outputSimpChinese = False
         self.lastKeyDownCode = 0
         self.lastKeyDownTime = 0.0
-        self.configTimeStamp = chewingConfig.lastTime
+        self.configVersion = chewingConfig.getVersion()
 
     # check whether the config file is changed and reload it as needed
     def checkConfigChange(self):
-        chewingConfig.reloadIfNeeded()
-        if self.configTimeStamp != chewingConfig.lastTime:
+        cfg = chewingConfig
+        cfg.update()
+        if cfg.isFullReloadNeeded(self.configVersion):
+            print("full reload")
+            # re-create a new chewing context
+            self.ctx = None
+            self.initChewingContext()
+        elif cfg.isConfigChanged(self.configVersion):
+            print("config changed")
             # configurations are changed
             self.applyConfig()
 
     def applyConfig(self):
         cfg = chewingConfig # globally shared config object
-        self.configTimeStamp = cfg.lastTime
+        self.configVersion = cfg.getVersion()
         ctx = self.ctx
 
         # add user phrase before or after the cursor
@@ -103,9 +110,12 @@ class ChewingTextService(TextService):
         # load libchewing context
         if not self.ctx:
             cfg = chewingConfig # globally shared config object
-            datadir = self.datadir.encode("UTF-8")
+            # syspath can contain a list of paths separated by ;
+            # here we prepend the user dir to system-wide data dir
+            # so user configurations can override the system-wide defaults.
+            search_paths = ";".join((cfg.getConfigDir(), self.datadir)).encode("UTF-8")
             user_phrase = cfg.getUserPhrase().encode("UTF-8")
-            ctx = ChewingContext(syspath = datadir, userpath = user_phrase)
+            ctx = ChewingContext(syspath = search_paths, userpath = user_phrase)
             self.ctx = ctx
             ctx.set_maxChiSymbolLen(50)
 

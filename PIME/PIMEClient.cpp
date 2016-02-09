@@ -138,6 +138,12 @@ void Client::updateLangBarButton(Ime::LangBarButton* btn, rapidjson::Value& info
 		std::wstring tooltip = utf8ToUtf16(it->value.GetString());
 		btn->setTooltip(tooltip.c_str());
 	}
+
+	it = info.FindMember("enable");
+	if (it != info.MemberEnd() && it->value.IsBool()) {
+		bool enable = it->value.GetBool();
+		btn->setEnabled(enable);
+	}
 }
 
 void Client::updateUI(rapidjson::Value& data) {
@@ -517,7 +523,7 @@ void Client::onCompartmentChanged(const GUID& key) {
 		writer.String("method");
 		writer.String("onCompartmentChanged");
 
-		writer.String("key");
+		writer.String("guid");
 		writer.String(utf16ToUtf8(str));
 		::CoTaskMemFree(str);
 

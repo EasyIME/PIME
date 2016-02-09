@@ -447,3 +447,39 @@ class ChewingTextService(TextService):
                 new_mode = HALFSHAPE_MODE
             ctx.set_ShapeMode(new_mode)
             self.updateLangButtons()
+
+    # called when the keyboard is opened or closed
+    def onKeyboardStatusChanged(self, opened):
+        TextService.onKeyboardStatusChanged(self, opened)
+        if opened: # keyboard is opened
+            self.initChewingContext()
+        else: # keyboard is closed
+            if self.showCandidates: # disable candidate window if it's opened
+                self.setShowCandidates(False)
+            # self.hideMessage() # hide message window, if there's any
+            # self.freeChewingContext(); # IME is closed, chewingContext is not needed
+
+        # Windows 8 systray IME mode icon
+        if self.client.isWindows8Above:
+            self.changeButton("windows-mode-icon", enable=opened)
+        # FIXME: should we also disable other language bar buttons as well?
+
+    # called just before current composition is terminated for doing cleanup.
+    # if forced is true, the composition is terminated by others, such as
+    # the input focus is grabbed by another application.
+    # if forced is false, the composition is terminated gracefully.
+    def onCompositionTerminated(self, forced):
+        TextService.onCompositionTerminated(self, forced)
+        # we do special handling here for forced composition termination.
+        if forced:
+            # we're still editing our composition and have something in the preedit buffer.
+            # however, some other applications grabs the focus and force us to terminate
+            # our composition.
+            ctx = self.ctx
+            if ctx:
+                if self.showCandidates:
+                    ctx.cand_close()
+                if ctx.bopomofo_Check():
+                    ctx.clean_bopomofo_buf()
+                if ctx.buffer_Check():
+                    ctx.commit_preedit_buf()

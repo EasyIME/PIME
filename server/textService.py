@@ -82,11 +82,7 @@ class TextService:
         self.compositionCursor = 0
 
     def updateStatus(self, msg):
-        if "keyboardOpen" in msg:
-            self.keyboardOpen = msg["keyboardOpen"]
-        if "showCandidates" in msg:
-            self.showCandidates = msg["showCandidates"]
-
+        pass
 
     # encode current status into an json object
     def getReply(self):
@@ -125,11 +121,14 @@ class TextService:
             commandType = msg["type"]
             self.onCommand(commandId, commandType)
         elif method == "onCompartmentChanged":
-            self.onCompartmentChanged()
+            guid = msg["guid"].lower()
+            self.onCompartmentChanged(guid)
         elif method == "onKeyboardStatusChanged":
-            self.onKeyboardStatusChanged()
+            opened = msg["opened"]
+            self.onKeyboardStatusChanged(opened)
         elif method == "onCompositionTerminated":
-            self.onCompositionTerminated()
+            forced = msg["forced"]
+            self.onCompositionTerminated(forced)
         else:
             success = False
 
@@ -161,13 +160,13 @@ class TextService:
     def onCommand(self, commandId, commandType):
         pass
 
-    def onCompartmentChanged(self):
+    def onCompartmentChanged(self, guid):
         pass
 
-    def onCompositionTerminated(self):
+    def onCompositionTerminated(self, forced):
         self.commitString = ""
 
-    def onKeyboardStatusChanged(self):
+    def onKeyboardStatusChanged(self, opened):
         pass
 
     # public methods that should not be touched
@@ -180,6 +179,7 @@ class TextService:
         when the button is clicked.
     @text: text on the button (optional)
     @tooltip: (optional)
+    @enable: if the button is enabled (optional)
     """
     def addButton(self, button_id, **kwargs):
         buttons = self.reply.setdefault("addButton", [])

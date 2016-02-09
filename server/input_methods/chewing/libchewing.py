@@ -56,7 +56,7 @@ class ChewingContext:
                 None)
 
     def __del__(self):
-        _libchewing.chewing_free(self.ctx)
+        _libchewing.chewing_delete(self.ctx)
 
     def __getattr__(self, name):
         func = 'chewing_' + name

@@ -132,6 +132,10 @@ $(function() {
     loadConfig();
     $("#tabs").tabs({heightStyle:"auto"});
 
+    $("#candPerRow").spinner({min:1, max:10});
+    $("#candPerPage").spinner({min:1, max:10});
+    $("#fontSize").spinner({min:6, max:200});
+    
     var selKeys=[
         "1234567890",
         "asdfghjkl;",

@@ -71,11 +71,28 @@ function getConfigDir() {
     return shell.ExpandEnvironmentStrings("%USERPROFILE%\\PIME\\chewing");
 }
 
+// This is Windows-only :-(
+function getDataDir() {
+    var shell = new ActiveXObject("WScript.Shell");
+    var progDir = shell.ExpandEnvironmentStrings("%PROGRAMFILES(x86)%");
+    if(progDir.charAt(0) == "%") { // expansion failed
+        progDir = shell.ExpandEnvironmentStrings("%PROGRAMFILES");
+    }
+    // FIXME: it's bad to hard code the path, but is there any better way?
+    return progDir + "\\PIME\\server\\input_methods\\chewing\\data";
+}
+
 var chewingConfig = null;
-var configFile = getConfigDir() + "\\config.json";
+var configDir = getConfigDir();
+var configFile = configDir + "\\config.json";
+var dataDir = getDataDir();
+var userSymbolsFile = configDir + "\\symbols.dat";
+var symbolsChanged = false;
+var userSwkbFile = configDir + "\\swkb.dat";
+var swkbChanged = false;
 
 function loadConfig() {
-    str = readFile(configFile);
+    var str = readFile(configFile);
     try {
         chewingConfig = JSON.parse(str);
     }
@@ -88,11 +105,32 @@ function loadConfig() {
             chewingConfig[key] = defaultConfig[key];
         }
     }
+
+    // load symbols.dat
+    str = readFile(userSymbolsFile);
+    if(str == "")
+        str = readFile(dataDir + "\\symbols.dat");
+    $("#symbols").val(str);
+
+    // load swkb.dat
+    str = readFile(userSwkbFile);
+    if(str == "")
+        str = readFile(dataDir + "\\swkb.dat");
+    $("#ez_symbols").val(str);
 }
 
 function saveConfig() {
     str = JSON.stringify(chewingConfig, null, 4);
     writeFile(configFile, str);
+
+    if(symbolsChanged) {
+        str = $("#symbols").val();
+        writeFile(userSymbolsFile, str);
+    }
+    if(swkbChanged) {
+        str = $("#ez_symbols").val();
+        writeFile(userSwkbFile, str);
+    }
 }
 
 // update chewingConfig object with the value set by the user
@@ -135,7 +173,7 @@ $(function() {
     $("#candPerRow").spinner({min:1, max:10});
     $("#candPerPage").spinner({min:1, max:10});
     $("#fontSize").spinner({min:6, max:200});
-    
+
     var selKeys=[
         "1234567890",
         "asdfghjkl;",
@@ -176,6 +214,14 @@ $(function() {
     }
     $("#kb" + chewingConfig.keyboardLayout).prop("checked", true);
 
+    $("#symbols").change(function(){
+        symbolsChanged = true;
+    });
+
+    $("#ez_symbols").change(function(){
+        swkbChanged = true;
+    });
+    
     $("#buttons").buttonset();
     $("#ok").click(function() {
         updateConfig();

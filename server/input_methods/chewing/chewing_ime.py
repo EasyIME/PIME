@@ -44,7 +44,7 @@ keyNames = {
     VK_NEXT: "PageDown"
 }
 
-SHIFT_SPACE_GUID = "{F1DAE0FB-8091-44A7-8A0C-3082A1515447}"
+SHIFT_SPACE_GUID = "{f1dae0fb-8091-44a7-8a0c-3082a1515447}"
 ID_SWITCH_LANG = 1
 ID_SWITCH_SHAPE = 2
 ID_SETTINGS = 3
@@ -175,6 +175,7 @@ class ChewingTextService(TextService):
             self.ctx.set_selKey(selKeys)
 
     def filterKeyDown(self, keyEvent):
+        cfg = chewingConfig
         self.lastKeyDownCode = keyEvent.keyCode
         if self.lastKeyDownTime == 0.0:
             self.lastKeyDownTime = time.time()
@@ -184,20 +185,29 @@ class ChewingTextService(TextService):
             if self.langMode != CHINESE_MODE and self.shapeMode != FULLSHAPE_MODE:
                 return False
 
-            # if Ctrl or Alt key is down
-            if keyEvent.isKeyDown(VK_CONTROL) or keyEvent.isKeyDown(VK_MENU):
-                # bypass IME. This might be a shortcut key used in the application
-                # FIXME: we only need Ctrl in composition mode for adding user phrases.
-                # However, if we turn on easy symbol input with Ctrl support later,
-                # we'll need th Ctrl key then.
+            # if Alt key is down, bypass IME.
+            # This might be a shortcut key used in the application
+            if keyEvent.isKeyDown(VK_MENU):
                 return False
+
+            # easy symbol input with Ctrl key
+            # We only need Ctrl in composition mode for adding user phrases.
+            if keyEvent.isKeyDown(VK_CONTROL):
+                if cfg.easySymbolsWithCtrl and self.langMode == CHINESE_MODE:
+                    return True
+                else: # This might be a shortcut key used in the app. Don't touch it.
+                    return False
+
+            # easy symbol input with Shift key
+            if keyEvent.isKeyDown(VK_SHIFT):
+                if cfg.easySymbolsWithShift and self.langMode == CHINESE_MODE:
+                    return True
 
             # we always need further processing in full shape mode since all English chars,
             # numbers, and symbols need to be converted to full shape Chinese chars.
             if self.shapeMode != FULLSHAPE_MODE:
                 # Caps lock is on => English mode
-                # if cfg.enableCapsLock and keyEvent.isKeyToggled(VK_CAPITAL):
-                if keyEvent.isKeyToggled(VK_CAPITAL):
+                if cfg.enableCapsLock and keyEvent.isKeyToggled(VK_CAPITAL):
                     # We need to handle this key because in onKeyDown(),
                     # the upper case chars need to be converted to lower case
                     # before doing output to the applications.
@@ -205,16 +215,13 @@ class ChewingTextService(TextService):
                         return True # this is an English alphabet
                     else:
                         return False
-
+                # Enable numpad even in Chinese mode
                 if keyEvent.isKeyToggled(VK_NUMLOCK): # NumLock is on
                     # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
                     if keyEvent.keyCode >= VK_NUMPAD0 and keyEvent.keyCode <= VK_DIVIDE:
                         return False # bypass IME
-            else: # full shape mode
-                if keyEvent.keyCode == VK_SPACE: # we need to convert space to fullshape.
-                    return True
 
-            # when not composing, we only cares about Bopomofo
+            # when not composing, we only care about Bopomofo
             # FIXME: we should check if the key is mapped to a phonetic symbol instead
             if keyEvent.isPrintableChar(includingSpace = True):
                 # this is a key mapped to a printable charStr. we want it!
@@ -224,21 +231,21 @@ class ChewingTextService(TextService):
 
     def onKeyDown(self, keyEvent):
         ctx = self.ctx
+        cfg = chewingConfig
         charCode = keyEvent.charCode
         charStr = chr(charCode)
         temporaryEnglishMode = False
         oldLangMode = ctx.get_ChiEngMode()
 
-        """ // What's easy symbol input??
-            // set this to true or false according to the status of Shift key
-            // alternatively, should we set this when onKeyDown and onKeyUp receive VK_SHIFT or VK_CONTROL?
-            bool easySymbols = false;
-            if(cfg.easySymbolsWithShift)
-                easySymbols = keyEvent.isKeyDown(VK_SHIFT);
-            if(!easySymbols && cfg.easySymbolsWithCtrl)
-                easySymbols = keyEvent.isKeyDown(VK_CONTROL);
-            ::chewing_set_easySymbolInput(chewingContext_, easySymbols);
-        """
+        # easy symbol input with Ctrl or Shift key
+        # set this to true or false according to the status of Shift key
+        if cfg.easySymbolsWithShift and keyEvent.isKeyDown(VK_SHIFT):
+            ctx.set_easySymbolInput(1)
+        elif cfg.easySymbolsWithCtrl and keyEvent.isKeyDown(VK_CONTROL):
+            ctx.set_easySymbolInput(1)
+        else:
+            ctx.set_easySymbolInput(0)
+
         if keyEvent.isPrintableChar(): # printable characters (exclude extended keys?)
             invertCase = False
             # If Caps lock is on, temporarily change to English mode
@@ -248,11 +255,10 @@ class ChewingTextService(TextService):
                 invertCase = True # need to convert upper case to lower, and vice versa.
 
             # If Shift is pressed, but we don't want to enter full shape symbols
-            # if keyEvent.isKeyDown(VK_SHIFT) and (cfg.fullShapeSymbols or isalpha(charCode)):
-            if keyEvent.isKeyDown(VK_SHIFT) and charStr.isalpha():
+            if keyEvent.isKeyDown(VK_SHIFT) and (not cfg.fullShapeSymbols or charStr.isalpha()):
                 temporaryEnglishMode = True
-                # if !cfg.upperCaseWithShift)
-                #    invertCase = True # need to convert upper case to lower, and vice versa.
+                if not cfg.upperCaseWithShift:
+                    invertCase = True # need to convert upper case to lower, and vice versa.
 
             if self.langMode == ENGLISH_MODE: # English mode
                 ctx.handle_Default(charCode)
@@ -265,7 +271,6 @@ class ChewingTextService(TextService):
                         charCode = ord(charStr.lower())
                     else:
                         charCode = ord(charStr.upper())
-                print("temp English", charCode)
                 ctx.handle_Default(charCode)
             else : # Chinese mode
                 if charStr.isalpha(): # alphabets: A-Z
@@ -304,8 +309,6 @@ class ChewingTextService(TextService):
                     getattr(ctx, methodName)()
                 else: # we don't know this key. ignore it!
                     return False
-
-        self.updateLangButtons()
 
         if ctx.keystroke_CheckIgnore():
             if temporaryEnglishMode:
@@ -365,6 +368,7 @@ class ChewingTextService(TextService):
         '''
         if temporaryEnglishMode:
             ctx.set_ChiEngMode(oldLangMode) # restore previous mode
+        self.updateLangButtons()
 
         return True
 
@@ -384,10 +388,10 @@ class ChewingTextService(TextService):
         self.lastKeyDownCode = 0;
         # some preserved keys registered are pressed
         if guid == SHIFT_SPACE_GUID: # shift + space is pressed
-            toggleShapeMode()
+            self.toggleShapeMode()
             return True
         return False
-        
+
     def onCommand(self, commandId, commandType):
         print("onCommand", commandId, commandType)
         # FIXME: We should distinguish left and right click using commandType

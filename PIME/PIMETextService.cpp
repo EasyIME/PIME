@@ -166,7 +166,6 @@ void TextService::onKeyboardStatusChanged(bool opened) {
 	Ime::TextService::onKeyboardStatusChanged(opened);
 	if(client_)
 		client_->onKeyboardStatusChanged(opened);
-#if 0
 	if(opened) { // keyboard is opened
 	}
 	else { // keyboard is closed
@@ -182,11 +181,6 @@ void TextService::onKeyboardStatusChanged(bool opened) {
 			hideCandidates();
 		hideMessage(); // hide message window, if there's any
 	}
-
-	if(imeModeIcon_)
-		imeModeIcon_->setEnabled(opened);
-	// FIXME: should we also disable other language bar buttons as well?
-#endif
 }
 
 // called just before current composition is terminated for doing cleanup.

@@ -1,8 +1,28 @@
 #! python3
+# Copyright (C) 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
 import json
 import os
+import time
 
 DEF_FONT_SIZE = 16
+
+# from libchewing/include/internal/userphrase-private.h
+DB_NAME	= "chewing.sqlite3"
 
 selKeys=(
     "1234567890",
@@ -38,6 +58,9 @@ class ChewingConfig:
         self.easySymbolsWithCtrl = 0
         self.upperCaseWithShift = 0
 
+        # version: last modified time of (config.json, symbols.dat, swkb.dat)
+        self._version = (0.0, 0.0, 0.0)
+        self._lastUpdateTime = 0.0
         self.load() # try to load from the config file
 
     def getConfigDir(self):
@@ -45,22 +68,103 @@ class ChewingConfig:
         os.makedirs(config_dir, mode=0o700, exist_ok=True)
         return config_dir
 
-    def getConfigFile(self):
-        return os.path.join(self.getConfigDir(), "config.json")
+    def getConfigFile(self, name="config.json"):
+        return os.path.join(self.getConfigDir(), name)
+
+    def getUserPhrase(self):
+        return os.path.join(self.getConfigDir(), DB_NAME)
 
     def getSelKeys(self):
         return selKeys[self.selKeyType]
 
+    def getLastTime(self):
+        return self._lastTime
+
     def load(self):
+        filename = self.getConfigFile()
         try:
-            with open(self.getConfigFile(), "r") as f:
-                self.__dict__.update(json.load(f))
+            if os.path.exists(filename):
+                with open(filename, "r") as f:
+                    self.__dict__.update(json.load(f))
+            else:
+                self.save()
+        except Exception:
+            self.save()
+        self.update()
+
+    def save(self):
+        filename = self.getConfigFile()
+        try:
+            with open(filename, "w") as f:
+                json = {key: value for key, value in self.__dict__.items() if not key.startswith("_")}
+                js = json.dump(json, f, indent=4)
+            self.update()
         except Exception:
             pass # FIXME: handle I/O errors?
 
-    def save(self):
+    def getDataDir(self):
+        return os.path.join(os.path.dirname(__file__), "data")
+
+    def findFile(self, dirs, name):
+        for dirname in dirs:
+            path = os.path.join(dirname, name)
+            if os.path.exists(path):
+                return path
+        return None
+
+    # check if the config files are changed and relaod as needed
+    def update(self):
+        # avoid checking mtime of files too frequently
+        if (time.time() - self._lastUpdateTime) < 3.0:
+            return
+
         try:
-            with open(self.getConfigFile(), "w") as f:
-                js = json.dump(self.__dict__, f, indent=4)
+            configTime = os.path.getmtime(self.getConfigFile())
         except Exception:
-            pass # FIXME: handle I/O errors?
+            configTime = 0.0
+
+        datadirs = (self.getConfigDir(), self.getDataDir())
+        symbolsTime = 0.0
+        symbolsFile = self.findFile(datadirs, "symbols.dat")
+        if symbolsFile:
+            try:
+                symbolsTime = os.path.getmtime(symbolsFile)
+            except Exception:
+                pass
+
+        ezSymbolsTime = 0.0
+        ezSymbolsFile = self.findFile(datadirs, "swkb.dat")
+        if ezSymbolsFile:
+            try:
+                ezSymbolsTime = os.path.getmtime(ezSymbolsFile)
+            except Exception:
+                pass
+
+        lastConfigTime = self._version[0]
+        self._version = (configTime, symbolsTime, ezSymbolsTime)
+
+        # the main config file is changed, reload it
+        if lastConfigTime != configTime:
+            if not hasattr(self, "_in_update"): # avoid recursion
+                self._in_update = True  # avoid recursion since update() will be called by load
+                self.load()
+                del self._in_update
+
+        self._lastUpdateTime = time.time()
+
+    def getVersion(self):
+        return self._version
+
+    def isConfigChanged(self, currentVersion):
+        return currentVersion[0] != self._version[0]
+
+    # reloadIfNeeded() tries to reload configurations only
+    # isFullReloadNeeded() checks whether you need to delete the
+    # existing chewing context and create a new one.
+    def isFullReloadNeeded(self, currentVersion):
+        return currentVersion[1:] != self._version[1:]
+
+
+# globally shared config object
+# load configurations from a user-specific config file
+chewingConfig = ChewingConfig()

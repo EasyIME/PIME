@@ -1,5 +1,5 @@
 //
-//	Copyright (C) 2015 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+//	Copyright (C) 2015 - 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 //
 //	This library is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU Library General Public
@@ -185,6 +185,28 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hprev, LPSTR cmd, int show) {
 	return 0;
 }
 
+static void terminateServerProcess() {
+	if (server_process != INVALID_HANDLE_VALUE) {
+		// Try a safer way to terminate the process
+		// This is done by calling ExitProcess() in the server process
+		// via CreateRemoteThread() dirty hack.
+		// Reference: http://www.drdobbs.com/a-safer-alternative-to-terminateprocess/184416547
+		// ExitProcess() is loaded at the same address in every process so we can do this.
+		// Also, ExitProcess() happens to have the same signature as a thread start routine.
+		// This is quite tricky!!
+		CreateRemoteThread(server_process, NULL, 0, (LPTHREAD_START_ROUTINE)ExitProcess, NULL, 0, NULL);
+		DWORD ret = WaitForSingleObject(server_process, 30 * 1000);
+		if (ret != WAIT_OBJECT_0) {
+			// if the safe and cleaner method fails, try the brute force one
+			TerminateProcess(server_process, 0);
+			// wait for the server process to terminate
+			WaitForSingleObject(server_process, 30 * 1000);
+		}
+		CloseHandle(server_process);
+		server_process = INVALID_HANDLE_VALUE;
+	}
+}
+
 static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 	switch (msg) {
 	case WM_TIMER:
@@ -195,10 +217,7 @@ static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 		break;
 	case WM_DESTROY:
 		// kill the server process and then quit
-		if (server_process != INVALID_HANDLE_VALUE) {
-			TerminateProcess(server_process, 0);
-			CloseHandle(server_process);
-		}
+		terminateServerProcess();
 		PostQuitMessage(0);
 		break;
 	default:

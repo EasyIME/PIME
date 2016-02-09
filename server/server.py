@@ -1,11 +1,26 @@
 #! python3
+# Copyright (C) 2015 - 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
 import threading
 import json
 import sys
 import os
 from ctypes import *
 from serviceManager import textServiceMgr
-
 
 # import libpipe
 dll_path = os.path.join(os.path.dirname(__file__), "libpipe.dll")
@@ -86,7 +101,7 @@ class Client:
                 reply["return"] = ret
         reply["success"] = success
         reply["seqNum"] = seqNum # reply with sequence number added
-        print("reply: ", reply)
+        # print("reply: ", reply)
         return reply
 
 
@@ -113,7 +128,7 @@ class ClientThread(threading.Thread):
                     buf_len = c_ulong(512)
                     read_len = libpipe.read_pipe(pipe, self.buf, buf_len, pointer(error))
                     error = error.value
-                    print("read: ", read_len, "error:", error)
+                    # print("read: ", read_len, "error:", error)
 
                     # convert content in the read buffer to unicode
                     if read_len > 0:
@@ -149,9 +164,8 @@ class ClientThread(threading.Thread):
 
                         data = bytes(reply, "UTF-8") # convert to UTF-8
                         data_len = c_ulong(len(data))
-                        print("write reply:", data_len)
+                        # print("write reply:", data_len)
                         libpipe.write_pipe(pipe, data, data_len, None)
-                        print("written!!")
             except:
                 import traceback
                 # print callstatck to know where the exceptions is
@@ -164,7 +178,8 @@ class ClientThread(threading.Thread):
         server.remove_client(client)
 
 
-class Server:
+# listen to incoming named pipe connections
+class Server():
     def __init__(self):
         self.lock = threading.Lock()
         self.clients = []
@@ -201,10 +216,7 @@ class Server:
         self.lock.release()
 
 
-def main():
+if __name__ == "__main__":
+    # listen to incoming pipe connections
     server = Server()
     server.run()
-
-
-if __name__ == "__main__":
-    main()

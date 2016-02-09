@@ -21,6 +21,10 @@
 #include "PIMETextService.h"
 #include <string>
 #include <ShlObj.h>
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/filereadstream.h"
+#include "../libIME/Utils.h"
 
 namespace PIME {
 
@@ -31,13 +35,8 @@ const GUID g_textServiceClsid =
 
 ImeModule::ImeModule(HMODULE module):
 	Ime::ImeModule(module, g_textServiceClsid) {
-
-	// override default location of chewing data directories
-	std::wstring env;
 	wchar_t path[MAX_PATH];
-
 	HRESULT result;
-
 	// get the program data directory
 	// try C:\program files (x86) first
 	result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILESX86, NULL, 0, path);
@@ -59,9 +58,55 @@ Ime::TextService* ImeModule::createTextService() {
 }
 
 // virtual
-bool ImeModule::onConfigure(HWND hwndParent) {
-	// launch ChewingPreferences
-	// ::ShellExecuteW(hwndParent, L"open", path.c_str(), NULL, NULL, SW_SHOWNORMAL);
+bool ImeModule::onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile) {
+	// FIXME: this is inefficient. Should we cache known modules?
+	LPOLESTR pGuidStr = NULL;
+	if (FAILED(::StringFromCLSID(rguidProfile, &pGuidStr)))
+		return false;
+	std::string guidStr = utf16ToUtf8(pGuidStr);
+	CoTaskMemFree(pGuidStr);
+
+	// find the input method module
+	std::wstring dirPath = programDir_ + L"\\server\\input_methods";
+	std::wstring configTool;
+	// scan the dir for lang profile definition files
+	WIN32_FIND_DATA findData = { 0 };
+	HANDLE hFind = ::FindFirstFile((dirPath + L"\\*").c_str(), &findData);
+	if (hFind != INVALID_HANDLE_VALUE) {
+		do {
+			if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { // this is a subdir
+				if (findData.cFileName[0] != '.') {
+					std::wstring imejson = dirPath;
+					imejson += '\\';
+					imejson += findData.cFileName;
+					imejson += L"\\ime.json";
+					FILE* fp = _wfopen(imejson.c_str(), L"r");
+					if (fp) {
+						char buf[4096];
+						rapidjson::Document json;
+						rapidjson::FileReadStream stream(fp, buf, sizeof(buf));
+						json.ParseStream(stream);
+						fclose(fp);
+						if (guidStr == json["guid"].GetString()) {
+							// found the language profile
+							std::wstring relPath = utf8ToUtf16(json["configTool"].GetString());
+							if (!relPath.empty()) {
+								configTool = dirPath;
+								configTool += '\\';
+								configTool += findData.cFileName;
+								configTool += '\\';
+								configTool += relPath;
+							}
+							break;
+						}
+					}
+				}
+			}
+		} while (::FindNextFile(hFind, &findData));
+		CloseHandle(hFind);
+	}
+	if(!configTool.empty())
+		::ShellExecuteW(hwndParent, L"open", configTool.c_str(), NULL, NULL, SW_SHOWNORMAL);
 	return true;
 }
 

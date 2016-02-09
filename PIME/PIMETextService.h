@@ -139,6 +139,8 @@ private:
 	void toggleShapeMode(); // toggle between full shape and half shape
 	void toggleSimplifiedChinese(); // toggle output traditional or simplified Chinese
 
+	void createCandidateWindow(Ime::EditSession* session);
+
 private:
 	Ime::CandidateWindow* candidateWindow_;
 	bool showingCandidates_;

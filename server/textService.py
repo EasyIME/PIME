@@ -1,4 +1,19 @@
 #! python3
+# Copyright (C) 2015 - 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 # button style constants used by language buttons (from ctfutb.h of Windows SDK)
 TF_LBI_STYLE_HIDDENSTATUSCONTROL = 0x00000001
@@ -67,11 +82,7 @@ class TextService:
         self.compositionCursor = 0
 
     def updateStatus(self, msg):
-        if "keyboardOpen" in msg:
-            self.keyboardOpen = msg["keyboardOpen"]
-        if "showCandidates" in msg:
-            self.showCandidates = msg["showCandidates"]
-
+        pass
 
     # encode current status into an json object
     def getReply(self):
@@ -79,10 +90,15 @@ class TextService:
         self.reply = {}
         return reply
 
+    # This should be implemented in the derived class
+    def checkConfigChange(self):
+        pass
 
     def handleRequest(self, method, msg): # msg is a json object
         success = True # if the method is successfully handled
         ret = None # the return value of the method, if any
+
+        self.checkConfigChange() # check if configurations are changed
 
         self.updateStatus(msg)
         if method == "filterKeyDown":
@@ -98,18 +114,21 @@ class TextService:
             keyEvent = KeyEvent(msg)
             ret = self.onKeyUp(keyEvent)
         elif method == "onPreservedKey":
-            guid = msg["guid"]
+            guid = msg["guid"].lower()
             ret = self.onPreservedKey(guid)
         elif method == "onCommand":
             commandId = msg["id"]
             commandType = msg["type"]
             self.onCommand(commandId, commandType)
         elif method == "onCompartmentChanged":
-            self.onCompartmentChanged()
+            guid = msg["guid"].lower()
+            self.onCompartmentChanged(guid)
         elif method == "onKeyboardStatusChanged":
-            self.onKeyboardStatusChanged()
+            opened = msg["opened"]
+            self.onKeyboardStatusChanged(opened)
         elif method == "onCompositionTerminated":
-            self.onCompositionTerminated()
+            forced = msg["forced"]
+            self.onCompositionTerminated(forced)
         else:
             success = False
 
@@ -141,18 +160,27 @@ class TextService:
     def onCommand(self, commandId, commandType):
         pass
 
-    def onCompartmentChanged(self):
+    def onCompartmentChanged(self, guid):
         pass
 
-    def onCompositionTerminated(self):
+    def onCompositionTerminated(self, forced):
         self.commitString = ""
 
-    def onKeyboardStatusChanged(self):
+    def onKeyboardStatusChanged(self, opened):
         pass
 
     # public methods that should not be touched
 
     # language bar buttons
+    """
+    allowed arguments:
+    @icon: full path to a *.ico file
+    @commandId: an integer ID which will be passed to onCommand()
+        when the button is clicked.
+    @text: text on the button (optional)
+    @tooltip: (optional)
+    @enable: if the button is enabled (optional)
+    """
     def addButton(self, button_id, **kwargs):
         buttons = self.reply.setdefault("addButton", [])
         info = kwargs
@@ -163,6 +191,9 @@ class TextService:
         buttons = self.reply.setdefault("removeButton", [])
         buttons.append(button_id)
 
+    """
+    See addButton() for allowed arguments.
+    """
     def changeButton(self, button_id, **kwargs):
         buttons = self.reply.setdefault("changeButton", [])
         info = kwargs

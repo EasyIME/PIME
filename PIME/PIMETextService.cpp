@@ -166,7 +166,6 @@ void TextService::onKeyboardStatusChanged(bool opened) {
 	Ime::TextService::onKeyboardStatusChanged(opened);
 	if(client_)
 		client_->onKeyboardStatusChanged(opened);
-#if 0
 	if(opened) { // keyboard is opened
 	}
 	else { // keyboard is closed
@@ -182,11 +181,6 @@ void TextService::onKeyboardStatusChanged(bool opened) {
 			hideCandidates();
 		hideMessage(); // hide message window, if there's any
 	}
-
-	if(imeModeIcon_)
-		imeModeIcon_->setEnabled(opened);
-	// FIXME: should we also disable other language bar buttons as well?
-#endif
 }
 
 // called just before current composition is terminated for doing cleanup.
@@ -215,8 +209,15 @@ void TextService::onLangProfileDeactivated(REFIID lang) {
 		client_->onLangProfileDeactivated(lang);
 }
 
+void TextService::createCandidateWindow(Ime::EditSession* session) {
+	if (!candidateWindow_) {
+		candidateWindow_ = new Ime::CandidateWindow(this, session);
+		candidateWindow_->setFont(font_);
+	}
+}
+
 void TextService::updateCandidates(Ime::EditSession* session) {
-	assert(candidateWindow_);
+	createCandidateWindow(session);
 	candidateWindow_->clear();
 
 	// FIXME: is this the right place to do it?
@@ -240,10 +241,10 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 	candidateWindow_->setUseCursor(candUseCursor_);
 	candidateWindow_->setCandPerRow(candPerRow_);
 
-	// FIXME: make this configurable
-	int n = 9; // candidate string shown per page
-	int i;
-	for (i = 0; i < n && i < candidates_.size(); ++i) {
+	// the items in the candidate list should not exist the
+	// number of available keys used to select them.
+	assert(candidates_.size() <= selKeys_.size());
+	for (int i = 0; i < candidates_.size(); ++i) {
 		candidateWindow_->add(candidates_[i], selKeys_[i]);
 	}
 	candidateWindow_->recalculateSize();
@@ -270,11 +271,7 @@ void TextService::showCandidates(Ime::EditSession* session) {
 	// if we're in a Windows store app. If isImmersive() returns true,
 	// The candidate window created should be a child window of the composition window.
 	// Please see Ime::CandidateWindow::CandidateWindow() for an example.
-	if(!candidateWindow_) {
-		candidateWindow_ = new Ime::CandidateWindow(this, session);
-		candidateWindow_->setFont(font_);
-	}
-	updateCandidates(session);
+	createCandidateWindow(session);
 	candidateWindow_->show();
 	showingCandidates_ = true;
 }

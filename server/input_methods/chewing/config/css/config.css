@@ -1,0 +1,11 @@
+#symbols, #ez_symbols {
+    width: 100%;
+    min-height: 320px;
+}
+
+#buttons {
+    margin: 4px;
+    position:relative;
+    float:right;
+}
+

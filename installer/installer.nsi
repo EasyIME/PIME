@@ -35,13 +35,15 @@ AllowSkipFiles off ; cannot skip a file
 ; icons of the generated installer and uninstaller
 !define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\orange-install.ico"
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\orange-uninstall.ico"
-!define PRODUCT_VERSION "0.03"
+
+!define PRODUCT_NAME "PIME 輸入法"
+!define PRODUCT_VERSION "0.06"
 
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 !define HOMEPAGE_URL "https://github.com/EasyIME/"
 
-Name "PIME 輸入法"
-BrandingText "PIME 輸入法"
+Name "${PRODUCT_NAME}"
+BrandingText "${PRODUCT_NAME}"
 
 OutFile "PIME-${PRODUCT_VERSION}-setup.exe" ; The generated installer file name
 
@@ -54,7 +56,8 @@ RequestExecutionLevel admin
 
 ;Pages
 ; license page
-!insertmacro MUI_PAGE_LICENSE "..\COPYING.txt"
+!insertmacro MUI_PAGE_LICENSE "..\LGPL-2.0.txt" ; for PIME
+!insertmacro MUI_PAGE_LICENSE "..\PSF.txt" ; for python
 
 ; !insertmacro MUI_PAGE_COMPONENTS
 
@@ -137,10 +140,10 @@ Section "PIME 輸入法" SecMain
     
     ; Install an embedable version of python 3.
     File /r "..\python"
-
+    
 	; Install the python server and input method modules
     ; FIXME: maybe we should install the pyc files later?
-	File /r /x "__pycache__" "..\server"
+	File /r /x "__pycache__" /x "meow" "..\server"
 
     ; Install the launcher and monitor of the server
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
@@ -171,8 +174,16 @@ Section "PIME 輸入法" SecMain
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${HOMEPAGE_URL}"
 	WriteUninstaller "$INSTDIR\Uninstall.exe" ;Create uninstaller
 
+    ; Compile all installed python modules to *.pyc files
+    nsExec::ExecToLog  '"$INSTDIR\python\python.exe" -m compileall "$INSTDIR\server"'
+
     ; Launch the python server as current user (non-elevated process)
     ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\PIMELauncher.exe" "open" ""
+
+    ; Create shortcuts
+    CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
+    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk" "$INSTDIR\server\input_methods\chewing\config\config.hta"
+    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
 
 ;Language strings
@@ -201,11 +212,16 @@ Section "Uninstall"
 
 	RMDir /r "$INSTDIR\x86"
 	RMDir /r "$INSTDIR\server"
-    RMDIR /r "$INSTDIR\python"
+    RMDir /r "$INSTDIR\python"
 
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
 	DeleteRegKey /ifempty HKLM "Software\PIME"
+
+    ; Delete shortcuts
+    Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
+    Delete "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk"
+    RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
 
 	Delete "$INSTDIR\Uninstall.exe"
 	RMDir "$INSTDIR"

@@ -114,6 +114,4 @@ class ChewingConfig:
 
 # globally shared config object
 # load configurations from a user-specific config file
-# FIXME: should we share this among all ChewingTextService instances?
-# FIXME: how to reload the configurations properly when they are changed?
 chewingConfig = ChewingConfig()

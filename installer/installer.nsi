@@ -37,7 +37,7 @@ AllowSkipFiles off ; cannot skip a file
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\orange-uninstall.ico"
 
 !define PRODUCT_NAME "PIME 輸入法"
-!define PRODUCT_VERSION "0.05"
+!define PRODUCT_VERSION "0.06"
 
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 !define HOMEPAGE_URL "https://github.com/EasyIME/"
@@ -173,6 +173,9 @@ Section "PIME 輸入法" SecMain
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${HOMEPAGE_URL}"
 	WriteUninstaller "$INSTDIR\Uninstall.exe" ;Create uninstaller
+
+    ; Compile all installed python modules to *.pyc files
+    nsExec::ExecToLog  '"$INSTDIR\python\python.exe" -m compileall "$INSTDIR\server"'
 
     ; Launch the python server as current user (non-elevated process)
     ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\PIMELauncher.exe" "open" ""

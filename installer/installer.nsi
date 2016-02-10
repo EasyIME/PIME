@@ -83,27 +83,30 @@ Function uninstallOldVersion
 	ReadRegStr $R0 HKLM "${PRODUCT_UNINST_KEY}" "UninstallString"
 	${If} $R0 != ""
 		ClearErrors
-		MessageBox MB_OKCANCEL|MB_ICONQUESTION "偵測到已安裝舊版，是否要移除舊版後繼續安裝新版？" IDOK +2
-			Abort ; this is skipped if the user select OK
+        ${If} ${FileExists} "$INSTDIR\Uninstall.exe"
+            MessageBox MB_OKCANCEL|MB_ICONQUESTION "偵測到已安裝舊版，是否要移除舊版後繼續安裝新版？" IDOK +2
+                Abort ; this is skipped if the user select OK
 
-		CopyFiles "$INSTDIR\Uninstall.exe" "$TEMP"
-		ExecWait '"$TEMP\Uninstall.exe" _?=$INSTDIR'
-		Delete "$TEMP\Uninstall.exe"
+            CopyFiles "$INSTDIR\Uninstall.exe" "$TEMP"
+            ExecWait '"$TEMP\Uninstall.exe" _?=$INSTDIR'
+            Delete "$TEMP\Uninstall.exe"
+        ${EndIf}
 	${EndIf}
 
-	;ClearErrors
+	ClearErrors
 	; Ensure that old files are all deleted
-	;${If} ${RunningX64}
-	;	${If} ${FileExists} "$INSTDIR\x64\PIMETextService.dll"
-	;		Call onInstError
-	;	${EndIf}			
-	;${EndIf}
-	;${If} ${FileExists} "$INSTDIR\x86\PIMETextService.dll"
-	;	Call onInstError
-	;${EndIf}			
-	;${If} ${FileExists} "$INSTDIR\Dictionary\*.dat"
-	;	Call onInstError
-	;${EndIf}
+	${If} ${RunningX64}
+		${If} ${FileExists} "$INSTDIR\x64\PIMETextService.dll"
+            Delete "$INSTDIR\x64\PIMETextService.dll"
+            IfErrors 0 +2
+                Call .onInstFailed
+		${EndIf}
+	${EndIf}
+	${If} ${FileExists} "$INSTDIR\x86\PIMETextService.dll"
+        Delete "$INSTDIR\x86\PIMETextService.dll"
+        IfErrors 0 +2
+            Call .onInstFailed
+	${EndIf}
 FunctionEnd
 
 ; Called during installer initialization
@@ -120,15 +123,44 @@ Function .onInit
 
 	; check if old version is installed and uninstall it first
 	Call uninstallOldVersion
+
 FunctionEnd
 
 ; called to show an error message when errors happen
 Function .onInstFailed
-	MessageBox MB_ICONSTOP|MB_OK "安裝發生錯誤，無法完成。$\n$\n可能有檔案正在使用中，暫時無法刪除或覆寫$\n$\n建議重新開機後，再次執行安裝程式。"
+	MessageBox MB_ICONSTOP|MB_OK "安裝發生錯誤，無法完成。$\n$\n有時是有檔案正在使用中，暫時無法刪除或覆寫$\n$\n建議重新開機後，再次執行安裝程式。"
+    Abort
+FunctionEnd
+
+Function ensureVCRedist
+    ; Check if we have Universal CRT (provided by VC++ 2015 runtime)
+    ; Reference: https://blogs.msdn.microsoft.com/vcblog/2015/03/03/introducing-the-universal-crt/
+    ;            https://docs.python.org/3/using/windows.html#embedded-distribution
+    ${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+        MessageBox MB_YESNO|MB_ICONQUESTION "這個程式需要微軟 VC++ 2015 runtime 更新才能運作，要自動下載安裝？" IDYES +2
+            Abort ; this is skipped if the user select Yes
+        ; Download VC++ 2015 redistibutable (x86 version)
+        nsisdl::download "http://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe" "$TEMP\vc_redist.x86.exe"
+        Pop $R0 ;Get the return value
+        ${If} $R0 != "success"
+            MessageBox MB_ICONSTOP|MB_OK "無法正確下載，請稍後再試，或手動安裝 VC++ 2015 runtime (x86)"
+            Abort
+        ${EndIf}
+        ; Run vcredist installer
+        ExecWait "$TEMP\vc_redist.x86.exe" $0
+        ${If} ${Errors}
+        ${OrIf} $0 != 0
+            MessageBox MB_ICONSTOP|MB_OK "VC++ 2015 runtime (x86) 安裝程式並未正確執行"
+            Abort
+        ${EndIf}
+    ${EndIf}
 FunctionEnd
 
 ;Installer Sections
 Section "PIME 輸入法" SecMain
+
+    ; Ensure that we have VC++ 2015 runtime (for python 3.5)
+    Call ensureVCRedist
 
 	; TODO: may be we can automatically rebuild the dlls here.
 	; http://stackoverflow.com/questions/24580/how-do-you-automate-a-visual-studio-build
@@ -196,27 +228,27 @@ LangString DESC_SecMain ${LANG_ENGLISH} "A test section." ; What's this??
 
 ;Uninstaller Section
 Section "Uninstall"
-
-	; Try to terminate running PIMELauncher and the server process
-	; Otherwise we cannot replace it.
-	ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
-	Delete "$INSTDIR\PIMELauncher.exe"
+    ; Remove the launcher from auto-start
+	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
+	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
+	DeleteRegKey /ifempty HKLM "Software\PIME"
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 	ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'
 	${If} ${RunningX64} 
 		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 		ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x64\PIMETextService.dll"'
-		RMDir /r "$INSTDIR\x64"
+		RMDir /REBOOTOK /r "$INSTDIR\x64"
 	${EndIf}
 
-	RMDir /r "$INSTDIR\x86"
-	RMDir /r "$INSTDIR\server"
-    RMDir /r "$INSTDIR\python"
+	; Try to terminate running PIMELauncher and the server process
+	; Otherwise we cannot replace it.
+	ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
+	Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
 
-	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
-	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
-	DeleteRegKey /ifempty HKLM "Software\PIME"
+	RMDir /REBOOTOK /r "$INSTDIR\x86"
+	RMDir /REBOOTOK /r "$INSTDIR\server"
+    RMDir /REBOOTOK /r "$INSTDIR\python"
 
     ; Delete shortcuts
     Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"

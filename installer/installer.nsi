@@ -146,11 +146,14 @@ Function ensureVCRedist
             MessageBox MB_ICONSTOP|MB_OK "無法正確下載，請稍後再試，或手動安裝 VC++ 2015 runtime (x86)"
             Abort
         ${EndIf}
+
         ; Run vcredist installer
         ExecWait "$TEMP\vc_redist.x86.exe" $0
-        ${If} ${Errors}
-        ${OrIf} $0 != 0
-            MessageBox MB_ICONSTOP|MB_OK "VC++ 2015 runtime (x86) 安裝程式並未正確執行"
+
+        ; check again is ucrtbase.dll is available
+        ${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+            MessageBox MB_ICONSTOP|MB_OK "VC++ 2015 runtime (x86) 並未正確安裝，請參閱相關微軟文件進行更新。"
+            ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
             Abort
         ${EndIf}
     ${EndIf}

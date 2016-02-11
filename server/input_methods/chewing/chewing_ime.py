@@ -450,7 +450,7 @@ class ChewingTextService(TextService):
 
     # 使用者按下語言列按鈕
     def onCommand(self, commandId, commandType):
-        # print("onCommand", commandId, commandType)
+        print("onCommand", commandId, commandType)
         # FIXME: We should distinguish left and right click using commandType
         
         if commandId == ID_SWITCH_LANG:  # 切換中英文模式

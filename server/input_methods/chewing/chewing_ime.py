@@ -225,7 +225,7 @@ class ChewingTextService(TextService):
         # 如果按下 Ctrl 鍵
         if keyEvent.isKeyDown(VK_CONTROL):
             # 開啟 Ctrl 快速輸入符號，輸入法需要此按鍵
-            if cfg.easySymbolsWithCtrl and self.langMode == CHINESE_MODE:
+            if cfg.easySymbolsWithCtrl and keyEvent.isPrintableChar() and self.langMode == CHINESE_MODE:
                 return True
             else: # 否則可能是應用程式熱鍵，輸入法不做處理
                 return False
@@ -233,7 +233,7 @@ class ChewingTextService(TextService):
         # 若按下 Shift 鍵
         if keyEvent.isKeyDown(VK_SHIFT):
             # 若開啟 Shift 快速輸入符號，輸入法需要此按鍵
-            if cfg.easySymbolsWithShift and self.langMode == CHINESE_MODE:
+            if cfg.easySymbolsWithShift and keyEvent.isPrintableChar() and self.langMode == CHINESE_MODE:
                 return True
 
         # 不論中英文模式，NumPad 都允許直接輸入數字，輸入法不處理

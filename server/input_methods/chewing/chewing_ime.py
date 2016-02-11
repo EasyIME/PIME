@@ -161,6 +161,7 @@ class ChewingTextService(TextService):
         if self.client.isWindows8Above:
             self.addButton("windows-mode-icon",
                 icon = os.path.join(self.icon_dir, icon_name),
+                tooltip = "中英文切換",
                 commandId = ID_MODE_ICON
             )
 
@@ -193,11 +194,12 @@ class ChewingTextService(TextService):
         if self.client.isWindows8Above:
             self.removeButton("windows-mode-icon")
 
+    # 設定選字按鍵 (123456..., asdf....等等)
     def setSelKeys(self, selKeys):
         TextService.setSelKeys(self, selKeys)
         self.selKeys = selKeys
         if self.chewingContext:
-            self.chewingContext.set_selKey(selKeys)
+            self.chewingContext.set_selKeys(selKeys)
 
     # 使用者按下按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
     # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵

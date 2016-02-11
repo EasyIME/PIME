@@ -74,6 +74,15 @@ class ChewingContext:
         else:
             raise AttributeError(name)
 
+    # The original libchewing API is set_selKey (without 's')
+    # It only accepts an integer array. Let's create a new API that accepts
+    # a python string
+    def set_selKeys(self, selKeys):
+        selKeyCodes = (c_int * len(selKeys))()
+        for i, key in enumerate(selKeys):
+            selKeyCodes[i] = ord(key)
+        _libchewing.chewing_set_selKey(self.ctx, selKeyCodes, len(selKeys))
+
     def Configure(self, cpp, maxlen, direction, space, kbtype):
         self.set_candPerPage(cpp)
         self.set_maxChiSymbolLen(maxlen)

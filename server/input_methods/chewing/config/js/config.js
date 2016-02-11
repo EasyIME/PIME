@@ -38,7 +38,7 @@ function readFile(path) {
         return data;
     }
     catch(err) {
-        return "";
+        return ""
     }
 }
 
@@ -68,7 +68,17 @@ function writeFile(path, data) {
 // This is Windows-only :-(
 function getConfigDir() {
     var shell = new ActiveXObject("WScript.Shell");
-    return shell.ExpandEnvironmentStrings("%USERPROFILE%\\PIME\\chewing");
+    var dirPath = shell.ExpandEnvironmentStrings("%USERPROFILE%\\PIME");
+    // ensure that the folder exists
+    var fso = new ActiveXObject("Scripting.FileSystemObject");
+    if(!fso.FolderExists(dirPath)) {
+        fso.CreateFolder(dirPath);
+    }
+    dirPath += "\\chewing";
+    if(!fso.FolderExists(dirPath)) {
+        fso.CreateFolder(dirPath);
+    }
+    return dirPath;
 }
 
 // This is Windows-only :-(

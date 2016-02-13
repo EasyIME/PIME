@@ -8,7 +8,7 @@ defaultConfig ={
     "candPerPage": 9,
     "defaultFullSpace": false,
     "selKeyType": "0",
-    "phraseMark": 1,
+    // "phraseMark": 1,
     "switchLangWithShift": true,
     "enableCapsLock": true,
     "showCandWithSpaceKey": false,

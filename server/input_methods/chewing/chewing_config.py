@@ -49,14 +49,14 @@ class ChewingConfig:
         self.fontSize = DEF_FONT_SIZE
         self.selKeyType = 0
         self.candPerPage = 9
-        self.cursorCandList = 1
-        self.enableCapsLock = 1
-        self.fullShapeSymbols = 1
-        self.phraseMark = 1
-        self.escCleanAllBuf = 0
-        self.easySymbolsWithShift = 1
-        self.easySymbolsWithCtrl = 0
-        self.upperCaseWithShift = 0
+        self.cursorCandList = True
+        self.enableCapsLock = True
+        self.fullShapeSymbols = True
+        # self.phraseMark = True
+        self.escCleanAllBuf = True
+        self.easySymbolsWithShift = True
+        self.easySymbolsWithCtrl = True
+        self.upperCaseWithShift = True
 
         # version: last modified time of (config.json, symbols.dat, swkb.dat)
         self._version = (0.0, 0.0, 0.0)

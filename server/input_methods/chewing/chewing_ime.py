@@ -106,8 +106,10 @@ class ChewingTextService(TextService):
         chewingContext.set_spaceAsSelection(cfg.showCandWithSpaceKey);
 
         # 設定 UI 外觀
-        self.customizeUI(candFontSize = cfg.fontSize, candPerRow = cfg.candPerRow)
-        
+        self.customizeUI(candFontSize = cfg.fontSize,
+                        candPerRow = cfg.candPerRow,
+                        candUseCursor = cfg.cursorCandList)
+
         # 設定選字按鍵 (123456..., asdf.... 等)
         self.setSelKeys(cfg.getSelKeys())
 
@@ -273,6 +275,7 @@ class ChewingTextService(TextService):
         chewingContext = self.chewingContext
         cfg = chewingConfig
         charCode = keyEvent.charCode
+        keyCode = keyEvent.keyCode
         charStr = chr(charCode)
 
         # 某些狀況下，需要暫時強制切成英文模式，之後再恢復
@@ -320,36 +323,50 @@ class ChewingTextService(TextService):
             else : # 中文模式
                 if charStr.isalpha(): # 英文字母 A-Z
                     chewingContext.handle_Default(ord(charStr.lower()))
-                elif keyEvent.keyCode == VK_SPACE: # 空白鍵
+                elif keyCode == VK_SPACE: # 空白鍵
                     chewingContext.handle_Space()
                 elif keyEvent.isKeyDown(VK_CONTROL) and charStr.isdigit(): # Ctrl + 數字(0-9)
                     chewingContext.handle_CtrlNum(charCode)
-                elif keyEvent.isKeyToggled(VK_NUMLOCK) and keyEvent.keyCode >= VK_NUMPAD0 and keyEvent.keyCode <= VK_DIVIDE:
+                elif keyEvent.isKeyToggled(VK_NUMLOCK) and keyCode >= VK_NUMPAD0 and keyCode <= VK_DIVIDE:
                     # numlock 開啟，處理 NumPad 按鍵
                     chewingContext.handle_Numlock(charCode)
                 else : # 其他按鍵不需要特殊處理
                     chewingContext.handle_Default(charCode)
         else:  # 不可見字元 (方向鍵, Enter, Page Down...等等)
             keyHandled = False
-            '''
-            # if we want to use the arrow keys to select candidate strings
-            if config().cursorCandList and showingCandidates() and candidateWindow_:
-                # if the candidate window is open, let it handle the key first
-                if candidateWindow_->filterKeyEvent(keyEvent):
-                    # the user selected a string from the candidate list already
-                    if candidateWindow_->hasResult():
-                        wchar_t selKey = candidateWindow_->currentSelKey()
-                        # pass the selKey to libchewing.
-                        chewingContext.handle_Default(selKey)
-                        keyHandled = True
-                    
-                    else # no candidate has been choosen yet
-                        return True # eat the key and don't pass it to libchewing at all
-            '''
+
+            # 如果有啟用在選字視窗內移動游標選字，而且目前正在選字
+            if cfg.cursorCandList and self.showCandidates:
+                candCursor = self.candidateCursor  # 目前的游標位置
+                candCount = len(self.candidateList)  # 目前選字清單項目數
+                if keyCode == VK_LEFT:  # 游標左移
+                    if candCursor > 0:
+                        candCursor -= 1
+                    ignoreKey = keyHandled = True
+                elif keyCode == VK_UP:  # 游標上移
+                    if candCursor >= cfg.candPerRow:
+                        candCursor -= cfg.candPerRow
+                    ignoreKey = keyHandled = True
+                elif keyCode == VK_RIGHT:  # 游標右移
+                    if (candCursor + 1) < candCount:
+                        candCursor += 1
+                    ignoreKey = keyHandled = True
+                elif keyCode == VK_DOWN:  # 游標下移
+                    if (candCursor + cfg.candPerRow) < candCount:
+                        candCursor += cfg.candPerRow
+                    ignoreKey = keyHandled = True
+                elif keyCode == VK_RETURN:  # 按下 Enter 鍵
+                    # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
+                    selKey = cfg.getSelKeys()[self.candidateCursor]
+                    # 代替使用者送出選字鍵給新酷音引擎，進行選字
+                    chewingContext.handle_Default(ord(selKey))
+                    keyHandled = True
+                # 更新選字視窗游標位置
+                self.setCandidateCursor(candCursor)
 
             if not keyHandled:  # 按鍵還沒被處理過
                 # the candidate window does not need the key. pass it to libchewing.
-                keyName = keyNames.get(keyEvent.keyCode)  #  取得按鍵的名稱
+                keyName = keyNames.get(keyCode)  #  取得按鍵的名稱
                 if keyName: # call libchewing method for the key
                     # 依照按鍵名稱，找 libchewing 對應的 handle_按鍵() method 呼叫
                     methodName = "handle_" + keyName
@@ -375,8 +392,10 @@ class ChewingTextService(TextService):
                     cand = chewingContext.cand_String().decode("UTF-8")
                     candidates.append(cand)
                 self.setCandidateList(candidates)  # 設定候選字清單
-                if not self.showCandidates:
+                if not self.showCandidates:  # 如果目前沒有顯示選字視窗
                     self.setShowCandidates(True)  # 顯示選字視窗
+                    if cfg.cursorCandList:  # 如果啟用選字清單內使用游標選字
+                        self.setCandidateCursor(0)  # 重設游標位置
             else:  # 沒有候選字
                 if self.showCandidates:
                     self.setShowCandidates(False)  # 隱藏選字視窗

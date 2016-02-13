@@ -236,9 +236,11 @@ bool CandidateWindow::filterKeyEvent(KeyEvent& keyEvent) {
 void CandidateWindow::setCurrentSel(int sel) {
 	if(sel >= items_.size())
 		sel = 0;
-	currentSel_ = sel;
-	if(isVisible())
-		::InvalidateRect(hwnd_, NULL, TRUE);
+	if (currentSel_ != sel) {
+		currentSel_ = sel;
+		if (isVisible())
+			::InvalidateRect(hwnd_, NULL, TRUE);
+	}
 }
 
 void CandidateWindow::clear() {

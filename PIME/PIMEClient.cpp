@@ -212,7 +212,7 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 				}
 				continue;
 			}
-			else if (it->value.IsInt() && strcmp(name, "candCursorPos") == 0) {
+			else if (it->value.IsInt() && strcmp(name, "candidateCursor") == 0) {
 				candCursorVal = &it->value;
 				continue;
 			}

@@ -80,7 +80,7 @@ class TextService:
         self.commitString = ""
         self.candidateList = []
         self.compositionCursor = 0
-        self.candCursor = 0
+        self.candidateCursor = 0
 
     def updateStatus(self, msg):
         pass
@@ -232,7 +232,7 @@ class TextService:
 
     def setCandidateCursor(self, pos):
         self.candidateCursor = pos
-        self.reply["candCursorPos"] = pos
+        self.reply["candidateCursor"] = pos
 
     def setShowCandidates(self, show):
         self.showCandidates = show

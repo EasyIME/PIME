@@ -346,7 +346,7 @@ class ChewingTextService(TextService):
                 elif keyCode == VK_UP:  # 游標上移
                     if candCursor >= cfg.candPerRow:
                         candCursor -= cfg.candPerRow
-                    ignoreKey = keyHandled = True
+                        ignoreKey = keyHandled = True
                 elif keyCode == VK_RIGHT:  # 游標右移
                     if (candCursor + 1) < candCount:
                         candCursor += 1
@@ -354,7 +354,7 @@ class ChewingTextService(TextService):
                 elif keyCode == VK_DOWN:  # 游標下移
                     if (candCursor + cfg.candPerRow) < candCount:
                         candCursor += cfg.candPerRow
-                    ignoreKey = keyHandled = True
+                        ignoreKey = keyHandled = True
                 elif keyCode == VK_RETURN:  # 按下 Enter 鍵
                     # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                     selKey = cfg.getSelKeys()[self.candidateCursor]

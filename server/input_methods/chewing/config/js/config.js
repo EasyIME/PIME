@@ -258,6 +258,48 @@ $(function() {
             break;
         }
     });
+	
+		// use for select example
+	function updateSelExample() {
+		var example = ["選", "字", "大", "小", "範", "例"];		
+		var html="";
+		
+		for (number = 1, i = 0, row = 0; number <= $("#candPerPage").val(); number++, i++, row++) {
+			if (example[i] == null) {
+				i = 0;
+			}
+				
+			if (row == $("#candPerRow").val()) {
+				row = 0;
+				html += "<br>";
+			}				
+			
+			html += "<span>" + number.toString().slice(-1) + ".</span> " + example[i] + "&nbsp;&nbsp;";
+		}			
+				
+		$("#selExample").html(html);
+	}
+	
+	// setup selExample default style
+	$("#selExample").css("font-size", $("#fontSize").val() + "px");
+	updateSelExample();
+
+	// trigger event
+	$('.ui-spinner-button').click(function() {
+		$(this).siblings('input').change();		
+	});	
+	
+	$("#ui_page input").on("change", function() {
+		$("#selExample").css("font-size", $("#fontSize").val() + "px");
+		updateSelExample();
+	});
+	
+	$("#ui_page input").on("keydown", function(e) {
+		if (e.keyCode == 38 || e.keyCode==40) {
+			$("#selExample").css("font-size", $("#fontSize").val() + "px");
+			updateSelExample();
+		}
+	});
 
     /*
     // resize and center the window

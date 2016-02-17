@@ -216,7 +216,9 @@ class ChewingTextService(TextService):
         # 使用者開始輸入，還沒送出前的編輯區內容稱 composition string
         # isComposing() 是 False，表示目前編輯區是空的
         # 若正在編輯中文，則任何按鍵我們都需要送給輸入法處理，直接 return True
-        if self.isComposing():
+        # 另外，若使用 "`" key 輸入特殊符號，可能會有編輯區是空的
+        # 但選字清單開啟，輸入法需要處理的情況
+        if self.isComposing() or self.showCandidates:
             return True
         # --------------   以下都是「沒有」正在輸入中文的狀況   --------------
 

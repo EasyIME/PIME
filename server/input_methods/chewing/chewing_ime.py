@@ -324,8 +324,14 @@ class ChewingTextService(TextService):
                 chewingContext.handle_Default(charCode)
             else : # 中文模式
                 if charStr.isalpha(): # 英文字母 A-Z
-                    chewingContext.handle_Default(ord(charStr.lower()))
-                elif keyCode == VK_SPACE: # 空白鍵
+                    # 如果開啟 Ctrl 或 Shift + A-Z 快速輸入符號 (easy symbols，定義在 swkb.dat)
+                    # 則只接受大寫英文字母
+                    if chewingContext.get_easySymbolInput():
+                        charCode = ord(charStr.upper())
+                    else:
+                        charCode = ord(charStr.lower())
+                    chewingContext.handle_Default(charCode)
+                elif keyEvent.keyCode == VK_SPACE: # 空白鍵
                     chewingContext.handle_Space()
                 elif keyEvent.isKeyDown(VK_CONTROL) and charStr.isdigit(): # Ctrl + 數字(0-9)
                     chewingContext.handle_CtrlNum(charCode)

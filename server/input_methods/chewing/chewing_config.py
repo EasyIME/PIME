@@ -49,14 +49,14 @@ class ChewingConfig:
         self.fontSize = DEF_FONT_SIZE
         self.selKeyType = 0
         self.candPerPage = 9
-        self.cursorCandList = 1
-        self.enableCapsLock = 1
-        self.fullShapeSymbols = 1
-        self.phraseMark = 1
-        self.escCleanAllBuf = 0
-        self.easySymbolsWithShift = 1
-        self.easySymbolsWithCtrl = 0
-        self.upperCaseWithShift = 0
+        self.cursorCandList = True
+        self.enableCapsLock = True
+        self.fullShapeSymbols = True
+        # self.phraseMark = True
+        self.escCleanAllBuf = True
+        self.easySymbolsWithShift = True
+        self.easySymbolsWithCtrl = True
+        self.upperCaseWithShift = True
 
         # version: last modified time of (config.json, symbols.dat, swkb.dat)
         self._version = (0.0, 0.0, 0.0)
@@ -158,9 +158,10 @@ class ChewingConfig:
     def isConfigChanged(self, currentVersion):
         return currentVersion[0] != self._version[0]
 
-    # reloadIfNeeded() tries to reload configurations only
     # isFullReloadNeeded() checks whether you need to delete the
     # existing chewing context and create a new one.
+    # This is often caused by change of data files, such as
+    # symbols.dat and swkb.dat files.
     def isFullReloadNeeded(self, currentVersion):
         return currentVersion[1:] != self._version[1:]
 

@@ -28,6 +28,7 @@ ENGLISH_MODE = 0
 FULLSHAPE_MODE = 1
 HALFSHAPE_MODE = 0
 
+# 按鍵內碼和名稱的對應
 keyNames = {
     VK_ESCAPE: "Esc",
     VK_RETURN: "Enter",
@@ -50,6 +51,7 @@ ID_SWITCH_SHAPE = 2
 ID_SETTINGS = 3
 ID_MODE_ICON = 4
 
+
 class ChewingTextService(TextService):
     def __init__(self, client):
         TextService.__init__(self, client)
@@ -57,7 +59,7 @@ class ChewingTextService(TextService):
         self.datadir = os.path.join(self.curdir, "data")
         # print(self.datadir)
         self.icon_dir = self.curdir
-        self.ctx = None # libchewing context
+        self.chewingContext = None # libchewing context
 
         self.langMode = -1
         self.shapeMode = -1
@@ -66,91 +68,106 @@ class ChewingTextService(TextService):
         self.lastKeyDownTime = 0.0
         self.configVersion = chewingConfig.getVersion()
 
-    # check whether the config file is changed and reload it as needed
+    # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):
         cfg = chewingConfig
-        cfg.update()
+        cfg.update() # 更新設定檔狀態
+
+        # 比較我們先前存的版本號碼，和目前設定檔的版本號
         if cfg.isFullReloadNeeded(self.configVersion):
-            print("full reload")
-            # re-create a new chewing context
-            self.ctx = None
+            # 資料改變需整個 reload，重建一個新的 chewing context
+            self.chewingContext = None
             self.initChewingContext()
         elif cfg.isConfigChanged(self.configVersion):
-            print("config changed")
-            # configurations are changed
+            # 只有偵測到設定檔變更，需要套用新設定
             self.applyConfig()
 
     def applyConfig(self):
         cfg = chewingConfig # globally shared config object
         self.configVersion = cfg.getVersion()
-        ctx = self.ctx
+        chewingContext = self.chewingContext
 
-        # add user phrase before or after the cursor
-        ctx.set_addPhraseDirection(cfg.addPhraseForward);
+        # 按下 Ctrl+ 數字加入游標"前方"的詞 (或是後方)
+        chewingContext.set_addPhraseDirection(cfg.addPhraseForward);
 
-        # automatically shift cursor to the next char after choosing a candidate
-        ctx.set_autoShiftCur(cfg.advanceAfterSelection);
+        # 選字後自動把游標往後移一個字
+        chewingContext.set_autoShiftCur(cfg.advanceAfterSelection);
 
-        # candiate strings per page
-        ctx.set_candPerPage(cfg.candPerPage);
+        # 每頁顯示幾個候選字
+        chewingContext.set_candPerPage(cfg.candPerPage);
 
-        # clean the composition buffer by Esc key
-        ctx.set_escCleanAllBuf(cfg.escCleanAllBuf);
+        # 按下 ESC 鍵清除正在編輯的字
+        chewingContext.set_escCleanAllBuf(cfg.escCleanAllBuf);
 
-        # keyboard type
-        ctx.set_KBType(cfg.keyboardLayout);
+        # 鍵盤 layout 種類
+        chewingContext.set_KBType(cfg.keyboardLayout);
 
-        # Use space key to open candidate window.
-        ctx.set_spaceAsSelection(cfg.showCandWithSpaceKey);
+        # 按下 Space 鍵開啟選字視窗
+        chewingContext.set_spaceAsSelection(cfg.showCandWithSpaceKey);
 
-        self.customizeUI(candFontSize = cfg.fontSize, candPerRow = cfg.candPerRow)
+        # 設定 UI 外觀
+        self.customizeUI(candFontSize = cfg.fontSize,
+                        candPerRow = cfg.candPerRow,
+                        candUseCursor = cfg.cursorCandList)
+
+        # 設定選字按鍵 (123456..., asdf.... 等)
         self.setSelKeys(cfg.getSelKeys())
 
+    # 初始化新酷音輸入法引擎
     def initChewingContext(self):
         # load libchewing context
-        if not self.ctx:
-            cfg = chewingConfig # globally shared config object
-            # syspath can contain a list of paths separated by ;
-            # here we prepend the user dir to system-wide data dir
-            # so user configurations can override the system-wide defaults.
+        if not self.chewingContext:
+            cfg = chewingConfig # 所有 ChewingTextService 共享一份設定物件
+            # syspath 參數可包含多個路徑，用 ; 分隔
+            # 此處把 user 設定檔目錄插入到 system-wide 資料檔路徑前
+            # 如此使用者變更設定後，可以比系統預設值有優先權
             search_paths = ";".join((cfg.getConfigDir(), self.datadir)).encode("UTF-8")
             user_phrase = cfg.getUserPhrase().encode("UTF-8")
-            ctx = ChewingContext(syspath = search_paths, userpath = user_phrase)
-            self.ctx = ctx
-            ctx.set_maxChiSymbolLen(50)
 
+            # 建立 ChewingContext，此處路徑需要 UTF-8 編碼
+            chewingContext = ChewingContext(syspath = search_paths, userpath = user_phrase)
+            self.chewingContext = chewingContext
+            chewingContext.set_maxChiSymbolLen(50) # 編輯區長度: 50 bytes
+
+            # 預設英數 or 中文模式
             self.langMode = ENGLISH_MODE if cfg.defaultEnglish else CHINESE_MODE
-            ctx.set_ChiEngMode(self.langMode)
+            chewingContext.set_ChiEngMode(self.langMode)
 
+            # 預設全形 or 半形
             self.shapeMode = FULLSHAPE_MODE if cfg.defaultFullSpace else HALFSHAPE_MODE
-            ctx.set_ShapeMode(self.shapeMode)
+            chewingContext.set_ShapeMode(self.shapeMode)
 
-        self.applyConfig()
+        self.applyConfig() # 套用其餘的使用者設定
 
+    # 輸入法被使用者啟用
     def onActivate(self):
         cfg = chewingConfig # globally shared config object
         TextService.onActivate(self)
         self.initChewingContext()
 
-        # add preserved keys
+        # 向系統宣告 Shift + Space 這個組合為特殊用途 (全半形切換)
+        # 當 Shift + Space 被按下的時候，onPreservedKey() 會被呼叫
         self.addPreservedKey(VK_SPACE, TF_MOD_SHIFT, SHIFT_SPACE_GUID); # shift + space
 
-        # add language bar buttons
-        # siwtch Chinese/English modes
+        # 新增語言列按鈕 (Windows 8 之後已取消語言列)
+
+        # 切換中英文
         icon_name = "chi.ico" if self.langMode == CHINESE_MODE else "eng.ico"
         self.addButton("switch-lang",
             icon = os.path.join(self.icon_dir, icon_name),
             tooltip = "中英文切換",
             commandId = ID_SWITCH_LANG
         )
-        # Windows 8 systray IME mode icon
+
+        # Windows 8 以上已取消語言列功能，改用 systray IME mode icon
         if self.client.isWindows8Above:
             self.addButton("windows-mode-icon",
                 icon = os.path.join(self.icon_dir, icon_name),
+                tooltip = "中英文切換",
                 commandId = ID_MODE_ICON
             )
-        
-        # toggle full shape/half shape
+
+        # 切換全半形
         icon_name = "full.ico" if self.shapeMode == FULLSHAPE_MODE else "half.ico"
         self.addButton("switch-shape",
             icon = os.path.join(self.icon_dir, icon_name),
@@ -158,7 +175,7 @@ class ChewingTextService(TextService):
             commandId = ID_SWITCH_SHAPE
         )
 
-        # settings and others, may open a popup menu
+        # 設定
         # FIXME: popup menu is not yet implemented
         self.addButton("settings",
             icon = os.path.join(self.icon_dir, "config.ico"),
@@ -166,10 +183,11 @@ class ChewingTextService(TextService):
             commandId = ID_SETTINGS
         )
 
+    # 使用者離開輸入法
     def onDeactivate(self):
         TextService.onDeactivate(self)
-        # unload libchewing context
-        self.ctx = None
+        # 釋放 libchewing context 的資源
+        self.chewingContext = None
         self.lastKeyDownCode = 0
 
         self.removeButton("switch-lang")
@@ -178,218 +196,273 @@ class ChewingTextService(TextService):
         if self.client.isWindows8Above:
             self.removeButton("windows-mode-icon")
 
+    # 設定選字按鍵 (123456..., asdf....等等)
     def setSelKeys(self, selKeys):
         TextService.setSelKeys(self, selKeys)
         self.selKeys = selKeys
-        if self.ctx:
-            self.ctx.set_selKey(selKeys)
+        if self.chewingContext:
+            self.chewingContext.set_selKeys(selKeys)
 
+    # 使用者按下按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
+    # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
+    # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
     def filterKeyDown(self, keyEvent):
         cfg = chewingConfig
+        # 紀錄最後一次按下的鍵和按下的時間，在 filterKeyUp() 中要用
         self.lastKeyDownCode = keyEvent.keyCode
         if self.lastKeyDownTime == 0.0:
             self.lastKeyDownTime = time.time()
-        # return False if we don't need this key
-        if not self.isComposing(): # we're not composing now
-            # don't do further handling in English + half shape mode
-            if self.langMode != CHINESE_MODE and self.shapeMode != FULLSHAPE_MODE:
-                return False
 
-            # if Alt key is down, bypass IME.
-            # This might be a shortcut key used in the application
-            if keyEvent.isKeyDown(VK_MENU):
-                return False
+        # 使用者開始輸入，還沒送出前的編輯區內容稱 composition string
+        # isComposing() 是 False，表示目前編輯區是空的
+        # 若正在編輯中文，則任何按鍵我們都需要送給輸入法處理，直接 return True
+        # 另外，若使用 "`" key 輸入特殊符號，可能會有編輯區是空的
+        # 但選字清單開啟，輸入法需要處理的情況
+        if self.isComposing() or self.showCandidates:
+            return True
+        # --------------   以下都是「沒有」正在輸入中文的狀況   --------------
 
-            # easy symbol input with Ctrl key
-            # We only need Ctrl in composition mode for adding user phrases.
-            if keyEvent.isKeyDown(VK_CONTROL):
-                if cfg.easySymbolsWithCtrl and self.langMode == CHINESE_MODE:
-                    return True
-                else: # This might be a shortcut key used in the app. Don't touch it.
-                    return False
-
-            # easy symbol input with Shift key
-            if keyEvent.isKeyDown(VK_SHIFT):
-                if cfg.easySymbolsWithShift and self.langMode == CHINESE_MODE:
-                    return True
-
-            # we always need further processing in full shape mode since all English chars,
-            # numbers, and symbols need to be converted to full shape Chinese chars.
-            if self.shapeMode != FULLSHAPE_MODE:
-                # Caps lock is on => English mode
-                if cfg.enableCapsLock and keyEvent.isKeyToggled(VK_CAPITAL):
-                    # We need to handle this key because in onKeyDown(),
-                    # the upper case chars need to be converted to lower case
-                    # before doing output to the applications.
-                    if keyEvent.isChar() and chr(keyEvent.charCode).isalpha():
-                        return True # this is an English alphabet
-                    else:
-                        return False
-                # Enable numpad even in Chinese mode
-                if keyEvent.isKeyToggled(VK_NUMLOCK): # NumLock is on
-                    # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
-                    if keyEvent.keyCode >= VK_NUMPAD0 and keyEvent.keyCode <= VK_DIVIDE:
-                        return False # bypass IME
-
-            # when not composing, we only care about Bopomofo
-            # FIXME: we should check if the key is mapped to a phonetic symbol instead
-            if keyEvent.isPrintableChar(includingSpace = True):
-                # this is a key mapped to a printable charStr. we want it!
-                return True
+        # 如果按下 Alt，可能是應用程式熱鍵，輸入法不做處理
+        if keyEvent.isKeyDown(VK_MENU):
             return False
-        return True
+
+        # 如果按下 Ctrl 鍵
+        if keyEvent.isKeyDown(VK_CONTROL):
+            # 開啟 Ctrl 快速輸入符號，輸入法需要此按鍵
+            if cfg.easySymbolsWithCtrl and keyEvent.isPrintableChar() and self.langMode == CHINESE_MODE:
+                return True
+            else: # 否則可能是應用程式熱鍵，輸入法不做處理
+                return False
+
+        # 若按下 Shift 鍵
+        if keyEvent.isKeyDown(VK_SHIFT):
+            # 若開啟 Shift 快速輸入符號，輸入法需要此按鍵
+            if cfg.easySymbolsWithShift and keyEvent.isPrintableChar() and self.langMode == CHINESE_MODE:
+                return True
+
+        # 不論中英文模式，NumPad 都允許直接輸入數字，輸入法不處理
+        if keyEvent.isKeyToggled(VK_NUMLOCK): # NumLock is on
+            # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
+            if keyEvent.keyCode >= VK_NUMPAD0 and keyEvent.keyCode <= VK_DIVIDE:
+                return False # bypass IME
+
+        # 不管中英文模式，只要是全形，輸入法都需要進一步處理(英數字從半形轉為全形)
+        if self.shapeMode == FULLSHAPE_MODE:
+            return True
+        # --------------   以下皆為半形模式   --------------
+
+        # 如果是英文半形模式，輸入法不做任何處理
+        if self.langMode == ENGLISH_MODE:
+            return False
+        # --------------   以下皆為中文模式   --------------
+
+        # 中文模式下開啟 Capslock，須切換成英文
+        if cfg.enableCapsLock and keyEvent.isKeyToggled(VK_CAPITAL):
+            # 如果此按鍵是英文字母，中文模式下要從大寫轉小寫，需要輸入法處理
+            if keyEvent.isChar() and chr(keyEvent.charCode).isalpha():
+                return True
+            # 是其他符號或數字，則視同英文模式，不用處理
+            else:
+                return False
+
+        # 中文模式下，當中文編輯區是空的，輸入法只需處理注音符號
+        # FIXME: 應該檢查按下的鍵是否為注音，不過大略可用是否為 printable char 代替
+        if keyEvent.isPrintableChar():
+            return True
+
+        # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
+        return False
 
     def onKeyDown(self, keyEvent):
-        ctx = self.ctx
+        chewingContext = self.chewingContext
         cfg = chewingConfig
         charCode = keyEvent.charCode
+        keyCode = keyEvent.keyCode
         charStr = chr(charCode)
+
+        # 某些狀況下，需要暫時強制切成英文模式，之後再恢復
         temporaryEnglishMode = False
-        oldLangMode = ctx.get_ChiEngMode()
+        oldLangMode = chewingContext.get_ChiEngMode()
+        ignoreKey = False  # 是否須忽略這個按鍵
 
-        # easy symbol input with Ctrl or Shift key
-        # set this to true or false according to the status of Shift key
+        # 使用 Ctrl 或 Shift 鍵做快速符號輸入 (easy symbol input)
+        # 這裡的 easy symbol input，是定義在 swkb.dat 設定檔中的符號
         if cfg.easySymbolsWithShift and keyEvent.isKeyDown(VK_SHIFT):
-            ctx.set_easySymbolInput(1)
+            chewingContext.set_easySymbolInput(1)
         elif cfg.easySymbolsWithCtrl and keyEvent.isKeyDown(VK_CONTROL):
-            ctx.set_easySymbolInput(1)
+            chewingContext.set_easySymbolInput(1)
         else:
-            ctx.set_easySymbolInput(0)
+            chewingContext.set_easySymbolInput(0)
 
-        if keyEvent.isPrintableChar(): # printable characters (exclude extended keys?)
-            invertCase = False
-            # If Caps lock is on, temporarily change to English mode
-            # if cfg.enableCapsLock and keyEvent.isKeyToggled(VK_CAPITAL):
-            if keyEvent.isKeyToggled(VK_CAPITAL):
-                temporaryEnglishMode = True
-                invertCase = True # need to convert upper case to lower, and vice versa.
+        # 若目前輸入的按鍵是可見字元 (字母、數字、標點...等)
+        if keyEvent.isPrintableChar():
+            invertCase = False  # 是否需要反轉大小寫
 
-            # If Shift is pressed, but we don't want to enter full shape symbols
-            if keyEvent.isKeyDown(VK_SHIFT) and (not cfg.fullShapeSymbols or charStr.isalpha()):
-                temporaryEnglishMode = True
-                if not cfg.upperCaseWithShift:
-                    invertCase = True # need to convert upper case to lower, and vice versa.
+            # 中文模式下須特別處理 CapsLock 和 Shift 鍵
+            if self.langMode == CHINESE_MODE:
+                # 若開啟 Caps lock，需要暫時強制切換成英文模式
+                if cfg.enableCapsLock and keyEvent.isKeyToggled(VK_CAPITAL):
+                    temporaryEnglishMode = True
+                    invertCase = True  # 大寫字母轉成小寫
 
-            if self.langMode == ENGLISH_MODE: # English mode
-                ctx.handle_Default(charCode)
-            elif temporaryEnglishMode: # temporary English mode
-                ctx.set_ChiEngMode(ENGLISH_MODE) # change to English mode temporarily
-                if invertCase: # need to invert upper case and lower case
-                    # we're NOT in real English mode, but Capslock is on, so we treat it as English mode
-                    # reverse upper and lower case
-                    if charStr.isupper():
-                        charCode = ord(charStr.lower())
-                    else:
+                # 若按下 Shift 鍵
+                if keyEvent.isKeyDown(VK_SHIFT):
+                    if charStr.isalpha():  # 如果是英文字母
+                        temporaryEnglishMode = True  # 暫時切換成英文模式
+                        if not cfg.upperCaseWithShift:  # 如果沒有開啟 Shift 輸入大寫英文
+                            invertCase = True # 大寫字母轉成小寫
+                    # 如果不使用 Shift 輸入全形標點，或快速輸入符號功能，則暫時切成英文模式
+                    elif not cfg.fullShapeSymbols and not cfg.easySymbolsWithShift:
+                        temporaryEnglishMode = True
+
+            if self.langMode == ENGLISH_MODE: # 英文模式
+                chewingContext.handle_Default(charCode)
+            elif temporaryEnglishMode: # 原為中文模式，暫時強制切成英文
+                chewingContext.set_ChiEngMode(ENGLISH_MODE)
+                if invertCase: # 先反轉大小寫，再送給新酷音引擎
+                    charCode = ord(charStr.lower() if charStr.isupper() else charStr.upper())
+                chewingContext.handle_Default(charCode)
+            else : # 中文模式
+                if charStr.isalpha(): # 英文字母 A-Z
+                    # 如果開啟 Ctrl 或 Shift + A-Z 快速輸入符號 (easy symbols，定義在 swkb.dat)
+                    # 則只接受大寫英文字母
+                    if chewingContext.get_easySymbolInput():
                         charCode = ord(charStr.upper())
-                ctx.handle_Default(charCode)
-            else : # Chinese mode
-                if charStr.isalpha(): # alphabets: A-Z
-                    ctx.handle_Default(ord(charStr.lower()))
-                elif keyEvent.keyCode == VK_SPACE: # space key
-                    ctx.handle_Space()
-                elif keyEvent.isKeyDown(VK_CONTROL) and charStr.isdigit(): # Ctrl + number (0~9)
-                    ctx.handle_CtrlNum(charCode)
-                elif keyEvent.isKeyToggled(VK_NUMLOCK) and keyEvent.keyCode >= VK_NUMPAD0 and keyEvent.keyCode <= VK_DIVIDE:
-                    # numlock is on, handle numpad keys
-                    ctx.handle_Numlock(charCode)
-                else : # other keys, no special handling is needed
-                    ctx.handle_Default(charCode)
-        else: # non-printable keys
+                    else:
+                        charCode = ord(charStr.lower())
+                    chewingContext.handle_Default(charCode)
+                elif keyEvent.keyCode == VK_SPACE: # 空白鍵
+                    chewingContext.handle_Space()
+                elif keyEvent.isKeyDown(VK_CONTROL) and charStr.isdigit(): # Ctrl + 數字(0-9)
+                    chewingContext.handle_CtrlNum(charCode)
+                elif keyEvent.isKeyToggled(VK_NUMLOCK) and keyCode >= VK_NUMPAD0 and keyCode <= VK_DIVIDE:
+                    # numlock 開啟，處理 NumPad 按鍵
+                    chewingContext.handle_Numlock(charCode)
+                else : # 其他按鍵不需要特殊處理
+                    chewingContext.handle_Default(charCode)
+        else:  # 不可見字元 (方向鍵, Enter, Page Down...等等)
             keyHandled = False
-            # if we want to use the arrow keys to select candidate strings
-            '''
-            if config().cursorCandList and showingCandidates() and candidateWindow_:
-                # if the candidate window is open, let it handle the key first
-                if candidateWindow_->filterKeyEvent(keyEvent):
-                    # the user selected a string from the candidate list already
-                    if candidateWindow_->hasResult():
-                        wchar_t selKey = candidateWindow_->currentSelKey()
-                        # pass the selKey to libchewing.
-                        ctx.handle_Default(selKey)
-                        keyHandled = True
-                    
-                    else # no candidate has been choosen yet
-                        return True # eat the key and don't pass it to libchewing at all
-            '''
-            if not keyHandled:
+
+            # 如果有啟用在選字視窗內移動游標選字，而且目前正在選字
+            if cfg.cursorCandList and self.showCandidates:
+                candCursor = self.candidateCursor  # 目前的游標位置
+                candCount = len(self.candidateList)  # 目前選字清單項目數
+                if keyCode == VK_LEFT:  # 游標左移
+                    if candCursor > 0:
+                        candCursor -= 1
+                    ignoreKey = keyHandled = True
+                elif keyCode == VK_UP:  # 游標上移
+                    if candCursor >= cfg.candPerRow:
+                        candCursor -= cfg.candPerRow
+                        ignoreKey = keyHandled = True
+                elif keyCode == VK_RIGHT:  # 游標右移
+                    if (candCursor + 1) < candCount:
+                        candCursor += 1
+                    ignoreKey = keyHandled = True
+                elif keyCode == VK_DOWN:  # 游標下移
+                    if (candCursor + cfg.candPerRow) < candCount:
+                        candCursor += cfg.candPerRow
+                        ignoreKey = keyHandled = True
+                elif keyCode == VK_RETURN:  # 按下 Enter 鍵
+                    # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
+                    selKey = cfg.getSelKeys()[self.candidateCursor]
+                    # 代替使用者送出選字鍵給新酷音引擎，進行選字
+                    chewingContext.handle_Default(ord(selKey))
+                    keyHandled = True
+                # 更新選字視窗游標位置
+                self.setCandidateCursor(candCursor)
+
+            if not keyHandled:  # 按鍵還沒被處理過
                 # the candidate window does not need the key. pass it to libchewing.
-                keyName = keyNames.get(keyEvent.keyCode)
+                keyName = keyNames.get(keyCode)  #  取得按鍵的名稱
                 if keyName: # call libchewing method for the key
+                    # 依照按鍵名稱，找 libchewing 對應的 handle_按鍵() method 呼叫
                     methodName = "handle_" + keyName
-                    getattr(ctx, methodName)()
-                else: # we don't know this key. ignore it!
-                    return False
+                    method = getattr(chewingContext, methodName)
+                    method()
+                else: # 我們不需要處理的按鍵，直接忽略
+                    ignoreKey = True
 
-        if ctx.keystroke_CheckIgnore():
-            if temporaryEnglishMode:
-                ctx.set_ChiEngMode(oldLangMode) # restore previous mode
-            return False
+        # 新酷音引擎判斷此按鍵忽略不處理
+        if chewingContext.keystroke_CheckIgnore():
+            ignoreKey = True
 
-        # handle candidates
-        if ctx.cand_TotalChoice() > 0: # has candidates
-            # FIXME: avoid updating candidate list everytime if it's not changed
-            candidates = []
-            ctx.cand_Enumerate()
-            n = ctx.cand_ChoicePerPage(); # candidate string shown per page
-            for i in range(0, n):
-                if not ctx.cand_hasNext():
-                    break
-                cand = ctx.cand_String().decode("UTF-8")
-                candidates.append(cand)
-            self.setCandidateList(candidates)
-            if not self.showCandidates:
-                self.setShowCandidates(True)
-        else:
-            if self.showCandidates:
-                self.setShowCandidates(False)
+        if not ignoreKey:  # 如果這個按鍵是有意義的，需要處理 (不可忽略)
+            # 處理選字清單
+            if chewingContext.cand_TotalChoice() > 0: # 若有候選字/詞
+                candidates = []
+                # 要求新酷音引擎列出每個候選字
+                chewingContext.cand_Enumerate()
+                for i in range(chewingContext.cand_ChoicePerPage()):
+                    if not chewingContext.cand_hasNext():
+                        break
+                    # 新酷音返回的是 UTF-8 byte string，須轉成 python 字串
+                    cand = chewingContext.cand_String().decode("UTF-8")
+                    candidates.append(cand)
+                self.setCandidateList(candidates)  # 設定候選字清單
+                if not self.showCandidates:  # 如果目前沒有顯示選字視窗
+                    self.setShowCandidates(True)  # 顯示選字視窗
+                    if cfg.cursorCandList:  # 如果啟用選字清單內使用游標選字
+                        self.setCandidateCursor(0)  # 重設游標位置
+            else:  # 沒有候選字
+                if self.showCandidates:
+                    self.setShowCandidates(False)  # 隱藏選字視窗
 
-        # has something to commit
-        if ctx.commit_Check():
-            commitStr = ctx.commit_String().decode("UTF-8")
-            # commit the text, replace currently selected text with our commit string
-            self.setCommitString(commitStr)
-            # print("commit:", commitStr)
+            # 有輸入完成的中文字串要送出(commit)到應用程式
+            if chewingContext.commit_Check():
+                commitStr = chewingContext.commit_String().decode("UTF-8")
+                self.setCommitString(commitStr)  # 設定要輸出的 commit string
 
-        # composition string
-        compStr = ""
-        if ctx.buffer_Check():
-            compStr = ctx.buffer_String().decode("UTF-8")
+            # 編輯區正在輸入中，尚未送出的中文字串 (composition string)
+            compStr = ""
+            if chewingContext.buffer_Check():
+                compStr = chewingContext.buffer_String().decode("UTF-8")
 
-        if ctx.bopomofo_Check():
-            bopomofoStr = ""
-            bopomofoStr = ctx.bopomofo_String(None).decode("UTF-8")
-            # put bopomofo symbols at insertion point
-            pos = ctx.cursor_Current()
-            compStr = compStr[:pos] + bopomofoStr + compStr[pos:]
-        # print("compStr:", compStr)
-        self.setCompositionString(compStr)
-        # update cursor pos
-        self.setCompositionCursor(ctx.cursor_Current())
-        '''
-        # show aux info
-        if ctx.aux_Check():
-            char* str = ctx.aux_String()
-            std::wstring wstr = utf8ToUtf16(str)
-            ctx.free(str)
-            # show the message to the user
-            # FIXME: sometimes libchewing shows the same aux info
-            # for subsequent key events... I think this is a bug.
-            showMessage(session, wstr, 2)
-        '''
+            # 輸入到一半，還沒組成字的注音符號 (bopomofo)
+            if chewingContext.bopomofo_Check():
+                bopomofoStr = ""
+                bopomofoStr = chewingContext.bopomofo_String(None).decode("UTF-8")
+                # 把輸入到一半，還沒組成字的注音字串，也插入到編輯區內
+                pos = chewingContext.cursor_Current()
+                compStr = compStr[:pos] + bopomofoStr + compStr[pos:]
+
+            # 更新編輯區內容 (composition string)
+            self.setCompositionString(compStr)
+            # 更新輸入游標位置
+            self.setCompositionCursor(chewingContext.cursor_Current())
+            '''
+            # show aux info
+            if chewingContext.aux_Check():
+                char* str = chewingContext.aux_String()
+                std::wstring wstr = utf8ToUtf16(str)
+                chewingContext.free(str)
+                # show the message to the user
+                # FIXME: sometimes libchewing shows the same aux info
+                # for subsequent key events... I think this is a bug.
+                showMessage(session, wstr, 2)
+            '''
+
+        # 若先前有暫時強制切成英文模式，需要復原
         if temporaryEnglishMode:
-            ctx.set_ChiEngMode(oldLangMode) # restore previous mode
+            chewingContext.set_ChiEngMode(oldLangMode)
+
+        # 依照目前狀態，更新語言列顯示的圖示
         self.updateLangButtons()
 
-        return True
+        return (not ignoreKey)  # 告知系統我們是否有處理這個按鍵
 
+    # 使用者放開按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
+    # return True，系統會呼叫 onKeyUp() 進一步處理這個按鍵
+    # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
     def filterKeyUp(self, keyEvent):
+        # 若啟用使用 Shift 鍵切換中英文模式
         if chewingConfig.switchLangWithShift:
+            # 剛才最後一個按下的鍵，和現在放開的鍵，都是 Shift
             if self.lastKeyDownCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
-                # last key down event is also shift key
-                # a <Shift> key down + key up pair was detected switch language
                 pressedDuration = time.time() - self.lastKeyDownTime
-                if pressedDuration < 0.5: # pressed for < 0.5 second
-                    self.toggleLanguageMode()
+                # 按下和放開的時間相隔 < 0.5 秒
+                if pressedDuration < 0.5:
+                    self.toggleLanguageMode()  # 切換中英文模式
         self.lastKeyDownCode = 0
         self.lastKeyDownTime = 0.0
         return False
@@ -397,32 +470,33 @@ class ChewingTextService(TextService):
     def onPreservedKey(self, guid):
         self.lastKeyDownCode = 0;
         # some preserved keys registered are pressed
-        if guid == SHIFT_SPACE_GUID: # shift + space is pressed
-            self.toggleShapeMode()
+        if guid == SHIFT_SPACE_GUID: # 使用者按下 shift + space
+            self.toggleShapeMode()  # 切換全半形
             return True
         return False
 
+    # 使用者按下語言列按鈕
     def onCommand(self, commandId, commandType):
-        # print("onCommand", commandId, commandType)
+        print("onCommand", commandId, commandType)
         # FIXME: We should distinguish left and right click using commandType
-        if commandId == ID_SWITCH_LANG:
+        
+        if commandId == ID_SWITCH_LANG:  # 切換中英文模式
             self.toggleLanguageMode()
-        elif commandId == ID_SWITCH_SHAPE:
+        elif commandId == ID_SWITCH_SHAPE:  # 切換全形/半形
             self.toggleShapeMode()
-        elif commandId == ID_SETTINGS:
-            # launch our configuration tool
-            # Luckily, there is a Windows-only python call for it
+        elif commandId == ID_SETTINGS:  # 開啟設定工具
             config_tool = os.path.join(self.curdir, "config", "config.hta")
             os.startfile(config_tool)
         elif commandId == ID_MODE_ICON: # windows 8 mode icon
-            self.toggleLanguageMode()
+            self.toggleLanguageMode()  # 切換中英文模式
 
+    # 依照目前輸入法狀態，更新語言列顯示
     def updateLangButtons(self):
-        ctx = self.ctx
-        if not ctx:
+        chewingContext = self.chewingContext
+        if not chewingContext:
             return
-        langMode = ctx.get_ChiEngMode()
-        if langMode != self.langMode:
+        langMode = chewingContext.get_ChiEngMode()
+        if langMode != self.langMode:  # 如果中英文模式發生改變
             self.langMode = langMode
             icon_name = "chi.ico" if langMode == CHINESE_MODE else "eng.ico"
             icon_path = os.path.join(self.icon_dir, icon_name)
@@ -433,67 +507,65 @@ class ChewingTextService(TextService):
                 #        WIndows 8 IME guideline and UX guidelines.
                 self.changeButton("windows-mode-icon", icon=icon_path)
 
-        shapeMode = ctx.get_ShapeMode()
-        if shapeMode != self.shapeMode:
+        shapeMode = chewingContext.get_ShapeMode()
+        if shapeMode != self.shapeMode:  # 如果全形半形模式改變
             self.shapeMode = shapeMode
             icon_name = "full.ico" if shapeMode == FULLSHAPE_MODE else "half.ico"
             icon_path = os.path.join(self.icon_dir, icon_name)
             self.changeButton("switch-shape", icon=icon_path)
 
-    #toggle between English and Chinese
+    # 切換中英文模式
     def toggleLanguageMode(self):
-        ctx = self.ctx
-        if ctx:
-            if ctx.get_ChiEngMode() == CHINESE_MODE:
+        chewingContext = self.chewingContext
+        if chewingContext:
+            if chewingContext.get_ChiEngMode() == CHINESE_MODE:
                 new_mode = ENGLISH_MODE
             else:
                 new_mode = CHINESE_MODE
-            ctx.set_ChiEngMode(new_mode)
+            chewingContext.set_ChiEngMode(new_mode)
             self.updateLangButtons()
 
-    # toggle between full shape and half shape
+    # 切換全形/半形
     def toggleShapeMode(self):
-        ctx = self.ctx
-        if ctx:
-            if ctx.get_ShapeMode() == HALFSHAPE_MODE:
+        chewingContext = self.chewingContext
+        if chewingContext:
+            if chewingContext.get_ShapeMode() == HALFSHAPE_MODE:
                 new_mode = FULLSHAPE_MODE
             else:
                 new_mode = HALFSHAPE_MODE
-            ctx.set_ShapeMode(new_mode)
+            chewingContext.set_ShapeMode(new_mode)
             self.updateLangButtons()
 
-    # called when the keyboard is opened or closed
+    # 鍵盤開啟/關閉時會被呼叫 (在 Windows 10 Ctrl+Space 時)
     def onKeyboardStatusChanged(self, opened):
         TextService.onKeyboardStatusChanged(self, opened)
-        if opened: # keyboard is opened
-            self.initChewingContext()
-        else: # keyboard is closed
-            if self.showCandidates: # disable candidate window if it's opened
+        if opened: # 鍵盤開啟
+            self.initChewingContext() # 確保新酷音引擎啟動
+        else: # 鍵盤關閉，輸入法停用
+            # 若選字中，隱藏選字視窗
+            if self.showCandidates:
                 self.setShowCandidates(False)
             # self.hideMessage() # hide message window, if there's any
-            # self.freeChewingContext(); # IME is closed, chewingContext is not needed
+            self.chewingContext = None  # 釋放新酷音引擎資源
 
         # Windows 8 systray IME mode icon
         if self.client.isWindows8Above:
+            # 若鍵盤關閉，我們需要把 widnows 8 mode icon 設定為 disabled
             self.changeButton("windows-mode-icon", enable=opened)
-        # FIXME: should we also disable other language bar buttons as well?
+        # FIXME: 是否需要同時 disable 其他語言列按鈕？
 
-    # called just before current composition is terminated for doing cleanup.
-    # if forced is true, the composition is terminated by others, such as
-    # the input focus is grabbed by another application.
-    # if forced is false, the composition is terminated gracefully.
+    # 當中文編輯結束時會被呼叫。若中文編輯不是正常結束，而是因為使用者
+    # 切換到其他應用程式或其他原因，導致我們的輸入法被強制關閉，此時
+    # forced 參數會是 True，在這種狀況下，要清除一些 buffer
     def onCompositionTerminated(self, forced):
         TextService.onCompositionTerminated(self, forced)
-        # we do special handling here for forced composition termination.
         if forced:
-            # we're still editing our composition and have something in the preedit buffer.
-            # however, some other applications grabs the focus and force us to terminate
-            # our composition.
-            ctx = self.ctx
-            if ctx:
+            # 中文組字到一半被系統強制關閉，清除編輯區內容
+            chewingContext = self.chewingContext
+            if chewingContext:
                 if self.showCandidates:
-                    ctx.cand_close()
-                if ctx.bopomofo_Check():
-                    ctx.clean_bopomofo_buf()
-                if ctx.buffer_Check():
-                    ctx.commit_preedit_buf()
+                    chewingContext.cand_close()
+                if chewingContext.bopomofo_Check():
+                    chewingContext.clean_bopomofo_buf()
+                if chewingContext.buffer_Check():
+                    chewingContext.commit_preedit_buf()

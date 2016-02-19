@@ -171,6 +171,7 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 	rapidjson::Document::ValueType* commitStringVal = nullptr;
 	rapidjson::Document::ValueType* compositionStringVal = nullptr;
 	rapidjson::Document::ValueType* compositionCursorVal = nullptr;
+	rapidjson::Document::ValueType* candCursorVal = nullptr;
 
 	for (auto it = msg.MemberBegin(); it != msg.MemberEnd(); ++it) {
 		const char* name = it->name.GetString();
@@ -209,6 +210,10 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 				else {
 					textService_->hideCandidates();
 				}
+				continue;
+			}
+			else if (it->value.IsInt() && strcmp(name, "candidateCursor") == 0) {
+				candCursorVal = &it->value;
 				continue;
 			}
 		}
@@ -341,6 +346,11 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 				textService_->startComposition(session->context());
 			}
 			textService_->setCompositionCursor(session, compositionCursor);
+		}
+		if (candCursorVal != nullptr) {
+			if (textService_->candidateWindow_ != nullptr) {
+				textService_->candidateWindow_->setCurrentSel(candCursorVal->GetInt());
+			}
 		}
 		if (endComposition && session != nullptr) {
 			textService_->endComposition(session->context());

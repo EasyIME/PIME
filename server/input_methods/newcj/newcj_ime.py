@@ -18,14 +18,17 @@
 from keycodes import * # for VK_XXX constants
 from textService import *
 import os.path
+from .libnewcj import NewCJContext
 
 class NewCJTextService(TextService):
     def __init__(self, client):
         TextService.__init__(self, client)
         self.icon_dir = os.path.abspath(os.path.dirname(__file__))
+        self.newCJContext = None
 
     def onActivate(self):
         TextService.onActivate(self)
+        self.initNewCJContext()
         # Windows 8 systray IME mode icon
         self.addButton("windows-mode-icon",
             icon = os.path.join(self.icon_dir, "chi.ico"),
@@ -85,9 +88,14 @@ class NewCJTextService(TextService):
             if i <= len(self.compositionString):
                 self.setCompositionCursor(i)
         else:
-            self.setCompositionString(self.compositionString + chr(keyEvent.charCode))
+            keyname = self.newCJContext.keyname[chr(keyEvent.charCode)]
+            self.setCompositionString(self.compositionString + keyname)
             self.setCompositionCursor(len(self.compositionString))
         return True
 
     def onCommand(self, commandId, commandType):
         print("onCommand", commandId, commandType)
+
+    def initNewCJContext(self):
+        self.newCJContext = NewCJContext()
+        self.newCJContext.loadTokens()

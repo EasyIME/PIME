@@ -66,6 +66,7 @@ class NewCJTextService(TextService):
             return True
         else:
             if keyEvent.keyCode == VK_DOWN:
+                candidates = self.newCJContext.chardef[self.compositionChar]
                 self.setCandidateList(candidates)
                 self.setShowCandidates(True)
                 return True

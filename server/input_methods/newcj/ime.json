@@ -1,0 +1,10 @@
+{
+	"name":"大新倉頡輸入法",
+	"version": "0.1",
+	"guid": "{D5F17DA0-594A-5897-9B0C-9BA79F000000}",
+	"locale": "zh-TW",
+	"icon": "icon.ico",
+	"win8_icon": "",
+	"moduleName": "newcj_ime",
+	"serviceName": "NewCJTextService"
+}

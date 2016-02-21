@@ -1,6 +1,4 @@
 #! python3
-# Copyright (C) 2015 - 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
-#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -21,6 +19,7 @@ import os.path
 from .libnewcj import NewCJContext
 
 class NewCJTextService(TextService):
+    compositionChar = ""
     def __init__(self, client):
         TextService.__init__(self, client)
         self.icon_dir = os.path.abspath(os.path.dirname(__file__))
@@ -74,9 +73,11 @@ class NewCJTextService(TextService):
         if not self.isComposing():
             if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
                 return False
-        if keyEvent.keyCode == VK_RETURN or len(self.compositionString) > 10:
-            self.setCommitString(self.compositionString)
+        if keyEvent.keyCode == VK_SPACE or keyEvent.keyCode == VK_RETURN or len(self.compositionString) > 5:
+            commitString = self.newCJContext.chardef[self.compositionChar][0]
+            self.setCommitString(commitString)
             self.setCompositionString("")
+            self.compositionChar = ""
         elif keyEvent.keyCode == VK_BACK and self.compositionString != "":
             self.setCompositionString(self.compositionString[:-1])
         elif keyEvent.keyCode == VK_LEFT:
@@ -88,6 +89,7 @@ class NewCJTextService(TextService):
             if i <= len(self.compositionString):
                 self.setCompositionCursor(i)
         else:
+            self.compositionChar = self.compositionChar + chr(keyEvent.charCode)
             keyname = self.newCJContext.keyname[chr(keyEvent.charCode)]
             self.setCompositionString(self.compositionString + keyname)
             self.setCompositionCursor(len(self.compositionString))

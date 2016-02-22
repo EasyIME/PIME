@@ -46,15 +46,19 @@ class NewCJTextService(TextService):
 
     def filterKeyDown(self, keyEvent):
 		# 看不見的符號通通不處理
-        if not keyEvent.isPrintableChar():
+        if not keyEvent.isPrintableChar() and keyEvent.keyCode != VK_DOWN:
             return False
-		# 選字單出現時，需要處理0~9按鍵
-        if self.isComposing() and self.isNumberChar(keyEvent.keyCode):
-            return True
+		# 要處理0~9按鍵
+        if self.isNumberChar(keyEvent.keyCode):
+            tmp = self.isComposing()
+            return self.isComposing()
         return True
 
     def onKeyDown(self, keyEvent):
-        candidates = self.newCJContext.chardef[self.compositionChar]
+        if self.compositionChar in self.newCJContext.chardef:
+            candidates = self.newCJContext.chardef[self.compositionChar]
+        else:
+            self.resetComposition()
         commitString = ''
         # handle candidate list
         if self.showCandidates:
@@ -86,8 +90,7 @@ class NewCJTextService(TextService):
             if self.commitString == '':
                 self.commitString = self.newCJContext.chardef[self.compositionChar][0]
             self.setCommitString(self.commitString)
-            self.setCompositionString("")
-            self.compositionChar = ""
+            self.resetComposition()
         elif keyEvent.keyCode == VK_BACK and self.compositionString != "":
             self.setCompositionString(self.compositionString[:-1])
         elif keyEvent.keyCode == VK_LEFT:
@@ -110,7 +113,11 @@ class NewCJTextService(TextService):
         print("onCommand", commandId, commandType)
 
     def isNumberChar(self, keyCode):
-        return self.charCode >= 0x30 and self.charCode <= 0x39
+        return keyCode >= 0x30 and keyCode <= 0x39
+
+    def resetComposition(self):
+        self.compositionChar = ''
+        self.setCompositionString('')
 
     def initNewCJContext(self):
         self.newCJContext = NewCJContext()

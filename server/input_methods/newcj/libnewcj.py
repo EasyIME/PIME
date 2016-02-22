@@ -15,10 +15,9 @@ KEYNAME_END = 0x02
 CHARDEF_BEGIN = 0x03
 CHARDEF_END = 0x04
 
-
-
 class NewCJContext:
 	chardef = dict()
+	chardef[''] = ''
 	keyname = dict()
 	properties = dict()
 	state = ''
@@ -64,6 +63,5 @@ class NewCJContext:
 				elif state == KEYNAME_BEGIN:
 					outputWord = tokens[1].replace('\n', '');
 					self.keyname[tokens[0]] = outputWord;
-
 		# Close opend file
 		fo.close();

@@ -19,6 +19,8 @@ import os.path
 from .libnewcj import NewCJContext
 
 class NewCJTextService(TextService):
+    # compositionChar 是a, b, c, d...
+    # compositionString是日, 月, 金, 木, 水, 火, 土...
     compositionChar = ""
     def __init__(self, client):
         TextService.__init__(self, client)
@@ -43,30 +45,36 @@ class NewCJTextService(TextService):
         self.removeButton("test-btn")
 
     def filterKeyDown(self, keyEvent):
-        if not self.isComposing():
-            if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
-                return False
+		# 看不見的符號通通不處理
+        if not keyEvent.isPrintableChar():
+            return False
+		# 選字單出現時，需要處理0~9按鍵
+        if self.isComposing() and self.isNumberChar(keyEvent.keyCode):
+            return True
         return True
 
     def onKeyDown(self, keyEvent):
-        candidates = ["喵", "描", "秒", "妙"]
+        candidates = self.newCJContext.chardef[self.compositionChar]
+        commitString = ''
         # handle candidate list
         if self.showCandidates:
+            candLengthStr = str(len(candidates))
+            if len(candidates) > 9:
+                print('length of candidates > 9 !!!')
             if keyEvent.keyCode == VK_UP or keyEvent.keyCode == VK_ESCAPE:
                 self.setShowCandidates(False)
-            elif keyEvent.keyCode >= ord('1') and keyEvent.keyCode <= ord('4'):
+            elif keyEvent.keyCode >= ord('1') and keyEvent.keyCode <= ord('9'):
                 i = keyEvent.keyCode - ord('1')
                 cand = candidates[i]
                 i = self.compositionCursor - 1
                 if i < 0:
                     i = 0
-                s = self.compositionString[0:i] + cand + self.compositionString[i + 1:]
-                self.setCompositionString(s)
+                self.commitString = self.compositionString[0:i] + cand + self.compositionString[i + 1:]
+                self.setCompositionString(self.commitString)
                 self.setShowCandidates(False)
             return True
         else:
             if keyEvent.keyCode == VK_DOWN:
-                candidates = self.newCJContext.chardef[self.compositionChar]
                 self.setCandidateList(candidates)
                 self.setShowCandidates(True)
                 return True
@@ -75,8 +83,9 @@ class NewCJTextService(TextService):
             if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
                 return False
         if keyEvent.keyCode == VK_SPACE or keyEvent.keyCode == VK_RETURN or len(self.compositionString) > 5:
-            commitString = self.newCJContext.chardef[self.compositionChar][0]
-            self.setCommitString(commitString)
+            if self.commitString == '':
+                self.commitString = self.newCJContext.chardef[self.compositionChar][0]
+            self.setCommitString(self.commitString)
             self.setCompositionString("")
             self.compositionChar = ""
         elif keyEvent.keyCode == VK_BACK and self.compositionString != "":
@@ -90,14 +99,18 @@ class NewCJTextService(TextService):
             if i <= len(self.compositionString):
                 self.setCompositionCursor(i)
         else:
-            self.compositionChar = self.compositionChar + chr(keyEvent.charCode)
-            keyname = self.newCJContext.keyname[chr(keyEvent.charCode)]
+            char = chr(keyEvent.charCode).lower()
+            self.compositionChar += char
+            keyname = self.newCJContext.keyname[char]
             self.setCompositionString(self.compositionString + keyname)
             self.setCompositionCursor(len(self.compositionString))
         return True
 
     def onCommand(self, commandId, commandType):
         print("onCommand", commandId, commandType)
+
+    def isNumberChar(self, keyCode):
+        return self.charCode >= 0x30 and self.charCode <= 0x39
 
     def initNewCJContext(self):
         self.newCJContext = NewCJContext()

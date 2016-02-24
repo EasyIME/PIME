@@ -26,7 +26,7 @@ class NewCJContext:
 		pass
 
 	def loadTokens(self):
-		lib_path = os.path.join(os.path.dirname(__file__), "newcj.txt")
+		lib_path = os.path.join(os.path.dirname(__file__), "newcj.cin")
 		fo = open(lib_path, mode="r", encoding="utf-8")
 		print("Name of the file: ", fo.name);
 		while True:

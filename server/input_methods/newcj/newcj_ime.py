@@ -131,13 +131,19 @@ class NewCJTextService(TextService):
                 return False
 
         # 檢查按下的鍵是否為自由大新定義的符號
-        if self.isNewCJChardef(keyEvent.keyCode):
+        if self.isNewCJChardef(keyEvent.charCode):
+            print('isNewCJChardef')
             return True
 
         # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
         return False
 
     def onKeyDown(self, keyEvent):
+        newCJContext = self.newCJContext
+        charCode = keyEvent.charCode
+        keyCode = keyEvent.keyCode
+        charStr = chr(charCode)
+
         candidates = []
         if self.compositionChar in self.newCJContext.chardef:
             candidates = self.newCJContext.chardef[self.compositionChar]
@@ -152,10 +158,10 @@ class NewCJTextService(TextService):
             candLengthStr = str(len(candidates))
             if len(candidates) > 9:
                 print('length of candidates > 9 !!!')
-            if keyEvent.keyCode == VK_UP or keyEvent.keyCode == VK_ESCAPE:
+            if keyCode == VK_UP or keyCode == VK_ESCAPE:
                 self.setShowCandidates(False)
-            elif keyEvent.keyCode >= ord('1') and keyEvent.keyCode <= ord('9'):
-                i = keyEvent.keyCode - ord('1')
+            elif keyCode >= ord('1') and keyCode <= ord('9'):
+                i = keyCode - ord('1')
                 cand = candidates[i]
                 i = self.compositionCursor - 1
                 if i < 0:
@@ -165,32 +171,32 @@ class NewCJTextService(TextService):
                 self.setShowCandidates(False)
             return True
         else:
-            if keyEvent.keyCode == VK_DOWN:
+            if keyCode == VK_DOWN:
                 self.setCandidateList(candidates)
                 self.setShowCandidates(True)
                 return True
         # handle normal keyboard input
         if not self.isComposing():
-            if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
+            if keyCode == VK_RETURN or keyCode == VK_BACK:
                 return False
-        if keyEvent.keyCode == VK_SPACE or keyEvent.keyCode == VK_RETURN or len(self.compositionString) > 5:
+        if keyCode == VK_SPACE or keyCode == VK_RETURN or len(self.compositionString) > 5:
             if self.commitString == '' and len(self.newCJContext.chardef[self.compositionChar]) >= 1:
                 self.commitString = self.newCJContext.chardef[self.compositionChar][0]
             self.setCommitString(self.commitString)
             print('commitString: ' + self.commitString)
             self.resetComposition()
-        elif keyEvent.keyCode == VK_BACK and self.compositionString != "":
+        elif keyCode == VK_BACK and self.compositionString != "":
             self.setCompositionString(self.compositionString[:-1])
-        elif keyEvent.keyCode == VK_LEFT:
+        elif keyCode == VK_LEFT:
             i = self.compositionCursor - 1
             if i >= 0:
                 self.setCompositionCursor(i)
-        elif keyEvent.keyCode == VK_RIGHT:
+        elif keyCode == VK_RIGHT:
             i = self.compositionCursor + 1
             if i <= len(self.compositionString):
                 self.setCompositionCursor(i)
         else:
-            char = chr(keyEvent.charCode).lower()
+            char = charStr.lower()
             self.compositionChar += char
             if char in self.newCJContext.keyname:
                 keyname = self.newCJContext.keyname[char]
@@ -214,5 +220,9 @@ class NewCJTextService(TextService):
         self.newCJContext.loadTokens()
         print('load tokens')
 
-    def isNewCJChardef(self, keyCode):
-        return chr(keyCode).lower() in self.newCJContext.chardef
+    def isNewCJChardef(self, charCode):
+        if charCode < 33:
+            return False
+        h = hex(charCode).split('x')[1]
+        charStr = bytearray.fromhex(str(h)).decode()
+        return charStr in self.newCJContext.chardef

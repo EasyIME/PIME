@@ -91,12 +91,51 @@ class NewCJTextService(TextService):
             self.removeButton("windows-mode-icon")
 
     def filterKeyDown(self, keyEvent):
-        if not keyEvent.isPrintableChar() and keyEvent.keyCode != VK_DOWN or keyEvent.keyCode == VK_RWIN:
+		# 使用者開始輸入，還沒送出前的編輯區內容稱 composition string
+        # isComposing() 是 False，表示目前編輯區是空的
+        # 若正在編輯中文，則任何按鍵我們都需要送給輸入法處理，直接 return True
+        # 另外，若使用 "`" key 輸入特殊符號，可能會有編輯區是空的
+        # 但選字清單開啟，輸入法需要處理的情況
+		# TODO: 是否讓Ctrl+A, Ctrl+C, Ctrl+V 在這時可以用？
+        if self.isComposing() or self.showCandidates:
+            return True
+        # --------------   以下都是「沒有」正在輸入中文的狀況   --------------
+
+        # 如果按下 Alt, Ctrl, Shift 鍵
+        if keyEvent.isKeyDown(VK_MENU) or keyEvent.isKeyDown(VK_CONTROL) or keyEvent.isKeyDown(VK_SHIFT):
             return False
-		# 要處理0~9按鍵
-        if self.isNumberChar(keyEvent.keyCode):
-            return self.showCandidates or self.isComposing()
-        return True
+
+        # 不論中英文模式，NumPad 都允許直接輸入數字，輸入法不處理
+        if keyEvent.isKeyToggled(VK_NUMLOCK): # NumLock is on
+            # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
+            if keyEvent.keyCode >= VK_NUMPAD0 and keyEvent.keyCode <= VK_DIVIDE:
+                return False # bypass IME
+
+        # 不管中英文模式，只要是全形，輸入法都需要進一步處理(英數字從半形轉為全形)
+        if self.shapeMode == FULLSHAPE_MODE:
+            return True
+        # --------------   以下皆為半形模式   --------------
+
+        # 如果是英文半形模式，輸入法不做任何處理
+        if self.langMode == ENGLISH_MODE:
+            return False
+        # --------------   以下皆為中文模式   --------------
+
+        # 中文模式下開啟 Capslock，須切換成英文
+        if keyEvent.isKeyToggled(VK_CAPITAL):
+            # 如果此按鍵是英文字母，中文模式下要從大寫轉小寫，需要輸入法處理
+            if keyEvent.isChar() and chr(keyEvent.charCode).isalpha():
+                return True
+            # 是其他符號或數字，則視同英文模式，不用處理
+            else:
+                return False
+
+        # 檢查按下的鍵是否為自由大新定義的符號
+        if self.isNewCJChardef(keyEvent.keyCode):
+            return True
+
+        # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
+        return False
 
     def onKeyDown(self, keyEvent):
         candidates = []
@@ -174,3 +213,6 @@ class NewCJTextService(TextService):
         self.newCJContext = NewCJContext()
         self.newCJContext.loadTokens()
         print('load tokens')
+
+    def isNewCJChardef(self, keyCode):
+        return chr(keyCode).lower() in self.newCJContext.chardef

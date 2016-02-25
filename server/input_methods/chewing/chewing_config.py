@@ -55,7 +55,7 @@ class ChewingConfig:
         # self.phraseMark = True
         self.escCleanAllBuf = True
         self.easySymbolsWithShift = True
-        self.easySymbolsWithCtrl = True
+        self.easySymbolsWithCtrl = False
         self.upperCaseWithShift = True
 
         # version: last modified time of (config.json, symbols.dat, swkb.dat)

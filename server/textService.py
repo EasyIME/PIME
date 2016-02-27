@@ -62,9 +62,7 @@ class KeyEvent:
     def isChar(self):
         return (self.charCode != 0)
 
-    def isPrintableChar(self, includingSpace = False):
-        if includingSpace and self.charCode == ord(' '):
-            return True
+    def isPrintableChar(self):
         return self.charCode > 0x1f and self.charCode != 0x7f
 
 

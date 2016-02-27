@@ -178,6 +178,7 @@ function updateConfig() {
 // jQuery ready
 $(function() {
     loadConfig();
+    $(document).tooltip();
     $("#tabs").tabs({heightStyle:"auto"});
 
     $("#candPerRow").spinner({min:1, max:10});

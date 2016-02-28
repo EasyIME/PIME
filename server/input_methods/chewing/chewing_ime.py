@@ -246,9 +246,10 @@ class ChewingTextService(TextService):
             if keyEvent.keyCode >= VK_NUMPAD0 and keyEvent.keyCode <= VK_DIVIDE:
                 return False # bypass IME
 
-        # 不管中英文模式，只要是全形，輸入法都需要進一步處理(英數字從半形轉為全形)
+        # 不管中英文模式，只要是全形可見字元或空白，輸入法都需要進一步處理(半形轉為全形)
         if self.shapeMode == FULLSHAPE_MODE:
-            return True
+            return (keyEvent.isPrintableChar() or keyEvent.keyCode == VK_SPACE)
+
         # --------------   以下皆為半形模式   --------------
 
         # 如果是英文半形模式，輸入法不做任何處理

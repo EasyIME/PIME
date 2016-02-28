@@ -148,7 +148,7 @@ class NewCJTextService(TextService):
 
 		candidates = []
 		if self.compositionChar in self.newCJContext.chardef:
-			candidates = self.newCJContext.cshardef[self.compositionChar]
+			candidates = self.newCJContext.chardef[self.compositionChar]
 		else:
 			self.resetComposition()
 		print('candidates: ', end='')
@@ -222,6 +222,7 @@ class NewCJTextService(TextService):
 		self.newCJContext.loadTokens()
 		print('load tokens')
 
+	# 確認是否是大新自由的字
 	def isNewCJChardef(self, charCode):
 		if charCode < 33:
 			return False

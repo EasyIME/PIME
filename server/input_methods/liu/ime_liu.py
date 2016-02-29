@@ -1,105 +1,104 @@
 #! python3
-# Copyright (C) 2015 - 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+# copyright (c) 2015 - 2016 hong jen yee (pcman) <pcman.tw@gmail.com>
 #
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
+# this library is free software; you can redistribute it and/or
+# modify it under the terms of the gnu lesser general public
+# license as published by the free software foundation; either
+# version 2.1 of the license, or (at your option) any later version.
 #
-# This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
+# this library is distributed in the hope that it will be useful,
+# but without any warranty; without even the implied warranty of
+# merchantability or fitness for a particular purpose.  see the gnu
+# lesser general public license for more details.
 #
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+# you should have received a copy of the gnu lesser general public
+# license along with this library; if not, write to the free software
+# foundation, inc., 51 franklin street, fifth floor, boston, ma  02110-1301  usa
 
-from keycodes import * # for VK_XXX constants
-from textService import *
-from cin import Cin
+from keycodes import * # for vk_xxx constants
+from textservice import *
+from cin import cin
 import os.path
 
-class LiuTextService(TextService):
+class liutextservice(textservice):
     def __init__(self, client):
-        TextService.__init__(self, client)
+        textservice.__init__(self, client)
 
-	base_dir = os.path.abspath(os.path.dirname(__file__))
+        base_dir = os.path.abspath(os.path.dirname(__file__))
 
         self.icon_dir = base_path
 
         input_table_path = os.path.join(base_dir, 'liu.cin')
         with open(input_table_path) as f:
-            self.cin = Cin(f)
-	
+            self.cin = cin(f)
 
-    def onActivate(self):
-        TextService.onActivate(self)
-        # Windows 8 systray IME mode icon
-        self.addButton("windows-mode-icon",
+
+    def onactivate(self):
+        textservice.onactivate(self)
+        # windows 8 systray ime mode icon
+        self.addbutton("windows-mode-icon",
             icon = os.path.join(self.icon_dir, "chi.ico"),
-            tooltip = "Liu !",
-            commandId = 1
+            tooltip = "liu !",
+            commandid = 1
         )
-        self.customizeUI(candFontSize = 20, candPerRow = 1)
-        
-        if self.cin.getSelection():
-            self.setSelKeys(self.cin.getSelection())
+        self.customizeui(candfontsize = 20, candperrow = 1)
 
-    def onDeactivate(self):
-        TextService.onDeactivate(self)
-        self.removeButton("test-btn")
+        if self.cin.getselection():
+            self.setselkeys(self.cin.getselection())
 
-    # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
-    # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
-    def filterKeyDown(self, keyEvent):
+    def ondeactivate(self):
+        textservice.ondeactivate(self)
+        self.removebutton("test-btn")
 
-        if not self.isComposing():
-            if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
-                return False
+    # return true，系統會呼叫 onkeydown() 進一步處理這個按鍵
+    # return false，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
+    def filterkeydown(self, keyevent):
 
-        # 如果按下 Alt，可能是應用程式熱鍵，輸入法不做處理
-        if keyEvent.isKeyDown(VK_MENU):
-            return False
+        if not self.iscomposing():
+            if keyevent.keycode == vk_return or keyevent.keycode == vk_back:
+                return false
 
-        # 如果按下 Ctrl 鍵
-        if keyEvent.isKeyDown(VK_CONTROL):
-            else: # 否則可能是應用程式熱鍵，輸入法不做處理
-                return False
+        # 如果按下 alt，可能是應用程式熱鍵，輸入法不做處理
+        if keyevent.iskeydown(vk_menu):
+            return false
 
-        return True
+        # 如果按下 ctrl 鍵
+        if keyevent.iskeydown(vk_control):
+            return false
 
-    def onKeyDown(self, keyEvent):
+        return true
+
+    def onkeydown(self, keyevent):
 
         # handle normal keyboard input
-        if not self.isComposing():
-            if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
-                return False
+        if not self.iscomposing():
+            if keyevent.keycode == vk_return or keyevent.keycode == vk_back:
+                return false
 
-        if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_SPACE or len(self.compositionString) > 10:
-            self.setCommitString(self.compositionString)
-            self.setCompositionString("")
+        if keyevent.keycode == vk_return or keyevent.keycode == vk_space or len(self.compositionstring) > 10:
+            self.setcommitstring(self.compositionstring)
+            self.setcompositionstring("")
 
-        elif keyEvent.keyCode == VK_BACK and self.compositionString != "":
-            self.setCompositionString(self.compositionString[:-1])
+        elif keyevent.keycode == vk_back and self.compositionstring != "":
+            self.setcompositionstring(self.compositionstring[:-1])
 
-        elif keyEvent.keyCode == VK_LEFT:
-            i = self.compositionCursor - 1
+        elif keyevent.keycode == vk_left:
+            i = self.compositioncursor - 1
             if i >= 0:
-                self.setCompositionCursor(i)
-        elif keyEvent.keyCode == VK_RIGHT:
-            i = self.compositionCursor + 1
-            if i <= len(self.compositionString):
-                self.setCompositionCursor(i)
+                self.setcompositioncursor(i)
+        elif keyevent.keycode == vk_right:
+            i = self.compositioncursor + 1
+            if i <= len(self.compositionstring):
+                self.setcompositioncursor(i)
         else:
 
-            char_code = keyEvent.charCode
+            char_code = keyevent.charcode
             new_character = chr(char_code)
 
-            self.setCompositionString(self.compositionString + new_character)
-            self.setCompositionCursor(len(self.compositionString))
+            self.setcompositionstring(self.compositionstring + new_character)
+            self.setcompositioncursor(len(self.compositionstring))
 
-        return True
+        return true
 
-    def onCommand(self, commandId, commandType):
-        print("onCommand", commandId, commandType)
+    def oncommand(self, commandid, commandtype):
+        print("oncommand", commandid, commandtype)

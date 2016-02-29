@@ -10,6 +10,15 @@ Code in these directories are licensed under LGPL 2.0:
   server
 
 The following components are from other projects:
-  python: Embeddable version of python 3.5 is licensed under PSF.
+  python:
+    Embeddable version of python 3.5 is licensed under PSF.
+    https://www.python.org/
 
-  rapidjson: C++ library used to parse and write json data licensed under BSD.
+  rapidjson:
+    C++ library used to parse and write json data licensed under BSD.
+    http://rapidjson.org/
+
+  server/opencc:
+    OpenCC is a library used to convert between traditional and simplified
+    Chinese licensed under Apache 2.0 license.
+    https://github.com/BYVoid/OpenCC

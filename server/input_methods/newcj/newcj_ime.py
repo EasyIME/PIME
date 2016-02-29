@@ -38,6 +38,7 @@ class NewCJTextService(TextService):
 		TextService.__init__(self, client)
 		self.curdir = os.path.abspath(os.path.dirname(__file__))
 		self.icon_dir = self.curdir
+		print('icon_dir: ' + self.icon_dir)
 
 		self.langMode = -1
 		self.shapeMode = -1
@@ -224,7 +225,7 @@ class NewCJTextService(TextService):
 
 	# 確認是否是大新自由的字
 	def isNewCJChardef(self, charCode):
-		if charCode < 33:
+		if charCode < 33 or charCode == 127:
 			return False
 		h = hex(charCode).split('x')[1]
 		charStr = bytearray.fromhex(str(h)).decode()

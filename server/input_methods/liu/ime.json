@@ -1,0 +1,10 @@
+{
+	"name":"蝦米輸入法",
+	"version": "0.1",
+	"guid": "{97aea8e7-7840-42aa-87ef-83edc91631f8}",
+	"locale": "zh-TW",
+	"icon": "icon.ico",
+	"win8_icon": "",
+	"moduleName": "ime_liu",
+	"serviceName": "LiuTextService"
+}

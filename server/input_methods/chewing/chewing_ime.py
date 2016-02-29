@@ -21,6 +21,7 @@ import os.path
 import time
 from .libchewing import ChewingContext
 from .chewing_config import chewingConfig
+import opencc  # OpenCC 繁體簡體中文轉換
 
 # from libchewing/include/global.h
 CHINESE_MODE = 1
@@ -68,6 +69,9 @@ class ChewingTextService(TextService):
         self.lastKeyDownTime = 0.0
         self.configVersion = chewingConfig.getVersion()
 
+        # 使用 OpenCC 繁體中文轉簡體
+        self.opencc = None
+
     # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):
         cfg = chewingConfig
@@ -112,6 +116,12 @@ class ChewingTextService(TextService):
 
         # 設定選字按鍵 (123456..., asdf.... 等)
         self.setSelKeys(cfg.getSelKeys())
+
+        # 轉換成簡體中文，建立 OpenCC instance
+        if cfg.outputSimpChinese and not self.opencc:
+            self.opencc = opencc.OpenCC(opencc.OPENCC_DEFAULT_CONFIG_TRAD_TO_SIMP)
+        else:
+            self.opencc = None
 
     # 初始化新酷音輸入法引擎
     def initChewingContext(self):
@@ -412,6 +422,12 @@ class ChewingTextService(TextService):
             # 有輸入完成的中文字串要送出(commit)到應用程式
             if chewingContext.commit_Check():
                 commitStr = chewingContext.commit_String().decode("UTF-8")
+                
+                # 如果使用打繁出簡，就轉成簡體中文
+                # TODO: 讓每個 chewing instance 能個別設定是否要輸出簡體
+                if cfg.outputSimpChinese:
+                    commitStr = self.opencc.convert(commitStr)
+
                 self.setCommitString(commitStr)  # 設定要輸出的 commit string
 
             # 編輯區正在輸入中，尚未送出的中文字串 (composition string)

@@ -294,7 +294,8 @@ class ChewingTextService(TextService):
         # 某些狀況下，需要暫時強制切成英文模式，之後再恢復
         temporaryEnglishMode = False
         oldLangMode = chewingContext.get_ChiEngMode()
-        ignoreKey = False  # 是否須忽略這個按鍵
+        ignoreKey = False  # 新酷音是否須忽略這個按鍵
+        keyHandled = False # 輸入法是否有處理這個按鍵
 
         # 使用 Ctrl 或 Shift 鍵做快速符號輸入 (easy symbol input)
         # 這裡的 easy symbol input，是定義在 swkb.dat 設定檔中的符號
@@ -307,6 +308,7 @@ class ChewingTextService(TextService):
 
         # 若目前輸入的按鍵是可見字元 (字母、數字、標點...等)
         if keyEvent.isPrintableChar():
+            keyHandled = True
             invertCase = False  # 是否需要反轉大小寫
 
             # 中文模式下須特別處理 CapsLock 和 Shift 鍵
@@ -358,8 +360,6 @@ class ChewingTextService(TextService):
                 else : # 其他按鍵不需要特殊處理
                     chewingContext.handle_Default(charCode)
         else:  # 不可見字元 (方向鍵, Enter, Page Down...等等)
-            keyHandled = False
-
             # 如果有啟用在選字視窗內移動游標選字，而且目前正在選字
             if cfg.cursorCandList and self.showCandidates:
                 candCursor = self.candidateCursor  # 目前的游標位置
@@ -397,14 +397,15 @@ class ChewingTextService(TextService):
                     methodName = "handle_" + keyName
                     method = getattr(chewingContext, methodName)
                     method()
+                    keyHandled = True
                 else: # 我們不需要處理的按鍵，直接忽略
                     ignoreKey = True
 
-        # 新酷音引擎判斷此按鍵忽略不處理
-        if chewingContext.keystroke_CheckIgnore():
+        # 新酷音引擎忽略不處理此按鍵
+        if keyHandled and chewingContext.keystroke_CheckIgnore():
             ignoreKey = True
 
-        if not ignoreKey:  # 如果這個按鍵是有意義的，需要處理 (不可忽略)
+        if not ignoreKey:  # 如果這個按鍵是有意義的，新酷音有做處理 (不可忽略)
             # 處理選字清單
             if chewingContext.cand_TotalChoice() > 0: # 若有候選字/詞
                 candidates = []
@@ -472,7 +473,7 @@ class ChewingTextService(TextService):
         # 依照目前狀態，更新語言列顯示的圖示
         self.updateLangButtons()
 
-        return (not ignoreKey)  # 告知系統我們是否有處理這個按鍵
+        return keyHandled  # 告知系統我們是否有處理這個按鍵
 
     # 使用者放開按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
     # return True，系統會呼叫 onKeyUp() 進一步處理這個按鍵

@@ -42,7 +42,9 @@ class LiuTextService(TextService):
             commandId = 1
         )
         self.customizeUI(candFontSize = 20, candPerRow = 1)
-        self.setSelKeys("1234567890")
+
+        if self.cin.getSelection():
+            self.setSelKeys(self.cin.getSelection())
         # self.setSelKeys("asdfjkl;")
 
     def onDeactivate(self):

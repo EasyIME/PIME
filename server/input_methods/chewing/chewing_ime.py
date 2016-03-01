@@ -278,7 +278,7 @@ class ChewingTextService(TextService):
 
         # 中文模式下，當中文編輯區是空的，輸入法只需處理注音符號
         # FIXME: 應該檢查按下的鍵是否為注音，不過大略可用是否為 printable char 代替
-        if keyEvent.isPrintableChar():
+        if keyEvent.isPrintableChar() and keyEvent.keyCode != VK_SPACE:
             return True
 
         # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
@@ -343,7 +343,13 @@ class ChewingTextService(TextService):
                         charCode = ord(charStr.lower())
                     chewingContext.handle_Default(charCode)
                 elif keyEvent.keyCode == VK_SPACE: # 空白鍵
-                    chewingContext.handle_Space()
+                    # NOTE: libchewing 有 bug: 當啟用 "使用空白鍵選字" 時，chewing_handle_Space()
+                    # 會忽略空白鍵，造成打不出空白。因此在此只有當 composition string 有內容
+                    # 有需要選字時，才呼叫 handle_Space()，否則改用 handle_Default()，以免空白鍵被吃掉
+                    if self.isComposing():
+                        chewingContext.handle_Space()
+                    else:
+                        chewingContext.handle_Default(charCode)
                 elif keyEvent.isKeyDown(VK_CONTROL) and charStr.isdigit(): # Ctrl + 數字(0-9)
                     chewingContext.handle_CtrlNum(charCode)
                 elif keyEvent.isKeyToggled(VK_NUMLOCK) and keyCode >= VK_NUMPAD0 and keyCode <= VK_DIVIDE:

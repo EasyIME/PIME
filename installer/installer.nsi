@@ -140,7 +140,7 @@ Function ensureVCRedist
         MessageBox MB_YESNO|MB_ICONQUESTION "這個程式需要微軟 VC++ 2015 runtime 更新才能運作，要自動下載安裝？" IDYES +2
             Abort ; this is skipped if the user select Yes
         ; Download VC++ 2015 redistibutable (x86 version)
-        nsisdl::download "http://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe" "$TEMP\vc_redist.x86.exe"
+        nsisdl::download "http://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe" "$TEMP\vc2015_redist.x86.exe"
         Pop $R0 ;Get the return value
         ${If} $R0 != "success"
             MessageBox MB_ICONSTOP|MB_OK "無法正確下載，請稍後再試，或手動安裝 VC++ 2015 runtime (x86)"
@@ -148,7 +148,7 @@ Function ensureVCRedist
         ${EndIf}
 
         ; Run vcredist installer
-        ExecWait "$TEMP\vc_redist.x86.exe" $0
+        ExecWait "$TEMP\vc2015_redist.x86.exe" $0
 
         ; check again is ucrtbase.dll is available
         ${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
@@ -157,6 +157,29 @@ Function ensureVCRedist
             Abort
         ${EndIf}
     ${EndIf}
+
+	; Check if we have VC++ 2013 runtime (required by OpenCC library)
+	${IfNot} ${FileExists} "$SYSDIR\msvcr120.dll"
+        MessageBox MB_YESNO|MB_ICONQUESTION "這個程式需要微軟 VC++ 2013 runtime 才能運作，要自動下載安裝？" IDYES +2
+            Abort ; this is skipped if the user select Yes
+        ; Download VC++ 2013 redistibutable (x86 version)
+        nsisdl::download "https://download.microsoft.com/download/8/1/6/816C537F-BE60-4341-883B-84D143D0AE96/vcredist_x86.exe" "$TEMP\vc2013_redist.x86.exe"
+        Pop $R0 ;Get the return value
+        ${If} $R0 != "success"
+            MessageBox MB_ICONSTOP|MB_OK "無法正確下載，請稍後再試，或手動安裝 VC++ 2015 runtime (x86)"
+            Abort
+        ${EndIf}
+
+        ; Run vcredist installer
+        ExecWait "$TEMP\vc2013_redist.x86.exe" $0
+
+        ; check again is msvcr120.dll is available
+        ${IfNot} ${FileExists} "$SYSDIR\msvcr120.dll"
+            MessageBox MB_ICONSTOP|MB_OK "VC++ 2013 runtime (x86) 並未正確安裝，請參閱相關微軟文件進行更新。"
+            ExecShell "open" "https://www.microsoft.com/zh-TW/download/details.aspx?id=40784"
+            Abort
+        ${EndIf}
+	${EndIf}
 FunctionEnd
 
 ;Installer Sections

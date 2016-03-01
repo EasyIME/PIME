@@ -14,15 +14,24 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-
+from __future__ import print_function
 from keycodes import * # for VK_XXX constants
 from textService import *
+import io
 import os.path
+from .cin import Cin
 
 class LiuTextService(TextService):
     def __init__(self, client):
         TextService.__init__(self, client)
-        self.icon_dir = os.path.abspath(os.path.dirname(__file__))
+
+        self.icon_dir = base_dir = os.path.abspath(os.path.dirname(__file__))
+
+        liu_path = os.path.join(base_dir, "liu.cin")
+        with io.open(liu_path, encoding='utf-8') as fs:
+            self.cin = Cin(fs)
+
+        print("finish loading")
 
     def onActivate(self):
         TextService.onActivate(self)

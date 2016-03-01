@@ -72,7 +72,7 @@ class LiuTextService(TextService):
             if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
                 return False
 
-        if keyEvent.keyCode == VK_RETURN or len(self.compositionString) > 10:
+        if keyEvent.keyCode == VK_SPACE or len(self.compositionString) > 10:
             self.setCommitString(self.compositionString)
             self.setCompositionString("")
 

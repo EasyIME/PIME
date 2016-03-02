@@ -15,6 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 from __future__ import print_function
+from __future__ import unicode_literals
 from keycodes import * # for VK_XXX constants
 from textService import *
 import io
@@ -58,33 +59,17 @@ class LiuTextService(TextService):
         return True
 
     def onKeyDown(self, keyEvent):
-        candidates = ["喵", "描", "秒", "妙"]
-        # handle candidate list
-        if self.showCandidates:
-            if keyEvent.keyCode == VK_UP or keyEvent.keyCode == VK_ESCAPE:
-                self.setShowCandidates(False)
-            elif keyEvent.keyCode >= ord('1') and keyEvent.keyCode <= ord('4'):
-                i = keyEvent.keyCode - ord('1')
-                cand = candidates[i]
-                i = self.compositionCursor - 1
-                if i < 0:
-                    i = 0
-                s = self.compositionString[0:i] + cand + self.compositionString[i + 1:]
-                self.setCompositionString(s)
-                self.setShowCandidates(False)
-            return True
-        else:
-            if keyEvent.keyCode == VK_DOWN:
-                self.setCandidateList(candidates)
-                self.setShowCandidates(True)
-                return True
+
         # handle normal keyboard input
         if not self.isComposing():
             if keyEvent.keyCode == VK_RETURN or keyEvent.keyCode == VK_BACK:
                 return False
 
         if keyEvent.keyCode == VK_SPACE or len(self.compositionString) > 10:
-            self.setCommitString(self.compositionString)
+
+            candidates = self.cin.getCharDef(self.compositionString)
+
+            self.setCommitString(candidates[0])
             self.setCompositionString("")
 
         elif keyEvent.keyCode == VK_BACK and self.compositionString != "":
@@ -106,8 +91,21 @@ class LiuTextService(TextService):
             charStr = chr(charCode)
 
             self.setCompositionString(self.compositionString + charStr)
+
+            candidates = self.cin.getCharDef(self.compositionString)
+
+            if candidates:
+                print("candidates are {}".format(",".join(candidates)))
+                self.setCandidateList(candidates)
+                self.setShowCandidates(True)
+            else:
+                print("no candidates")
+
             self.setCompositionCursor(len(self.compositionString))
+
         return True
 
     def onCommand(self, commandId, commandType):
         print("onCommand", commandId, commandType)
+
+

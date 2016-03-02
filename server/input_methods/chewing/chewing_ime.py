@@ -367,7 +367,7 @@ class ChewingTextService(TextService):
                 if keyCode == VK_LEFT:  # 游標左移
                     if candCursor > 0:
                         candCursor -= 1
-                    ignoreKey = keyHandled = True
+                        ignoreKey = keyHandled = True
                 elif keyCode == VK_UP:  # 游標上移
                     if candCursor >= cfg.candPerRow:
                         candCursor -= cfg.candPerRow
@@ -375,7 +375,7 @@ class ChewingTextService(TextService):
                 elif keyCode == VK_RIGHT:  # 游標右移
                     if (candCursor + 1) < candCount:
                         candCursor += 1
-                    ignoreKey = keyHandled = True
+                        ignoreKey = keyHandled = True
                 elif keyCode == VK_DOWN:  # 游標下移
                     if (candCursor + cfg.candPerRow) < candCount:
                         candCursor += cfg.candPerRow

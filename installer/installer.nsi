@@ -197,7 +197,7 @@ Section "PIME 輸入法" SecMain
 	SetOutPath "$INSTDIR"
     
     ; Install version info
-    File "version.txt"
+    File "..\version.txt"
 
     ; Install an embedable version of python 3.
     File /r "..\python"

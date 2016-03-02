@@ -417,14 +417,19 @@ class ChewingTextService(TextService):
                     # 新酷音返回的是 UTF-8 byte string，須轉成 python 字串
                     cand = chewingContext.cand_String().decode("UTF-8")
                     candidates.append(cand)
-                self.setCandidateList(candidates)  # 設定候選字清單
-                if not self.showCandidates:  # 如果目前沒有顯示選字視窗
-                    self.setShowCandidates(True)  # 顯示選字視窗
+
+                # 檢查選字清單是否改變 (沒效率但是簡單)
+                if candidates != self.candidateList:
+                    self.setCandidateList(candidates)  # 更新候選字清單
                     if cfg.cursorCandList:  # 如果啟用選字清單內使用游標選字
                         self.setCandidateCursor(0)  # 重設游標位置
+
+                if not self.showCandidates:  # 如果目前沒有顯示選字視窗
+                    self.setShowCandidates(True)  # 顯示選字視窗
             else:  # 沒有候選字
                 if self.showCandidates:
                     self.setShowCandidates(False)  # 隱藏選字視窗
+                    self.setCandidateList([])  # 更新候選字清單
 
             # 有輸入完成的中文字串要送出(commit)到應用程式
             if chewingContext.commit_Check():

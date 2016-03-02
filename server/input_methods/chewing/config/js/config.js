@@ -177,6 +177,9 @@ function updateConfig() {
 
 // jQuery ready
 $(function() {
+    // show PIME version number
+    $("#version").load("../../../../version.txt");
+
     loadConfig();
     $(document).tooltip();
     $("#tabs").tabs({heightStyle:"auto"});

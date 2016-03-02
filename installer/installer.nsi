@@ -37,7 +37,7 @@ AllowSkipFiles off ; cannot skip a file
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\orange-uninstall.ico"
 
 !define PRODUCT_NAME "PIME 輸入法"
-!define PRODUCT_VERSION "0.10"
+!define PRODUCT_VERSION "0.11"
 
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 !define HOMEPAGE_URL "https://github.com/EasyIME/"
@@ -196,6 +196,9 @@ Section "PIME 輸入法" SecMain
 	SetOverwrite on ; overwrite existing files
 	SetOutPath "$INSTDIR"
     
+    ; Install version info
+    File "version.txt"
+
     ; Install an embedable version of python 3.
     File /r "..\python"
     

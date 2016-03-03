@@ -38,7 +38,6 @@ class NewCJTextService(TextService):
 		TextService.__init__(self, client)
 		self.curdir = os.path.abspath(os.path.dirname(__file__))
 		self.icon_dir = self.curdir
-		print('icon_dir: ' + self.icon_dir)
 
 		self.langMode = -1
 		self.shapeMode = -1
@@ -48,50 +47,12 @@ class NewCJTextService(TextService):
 	def onActivate(self):
 		TextService.onActivate(self)
 		self.initNewCJContext()
-
-		# 切換中英文
-		icon_name = "chi.ico" if self.langMode == CHINESE_MODE else "eng.ico"
-		self.addButton("switch-lang",
-					   icon=os.path.join(self.icon_dir, icon_name),
-					   tooltip="中英文切換",
-					   commandId=ID_SWITCH_LANG
-					   )
-
-		# Windows 8 以上已取消語言列功能，改用 systray IME mode icon
-		if self.client.isWindows8Above:
-			self.addButton("windows-mode-icon",
-						   icon=os.path.join(self.icon_dir, icon_name),
-						   tooltip="中英文切換",
-						   commandId=ID_MODE_ICON
-						   )
-
-		# 切換全半形
-		icon_name = "full.ico" if self.shapeMode == FULLSHAPE_MODE else "half.ico"
-		self.addButton("switch-shape",
-					   icon=os.path.join(self.icon_dir, icon_name),
-					   tooltip="全形/半形切換",
-					   commandId=ID_SWITCH_SHAPE
-					   )
-
-		# 設定
-		# FIXME: popup menu is not yet implemented
-		self.addButton("settings",
-					   icon=os.path.join(self.icon_dir, "config.ico"),
-					   tooltip="設定",
-					   commandId=ID_SETTINGS
-					   )
-
 		self.customizeUI(candFontSize=20, candPerRow=1)
 		self.setSelKeys("1234567890")
 
 	def onDeactivate(self):
 		TextService.onDeactivate(self)
 		self.newCJContext = None
-		self.removeButton("switch-lang")
-		self.removeButton("switch-shape")
-		self.removeButton("settings")
-		if self.client.isWindows8Above:
-			self.removeButton("windows-mode-icon")
 
 	def filterKeyDown(self, keyEvent):
 		# 使用者開始輸入，還沒送出前的編輯區內容稱 composition string
@@ -135,7 +96,6 @@ class NewCJTextService(TextService):
 
 		# 檢查按下的鍵是否為自由大新定義的符號
 		if self.isNewCJChardef(keyEvent.charCode):
-			print('isNewCJChardef')
 			return True
 
 		# 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
@@ -152,10 +112,6 @@ class NewCJTextService(TextService):
 			candidates = self.newCJContext.chardef[self.compositionChar]
 		else:
 			self.resetComposition()
-		print('candidates: ', end='')
-		print(candidates, sep=' ')
-		print('compositionString: ' + self.compositionString)
-		print('compositionChar: ' + self.compositionChar)
 		# handle candidate list
 		if self.showCandidates:
 			candLengthStr = str(len(candidates))

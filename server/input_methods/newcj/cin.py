@@ -39,7 +39,7 @@ class Cin(object):
         for line in fs:
 
             line = line.strip()
-            if not line:
+            if not line or line[0] == '#':
                 continue
 
             if CIN_HEAD in line:
@@ -81,7 +81,7 @@ class Cin(object):
                 continue
 
             if state is PARSE_CHARDEF_STATE:
-                key, root = line.split()
+                key, root = safeSplit(line)
                 key = key.strip()
                 root = root.strip()
 
@@ -112,5 +112,10 @@ class Cin(object):
 def head_rest(head, line):
     return line[len(head):].strip()
 
+def safeSplit(line):
+    if ' ' in line:
+        return line.split(' ', 1)
+    else:
+        return line.split('\t', 1)
 
 __all__ = ["Cin"]

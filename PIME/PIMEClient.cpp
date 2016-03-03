@@ -304,6 +304,7 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 				}
 			}
 		}
+		// other configurations
 		else if (it->value.IsString() && strcmp(name, "setSelKeys") == 0) {
 			// keys used to select candidates
 			std::wstring selKeys = utf8ToUtf16(it->value.GetString());
@@ -312,6 +313,14 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 		else if (it->value.IsObject() && strcmp(name, "customizeUI") == 0) {
 			// customize the UI
 			updateUI(it->value);
+		}
+		// show message
+		else if (it->value.IsObject() && strcmp(name, "showMessage") == 0) {
+			rapidjson::Value& message = it->value["message"];
+			rapidjson::Value& duration = it->value["duration"];
+			if (message.IsString() && duration.IsInt()) {
+				textService_->showMessage(session, utf8ToUtf16(message.GetString()), duration.GetInt());
+			}
 		}
 	}
 

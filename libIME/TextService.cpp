@@ -1143,10 +1143,10 @@ HWND TextService::compositionWindow(EditSession* session) {
 	ComPtr<ITfContextView> view;
 	if(session->context()->GetActiveView(&view) == S_OK) {
 		// get current composition window
-		if(view->GetWnd(&hwnd) != S_OK) {
-			hwnd = ::GetFocus();
-		}
+		view->GetWnd(&hwnd);
 	}
+	if (hwnd == NULL)
+		hwnd = ::GetFocus();
 	return hwnd;
 }
 

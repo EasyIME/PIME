@@ -249,3 +249,15 @@ class TextService:
 
     def isComposing(self):
         return (self.compositionString != "")
+
+    '''
+    Ask libIME to show a tooltip-like transient message to the user
+    @message is the message to show.
+    @duration is in seconds. After the specified duration, the message will be hidden.
+    The currently shown message, if there is any, will be replaced by calling this method.
+    '''
+    def showMessage(self, message, duration=3):
+        self.reply["showMessage"] = {
+            "message": message,
+            "duration": duration
+        }

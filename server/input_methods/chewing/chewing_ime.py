@@ -459,17 +459,13 @@ class ChewingTextService(TextService):
             self.setCompositionString(compStr)
             # 更新輸入游標位置
             self.setCompositionCursor(chewingContext.cursor_Current())
-            '''
-            # show aux info
+
+            # 顯示額外提示訊息 (例如：Ctrl+數字加入自訂詞之後，會顯示提示)
             if chewingContext.aux_Check():
-                char* str = chewingContext.aux_String()
-                std::wstring wstr = utf8ToUtf16(str)
-                chewingContext.free(str)
-                # show the message to the user
+                message = chewingContext.aux_String().decode("UTF-8")
                 # FIXME: sometimes libchewing shows the same aux info
                 # for subsequent key events... I think this is a bug.
-                showMessage(session, wstr, 2)
-            '''
+                self.showMessage(message, 2)
 
         # 若先前有暫時強制切成英文模式，需要復原
         if temporaryEnglishMode:

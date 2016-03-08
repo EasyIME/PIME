@@ -166,7 +166,7 @@ class NewCJTextService(TextService):
 			self.setCompositionString(self.compositionString + keyname)
 			self.setCompositionCursor(len(self.compositionString))
 
-		if keyCode == VK_ESCAPE and self.showCandidates:
+		if keyCode == VK_ESCAPE and (self.showCandidates or len(self.compositionChar) > 0):
 			self.setShowCandidates(False)
 			self.resetComposition()
 

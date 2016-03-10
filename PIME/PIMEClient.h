@@ -23,7 +23,7 @@
 #include <libIME/TextService.h>
 #include <libIME/KeyEvent.h>
 #include <libIME/EditSession.h>
-#include <libIME/LangBarButton.h>
+#include "PIMELangBarButton.h"
 
 #include <unordered_map>
 
@@ -80,14 +80,11 @@ private:
 	int addSeqNum(rapidjson::Writer<rapidjson::StringBuffer>& writer);
 	bool handleReply(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
 	void updateStatus(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
-	void updateLangBarButton(Ime::LangBarButton* btn, rapidjson::Value& info);
 	void updateUI(rapidjson::Value& data);
-	void clearIconCache();
 
 	TextService* textService_;
 	HANDLE pipe_;
-	std::unordered_map<std::string, Ime::LangBarButton*> buttons_; // map buttons to string IDs
-	std::unordered_map<std::wstring, HICON> iconCache_; // cache loaded icons
+	std::unordered_map<std::string, PIME::LangBarButton*> buttons_; // map buttons to string IDs
 };
 
 }

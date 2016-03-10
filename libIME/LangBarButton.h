@@ -87,6 +87,11 @@ public:
 	STDMETHODIMP UnadviseSink(DWORD dwCookie);
 
 	void update(DWORD flags = TF_LBI_BTNALL);
+
+	TextService* textService() const {
+		return textService_;
+	};
+
 private:
 	void buildITfMenu(ITfMenu* menu, HMENU templ);
 

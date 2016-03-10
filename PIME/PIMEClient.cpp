@@ -32,11 +32,6 @@ using namespace rapidjson;
 
 namespace PIME {
 
-// this is the GUID of the IME mode icon in Windows 8
-// the value is not available in older SDK versions, so let's define it ourselves.
-static const GUID _GUID_LBI_INPUTMODE =
-{ 0x2C77A81E, 0x41CC, 0x4178, { 0xA3, 0xA7, 0x5F, 0x8A, 0x98, 0x75, 0x68, 0xE6 } };
-
 Client::Client(TextService* service):
 	textService_(service),
 	pipe_(INVALID_HANDLE_VALUE) {
@@ -56,7 +51,7 @@ Client::~Client(void) {
 			textService_->removeButton(it->second);
 		}
 	}
-	clearIconCache();
+	LangBarButton::clearIconCache();
 }
 
 // pack a keyEvent object into a json value
@@ -103,47 +98,6 @@ bool Client::handleReply(rapidjson::Document& msg, Ime::EditSession* session) {
 		return success;
 	}
 	return false;
-}
-
-void Client::updateLangBarButton(Ime::LangBarButton* btn, rapidjson::Value& info) {
-	auto it = info.FindMember("icon");
-	if (it != info.MemberEnd() && it->value.IsString()) {
-		wstring iconPath = utf8ToUtf16(it->value.GetString());
-		HICON icon = NULL;
-		auto icon_it = iconCache_.find(iconPath);
-		if (icon_it != iconCache_.end()) // found in the cache
-			icon = icon_it->second;
-		else { // not in the cache
-			icon = (HICON)LoadImageW(NULL, iconPath.c_str(), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_LOADFROMFILE);
-			iconCache_[iconPath] = icon; // cache the icon
-		}
-		if (icon)
-			btn->setIcon(icon);
-	}
-
-	it = info.FindMember("commandId");
-	if (it != info.MemberEnd() && it->value.IsUint()) {
-		UINT cmd = it->value.GetUint();
-		btn->setCommandId(cmd);
-	}
-
-	it = info.FindMember("text");
-	if (it != info.MemberEnd() && it->value.IsString()) {
-		std::wstring text = utf8ToUtf16(it->value.GetString());
-		btn->setText(text.c_str());
-	}
-
-	it = info.FindMember("tooltip");
-	if (it != info.MemberEnd() && it->value.IsString()) {
-		std::wstring tooltip = utf8ToUtf16(it->value.GetString());
-		btn->setTooltip(tooltip.c_str());
-	}
-
-	it = info.FindMember("enable");
-	if (it != info.MemberEnd() && it->value.IsBool()) {
-		bool enable = it->value.GetBool();
-		btn->setEnabled(enable);
-	}
 }
 
 void Client::updateUI(rapidjson::Value& data) {
@@ -223,28 +177,10 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 			rapidjson::Value& buttons = it->value;
 			for (auto btn_it = buttons.Begin(); btn_it < buttons.End(); ++btn_it) {
 				rapidjson::Value& btn = *btn_it;
-				if (btn.IsObject()) {
-					string id = btn["id"].GetString();
-
-					DWORD style = TF_LBI_STYLE_BTN_BUTTON;
-					auto prop_it = btn.FindMember("style");
-					if (prop_it != btn.MemberEnd())
-						style = prop_it->value.GetUint();
-
-					CLSID guid = { 0 }; // create a new GUID on-the-fly
-					if (id == "windows-mode-icon") {
-						// Windows 8 systray IME mode icon
-						guid = _GUID_LBI_INPUTMODE;
-					}
-					else {
-						CoCreateGuid(&guid);
-					}
-
-
-					// FIXME: when to clear the id <=> button map??
-					Ime::LangBarButton* langBtn = new Ime::LangBarButton(textService_, guid, 0, NULL, style);
-					buttons_[id] = langBtn; // insert into the map
-					updateLangBarButton(langBtn, btn);
+				// FIXME: when to clear the id <=> button map??
+				PIME::LangBarButton* langBtn = PIME::LangBarButton::fromJson(textService_, btn);
+				if (langBtn != nullptr) {
+					buttons_[langBtn->id()] = langBtn; // insert into the map
 					textService_->addButton(langBtn);
 					langBtn->Release();
 				}
@@ -273,7 +209,7 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 					string id = btn["id"].GetString();
 					auto map_it = buttons_.find(id);
 					if (map_it != buttons_.end()) {
-						updateLangBarButton(map_it->second, btn);
+						map_it->second->update(btn);
 					}
 				}
 			}
@@ -397,7 +333,7 @@ void Client::onDeactivate() {
 	Document ret = sendRequest(s.GetString(), sn);
 	if (handleReply(ret)) {
 	}
-	clearIconCache();
+	LangBarButton::clearIconCache();
 }
 
 bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
@@ -636,7 +572,7 @@ void Client::onLangProfileDeactivated(REFIID lang) {
 		if (handleReply(ret)) {
 		}
 	}
-	clearIconCache();
+	LangBarButton::clearIconCache();
 }
 
 void Client::init() {
@@ -747,16 +683,9 @@ void Client::closePipe() {
 	if (pipe_ != INVALID_HANDLE_VALUE) {
 		DisconnectNamedPipe(pipe_);
 		CloseHandle(pipe_);
-		clearIconCache();
+		LangBarButton::clearIconCache();
 		pipe_ = INVALID_HANDLE_VALUE;
 	}
-}
-
-void Client::clearIconCache() {
-	for (auto it = iconCache_.begin(); it != iconCache_.end(); ++it) {
-		DestroyIcon(it->second);
-	}
-	iconCache_.clear();
 }
 
 

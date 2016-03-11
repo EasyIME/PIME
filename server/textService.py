@@ -83,8 +83,7 @@ class TextService:
     def updateStatus(self, msg):
         pass
 
-    # encode current status into an json object
-    def getReply(self):
+    def fetchReply(self):
         reply = self.reply
         self.reply = {}
         return reply

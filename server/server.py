@@ -36,6 +36,13 @@ class Client:
         self.pipe= pipe
         self.server = server
         self.service = None
+        self.reply = {}
+
+    # fetch current reply to the client request
+    def fetchReply(self):
+        reply = self.reply
+        self.reply = {}
+        return reply
 
     def init(self, msg):
         self.isWindows8Above = msg["isWindows8Above"]
@@ -47,8 +54,10 @@ class Client:
         pass
 
     def onDeactivate(self):
-        if self.service:
-            self.service.onDeactivate()
+        service = self.service
+        if service:
+            service.onDeactivate()
+            self.reply.update(service.fetchReply())
             self.service = None
 
     def onLangProfileActivated(self, guid):
@@ -56,11 +65,13 @@ class Client:
         # deactivate the current text service
         if service:
             service.onDeactivate()
+            self.reply.update(service.fetchReply())
         service = textServiceMgr.createService(self, guid)
         self.service = service
         # activate the new text service
         if service:
             service.onActivate()
+            self.reply.update(service.fetchReply())
 
     def onLangProfileDeactivated(self, guid):
         pass
@@ -86,22 +97,19 @@ class Client:
         elif method == "onLangProfileDeactivated":
             guid = msg["guid"]
             self.onLangProfileDeactivated(guid)
-        else:
-            handled = False
-
-        reply = {}
-        # these are messages handled by the text service
-        service = self.service
-        if service:
-            if not handled: # if the request is not yet handled
+        else:  # these are messages handled by the text service
+            service = self.service
+            if service:
                 (success, ret) = service.handleRequest(method, msg)
-            if success:
-                reply = service.getReply()
-            if ret != None:
-                reply["return"] = ret
+                if success:
+                    self.reply.update(service.fetchReply())
+
+        reply = self.fetchReply()
+        if ret != None:
+            reply["return"] = ret
         reply["success"] = success
         reply["seqNum"] = seqNum # reply with sequence number added
-        # print("reply: ", reply)
+        print("reply: ", reply)
         return reply
 
 

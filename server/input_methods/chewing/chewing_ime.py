@@ -534,8 +534,8 @@ class ChewingTextService(TextService):
 
     # 開啟語言列按鈕選單
     def onMenu(self, buttonId):
-        # 設定按鈕
-        if buttonId == "settings":
+        # 設定按鈕 (windows 8 mode icon 按鈕也使用同一個選單)
+        if buttonId == "settings" or buttonId == "windows-mode-icon":
             # 用 json 語法表示選單結構
             return [
                 {"text": "關於新酷音輸入法(&A)", "id": ID_ABOUT},

@@ -109,7 +109,7 @@ class Client:
             reply["return"] = ret
         reply["success"] = success
         reply["seqNum"] = seqNum # reply with sequence number added
-        print("reply: ", reply)
+        # print("reply: ", reply)
         return reply
 
 

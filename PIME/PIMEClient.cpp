@@ -559,7 +559,43 @@ bool Client::onMenu(LangBarButton* btn, ITfMenu* pMenu) {
 }
 
 static HMENU menuFromJson(rapidjson::Value& menuInfo) {
-	// TODO
+	if (menuInfo.IsArray()) {
+		HMENU menu = ::CreatePopupMenu();
+		for (auto it = menuInfo.Begin(); it != menuInfo.End(); ++it) {
+			rapidjson::Value& item = *it;
+			UINT_PTR id = 0;
+			auto prop_it = item.FindMember("id");
+			if (prop_it != item.MemberEnd() && prop_it->value.IsInt())
+				id = prop_it->value.GetInt();
+
+			std::wstring text;
+			prop_it = item.FindMember("text");
+			if (prop_it != item.MemberEnd() && prop_it->value.IsString())
+				text = utf8ToUtf16(prop_it->value.GetString());
+
+			UINT flags = MF_STRING;
+			if (id == 0 && text.empty())
+				flags = MF_SEPARATOR;
+			else {
+				prop_it = item.FindMember("checked");
+				if (prop_it != item.MemberEnd() && prop_it->value.IsBool() && prop_it->value.GetBool())
+					flags |= MF_CHECKED;
+
+				prop_it = item.FindMember("enabled");
+				if (prop_it != item.MemberEnd() && prop_it->value.IsBool() && !prop_it->value.GetBool())
+					flags |= MF_GRAYED;
+
+				prop_it = item.FindMember("submenu");
+				if (prop_it != item.MemberEnd() && prop_it->value.IsArray()) {
+					HMENU submenu = menuFromJson(prop_it->value);
+					flags |= MF_POPUP;
+					id = UINT_PTR(submenu);
+				}
+			}
+			AppendMenu(menu, flags, id, text.c_str());
+		}
+		return menu;
+	}
 	return NULL;
 }
 

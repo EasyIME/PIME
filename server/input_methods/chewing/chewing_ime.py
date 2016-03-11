@@ -61,7 +61,6 @@ ID_BUGREPORT = 8
 ID_DICT_BUGREPORT = 9
 ID_CHEWING_HELP = 10
 ID_HASHED = 11
-ID_CONFIG = 12
 ID_MOEDICT = 13
 ID_DICT = 14
 ID_SIMPDICT = 15
@@ -134,11 +133,8 @@ class ChewingTextService(TextService):
         # 設定選字按鍵 (123456..., asdf.... 等)
         self.setSelKeys(cfg.getSelKeys())
 
-        # 轉換成簡體中文，建立 OpenCC instance
-        if cfg.outputSimpChinese and not self.opencc:
-            self.opencc = opencc.OpenCC(opencc.OPENCC_DEFAULT_CONFIG_TRAD_TO_SIMP)
-        else:
-            self.opencc = None
+        # 轉換輸出成簡體中文?
+        self.setOutputSimplifiedChinese(cfg.outputSimpChinese)
 
     # 初始化新酷音輸入法引擎
     def initChewingContext(self):
@@ -229,6 +225,16 @@ class ChewingTextService(TextService):
         self.selKeys = selKeys
         if self.chewingContext:
             self.chewingContext.set_selKeys(selKeys)
+
+    # 設定輸出成簡體中文
+    def setOutputSimplifiedChinese(self, outputSimpChinese):
+        self.outputSimpChinese = outputSimpChinese
+        # 建立 OpenCC instance 用來做繁簡體中文轉換
+        if outputSimpChinese:
+            if not self.opencc:
+                self.opencc = opencc.OpenCC(opencc.OPENCC_DEFAULT_CONFIG_TRAD_TO_SIMP)
+        else:
+            self.opencc = None
 
     # 使用者按下按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
     # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
@@ -453,8 +459,7 @@ class ChewingTextService(TextService):
                 commitStr = chewingContext.commit_String().decode("UTF-8")
                 
                 # 如果使用打繁出簡，就轉成簡體中文
-                # TODO: 讓每個 chewing instance 能個別設定是否要輸出簡體
-                if cfg.outputSimpChinese:
+                if self.outputSimpChinese:
                     commitStr = self.opencc.convert(commitStr)
 
                 self.setCommitString(commitStr)  # 設定要輸出的 commit string
@@ -538,7 +543,7 @@ class ChewingTextService(TextService):
         elif commandId == ID_GROUP: # visit chewing google groups website
             os.startfile("http://groups.google.com/group/chewing-devel")
         elif commandId == ID_BUGREPORT: # visit bug tracker page
-            os.startfile("https://github.com/chewing/windows-chewing-tsf/issues?state=open")
+            os.startfile("https://github.com/EasyIME/PIME/issues")
         elif commandId == ID_DICT_BUGREPORT:
             os.startfile("https://github.com/chewing/libchewing-data/issues")
         elif commandId == ID_MOEDICT: # a very awesome online Chinese dictionary
@@ -553,8 +558,8 @@ class ChewingTextService(TextService):
             os.startfile("http://dict.idioms.moe.edu.tw/?")
         elif commandId == ID_CHEWING_HELP:
             pass
-        elif commandId == ID_OUTPUT_SIMP_CHINESE:
-            pass
+        elif commandId == ID_OUTPUT_SIMP_CHINESE:  # 切換簡體中文輸出
+            self.setOutputSimplifiedChinese(not self.outputSimpChinese)
 
     # 開啟語言列按鈕選單
     def onMenu(self, buttonId):
@@ -571,7 +576,7 @@ class ChewingTextService(TextService):
                 {},
                 # {"text": "新酷音使用說明 (&H)", "id": ID_CHEWING_HELP},
                 # {"text": "編輯使用者詞庫 (&E)", "id": ID_HASHED},
-                {"text": "設定新酷音輸入法(&C)", "id": ID_CONFIG},
+                {"text": "設定新酷音輸入法(&C)", "id": ID_SETTINGS},
                 {},
                 {"text": "網路辭典 (&D)", "submenu": [
                     {"text": "萌典 (moedict)", "id": ID_MOEDICT},
@@ -581,7 +586,7 @@ class ChewingTextService(TextService):
                     {"text": "教育部國語小字典", "id": ID_LITTLEDICT},
                     {"text": "教育部成語典", "id": ID_PROVERBDICT},
                 ]},
-                {"text": "輸出簡體中文 (&S)", "id": ID_OUTPUT_SIMP_CHINESE, "checked": chewingConfig.outputSimpChinese}
+                {"text": "輸出簡體中文 (&S)", "id": ID_OUTPUT_SIMP_CHINESE, "checked": self.outputSimpChinese}
             ]
         return None
 

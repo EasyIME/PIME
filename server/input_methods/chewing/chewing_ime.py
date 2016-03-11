@@ -531,6 +531,30 @@ class ChewingTextService(TextService):
             os.startfile(config_tool)
         elif commandId == ID_MODE_ICON: # windows 8 mode icon
             self.toggleLanguageMode()  # 切換中英文模式
+        elif commandId == ID_ABOUT: # 關於新酷音輸入法
+            pass
+        elif commandId == ID_WEBSITE: # visit chewing website
+            os.startfile("http://chewing.im/")
+        elif commandId == ID_GROUP: # visit chewing google groups website
+            os.startfile("http://groups.google.com/group/chewing-devel")
+        elif commandId == ID_BUGREPORT: # visit bug tracker page
+            os.startfile("https://github.com/chewing/windows-chewing-tsf/issues?state=open")
+        elif commandId == ID_DICT_BUGREPORT:
+            os.startfile("https://github.com/chewing/libchewing-data/issues")
+        elif commandId == ID_MOEDICT: # a very awesome online Chinese dictionary
+            os.startfile("https://www.moedict.tw/")
+        elif commandId == ID_DICT: # online Chinese dictonary
+            os.startfile("http://dict.revised.moe.edu.tw/")
+        elif commandId == ID_SIMPDICT: # a simplified version of the online dictonary
+            os.startfile("http://dict.concised.moe.edu.tw/main/cover/main.htm")
+        elif commandId == ID_LITTLEDICT: # a simplified dictionary for little children
+            os.startfile("http://dict.mini.moe.edu.tw/cgi-bin/gdic/gsweb.cgi?o=ddictionary")
+        elif commandId == ID_PROVERBDICT: # a dictionary for proverbs (seems to be broken at the moment?)
+            os.startfile("http://dict.idioms.moe.edu.tw/?")
+        elif commandId == ID_CHEWING_HELP:
+            pass
+        elif commandId == ID_OUTPUT_SIMP_CHINESE:
+            pass
 
     # 開啟語言列按鈕選單
     def onMenu(self, buttonId):
@@ -538,15 +562,15 @@ class ChewingTextService(TextService):
         if buttonId == "settings" or buttonId == "windows-mode-icon":
             # 用 json 語法表示選單結構
             return [
-                {"text": "關於新酷音輸入法(&A)", "id": ID_ABOUT},
+                # {"text": "關於新酷音輸入法(&A)", "id": ID_ABOUT},
                 {"text": "參觀新酷音官方網站(&W)", "id": ID_WEBSITE},
                 {"text": "新酷音線上討論區(&G)", "id": ID_GROUP},
                 {},
                 {"text": "軟體本身的建議及錯誤回報(&B)", "id": ID_BUGREPORT},
                 {"text": "注音及選字選詞錯誤回報 (&P)", "id": ID_DICT_BUGREPORT},
                 {},
-                {"text": "新酷音使用說明 (&H)", "id": ID_CHEWING_HELP, "enabled": False},
-                {"text": "編輯使用者詞庫 (&E)", "id": ID_HASHED, "enabled": False},
+                # {"text": "新酷音使用說明 (&H)", "id": ID_CHEWING_HELP},
+                # {"text": "編輯使用者詞庫 (&E)", "id": ID_HASHED},
                 {"text": "設定新酷音輸入法(&C)", "id": ID_CONFIG},
                 {},
                 {"text": "網路辭典 (&D)", "submenu": [

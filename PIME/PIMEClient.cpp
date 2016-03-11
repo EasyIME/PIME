@@ -624,7 +624,7 @@ Document Client::sendRequest(std::string req, int seqNo) {
 			ret = buf;
 			for (;;) {
 				BOOL success = ReadFile(pipe_, buf, 1023, &rlen, NULL);
-				if (!success && (GetLastError() != ERROR_MORE_DATA))
+				if (success || (GetLastError() != ERROR_MORE_DATA))
 					break;
 				buf[rlen] = '\0';
 				ret += buf;

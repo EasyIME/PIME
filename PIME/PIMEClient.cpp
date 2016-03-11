@@ -88,7 +88,7 @@ int Client::addSeqNum(Writer<StringBuffer>& writer) {
 	return seqNum;
 }
 
-bool Client::handleReply(rapidjson::Document& msg, Ime::EditSession* session) {
+bool Client::handleReply(rapidjson::Value& msg, Ime::EditSession* session) {
 	auto it = msg.FindMember("success");
 	if (it != msg.MemberEnd() && it->value.IsBool()) {
 		bool success = it->value.GetBool();
@@ -119,7 +119,7 @@ void Client::updateUI(rapidjson::Value& data) {
 	}
 }
 
-void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
+void Client::updateStatus(rapidjson::Value& msg, Ime::EditSession* session) {
 	// We need to handle ordering of some types of the requests.
 	// For example, setCompositionCursor() should happen after setCompositionCursor().
 	rapidjson::Document::ValueType* commitStringVal = nullptr;
@@ -315,7 +315,9 @@ void Client::onActivate() {
 
 	writer.EndObject();
 	s.GetString();
-	Document ret = sendRequest(s.GetString(), sn);
+
+	rapidjson::Document ret;
+	sendRequest(s.GetString(), sn, ret);
 	if (handleReply(ret)) {
 	}
 }
@@ -330,7 +332,9 @@ void Client::onDeactivate() {
 	writer.String("onDeactivate");
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+
+	rapidjson::Document ret;
+	sendRequest(s.GetString(), sn, ret);
 	if (handleReply(ret)) {
 	}
 	LangBarButton::clearIconCache();
@@ -349,7 +353,9 @@ bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+
+	rapidjson::Document ret;
+	sendRequest(s.GetString(), sn, ret);
 	if (handleReply(ret)) {
 		return ret["return"].GetBool();
 	}
@@ -369,7 +375,9 @@ bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+
+	rapidjson::Document ret;
+	sendRequest(s.GetString(), sn, ret);
 	if (handleReply(ret, session)) {
 		return ret["return"].GetBool();
 	}
@@ -389,7 +397,9 @@ bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+
+	rapidjson::Document ret;
+	sendRequest(s.GetString(), sn, ret);
 	if (handleReply(ret)) {
 		return ret["return"].GetBool();
 	}
@@ -409,7 +419,9 @@ bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	keyEventToJson(writer, keyEvent);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+
+	rapidjson::Document ret;
+	sendRequest(s.GetString(), sn, ret);
 	if (handleReply(ret, session)) {
 		return ret["return"].GetBool();
 	}
@@ -433,7 +445,9 @@ bool Client::onPreservedKey(const GUID& guid) {
 		::CoTaskMemFree(str);
 
 		writer.EndObject();
-		Document ret = sendRequest(s.GetString(), sn);
+
+		rapidjson::Document ret;
+		sendRequest(s.GetString(), sn, ret);
 		if (handleReply(ret)) {
 			return ret["return"].GetBool();
 		}
@@ -458,11 +472,106 @@ bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
 	writer.Uint(type);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+
+	rapidjson::Document ret;
+	sendRequest(s.GetString(), sn, ret);
 	if (handleReply(ret)) {
 		return ret["return"].GetBool();
 	}
 	return false;
+}
+
+bool Client::sendOnMenu(std::string button_id, rapidjson::Document& result) {
+	StringBuffer s;
+	Writer<StringBuffer> writer(s);
+	writer.StartObject();
+
+	int sn = addSeqNum(writer);
+
+	writer.String("method");
+	writer.String("onMenu");
+
+	writer.String("id");
+	writer.String(button_id);
+
+	writer.EndObject();
+
+	sendRequest(s.GetString(), sn, result);
+	if (handleReply(result)) {
+		return true;
+	}
+	return false;
+}
+
+static bool menuFromJson(ITfMenu* pMenu, rapidjson::Value& menuInfo) {
+	if (pMenu != nullptr && menuInfo.IsArray()) {
+		for (auto it = menuInfo.Begin(); it != menuInfo.End(); ++it) {
+			rapidjson::Value& item = *it;
+			UINT id = 0;
+			auto prop_it = item.FindMember("id");
+			if (prop_it != item.MemberEnd() && prop_it->value.IsInt())
+				id = prop_it->value.GetInt();
+
+			std::wstring text;
+			prop_it = item.FindMember("text");
+			if (prop_it != item.MemberEnd() && prop_it->value.IsString())
+				text = utf8ToUtf16(prop_it->value.GetString());
+
+			DWORD flags = 0;
+			rapidjson::Value* submenuInfo = nullptr;
+			ITfMenu* submenu = nullptr;
+			if (id == 0 && text.empty())
+				flags = TF_LBMENUF_SEPARATOR;
+			else {
+				prop_it = item.FindMember("checked");
+				if (prop_it != item.MemberEnd() && prop_it->value.IsBool() && prop_it->value.GetBool())
+					flags |= TF_LBMENUF_CHECKED;
+
+				prop_it = item.FindMember("enabled");
+				if (prop_it != item.MemberEnd() && prop_it->value.IsBool() && !prop_it->value.GetBool())
+					flags |= TF_LBMENUF_GRAYED;
+
+				prop_it = item.FindMember("submenu");
+				if (prop_it != item.MemberEnd() && prop_it->value.IsArray()) {
+					submenuInfo = &prop_it->value;
+					flags |= TF_LBMENUF_SUBMENU;
+				}
+			}
+			pMenu->AddMenuItem(id, flags, NULL, NULL, text.c_str(), text.length(), submenuInfo != nullptr ? &submenu : nullptr);
+			if (submenu != nullptr && submenuInfo != nullptr) {
+				menuFromJson(submenu, *submenuInfo);
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+// called when a language bar button needs a menu
+// virtual
+bool Client::onMenu(LangBarButton* btn, ITfMenu* pMenu) {
+	rapidjson::Document result;
+	if(sendOnMenu(btn->id(), result)) {
+		rapidjson::Value& menuInfo = result["return"];
+		return menuFromJson(pMenu, menuInfo);
+	}
+	return false;
+}
+
+static HMENU menuFromJson(rapidjson::Value& menuInfo) {
+	// TODO
+	return NULL;
+}
+
+// called when a language bar button needs a menu
+// virtual
+HMENU Client::onMenu(LangBarButton* btn) {
+	rapidjson::Document result;
+	if (sendOnMenu(btn->id(), result)) {
+		rapidjson::Value& menuInfo = result["return"];
+		return menuFromJson(menuInfo);
+	}
+	return NULL;
 }
 
 // called when a compartment value is changed
@@ -483,7 +592,9 @@ void Client::onCompartmentChanged(const GUID& key) {
 		::CoTaskMemFree(str);
 
 		writer.EndObject();
-		Document ret = sendRequest(s.GetString(), sn);
+
+		rapidjson::Document ret;
+		sendRequest(s.GetString(), sn, ret);
 		if (handleReply(ret)) {
 		}
 	}
@@ -504,7 +615,9 @@ void Client::onKeyboardStatusChanged(bool opened) {
 	writer.Bool(opened);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+
+	rapidjson::Document ret;
+	sendRequest(s.GetString(), sn, ret);
 	if (handleReply(ret)) {
 	}
 }
@@ -524,7 +637,9 @@ void Client::onCompositionTerminated(bool forced) {
 	writer.Bool(forced);
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+
+	rapidjson::Document ret;
+	sendRequest(s.GetString(), sn, ret);
 	if (handleReply(ret)) {
 	}
 }
@@ -546,7 +661,9 @@ void Client::onLangProfileActivated(REFIID lang) {
 		::CoTaskMemFree(str);
 
 		writer.EndObject();
-		Document ret = sendRequest(s.GetString(), sn);
+
+		rapidjson::Document ret;
+		sendRequest(s.GetString(), sn, ret);
 		if (handleReply(ret)) {
 		}
 	}
@@ -568,7 +685,9 @@ void Client::onLangProfileDeactivated(REFIID lang) {
 		::CoTaskMemFree(str);
 
 		writer.EndObject();
-		Document ret = sendRequest(s.GetString(), sn);
+
+		rapidjson::Document ret;
+		sendRequest(s.GetString(), sn, ret);
 		if (handleReply(ret)) {
 		}
 	}
@@ -601,12 +720,14 @@ void Client::init() {
 	writer.Bool(textService_->isConsole());
 
 	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+
+	rapidjson::Document ret;
+	sendRequest(s.GetString(), sn, ret);
 	if (handleReply(ret)) {
 	}
 }
 
-Document Client::sendRequest(std::string req, int seqNo) {
+bool PIME::Client::sendRequest(std::string req, int seqNo, rapidjson::Document & result) {
 	std::string ret;
 	if (connectPipe()) { // ensure that we're connected
 		char buf[1024];
@@ -619,21 +740,23 @@ Document Client::sendRequest(std::string req, int seqNo) {
 			if (GetLastError() != ERROR_MORE_DATA) {
 				// unknown error happens, reset the pipe?
 				closePipe();
+				return false;
 			}
 			buf[rlen] = '\0';
 			ret = buf;
 			for (;;) {
 				BOOL success = ReadFile(pipe_, buf, 1023, &rlen, NULL);
-				if (success || (GetLastError() != ERROR_MORE_DATA))
+				if (!success && (GetLastError() != ERROR_MORE_DATA))
 					break;
 				buf[rlen] = '\0';
 				ret += buf;
+				if (success)
+					break;
 			}
 		}
 	}
-	Document d;
-	d.Parse(ret.c_str());
-	return d;
+	result.Parse(ret.c_str());
+	return true;
 }
 
 bool Client::connectPipe() {

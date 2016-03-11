@@ -28,6 +28,7 @@
 #include <unordered_map>
 
 #define RAPIDJSON_HAS_STDSTRING	1
+#define RAPIDJSON_HAS_CXX11_RVALUE_REFS 1
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
@@ -56,6 +57,12 @@ public:
 
 	bool onCommand(UINT id, Ime::TextService::CommandType type);
 
+	// called when a language bar button needs a menu
+	bool onMenu(LangBarButton* btn, ITfMenu* pMenu);
+
+	// called when a language bar button needs a menu
+	HMENU onMenu(LangBarButton* btn);
+
 	// called when a compartment value is changed
 	void onCompartmentChanged(const GUID& key);
 
@@ -69,18 +76,18 @@ public:
 
 	void onLangProfileDeactivated(REFIID lang);
 
-
 private:
 	bool connectPipe();
-	rapidjson::Document sendRequest(std::string req, int seqNo);
+	bool sendRequest(std::string req, int seqNo, rapidjson::Document& result);
 	void closePipe();
 	void init();
 
 	void keyEventToJson(rapidjson::Writer<rapidjson::StringBuffer>& writer, Ime::KeyEvent& keyEvent);
 	int addSeqNum(rapidjson::Writer<rapidjson::StringBuffer>& writer);
-	bool handleReply(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
-	void updateStatus(rapidjson::Document& msg, Ime::EditSession* session = nullptr);
+	bool handleReply(rapidjson::Value& msg, Ime::EditSession* session = nullptr);
+	void updateStatus(rapidjson::Value& msg, Ime::EditSession* session = nullptr);
 	void updateUI(rapidjson::Value& data);
+	bool sendOnMenu(std::string button_id, rapidjson::Document& result);
 
 	TextService* textService_;
 	HANDLE pipe_;

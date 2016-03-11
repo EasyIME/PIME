@@ -46,11 +46,28 @@ keyNames = {
     VK_NEXT: "PageDown"
 }
 
+# shift + space 熱鍵的 GUID
 SHIFT_SPACE_GUID = "{f1dae0fb-8091-44a7-8a0c-3082a1515447}"
+
+# 選單項目和語言列按鈕的 command ID
 ID_SWITCH_LANG = 1
 ID_SWITCH_SHAPE = 2
 ID_SETTINGS = 3
 ID_MODE_ICON = 4
+ID_ABOUT = 5
+ID_WEBSITE = 6
+ID_GROUP = 7
+ID_BUGREPORT = 8
+ID_DICT_BUGREPORT = 9
+ID_CHEWING_HELP = 10
+ID_HASHED = 11
+ID_CONFIG = 12
+ID_MOEDICT = 13
+ID_DICT = 14
+ID_SIMPDICT = 15
+ID_LITTLEDICT = 16
+ID_PROVERBDICT = 17
+ID_OUTPUT_SIMP_CHINESE = 18
 
 
 class ChewingTextService(TextService):
@@ -190,7 +207,7 @@ class ChewingTextService(TextService):
         self.addButton("settings",
             icon = os.path.join(self.icon_dir, "config.ico"),
             tooltip = "設定",
-            commandId = ID_SETTINGS
+            type = "menu"
         )
 
     # 使用者離開輸入法
@@ -514,6 +531,35 @@ class ChewingTextService(TextService):
             os.startfile(config_tool)
         elif commandId == ID_MODE_ICON: # windows 8 mode icon
             self.toggleLanguageMode()  # 切換中英文模式
+
+    # 開啟語言列按鈕選單
+    def onMenu(self, buttonId):
+        # 設定按鈕
+        if buttonId == "settings":
+            # 用 json 語法表示選單結構
+            return [
+                {"text": "關於新酷音輸入法(&A)", "id": ID_ABOUT},
+                {"text": "參觀新酷音官方網站(&W)", "id": ID_WEBSITE},
+                {"text": "新酷音線上討論區(&G)", "id": ID_GROUP},
+                {},
+                {"text": "軟體本身的建議及錯誤回報(&B)", "id": ID_BUGREPORT},
+                {"text": "注音及選字選詞錯誤回報 (&P)", "id": ID_DICT_BUGREPORT},
+                {},
+                {"text": "新酷音使用說明 (&H)", "id": ID_CHEWING_HELP, "enabled": False},
+                {"text": "編輯使用者詞庫 (&E)", "id": ID_HASHED, "enabled": False},
+                {"text": "設定新酷音輸入法(&C)", "id": ID_CONFIG},
+                {},
+                {"text": "網路辭典 (&D)", "submenu": [
+                    {"text": "萌典 (moedict)", "id": ID_MOEDICT},
+                    {},
+                    {"text": "教育部國語辭典", "id": ID_DICT},
+                    {"text": "教育部國語辭典簡編本", "id": ID_SIMPDICT},
+                    {"text": "教育部國語小字典", "id": ID_LITTLEDICT},
+                    {"text": "教育部成語典", "id": ID_PROVERBDICT},
+                ]},
+                {"text": "輸出簡體中文 (&S)", "id": ID_OUTPUT_SIMP_CHINESE, "checked": chewingConfig.outputSimpChinese}
+            ]
+        return None
 
     # 依照目前輸入法狀態，更新語言列顯示
     def updateLangButtons(self):

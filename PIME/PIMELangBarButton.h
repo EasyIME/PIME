@@ -45,7 +45,7 @@ public:
 	static void clearIconCache();
 
 	// ITfLangBarItemButton
-	// STDMETHODIMP OnClick(TfLBIClick click, POINT pt, const RECT *prcArea);
+	STDMETHODIMP OnClick(TfLBIClick click, POINT pt, const RECT *prcArea);
 	STDMETHODIMP InitMenu(ITfMenu *pMenu);
 
 private:

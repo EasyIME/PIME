@@ -15,17 +15,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-# button style constants used by language buttons (from ctfutb.h of Windows SDK)
-TF_LBI_STYLE_HIDDENSTATUSCONTROL = 0x00000001
-TF_LBI_STYLE_SHOWNINTRAY         = 0x00000002
-TF_LBI_STYLE_HIDEONNOOTHERITEMS  = 0x00000004
-TF_LBI_STYLE_SHOWNINTRAYONLY     = 0x00000008
-TF_LBI_STYLE_HIDDENBYDEFAULT     = 0x00000010
-TF_LBI_STYLE_TEXTCOLORICON       = 0x00000020
-TF_LBI_STYLE_BTN_BUTTON          = 0x00010000
-TF_LBI_STYLE_BTN_MENU            = 0x00020000
-TF_LBI_STYLE_BTN_TOGGLE          = 0x00040000
-
 # keyboard modifiers used by TSF (from msctf.h of Windows SDK)
 TF_MOD_ALT                       = 0x0001
 TF_MOD_CONTROL                   = 0x0002
@@ -118,6 +107,9 @@ class TextService:
             commandId = msg["id"]
             commandType = msg["type"]
             self.onCommand(commandId, commandType)
+        elif method == "onMenu":
+            buttonId = msg["id"]
+            ret = self.onMenu(buttonId)
         elif method == "onCompartmentChanged":
             guid = msg["guid"].lower()
             self.onCompartmentChanged(guid)
@@ -158,6 +150,9 @@ class TextService:
     def onCommand(self, commandId, commandType):
         pass
 
+    def onMenu(self, buttonId):
+        return None
+
     def onCompartmentChanged(self, guid):
         pass
 
@@ -177,7 +172,9 @@ class TextService:
         when the button is clicked.
     @text: text on the button (optional)
     @tooltip: (optional)
+    @type: "button", "menu", "toggle" (optional, button is the default)
     @enable: if the button is enabled (optional)
+    @toggled: is the button toggled, only valid if type is "toggle" (optional)
     """
     def addButton(self, button_id, **kwargs):
         buttons = self.reply.setdefault("addButton", [])

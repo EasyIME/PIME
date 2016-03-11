@@ -52,6 +52,12 @@ public:
 
 	virtual bool onCommand(UINT id, CommandType type);
 
+	// called when a language bar button needs a menu
+	virtual bool onMenu(LangBarButton* btn, ITfMenu* pMenu);
+
+	// called when a language bar button needs a menu
+	virtual HMENU onMenu(LangBarButton* btn);
+
 	// called when a compartment value is changed
 	virtual void onCompartmentChanged(const GUID& key);
 

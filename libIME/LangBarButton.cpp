@@ -175,6 +175,15 @@ void LangBarButton::setToggled(bool toggle) {
 }
 
 
+DWORD LangBarButton::style() const {
+	return info_.dwStyle;
+}
+
+void LangBarButton::setStyle(DWORD style) {
+	info_.dwStyle = style;
+}
+
+
 // COM stuff
 
 // IUnknown

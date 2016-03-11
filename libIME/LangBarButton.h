@@ -62,6 +62,9 @@ public:
 	bool toggled() const;
 	void setToggled(bool toggle);
 
+	DWORD style() const;
+	void setStyle(DWORD style);
+
 	// COM-related stuff
 
 	// IUnknown

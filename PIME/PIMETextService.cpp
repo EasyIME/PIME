@@ -153,6 +153,26 @@ bool TextService::onCommand(UINT id, CommandType type) {
 	return client_->onCommand(id, type);
 }
 
+
+// called when a language bar button needs a menu
+// virtual
+bool TextService::onMenu(LangBarButton* btn, ITfMenu* pMenu) {
+	if (client_ != nullptr) {
+		return client_->onMenu(btn, pMenu);
+	}
+	return false;
+}
+
+// called when a language bar button needs a menu
+// virtual
+HMENU TextService::onMenu(LangBarButton* btn) {
+	if (client_ != nullptr) {
+		return client_->onMenu(btn);
+	}
+	return NULL;
+}
+
+
 // virtual
 void TextService::onCompartmentChanged(const GUID& key) {
 	Ime::TextService::onCompartmentChanged(key);

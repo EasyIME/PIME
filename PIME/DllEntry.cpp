@@ -1,16 +1,13 @@
 #include "PIMEImeModule.h"
 #include "resource.h"
 #include <iostream>
-#include <cstdio>
+#include <fstream>
 #include <vector>
 #include <ShlObj.h>
 #include <Shlwapi.h> // for PathIsRelative
-#include "rapidjson/document.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/filereadstream.h"
+#include <json/json.h>
 #include "../libIME/Utils.h"
 
-using namespace rapidjson;
 
 PIME::ImeModule* g_imeModule = NULL;
 
@@ -45,23 +42,20 @@ STDAPI DllUnregisterServer(void) {
 
 static Ime::LangProfileInfo langProfileFromJson(std::wstring file) {
 	// load the json file to get the info of input method
-	std::FILE* fp = _wfopen(file.c_str(), L"r");
+	std::ifstream fp(file, std::ifstream::binary);
 	if(fp) {
-		Document json;
-		char buf[4096];
-		FileReadStream stream(fp, buf, sizeof(buf));
-		json.ParseStream(stream);
-		fclose(fp);
-		auto name = utf8ToUtf16(json["name"].GetString());
-		auto guidStr = utf8ToUtf16(json["guid"].GetString());
+		Json::Value json;
+		fp >> json;
+		auto name = utf8ToUtf16(json["name"].asCString());
+		auto guidStr = utf8ToUtf16(json["guid"].asCString());
 		CLSID guid = {0};
 		CLSIDFromString (guidStr.c_str(), &guid);
 		// convert locale name to lanid
-		auto locale = utf8ToUtf16(json["locale"].GetString());
+		auto locale = utf8ToUtf16(json["locale"].asCString());
 		LCID lcid = LocaleNameToLCID(locale.c_str(), 0);
 		LANGID langid = LANGIDFROMLCID(lcid);
 		// ::MessageBox(0, name.c_str(), 0, 0);
-		auto iconFile = utf8ToUtf16(json["icon"].GetString());
+		auto iconFile = utf8ToUtf16(json["icon"].asCString());
 		if (!iconFile.empty() && PathIsRelative(iconFile.c_str())) {
 			int p = file.rfind('\\');
 			if (p != file.npos) {

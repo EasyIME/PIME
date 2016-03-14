@@ -26,12 +26,7 @@
 #include "PIMELangBarButton.h"
 
 #include <unordered_map>
-
-#define RAPIDJSON_HAS_STDSTRING	1
-#define RAPIDJSON_HAS_CXX11_RVALUE_REFS 1
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
+#include <json/json.h>
 
 namespace PIME {
 
@@ -78,16 +73,16 @@ public:
 
 private:
 	bool connectPipe();
-	bool sendRequest(std::string req, int seqNo, rapidjson::Document& result);
+	bool sendRequest(const Json::Value& req, int seqNo, Json::Value& result);
 	void closePipe();
 	void init();
 
-	void keyEventToJson(rapidjson::Writer<rapidjson::StringBuffer>& writer, Ime::KeyEvent& keyEvent);
-	int addSeqNum(rapidjson::Writer<rapidjson::StringBuffer>& writer);
-	bool handleReply(rapidjson::Value& msg, Ime::EditSession* session = nullptr);
-	void updateStatus(rapidjson::Value& msg, Ime::EditSession* session = nullptr);
-	void updateUI(rapidjson::Value& data);
-	bool sendOnMenu(std::string button_id, rapidjson::Document& result);
+	void keyEventToJson(Ime::KeyEvent& keyEvent, Json::Value& jsonValue);
+	int addSeqNum(Json::Value& jsonValue);
+	bool handleReply(Json::Value& msg, Ime::EditSession* session = nullptr);
+	void updateStatus(Json::Value& msg, Ime::EditSession* session = nullptr);
+	void updateUI(const Json::Value& data);
+	bool sendOnMenu(std::string button_id, Json::Value& result);
 
 	TextService* textService_;
 	HANDLE pipe_;

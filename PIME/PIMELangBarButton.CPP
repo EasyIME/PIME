@@ -42,14 +42,14 @@ LangBarButton::LangBarButton(TextService* service, const std::string& id, const 
 LangBarButton::~LangBarButton() {
 }
 
-LangBarButton* LangBarButton::fromJson(TextService* service, rapidjson::Value& info) {
-	if (info.IsObject()) {
-		std::string id = info["id"].GetString();
+LangBarButton* LangBarButton::fromJson(TextService* service, const Json::Value& info) {
+	if (info.isObject()) {
+		std::string id = info["id"].asString();
 
 		DWORD style = TF_LBI_STYLE_BTN_BUTTON;
-		auto prop_it = info.FindMember("style");
-		if (prop_it != info.MemberEnd())
-			style = prop_it->value.GetUint();
+		const Json::Value& styleValue = info["style"];
+		if (styleValue.isUInt())
+			style = styleValue.asUInt();
 
 		CLSID guid = { 0 }; // create a new GUID on-the-fly
 		if (id == WINDOWS_MODE_ICON_ID) {
@@ -69,10 +69,10 @@ LangBarButton* LangBarButton::fromJson(TextService* service, rapidjson::Value& i
 	return nullptr;
 }
 
-void LangBarButton::update(rapidjson::Value& info) {
-	auto it = info.FindMember("icon");
-	if (it != info.MemberEnd() && it->value.IsString()) {
-		std::wstring iconPath = utf8ToUtf16(it->value.GetString());
+void LangBarButton::update(const Json::Value& info) {
+	const Json::Value& iconValue = info["icon"];
+	if (iconValue.isString()) {
+		std::wstring iconPath = utf8ToUtf16(iconValue.asCString());
 		HICON icon = NULL;
 		auto icon_it = iconCache_.find(iconPath);
 		if (icon_it != iconCache_.end()) // found in the cache
@@ -85,29 +85,29 @@ void LangBarButton::update(rapidjson::Value& info) {
 			setIcon(icon);
 	}
 
-	it = info.FindMember("commandId");
-	if (it != info.MemberEnd() && it->value.IsUint()) {
-		UINT cmd = it->value.GetUint();
+	const Json::Value& cmdValue = info["commandId"];
+	if (cmdValue.isUInt()) {
+		UINT cmd = cmdValue.asUInt();
 		setCommandId(cmd);
 	}
 
-	it = info.FindMember("text");
-	if (it != info.MemberEnd() && it->value.IsString()) {
-		std::wstring text = utf8ToUtf16(it->value.GetString());
+	const Json::Value& textValue = info["text"];
+	if (textValue.isString()) {
+		std::wstring text = utf8ToUtf16(textValue.asCString());
 		setText(text.c_str());
 	}
 
-	it = info.FindMember("tooltip");
-	if (it != info.MemberEnd() && it->value.IsString()) {
-		std::wstring tooltip = utf8ToUtf16(it->value.GetString());
+	const Json::Value& tooltipValue = info["tooltip"];
+	if (tooltipValue.isString()) {
+		std::wstring tooltip = utf8ToUtf16(tooltipValue.asCString());
 		setTooltip(tooltip.c_str());
 	}
 
 	// update style of the button
-	it = info.FindMember("type");
-	if (it != info.MemberEnd() && it->value.IsString()) {
+	const Json::Value& typeValue  = info["type"];
+	if (typeValue.isString()) {
 		DWORD newStyle = style() & ~(TF_LBI_STYLE_BTN_BUTTON | TF_LBI_STYLE_BTN_MENU | TF_LBI_STYLE_BTN_TOGGLE);
-		std::string type = it->value.GetString();
+		std::string type = typeValue.asString();
 		if (type == "button")
 			newStyle |= TF_LBI_STYLE_BTN_BUTTON;
 		else if (type == "toggle")
@@ -117,16 +117,14 @@ void LangBarButton::update(rapidjson::Value& info) {
 		setStyle(newStyle);
 	}
 
-	it = info.FindMember("enable");
-	if (it != info.MemberEnd() && it->value.IsBool()) {
-		bool enable = it->value.GetBool();
-		setEnabled(enable);
+	const Json::Value& enableValue = info["enable"];
+	if (enableValue.isBool()) {
+		setEnabled(enableValue.asBool());
 	}
 
-	it = info.FindMember("toggled");
-	if (it != info.MemberEnd() && it->value.IsBool()) {
-		bool toggled = it->value.GetBool();
-		setToggled(toggled);
+	const Json::Value& toggledValue = info["toggled"];
+	if (toggledValue.isBool()) {
+		setToggled(toggledValue.asBool());
 	}
 }
 

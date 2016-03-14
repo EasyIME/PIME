@@ -20,10 +20,9 @@
 #include "PIMEImeModule.h"
 #include "PIMETextService.h"
 #include <string>
+#include <fstream>
 #include <ShlObj.h>
-#include "rapidjson/document.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/filereadstream.h"
+#include <json/json.h>
 #include "../libIME/Utils.h"
 
 namespace PIME {
@@ -80,16 +79,14 @@ bool ImeModule::onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile
 					imejson += '\\';
 					imejson += findData.cFileName;
 					imejson += L"\\ime.json";
-					FILE* fp = _wfopen(imejson.c_str(), L"r");
+
+					std::ifstream fp(imejson, std::ifstream::binary);
 					if (fp) {
-						char buf[4096];
-						rapidjson::Document json;
-						rapidjson::FileReadStream stream(fp, buf, sizeof(buf));
-						json.ParseStream(stream);
-						fclose(fp);
-						if (guidStr == json["guid"].GetString()) {
+						Json::Value json;
+						fp >> json;
+						if (guidStr == json["guid"].asString()) {
 							// found the language profile
-							std::wstring relPath = utf8ToUtf16(json["configTool"].GetString());
+							std::wstring relPath = utf8ToUtf16(json.get("configTool", "").asCString());
 							if (!relPath.empty()) {
 								configTool = dirPath;
 								configTool += '\\';
@@ -111,4 +108,4 @@ bool ImeModule::onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile
 }
 
 
-} // namespace Chewing
+} // namespace PIME

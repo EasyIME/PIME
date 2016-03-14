@@ -21,8 +21,7 @@
 #define PIME_LANGUAGE_BAR_BUTTON_H
 
 #include <libIME/LangBarButton.h>
-#define RAPIDJSON_HAS_STDSTRING	1
-#include "rapidjson/document.h"
+#include <json/json.h>
 #include <string>
 #include <unordered_map>
 
@@ -35,8 +34,8 @@ public:
 	LangBarButton(TextService* service, const std::string& id, const GUID& guid, UINT commandId = 0, const wchar_t* text = NULL, DWORD style = TF_LBI_STYLE_BTN_BUTTON);
 	~LangBarButton();
 
-	static LangBarButton* fromJson(TextService* service, rapidjson::Value& info);
-	void update(rapidjson::Value& info);
+	static LangBarButton* fromJson(TextService* service, const Json::Value& info);
+	void update(const Json::Value& info);
 
 	const std::string& id() const {
 		return id_;

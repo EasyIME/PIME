@@ -7,7 +7,7 @@ add_definitions(/D_UNICODE=1 /DUNICODE=1)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/rapidjson/include
+    ${CMAKE_SOURCE_DIR}/jsoncpp/include
 )
 
 add_library(PIMETextService SHARED
@@ -28,4 +28,5 @@ add_library(PIMETextService SHARED
 
 target_link_libraries(PIMETextService
     libIME_static
+    jsoncpp_lib_static
 )

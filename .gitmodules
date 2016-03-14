@@ -1,3 +1,6 @@
 [submodule "jsoncpp"]
 	path = jsoncpp
 	url = https://github.com/open-source-parsers/jsoncpp.git
+[submodule "libIME"]
+	path = libIME
+	url = https://github.com/EasyIME/libIME.git

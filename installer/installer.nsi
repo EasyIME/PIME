@@ -137,7 +137,7 @@ FunctionEnd
 
 ; called to show an error message when errors happen
 Function .onInstFailed
-		${If} ${RebootFlag}
+	${If} ${RebootFlag}
 		MessageBox MB_YESNO "安裝發生錯誤，無法完成。$\r$\n有時是有檔案正在使用中，暫時無法刪除或覆寫$\n$\n建議重新開機後，再次執行安裝程式。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)" IDNO +2
 		Reboot
 	${Else}
@@ -229,7 +229,7 @@ Section "PIME 輸入法" SecMain
 SectionEnd
 
 SubSection "其它輸入法模組"
-	Section "大新倉頡" newcj
+	Section "自由大新倉頡" newcj
 		SectionIn 2
 		SetOutPath "$INSTDIR\server\input_methods"
 		File /r "..\server\input_methods\newcj"
@@ -276,35 +276,36 @@ Section "" Register
     ; Launch the python server as current user (non-elevated process)
     ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\PIMELauncher.exe" "open" ""
 
-	StrCpy $R0 0
-	StrCpy $0 0
-	loop:
-		EnumRegValue $1 HKCU "Control Panel\International\User Profile\zh-Hant-TW" $0
-		StrCmp $1 "" done
-		IntOp $0 $0 + 1
-		${If} $1 ==  ${chewing_value}
-		${OrIf} $1 == ${newcj_value}
-		${OrIf} $1 == ${thcj_value}
-			IntOp $R0 $R0 + 0
-		${Else}
+	${If} ${AtLeastWin8}
+		StrCpy $R0 0
+		StrCpy $0 0
+		loop:
+			EnumRegValue $1 HKCU "Control Panel\International\User Profile\zh-Hant-TW" $0
+			StrCmp $1 "" done
+			IntOp $0 $0 + 1
+			${If} $1 ==  ${chewing_value}
+			${OrIf} $1 == ${newcj_value}
+			${OrIf} $1 == ${thcj_value}
+				IntOp $R0 $R0 + 0
+			${Else}
+				IntOp $R0 $R0 + 1
+			${EndIf}
+			Goto loop
+		done:
+
+		IntOp $R0 $R0 + 1
+		WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value} $R0
+
+		${If} ${SectionIsSelected} ${newcj}
 			IntOp $R0 $R0 + 1
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${newcj_value} $R0
 		${EndIf}
-		Goto loop
-	done:
-		
 
-	IntOp $R0 $R0 + 1
-	WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value} $R0
-
-	${If} ${SectionIsSelected} ${newcj}
-		IntOp $R0 $R0 + 1
-		WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${newcj_value} $R0
-	${EndIf}
-
-	${If} ${SectionIsSelected} ${thcj}
-		IntOp $R0 $R0 + 1
-		WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${thcj_value} $R0
-	${EndIf}
+		${If} ${SectionIsSelected} ${thcj}
+			IntOp $R0 $R0 + 1
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${thcj_value} $R0
+		${EndIf}
+${EndIf}
 
     ; Create shortcuts
     CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
@@ -321,7 +322,7 @@ LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解
 ;Assign language strings to sections
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} "安裝 ${PRODUCT_NAME} 主程式到你的電腦裏。"
-	!insertmacro MUI_DESCRIPTION_TEXT ${newcj} "安裝大新倉頡輸入法模組。"
+	!insertmacro MUI_DESCRIPTION_TEXT ${newcj} "安裝自由大新倉頡輸入法模組。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${thcj} "安裝泰瑞倉頡輸入法模組。"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -332,9 +333,11 @@ Section "Uninstall"
 	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
 	DeleteRegKey /ifempty HKLM "Software\PIME"
 
-	DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value}
-	DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW"  ${newcj_value}
-	DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW"  ${thcj_value}
+	${If} ${AtLeastWin8}
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value}
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW"  ${newcj_value}
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW"  ${thcj_value}
+	${EndIf}
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 	ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'

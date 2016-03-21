@@ -102,15 +102,19 @@ Function uninstallOldVersion
 	; Ensure that old files are all deleted
 	${If} ${RunningX64}
 		${If} ${FileExists} "$INSTDIR\x64\PIMETextService.dll"
-            Delete "$INSTDIR\x64\PIMETextService.dll"
+            Delete /REBOOTOK "$INSTDIR\x64\PIMETextService.dll"
             IfErrors 0 +2
                 Call .onInstFailed
 		${EndIf}
 	${EndIf}
 	${If} ${FileExists} "$INSTDIR\x86\PIMETextService.dll"
-        Delete "$INSTDIR\x86\PIMETextService.dll"
+        Delete /REBOOTOK "$INSTDIR\x86\PIMETextService.dll"
         IfErrors 0 +2
             Call .onInstFailed
+	${EndIf}
+
+	${If} ${RebootFlag}
+		Call .onInstFailed
 	${EndIf}
 FunctionEnd
 
@@ -133,7 +137,12 @@ FunctionEnd
 
 ; called to show an error message when errors happen
 Function .onInstFailed
-	MessageBox MB_ICONSTOP|MB_OK "安裝發生錯誤，無法完成。$\n$\n有時是有檔案正在使用中，暫時無法刪除或覆寫$\n$\n建議重新開機後，再次執行安裝程式。"
+		${If} ${RebootFlag}
+		MessageBox MB_YESNO "安裝發生錯誤，無法完成。$\r$\n有時是有檔案正在使用中，暫時無法刪除或覆寫$\n$\n建議重新開機後，再次執行安裝程式。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)" IDNO +2
+		Reboot
+	${Else}
+		MessageBox MB_ICONSTOP|MB_OK "安裝發生錯誤，無法完成。$\n$\n有時是有檔案正在使用中，暫時無法刪除或覆寫$\n$\n建議重新開機後，再次執行安裝程式。"
+	${EndIf}
     Abort
 FunctionEnd
 
@@ -190,8 +199,6 @@ FunctionEnd
 ;InstType
 InstType "$(INST_TYPE_STD)"
 InstType "$(INST_TYPE_FULL)"
-LangString INST_TYPE_STD ${CHT} "標準安裝"
-LangString INST_TYPE_FULL ${CHT} "完整安裝"
 
 ;Installer Sections
 Section "PIME 輸入法" SecMain
@@ -287,16 +294,16 @@ Section "" Register
 		
 
 	IntOp $R0 $R0 + 1
-	WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value} 0x0000000$R0
+	WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value} $R0
 
 	${If} ${SectionIsSelected} ${newcj}
 		IntOp $R0 $R0 + 1
-		WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${newcj_value} 0x0000000$R0
+		WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${newcj_value} $R0
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${thcj}
 		IntOp $R0 $R0 + 1
-		WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${thcj_value} 0x0000000$R0
+		WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${thcj_value} $R0
 	${EndIf}
 
     ; Create shortcuts
@@ -307,6 +314,9 @@ SectionEnd
 
 ;Language strings
 LangString DESC_SecMain ${LANG_ENGLISH} "A test section." ; What's this??
+LangString INST_TYPE_STD ${CHT} "標準安裝"
+LangString INST_TYPE_FULL ${CHT} "完整安裝"
+LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解除安裝。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)"
 
 ;Assign language strings to sections
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
@@ -351,6 +361,10 @@ Section "Uninstall"
 	Delete "$INSTDIR\version.txt"
 	Delete "$INSTDIR\Uninstall.exe"
 	RMDir "$INSTDIR"
-
+	
+	${If} ${RebootFlag}
+		MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +2
+		Reboot
+	${EndIf}
 SectionEnd
 

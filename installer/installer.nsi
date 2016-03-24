@@ -138,12 +138,13 @@ FunctionEnd
 ; called to show an error message when errors happen
 Function .onInstFailed
 	${If} ${RebootFlag}
-		MessageBox MB_YESNO "安裝發生錯誤，無法完成。$\r$\n有時是有檔案正在使用中，暫時無法刪除或覆寫$\n$\n建議重新開機後，再次執行安裝程式。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)" IDNO +2
+		MessageBox MB_YESNO "安裝發生錯誤，無法完成。$\r$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)" IDNO +2
 		Reboot
+		Abort
 	${Else}
-		MessageBox MB_ICONSTOP|MB_OK "安裝發生錯誤，無法完成。$\n$\n有時是有檔案正在使用中，暫時無法刪除或覆寫$\n$\n建議重新開機後，再次執行安裝程式。"
+		MessageBox MB_ICONSTOP|MB_OK "安裝發生錯誤，無法完成。$\n$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。"
+		Abort
 	${EndIf}
-    Abort
 FunctionEnd
 
 Function ensureVCRedist
@@ -196,7 +197,7 @@ Function ensureVCRedist
 	${EndIf}
 FunctionEnd
 
-;InstType
+;Installer Type
 InstType "$(INST_TYPE_STD)"
 InstType "$(INST_TYPE_FULL)"
 
@@ -222,7 +223,7 @@ Section "PIME 輸入法" SecMain
     
 	; Install the python server and input method modules
     ; FIXME: maybe we should install the pyc files later?
-	File /r /x "__pycache__" /x "meow"  /x  "newcj" /x "thcj" "..\server"
+	File /r /x "__pycache__" /x "meow" /x "newcj" /x "thcj" "..\server"
 
     ; Install the launcher and monitor of the server
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
@@ -305,7 +306,7 @@ Section "" Register
 			IntOp $R0 $R0 + 1
 			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${thcj_value} $R0
 		${EndIf}
-${EndIf}
+	${EndIf}
 
     ; Create shortcuts
     CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
@@ -354,7 +355,7 @@ Section "Uninstall"
 
 	RMDir /REBOOTOK /r "$INSTDIR\x86"
 	RMDir /REBOOTOK /r "$INSTDIR\server"
-    RMDir /REBOOTOK /r "$INSTDIR\python"
+	RMDir /REBOOTOK /r "$INSTDIR\python"
 
     ; Delete shortcuts
     Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
@@ -364,7 +365,7 @@ Section "Uninstall"
 	Delete "$INSTDIR\version.txt"
 	Delete "$INSTDIR\Uninstall.exe"
 	RMDir "$INSTDIR"
-	
+
 	${If} ${RebootFlag}
 		MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +2
 		Reboot

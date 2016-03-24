@@ -1,0 +1,32 @@
+body {
+    line-height: 150%;
+}
+
+#symbols, #ez_symbols {
+    width: 100%;
+    min-height: 320px;
+}
+
+#buttons {
+    margin: 4px;
+    position: relative;
+    float: right;
+}
+
+#selExample{
+	line-height: 110%;
+	border-top: 1px solid grey;
+	border-left: 1px solid grey;
+	border-right: 2px solid black;
+	border-bottom: 1px solid black;
+	background-color: white;
+	padding: 4px;
+    min-width: 2.3em;
+    font-family: serif;
+	display: inline-block;
+	margin-top: 5px;
+}
+
+#selExample span {
+	color:blue;
+}

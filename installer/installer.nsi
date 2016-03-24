@@ -236,7 +236,7 @@ SubSection "其它輸入法模組"
 		File /r "..\server\input_methods\newcj"
 	SectionEnd
 
-	Section "泰瑞倉頡" thcj
+	Section "酷倉" thcj
 		SectionIn 2
 		SetOutPath "$INSTDIR\server\input_methods"
 		File /r "..\server\input_methods\thcj"

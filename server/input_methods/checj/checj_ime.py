@@ -144,14 +144,16 @@ class CheCJTextService(TextService):
             chewingContext.set_ShapeMode(self.shapeMode)
             
             if cfg.selCinFile == 0: 
-                self.CinFile = "cin/mscj3.cin"
+                self.CinFile = "cin/checj.cin"
             elif cfg.selCinFile == 1: 
-                self.CinFile = "cin/cj-ext.cin"
+                self.CinFile = "cin/mscj3.cin"
             elif cfg.selCinFile == 2: 
-                self.CinFile = "cin/cangjie.cin"
+                self.CinFile = "cin/cj-ext.cin"
             elif cfg.selCinFile == 3: 
-                self.CinFile = "cin/thcj.cin"
+                self.CinFile = "cin/cangjie.cin"
             elif cfg.selCinFile == 4: 
+                self.CinFile = "cin/thcj.cin"
+            elif cfg.selCinFile == 5: 
                 self.CinFile = "cin/newcj.cin"
 
             CinPath = os.path.join(self.curdir, self.CinFile)

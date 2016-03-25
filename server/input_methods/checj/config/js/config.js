@@ -74,7 +74,7 @@ function getConfigDir() {
     if(!fso.FolderExists(dirPath)) {
         fso.CreateFolder(dirPath);
     }
-    dirPath += "\\thcj";
+    dirPath += "\\checj";
     if(!fso.FolderExists(dirPath)) {
         fso.CreateFolder(dirPath);
     }
@@ -89,7 +89,7 @@ function getDataDir() {
         progDir = shell.ExpandEnvironmentStrings("%PROGRAMFILES");
     }
     // FIXME: it's bad to hard code the path, but is there any better way?
-    return progDir + "\\PIME\\server\\input_methods\\thcj\\data";
+    return progDir + "\\PIME\\server\\input_methods\\checj\\data";
 }
 
 var chewingConfig = null;
@@ -184,6 +184,7 @@ $(function() {
     $("#fontSize").spinner({min:6, max:200});
 
     var selCins=[
+        "酷倉",
         "倉頡",
         "倉頡(大字集)",
         "中標倉頡",

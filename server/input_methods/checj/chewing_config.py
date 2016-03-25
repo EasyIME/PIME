@@ -22,7 +22,7 @@ import time
 DEF_FONT_SIZE = 16
 
 # from libchewing/include/internal/userphrase-private.h
-DB_NAME	= "thcj.sqlite3"
+DB_NAME	= "checj.sqlite3"
 
 selKeys=(
     "1234567890"
@@ -60,7 +60,7 @@ class ChewingConfig:
         self.load() # try to load from the config file
 
     def getConfigDir(self):
-        config_dir = os.path.join(os.path.expanduser("~"), "PIME", "thcj")
+        config_dir = os.path.join(os.path.expanduser("~"), "PIME", "checj")
         os.makedirs(config_dir, mode=0o700, exist_ok=True)
         return config_dir
 

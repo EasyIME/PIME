@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import unicode_literals
+import re
 
 CIN_HEAD = "%gen_inp"
 ENAME_HEAD = "%ename"
@@ -81,6 +82,8 @@ class Cin(object):
                 continue
 
             if state is PARSE_CHARDEF_STATE:
+                if '#' in line:
+                    line = re.sub('#.+', '', line)
                 key, root = safeSplit(line)
                 key = key.strip()
                 root = root.strip()

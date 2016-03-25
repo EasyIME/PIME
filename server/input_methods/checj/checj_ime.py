@@ -114,7 +114,8 @@ class CheCJTextService(TextService):
         
         # 設定選字按鍵 (123456..., asdf.... 等)
         if self.cin.getSelection(): # CheCJ
-            self.setSelKeys(self.cin.getSelection())
+            selkey = self.cin.getSelection() + "*" * 90
+            self.setSelKeys(selkey)
 
         # 轉換輸出成簡體中文?
         self.setOutputSimplifiedChinese(cfg.outputSimpChinese)
@@ -150,7 +151,7 @@ class CheCJTextService(TextService):
             elif cfg.selCinFile == 2: 
                 self.CinFile = "cin/cj-ext.cin"
             elif cfg.selCinFile == 3: 
-                self.CinFile = "cin/cangjie.cin"
+                self.CinFile = "cin/cnscj.cin"
             elif cfg.selCinFile == 4: 
                 self.CinFile = "cin/thcj.cin"
             elif cfg.selCinFile == 5: 
@@ -386,10 +387,6 @@ class CheCJTextService(TextService):
                     self.setShowCandidates(True)
 
             if candidates:
-                if len(candidates) > 10:
-                    selkey = self.cin.getSelection() + "*" * len(candidates)
-                    self.setSelKeys(selkey)
-                
                 self.setCandidateList(candidates)
                 self.setShowCandidates(True)
                 candCursor = self.candidateCursor  # 目前的游標位置
@@ -650,17 +647,17 @@ class CheCJTextService(TextService):
             charStr = chr(charCode)
         if charCode == 0x0020: # Spacebar
             charStr = chr(0x3000)
-        elif charCode == 0x0022: # char(")
+        elif charCode == 0x0022: # char(") to char(、)
             charStr = chr(0x3001)
-        elif charCode == 0x0027: # char(')
+        elif charCode == 0x0027: # char(') to char(、)
             charStr = chr(0x3001)
-        elif charCode == 0x002e: # char(.)
+        elif charCode == 0x002e: # char(.) to char(。)
             charStr = chr(0x3002)
-        elif charCode == 0x003c: # char(<)
+        elif charCode == 0x003c: # char(<) to char(，)
             charStr = chr(0xff0c)
-        elif charCode == 0x003e: # char(>)
+        elif charCode == 0x003e: # char(>) to char(。)
             charStr = chr(0x3002)
-        elif charCode == 0x005f: # char(_)
+        elif charCode == 0x005f: # char(_) to char(－)
             charStr = chr(0xff0d)
         else:
             charCode += 0xfee0

@@ -44,7 +44,7 @@ AllowSkipFiles off ; cannot skip a file
 
 !define chewing_value "0404:{35F67E9D-A54D-4177-9697-8B0AB71A9E04}{F80736AA-28DB-423A-92C9-5540F501C939}"
 !define newcj_value "0404:{35F67E9D-A54D-4177-9697-8B0AB71A9E04}{D5F17DA0-594A-5897-9B0C-9BA79F000000}"
-!define thcj_value "0404:{35F67E9D-A54D-4177-9697-8B0AB71A9E04}{F828D2DC-81BE-466E-9CFE-24BB03172693}"
+!define checj_value "0404:{35F67E9D-A54D-4177-9697-8B0AB71A9E04}{F828D2DC-81BE-466E-9CFE-24BB03172693}"
 
 Name "${PRODUCT_NAME}"
 BrandingText "${PRODUCT_NAME}"
@@ -223,7 +223,7 @@ Section "PIME 輸入法" SecMain
     
 	; Install the python server and input method modules
     ; FIXME: maybe we should install the pyc files later?
-	File /r /x "__pycache__" /x "meow" /x "newcj" /x "thcj" "..\server"
+	File /r /x "__pycache__" /x "meow" /x "newcj" /x "checj" "..\server"
 
     ; Install the launcher and monitor of the server
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
@@ -236,10 +236,10 @@ SubSection "其它輸入法模組"
 		File /r "..\server\input_methods\newcj"
 	SectionEnd
 
-	Section "酷倉" thcj
+	Section "酷倉" checj
 		SectionIn 2
 		SetOutPath "$INSTDIR\server\input_methods"
-		File /r "..\server\input_methods\thcj"
+		File /r "..\server\input_methods\checj"
 	SectionEnd
 SubSectionEnd
 
@@ -286,7 +286,7 @@ Section "" Register
 			IntOp $0 $0 + 1
 			${If} $1 ==  ${chewing_value}
 			${OrIf} $1 == ${newcj_value}
-			${OrIf} $1 == ${thcj_value}
+			${OrIf} $1 == ${checj_value}
 				IntOp $R0 $R0 + 0
 			${Else}
 				IntOp $R0 $R0 + 1
@@ -302,15 +302,18 @@ Section "" Register
 			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${newcj_value} $R0
 		${EndIf}
 
-		${If} ${SectionIsSelected} ${thcj}
+		${If} ${SectionIsSelected} ${checj}
 			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${thcj_value} $R0
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${checj_value} $R0
 		${EndIf}
 	${EndIf}
 
     ; Create shortcuts
     CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
     CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk" "$INSTDIR\server\input_methods\chewing\config\config.hta"
+    ${If} ${SectionIsSelected} ${checj}
+        CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk" "$INSTDIR\server\input_methods\checj\config\config.hta"
+    ${EndIf}
     CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
 
@@ -324,7 +327,7 @@ LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} "安裝 ${PRODUCT_NAME} 主程式到你的電腦裏。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${newcj} "安裝自由大新倉頡輸入法模組。"
-	!insertmacro MUI_DESCRIPTION_TEXT ${thcj} "安裝泰瑞倉頡輸入法模組。"
+	!insertmacro MUI_DESCRIPTION_TEXT ${checj} "安裝酷倉輸入法模組。"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;Uninstaller Section
@@ -337,7 +340,7 @@ Section "Uninstall"
 	${If} ${AtLeastWin8}
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value}
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW"  ${newcj_value}
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW"  ${thcj_value}
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW"  ${checj_value}
 	${EndIf}
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
@@ -359,6 +362,7 @@ Section "Uninstall"
 
     ; Delete shortcuts
     Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
+    Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk"
     Delete "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk"
     RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
 

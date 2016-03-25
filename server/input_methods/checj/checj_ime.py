@@ -21,7 +21,7 @@ from .libchewing import ChewingContext
 from .chewing_config import chewingConfig
 import opencc  # OpenCC 繁體簡體中文轉換
 
-# TerryCJ
+# CheCJ
 import io
 from .cin import Cin
 from .swkb import swkb
@@ -54,12 +54,12 @@ ID_LITTLEDICT = 16
 ID_PROVERBDICT = 17
 ID_OUTPUT_SIMP_CHINESE = 18
 
-# TerryCJ
+# CheCJ
 MAX_CHAR_LENGTH = 5
 
 
-class TerryCJTextService(TextService):
-    # TerryCJ
+class CheCJTextService(TextService):
+    # CheCJ
     compositionChar = ''
 
     def __init__(self, client):
@@ -80,7 +80,7 @@ class TerryCJTextService(TextService):
         # 使用 OpenCC 繁體中文轉簡體
         self.opencc = None
         
-        # TerryCJ
+        # CheCJ
         self.candidates = []
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
@@ -113,7 +113,7 @@ class TerryCJTextService(TextService):
                         candPerRow = cfg.candPerRow)
         
         # 設定選字按鍵 (123456..., asdf.... 等)
-        if self.cin.getSelection(): # TerryCJ
+        if self.cin.getSelection(): # CheCJ
             self.setSelKeys(self.cin.getSelection())
 
         # 轉換輸出成簡體中文?
@@ -283,7 +283,7 @@ class TerryCJTextService(TextService):
             return False
         # --------------   以下皆為中文模式   --------------
 
-        # TerryCJ
+        # CheCJ
         # 中文模式下，當中文編輯區是空的，輸入法只需處理倉頡字根
         # 檢查按下的鍵是否為倉頡字根
         if self.cin.isInKeyName(chr(keyEvent.charCode).lower()):
@@ -299,7 +299,7 @@ class TerryCJTextService(TextService):
         keyCode = keyEvent.keyCode
         charStr = chr(charCode)
         
-        # TerryCJ
+        # CheCJ
         candidates = self.candidates
         charStrLow = charStr.lower()
 
@@ -419,7 +419,7 @@ class TerryCJTextService(TextService):
                 self.setShowCandidates(False)
 
             # 按下空白或字碼超過5個時，將組成的字送出
-            if keyCode == VK_SPACE or len(self.compositionString) > MAX_CHAR_LENGTH:
+            if keyCode == VK_SPACE:
                 if len(candidates) >= 1:
                     commitStr = candidates[candCursor]
                     

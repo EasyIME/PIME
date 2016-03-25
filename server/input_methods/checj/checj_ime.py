@@ -394,6 +394,14 @@ class CheCJTextService(TextService):
                 self.setShowCandidates(True)
                 candCursor = self.candidateCursor  # 目前的游標位置
                 candCount = len(self.candidateList)  # 目前選字清單項目數
+                
+                if self.isSymbolsChar(keyCode) and len(self.compositionChar) == 1:
+                    if len(candidates) == 1:
+                        cand = candidates[0]
+                        self.setCommitString(cand)
+                        self.resetComposition()
+                        candCursor = 0
+                
                 # TODO: use %selkey in newcj.cin instead of ord('0') and ord('9')
                 if keyCode >= ord('0') and keyCode <= ord('9'):
                     i = keyCode - ord('1')

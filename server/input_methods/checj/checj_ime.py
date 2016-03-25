@@ -641,8 +641,6 @@ class CheCJTextService(TextService):
             charStr = chr(0x3001)
         elif charCode == 0x002e: # char(.)
             charStr = chr(0x3002)
-        elif charCode == 0x003a: # char(:)
-            charStr = chr(0xff1b)
         elif charCode == 0x003c: # char(<)
             charStr = chr(0xff0c)
         elif charCode == 0x003e: # char(>)

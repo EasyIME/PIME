@@ -155,7 +155,9 @@ class CheCJTextService(TextService):
             elif cfg.selCinFile == 4: 
                 self.CinFile = "cin/thcj.cin"
             elif cfg.selCinFile == 5: 
-                self.CinFile = "cin/newcj.cin"
+                self.CinFile = "cin/newcj3.cin"
+            elif cfg.selCinFile == 6: 
+                self.CinFile = "cin/cj5.cin"
 
             CinPath = os.path.join(self.curdir, self.CinFile)
             with io.open(CinPath, encoding='utf-8') as fs:

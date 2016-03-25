@@ -189,7 +189,8 @@ $(function() {
         "雅虎倉頡",
         "中標倉頡",
         "泰瑞倉頡",
-        "亂倉打鳥"
+        "亂倉打鳥",
+        "倉五"
     ];
     var selCinFile = $("#selCinFile");
     for(var i = 0; i < selCins.length; ++i) {

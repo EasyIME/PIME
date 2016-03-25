@@ -386,7 +386,10 @@ class CheCJTextService(TextService):
                     self.setShowCandidates(True)
 
             if candidates:
-                print("candidates are {}".format(",".join(candidates)))
+                if len(candidates) > 10:
+                    selkey = self.cin.getSelection() + "*" * len(candidates)
+                    self.setSelKeys(selkey)
+                
                 self.setCandidateList(candidates)
                 self.setShowCandidates(True)
                 candCursor = self.candidateCursor  # 目前的游標位置
@@ -415,6 +418,8 @@ class CheCJTextService(TextService):
                     self.setCommitString(commitStr)
                     self.resetComposition()
                     candCursor = 0
+                else: # 按下其它鍵，先將候選字游標位址歸零
+                    candCursor = 0
                 # 更新選字視窗游標位置
                 self.setCandidateCursor(candCursor)
             else:
@@ -430,6 +435,7 @@ class CheCJTextService(TextService):
                         commitStr = self.opencc.convert(commitStr)
                     
                     self.setCommitString(commitStr)
+                    self.setCandidateCursor(0)
                     self.resetComposition()
                 else:
                     self.showMessage("查無字根...", 3)
@@ -439,6 +445,7 @@ class CheCJTextService(TextService):
                     self.showMessage("", 0)
                     self.setCompositionString(self.compositionString[:-1])
                     self.compositionChar = self.compositionChar[:-1]
+                    self.setCandidateCursor(0)
                     if self.cin.isInCharDef(self.compositionChar):
                         candidates = self.cin.getCharDef(self.compositionChar)
                         self.setCandidateList(candidates)

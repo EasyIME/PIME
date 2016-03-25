@@ -332,7 +332,11 @@ class CheCJTextService(TextService):
                 # 如果是全形模式，將字串轉為全形再輸出
                 elif self.shapeMode == FULLSHAPE_MODE:
                     CommitStr = self.charCodeToFullshape(charCode)
-                    
+                # 如果啟用 Shift 輸入全形標點
+                elif cfg.fullShapeSymbols:
+                    # 如果是符號或數字，將字串轉為全形再輸出
+                    if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
+                        CommitStr = self.SymbolscharCodeToFullshape(charCode)
                 self.setCommitString(CommitStr)
                 self.resetComposition()
             else:
@@ -360,10 +364,10 @@ class CheCJTextService(TextService):
                         CommitStr = charStr
                         self.setCommitString(CommitStr)
                         self.resetComposition()
-                else:
-                    # 如果啟用 Shift 輸入全形標點，將字串轉為全形再輸出
-                    if keyEvent.isPrintableChar():
-                        CommitStr = self.charCodeToFullshape(charCode)
+                else: # 如果啟用 Shift 輸入全形標點
+                    # 如果是符號或數字，將字串轉為全形再輸出
+                    if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
+                        CommitStr = self.SymbolscharCodeToFullshape(charCode)
                         self.setCommitString(CommitStr)
                         self.resetComposition()
             else:
@@ -649,6 +653,17 @@ class CheCJTextService(TextService):
             charStr = chr(charCode)
         if charCode == 0x0020: # Spacebar
             charStr = chr(0x3000)
+        else:
+            charCode += 0xfee0
+            charStr = chr(charCode)
+        return charStr
+        
+    def SymbolscharCodeToFullshape(self, charCode):
+        charStr = ''
+        if charCode < 0x0020 or charCode > 0x7e:
+            charStr = chr(charCode)
+        if charCode == 0x0020: # Spacebar
+            charStr = chr(0x3000)
         elif charCode == 0x0022: # char(") to char(、)
             charStr = chr(0x3001)
         elif charCode == 0x0027: # char(') to char(、)
@@ -665,4 +680,3 @@ class CheCJTextService(TextService):
             charCode += 0xfee0
             charStr = chr(charCode)
         return charStr
-        

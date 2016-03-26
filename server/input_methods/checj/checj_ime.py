@@ -73,6 +73,8 @@ class CheCJTextService(TextService):
         self.langMode = -1
         self.shapeMode = -1
         self.outputSimpChinese = False
+        self.fullShapeSymbols = False
+        self.easySymbolsWithShift = False
         self.lastKeyDownCode = 0
         self.lastKeyDownTime = 0.0
         self.configVersion = chewingConfig.getVersion()
@@ -82,6 +84,8 @@ class CheCJTextService(TextService):
         
         # CheCJ
         self.candidates = []
+        self.showmenu = False
+        self.menutype = 0
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):
@@ -119,6 +123,12 @@ class CheCJTextService(TextService):
 
         # 轉換輸出成簡體中文?
         self.setOutputSimplifiedChinese(cfg.outputSimpChinese)
+        
+        # Shift 輸入全形標點?
+        self.fullShapeSymbols = cfg.fullShapeSymbols
+        
+        # Shift 快速輸入符號?
+        self.easySymbolsWithShift = cfg.easySymbolsWithShift
         
     # 初始化新酷音輸入法引擎
     def initChewingContext(self):
@@ -265,10 +275,10 @@ class CheCJTextService(TextService):
         # 若按下 Shift 鍵
         if keyEvent.isKeyDown(VK_SHIFT):
             # 若開啟 Shift 快速輸入符號，輸入法需要此按鍵
-            if cfg.easySymbolsWithShift and keyEvent.isPrintableChar() and self.langMode == CHINESE_MODE:
+            if self.easySymbolsWithShift and keyEvent.isPrintableChar() and self.langMode == CHINESE_MODE:
                 return True
             # 若開啟 Shift 輸入全形標點，輸入法需要此按鍵
-            if cfg.fullShapeSymbols and keyEvent.isPrintableChar() and self.langMode == CHINESE_MODE:
+            if self.fullShapeSymbols and keyEvent.isPrintableChar() and self.langMode == CHINESE_MODE:
                 return True
 
         # 不論中英文模式，NumPad 都允許直接輸入數字，輸入法不處理
@@ -293,6 +303,10 @@ class CheCJTextService(TextService):
         # 檢查按下的鍵是否為倉頡字根
         if self.cin.isInKeyName(chr(keyEvent.charCode).lower()):
             return True
+            
+        # 中文模式下，若 Shift 鍵及 ` 鍵並沒有同時按下，讓輸入法進行處理
+        if not keyEvent.isKeyDown(VK_SHIFT) and keyEvent.isKeyDown(VK_OEM_3):
+            return True
 
         # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
         return False
@@ -307,6 +321,74 @@ class CheCJTextService(TextService):
         # CheCJ
         candidates = self.candidates
         charStrLow = charStr.lower()
+        
+        # 功能選單 ----------------------------------------------------------------
+        if self.langMode == CHINESE_MODE and len(self.compositionChar) == 0:
+            menu_OutputSimpChinese = "輸出繁體" if self.outputSimpChinese else "輸出簡體"
+            menu_fullShapeSymbols = "停用 Shift 輸入全形標點" if self.fullShapeSymbols else "啟用 Shift 輸入全形標點"
+            menu_easySymbolsWithShift = "停用 Shift 快速輸入符號" if self.easySymbolsWithShift else "啟用 Shift 快速輸入符號"
+            
+            if not keyEvent.isKeyDown(VK_SHIFT) and keyEvent.isKeyDown(VK_OEM_3):
+                self.menutype = 0
+                menu = ["設定酷倉", menu_OutputSimpChinese, "符號輸入"]
+                self.setCandidateList(menu)
+                self.setShowCandidates(True)
+                self.showmenu = True
+                
+            if self.showmenu:
+                candCursor = self.candidateCursor  # 目前的游標位置
+                candCount = len(self.candidateList)  # 目前選字清單項目數
+                # TODO: use %selkey in newcj.cin instead of ord('0') and ord('9')
+                if keyCode >= ord('0') and keyCode <= ord('9'):
+                    i = keyCode - ord('1')
+                    if self.menutype == 0 and i == 2:
+                        candCursor = 0
+                        menu = [menu_fullShapeSymbols, menu_easySymbolsWithShift]
+                        self.setCandidateList(menu)
+                        self.menutype = 1
+                    elif self.menutype == 0:
+                        self.onMenuCommand(i, 0)
+                        candCursor = 0
+                        self.showmenu = False
+                        self.resetComposition()
+                    elif self.menutype == 1:
+                        self.onMenuCommand(i, 1)
+                        candCursor = 0
+                        self.showmenu = False
+                        self.menutype = 0
+                        self.resetComposition()
+                elif keyCode == VK_UP:  # 游標上移
+                    if candCursor > 0:
+                        candCursor -= 1
+                elif keyCode == VK_DOWN:  # 游標下移
+                    if (candCursor + 1) < candCount:
+                        candCursor += 1
+                elif keyCode == VK_RETURN:  # 按下 Enter 鍵
+                    # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
+                    i = candCursor
+                    if self.menutype == 0 and i == 2:
+                        candCursor = 0
+                        menu = [menu_fullShapeSymbols, menu_easySymbolsWithShift]
+                        self.setCandidateList(menu)
+                        self.menutype = 1
+                    elif self.menutype == 0:
+                        self.onMenuCommand(i, 0)
+                        candCursor = 0
+                        self.showmenu = False
+                        self.resetComposition()
+                    elif self.menutype == 1:
+                        self.onMenuCommand(i, 1)
+                        candCursor = 0
+                        self.showmenu = False
+                        self.menutype = 0
+                        self.resetComposition()
+                elif keyCode == VK_ESCAPE:
+                    candCursor = 0
+                    self.showmenu = False
+                    self.menutype = 0
+                    self.resetComposition()
+                # 更新選字視窗游標位置
+                self.setCandidateCursor(candCursor)
 
         if not self.isComposing():
             if keyCode == VK_RETURN or keyCode == VK_BACK:
@@ -322,7 +404,7 @@ class CheCJTextService(TextService):
                 CommitStr = charStr
                 # 使用 Ctrl 或 Shift 鍵做金輸入 (easy symbol input)
                 # 這裡的 easy symbol input，是定義在 swkb.dat 設定檔中的符號
-                if cfg.easySymbolsWithShift:
+                if self.easySymbolsWithShift:
                     if self.swkb.isInCharDef(charStr.upper()):
                         candidates = self.swkb.getCharDef(charStr.upper())
                         CommitStr = candidates[0]
@@ -333,7 +415,7 @@ class CheCJTextService(TextService):
                 elif self.shapeMode == FULLSHAPE_MODE:
                     CommitStr = self.charCodeToFullshape(charCode)
                 # 如果啟用 Shift 輸入全形標點
-                elif cfg.fullShapeSymbols:
+                elif self.fullShapeSymbols:
                     # 如果是符號或數字，將字串轉為全形再輸出
                     if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
                         CommitStr = self.SymbolscharCodeToFullshape(charCode)
@@ -354,7 +436,7 @@ class CheCJTextService(TextService):
             # 若按下 Shift 鍵
             if keyEvent.isKeyDown(VK_SHIFT):
                 # 如果停用 Shift 輸入全形標點
-                if not cfg.fullShapeSymbols:
+                if not self.fullShapeSymbols:
                     # 如果是全形模式，將字串轉為全形再輸出
                     if self.shapeMode == FULLSHAPE_MODE and len(self.compositionChar) == 0:
                         CommitStr = self.charCodeToFullshape(charCode)
@@ -376,28 +458,33 @@ class CheCJTextService(TextService):
                     CommitStr = self.charCodeToFullshape(charCode)
                     self.setCommitString(CommitStr)
                     self.resetComposition()
-        
+
         if self.langMode == CHINESE_MODE and len(self.compositionChar) >= 1:
+            self.showmenu = False
+            
             if keyCode == VK_ESCAPE and (self.showCandidates or len(self.compositionChar) > 0):
                 self.setShowCandidates(False)
+                self.setCandidateCursor(0)
                 self.resetComposition()
-
+                
             if self.cin.isInCharDef(self.compositionChar):
                 candidates = self.cin.getCharDef(self.compositionChar)
             elif len(self.compositionChar) > MAX_CHAR_LENGTH:
                 self.setCompositionString(self.compositionString[:-1])
                 self.compositionChar = self.compositionChar[:-1]
                 if self.cin.isInCharDef(self.compositionChar):
+                    self.setCandidateCursor(0)
                     candidates = self.cin.getCharDef(self.compositionChar)
                     self.setCandidateList(candidates)
                     self.setShowCandidates(True)
-
+                    
             if candidates:
                 self.setCandidateList(candidates)
                 self.setShowCandidates(True)
                 candCursor = self.candidateCursor  # 目前的游標位置
                 candCount = len(self.candidateList)  # 目前選字清單項目數
                 
+                # 如果字根首字是符號就直接輸出
                 if self.isSymbolsChar(keyCode) and len(self.compositionChar) == 1:
                     if len(candidates) == 1:
                         cand = candidates[0]
@@ -412,6 +499,7 @@ class CheCJTextService(TextService):
                         cand = candidates[i]
                         self.setCommitString(cand)
                         self.resetComposition()
+                        candCursor = 0
                 elif keyCode == VK_UP:  # 游標上移
                     if candCursor > 0:
                         candCursor -= 1
@@ -556,6 +644,21 @@ class CheCJTextService(TextService):
             ]
         return None
 
+    # 按下「`」鍵的選單命令
+    def onMenuCommand(self, commandId, commandType):
+        cfg = chewingConfig
+        if commandType == 0:
+            if commandId == 0:
+                config_tool = os.path.join(self.curdir, "config", "config.hta")
+                os.startfile(config_tool)
+            elif commandId == 1:
+                self.setOutputSimplifiedChinese(not self.outputSimpChinese)
+        elif commandType == 1:
+            if commandId == 0:
+                self.fullShapeSymbols = not self.fullShapeSymbols
+            elif commandId == 1:
+                self.easySymbolsWithShift = not self.easySymbolsWithShift
+        
     # 依照目前輸入法狀態，更新語言列顯示
     def updateLangButtons(self):
         chewingContext = self.chewingContext

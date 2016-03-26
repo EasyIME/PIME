@@ -17,7 +17,6 @@ from keycodes import *  # for VK_XXX constants
 from textService import *
 import os.path
 import time
-from .libchewing import ChewingContext
 from .chewing_config import chewingConfig
 import opencc  # OpenCC 繁體簡體中文轉換
 
@@ -68,7 +67,6 @@ class CheCJTextService(TextService):
         self.datadir = os.path.join(self.curdir, "data")
         # print(self.datadir)
         self.icon_dir = self.curdir
-        self.chewingContext = None # libchewing context
         
         self.langMode = -1
         self.shapeMode = -1
@@ -95,7 +93,6 @@ class CheCJTextService(TextService):
         # 比較我們先前存的版本號碼，和目前設定檔的版本號
         if cfg.isFullReloadNeeded(self.configVersion):
             # 資料改變需整個 reload，重建一個新的 chewing context
-            self.chewingContext = None
             self.initChewingContext()
         elif cfg.isConfigChanged(self.configVersion):
             # 只有偵測到設定檔變更，需要套用新設定
@@ -104,13 +101,6 @@ class CheCJTextService(TextService):
     def applyConfig(self):
         cfg = chewingConfig # globally shared config object
         self.configVersion = cfg.getVersion()
-        chewingContext = self.chewingContext
-
-        # 每頁顯示幾個候選字
-        chewingContext.set_candPerPage(cfg.candPerPage);
-
-        # 鍵盤 layout 種類
-        chewingContext.set_KBType(cfg.keyboardLayout);
 
         # 設定 UI 外觀
         self.customizeUI(candFontSize = cfg.fontSize,
@@ -132,50 +122,41 @@ class CheCJTextService(TextService):
         
     # 初始化新酷音輸入法引擎
     def initChewingContext(self):
-        # load libchewing context
-        if not self.chewingContext:
-            cfg = chewingConfig # 所有 ChewingTextService 共享一份設定物件
-            # syspath 參數可包含多個路徑，用 ; 分隔
-            # 此處把 user 設定檔目錄插入到 system-wide 資料檔路徑前
-            # 如此使用者變更設定後，可以比系統預設值有優先權
-            search_paths = ";".join((cfg.getConfigDir(), self.datadir)).encode("UTF-8")
-            user_phrase = cfg.getUserPhrase().encode("UTF-8")
+        cfg = chewingConfig # 所有 ChewingTextService 共享一份設定物件
+        # syspath 參數可包含多個路徑，用 ; 分隔
+        # 此處把 user 設定檔目錄插入到 system-wide 資料檔路徑前
+        # 如此使用者變更設定後，可以比系統預設值有優先權
+        search_paths = ";".join((cfg.getConfigDir(), self.datadir)).encode("UTF-8")
+        user_phrase = cfg.getUserPhrase().encode("UTF-8")
 
-            # 建立 ChewingContext，此處路徑需要 UTF-8 編碼
-            chewingContext = ChewingContext(syspath = search_paths, userpath = user_phrase)
-            self.chewingContext = chewingContext
-            chewingContext.set_maxChiSymbolLen(50) # 編輯區長度: 50 bytes
+        # 預設英數 or 中文模式
+        self.langMode = ENGLISH_MODE if cfg.defaultEnglish else CHINESE_MODE
 
-            # 預設英數 or 中文模式
-            self.langMode = ENGLISH_MODE if cfg.defaultEnglish else CHINESE_MODE
-            chewingContext.set_ChiEngMode(self.langMode)
+        # 預設全形 or 半形
+        self.shapeMode = FULLSHAPE_MODE if cfg.defaultFullSpace else HALFSHAPE_MODE
+        
+        if cfg.selCinFile == 0: 
+            self.CinFile = "cin/checj.cin"
+        elif cfg.selCinFile == 1: 
+            self.CinFile = "cin/mscj3.cin"
+        elif cfg.selCinFile == 2: 
+            self.CinFile = "cin/cj-ext.cin"
+        elif cfg.selCinFile == 3: 
+            self.CinFile = "cin/cnscj.cin"
+        elif cfg.selCinFile == 4: 
+            self.CinFile = "cin/thcj.cin"
+        elif cfg.selCinFile == 5: 
+            self.CinFile = "cin/newcj3.cin"
+        elif cfg.selCinFile == 6: 
+            self.CinFile = "cin/cj5.cin"
 
-            # 預設全形 or 半形
-            self.shapeMode = FULLSHAPE_MODE if cfg.defaultFullSpace else HALFSHAPE_MODE
-            chewingContext.set_ShapeMode(self.shapeMode)
+        CinPath = os.path.join(self.curdir, self.CinFile)
+        with io.open(CinPath, encoding='utf-8') as fs:
+            self.cin = Cin(fs)
             
-            if cfg.selCinFile == 0: 
-                self.CinFile = "cin/checj.cin"
-            elif cfg.selCinFile == 1: 
-                self.CinFile = "cin/mscj3.cin"
-            elif cfg.selCinFile == 2: 
-                self.CinFile = "cin/cj-ext.cin"
-            elif cfg.selCinFile == 3: 
-                self.CinFile = "cin/cnscj.cin"
-            elif cfg.selCinFile == 4: 
-                self.CinFile = "cin/thcj.cin"
-            elif cfg.selCinFile == 5: 
-                self.CinFile = "cin/newcj3.cin"
-            elif cfg.selCinFile == 6: 
-                self.CinFile = "cin/cj5.cin"
-
-            CinPath = os.path.join(self.curdir, self.CinFile)
-            with io.open(CinPath, encoding='utf-8') as fs:
-                self.cin = Cin(fs)
-                
-            swkbPath = os.path.join(self.curdir, "data/swkb.dat")
-            with io.open(swkbPath, encoding='utf-8') as fs:
-                self.swkb = swkb(fs)
+        swkbPath = os.path.join(self.curdir, "data/swkb.dat")
+        with io.open(swkbPath, encoding='utf-8') as fs:
+            self.swkb = swkb(fs)
 
         self.applyConfig() # 套用其餘的使用者設定
             
@@ -224,8 +205,6 @@ class CheCJTextService(TextService):
     # 使用者離開輸入法
     def onDeactivate(self):
         TextService.onDeactivate(self)
-        # 釋放 libchewing context 的資源
-        self.chewingContext = None
         self.lastKeyDownCode = 0
         
         self.removeButton("switch-lang")
@@ -312,7 +291,6 @@ class CheCJTextService(TextService):
         return False
 
     def onKeyDown(self, keyEvent):
-        chewingContext = self.chewingContext
         cfg = chewingConfig
         charCode = keyEvent.charCode
         keyCode = keyEvent.keyCode
@@ -661,10 +639,6 @@ class CheCJTextService(TextService):
         
     # 依照目前輸入法狀態，更新語言列顯示
     def updateLangButtons(self):
-        chewingContext = self.chewingContext
-        if not chewingContext:
-            return
-    
         # 如果中英文模式發生改變
         icon_name = "chi.ico" if self.langMode == CHINESE_MODE else "eng.ico"
         icon_path = os.path.join(self.icon_dir, icon_name)
@@ -682,25 +656,19 @@ class CheCJTextService(TextService):
 
     # 切換中英文模式
     def toggleLanguageMode(self):
-        chewingContext = self.chewingContext
-        if chewingContext:
-            if self.langMode == CHINESE_MODE:
-                self.langMode = ENGLISH_MODE
-            elif self.langMode == ENGLISH_MODE:
-                self.langMode = CHINESE_MODE
-            chewingContext.set_ChiEngMode(self.langMode)
-            self.updateLangButtons()
+        if self.langMode == CHINESE_MODE:
+            self.langMode = ENGLISH_MODE
+        elif self.langMode == ENGLISH_MODE:
+            self.langMode = CHINESE_MODE
+        self.updateLangButtons()
 
     # 切換全形/半形
     def toggleShapeMode(self):
-        chewingContext = self.chewingContext
-        if chewingContext:
-            if self.shapeMode == HALFSHAPE_MODE:
-                self.shapeMode = FULLSHAPE_MODE
-            elif self.shapeMode == FULLSHAPE_MODE:
-                self.shapeMode = HALFSHAPE_MODE
-            chewingContext.set_ShapeMode(self.shapeMode)
-            self.updateLangButtons()
+        if self.shapeMode == HALFSHAPE_MODE:
+            self.shapeMode = FULLSHAPE_MODE
+        elif self.shapeMode == FULLSHAPE_MODE:
+            self.shapeMode = HALFSHAPE_MODE
+        self.updateLangButtons()
 
     # 鍵盤開啟/關閉時會被呼叫 (在 Windows 10 Ctrl+Space 時)
     def onKeyboardStatusChanged(self, opened):
@@ -728,15 +696,6 @@ class CheCJTextService(TextService):
     def onCompositionTerminated(self, forced):
         TextService.onCompositionTerminated(self, forced)
         if forced:
-            # 中文組字到一半被系統強制關閉，清除編輯區內容
-            chewingContext = self.chewingContext
-            if chewingContext:
-                if self.showCandidates:
-                    chewingContext.cand_close()
-                if chewingContext.bopomofo_Check():
-                    chewingContext.clean_bopomofo_buf()
-                if chewingContext.buffer_Check():
-                    chewingContext.commit_preedit_buf()
             self.resetComposition()
             
     def resetComposition(self):

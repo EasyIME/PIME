@@ -22,6 +22,9 @@ import time
 from .libchewing import ChewingContext
 from .chewing_config import chewingConfig
 import opencc  # OpenCC 繁體簡體中文轉換
+import sys
+from ctypes import windll  # for ShellExecuteW()
+
 
 # from libchewing/include/global.h
 CHINESE_MODE = 1
@@ -532,8 +535,12 @@ class ChewingTextService(TextService):
         elif commandId == ID_SWITCH_SHAPE:  # 切換全形/半形
             self.toggleShapeMode()
         elif commandId == ID_SETTINGS:  # 開啟設定工具
-            config_tool = os.path.join(self.curdir, "config", "config.hta")
-            os.startfile(config_tool)
+            config_tool = '"{0}"'.format(os.path.join(self.curdir, "config", "configTool.py"))
+            python_exe = sys.executable  # 找到 python 執行檔
+            # 使用我們自帶的 python runtime exe 執行 config tool
+            # 此處也可以用 subprocess，不過使用 windows API 比較方便
+            r = windll.shell32.ShellExecuteW(None, "open", python_exe, config_tool, os.path.dirname(config_tool), 1)  # SW_SHOWNORMAL = 1
+            print(r)
         elif commandId == ID_MODE_ICON: # windows 8 mode icon
             self.toggleLanguageMode()  # 切換中英文模式
         elif commandId == ID_ABOUT: # 關於新酷音輸入法

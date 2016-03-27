@@ -156,56 +156,77 @@ class NewCJTextService(TextService):
 		charStr = chr(charCode)
 		charStrLow = charStr.lower()
 
-		if not self.isComposing():
-			if keyCode == VK_RETURN or keyCode == VK_BACK:
-				return False
+		# 若目前輸入的按鍵是可見字元 (字母、數字、標點...等)
+		if keyEvent.isPrintableChar():
+			# 若按下的鍵在 cin 檔裡有定義
+			if self.cin.isInKeyName(charStrLow):
+				self.compositionChar += charStrLow
+				keyname = self.cin.getKeyName(charStrLow)
+				self.setCompositionString(self.compositionString + keyname)
+				self.setCompositionCursor(len(self.compositionString))
+			# 若字碼已經可組成一個字
+			if self.cin.isInCharDef(self.compositionChar):
+				candidates = self.cin.getCharDef(self.compositionChar)
+			elif len(self.compositionChar) > MAX_CHAR_LENGTH:
+				self.resetComposition()
 
-		if self.cin.isInKeyName(charStrLow):
-			self.compositionChar += charStrLow
-			keyname = self.cin.getKeyName(charStrLow)
-			self.setCompositionString(self.compositionString + keyname)
-			self.setCompositionCursor(len(self.compositionString))
+			if candidates:
+				print("candidates are {}".format(",".join(candidates)))
+				self.setCandidateList(candidates)
+				self.setShowCandidates(True)
+				if charStr in self.cin.getSelection():
+					i = keyCode - ord('1')
+					if i < len(candidates):
+						cand = candidates[i]
+						self.setCommitString(cand)
+						self.resetComposition()
+			else:
+				self.setShowCandidates(False)
 
-		if keyCode == VK_ESCAPE and (self.showCandidates or len(self.compositionChar) > 0):
-			self.setShowCandidates(False)
-			self.resetComposition()
+			# 按下空白或字碼超過5個時，將組成的字送出
+			if keyCode == VK_SPACE or len(self.compositionString) > MAX_CHAR_LENGTH:
+				if len(candidates) >= 1:
+					self.setCommitString(candidates[0])
+				self.resetComposition()
 
-		if self.cin.isInCharDef(self.compositionChar):
-			candidates = self.cin.getCharDef(self.compositionChar)
-		elif len(self.compositionChar) > MAX_CHAR_LENGTH:
-			self.resetComposition()
+			return True
+		else:
+			if not self.isComposing():
+				if keyCode == VK_RETURN or keyCode == VK_BACK:
+					return False
+			# 此時不在組成字的階段，刪掉一個字碼
+			elif keyCode == VK_BACK:
+				if self.compositionString != "":
+					self.setCompositionString(self.compositionString[:-1])
+					self.compositionChar = self.compositionChar[:-1]
+					if self.cin.isInCharDef(self.compositionChar):
+						candidates = self.cin.getCharDef(self.compositionChar)
+						self.setCandidateList(candidates)
+						self.setShowCandidates(True)
+					else:
+						self.setShowCandidates(False)
 
-		if candidates:
-			print("candidates are {}".format(",".join(candidates)))
-			self.setCandidateList(candidates)
-			self.setShowCandidates(True)
-			# TODO: use %selkey in newcj.cin instead of ord('0') and ord('9')
-			if keyCode >= ord('0') and keyCode <= ord('9'):
-				i = keyCode - ord('1')
-				if i < len(candidates):
-					cand = candidates[i]
+			if keyCode == VK_ESCAPE and (self.showCandidates or len(self.compositionChar) > 0):
+				self.setShowCandidates(False)
+				self.resetComposition()
+			if self.showCandidates:
+				candCursor = self.candidateCursor  # 目前的游標位置
+				candCount = len(self.candidateList)  # 目前選字清單項目數
+				if keyCode == VK_UP:  # 游標上移
+					if candCursor >= 1:
+						candCursor -= 1
+				elif keyCode == VK_DOWN:  # 游標下移
+					if (candCursor + 1) < candCount:
+						candCursor += 1
+				elif keyCode == VK_RETURN:  # 按下 Enter 鍵
+					candidates = self.cin.getCharDef(self.compositionChar)
+					cand = candidates[candCursor]
 					self.setCommitString(cand)
 					self.resetComposition()
-		else:
-			self.setShowCandidates(False)
-
-		# 按下空白或字碼超過5個時，將組成的字送出
-		if keyCode == VK_SPACE or len(self.compositionString) > MAX_CHAR_LENGTH:
-			if len(candidates) >= 1:
-				self.setCommitString(candidates[0])
-			self.resetComposition()
-		# 刪掉一個字碼
-		elif keyCode == VK_BACK:
-			if self.compositionString != "":
-				self.setCompositionString(self.compositionString[:-1])
-				self.compositionChar = self.compositionChar[:-1]
-				if self.cin.isInCharDef(self.compositionChar):
-					candidates = self.cin.getCharDef(self.compositionChar)
-					self.setCandidateList(candidates)
-					self.setShowCandidates(True)
-				else:
-					self.setShowCandidates(False)
-		return True
+					self.setCandidateCursor(0)
+					return
+				# 更新選字視窗游標位置
+				self.setCandidateCursor(candCursor)
 
 	def onCommand(self, commandId, commandType):
 		print("onCommand", commandId, commandType)

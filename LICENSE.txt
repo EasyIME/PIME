@@ -14,6 +14,10 @@ The following components are from other projects:
     Embeddable version of python 3.5 is licensed under PSF.
     https://www.python.org/
 
+  python/tornado:
+    Tornado is a python web framework licensed under Apache 2.0.
+    http://www.tornadoweb.org/en/stable/
+
   rapidjson:
     C++ library used to parse and write json data licensed under BSD.
     http://rapidjson.org/

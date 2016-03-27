@@ -102,8 +102,19 @@ bool ImeModule::onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile
 		} while (::FindNextFile(hFind, &findData));
 		CloseHandle(hFind);
 	}
-	if(!configTool.empty())
-		::ShellExecuteW(hwndParent, L"open", configTool.c_str(), NULL, NULL, SW_SHOWNORMAL);
+	if (!configTool.empty()) {
+		// check if this is a python program (ends with .py)
+		if (configTool.compare(configTool.length() - 3, 3, L".py") == 0) {
+			// find our own python 3 runtime.
+			std::wstring pythonPath = programDir_ + L"\\python\\pythonw.exe";
+			configTool = (L"\"" + configTool + L"\""); // quote the path to .py file.
+			::ShellExecuteW(hwndParent, L"open", pythonPath.c_str(), configTool.c_str(), NULL, SW_SHOWNORMAL);
+		}
+		else {
+			// execute the file directly
+			::ShellExecuteW(hwndParent, L"open", configTool.c_str(), NULL, NULL, SW_SHOWNORMAL);
+		}
+	}
 	return true;
 }
 

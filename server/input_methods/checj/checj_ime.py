@@ -22,6 +22,7 @@ import opencc  # OpenCC 繁體簡體中文轉換
 
 # CheCJ
 import io
+import math
 from .cin import Cin
 from .swkb import swkb
 
@@ -82,6 +83,7 @@ class CheCJTextService(TextService):
         
         # CheCJ
         self.candidates = []
+        self.currentCandPage = 0
         self.showmenu = False
         self.menutype = 0
 
@@ -102,14 +104,20 @@ class CheCJTextService(TextService):
         cfg = chewingConfig # globally shared config object
         self.configVersion = cfg.getVersion()
 
+        # 每列顯示幾個候選字
+        self.candPerRow = cfg.candPerRow;
+        
+        # 每頁顯示幾個候選字
+        self.candPerPage = cfg.candPerPage;
+
         # 設定 UI 外觀
         self.customizeUI(candFontSize = cfg.fontSize,
-                        candPerRow = cfg.candPerRow)
+                        candPerRow = cfg.candPerRow,
+                        candUseCursor = cfg.cursorCandList)
         
         # 設定選字按鍵 (123456..., asdf.... 等)
         if self.cin.getSelection(): # CheCJ
-            selkey = self.cin.getSelection() + "*" * 90
-            self.setSelKeys(selkey)
+            self.setSelKeys(self.cin.getSelection())
 
         # 轉換輸出成簡體中文?
         self.setOutputSimplifiedChinese(cfg.outputSimpChinese)
@@ -310,63 +318,110 @@ class CheCJTextService(TextService):
                 self.menutype = 0
                 menu = ["設定酷倉", menu_OutputSimpChinese, "符號輸入"]
                 self.setCandidateList(menu)
-                self.setShowCandidates(True)
                 self.showmenu = True
                 
             if self.showmenu:
+                candidates = self.candidateList
                 candCursor = self.candidateCursor  # 目前的游標位置
                 candCount = len(self.candidateList)  # 目前選字清單項目數
-                # TODO: use %selkey in newcj.cin instead of ord('0') and ord('9')
+                currentCandPageCount = math.ceil(len(candidates) / self.candPerPage) # 目前的選字清單總頁數
+                currentCandPage = self.currentCandPage # 目前的選字清單頁數
+                
+                # 候選清單分頁
+                pagecandidates = list(self.chunks(candidates, self.candPerPage))
+                self.setCandidateList(pagecandidates[currentCandPage])
+                self.setShowCandidates(True)
+                
+                # 使用數字鍵輸出候選字
                 if keyCode >= ord('0') and keyCode <= ord('9'):
                     i = keyCode - ord('1')
                     if self.menutype == 0 and i == 2:
                         candCursor = 0
-                        menu = [menu_fullShapeSymbols, menu_easySymbolsWithShift]
-                        self.setCandidateList(menu)
+                        currentCandPage = 0
+                        candidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift]
+                        pagecandidates = list(self.chunks(candidates, self.candPerPage))
                         self.menutype = 1
                     elif self.menutype == 0:
                         self.onMenuCommand(i, 0)
                         candCursor = 0
+                        currentCandPage = 0
                         self.showmenu = False
                         self.resetComposition()
                     elif self.menutype == 1:
                         self.onMenuCommand(i, 1)
                         candCursor = 0
+                        currentCandPage = 0
                         self.showmenu = False
                         self.menutype = 0
                         self.resetComposition()
                 elif keyCode == VK_UP:  # 游標上移
+                    if (candCursor - self.candPerRow) < 0:
+                        if currentCandPage > 0:
+                            currentCandPage -= 1
+                            candCursor = 0
+                    else:
+                        if (candCursor - self.candPerRow) >= 0:
+                            candCursor = candCursor - self.candPerRow
+                elif keyCode == VK_DOWN:  # 游標下移
+                    if (candCursor + self.candPerRow) >= self.candPerPage:
+                        if (currentCandPage + 1) < currentCandPageCount:
+                            currentCandPage += 1
+                            candCursor = 0
+                    else:
+                        if (candCursor + self.candPerRow) < len(pagecandidates[currentCandPage]):
+                            candCursor = candCursor + self.candPerRow
+                elif keyCode == VK_LEFT:  # 游標左移
                     if candCursor > 0:
                         candCursor -= 1
-                elif keyCode == VK_DOWN:  # 游標下移
+                elif keyCode == VK_RIGHT:  # 游標右移
                     if (candCursor + 1) < candCount:
                         candCursor += 1
-                elif keyCode == VK_RETURN:  # 按下 Enter 鍵
+                elif keyCode == VK_HOME:  # Home 鍵
+                    currentCandPage = 0
+                    candCursor = 0
+                elif keyCode == VK_END:  # End 鍵
+                    currentCandPage = currentCandPageCount - 1
+                    candCursor = 0
+                elif keyCode == VK_PRIOR:  # Page UP 鍵
+                    if currentCandPage > 0:
+                        currentCandPage -= 1
+                        candCursor = 0
+                elif keyCode == VK_NEXT:  # Page Down 鍵
+                    if (currentCandPage + 1) < currentCandPageCount:
+                        currentCandPage += 1
+                        candCursor = 0
+                elif keyCode == VK_RETURN or keyCode == VK_SPACE:  # 按下 Enter 鍵或空白鍵
                     # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                     i = candCursor
                     if self.menutype == 0 and i == 2:
                         candCursor = 0
-                        menu = [menu_fullShapeSymbols, menu_easySymbolsWithShift]
-                        self.setCandidateList(menu)
+                        currentCandPage = 0
+                        candidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift]
+                        pagecandidates = list(self.chunks(candidates, self.candPerPage))
                         self.menutype = 1
                     elif self.menutype == 0:
                         self.onMenuCommand(i, 0)
                         candCursor = 0
+                        currentCandPage = 0
                         self.showmenu = False
                         self.resetComposition()
                     elif self.menutype == 1:
                         self.onMenuCommand(i, 1)
                         candCursor = 0
+                        currentCandPage = 0
                         self.showmenu = False
                         self.menutype = 0
                         self.resetComposition()
                 elif keyCode == VK_ESCAPE:
                     candCursor = 0
+                    currentCandPage = 0
                     self.showmenu = False
                     self.menutype = 0
                     self.resetComposition()
                 # 更新選字視窗游標位置
                 self.setCandidateCursor(candCursor)
+                self.setCandidatePage(currentCandPage)
+                self.setCandidateList(pagecandidates[currentCandPage])
 
         if not self.isComposing():
             if keyCode == VK_RETURN or keyCode == VK_BACK:
@@ -443,7 +498,17 @@ class CheCJTextService(TextService):
             if keyCode == VK_ESCAPE and (self.showCandidates or len(self.compositionChar) > 0):
                 self.setShowCandidates(False)
                 self.setCandidateCursor(0)
+                self.setCandidatePage(0)
                 self.resetComposition()
+                
+            # 刪掉一個字根
+            if keyCode == VK_BACK:
+                if self.compositionString != "":
+                    self.showMessage("", 0)
+                    self.setCompositionString(self.compositionString[:-1])
+                    self.compositionChar = self.compositionChar[:-1]
+                    self.setCandidateCursor(0)
+                    self.setCandidatePage(0)
                 
             if self.cin.isInCharDef(self.compositionChar):
                 candidates = self.cin.getCharDef(self.compositionChar)
@@ -455,12 +520,18 @@ class CheCJTextService(TextService):
                     candidates = self.cin.getCharDef(self.compositionChar)
                     self.setCandidateList(candidates)
                     self.setShowCandidates(True)
-                    
+            
+            # 候選清單處理
             if candidates:
-                self.setCandidateList(candidates)
-                self.setShowCandidates(True)
                 candCursor = self.candidateCursor  # 目前的游標位置
                 candCount = len(self.candidateList)  # 目前選字清單項目數
+                currentCandPageCount = math.ceil(len(candidates) / self.candPerPage) # 目前的選字清單總頁數
+                currentCandPage = self.currentCandPage # 目前的選字清單頁數
+                
+                # 候選清單分頁
+                pagecandidates = list(self.chunks(candidates, self.candPerPage))
+                self.setCandidateList(pagecandidates[currentCandPage])
+                self.setShowCandidates(True)
                 
                 # 如果字根首字是符號就直接輸出
                 if self.isSymbolsChar(keyCode) and len(self.compositionChar) == 1:
@@ -469,24 +540,56 @@ class CheCJTextService(TextService):
                         self.setCommitString(cand)
                         self.resetComposition()
                         candCursor = 0
+                        currentCandPage = 0
                 
-                # TODO: use %selkey in newcj.cin instead of ord('0') and ord('9')
+                # 使用數字鍵輸出候選字
                 if keyCode >= ord('0') and keyCode <= ord('9'):
                     i = keyCode - ord('1')
                     if i < len(candidates):
-                        cand = candidates[i]
+                        cand = self.candidateList[i]
                         self.setCommitString(cand)
                         self.resetComposition()
                         candCursor = 0
+                        currentCandPage = 0
                 elif keyCode == VK_UP:  # 游標上移
+                    if (candCursor - self.candPerRow) < 0:
+                        if currentCandPage > 0:
+                            currentCandPage -= 1
+                            candCursor = 0
+                    else:
+                        if (candCursor - self.candPerRow) >= 0:
+                            candCursor = candCursor - self.candPerRow
+                elif keyCode == VK_DOWN:  # 游標下移
+                    if (candCursor + self.candPerRow) >= self.candPerPage:
+                        if (currentCandPage + 1) < currentCandPageCount:
+                            currentCandPage += 1
+                            candCursor = 0
+                    else:
+                        if (candCursor + self.candPerRow) < len(pagecandidates[currentCandPage]):
+                            candCursor = candCursor + self.candPerRow
+                elif keyCode == VK_LEFT:  # 游標左移
                     if candCursor > 0:
                         candCursor -= 1
-                elif keyCode == VK_DOWN:  # 游標下移
+                elif keyCode == VK_RIGHT:  # 游標右移
                     if (candCursor + 1) < candCount:
                         candCursor += 1
-                elif keyCode == VK_RETURN:  # 按下 Enter 鍵
+                elif keyCode == VK_HOME:  # Home 鍵
+                    currentCandPage = 0
+                    candCursor = 0
+                elif keyCode == VK_END:  # End 鍵
+                    currentCandPage = currentCandPageCount - 1
+                    candCursor = 0
+                elif keyCode == VK_PRIOR:  # Page UP 鍵
+                    if currentCandPage > 0:
+                        currentCandPage -= 1
+                        candCursor = 0
+                elif keyCode == VK_NEXT:  # Page Down 鍵
+                    if (currentCandPage + 1) < currentCandPageCount:
+                        currentCandPage += 1
+                        candCursor = 0
+                elif keyCode == VK_RETURN or keyCode == VK_SPACE:  # 按下 Enter 鍵或空白鍵
                     # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
-                    commitStr = candidates[candCursor]
+                    commitStr = self.candidateList[candCursor]
                     
                     # 如果使用打繁出簡，就轉成簡體中文
                     if self.outputSimpChinese:
@@ -495,40 +598,20 @@ class CheCJTextService(TextService):
                     self.setCommitString(commitStr)
                     self.resetComposition()
                     candCursor = 0
-                else: # 按下其它鍵，先將候選字游標位址歸零
+                    currentCandPage = 0
+                else: # 按下其它鍵，先將候選字游標位址及目前頁數歸零
                     candCursor = 0
-                # 更新選字視窗游標位置
+                    currentCandPage = 0
+                # 更新選字視窗游標位置及頁數
                 self.setCandidateCursor(candCursor)
-            else:
+                self.setCandidatePage(currentCandPage)
+                self.setCandidateList(pagecandidates[currentCandPage])
+            else: # 沒有候選字
+                # 按下空白鍵
+                if keyCode == VK_SPACE:
+                    if len(candidates) == 0:
+                        self.showMessage("查無字根...", 3)
                 self.setShowCandidates(False)
-
-            # 按下空白或字碼超過5個時，將組成的字送出
-            if keyCode == VK_SPACE:
-                if len(candidates) >= 1:
-                    commitStr = candidates[candCursor]
-                    
-                    # 如果使用打繁出簡，就轉成簡體中文
-                    if self.outputSimpChinese:
-                        commitStr = self.opencc.convert(commitStr)
-                    
-                    self.setCommitString(commitStr)
-                    self.setCandidateCursor(0)
-                    self.resetComposition()
-                else:
-                    self.showMessage("查無字根...", 3)
-            # 刪掉一個字碼
-            elif keyCode == VK_BACK:
-                if self.compositionString != "":
-                    self.showMessage("", 0)
-                    self.setCompositionString(self.compositionString[:-1])
-                    self.compositionChar = self.compositionChar[:-1]
-                    self.setCandidateCursor(0)
-                    if self.cin.isInCharDef(self.compositionChar):
-                        candidates = self.cin.getCharDef(self.compositionChar)
-                        self.setCandidateList(candidates)
-                        self.setShowCandidates(True)
-                    else:
-                        self.setShowCandidates(False)
         return True
 
     # 使用者放開按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
@@ -698,17 +781,25 @@ class CheCJTextService(TextService):
         if forced:
             self.resetComposition()
             
+    # 重置輸入的字根
     def resetComposition(self):
         self.compositionChar = ''
         self.setCompositionString('')
         self.setShowCandidates(False)
     
+    # 設定候選字頁數
+    def setCandidatePage(self, page):
+        self.currentCandPage = page
+    
+    # 判斷數字鍵?
     def isNumberChar(self, keyCode):
         return keyCode >= 0x30 and keyCode <= 0x39
-        
+
+    # 判斷符號鍵?
     def isSymbolsChar(self, keyCode):
         return keyCode >= 0xBA and keyCode <= 0xDF
-        
+
+    # 一般字元轉全形
     def charCodeToFullshape(self, charCode):
         charStr = ''
         if charCode < 0x0020 or charCode > 0x7e:
@@ -720,6 +811,7 @@ class CheCJTextService(TextService):
             charStr = chr(charCode)
         return charStr
         
+    # 符號字元轉全形
     def SymbolscharCodeToFullshape(self, charCode):
         charStr = ''
         if charCode < 0x0020 or charCode > 0x7e:
@@ -742,3 +834,8 @@ class CheCJTextService(TextService):
             charCode += 0xfee0
             charStr = chr(charCode)
         return charStr
+        
+    # List 分斷
+    def chunks(self, l, n):
+        for i in range(0, len(l), n):
+            yield l[i:i+n]

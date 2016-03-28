@@ -310,7 +310,7 @@ class CheCJTextService(TextService):
         charStr = chr(charCode)
         
         # CheCJ
-        candidates = self.candidates
+        candidates = []
         charStrLow = charStr.lower()
         
         # 功能選單 ----------------------------------------------------------------
@@ -468,10 +468,10 @@ class CheCJTextService(TextService):
                 self.setCandidateCursor(candCursor)
                 self.setCandidatePage(currentCandPage)
                 self.setCandidateList(pagecandidates[currentCandPage])
-
-        if not self.isComposing():
-            if keyCode == VK_RETURN or keyCode == VK_BACK:
-                return False
+        else:
+            if not self.isComposing():
+                if keyCode == VK_RETURN or keyCode == VK_BACK:
+                    return False
 
         # 若按下 Shift 鍵
         if keyEvent.isKeyDown(VK_SHIFT):
@@ -653,8 +653,8 @@ class CheCJTextService(TextService):
                 self.setCandidatePage(currentCandPage)
                 self.setCandidateList(pagecandidates[currentCandPage])
             else: # 沒有候選字
-                # 按下空白鍵
-                if keyCode == VK_SPACE:
+                # 按下空白鍵或 Enter 鍵
+                if keyCode == VK_SPACE or keyCode == VK_RETURN:
                     if len(candidates) == 0:
                         self.showMessage("查無字根...", 3)
                 self.setShowCandidates(False)

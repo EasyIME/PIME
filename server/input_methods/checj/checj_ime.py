@@ -26,6 +26,7 @@ import math
 from .cin import Cin
 from .swkb import swkb
 from .symbols import symbols
+from .fsymbols import fsymbols
 
 # from libchewing/include/global.h
 CHINESE_MODE = 1
@@ -135,7 +136,6 @@ class CheCJTextService(TextService):
         # syspath 參數可包含多個路徑，用 ; 分隔
         # 此處把 user 設定檔目錄插入到 system-wide 資料檔路徑前
         # 如此使用者變更設定後，可以比系統預設值有優先權
-        search_paths = ";".join((cfg.getConfigDir(), self.datadir)).encode("UTF-8")
         user_phrase = cfg.getUserPhrase().encode("UTF-8")
 
         # 預設英數 or 中文模式
@@ -162,14 +162,19 @@ class CheCJTextService(TextService):
         CinPath = os.path.join(self.curdir, self.CinFile)
         with io.open(CinPath, encoding='utf-8') as fs:
             self.cin = Cin(fs)
-            
-        swkbPath = os.path.join(self.curdir, "data/swkb.dat")
+
+        datadirs = (cfg.getConfigDir(), cfg.getDataDir())
+        swkbPath = cfg.findFile(datadirs, "swkb.dat")
         with io.open(swkbPath, encoding='utf-8') as fs:
             self.swkb = swkb(fs)
             
-        symbolsPath = os.path.join(self.curdir, "data/symbols.dat")
+        symbolsPath = cfg.findFile(datadirs, "symbols.dat")
         with io.open(symbolsPath, encoding='utf-8') as fs:
             self.symbols = symbols(fs)
+            
+        fsymbolsPath = cfg.findFile(datadirs, "fsymbols.dat")
+        with io.open(fsymbolsPath, encoding='utf-8') as fs:
+            self.fsymbols = fsymbols(fs)
 
         self.applyConfig() # 套用其餘的使用者設定
             
@@ -477,29 +482,39 @@ class CheCJTextService(TextService):
         if keyEvent.isKeyDown(VK_SHIFT):
             self.resetComposition()
             
-        if self.cin.isInKeyName(charStrLow):
+        if self.cin.isInKeyName(charStrLow) and not self.showmenu:
             # 若按下 Shift 鍵，直接輸出不作處理
             if keyEvent.isKeyDown(VK_SHIFT):
                 CommitStr = charStr
-                # 使用 Ctrl 或 Shift 鍵做金輸入 (easy symbol input)
+                # 使用 Ctrl 或 Shift 鍵做全形輸入 (easy symbol input)
                 # 這裡的 easy symbol input，是定義在 swkb.dat 設定檔中的符號
-                if self.easySymbolsWithShift:
+                if self.easySymbolsWithShift and self.isLetterChar(keyCode):
                     if self.swkb.isInCharDef(charStr.upper()):
                         candidates = self.swkb.getCharDef(charStr.upper())
                         CommitStr = candidates[0]
                         candidates = []
                     else: # 不在快速符號表裡
                         CommitStr = self.charCodeToFullshape(charCode)
+                    self.setCommitString(CommitStr)
+                    self.resetComposition()
                 # 如果是全形模式，將字串轉為全形再輸出
                 elif self.shapeMode == FULLSHAPE_MODE:
                     CommitStr = self.charCodeToFullshape(charCode)
+                    self.setCommitString(CommitStr)
+                    self.resetComposition()
                 # 如果啟用 Shift 輸入全形標點
                 elif self.fullShapeSymbols:
                     # 如果是符號或數字，將字串轉為全形再輸出
                     if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
-                        CommitStr = self.SymbolscharCodeToFullshape(charCode)
-                self.setCommitString(CommitStr)
-                self.resetComposition()
+                        if self.fsymbols.isInCharDef(charStr):
+                            self.compositionChar += charStr
+                            fullShapeSymbolsList = self.fsymbols.getCharDef(self.compositionChar)
+                            self.setCompositionString(self.compositionString + fullShapeSymbolsList[0])
+                            self.setCompositionCursor(len(self.compositionString))
+                        else:
+                            CommitStr = self.SymbolscharCodeToFullshape(charCode)
+                            self.setCommitString(CommitStr)
+                            self.resetComposition()
             else:
                 # 如果是英文全形模式，將字串轉為全形再輸出
                 if self.shapeMode == FULLSHAPE_MODE and self.langMode == ENGLISH_MODE:
@@ -528,9 +543,15 @@ class CheCJTextService(TextService):
                 else: # 如果啟用 Shift 輸入全形標點
                     # 如果是符號或數字，將字串轉為全形再輸出
                     if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
-                        CommitStr = self.SymbolscharCodeToFullshape(charCode)
-                        self.setCommitString(CommitStr)
-                        self.resetComposition()
+                        if self.fsymbols.isInCharDef(charStr):
+                            self.compositionChar += charStr
+                            fullShapeSymbolsList = self.fsymbols.getCharDef(self.compositionChar)
+                            self.setCompositionString(self.compositionString + fullShapeSymbolsList[0])
+                            self.setCompositionCursor(len(self.compositionString))
+                        else:
+                            CommitStr = self.SymbolscharCodeToFullshape(charCode)
+                            self.setCommitString(CommitStr)
+                            self.resetComposition()
             else:
                 # 如果是全形模式，將字串轉為全形再輸出
                 if self.shapeMode == FULLSHAPE_MODE and len(self.compositionChar) == 0:
@@ -558,6 +579,8 @@ class CheCJTextService(TextService):
                 
             if self.cin.isInCharDef(self.compositionChar):
                 candidates = self.cin.getCharDef(self.compositionChar)
+            elif self.fsymbols.isInCharDef(self.compositionChar):
+                candidates = self.fsymbols.getCharDef(self.compositionChar)
             elif len(self.compositionChar) > MAX_CHAR_LENGTH:
                 self.setCompositionString(self.compositionString[:-1])
                 self.compositionChar = self.compositionChar[:-1]
@@ -580,7 +603,7 @@ class CheCJTextService(TextService):
                 self.setShowCandidates(True)
                 
                 # 如果字根首字是符號就直接輸出
-                if self.isSymbolsChar(keyCode) and len(self.compositionChar) == 1:
+                if (self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode)) and len(self.compositionChar) == 1:
                     if len(candidates) == 1:
                         cand = candidates[0]
                         self.setCommitString(cand)
@@ -844,6 +867,10 @@ class CheCJTextService(TextService):
     # 判斷符號鍵?
     def isSymbolsChar(self, keyCode):
         return keyCode >= 0xBA and keyCode <= 0xDF
+        
+    # 判斷字母鍵?
+    def isLetterChar(self, keyCode):
+        return keyCode >= 0x41 and keyCode <= 0x5A
 
     # 一般字元轉全形
     def charCodeToFullshape(self, charCode):
@@ -881,7 +908,7 @@ class CheCJTextService(TextService):
             charStr = chr(charCode)
         return charStr
         
-    # List 分斷
+    # List 分段
     def chunks(self, l, n):
         for i in range(0, len(l), n):
             yield l[i:i+n]

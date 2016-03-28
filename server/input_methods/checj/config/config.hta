@@ -32,6 +32,7 @@
             <li><a href="#ui_page">介面外觀</a></li>
             <!-- <li><a href="#keyboard_page">鍵盤設定</a></li> -->
             <li><a href="#symbols_page">特殊符號</a></li>
+            <li><a href="#fs_symbols_page">全形標點輸入</a></li>
             <li><a href="#ez_symbols_page">簡易符號輸入</a></li>
             <li><a href="#about_page">關於新酷音</a></li>
         </ul>
@@ -39,9 +40,6 @@
         <div id="typing_page">
             <input type="checkbox" id="switchLangWithShift" name="switchLangWithShift" />
             <label for="switchLangWithShift">使用 Shift 快速切換中英文</label><br>
-
-            <input type="checkbox" id="fullShapeSymbols" name="fullShapeSymbols" />
-            <label for="fullShapeSymbols">按住 Shift 輸入全形標點符號</label><br>
 
             <label for="selCinFile">輸入法碼表: </label>
             <select name="selCinFile" id="selCinFile">
@@ -97,14 +95,25 @@
             每一行的內容都是： 「分類名稱」=「此分類下的所有符號」。
             您也可以一行只放一個符號，則該符號會被放在最上層選單。<br>
         </div>
+        
+        <div id="fs_symbols_page">
+            <input type="checkbox" id="fullShapeSymbols" name="fullShapeSymbols" />
+            <label for="fullShapeSymbols">中文模式下按住 Shift 輸入全形標點符號</label><br>
+            <p>
+            以下是使用 Shift 輸入全形標點符號的設定，每一行表示一個 Shift+符號/數字鍵所對應的字串。<br>
+            每一行的格式必須符合：「Ta=Tb」。其中 Ta 與 Tb 間必須有一個半形「=」字元；<br>
+            Ta 可以是 Shift+符號/數字鍵所輸出的符號；Tb 可以是長度 1 到 10 的任意中英文字串。
+            </p>
+            <textarea id="fs_symbols"></textarea>
+        </div>
 
         <div id="ez_symbols_page">
             <input type="checkbox" id="easySymbolsWithShift" name="easySymbolsWithShift" />
             <label for="easySymbolsWithShift">中文模式下按住 Shift 快速輸入符號</label><br>
             <p>
-            以下是使用Shift 快速輸入符號的設定，每一行表示一個鍵所對應的字串，
+            以下是使用 Shift 快速輸入符號的設定，每一行表示一個鍵所對應的字串，
             例如「m 新酷音」或是「L orz」等。<br>
-            每一行的格式必須符合：「Ta Tb」。其中 Ta 與 Tb 間必須有一個半形空白字元；
+            每一行的格式必須符合：「Ta Tb」。其中 Ta 與 Tb 間必須有一個半形空白字元；<br>
             Ta 可以是 a-z 等字母；Tb 可以是長度 1 到 10 的任意中英文字串。
             </p>
             <textarea id="ez_symbols"></textarea>

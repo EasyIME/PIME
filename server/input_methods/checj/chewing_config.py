@@ -135,9 +135,17 @@ class ChewingConfig:
                 ezSymbolsTime = os.path.getmtime(ezSymbolsFile)
             except Exception:
                 pass
+                
+        fsymbolsTime = 0.0
+        fsymbolsFile = self.findFile(datadirs, "fsymbols.dat")
+        if fsymbolsFile:
+            try:
+                fsymbolsTime = os.path.getmtime(fsymbolsFile)
+            except Exception:
+                pass
 
         lastConfigTime = self._version[0]
-        self._version = (configTime, symbolsTime, ezSymbolsTime)
+        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime)
 
         # the main config file is changed, reload it
         if lastConfigTime != configTime:

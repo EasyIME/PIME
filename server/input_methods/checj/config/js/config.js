@@ -100,6 +100,8 @@ var userSymbolsFile = configDir + "\\symbols.dat";
 var symbolsChanged = false;
 var userSwkbFile = configDir + "\\swkb.dat";
 var swkbChanged = false;
+var userFsymbolsFile = configDir + "\\fsymbols.dat";
+var fsymbolsChanged = false;
 
 function loadConfig() {
     var str = readFile(configFile);
@@ -127,6 +129,12 @@ function loadConfig() {
     if(str == "")
         str = readFile(dataDir + "\\swkb.dat");
     $("#ez_symbols").val(str);
+    
+    // load fsymbols.dat
+    str = readFile(userFsymbolsFile);
+    if(str == "")
+        str = readFile(dataDir + "\\fsymbols.dat");
+    $("#fs_symbols").val(str);
 }
 
 function saveConfig() {
@@ -140,6 +148,10 @@ function saveConfig() {
     if(swkbChanged) {
         str = $("#ez_symbols").val();
         writeFile(userSwkbFile, str);
+    }
+    if(fsymbolsChanged) {
+        str = $("#fs_symbols").val();
+        writeFile(userFsymbolsFile, str);
     }
 }
 
@@ -206,6 +218,10 @@ $(function() {
 
     $("#ez_symbols").change(function(){
         swkbChanged = true;
+    });
+    
+    $("#fs_symbols").change(function(){
+        fsymbolsChanged = true;
     });
     
     $("#buttons").buttonset();

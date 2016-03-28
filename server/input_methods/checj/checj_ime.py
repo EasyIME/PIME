@@ -25,6 +25,7 @@ import io
 import math
 from .cin import Cin
 from .swkb import swkb
+from .symbols import symbols
 
 # from libchewing/include/global.h
 CHINESE_MODE = 1
@@ -165,6 +166,10 @@ class CheCJTextService(TextService):
         swkbPath = os.path.join(self.curdir, "data/swkb.dat")
         with io.open(swkbPath, encoding='utf-8') as fs:
             self.swkb = swkb(fs)
+            
+        symbolsPath = os.path.join(self.curdir, "data/symbols.dat")
+        with io.open(symbolsPath, encoding='utf-8') as fs:
+            self.symbols = symbols(fs)
 
         self.applyConfig() # 套用其餘的使用者設定
             
@@ -316,12 +321,15 @@ class CheCJTextService(TextService):
             
             if not keyEvent.isKeyDown(VK_SHIFT) and keyEvent.isKeyDown(VK_OEM_3):
                 self.menutype = 0
-                menu = ["設定酷倉", menu_OutputSimpChinese, "符號輸入"]
+                menu = ["設定酷倉", menu_OutputSimpChinese, "符號輸入", "特殊符號"]
+                self.setCandidateCursor(0)
+                self.setCandidatePage(0)
                 self.setCandidateList(menu)
+                self.candidates = self.candidateList
                 self.showmenu = True
                 
             if self.showmenu:
-                candidates = self.candidateList
+                candidates = self.candidates
                 candCursor = self.candidateCursor  # 目前的游標位置
                 candCount = len(self.candidateList)  # 目前選字清單項目數
                 currentCandPageCount = math.ceil(len(candidates) / self.candPerPage) # 目前的選字清單總頁數
@@ -338,9 +346,15 @@ class CheCJTextService(TextService):
                     if self.menutype == 0 and i == 2:
                         candCursor = 0
                         currentCandPage = 0
-                        candidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift]
-                        pagecandidates = list(self.chunks(candidates, self.candPerPage))
+                        self.candidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift]
+                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
                         self.menutype = 1
+                    elif self.menutype == 0 and i == 3:
+                        candCursor = 0
+                        currentCandPage = 0
+                        self.candidates = self.symbols.getKeyNames()
+                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menutype = 2
                     elif self.menutype == 0:
                         self.onMenuCommand(i, 0)
                         candCursor = 0
@@ -353,6 +367,19 @@ class CheCJTextService(TextService):
                         currentCandPage = 0
                         self.showmenu = False
                         self.menutype = 0
+                        self.resetComposition()
+                    elif self.menutype == 2:
+                        candCursor = 0
+                        currentCandPage = 0
+                        self.candidates = self.symbols.getCharDef(self.candidateList[i])
+                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menutype = 3
+                    elif self.menutype == 3:
+                        self.menutype = 0
+                        candCursor = 0
+                        currentCandPage = 0
+                        self.showmenu = False
+                        self.setCommitString(self.candidateList[i])
                         self.resetComposition()
                 elif keyCode == VK_UP:  # 游標上移
                     if (candCursor - self.candPerRow) < 0:
@@ -396,9 +423,15 @@ class CheCJTextService(TextService):
                     if self.menutype == 0 and i == 2:
                         candCursor = 0
                         currentCandPage = 0
-                        candidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift]
-                        pagecandidates = list(self.chunks(candidates, self.candPerPage))
+                        self.candidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift]
+                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
                         self.menutype = 1
+                    elif self.menutype == 0 and i == 3:
+                        candCursor = 0
+                        currentCandPage = 0
+                        self.candidates = self.symbols.getKeyNames()
+                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menutype = 2
                     elif self.menutype == 0:
                         self.onMenuCommand(i, 0)
                         candCursor = 0
@@ -411,6 +444,19 @@ class CheCJTextService(TextService):
                         currentCandPage = 0
                         self.showmenu = False
                         self.menutype = 0
+                        self.resetComposition()
+                    elif self.menutype == 2:
+                        candCursor = 0
+                        currentCandPage = 0
+                        self.candidates = self.symbols.getCharDef(self.candidateList[i])
+                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menutype = 3
+                    elif self.menutype == 3:
+                        self.menutype = 0
+                        candCursor = 0
+                        currentCandPage = 0
+                        self.showmenu = False
+                        self.setCommitString(self.candidateList[i])
                         self.resetComposition()
                 elif keyCode == VK_ESCAPE:
                     candCursor = 0

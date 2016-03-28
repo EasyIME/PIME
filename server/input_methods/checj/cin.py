@@ -38,8 +38,7 @@ class Cin(object):
         self.chardefs = {}
 
         for line in fs:
-
-            line = line.strip()
+            line = re.sub('^ | $', '', line)
             if not line or line[0] == '#':
                 continue
 
@@ -85,8 +84,13 @@ class Cin(object):
                 if '#' in line:
                     line = re.sub('#.+', '', line)
                 key, root = safeSplit(line)
+                
                 key = key.strip()
-                root = root.strip()
+
+                if '　' in root:
+                    root = '\u3000'
+                else:
+                    root = root.strip()
 
                 try:
                     self.chardefs[key].append(root)
@@ -124,7 +128,9 @@ def head_rest(head, line):
 def safeSplit(line):
     if ' ' in line:
         return line.split(' ', 1)
-    else:
+    elif '\t' in line:
         return line.split('\t', 1)
+    else:
+        return line, "Error"
 
 __all__ = ["Cin"]

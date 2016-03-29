@@ -1,26 +1,16 @@
 defaultConfig ={
-    "keyboardLayout": 0,
-    // "addPhraseForward": true,
     "defaultEnglish": false,
     "candPerRow": 3,
     "easySymbolsWithShift": true,
-    //"easySymbolsWithCtrl": false,
     "candPerPage": 9,
     "defaultFullSpace": false,
     "selCinFile": "0",
-    // "phraseMark": 1,
     "switchLangWithShift": true,
-    // "enableCapsLock": true,
-    // "showCandWithSpaceKey": false,
     "fullShapeSymbols": true,
     "colorCandWnd": true,
-    // "advanceAfterSelection": true,
     "fontSize": 16,
     "outputSimpChinese": false,
     "supportSymbolCoding": false
-    // "upperCaseWithShift": false,
-    // "escCleanAllBuf": false,
-    // "cursorCandList": true
 };
 
 // unfortunately, here we use Windows-only features - ActiveX

@@ -124,9 +124,9 @@ class Cin(object):
     def haveNextCharDef(self, key):
         chardefslist = []
         for chardef in self.chardefs:
-            if key in chardef[0]:
+            if key == chardef[0][:1]:
                 chardefslist.append(chardef[0])
-                if len(chardefslist) > 2:
+                if len(chardefslist) >= 2:
                     break
         return chardefslist
 

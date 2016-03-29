@@ -31,11 +31,9 @@ selKeys=(
 class ChewingConfig:
 
     def __init__(self):
-        self.keyboardLayout = 0
         self.candPerRow = 3
         self.defaultEnglish = False
         self.defaultFullSpace = False
-        self.showCandWithSpaceKey = False
         self.switchLangWithShift = True
         self.outputSimpChinese = False
         self.addPhraseForward = True

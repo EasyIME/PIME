@@ -17,6 +17,7 @@ defaultConfig ={
     // "advanceAfterSelection": true,
     "fontSize": 16,
     "outputSimpChinese": false,
+    "supportSymbolCoding": false
     // "upperCaseWithShift": false,
     // "escCleanAllBuf": false,
     // "cursorCandList": true

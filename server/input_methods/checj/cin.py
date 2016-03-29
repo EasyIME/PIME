@@ -114,12 +114,21 @@ class Cin(object):
 
     def isInCharDef(self, key):
         return key in self.chardefs
-
+        
     def getCharDef(self, key):
         """ 
         will return a list conaining all possible result
         """
         return self.chardefs[key]
+        
+    def haveNextCharDef(self, key):
+        chardefslist = []
+        for chardef in self.chardefs:
+            if key in chardef[0]:
+                chardefslist.append(chardef[0])
+                if len(chardefslist) > 2:
+                    break
+        return chardefslist
 
 
 def head_rest(head, line):

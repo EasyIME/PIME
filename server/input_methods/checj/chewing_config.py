@@ -53,6 +53,8 @@ class ChewingConfig:
         self.easySymbolsWithShift = True
         # self.easySymbolsWithCtrl = False
         self.upperCaseWithShift = True
+        self.supportSymbolCoding = False
+        
 
         # version: last modified time of (config.json, symbols.dat, swkb.dat)
         self._version = (0.0, 0.0, 0.0)

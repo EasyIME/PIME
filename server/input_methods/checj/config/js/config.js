@@ -4,7 +4,7 @@ defaultConfig ={
     "easySymbolsWithShift": true,
     "candPerPage": 9,
     "defaultFullSpace": false,
-    "selCinFile": "0",
+    "selCinType": "0",
     "switchLangWithShift": true,
     "fullShapeSymbols": true,
     "colorCandWnd": true,
@@ -168,9 +168,9 @@ function updateConfig() {
         }
     });
     // selCin
-    var selCin = parseInt($("#selCinFile").find(":selected").val());
+    var selCin = parseInt($("#selCinType").find(":selected").val());
     if(!isNaN(selCin))
-        chewingConfig.selCinFile = selCin;
+        chewingConfig.selCinType = selCin;
 }
 
 // jQuery ready
@@ -195,13 +195,13 @@ $(function() {
         "亂倉打鳥",
         "倉五"
     ];
-    var selCinFile = $("#selCinFile");
+    var selCinType = $("#selCinType");
     for(var i = 0; i < selCins.length; ++i) {
         var selCin = selCins[i];
         var item = '<option value="' + i + '">' + selCin + '</option>';
-        selCinFile.append(item);
+        selCinType.append(item);
     }
-    selCinFile.children().eq(chewingConfig.selCinFile).prop("selected", true);
+    selCinType.children().eq(chewingConfig.selCinType).prop("selected", true);
 
     $("#symbols").change(function(){
         symbolsChanged = true;

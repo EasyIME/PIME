@@ -95,6 +95,12 @@ class CheCJTextService(TextService):
     def checkConfigChange(self):
         cfg = chewingConfig
         cfg.update() # 更新設定檔狀態
+        
+        # 如果有更換輸入法碼表，就重新載入碼表資料
+        if not self.selCinType == cfg.selCinType:
+            self.selCinType = cfg.selCinType
+            cfg.loadCinFile()
+            self.cin = cfg.cin
 
         # 比較我們先前存的版本號碼，和目前設定檔的版本號
         if cfg.isFullReloadNeeded(self.configVersion):
@@ -137,7 +143,7 @@ class CheCJTextService(TextService):
         
     # 初始化新酷音輸入法引擎
     def initChewingContext(self):
-        cfg = chewingConfig # 所有 ChewingTextService 共享一份設定物件
+        cfg = chewingConfig # 所有 CheCJTextService 共享一份設定物件
         # syspath 參數可包含多個路徑，用 ; 分隔
         # 此處把 user 設定檔目錄插入到 system-wide 資料檔路徑前
         # 如此使用者變更設定後，可以比系統預設值有優先權
@@ -149,24 +155,9 @@ class CheCJTextService(TextService):
         # 預設全形 or 半形
         self.shapeMode = FULLSHAPE_MODE if cfg.defaultFullSpace else HALFSHAPE_MODE
         
-        if cfg.selCinFile == 0: 
-            self.CinFile = "cin/checj.cin"
-        elif cfg.selCinFile == 1: 
-            self.CinFile = "cin/mscj3.cin"
-        elif cfg.selCinFile == 2: 
-            self.CinFile = "cin/cj-ext.cin"
-        elif cfg.selCinFile == 3: 
-            self.CinFile = "cin/cnscj.cin"
-        elif cfg.selCinFile == 4: 
-            self.CinFile = "cin/thcj.cin"
-        elif cfg.selCinFile == 5: 
-            self.CinFile = "cin/newcj3.cin"
-        elif cfg.selCinFile == 6: 
-            self.CinFile = "cin/cj5.cin"
-
-        CinPath = os.path.join(self.curdir, self.CinFile)
-        with io.open(CinPath, encoding='utf-8') as fs:
-            self.cin = Cin(fs)
+        # 所有 CheCJTextService 共享一份輸入法碼表
+        self.selCinType = cfg.selCinType
+        self.cin = cfg.cin
 
         datadirs = (cfg.getConfigDir(), cfg.getDataDir())
         swkbPath = cfg.findFile(datadirs, "swkb.dat")

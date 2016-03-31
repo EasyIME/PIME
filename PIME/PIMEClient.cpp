@@ -219,6 +219,9 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 				}
 			}
 		}
+		else if (value.isBool() && strcmp(name, "openKeyboard") == 0) {
+			textService_->setKeyboardOpen(value.asBool());
+		}
 		// other configurations
 		else if (value.isString() && strcmp(name, "setSelKeys") == 0) {
 			// keys used to select candidates
@@ -287,6 +290,7 @@ void Client::onActivate() {
 	Json::Value req;
 	int sn = addSeqNum(req);
 	req["method"] = "onActivate";
+	req["isKeyboardOpen"] = textService_->isKeyboardOpened();
 
 	Json::Value ret;
 	sendRequest(req, sn, ret);

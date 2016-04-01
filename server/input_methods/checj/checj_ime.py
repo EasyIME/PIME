@@ -86,6 +86,9 @@ class CheCJTextService(TextService):
         
         # CheCJ
         self.candidates = []
+        self.wildcardcandidates = []
+        self.wildcardpagecandidates = []
+        self.wildcardcompositionChar = ""
         self.currentCandPage = 0
         self.showmenu = False
         self.closemenu = True
@@ -596,6 +599,8 @@ class CheCJTextService(TextService):
                 self.setShowCandidates(False)
                 self.setCandidateCursor(0)
                 self.setCandidatePage(0)
+                self.wildcardcandidates = []
+                self.wildcardpagecandidates = []
                 self.resetComposition()
                 
             # 刪掉一個字根
@@ -605,13 +610,23 @@ class CheCJTextService(TextService):
                     self.compositionChar = self.compositionChar[:-1]
                     self.setCandidateCursor(0)
                     self.setCandidatePage(0)
+                    self.wildcardcandidates = []
+                    self.wildcardpagecandidates = []
 
             if self.cin.isInCharDef(self.compositionChar) and self.closemenu:
                 candidates = self.cin.getCharDef(self.compositionChar)
             elif self.fsymbols.isInCharDef(self.compositionChar) and self.closemenu:
                 candidates = self.fsymbols.getCharDef(self.compositionChar)
             elif 'z' in self.compositionChar and self.closemenu:
-                candidates = self.cin.getWildcardCharDefs(self.compositionChar)
+                if self.wildcardcandidates and self.wildcardcompositionChar == self.compositionChar:
+                    candidates = self.wildcardcandidates
+                else:
+                    self.setCandidateCursor(0)
+                    self.setCandidatePage(0)
+                    self.wildcardcandidates = self.cin.getWildcardCharDefs(self.compositionChar)
+                    self.wildcardpagecandidates = []
+                    self.wildcardcompositionChar = self.compositionChar
+                    candidates = self.wildcardcandidates
                 self.isWildcardChardefs = True
             elif len(self.compositionChar) > MAX_CHAR_LENGTH:
                 self.setCompositionString(self.compositionString[:-1])
@@ -630,7 +645,14 @@ class CheCJTextService(TextService):
                 currentCandPage = self.currentCandPage # 目前的選字清單頁數
                 
                 # 候選清單分頁
-                pagecandidates = list(self.chunks(candidates, self.candPerPage))
+                if self.isWildcardChardefs:
+                    if self.wildcardpagecandidates:
+                        pagecandidates = self.wildcardpagecandidates
+                    else:
+                        self.wildcardpagecandidates = list(self.chunks(candidates, self.candPerPage))
+                        pagecandidates = self.wildcardpagecandidates
+                else:
+                    pagecandidates = list(self.chunks(candidates, self.candPerPage))
                 self.setCandidateList(pagecandidates[currentCandPage])
                 self.setShowCandidates(True)
                 
@@ -657,6 +679,8 @@ class CheCJTextService(TextService):
                         if self.isWildcardChardefs:
                             messagestr = self.cin.getCharEncode(commitStr)
                             self.showMessage(messagestr, 5)
+                            self.wildcardcandidates = []
+                            self.wildcardpagecandidates = []
                             self.isWildcardChardefs = False
                     
                         # 如果使用打繁出簡，就轉成簡體中文
@@ -711,6 +735,8 @@ class CheCJTextService(TextService):
                     if self.isWildcardChardefs:
                         messagestr = self.cin.getCharEncode(commitStr)
                         self.showMessage(messagestr, 5)
+                        self.wildcardcandidates = []
+                        self.wildcardpagecandidates = []
                         self.isWildcardChardefs = False
                     
                     # 如果使用打繁出簡，就轉成簡體中文

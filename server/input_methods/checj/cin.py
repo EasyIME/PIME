@@ -130,29 +130,24 @@ class Cin(object):
                     break
         return chardefslist
 
-    def getWildcardCharDefs(self, key):
+    def getWildcardCharDefs(self, CompositionChar):
         wildcardchardefs = []
+        matchchardefs = {}
             
-        matchs = re.match(r'(.+)?z(.+)?', key)
+        matchs = re.match('(.+)?z(.+)?', CompositionChar)
         matchslist = matchs.groups()
-        
-        for chardef in self.chardefs:
-            matched = False
-            if matchslist[0] != None and matchslist[1] != None:
-                if chardef[:len(matchslist[0])] == matchslist[0] and chardef[-len(matchslist[1]):] == matchslist[1]:
-                    matched = True
-            elif matchslist[0] != None and matchslist[1] == None:
-                if chardef[:len(matchslist[0])] == matchslist[0]:
-                    matched = True
-            elif matchslist[0] == None and matchslist[1] != None:
-                if chardef[-len(matchslist[1]):] == matchslist[1]:
-                    matched = True
+        if matchslist[0] != None and matchslist[1] != None:
+            matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('^' + matchslist[0] + '(.+)?' + matchslist[1] + '$', key)]
+        elif matchslist[0] != None and matchslist[1] == None:
+            matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('^' + matchslist[0] + '(.+)?', key)]
+        elif matchslist[0] == None and matchslist[1] != None:
+            matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('(.+)?' + matchslist[1] + '$', key)]
             
-            if matched:
-                for char in self.chardefs[chardef]:
+        if matchchardefs:
+            for chardef in matchchardefs:
+                for char in chardef:
                     if not char in wildcardchardefs:
                         wildcardchardefs.append(char)
-    
         return wildcardchardefs
 
     def getCharEncode(self, root):
@@ -162,7 +157,9 @@ class Cin(object):
                 if char == root:
                     for str in chardef:
                         result += self.getKeyName(str)
-                    return result
+                    result += ' ¦ '
+        result = re.sub('\s¦\s$', '', result)
+        return result
         
 
 def head_rest(head, line):

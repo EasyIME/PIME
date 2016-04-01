@@ -779,7 +779,7 @@ class CheCJTextService(TextService):
         elif commandId == ID_ABOUT: # 關於新酷音輸入法
             pass
         elif commandId == ID_WEBSITE: # visit chewing website
-            os.startfile("http://chewing.im/")
+            os.startfile("https://github.com/EasyIME/PIME")
         elif commandId == ID_GROUP: # visit chewing google groups website
             os.startfile("http://groups.google.com/group/chewing-devel")
         elif commandId == ID_BUGREPORT: # visit bug tracker page
@@ -808,8 +808,8 @@ class CheCJTextService(TextService):
             # 用 json 語法表示選單結構
             return [
                 # {"text": "關於新酷音輸入法(&A)", "id": ID_ABOUT},
-                {"text": "參觀新酷音官方網站(&W)", "id": ID_WEBSITE},
-                {"text": "新酷音線上討論區(&G)", "id": ID_GROUP},
+                {"text": "參觀 PIME 官方網站(&W)", "id": ID_WEBSITE},
+                # {"text": "新酷音線上討論區(&G)", "id": ID_GROUP},
                 {},
                 {"text": "軟體本身的建議及錯誤回報(&B)", "id": ID_BUGREPORT},
                 {"text": "酷倉輸入法模組錯誤回報 (&P)", "id": ID_DICT_BUGREPORT},

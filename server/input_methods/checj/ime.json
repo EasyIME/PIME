@@ -7,5 +7,5 @@
 	"win8_icon": "",
 	"moduleName": "checj_ime",
 	"serviceName": "CheCJTextService",
-    "configTool": "config\\config.hta"
+	"configTool": "config\\config.hta"
 }

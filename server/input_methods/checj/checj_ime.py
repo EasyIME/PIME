@@ -89,6 +89,7 @@ class CheCJTextService(TextService):
         self.currentCandPage = 0
         self.showmenu = False
         self.closemenu = True
+        self.isWildcardChardefs = False
         self.menutype = 0
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
@@ -313,6 +314,8 @@ class CheCJTextService(TextService):
         # CheCJ
         candidates = []
         charStrLow = charStr.lower()
+        self.isWildcardChardefs = False
+        self.showMessage("", 0)
         
         # 功能選單 ----------------------------------------------------------------
         if self.langMode == CHINESE_MODE and len(self.compositionChar) == 0:
@@ -598,7 +601,6 @@ class CheCJTextService(TextService):
             # 刪掉一個字根
             if keyCode == VK_BACK:
                 if self.compositionString != "":
-                    self.showMessage("", 0)
                     self.setCompositionString(self.compositionString[:-1])
                     self.compositionChar = self.compositionChar[:-1]
                     self.setCandidateCursor(0)
@@ -608,6 +610,9 @@ class CheCJTextService(TextService):
                 candidates = self.cin.getCharDef(self.compositionChar)
             elif self.fsymbols.isInCharDef(self.compositionChar) and self.closemenu:
                 candidates = self.fsymbols.getCharDef(self.compositionChar)
+            elif 'z' in self.compositionChar and self.closemenu:
+                candidates = self.cin.getWildcardCharDefs(self.compositionChar)
+                self.isWildcardChardefs = True
             elif len(self.compositionChar) > MAX_CHAR_LENGTH:
                 self.setCompositionString(self.compositionString[:-1])
                 self.compositionChar = self.compositionChar[:-1]
@@ -646,8 +651,19 @@ class CheCJTextService(TextService):
                 if keyCode >= ord('0') and keyCode <= ord('9'):
                     i = keyCode - ord('1')
                     if i < len(candidates):
-                        cand = self.candidateList[i]
-                        self.setCommitString(cand)
+                        commitStr = self.candidateList[i]
+                    
+                        # 如果使用萬用字元解碼
+                        if self.isWildcardChardefs:
+                            messagestr = self.cin.getCharEncode(commitStr)
+                            self.showMessage(messagestr, 5)
+                            self.isWildcardChardefs = False
+                    
+                        # 如果使用打繁出簡，就轉成簡體中文
+                        if self.outputSimpChinese:
+                            commitStr = self.opencc.convert(commitStr)
+                        
+                        self.setCommitString(commitStr)
                         self.resetComposition()
                         candCursor = 0
                         currentCandPage = 0
@@ -690,6 +706,12 @@ class CheCJTextService(TextService):
                 elif keyCode == VK_RETURN or keyCode == VK_SPACE:  # 按下 Enter 鍵或空白鍵
                     # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                     commitStr = self.candidateList[candCursor]
+                    
+                    # 如果使用萬用字元解碼
+                    if self.isWildcardChardefs:
+                        messagestr = self.cin.getCharEncode(commitStr)
+                        self.showMessage(messagestr, 5)
+                        self.isWildcardChardefs = False
                     
                     # 如果使用打繁出簡，就轉成簡體中文
                     if self.outputSimpChinese:

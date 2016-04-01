@@ -124,12 +124,46 @@ class Cin(object):
     def haveNextCharDef(self, key):
         chardefslist = []
         for chardef in self.chardefs:
-            if key == chardef[0][:1]:
-                chardefslist.append(chardef[0])
+            if key == chardef[:1]:
+                chardefslist.append(chardef)
                 if len(chardefslist) >= 2:
                     break
         return chardefslist
 
+    def getWildcardCharDefs(self, key):
+        wildcardchardefs = []
+            
+        matchs = re.match(r'(.+)?z(.+)?', key)
+        matchslist = matchs.groups()
+        
+        for chardef in self.chardefs:
+            matched = False
+            if matchslist[0] != None and matchslist[1] != None:
+                if chardef[:len(matchslist[0])] == matchslist[0] and chardef[-len(matchslist[1]):] == matchslist[1]:
+                    matched = True
+            elif matchslist[0] != None and matchslist[1] == None:
+                if chardef[:len(matchslist[0])] == matchslist[0]:
+                    matched = True
+            elif matchslist[0] == None and matchslist[1] != None:
+                if chardef[-len(matchslist[1]):] == matchslist[1]:
+                    matched = True
+            
+            if matched:
+                for char in self.chardefs[chardef]:
+                    if not char in wildcardchardefs:
+                        wildcardchardefs.append(char)
+    
+        return wildcardchardefs
+
+    def getCharEncode(self, root):
+        result = root + ": "
+        for chardef in self.chardefs:
+            for char in self.chardefs[chardef]:
+                if char == root:
+                    for str in chardef:
+                        result += self.getKeyName(str)
+                    return result
+        
 
 def head_rest(head, line):
     return line[len(head):].strip()

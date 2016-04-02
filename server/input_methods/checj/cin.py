@@ -173,14 +173,17 @@ class Cin(object):
         return wildcardchardefs
 
     def getCharEncode(self, root):
-        result = root + ": "
+        nunbers = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩']
+        i = 0
+        result = root + ":"
         for chardef in self.chardefs:
             for char in self.chardefs[chardef]:
                 if char == root:
+                    result += '　' + nunbers[i]
+                    if i < 9:
+                        i = i + 1
                     for str in chardef:
                         result += self.getKeyName(str)
-                    result += '  ¦ '
-        result = re.sub('\s+¦\s$', '', result)
         return result
         
 

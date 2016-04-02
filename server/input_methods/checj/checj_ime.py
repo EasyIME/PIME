@@ -650,6 +650,11 @@ class CheCJTextService(TextService):
                     self.wildcardcandidates = []
                     self.wildcardpagecandidates = []
 
+            # 組字字根超過5個
+            if len(self.compositionChar) > MAX_CHAR_LENGTH:
+                self.setCompositionString(self.compositionString[:-1])
+                self.compositionChar = self.compositionChar[:-1]
+
             if self.cin.isInCharDef(self.compositionChar) and self.closemenu:
                 candidates = self.cin.getCharDef(self.compositionChar)
             elif self.fsymbols.isInCharDef(self.compositionChar) and self.closemenu:
@@ -665,14 +670,6 @@ class CheCJTextService(TextService):
                     self.wildcardcompositionChar = self.compositionChar
                     candidates = self.wildcardcandidates
                 self.isWildcardChardefs = True
-            elif len(self.compositionChar) > MAX_CHAR_LENGTH:
-                self.setCompositionString(self.compositionString[:-1])
-                self.compositionChar = self.compositionChar[:-1]
-                if self.cin.isInCharDef(self.compositionChar):
-                    self.setCandidateCursor(0)
-                    candidates = self.cin.getCharDef(self.compositionChar)
-                    self.setCandidateList(candidates)
-                    self.setShowCandidates(True)
             
             # 候選清單處理
             if candidates:

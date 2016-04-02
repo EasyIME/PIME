@@ -10,7 +10,10 @@ defaultConfig ={
     "colorCandWnd": true,
     "fontSize": 16,
     "outputSimpChinese": false,
-    "supportSymbolCoding": false
+    "supportSymbolCoding": false,
+    "supportWildcard": true,
+    "selWildcardType": "0",
+    "candMaxItems": 500
 };
 
 // unfortunately, here we use Windows-only features - ActiveX
@@ -171,6 +174,11 @@ function updateConfig() {
     var selCin = parseInt($("#selCinType").find(":selected").val());
     if(!isNaN(selCin))
         chewingConfig.selCinType = selCin;
+    
+    // selWildcard
+    var selWildcard = parseInt($("#selWildcardType").find(":selected").val());
+    if(!isNaN(selWildcard))
+        chewingConfig.selWildcardType = selWildcard;
 }
 
 // jQuery ready
@@ -184,6 +192,7 @@ $(function() {
 
     $("#candPerRow").spinner({min:1, max:10});
     $("#candPerPage").spinner({min:1, max:10});
+    $("#candMaxItems").spinner({min:100, max:10000});
     $("#fontSize").spinner({min:6, max:200});
 
     var selCins=[
@@ -203,6 +212,17 @@ $(function() {
     }
     selCinType.children().eq(chewingConfig.selCinType).prop("selected", true);
 
+    var selWildcards=[
+        "重　"
+    ];
+    var selWildcardType = $("#selWildcardType");
+    for(var i = 0; i < selWildcards.length; ++i) {
+        var selWildcard = selWildcards[i];
+        var item = '<option value="' + i + '">' + selWildcard + '</option>';
+        selWildcardType.append(item);
+    }
+    selWildcardType.children().eq(chewingConfig.selWildcardType).prop("selected", true);
+    
     $("#symbols").change(function(){
         symbolsChanged = true;
     });

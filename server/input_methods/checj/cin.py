@@ -130,11 +130,11 @@ class Cin(object):
                     break
         return chardefslist
 
-    def getWildcardCharDefs(self, CompositionChar):
+    def getWildcardCharDefs(self, CompositionChar, WildcardChar, candMaxItems):
         wildcardchardefs = []
         matchchardefs = {}
             
-        matchs = re.match('(.+)?z(.+)?', CompositionChar)
+        matchs = re.match('(.+)?' + WildcardChar +'(.+)?', CompositionChar)
         matchslist = matchs.groups()
         if matchslist[0] != None and matchslist[1] != None:
             matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('^' + matchslist[0] + '(.+)?' + matchslist[1] + '$', key)]
@@ -148,6 +148,9 @@ class Cin(object):
                 for char in chardef:
                     if not char in wildcardchardefs:
                         wildcardchardefs.append(char)
+                        
+                    if len(wildcardchardefs) >= candMaxItems:
+                        return wildcardchardefs
         return wildcardchardefs
 
     def getCharEncode(self, root):

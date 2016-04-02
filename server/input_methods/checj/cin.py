@@ -136,12 +136,30 @@ class Cin(object):
             
         matchs = re.match('(.+)?' + WildcardChar +'(.+)?', CompositionChar)
         matchslist = matchs.groups()
+        
+        sChar = ''
+        eChar = ''
+        
+        if matchslist[0] != None:
+            sChar = str(matchslist[0])
+            
+        if matchslist[1] != None:
+            eChar = str(matchslist[1])
+            
+        for char in ['\\', '.', '*', '?', '+', '[', '{', '|', '(', ')', '^', '$']:
+            if matchslist[0] != None:
+                if char in sChar:
+                    sChar = sChar.replace(char, "\\" + char)
+            if matchslist[1] != None:
+                if char in eChar:
+                    eChar = eChar.replace(char, "\\" + char)
+                    
         if matchslist[0] != None and matchslist[1] != None:
-            matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('^' + matchslist[0] + '(.+)?' + matchslist[1] + '$', key)]
+            matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('^' + sChar + '(.+)?' + eChar + '$', key)]
         elif matchslist[0] != None and matchslist[1] == None:
-            matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('^' + matchslist[0] + '(.+)?', key)]
+            matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('^' + sChar + '(.+)?', key)]
         elif matchslist[0] == None and matchslist[1] != None:
-            matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('(.+)?' + matchslist[1] + '$', key)]
+            matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('(.+)?' + eChar + '$', key)]
             
         if matchchardefs:
             for chardef in matchchardefs:
@@ -151,6 +169,7 @@ class Cin(object):
                         
                     if len(wildcardchardefs) >= candMaxItems:
                         return wildcardchardefs
+
         return wildcardchardefs
 
     def getCharEncode(self, root):
@@ -160,8 +179,8 @@ class Cin(object):
                 if char == root:
                     for str in chardef:
                         result += self.getKeyName(str)
-                    result += ' ¦ '
-        result = re.sub('\s¦\s$', '', result)
+                    result += '  ¦ '
+        result = re.sub('\s+¦\s$', '', result)
         return result
         
 

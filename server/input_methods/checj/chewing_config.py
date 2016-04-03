@@ -55,6 +55,9 @@ class ChewingConfig:
         # self.easySymbolsWithCtrl = False
         self.upperCaseWithShift = True
         self.supportSymbolCoding = False
+        self.supportWildcard = True
+        self.selWildcardType = 0
+        self.candMaxItems = 500
         self.curdir = os.path.abspath(os.path.dirname(__file__))
         
         # version: last modified time of (config.json, symbols.dat, swkb.dat)

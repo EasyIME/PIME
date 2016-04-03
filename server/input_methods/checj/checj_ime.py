@@ -94,6 +94,8 @@ class CheCJTextService(TextService):
         self.closemenu = True
         self.isWildcardChardefs = False
         self.menutype = 0
+        cfg = chewingConfig # 所有 CheCJTextService 共享一份設定物件
+        
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):

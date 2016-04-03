@@ -130,39 +130,61 @@ class Cin(object):
                     break
         return chardefslist
 
-    def getWildcardCharDefs(self, key):
+    def getWildcardCharDefs(self, CompositionChar, WildcardChar, candMaxItems):
         wildcardchardefs = []
+        matchchardefs = {}
             
-        matchs = re.match(r'(.+)?z(.+)?', key)
+        matchs = re.match('(.+)?' + WildcardChar +'(.+)?', CompositionChar)
         matchslist = matchs.groups()
         
-        for chardef in self.chardefs:
-            matched = False
-            if matchslist[0] != None and matchslist[1] != None:
-                if chardef[:len(matchslist[0])] == matchslist[0] and chardef[-len(matchslist[1]):] == matchslist[1]:
-                    matched = True
-            elif matchslist[0] != None and matchslist[1] == None:
-                if chardef[:len(matchslist[0])] == matchslist[0]:
-                    matched = True
-            elif matchslist[0] == None and matchslist[1] != None:
-                if chardef[-len(matchslist[1]):] == matchslist[1]:
-                    matched = True
+        sChar = ''
+        eChar = ''
+        
+        if matchslist[0] != None:
+            sChar = str(matchslist[0])
             
-            if matched:
-                for char in self.chardefs[chardef]:
+        if matchslist[1] != None:
+            eChar = str(matchslist[1])
+            
+        for char in ['\\', '.', '*', '?', '+', '[', '{', '|', '(', ')', '^', '$']:
+            if matchslist[0] != None:
+                if char in sChar:
+                    sChar = sChar.replace(char, "\\" + char)
+            if matchslist[1] != None:
+                if char in eChar:
+                    eChar = eChar.replace(char, "\\" + char)
+                    
+        if matchslist[0] != None and matchslist[1] != None:
+            matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('^' + sChar + '(.+)?' + eChar + '$', key)]
+        elif matchslist[0] != None and matchslist[1] == None:
+            matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('^' + sChar + '(.+)?', key)]
+        elif matchslist[0] == None and matchslist[1] != None:
+            matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('(.+)?' + eChar + '$', key)]
+            
+        if matchchardefs:
+            for chardef in matchchardefs:
+                for char in chardef:
                     if not char in wildcardchardefs:
                         wildcardchardefs.append(char)
-    
+                        
+                    if len(wildcardchardefs) >= candMaxItems:
+                        return wildcardchardefs
+
         return wildcardchardefs
 
     def getCharEncode(self, root):
-        result = root + ": "
+        nunbers = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩']
+        i = 0
+        result = root + ":"
         for chardef in self.chardefs:
             for char in self.chardefs[chardef]:
                 if char == root:
+                    result += '　' + nunbers[i]
+                    if i < 9:
+                        i = i + 1
                     for str in chardef:
                         result += self.getKeyName(str)
-                    return result
+        return result
         
 
 def head_rest(head, line):

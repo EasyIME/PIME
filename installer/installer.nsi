@@ -42,6 +42,10 @@ AllowSkipFiles off ; cannot skip a file
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 !define HOMEPAGE_URL "https://github.com/EasyIME/"
 
+!define chewing_value "0404:{35F67E9D-A54D-4177-9697-8B0AB71A9E04}{F80736AA-28DB-423A-92C9-5540F501C939}"
+!define newcj_value "0404:{35F67E9D-A54D-4177-9697-8B0AB71A9E04}{D5F17DA0-594A-5897-9B0C-9BA79F000000}"
+!define checj_value "0404:{35F67E9D-A54D-4177-9697-8B0AB71A9E04}{F828D2DC-81BE-466E-9CFE-24BB03172693}"
+
 Name "${PRODUCT_NAME}"
 BrandingText "${PRODUCT_NAME}"
 
@@ -60,6 +64,7 @@ RequestExecutionLevel admin
 !insertmacro MUI_PAGE_LICENSE "..\PSF.txt" ; for python
 
 ; !insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_COMPONENTS
 
 ; installation progress page
 !insertmacro MUI_PAGE_INSTFILES
@@ -97,15 +102,19 @@ Function uninstallOldVersion
 	; Ensure that old files are all deleted
 	${If} ${RunningX64}
 		${If} ${FileExists} "$INSTDIR\x64\PIMETextService.dll"
-            Delete "$INSTDIR\x64\PIMETextService.dll"
+            Delete /REBOOTOK "$INSTDIR\x64\PIMETextService.dll"
             IfErrors 0 +2
                 Call .onInstFailed
 		${EndIf}
 	${EndIf}
 	${If} ${FileExists} "$INSTDIR\x86\PIMETextService.dll"
-        Delete "$INSTDIR\x86\PIMETextService.dll"
+        Delete /REBOOTOK "$INSTDIR\x86\PIMETextService.dll"
         IfErrors 0 +2
             Call .onInstFailed
+	${EndIf}
+
+	${If} ${RebootFlag}
+		Call .onInstFailed
 	${EndIf}
 FunctionEnd
 
@@ -128,8 +137,14 @@ FunctionEnd
 
 ; called to show an error message when errors happen
 Function .onInstFailed
-	MessageBox MB_ICONSTOP|MB_OK "安裝發生錯誤，無法完成。$\n$\n有時是有檔案正在使用中，暫時無法刪除或覆寫$\n$\n建議重新開機後，再次執行安裝程式。"
-    Abort
+	${If} ${RebootFlag}
+		MessageBox MB_YESNO "安裝發生錯誤，無法完成。$\r$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)" IDNO +2
+		Reboot
+		Abort
+	${Else}
+		MessageBox MB_ICONSTOP|MB_OK "安裝發生錯誤，無法完成。$\n$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。"
+		Abort
+	${EndIf}
 FunctionEnd
 
 Function ensureVCRedist
@@ -182,9 +197,13 @@ Function ensureVCRedist
 	${EndIf}
 FunctionEnd
 
-;Installer Sections
-Section "PIME 輸入法" SecMain
+;Installer Type
+InstType "$(INST_TYPE_STD)"
+InstType "$(INST_TYPE_FULL)"
 
+;Installer Sections
+Section "PIME 輸入法平台" SecMain
+	SectionIn 1 2 RO
     ; Ensure that we have VC++ 2015 runtime (for python 3.5)
     Call ensureVCRedist
 
@@ -204,11 +223,34 @@ Section "PIME 輸入法" SecMain
     
 	; Install the python server and input method modules
     ; FIXME: maybe we should install the pyc files later?
-	File /r /x "__pycache__" /x "meow" "..\server"
+	File /r /x "__pycache__" /x "meow" /x "chewing" /x "newcj" /x "checj" "..\server"
 
     ; Install the launcher and monitor of the server
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
+SectionEnd
 
+SubSection "輸入法模組"
+	Section "新酷音" chewing
+		SectionIn 1 2
+		SetOutPath "$INSTDIR\server\input_methods"
+		File /r "..\server\input_methods\chewing"
+	SectionEnd
+
+	Section "自由大新倉頡" newcj
+		SectionIn 2
+		SetOutPath "$INSTDIR\server\input_methods"
+		File /r "..\server\input_methods\newcj"
+	SectionEnd
+
+	Section "酷倉" checj
+		SectionIn 2
+		SetOutPath "$INSTDIR\server\input_methods"
+		File /r "..\server\input_methods\checj"
+	SectionEnd
+SubSectionEnd
+
+Section "" Register
+	SectionIn 1 2
     ; Install the text service dlls
 	${If} ${RunningX64} ; This is a 64-bit Windows system
 		SetOutPath "$INSTDIR\x64"
@@ -241,18 +283,58 @@ Section "PIME 輸入法" SecMain
     ; Launch the python server as current user (non-elevated process)
     ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\PIMELauncher.exe" "open" ""
 
+	${If} ${AtLeastWin8}
+		StrCpy $R0 0
+		StrCpy $0 0
+		loop:
+			EnumRegValue $1 HKCU "Control Panel\International\User Profile\zh-Hant-TW" $0
+			StrCmp $1 "" done
+			IntOp $0 $0 + 1
+			${If} $1 ==  ${chewing_value}
+			${OrIf} $1 == ${newcj_value}
+			${OrIf} $1 == ${checj_value}
+				IntOp $R0 $R0 + 0
+			${Else}
+				IntOp $R0 $R0 + 1
+			${EndIf}
+			Goto loop
+		done:
+
+		IntOp $R0 $R0 + 1
+		WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value} $R0
+
+		${If} ${SectionIsSelected} ${newcj}
+			IntOp $R0 $R0 + 1
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${newcj_value} $R0
+		${EndIf}
+
+		${If} ${SectionIsSelected} ${checj}
+			IntOp $R0 $R0 + 1
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${checj_value} $R0
+		${EndIf}
+	${EndIf}
+
     ; Create shortcuts
     CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
-    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk" "$INSTDIR\server\input_methods\chewing\config\config.hta"
+    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk" "$INSTDIR\python\pythonw.exe" '"$INSTDIR\server\input_methods\chewing\config\configTool.py"' "$INSTDIR\server\input_methods\chewing\icon.ico" 0
+    ${If} ${SectionIsSelected} ${checj}
+        CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk" "$INSTDIR\server\input_methods\checj\config\config.hta" "" "$INSTDIR\server\input_methods\checj\icon.ico" 0
+    ${EndIf}
     CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
 
 ;Language strings
 LangString DESC_SecMain ${LANG_ENGLISH} "A test section." ; What's this??
+LangString INST_TYPE_STD ${CHT} "標準安裝"
+LangString INST_TYPE_FULL ${CHT} "完整安裝"
+LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解除安裝。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)"
 
 ;Assign language strings to sections
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} $(DESC_SecMain)
+	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} "安裝 ${PRODUCT_NAME} 主程式到你的電腦裏。"
+    !insertmacro MUI_DESCRIPTION_TEXT ${newcj} "安裝新酷音輸入法模組。"
+	!insertmacro MUI_DESCRIPTION_TEXT ${newcj} "安裝自由大新倉頡輸入法模組。"
+	!insertmacro MUI_DESCRIPTION_TEXT ${checj} "安裝酷倉輸入法模組。"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;Uninstaller Section
@@ -261,6 +343,12 @@ Section "Uninstall"
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
 	DeleteRegKey /ifempty HKLM "Software\PIME"
+
+	${If} ${AtLeastWin8}
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value}
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW"  ${newcj_value}
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW"  ${checj_value}
+	${EndIf}
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 	ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'
@@ -277,15 +365,21 @@ Section "Uninstall"
 
 	RMDir /REBOOTOK /r "$INSTDIR\x86"
 	RMDir /REBOOTOK /r "$INSTDIR\server"
-    RMDir /REBOOTOK /r "$INSTDIR\python"
+	RMDir /REBOOTOK /r "$INSTDIR\python"
 
     ; Delete shortcuts
     Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
+    Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk"
     Delete "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk"
     RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
 
+	Delete "$INSTDIR\version.txt"
 	Delete "$INSTDIR\Uninstall.exe"
 	RMDir "$INSTDIR"
 
+	${If} ${RebootFlag}
+		MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +2
+		Reboot
+	${EndIf}
 SectionEnd
 

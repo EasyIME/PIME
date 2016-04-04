@@ -68,7 +68,7 @@ class CheCJTextService(TextService):
         TextService.__init__(self, client)
         self.curdir = os.path.abspath(os.path.dirname(__file__))
         self.datadir = os.path.join(self.curdir, "data")
-        # print(self.datadir)
+
         self.icon_dir = self.curdir
         
         self.langMode = -1
@@ -93,6 +93,7 @@ class CheCJTextService(TextService):
         self.showmenu = False
         self.closemenu = True
         self.isWildcardChardefs = False
+        self.isLangModeChanged = True
         self.menutype = 0
         cfg = chewingConfig # 所有 CheCJTextService 共享一份設定物件
         
@@ -153,6 +154,8 @@ class CheCJTextService(TextService):
         # 使用的萬用字元?
         if cfg.selWildcardType == 0:
             self.selWildcardChar = 'z'
+        elif cfg.selWildcardType == 1:
+            self.selWildcardChar = '*'
 
         # 最大候選字個數?
         self.candMaxItems = cfg.candMaxItems
@@ -283,13 +286,16 @@ class CheCJTextService(TextService):
 
         # 若按下 Shift 鍵
         if keyEvent.isKeyDown(VK_SHIFT):
-            # 若開啟 Shift 快速輸入符號，輸入法需要此按鍵
+            # 若開啟 Shift 快速輸入符號，輸入法需要處理此按鍵
             if self.easySymbolsWithShift and keyEvent.isPrintableChar() and self.langMode == CHINESE_MODE:
                 return True
-            # 若開啟 Shift 輸入全形標點，輸入法需要此按鍵
+            # 若開啟 Shift 輸入全形標點，輸入法需要處理此按鍵
             if self.fullShapeSymbols and keyEvent.isPrintableChar() and self.langMode == CHINESE_MODE:
                 return True
-
+            # 若萬用字元使用*，輸入法需要處理*按鍵
+            if self.selWildcardChar == '*' and keyEvent.keyCode == 0x38 and self.langMode == CHINESE_MODE:
+                return True
+                
         # 不論中英文模式，NumPad 都允許直接輸入數字，輸入法不處理
         if keyEvent.isKeyToggled(VK_NUMLOCK): # NumLock is on
             # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
@@ -313,10 +319,10 @@ class CheCJTextService(TextService):
         if self.cin.isInKeyName(chr(keyEvent.charCode).lower()):
             return True
             
-        # 中文模式下，若 Shift 鍵及 ` 鍵並沒有同時按下，讓輸入法進行處理
-        if not keyEvent.isKeyDown(VK_SHIFT) and keyEvent.isKeyDown(VK_OEM_3):
+        # 中文模式下，若按下 ` 鍵，讓輸入法進行處理
+        if keyEvent.isKeyDown(VK_OEM_3):
             return True
-
+        
         # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
         return False
 
@@ -364,7 +370,7 @@ class CheCJTextService(TextService):
                 self.setShowCandidates(True)
                 
                 # 使用數字鍵輸出候選字
-                if keyCode >= ord('0') and keyCode <= ord('9'):
+                if keyCode >= ord('0') and keyCode <= ord('9') and not keyEvent.isKeyDown(VK_SHIFT):
                     i = keyCode - ord('1')
                     if self.menutype == 0 and i == 2: # 切至符號輸入頁面
                         candCursor = 0
@@ -518,21 +524,29 @@ class CheCJTextService(TextService):
                 self.setCandidatePage(currentCandPage)
                 self.setCandidateList(pagecandidates[currentCandPage])
         
+        
+        # 某些狀況須要特別處理或忽略
         # 如果字根空白且選單未開啟過，不處理 Enter 及 Backspace 鍵
         if not self.isComposing() and self.closemenu:
             if keyCode == VK_RETURN or keyCode == VK_BACK:
                 return False
 
-        # 若按下 Shift 鍵
-        if keyEvent.isKeyDown(VK_SHIFT):
+        # 若按下 Shift 鍵,且觸發中英文切換
+        if self.isLangModeChanged and keyEvent.isKeyDown(VK_SHIFT):
+            self.isLangModeChanged = False
             self.showmenu = False
             self.resetComposition()
+
+        # 若按下 Shift 鍵,且沒有按下其它的按鍵
+        if keyEvent.isKeyDown(VK_SHIFT) and not keyEvent.isPrintableChar():
+            return False
             
+        # 按下的鍵為 CIN 內有定義的字根
         if self.cin.isInKeyName(charStrLow) and self.closemenu:
             # 若按下 Shift 鍵
             if keyEvent.isKeyDown(VK_SHIFT) and self.langMode == CHINESE_MODE:
                 CommitStr = charStr
-                # 使用 Ctrl 或 Shift 鍵做全形輸入 (easy symbol input)
+                # 使用 Shift 鍵做全形輸入 (easy symbol input)
                 # 這裡的 easy symbol input，是定義在 swkb.dat 設定檔中的符號
                 if self.easySymbolsWithShift and self.isLetterChar(keyCode):
                     if self.swkb.isInCharDef(charStr.upper()):
@@ -546,32 +560,55 @@ class CheCJTextService(TextService):
                     self.resetComposition()
                 # 如果啟用 Shift 輸入全形標點
                 elif self.fullShapeSymbols:
+                    if charStr == '*' and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
+                        if not '*' in self.compositionChar:
+                            self.compositionChar += '*'
+                            keyname = '＊'
+                            self.setCompositionString(self.compositionString + keyname)
                     # 如果是符號或數字，將字串轉為全形再輸出
-                    if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
+                    elif self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
                         if self.fsymbols.isInCharDef(charStr):
-                            self.compositionChar += charStr
+                            self.compositionChar = charStr
                             fullShapeSymbolsList = self.fsymbols.getCharDef(self.compositionChar)
-                            self.setCompositionString(self.compositionString + fullShapeSymbolsList[0])
+                            self.setCompositionString(fullShapeSymbolsList[0])
                             self.setCompositionCursor(len(self.compositionString))
                         else:
-                            if self.shapeMode == FULLSHAPE_MODE: # 全形模式
-                                CommitStr = self.SymbolscharCodeToFullshape(charCode)
-                            self.setCommitString(CommitStr)
-                            self.resetComposition()
+                            if self.cin.isInKeyName(charStrLow): # 如果是 CIN 所定義的字根
+                                self.compositionChar = charStrLow
+                                keyname = self.cin.getKeyName(charStrLow)
+                                self.setCompositionString(keyname)
+                                self.setCompositionCursor(len(self.compositionString))
+                            else:
+                                if self.shapeMode == FULLSHAPE_MODE: # 全形模式
+                                    CommitStr = self.SymbolscharCodeToFullshape(charCode)
+                                self.setCommitString(CommitStr)
+                                self.resetComposition()
                     else: #如果是字母
                         if self.shapeMode == FULLSHAPE_MODE: # 全形模式
                             CommitStr = self.charCodeToFullshape(charCode)
                         self.setCommitString(CommitStr)
                         self.resetComposition()
                 else: # 如果未使用 SHIFT 輸入快速符號或全形標點
-                    if self.shapeMode == FULLSHAPE_MODE: # 全形模式
-                        # 如果是符號或數字，將字串轉為全形再輸出
-                        if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
-                            CommitStr = self.SymbolscharCodeToFullshape(charCode)
+                    if charStr == '*' and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
+                        if not '*' in self.compositionChar:
+                            self.compositionChar += '*'
+                            keyname = '＊'
+                            self.setCompositionString(self.compositionString + keyname)
+                    else:
+                        if self.cin.isInKeyName(charStrLow) and (self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode)): # 如果是 CIN 所定義的字根
+                            self.compositionChar = charStrLow
+                            keyname = self.cin.getKeyName(charStrLow)
+                            self.setCompositionString(keyname)
+                            self.setCompositionCursor(len(self.compositionString))
                         else:
-                            CommitStr = self.charCodeToFullshape(charCode)
-                    self.setCommitString(CommitStr)
-                    self.resetComposition()
+                            if self.shapeMode == FULLSHAPE_MODE: # 全形模式
+                                # 如果是符號或數字，將字串轉為全形再輸出
+                                if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
+                                    CommitStr = self.SymbolscharCodeToFullshape(charCode)
+                                else:
+                                    CommitStr = self.charCodeToFullshape(charCode)
+                            self.setCommitString(CommitStr)
+                            self.resetComposition()
             else: # 若沒按下 Shift 鍵
                 # 如果是英文全形模式，將字串轉為全形再輸出
                 if self.shapeMode == FULLSHAPE_MODE and self.langMode == ENGLISH_MODE:
@@ -594,33 +631,59 @@ class CheCJTextService(TextService):
                 # 如果停用 Shift 輸入全形標點
                 if not self.fullShapeSymbols:
                     # 如果是全形模式，將字串轉為全形再輸出
-                    if self.shapeMode == FULLSHAPE_MODE and len(self.compositionChar) == 0:
-                        # 如果是符號或數字，將字串轉為全形再輸出
-                        if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
-                            CommitStr = self.SymbolscharCodeToFullshape(charCode)
+                    if self.shapeMode == FULLSHAPE_MODE:
+                        if charStr == '*' and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
+                            if not '*' in self.compositionChar:
+                                self.compositionChar += '*'
+                                keyname = '＊'
+                                self.setCompositionString(self.compositionString + keyname)
                         else:
-                            CommitStr = self.charCodeToFullshape(charCode)
-                        self.setCommitString(CommitStr)
-                        self.resetComposition()
-                    else: # 直接輸出不作處理
-                        CommitStr = charStr
-                        self.setCommitString(CommitStr)
-                        self.resetComposition()
-                else: # 如果啟用 Shift 輸入全形標點
-                    # 如果是符號或數字，將字串轉為全形再輸出
-                    if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
-                        if self.fsymbols.isInCharDef(charStr):
-                            self.compositionChar += charStr
-                            fullShapeSymbolsList = self.fsymbols.getCharDef(self.compositionChar)
-                            self.setCompositionString(self.compositionString + fullShapeSymbolsList[0])
-                            self.setCompositionCursor(len(self.compositionString))
-                        else:
+                            # 如果是符號或數字，將字串轉為全形再輸出
                             if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
                                 CommitStr = self.SymbolscharCodeToFullshape(charCode)
                             else:
                                 CommitStr = self.charCodeToFullshape(charCode)
                             self.setCommitString(CommitStr)
                             self.resetComposition()
+                    else: # 半形模式直接輸出不作處理
+                        if charStr == '*' and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
+                            if not '*' in self.compositionChar:
+                                self.compositionChar += '*'
+                                keyname = '＊'
+                                self.setCompositionString(self.compositionString + keyname)
+                        else:
+                            CommitStr = charStr
+                            self.setCommitString(CommitStr)
+                            self.resetComposition()
+                else: # 如果啟用 Shift 輸入全形標點
+                    # 如果是符號或數字鍵，將字串轉為全形再輸出
+                    if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
+                        # 如果該鍵有定義在 fsymbols
+                        if self.fsymbols.isInCharDef(charStr):
+                            if charStr == '*' and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
+                                if not '*' in self.compositionChar:
+                                    self.compositionChar += '*'
+                                    keyname = '＊'
+                                    self.setCompositionString(self.compositionString + keyname)
+                            else:
+                                self.compositionChar = charStr
+                                fullShapeSymbolsList = self.fsymbols.getCharDef(self.compositionChar)
+                                self.setCompositionString(fullShapeSymbolsList[0])
+                                self.setCompositionCursor(len(self.compositionString))
+                        else: # 沒有定義在 fsymbols 裡
+                            if charStr == '*' and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
+                                if not '*' in self.compositionChar:
+                                    self.compositionChar += '*'
+                                    keyname = '＊'
+                                    self.setCompositionString(self.compositionString + keyname)
+                            else:
+                                if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
+                                    CommitStr = self.SymbolscharCodeToFullshape(charCode)
+                                else:
+                                    CommitStr = self.charCodeToFullshape(charCode)
+                                self.setCommitString(CommitStr)
+                                self.resetComposition()
+                                
             else: # 若沒按下 Shift 鍵
                 # 如果是全形模式，將字串轉為全形再輸出
                 if self.shapeMode == FULLSHAPE_MODE and len(self.compositionChar) == 0:
@@ -659,9 +722,9 @@ class CheCJTextService(TextService):
 
             if self.cin.isInCharDef(self.compositionChar) and self.closemenu:
                 candidates = self.cin.getCharDef(self.compositionChar)
-            elif self.fsymbols.isInCharDef(self.compositionChar) and self.closemenu:
+            elif self.fullShapeSymbols and self.fsymbols.isInCharDef(self.compositionChar) and self.closemenu:
                 candidates = self.fsymbols.getCharDef(self.compositionChar)
-            elif self.supportWildcard and 'z' in self.compositionChar and self.closemenu:
+            elif self.supportWildcard and self.selWildcardChar in self.compositionChar and self.closemenu:
                 if self.wildcardcandidates and self.wildcardcompositionChar == self.compositionChar:
                     candidates = self.wildcardcandidates
                 else:
@@ -693,12 +756,12 @@ class CheCJTextService(TextService):
                 self.setShowCandidates(True)
                 
                 # 如果字根首字是符號就直接輸出
-                if (self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode)) and len(self.compositionChar) == 1:
+                if (self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode)) and len(self.compositionChar) == 1 and charStrLow == self.compositionChar:
                     directout = True
                     if self.cin.isInCharDef(self.compositionChar) and self.supportSymbolCoding and len(self.cin.haveNextCharDef(self.compositionChar)) > 1:
                         directout = False
                     
-                    if len(candidates) == 1 and directout:
+                    if len(candidates) == 1 and directout and self.selWildcardChar != self.compositionChar:
                         cand = candidates[0]
                         self.setCommitString(cand)
                         self.resetComposition()
@@ -706,7 +769,7 @@ class CheCJTextService(TextService):
                         currentCandPage = 0
                 
                 # 使用數字鍵輸出候選字
-                if keyCode >= ord('0') and keyCode <= ord('9'):
+                if keyCode >= ord('0') and keyCode <= ord('9') and not keyEvent.isKeyDown(VK_SHIFT):
                     i = keyCode - ord('1')
                     if i < len(candidates):
                         commitStr = self.candidateList[i]
@@ -935,6 +998,7 @@ class CheCJTextService(TextService):
             self.langMode = ENGLISH_MODE
         elif self.langMode == ENGLISH_MODE:
             self.langMode = CHINESE_MODE
+        self.isLangModeChanged = True
         self.updateLangButtons()
 
     # 切換全形/半形

@@ -213,7 +213,8 @@ $(function() {
     selCinType.children().eq(chewingConfig.selCinType).prop("selected", true);
 
     var selWildcards=[
-        "重　"
+        "重　",
+        "＊　"
     ];
     var selWildcardType = $("#selWildcardType");
     for(var i = 0; i < selWildcards.length; ++i) {

@@ -14,7 +14,7 @@
 %tcname 倉頡（大字集）
 %scname 仓颉（大字集）
 %encoding UTF-8
-%selkey 123456789
+%selkey 1234567890
 %endkey ,./;'[]\`-=<>?:"{}|~!@#$%^&*()_+
 %keyname begin
 a 日

@@ -17,7 +17,7 @@ from keycodes import *  # for VK_XXX constants
 from textService import *
 import os.path
 import time
-from .chewing_config import chewingConfig
+from .checj_config import ChecjConfig
 import opencc  # OpenCC 繁體簡體中文轉換
 
 # CheCJ
@@ -79,7 +79,7 @@ class CheCJTextService(TextService):
         self.supportSymbolCoding = False
         self.lastKeyDownCode = 0
         self.lastKeyDownTime = 0.0
-        self.configVersion = chewingConfig.getVersion()
+        self.configVersion = ChecjConfig.getVersion()
 
         # 使用 OpenCC 繁體中文轉簡體
         self.opencc = None
@@ -93,14 +93,15 @@ class CheCJTextService(TextService):
         self.showmenu = False
         self.closemenu = True
         self.isWildcardChardefs = False
-        self.isLangModeChanged = True
+        self.isLangModeChanged = False
+        self.isShapeModeChanged = False
         self.menutype = 0
-        cfg = chewingConfig # 所有 CheCJTextService 共享一份設定物件
+        cfg = ChecjConfig # 所有 CheCJTextService 共享一份設定物件
         
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):
-        cfg = chewingConfig
+        cfg = ChecjConfig
         cfg.update() # 更新設定檔狀態
         
         # 如果有更換輸入法碼表，就重新載入碼表資料
@@ -111,14 +112,14 @@ class CheCJTextService(TextService):
 
         # 比較我們先前存的版本號碼，和目前設定檔的版本號
         if cfg.isFullReloadNeeded(self.configVersion):
-            # 資料改變需整個 reload，重建一個新的 chewing context
-            self.initChewingContext()
+            # 資料改變需整個 reload，重建一個新的 checj context
+            self.initChecjContext()
         elif cfg.isConfigChanged(self.configVersion):
             # 只有偵測到設定檔變更，需要套用新設定
             self.applyConfig()
             
     def applyConfig(self):
-        cfg = chewingConfig # globally shared config object
+        cfg = ChecjConfig # globally shared config object
         self.configVersion = cfg.getVersion()
 
         # 每列顯示幾個候選字
@@ -161,8 +162,8 @@ class CheCJTextService(TextService):
         self.candMaxItems = cfg.candMaxItems
         
     # 初始化新酷音輸入法引擎
-    def initChewingContext(self):
-        cfg = chewingConfig # 所有 CheCJTextService 共享一份設定物件
+    def initChecjContext(self):
+        cfg = ChecjConfig # 所有 CheCJTextService 共享一份設定物件
         # syspath 參數可包含多個路徑，用 ; 分隔
         # 此處把 user 設定檔目錄插入到 system-wide 資料檔路徑前
         # 如此使用者變更設定後，可以比系統預設值有優先權
@@ -195,9 +196,9 @@ class CheCJTextService(TextService):
             
     # 輸入法被使用者啟用
     def onActivate(self):
-        cfg = chewingConfig # globally shared config object
+        cfg = ChecjConfig # globally shared config object
         TextService.onActivate(self)
-        self.initChewingContext()
+        self.initChecjContext()
         
         # 向系統宣告 Shift + Space 這個組合為特殊用途 (全半形切換)
         # 當 Shift + Space 被按下的時候，onPreservedKey() 會被呼叫
@@ -240,12 +241,15 @@ class CheCJTextService(TextService):
         TextService.onDeactivate(self)
         self.lastKeyDownCode = 0
         
+        # 向系統宣告移除 Shift + Space 這個組合鍵用途 (全半形切換)
+        self.removePreservedKey(SHIFT_SPACE_GUID); # shift + space
+        
         self.removeButton("switch-lang")
         self.removeButton("switch-shape")
         self.removeButton("settings")
         if self.client.isWindows8Above:
             self.removeButton("windows-mode-icon")
-        
+            
     # 設定輸出成簡體中文
     def setOutputSimplifiedChinese(self, outputSimpChinese):
         self.outputSimpChinese = outputSimpChinese
@@ -260,7 +264,7 @@ class CheCJTextService(TextService):
     # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
     # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
     def filterKeyDown(self, keyEvent):
-        cfg = chewingConfig
+        cfg = ChecjConfig
         
         # 紀錄最後一次按下的鍵和按下的時間，在 filterKeyUp() 中要用
         self.lastKeyDownCode = keyEvent.keyCode
@@ -327,7 +331,7 @@ class CheCJTextService(TextService):
         return False
 
     def onKeyDown(self, keyEvent):
-        cfg = chewingConfig
+        cfg = ChecjConfig
         charCode = keyEvent.charCode
         keyCode = keyEvent.keyCode
         charStr = chr(charCode)
@@ -530,12 +534,6 @@ class CheCJTextService(TextService):
         if not self.isComposing() and self.closemenu:
             if keyCode == VK_RETURN or keyCode == VK_BACK:
                 return False
-
-        # 若按下 Shift 鍵,且觸發中英文切換
-        if self.isLangModeChanged and keyEvent.isKeyDown(VK_SHIFT):
-            self.isLangModeChanged = False
-            self.showmenu = False
-            self.resetComposition()
 
         # 若按下 Shift 鍵,且沒有按下其它的按鍵
         if keyEvent.isKeyDown(VK_SHIFT) and not keyEvent.isPrintableChar():
@@ -868,22 +866,59 @@ class CheCJTextService(TextService):
     # return True，系統會呼叫 onKeyUp() 進一步處理這個按鍵
     # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
     def filterKeyUp(self, keyEvent):
+        # 如果按下 Alt，可能是應用程式熱鍵，輸入法不做處理
+        if keyEvent.isKeyDown(VK_MENU):
+            return False
+
+        # 如果按下 Ctrl 鍵
+        if keyEvent.isKeyDown(VK_CONTROL):
+            return False
+    
         # 若啟用使用 Shift 鍵切換中英文模式
-        if chewingConfig.switchLangWithShift:
+        if ChecjConfig.switchLangWithShift:
             # 剛才最後一個按下的鍵，和現在放開的鍵，都是 Shift
             if self.lastKeyDownCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
                 pressedDuration = time.time() - self.lastKeyDownTime
                 # 按下和放開的時間相隔 < 0.5 秒
                 if pressedDuration < 0.5:
-                    self.toggleLanguageMode()  # 切換中英文模式
+                    self.isLangModeChanged = True
+                    return True
+        
+        # 若切換全形/半形模式
+        if self.isShapeModeChanged:
+            return True
+            
         self.lastKeyDownCode = 0
         self.lastKeyDownTime = 0.0
         return False
 
+    def onKeyUp(self, keyEvent):
+        cfg = ChecjConfig # 所有 CheCJTextService 共享一份設定物件
+        charCode = keyEvent.charCode
+        keyCode = keyEvent.keyCode
+        
+        self.lastKeyDownCode = 0
+        self.lastKeyDownTime = 0.0
+        
+        # 若按下 Shift 鍵,且觸發中英文切換
+        if self.isLangModeChanged and keyCode == VK_SHIFT:
+            self.toggleLanguageMode()  # 切換中英文模式
+            self.isLangModeChanged = False
+            self.showmenu = False
+            self.resetComposition()
+            message = '中文模式' if self.langMode == CHINESE_MODE else '英數模式'
+            self.showMessage(message, 3)
+            
+        if self.isShapeModeChanged:
+            self.isShapeModeChanged = False
+            message = '半形模式' if self.shapeMode == HALFSHAPE_MODE else '全形模式'
+            self.showMessage(message, 3)
+    
     def onPreservedKey(self, guid):
         self.lastKeyDownCode = 0;
         # some preserved keys registered are pressed
         if guid == SHIFT_SPACE_GUID: # 使用者按下 shift + space
+            self.isShapeModeChanged = True
             self.toggleShapeMode()  # 切換全半形
             return True
         return False
@@ -957,7 +992,7 @@ class CheCJTextService(TextService):
 
     # 按下「`」鍵的選單命令
     def onMenuCommand(self, commandId, commandType):
-        cfg = chewingConfig
+        cfg = ChecjConfig
         if commandType == 0:
             if commandId == 0:
                 config_tool = os.path.join(self.curdir, "config", "config.hta")
@@ -998,7 +1033,6 @@ class CheCJTextService(TextService):
             self.langMode = ENGLISH_MODE
         elif self.langMode == ENGLISH_MODE:
             self.langMode = CHINESE_MODE
-        self.isLangModeChanged = True
         self.updateLangButtons()
 
     # 切換全形/半形

@@ -30,7 +30,7 @@ selKeys=(
     "1234567890"
 )
 
-class ChewingConfig:
+class ChecjConfig:
 
     def __init__(self):
         self.candPerRow = 3
@@ -198,4 +198,4 @@ class ChewingConfig:
 
 # globally shared config object
 # load configurations from a user-specific config file
-chewingConfig = ChewingConfig()
+ChecjConfig = ChecjConfig()

@@ -251,7 +251,7 @@ SubSectionEnd
 
 Section "" Register
 	SectionIn 1 2
-    ; Install the text service dlls
+	; Install the text service dlls
 	${If} ${RunningX64} ; This is a 64-bit Windows system
 		SetOutPath "$INSTDIR\x64"
 		File "..\build64\pime\Release\PIMETextService.dll" ; put 64-bit PIMETextService.dll in x64 folder
@@ -277,11 +277,11 @@ Section "" Register
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${HOMEPAGE_URL}"
 	WriteUninstaller "$INSTDIR\Uninstall.exe" ;Create uninstaller
 
-    ; Compile all installed python modules to *.pyc files
-    nsExec::ExecToLog  '"$INSTDIR\python\python.exe" -m compileall "$INSTDIR\server"'
+	; Compile all installed python modules to *.pyc files
+	nsExec::ExecToLog  '"$INSTDIR\python\python.exe" -m compileall "$INSTDIR\server"'
 
-    ; Launch the python server as current user (non-elevated process)
-    ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\PIMELauncher.exe" "open" ""
+	; Launch the python server as current user (non-elevated process)
+	${StdUtils.ExecShellAsUser} $0 "$INSTDIR\PIMELauncher.exe" "open" ""
 
 	${If} ${AtLeastWin8}
 		StrCpy $R0 0
@@ -300,8 +300,10 @@ Section "" Register
 			Goto loop
 		done:
 
-		IntOp $R0 $R0 + 1
-		WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value} $R0
+		${If} ${SectionIsSelected} ${chewing}
+			IntOp $R0 $R0 + 1
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value} $R0
+		${EndIf}
 
 		${If} ${SectionIsSelected} ${newcj}
 			IntOp $R0 $R0 + 1
@@ -314,13 +316,16 @@ Section "" Register
 		${EndIf}
 	${EndIf}
 
-    ; Create shortcuts
-    CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
-    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk" "$INSTDIR\python\pythonw.exe" '"$INSTDIR\server\input_methods\chewing\config\configTool.py"' "$INSTDIR\server\input_methods\chewing\icon.ico" 0
-    ${If} ${SectionIsSelected} ${checj}
-        CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk" "$INSTDIR\server\input_methods\checj\config\config.hta" "" "$INSTDIR\server\input_methods\checj\icon.ico" 0
-    ${EndIf}
-    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk" "$INSTDIR\Uninstall.exe"
+	; Create shortcuts
+	CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
+	${If} ${SectionIsSelected} ${chewing}
+		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk" "$INSTDIR\python\pythonw.exe" '"$INSTDIR\server\input_methods\chewing\config\configTool.py"' "$INSTDIR\server\input_methods\chewing\icon.ico" 0
+	${EndIf}
+	
+	${If} ${SectionIsSelected} ${checj}
+		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk" "$INSTDIR\server\input_methods\checj\config\config.hta" "" "$INSTDIR\server\input_methods\checj\icon.ico" 0
+	${EndIf}
+	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
 
 ;Language strings
@@ -332,7 +337,7 @@ LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解
 ;Assign language strings to sections
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} "安裝 ${PRODUCT_NAME} 主程式到你的電腦裏。"
-    !insertmacro MUI_DESCRIPTION_TEXT ${newcj} "安裝新酷音輸入法模組。"
+	!insertmacro MUI_DESCRIPTION_TEXT ${chewing} "安裝新酷音輸入法模組。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${newcj} "安裝自由大新倉頡輸入法模組。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${checj} "安裝酷倉輸入法模組。"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END

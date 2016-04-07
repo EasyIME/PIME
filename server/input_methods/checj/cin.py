@@ -134,7 +134,7 @@ class Cin(object):
         wildcardchardefs = []
         matchchardefs = {}
             
-        matchs = re.match('(.+)?' + WildcardChar +'(.+)?', CompositionChar)
+        matchs = re.match('(.+)?[' + WildcardChar +'](.+)?', CompositionChar)
         matchslist = matchs.groups()
         
         sChar = ''

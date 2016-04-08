@@ -744,11 +744,6 @@ class CheCJTextService(TextService):
             self.showmenu = False
             
             if keyCode == VK_ESCAPE and (self.showCandidates or len(self.compositionChar) > 0):
-                self.setShowCandidates(False)
-                self.setCandidateCursor(0)
-                self.setCandidatePage(0)
-                self.wildcardcandidates = []
-                self.wildcardpagecandidates = []
                 self.resetComposition()
                 
             # 刪掉一個字根
@@ -1096,12 +1091,7 @@ class CheCJTextService(TextService):
         if opened: # 鍵盤開啟
             self.resetComposition()
         else: # 鍵盤關閉，輸入法停用
-            # 若選字中，隱藏選字視窗
-            if self.showCandidates:
-                self.setShowCandidates(False)
-            # self.hideMessage() # hide message window, if there's any
-            self.compositionChar = ''
-            self.setCompositionString('')
+            self.resetComposition()
 
         # Windows 8 systray IME mode icon
         if self.client.isWindows8Above:
@@ -1123,6 +1113,10 @@ class CheCJTextService(TextService):
         self.compositionChar = ''
         self.setCompositionString('')
         self.setShowCandidates(False)
+        self.setCandidateCursor(0)
+        self.setCandidatePage(0)
+        self.wildcardcandidates = []
+        self.wildcardpagecandidates = []
     
     # 設定候選字頁數
     def setCandidatePage(self, page):

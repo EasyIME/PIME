@@ -27,6 +27,7 @@ from .cin import Cin
 from .swkb import swkb
 from .symbols import symbols
 from .fsymbols import fsymbols
+from .flangs import flangs
 
 # from libchewing/include/global.h
 CHINESE_MODE = 1
@@ -191,6 +192,10 @@ class CheCJTextService(TextService):
         fsymbolsPath = cfg.findFile(datadirs, "fsymbols.dat")
         with io.open(fsymbolsPath, encoding='utf-8') as fs:
             self.fsymbols = fsymbols(fs)
+            
+        flangsPath = cfg.findFile(datadirs, "flangs.dat")
+        with io.open(flangsPath, encoding='utf-8') as fs:
+            self.flangs = flangs(fs)
 
         self.applyConfig() # 套用其餘的使用者設定
             
@@ -352,7 +357,7 @@ class CheCJTextService(TextService):
             
             if not keyEvent.isKeyDown(VK_SHIFT) and keyEvent.isKeyDown(VK_OEM_3):
                 self.menutype = 0
-                menu = ["設定酷倉", menu_OutputSimpChinese, "符號輸入", "特殊符號", "打字行為"]
+                menu = ["設定酷倉", menu_OutputSimpChinese, "功能開關", "特殊符號", "注音符號", "外語文字"]
                 self.setCandidateCursor(0)
                 self.setCandidatePage(0)
                 self.setCandidateList(menu)
@@ -376,10 +381,10 @@ class CheCJTextService(TextService):
                 # 使用數字鍵輸出候選字
                 if keyCode >= ord('0') and keyCode <= ord('9') and not keyEvent.isKeyDown(VK_SHIFT):
                     i = keyCode - ord('1')
-                    if self.menutype == 0 and i == 2: # 切至符號輸入頁面
+                    if self.menutype == 0 and i == 2: # 切至功能開關頁面
                         candCursor = 0
                         currentCandPage = 0
-                        self.candidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportSymbolCoding]
+                        self.candidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportSymbolCoding, menu_supportWildcard]
                         pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
                         self.menutype = 1
                     elif self.menutype == 0 and i == 3: # 切至特殊符號頁面
@@ -388,19 +393,28 @@ class CheCJTextService(TextService):
                         self.candidates = self.symbols.getKeyNames()
                         pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
                         self.menutype = 2
-                    elif self.menutype == 0 and i == 4: # 切至打字行為頁面
+                    elif self.menutype == 0 and i == 4: # 切至注音符號頁面
                         candCursor = 0
                         currentCandPage = 0
-                        self.candidates = [menu_supportWildcard]
+                        bopomofolist = []
+                        for i in range(0x3105,0x312A):
+                            bopomofolist.append(chr(i))
+                        self.candidates = bopomofolist
                         pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
                         self.menutype = 4
+                    elif self.menutype == 0 and i == 5: # 切至外語文字頁面
+                        candCursor = 0
+                        currentCandPage = 0
+                        self.candidates = self.flangs.getKeyNames()
+                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menutype = 5
                     elif self.menutype == 0: # 執行主頁面其它項目
                         self.onMenuCommand(i, 0)
                         candCursor = 0
                         currentCandPage = 0
                         self.showmenu = False
                         self.resetComposition()
-                    elif self.menutype == 1: # 執行符號輸入頁面項目
+                    elif self.menutype == 1: # 執行功能開關頁面項目
                         self.onMenuCommand(i, 1)
                         candCursor = 0
                         currentCandPage = 0
@@ -420,12 +434,25 @@ class CheCJTextService(TextService):
                         self.showmenu = False
                         self.setCommitString(self.candidateList[i])
                         self.resetComposition()
-                    elif self.menutype == 4: # 執行打字行為頁面項目
-                        self.onMenuCommand(i, 2)
+                    elif self.menutype == 4: # 執行注音符號頁面項目
+                        self.menutype = 0
                         candCursor = 0
                         currentCandPage = 0
                         self.showmenu = False
+                        self.setCommitString(self.candidateList[i])
+                        self.resetComposition()
+                    elif self.menutype == 5: # 切至外語文字子頁面
+                        candCursor = 0
+                        currentCandPage = 0
+                        self.candidates = self.flangs.getCharDef(self.candidateList[i])
+                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menutype = 6
+                    elif self.menutype == 6: # 執行外語文字子頁面項目
                         self.menutype = 0
+                        candCursor = 0
+                        currentCandPage = 0
+                        self.showmenu = False
+                        self.setCommitString(self.candidateList[i])
                         self.resetComposition()
                 elif keyCode == VK_UP:  # 游標上移
                     if (candCursor - self.candPerRow) < 0:
@@ -464,58 +491,79 @@ class CheCJTextService(TextService):
                         currentCandPage += 1
                         candCursor = 0
                 elif keyCode == VK_RETURN or keyCode == VK_SPACE:  # 按下 Enter 鍵或空白鍵
-                    # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                     i = candCursor
-                    if self.menutype == 0 and i == 2:
+                    if self.menutype == 0 and i == 2: # 切至功能開關頁面
                         candCursor = 0
                         currentCandPage = 0
-                        self.candidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportSymbolCoding]
+                        self.candidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportSymbolCoding, menu_supportWildcard]
                         pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
                         self.menutype = 1
-                    elif self.menutype == 0 and i == 3:
+                    elif self.menutype == 0 and i == 3: # 切至特殊符號頁面
                         candCursor = 0
                         currentCandPage = 0
                         self.candidates = self.symbols.getKeyNames()
                         pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
                         self.menutype = 2
-                    elif self.menutype == 0 and i == 4: # 切至打字行為頁面
+                    elif self.menutype == 0 and i == 4: # 切至注音符號頁面
                         candCursor = 0
                         currentCandPage = 0
-                        self.candidates = [menu_supportWildcard]
+                        bopomofolist = []
+                        for i in range(0x3105,0x312A):
+                            bopomofolist.append(chr(i))
+                        self.candidates = bopomofolist
                         pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
                         self.menutype = 4
-                    elif self.menutype == 0:
+                    elif self.menutype == 0 and i == 5: # 切至外語文字頁面
+                        candCursor = 0
+                        currentCandPage = 0
+                        self.candidates = self.flangs.getKeyNames()
+                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menutype = 5
+                    elif self.menutype == 0: # 執行主頁面其它項目
                         self.onMenuCommand(i, 0)
                         candCursor = 0
                         currentCandPage = 0
                         self.showmenu = False
                         self.resetComposition()
-                    elif self.menutype == 1: # 符號輸入
+                    elif self.menutype == 1: # 執行功能開關頁面項目
                         self.onMenuCommand(i, 1)
                         candCursor = 0
                         currentCandPage = 0
                         self.showmenu = False
                         self.menutype = 0
                         self.resetComposition()
-                    elif self.menutype == 2:
+                    elif self.menutype == 2: # 切至特殊符號子頁面
                         candCursor = 0
                         currentCandPage = 0
                         self.candidates = self.symbols.getCharDef(self.candidateList[i])
                         pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
                         self.menutype = 3
-                    elif self.menutype == 3:
+                    elif self.menutype == 3: # 執行特殊符號子頁面項目
                         self.menutype = 0
                         candCursor = 0
                         currentCandPage = 0
                         self.showmenu = False
                         self.setCommitString(self.candidateList[i])
                         self.resetComposition()
-                    elif self.menutype == 4: # 執行打字行為頁面項目
-                        self.onMenuCommand(i, 2)
+                    elif self.menutype == 4: # 執行注音符號頁面項目
+                        self.menutype = 0
                         candCursor = 0
                         currentCandPage = 0
                         self.showmenu = False
+                        self.setCommitString(self.candidateList[i])
+                        self.resetComposition()
+                    elif self.menutype == 5: # 切至外語文字子頁面
+                        candCursor = 0
+                        currentCandPage = 0
+                        self.candidates = self.flangs.getCharDef(self.candidateList[i])
+                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menutype = 6
+                    elif self.menutype == 6: # 執行外語文字子頁面項目
                         self.menutype = 0
+                        candCursor = 0
+                        currentCandPage = 0
+                        self.showmenu = False
+                        self.setCommitString(self.candidateList[i])
                         self.resetComposition()
                 elif keyCode == VK_ESCAPE:
                     candCursor = 0
@@ -696,11 +744,6 @@ class CheCJTextService(TextService):
             self.showmenu = False
             
             if keyCode == VK_ESCAPE and (self.showCandidates or len(self.compositionChar) > 0):
-                self.setShowCandidates(False)
-                self.setCandidateCursor(0)
-                self.setCandidatePage(0)
-                self.wildcardcandidates = []
-                self.wildcardpagecandidates = []
                 self.resetComposition()
                 
             # 刪掉一個字根
@@ -999,15 +1042,14 @@ class CheCJTextService(TextService):
                 os.startfile(config_tool)
             elif commandId == 1:
                 self.setOutputSimplifiedChinese(not self.outputSimpChinese)
-        elif commandType == 1:
+        elif commandType == 1: # 功能開關
             if commandId == 0:
                 self.fullShapeSymbols = not self.fullShapeSymbols
             elif commandId == 1:
                 self.easySymbolsWithShift = not self.easySymbolsWithShift
             elif commandId == 2:
                 self.supportSymbolCoding = not self.supportSymbolCoding
-        elif commandType == 2:
-            if commandId == 0:
+            elif commandId == 3:
                 self.supportWildcard = not self.supportWildcard
         
     # 依照目前輸入法狀態，更新語言列顯示
@@ -1049,12 +1091,7 @@ class CheCJTextService(TextService):
         if opened: # 鍵盤開啟
             self.resetComposition()
         else: # 鍵盤關閉，輸入法停用
-            # 若選字中，隱藏選字視窗
-            if self.showCandidates:
-                self.setShowCandidates(False)
-            # self.hideMessage() # hide message window, if there's any
-            self.compositionChar = ''
-            self.setCompositionString('')
+            self.resetComposition()
 
         # Windows 8 systray IME mode icon
         if self.client.isWindows8Above:
@@ -1076,6 +1113,10 @@ class CheCJTextService(TextService):
         self.compositionChar = ''
         self.setCompositionString('')
         self.setShowCandidates(False)
+        self.setCandidateCursor(0)
+        self.setCandidatePage(0)
+        self.wildcardcandidates = []
+        self.wildcardpagecandidates = []
     
     # 設定候選字頁數
     def setCandidatePage(self, page):

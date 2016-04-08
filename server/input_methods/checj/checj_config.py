@@ -150,9 +150,17 @@ class ChecjConfig:
                 fsymbolsTime = os.path.getmtime(fsymbolsFile)
             except Exception:
                 pass
+                
+        flangsTime = 0.0
+        flangsFile = self.findFile(datadirs, "flangs.dat")
+        if flangsFile:
+            try:
+                flangsTime = os.path.getmtime(flangsFile)
+            except Exception:
+                pass
 
         lastConfigTime = self._version[0]
-        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime)
+        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime, flangsTime)
 
         # the main config file is changed, reload it
         if lastConfigTime != configTime:

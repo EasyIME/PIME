@@ -96,6 +96,8 @@ var userSwkbFile = configDir + "\\swkb.dat";
 var swkbChanged = false;
 var userFsymbolsFile = configDir + "\\fsymbols.dat";
 var fsymbolsChanged = false;
+var userFlangsFile = configDir + "\\flangs.dat";
+var flangsChanged = false;
 
 function loadConfig() {
     var str = readFile(configFile);
@@ -129,6 +131,12 @@ function loadConfig() {
     if(str == "")
         str = readFile(dataDir + "\\fsymbols.dat");
     $("#fs_symbols").val(str);
+    
+    // load flangs.dat
+    str = readFile(userFlangsFile);
+    if(str == "")
+        str = readFile(dataDir + "\\flangs.dat");
+    $("#flangs").val(str);
 }
 
 function saveConfig() {
@@ -146,6 +154,10 @@ function saveConfig() {
     if(fsymbolsChanged) {
         str = $("#fs_symbols").val();
         writeFile(userFsymbolsFile, str);
+    }
+    if(flangsChanged) {
+        str = $("#flangs").val();
+        writeFile(userFlangsFile, str);
     }
 }
 
@@ -234,6 +246,10 @@ $(function() {
     
     $("#fs_symbols").change(function(){
         fsymbolsChanged = true;
+    });
+    
+    $("#flangs").change(function(){
+        flangsChanged = true;
     });
     
     $("#buttons").buttonset();

@@ -576,11 +576,22 @@ class CheCJTextService(TextService):
                 self.setCandidatePage(currentCandPage)
                 self.setCandidateList(pagecandidates[currentCandPage])
         
-        
         # 某些狀況須要特別處理或忽略
-        # 如果字根空白且選單未開啟過，不處理 Enter 及 Backspace 鍵
+        # 如果輸入編輯區為空且選單未開啟過，不處理 Enter 及 Backspace 鍵
         if not self.isComposing() and self.closemenu:
             if keyCode == VK_RETURN or keyCode == VK_BACK:
+                return False
+
+        # 如果輸入編輯區內有字根
+        if self.isComposing():
+            # 如果按下 Ctrl 鍵，將輸入編輯區清空
+            if keyEvent.isKeyDown(VK_CONTROL):
+                self.resetComposition()
+                return False
+
+            # 如果切換輸入法，將輸入編輯區清空
+            if keyEvent.isKeyDown(VK_SHIFT) and keyEvent.isKeyDown(VK_CONTROL):
+                self.resetComposition()
                 return False
 
         # 若按下 Shift 鍵,且沒有按下其它的按鍵

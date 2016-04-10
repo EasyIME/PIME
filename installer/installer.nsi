@@ -66,6 +66,12 @@ RequestExecutionLevel admin
 ; !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_COMPONENTS
 
+; Custom IE Protected Mode
+; custom page
+Var HWND
+ReserveFile ".\resource\ieprotectedpage.ini"
+Page custom setIEProtectedPage leaveIEProtectedPage
+
 ; installation progress page
 !insertmacro MUI_PAGE_INSTFILES
 
@@ -130,6 +136,9 @@ Function .onInit
 		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 	${EndIf}
 
+	InitPluginsDir
+	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\ieprotectedpage.ini"
+
 	; check if old version is installed and uninstall it first
 	Call uninstallOldVersion
 
@@ -138,8 +147,9 @@ FunctionEnd
 ; called to show an error message when errors happen
 Function .onInstFailed
 	${If} ${RebootFlag}
-		MessageBox MB_YESNO "安裝發生錯誤，無法完成。$\r$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)" IDNO +2
+		MessageBox MB_YESNO "安裝發生錯誤，無法完成。$\r$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)" IDNO +3
 		Reboot
+		Quit
 		Abort
 	${Else}
 		MessageBox MB_ICONSTOP|MB_OK "安裝發生錯誤，無法完成。$\n$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。"
@@ -195,6 +205,35 @@ Function ensureVCRedist
             Abort
         ${EndIf}
 	${EndIf}
+FunctionEnd
+
+; Custom IE Protected Mode
+Function setIEProtectedPage
+	ReadRegDWORD $R0 HKCU "Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" "2500"
+	${If} $R0 == 3
+		WriteINIStr "$PLUGINSDIR\ieprotectedpage.ini" "Field 2" State 1
+	${Endif}
+	InstallOptions::initDialog /NOUNLOAD "$PLUGINSDIR\ieprotectedpage.ini"
+	Pop $HWND
+	!insertmacro MUI_HEADER_TEXT "變更 IE 設定" "PIME 輸入法須要變更 IE 設定，才能在 IE 裡使用。"
+
+	GetDlgItem $0 $HWND 1205
+	EnableWindow $0 0
+	InstallOptions::show
+FunctionEnd
+
+; Custom IE Protected Mode
+Function leaveIEProtectedPage
+	ReadINIStr $0 "$PLUGINSDIR\ieprotectedpage.ini" Settings State
+	${Switch} $0
+		${Default}
+			Abort
+		${Case} 2
+			GetDlgItem $1 $HWND 1205
+			EnableWindow $1 0
+			Abort
+		${Case} 0
+	${EndSwitch}
 FunctionEnd
 
 ;Installer Type
@@ -316,6 +355,14 @@ Section "" Register
 		${EndIf}
 	${EndIf}
 
+	; Custom IE Protected Mode
+	ReadINIStr $0 "$PLUGINSDIR\ieprotectedpage.ini" "Field 2" State
+	${If} $0 == "1"
+		WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" "2500" 0x00000003
+	${Else}
+		WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" "2500" 0x00000000
+	${EndIf}
+
 	; Create shortcuts
 	CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
 	${If} ${SectionIsSelected} ${chewing}
@@ -385,6 +432,7 @@ Section "Uninstall"
 	${If} ${RebootFlag}
 		MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +2
 		Reboot
+		Abort
 	${EndIf}
 SectionEnd
 

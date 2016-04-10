@@ -582,18 +582,6 @@ class CheCJTextService(TextService):
             if keyCode == VK_RETURN or keyCode == VK_BACK:
                 return False
 
-        # 如果輸入編輯區內有字根
-        if self.isComposing():
-            # 如果按下 Ctrl 鍵，將輸入編輯區清空
-            if keyEvent.isKeyDown(VK_CONTROL):
-                self.resetComposition()
-                return False
-
-            # 如果切換輸入法，將輸入編輯區清空
-            if keyEvent.isKeyDown(VK_SHIFT) and keyEvent.isKeyDown(VK_CONTROL):
-                self.resetComposition()
-                return False
-
         # 若按下 Shift 鍵,且沒有按下其它的按鍵
         if keyEvent.isKeyDown(VK_SHIFT) and not keyEvent.isPrintableChar():
             return False
@@ -959,7 +947,8 @@ class CheCJTextService(TextService):
             self.toggleLanguageMode()  # 切換中英文模式
             self.isLangModeChanged = False
             self.showmenu = False
-            self.resetComposition()
+            if self.showCandidates or len(self.compositionChar) > 0:
+                self.resetComposition()
             message = '中文模式' if self.langMode == CHINESE_MODE else '英數模式'
             self.showMessage(message, 3)
             

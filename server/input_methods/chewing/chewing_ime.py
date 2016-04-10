@@ -552,7 +552,7 @@ class ChewingTextService(TextService):
         elif commandId == ID_BUGREPORT: # visit bug tracker page
             os.startfile("https://github.com/EasyIME/PIME/issues")
         elif commandId == ID_DICT_BUGREPORT:
-            os.startfile("https://github.com/chewing/libchewing-data/issues")
+            os.startfile("https://github.com/chewing/libchewing/issues")
         elif commandId == ID_MOEDICT: # a very awesome online Chinese dictionary
             os.startfile("https://www.moedict.tw/")
         elif commandId == ID_DICT: # online Chinese dictonary

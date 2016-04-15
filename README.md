@@ -19,8 +19,7 @@ All parts are licensed under GNU LGPL v2.1 license.
 
         git clone https://github.com/EasyIME/PIME.git
         cd PIME
-        git submodule init
-        git submodule update
+        git submodule update --init
 
 *   Use one of the following CMake commands to generate Visual Studio project
 

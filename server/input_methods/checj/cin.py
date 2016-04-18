@@ -175,7 +175,7 @@ class Cin(object):
     def getCharEncode(self, root):
         nunbers = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩']
         i = 0
-        result = root + ":"
+        result = root + ':'
         for chardef in self.chardefs:
             for char in self.chardefs[chardef]:
                 if char == root:
@@ -184,6 +184,9 @@ class Cin(object):
                         i = i + 1
                     for str in chardef:
                         result += self.getKeyName(str)
+        
+        if result == root + ':':
+            result = '查無字根...'
         return result
         
 

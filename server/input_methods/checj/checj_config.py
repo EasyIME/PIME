@@ -48,16 +48,16 @@ class ChecjConfig:
         self.candPerPage = 9
         self.cursorCandList = True
         self.enableCapsLock = True
-        self.fullShapeSymbols = True
+        self.fullShapeSymbols = False
         # self.phraseMark = True
         self.escCleanAllBuf = True
-        self.easySymbolsWithShift = True
+        self.easySymbolsWithShift = False
         # self.easySymbolsWithCtrl = False
         self.upperCaseWithShift = True
         self.supportSymbolCoding = False
         self.supportWildcard = True
         self.selWildcardType = 0
-        self.candMaxItems = 500
+        self.candMaxItems = 100
         self.curdir = os.path.abspath(os.path.dirname(__file__))
         
         # version: last modified time of (config.json, symbols.dat, swkb.dat)

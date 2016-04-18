@@ -1,19 +1,19 @@
 defaultConfig ={
     "defaultEnglish": false,
     "candPerRow": 3,
-    "easySymbolsWithShift": true,
+    "easySymbolsWithShift": false,
     "candPerPage": 9,
     "defaultFullSpace": false,
     "selCinType": "0",
     "switchLangWithShift": true,
-    "fullShapeSymbols": true,
+    "fullShapeSymbols": false,
     "colorCandWnd": true,
     "fontSize": 16,
     "outputSimpChinese": false,
     "supportSymbolCoding": false,
     "supportWildcard": true,
     "selWildcardType": "0",
-    "candMaxItems": 500
+    "candMaxItems": 100
 };
 
 // unfortunately, here we use Windows-only features - ActiveX
@@ -86,7 +86,7 @@ function getDataDir() {
     return progDir + "\\PIME\\server\\input_methods\\checj\\data";
 }
 
-var chewingConfig = null;
+var checjConfig = null;
 var configDir = getConfigDir();
 var configFile = configDir + "\\config.json";
 var dataDir = getDataDir();
@@ -102,15 +102,15 @@ var flangsChanged = false;
 function loadConfig() {
     var str = readFile(configFile);
     try {
-        chewingConfig = JSON.parse(str);
+        checjConfig = JSON.parse(str);
     }
     catch(err) {
-        chewingConfig = {};
+        checjConfig = {};
     }
     // add missing values
     for(key in defaultConfig) {
-        if(!chewingConfig.hasOwnProperty(key)) {
-            chewingConfig[key] = defaultConfig[key];
+        if(!checjConfig.hasOwnProperty(key)) {
+            checjConfig[key] = defaultConfig[key];
         }
     }
 
@@ -140,7 +140,7 @@ function loadConfig() {
 }
 
 function saveConfig() {
-    str = JSON.stringify(chewingConfig, null, 4);
+    str = JSON.stringify(checjConfig, null, 4);
     writeFile(configFile, str);
 
     if(symbolsChanged) {
@@ -161,7 +161,7 @@ function saveConfig() {
     }
 }
 
-// update chewingConfig object with the value set by the user
+// update checjConfig object with the value set by the user
 function updateConfig() {
     // get values from checkboxes
     $("input").each(function(index, elem) {
@@ -169,28 +169,28 @@ function updateConfig() {
         var id = item.attr("id");
         switch(item.attr("type")) {
         case "checkbox":
-            chewingConfig[id] = item.prop("checked");
+            checjConfig[id] = item.prop("checked");
             break;
         case "text":
             var val = item.val();
-            if(typeof chewingConfig[id] == "number") {
+            if(typeof checjConfig[id] == "number") {
                 var intVal = parseInt(val);
                 if(!isNaN(intVal))
                     val = intVal;
             }
-            chewingConfig[id] = val;
+            checjConfig[id] = val;
             break;
         }
     });
     // selCin
     var selCin = parseInt($("#selCinType").find(":selected").val());
     if(!isNaN(selCin))
-        chewingConfig.selCinType = selCin;
+        checjConfig.selCinType = selCin;
     
     // selWildcard
     var selWildcard = parseInt($("#selWildcardType").find(":selected").val());
     if(!isNaN(selWildcard))
-        chewingConfig.selWildcardType = selWildcard;
+        checjConfig.selWildcardType = selWildcard;
 }
 
 // jQuery ready
@@ -222,7 +222,7 @@ $(function() {
         var item = '<option value="' + i + '">' + selCin + '</option>';
         selCinType.append(item);
     }
-    selCinType.children().eq(chewingConfig.selCinType).prop("selected", true);
+    selCinType.children().eq(checjConfig.selCinType).prop("selected", true);
 
     var selWildcards=[
         "重　",
@@ -234,7 +234,7 @@ $(function() {
         var item = '<option value="' + i + '">' + selWildcard + '</option>';
         selWildcardType.append(item);
     }
-    selWildcardType.children().eq(chewingConfig.selWildcardType).prop("selected", true);
+    selWildcardType.children().eq(checjConfig.selWildcardType).prop("selected", true);
     
     $("#symbols").change(function(){
         symbolsChanged = true;
@@ -268,7 +268,7 @@ $(function() {
     // set all initial values
     $("input").each(function(index, elem) {
         var item = $(this);
-        var value = chewingConfig[item.attr("id")];
+        var value = checjConfig[item.attr("id")];
         switch(item.attr("type")) {
         case "checkbox":
             item.prop("checked", value);

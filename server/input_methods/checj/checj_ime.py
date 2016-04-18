@@ -27,6 +27,7 @@ from .cin import Cin
 from .swkb import swkb
 from .symbols import symbols
 from .fsymbols import fsymbols
+from .msymbols import msymbols
 from .flangs import flangs
 
 # from libchewing/include/global.h
@@ -86,13 +87,16 @@ class CheCJTextService(TextService):
         self.opencc = None
         
         # CheCJ
-        self.candidates = []
+        self.menucandidates = []
         self.wildcardcandidates = []
         self.wildcardpagecandidates = []
         self.wildcardcompositionChar = ""
         self.currentCandPage = 0
         self.showmenu = False
+        self.switchmenu = False
         self.closemenu = True
+        self.multifunctionmode = False
+        self.ctrlsymbolsmode = False
         self.isWildcardChardefs = False
         self.isLangModeChanged = False
         self.isShapeModeChanged = False
@@ -196,6 +200,10 @@ class CheCJTextService(TextService):
         flangsPath = cfg.findFile(datadirs, "flangs.dat")
         with io.open(flangsPath, encoding='utf-8') as fs:
             self.flangs = flangs(fs)
+            
+        msymbolsPath = cfg.findFile(datadirs, "msymbols.dat")
+        with io.open(msymbolsPath, encoding='utf-8') as fs:
+            self.msymbols = msymbols(fs)
 
         self.applyConfig() # 套用其餘的使用者設定
             
@@ -291,19 +299,24 @@ class CheCJTextService(TextService):
 
         # 如果按下 Ctrl 鍵
         if keyEvent.isKeyDown(VK_CONTROL):
-            return False
+            # 若按下的是指定的符號鍵，輸入法需要處理此按鍵
+            if self.isCtrlSymbolsChar(keyEvent.keyCode) and self.langMode == CHINESE_MODE:
+                return True
+            else:
+                return False
 
         # 若按下 Shift 鍵
         if keyEvent.isKeyDown(VK_SHIFT):
-            # 若開啟 Shift 快速輸入符號，輸入法需要處理此按鍵
-            if self.easySymbolsWithShift and keyEvent.isPrintableChar() and self.langMode == CHINESE_MODE:
-                return True
-            # 若開啟 Shift 輸入全形標點，輸入法需要處理此按鍵
-            if self.fullShapeSymbols and keyEvent.isPrintableChar() and self.langMode == CHINESE_MODE:
-                return True
-            # 若萬用字元使用*，輸入法需要處理*按鍵
-            if self.selWildcardChar == '*' and keyEvent.keyCode == 0x38 and self.langMode == CHINESE_MODE:
-                return True
+            if self.langMode == CHINESE_MODE and not keyEvent.isKeyDown(VK_CONTROL):
+                # 若開啟 Shift 快速輸入符號，輸入法需要處理此按鍵
+                if self.easySymbolsWithShift and self.isLetterChar(keyEvent.keyCode):
+                    return True
+                # 若開啟 Shift 輸入全形標點，輸入法需要處理此按鍵
+                if self.fullShapeSymbols and (self.isSymbolsChar(keyEvent.keyCode) or self.isNumberChar(keyEvent.keyCode)):
+                    return True
+                # 若萬用字元使用*，輸入法需要處理*按鍵
+                if self.selWildcardChar == '*' and keyEvent.keyCode == 0x38:
+                    return True
                 
         # 不論中英文模式，NumPad 都允許直接輸入數字，輸入法不處理
         if keyEvent.isKeyToggled(VK_NUMLOCK): # NumLock is on
@@ -347,6 +360,66 @@ class CheCJTextService(TextService):
         self.isWildcardChardefs = False
         self.showMessage("", 0)
         
+        # 多功能前導字元 ---------------------------------------------------------
+        if self.langMode == CHINESE_MODE and not self.showmenu:
+            if len(self.compositionChar) == 0 and charStr == '`':
+                self.compositionChar += charStr
+                self.setCompositionString(self.compositionChar)
+                messagestr = '您已經按下了多功能前導字元鍵，加按 M 鍵可以呼出選單，請參閱使用說明以獲得更多幫助。'
+                self.showMessage(messagestr, 5)
+                self.multifunctionmode = True
+            elif len(self.compositionChar) == 1 and self.multifunctionmode:
+                if charStrLow == 'm':
+                    self.compositionChar = ''
+                    self.setCompositionString('')
+                    self.multifunctionmode = False
+                    self.closemenu = False
+                elif charStrLow == 'u':
+                    self.compositionChar += charStr.upper()
+                    self.setCompositionString(self.compositionChar)
+                elif self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
+                    self.compositionChar += charStr
+            elif len(self.compositionChar) > 1 and self.multifunctionmode:
+                if self.msymbols.isInCharDef(self.compositionChar[1:] + charStr):
+                    self.compositionChar += charStr
+                elif self.compositionChar[:2] == '`U':
+                    if keyCode >= 0x30 and keyCode <= 0x46:
+                        self.compositionChar += charStr.upper()
+                        self.setCompositionString(self.compositionChar)
+                elif self.compositionChar[:2] == '``':
+                    self.compositionChar = ''
+                    self.setCompositionString('')
+                    self.multifunctionmode = False
+                    self.closemenu = False
+
+        if self.multifunctionmode:
+            # 按下 ESC 鍵
+            if keyCode == VK_ESCAPE and (self.showCandidates or len(self.compositionChar) > 0):
+                self.resetComposition()
+                return True
+            
+            # 刪掉一個字根
+            if keyCode == VK_BACK:
+                if self.compositionString != '':
+                    self.setCompositionString(self.compositionString[:-1])
+                    self.compositionChar = self.compositionChar[:-1]
+                    self.setCandidateCursor(0)
+                    self.setCandidatePage(0)
+                    if self.compositionString == '':
+                        self.resetComposition()
+                        return True
+
+            # Unicode 編碼字元超過 8 + 2 個
+            if self.compositionChar[:2] == '`U' and len(self.compositionChar) > 10:
+                self.setCompositionString(self.compositionString[:-1])
+                self.compositionChar = self.compositionChar[:-1]
+
+            # 按下的鍵為 CIN 內有定義的字根
+            if self.msymbols.isInCharDef(self.compositionChar[1:]) and self.closemenu and len(self.compositionChar) >= 2:
+                candidates = self.msymbols.getCharDef(self.compositionChar[1:])
+                self.setCompositionString(candidates[0])
+                    
+        
         # 功能選單 ----------------------------------------------------------------
         if self.langMode == CHINESE_MODE and len(self.compositionChar) == 0:
             menu_OutputSimpChinese = "輸出繁體" if self.outputSimpChinese else "輸出簡體"
@@ -355,19 +428,18 @@ class CheCJTextService(TextService):
             menu_supportSymbolCoding = "停用 Cin 碼表的符號編碼" if self.supportSymbolCoding else "啟用 Cin 碼表的符號編碼"
             menu_supportWildcard = "停用以萬用字元代替組字字根" if self.supportWildcard else "啟用以萬用字元代替組字字根"
             
-            if not keyEvent.isKeyDown(VK_SHIFT) and keyEvent.isKeyDown(VK_OEM_3):
+            if not self.closemenu:
                 self.menutype = 0
                 menu = ["設定酷倉", menu_OutputSimpChinese, "功能開關", "特殊符號", "注音符號", "外語文字"]
                 self.setCandidateCursor(0)
                 self.setCandidatePage(0)
                 self.setCandidateList(menu)
-                self.candidates = self.candidateList
+                self.menucandidates = self.candidateList
                 self.showmenu = True
-                self.closemenu = False
                 
             if self.showmenu:
                 self.closemenu = False
-                candidates = self.candidates
+                candidates = self.menucandidates
                 candCursor = self.candidateCursor  # 目前的游標位置
                 candCount = len(self.candidateList)  # 目前選字清單項目數
                 currentCandPageCount = math.ceil(len(candidates) / self.candPerPage) # 目前的選字清單總頁數
@@ -377,84 +449,10 @@ class CheCJTextService(TextService):
                 pagecandidates = list(self.chunks(candidates, self.candPerPage))
                 self.setCandidateList(pagecandidates[currentCandPage])
                 self.setShowCandidates(True)
+                i = -1
                 
-                # 使用數字鍵輸出候選字
-                if keyCode >= ord('0') and keyCode <= ord('9') and not keyEvent.isKeyDown(VK_SHIFT):
-                    i = keyCode - ord('1')
-                    if self.menutype == 0 and i == 2: # 切至功能開關頁面
-                        candCursor = 0
-                        currentCandPage = 0
-                        self.candidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportSymbolCoding, menu_supportWildcard]
-                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
-                        self.menutype = 1
-                    elif self.menutype == 0 and i == 3: # 切至特殊符號頁面
-                        candCursor = 0
-                        currentCandPage = 0
-                        self.candidates = self.symbols.getKeyNames()
-                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
-                        self.menutype = 2
-                    elif self.menutype == 0 and i == 4: # 切至注音符號頁面
-                        candCursor = 0
-                        currentCandPage = 0
-                        bopomofolist = []
-                        for i in range(0x3105,0x312A):
-                            bopomofolist.append(chr(i))
-                        self.candidates = bopomofolist
-                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
-                        self.menutype = 4
-                    elif self.menutype == 0 and i == 5: # 切至外語文字頁面
-                        candCursor = 0
-                        currentCandPage = 0
-                        self.candidates = self.flangs.getKeyNames()
-                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
-                        self.menutype = 5
-                    elif self.menutype == 0: # 執行主頁面其它項目
-                        self.onMenuCommand(i, 0)
-                        candCursor = 0
-                        currentCandPage = 0
-                        self.showmenu = False
-                        self.resetComposition()
-                    elif self.menutype == 1: # 執行功能開關頁面項目
-                        self.onMenuCommand(i, 1)
-                        candCursor = 0
-                        currentCandPage = 0
-                        self.showmenu = False
-                        self.menutype = 0
-                        self.resetComposition()
-                    elif self.menutype == 2: # 切至特殊符號子頁面
-                        candCursor = 0
-                        currentCandPage = 0
-                        self.candidates = self.symbols.getCharDef(self.candidateList[i])
-                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
-                        self.menutype = 3
-                    elif self.menutype == 3: # 執行特殊符號子頁面項目
-                        self.menutype = 0
-                        candCursor = 0
-                        currentCandPage = 0
-                        self.showmenu = False
-                        self.setCommitString(self.candidateList[i])
-                        self.resetComposition()
-                    elif self.menutype == 4: # 執行注音符號頁面項目
-                        self.menutype = 0
-                        candCursor = 0
-                        currentCandPage = 0
-                        self.showmenu = False
-                        self.setCommitString(self.candidateList[i])
-                        self.resetComposition()
-                    elif self.menutype == 5: # 切至外語文字子頁面
-                        candCursor = 0
-                        currentCandPage = 0
-                        self.candidates = self.flangs.getCharDef(self.candidateList[i])
-                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
-                        self.menutype = 6
-                    elif self.menutype == 6: # 執行外語文字子頁面項目
-                        self.menutype = 0
-                        candCursor = 0
-                        currentCandPage = 0
-                        self.showmenu = False
-                        self.setCommitString(self.candidateList[i])
-                        self.resetComposition()
-                elif keyCode == VK_UP:  # 游標上移
+                # 選單按鍵處理
+                if keyCode == VK_UP:  # 游標上移
                     if (candCursor - self.candPerRow) < 0:
                         if currentCandPage > 0:
                             currentCandPage -= 1
@@ -490,19 +488,33 @@ class CheCJTextService(TextService):
                     if (currentCandPage + 1) < currentCandPageCount:
                         currentCandPage += 1
                         candCursor = 0
+                elif keyCode == VK_ESCAPE: # ESC 鍵
+                    candCursor = 0
+                    currentCandPage = 0
+                    self.showmenu = False
+                    self.menutype = 0
+                    self.resetComposition()
+                elif self.isNumberChar(keyCode) and not keyEvent.isKeyDown(VK_SHIFT): # 使用數字鍵輸出候選字
+                    i = keyCode - ord('1')
+                    self.switchmenu = True
                 elif keyCode == VK_RETURN or keyCode == VK_SPACE:  # 按下 Enter 鍵或空白鍵
                     i = candCursor
+                    self.switchmenu = True
+
+                # 選單切換及執行
+                if self.switchmenu and i >= 0:
+                    self.switchmenu = False
                     if self.menutype == 0 and i == 2: # 切至功能開關頁面
                         candCursor = 0
                         currentCandPage = 0
-                        self.candidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportSymbolCoding, menu_supportWildcard]
-                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportSymbolCoding, menu_supportWildcard]
+                        pagecandidates = list(self.chunks(self.menucandidates, self.candPerPage))
                         self.menutype = 1
                     elif self.menutype == 0 and i == 3: # 切至特殊符號頁面
                         candCursor = 0
                         currentCandPage = 0
-                        self.candidates = self.symbols.getKeyNames()
-                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menucandidates = self.symbols.getKeyNames()
+                        pagecandidates = list(self.chunks(self.menucandidates, self.candPerPage))
                         self.menutype = 2
                     elif self.menutype == 0 and i == 4: # 切至注音符號頁面
                         candCursor = 0
@@ -510,14 +522,14 @@ class CheCJTextService(TextService):
                         bopomofolist = []
                         for i in range(0x3105,0x312A):
                             bopomofolist.append(chr(i))
-                        self.candidates = bopomofolist
-                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menucandidates = bopomofolist
+                        pagecandidates = list(self.chunks(self.menucandidates, self.candPerPage))
                         self.menutype = 4
                     elif self.menutype == 0 and i == 5: # 切至外語文字頁面
                         candCursor = 0
                         currentCandPage = 0
-                        self.candidates = self.flangs.getKeyNames()
-                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menucandidates = self.flangs.getKeyNames()
+                        pagecandidates = list(self.chunks(self.menucandidates, self.candPerPage))
                         self.menutype = 5
                     elif self.menutype == 0: # 執行主頁面其它項目
                         self.onMenuCommand(i, 0)
@@ -535,8 +547,8 @@ class CheCJTextService(TextService):
                     elif self.menutype == 2: # 切至特殊符號子頁面
                         candCursor = 0
                         currentCandPage = 0
-                        self.candidates = self.symbols.getCharDef(self.candidateList[i])
-                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menucandidates = self.symbols.getCharDef(self.candidateList[i])
+                        pagecandidates = list(self.chunks(self.menucandidates, self.candPerPage))
                         self.menutype = 3
                     elif self.menutype == 3: # 執行特殊符號子頁面項目
                         self.menutype = 0
@@ -555,8 +567,8 @@ class CheCJTextService(TextService):
                     elif self.menutype == 5: # 切至外語文字子頁面
                         candCursor = 0
                         currentCandPage = 0
-                        self.candidates = self.flangs.getCharDef(self.candidateList[i])
-                        pagecandidates = list(self.chunks(self.candidates, self.candPerPage))
+                        self.menucandidates = self.flangs.getCharDef(self.candidateList[i])
+                        pagecandidates = list(self.chunks(self.menucandidates, self.candPerPage))
                         self.menutype = 6
                     elif self.menutype == 6: # 執行外語文字子頁面項目
                         self.menutype = 0
@@ -565,20 +577,16 @@ class CheCJTextService(TextService):
                         self.showmenu = False
                         self.setCommitString(self.candidateList[i])
                         self.resetComposition()
-                elif keyCode == VK_ESCAPE:
-                    candCursor = 0
-                    currentCandPage = 0
-                    self.showmenu = False
-                    self.menutype = 0
-                    self.resetComposition()
+
                 # 更新選字視窗游標位置
                 self.setCandidateCursor(candCursor)
                 self.setCandidatePage(currentCandPage)
                 self.setCandidateList(pagecandidates[currentCandPage])
         
+        # 按鍵處理 ----------------------------------------------------------------
         # 某些狀況須要特別處理或忽略
         # 如果輸入編輯區為空且選單未開啟過，不處理 Enter 及 Backspace 鍵
-        if not self.isComposing() and self.closemenu:
+        if not self.isComposing() and self.closemenu and not self.multifunctionmode:
             if keyCode == VK_RETURN or keyCode == VK_BACK:
                 return False
 
@@ -586,8 +594,21 @@ class CheCJTextService(TextService):
         if keyEvent.isKeyDown(VK_SHIFT) and not keyEvent.isPrintableChar():
             return False
             
+        # 若按下 Ctrl 鍵
+        if keyEvent.isKeyDown(VK_CONTROL):
+            # 若按下的是指定的符號鍵，輸入法需要處理此按鍵
+            if self.isCtrlSymbolsChar(keyCode):
+                if self.msymbols.isInCharDef(charStr) and self.closemenu and not self.multifunctionmode:
+                    if not self.ctrlsymbolsmode:
+                        self.ctrlsymbolsmode = True
+                        self.compositionChar = charStr
+                    elif self.msymbols.isInCharDef(self.compositionChar + charStr):
+                        self.compositionChar += charStr
+                    candidates = self.msymbols.getCharDef(self.compositionChar)
+                    self.setCompositionString(candidates[0])
+            
         # 按下的鍵為 CIN 內有定義的字根
-        if self.cin.isInKeyName(charStrLow) and self.closemenu:
+        if self.cin.isInKeyName(charStrLow) and self.closemenu and not self.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not self.ctrlsymbolsmode:
             # 若按下 Shift 鍵
             if keyEvent.isKeyDown(VK_SHIFT) and self.langMode == CHINESE_MODE:
                 CommitStr = charStr
@@ -670,7 +691,7 @@ class CheCJTextService(TextService):
                     self.setCompositionString(self.compositionString + keyname)
                     self.setCompositionCursor(len(self.compositionString))
         # 按下的鍵不存在於 CIN 所定義的字根
-        elif not self.cin.isInKeyName(charStrLow) and self.closemenu:
+        elif not self.cin.isInKeyName(charStrLow) and self.closemenu and not self.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not self.ctrlsymbolsmode:
             # 若按下 Shift 鍵
             if keyEvent.isKeyDown(VK_SHIFT) and self.langMode == CHINESE_MODE:
                 # 如果停用 Shift 輸入全形標點
@@ -739,7 +760,7 @@ class CheCJTextService(TextService):
                     self.setCommitString(CommitStr)
                     self.resetComposition()
 
-        if self.langMode == CHINESE_MODE and len(self.compositionChar) >= 1:
+        if self.langMode == CHINESE_MODE and len(self.compositionChar) >= 1 and not self.multifunctionmode:
             self.showmenu = False
             
             if keyCode == VK_ESCAPE and (self.showCandidates or len(self.compositionChar) > 0):
@@ -754,6 +775,8 @@ class CheCJTextService(TextService):
                     self.setCandidatePage(0)
                     self.wildcardcandidates = []
                     self.wildcardpagecandidates = []
+                    if self.compositionString == '':
+                        self.resetComposition()
 
             # 組字字根超過5個
             if len(self.compositionChar) > MAX_CHAR_LENGTH:
@@ -764,6 +787,8 @@ class CheCJTextService(TextService):
                 candidates = self.cin.getCharDef(self.compositionChar)
             elif self.fullShapeSymbols and self.fsymbols.isInCharDef(self.compositionChar) and self.closemenu:
                 candidates = self.fsymbols.getCharDef(self.compositionChar)
+            elif self.msymbols.isInCharDef(self.compositionChar) and self.closemenu:
+                candidates = self.msymbols.getCharDef(self.compositionChar)
             elif self.supportWildcard and self.selWildcardChar in self.compositionChar and self.closemenu:
                 if self.wildcardcandidates and self.wildcardcompositionChar == self.compositionChar:
                     candidates = self.wildcardcandidates
@@ -775,7 +800,8 @@ class CheCJTextService(TextService):
                     self.wildcardcompositionChar = self.compositionChar
                     candidates = self.wildcardcandidates
                 self.isWildcardChardefs = True
-            
+        
+        if self.langMode == CHINESE_MODE and len(self.compositionChar) >= 1:    
             # 候選清單處理
             if candidates:
                 candCursor = self.candidateCursor  # 目前的游標位置
@@ -802,6 +828,15 @@ class CheCJTextService(TextService):
                         directout = False
                     
                     if len(candidates) == 1 and directout and self.selWildcardChar != self.compositionChar:
+                        cand = candidates[0]
+                        self.setCommitString(cand)
+                        self.resetComposition()
+                        candCursor = 0
+                        currentCandPage = 0
+                
+                # 多功能前導字元
+                if self.multifunctionmode:
+                    if len(candidates) == 1:
                         cand = candidates[0]
                         self.setCommitString(cand)
                         self.resetComposition()
@@ -887,8 +922,9 @@ class CheCJTextService(TextService):
                     candCursor = 0
                     currentCandPage = 0
                 else: # 按下其它鍵，先將候選字游標位址及目前頁數歸零
-                    candCursor = 0
-                    currentCandPage = 0
+                    if not self.ctrlsymbolsmode:
+                        candCursor = 0
+                        currentCandPage = 0
                 # 更新選字視窗游標位置及頁數
                 self.setCandidateCursor(candCursor)
                 self.setCandidatePage(currentCandPage)
@@ -897,7 +933,19 @@ class CheCJTextService(TextService):
                 # 按下空白鍵或 Enter 鍵
                 if keyCode == VK_SPACE or keyCode == VK_RETURN:
                     if len(candidates) == 0:
-                        self.showMessage("查無字根...", 3)
+                        if self.multifunctionmode:
+                            if self.compositionChar == '`':
+                                self.setCommitString(self.compositionChar)
+                                self.resetComposition()
+                            else:
+                                if self.compositionChar[:2] == '`U':
+                                    commitStr = chr(int(self.compositionChar[2:], 16))
+                                    self.setCommitString(commitStr)
+                                    self.resetComposition()
+                                    messagestr = self.cin.getCharEncode(commitStr)
+                                    self.showMessage(messagestr, 5)
+                        else:
+                            self.showMessage("查無字根...", 3)
                 self.setShowCandidates(False)
 
         if not self.closemenu:
@@ -915,7 +963,7 @@ class CheCJTextService(TextService):
         # 如果按下 Ctrl 鍵
         if keyEvent.isKeyDown(VK_CONTROL):
             return False
-    
+
         # 若啟用使用 Shift 鍵切換中英文模式
         if ChecjConfig.switchLangWithShift:
             # 剛才最後一個按下的鍵，和現在放開的鍵，都是 Shift
@@ -947,6 +995,7 @@ class CheCJTextService(TextService):
             self.toggleLanguageMode()  # 切換中英文模式
             self.isLangModeChanged = False
             self.showmenu = False
+            self.multifunctionmode = False
             if self.showCandidates or len(self.compositionChar) > 0:
                 self.resetComposition()
             message = '中文模式' if self.langMode == CHINESE_MODE else '英數模式'
@@ -1117,6 +1166,8 @@ class CheCJTextService(TextService):
         self.setCandidatePage(0)
         self.wildcardcandidates = []
         self.wildcardpagecandidates = []
+        self.multifunctionmode = False
+        self.ctrlsymbolsmode = False
     
     # 設定候選字頁數
     def setCandidatePage(self, page):
@@ -1129,6 +1180,10 @@ class CheCJTextService(TextService):
     # 判斷符號鍵?
     def isSymbolsChar(self, keyCode):
         return keyCode >= 0xBA and keyCode <= 0xDF
+        
+    # 判斷 Ctrl 符號鍵?
+    def isCtrlSymbolsChar(self, keyCode):
+        return keyCode >= 0xBA and keyCode <= 0xDF and keyCode != 0xBB and keyCode != 0xBD and keyCode != 0xC0
         
     # 判斷字母鍵?
     def isLetterChar(self, keyCode):

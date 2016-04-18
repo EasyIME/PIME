@@ -14,7 +14,7 @@
 
         <!-- We use Microsoft HTML application (Windows-only) -->
         <hta:application
-            id="ChewingConfig"
+            id="CheCJConfig"
             border="thick"
             borderstyle="normal"
             contextmenu="no"
@@ -37,7 +37,7 @@
             <li><a href="#ez_symbols_page">簡易符號輸入</a></li>
             <li><a href="#flangs_page">外語文字</a></li>
             <li><a href="#help_page">使用說明</a></li>
-            <li><a href="#about_page">關於新酷音</a></li>
+            <li><a href="#about_page">關於酷倉</a></li>
         </ul>
 
         <div id="typing_page">
@@ -72,7 +72,7 @@
             </select><br>
             
             <br>
-            <label>酷倉: 酷倉專用的混合三代倉頡及五代倉頡的輸入法碼表,原始資料來自泰瑞倉頡。</label><br>
+            <label>酷倉: 酷倉專用的三代倉頡輸入法碼表,原始資料來自 Yahoo! KeyKey。</label><br>
             <label>倉頡: 與微軟倉頡編碼相同的三代倉頡輸入法碼表,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
             <label>雅虎倉頡: 採用三代倉頡的輸入法碼表,由 <a href="https://github.com/yahoo/KeyKey">Yahoo! KeyKey</a> 整理提供。</label><br>
             <label>中標倉頡: 採用CNS全字庫的倉頡輸入法碼表,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
@@ -150,12 +150,10 @@
         </div>
 
         <div id="about_page">
-            <img src="images/logo.png" alt="新酷音輸入法Logo"/><br>
+            PIME 輸入法平台網站：<a href="https://github.com/EasyIME/PIME">PIME 輸入法平台</a><br>
             PIME 輸入法平台版本：<span id="version"></span>
-            <p>最早的「酷音輸入法」是<a href="http://www.csie.ntu.edu.tw/~b6506053/">龔律全</a>與<a href="https://plus.google.com/u/0/106631098488727416298/posts">陳康本</a>兩人的資訊專題 (分別在兩人就讀台大資工系與台大電機系的時期)，由中央研究院資訊研究所的<a href="http://www.iis.sinica.edu.tw/~tshsu">徐讚昇</a>博士提供技術指導與超過兩年的經濟及設備支援，最終的成果選擇以 GPL 授權釋出，可說是 XIM (X Input Method) 中最接近新注音或是自然輸入法的實作，詳情可參閱龔律全所撰寫的<a href="doc/chewing-report.pdf">技術報告</a> (PDF)。</p>
-            <p>但是酷音輸入法的兩位原創者已不再維護，後續的發展由許多熱心的朋友移植到不同的平台上，諸如 TimHsu (crazykid) 與 jserv 維護的 JMCCE 1.4.x 中文終端機內建酷音輸入法、clkao 移植酷音到 MacOS X 與 IIIMF 架構，以及 gugod 接手 clkao 的 ChewingOSX 後，大幅改善實作的 SpaceChewing 計畫等。而新酷音就是扮演整合這些分支的角色，並且更廣泛移植與改良酷音輸入法的適用性，並且於 2004 年 12 月有獨立的專案資源，到目前為止，已有許多熱心的貢獻者加入開發行列，期待更多的朋友參與。</p>
-            <p>關於本計畫概況，可參閱新酷音計畫在 2004 國際開放源碼研討會 (ICOS 2004)上的<a href="doc/chewing-intro.html">簡報</a> (Adobe Flash 格式)。</p>
-            <p>本 Windows 版本是由<a href="https://github.com/PCMan">洪任諭(PCMan)</a>移植到 <a href="https://github.com/EasyIME/PIME">PIME 輸入法平台</a>上 Copyright &copy; 2015 - 2016</p>
+            <p>PIME 是在 Windows上使用 Python 3 開發 TSF 中文輸入法的平台，由作者 <a href="https://github.com/PCMan">洪任諭(PCMan)</a> 所開發，目前支援到 Windows 10，並且能支援 Windows app container (Metro mode)。可以讓開發者在不了解系統細節的情況下，單純使用 Python 就能實作支援 Windows 的輸入法模組。</p>
+            <p>酷倉是在 PIME 輸入法平台下，基於 CIN 碼表所實現的倉頡輸入法模組。本身移植了 PIME 平台下新酷音大部份的功能，並參考了微軟倉頡的一些操作方式，讓使用者轉移過來使用時，能夠馬上就上手，而不須要重新去適應。</p>
         </div>
     </div>
 

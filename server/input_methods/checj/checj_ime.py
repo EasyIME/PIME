@@ -387,6 +387,11 @@ class CheCJTextService(TextService):
                         self.compositionChar += charStr.upper()
                         self.setCompositionString(self.compositionChar)
                 elif self.compositionChar[:2] == '``':
+                    if keyCode == VK_OEM_3:
+                        self.compositionChar += charStr
+                    
+            if len(self.compositionChar) == 3 and self.multifunctionmode:
+                if self.compositionChar == '```':
                     self.compositionChar = ''
                     self.setCompositionString('')
                     self.multifunctionmode = False

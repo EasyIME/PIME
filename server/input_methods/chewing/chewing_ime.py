@@ -530,9 +530,9 @@ class ChewingTextService(TextService):
         print("onCommand", commandId, commandType)
         # FIXME: We should distinguish left and right click using commandType
         
-        if commandId == ID_SWITCH_LANG:  # 切換中英文模式
+        if commandId == ID_SWITCH_LANG and commandType == COMMAND_LEFT_CLICK:  # 切換中英文模式
             self.toggleLanguageMode()
-        elif commandId == ID_SWITCH_SHAPE:  # 切換全形/半形
+        elif commandId == ID_SWITCH_SHAPE and commandType == COMMAND_LEFT_CLICK:  # 切換全形/半形
             self.toggleShapeMode()
         elif commandId == ID_SETTINGS:  # 開啟設定工具
             config_tool = '"{0}"'.format(os.path.join(self.curdir, "config", "configTool.py"))

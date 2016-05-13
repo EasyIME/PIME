@@ -475,14 +475,15 @@ class ChewingTextService(TextService):
             if chewingContext.bopomofo_Check():
                 bopomofoStr = ""
                 bopomofoStr = chewingContext.bopomofo_String(None).decode("UTF-8")
-                # 把輸入到一半，還沒組成字的注音字串，也插入到編輯區內
+                # 把輸入到一半，還沒組成字的注音字串，也插入到編輯區內，並且更新游標位置
                 pos = chewingContext.cursor_Current()
                 compStr = compStr[:pos] + bopomofoStr + compStr[pos:]
+                self.setCompositionCursor(chewingContext.cursor_Current() + len(bopomofoStr))
+            else:
+                self.setCompositionCursor(chewingContext.cursor_Current())
 
             # 更新編輯區內容 (composition string)
             self.setCompositionString(compStr)
-            # 更新輸入游標位置
-            self.setCompositionCursor(chewingContext.cursor_Current())
 
             # 顯示額外提示訊息 (例如：Ctrl+數字加入自訂詞之後，會顯示提示)
             if chewingContext.aux_Check():

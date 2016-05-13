@@ -303,8 +303,7 @@ class ChewingTextService(TextService):
                 return False
 
         # 中文模式下，當中文編輯區是空的，輸入法只需處理注音符號
-        # FIXME: 應該檢查按下的鍵是否為注音，不過大略可用是否為 printable char 代替
-        if keyEvent.isPrintableChar() and keyEvent.keyCode != VK_SPACE:
+        if keyEvent.isBopomofo():
             return True
 
         # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
@@ -460,7 +459,7 @@ class ChewingTextService(TextService):
             # 有輸入完成的中文字串要送出(commit)到應用程式
             if chewingContext.commit_Check():
                 commitStr = chewingContext.commit_String().decode("UTF-8")
-                
+
                 # 如果使用打繁出簡，就轉成簡體中文
                 if self.outputSimpChinese:
                     commitStr = self.opencc.convert(commitStr)
@@ -529,7 +528,7 @@ class ChewingTextService(TextService):
     def onCommand(self, commandId, commandType):
         print("onCommand", commandId, commandType)
         # FIXME: We should distinguish left and right click using commandType
-        
+
         if commandId == ID_SWITCH_LANG:  # 切換中英文模式
             self.toggleLanguageMode()
         elif commandId == ID_SWITCH_SHAPE:  # 切換全形/半形
@@ -610,7 +609,7 @@ class ChewingTextService(TextService):
             self.changeButton("switch-lang", icon=icon_path)
 
             if self.client.isWindows8Above: # windows 8 mode icon
-                # FIXME: we need a better set of icons to meet the 
+                # FIXME: we need a better set of icons to meet the
                 #        WIndows 8 IME guideline and UX guidelines.
                 self.changeButton("windows-mode-icon", icon=icon_path)
 

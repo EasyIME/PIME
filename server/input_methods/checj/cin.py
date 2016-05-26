@@ -132,6 +132,7 @@ class Cin(object):
 
     def getWildcardCharDefs(self, CompositionChar, WildcardChar, candMaxItems):
         wildcardchardefs = []
+        cjkextchardefs = []
         matchchardefs = {}
             
         matchs = re.match('(.+)?[' + WildcardChar +'](.+)?', CompositionChar)
@@ -164,12 +165,23 @@ class Cin(object):
         if matchchardefs:
             for chardef in matchchardefs:
                 for char in chardef:
-                    if not char in wildcardchardefs:
-                        wildcardchardefs.append(char)
-                        
+                    if re.match('[\u4e00-\u9fff]', char):
+                        if not char in wildcardchardefs:
+                            wildcardchardefs.append(char)
+                    else:
+                        if not char in cjkextchardefs:
+                            cjkextchardefs.append(char)
+
                     if len(wildcardchardefs) >= candMaxItems:
                         return wildcardchardefs
-
+            
+            if len(cjkextchardefs) > 0:
+                for cjkextchar in cjkextchardefs:
+                    if not cjkextchar in wildcardchardefs:
+                        wildcardchardefs.append(cjkextchar)
+                    
+                    if len(wildcardchardefs) >= candMaxItems:
+                        return wildcardchardefs
         return wildcardchardefs
 
     def getCharEncode(self, root):

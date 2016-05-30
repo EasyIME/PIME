@@ -140,10 +140,12 @@ class Cin(object):
         matchstring = CompositionChar
         for char in ['\\', '.', '*', '?', '+', '[', '{', '|', '(', ')', '^', '$']:
             if char in matchstring:
-                matchstring = matchstring.replace(char, '\\' + char)
+                if not char == WildcardChar:
+                    matchstring = matchstring.replace(char, '\\' + char)
         
         matchstring = matchstring.replace(WildcardChar, '(.+)?')
-
+        print(matchstring)
+        
         matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('^' + matchstring + '$', key) and len(key) == keyLength]
 
         if matchchardefs:

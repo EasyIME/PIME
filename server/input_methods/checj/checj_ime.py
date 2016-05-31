@@ -631,11 +631,10 @@ class CheCJTextService(TextService):
                     self.resetComposition()
                 # 如果啟用 Shift 輸入全形標點
                 elif self.fullShapeSymbols:
-                    if charStr == '*' and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
-                        if not '*' in self.compositionChar:
-                            self.compositionChar += '*'
-                            keyname = '＊'
-                            self.setCompositionString(self.compositionString + keyname)
+                    if charStr == '*' and self.supportWildcard and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
+                        self.compositionChar += '*'
+                        keyname = '＊'
+                        self.setCompositionString(self.compositionString + keyname)
                     # 如果是符號或數字，將字串轉為全形再輸出
                     elif self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
                         if self.fsymbols.isInCharDef(charStr):
@@ -660,11 +659,10 @@ class CheCJTextService(TextService):
                         self.setCommitString(CommitStr)
                         self.resetComposition()
                 else: # 如果未使用 SHIFT 輸入快速符號或全形標點
-                    if charStr == '*' and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
-                        if not '*' in self.compositionChar:
-                            self.compositionChar += '*'
-                            keyname = '＊'
-                            self.setCompositionString(self.compositionString + keyname)
+                    if charStr == '*' and self.supportWildcard and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
+                        self.compositionChar += '*'
+                        keyname = '＊'
+                        self.setCompositionString(self.compositionString + keyname)
                     else:
                         if self.cin.isInKeyName(charStrLow) and (self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode)): # 如果是 CIN 所定義的字根
                             self.compositionChar = charStrLow
@@ -703,11 +701,10 @@ class CheCJTextService(TextService):
                 if not self.fullShapeSymbols:
                     # 如果是全形模式，將字串轉為全形再輸出
                     if self.shapeMode == FULLSHAPE_MODE:
-                        if charStr == '*' and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
-                            if not '*' in self.compositionChar:
-                                self.compositionChar += '*'
-                                keyname = '＊'
-                                self.setCompositionString(self.compositionString + keyname)
+                        if charStr == '*' and self.supportWildcard and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
+                            self.compositionChar += '*'
+                            keyname = '＊'
+                            self.setCompositionString(self.compositionString + keyname)
                         else:
                             # 如果是符號或數字，將字串轉為全形再輸出
                             if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
@@ -717,11 +714,10 @@ class CheCJTextService(TextService):
                             self.setCommitString(CommitStr)
                             self.resetComposition()
                     else: # 半形模式直接輸出不作處理
-                        if charStr == '*' and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
-                            if not '*' in self.compositionChar:
-                                self.compositionChar += '*'
-                                keyname = '＊'
-                                self.setCompositionString(self.compositionString + keyname)
+                        if charStr == '*' and self.supportWildcard and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
+                            self.compositionChar += '*'
+                            keyname = '＊'
+                            self.setCompositionString(self.compositionString + keyname)
                         else:
                             CommitStr = charStr
                             self.setCommitString(CommitStr)
@@ -731,22 +727,20 @@ class CheCJTextService(TextService):
                     if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
                         # 如果該鍵有定義在 fsymbols
                         if self.fsymbols.isInCharDef(charStr):
-                            if charStr == '*' and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
-                                if not '*' in self.compositionChar:
-                                    self.compositionChar += '*'
-                                    keyname = '＊'
-                                    self.setCompositionString(self.compositionString + keyname)
+                            if charStr == '*' and self.supportWildcard and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
+                                self.compositionChar += '*'
+                                keyname = '＊'
+                                self.setCompositionString(self.compositionString + keyname)
                             else:
                                 self.compositionChar = charStr
                                 fullShapeSymbolsList = self.fsymbols.getCharDef(self.compositionChar)
                                 self.setCompositionString(fullShapeSymbolsList[0])
                                 self.setCompositionCursor(len(self.compositionString))
                         else: # 沒有定義在 fsymbols 裡
-                            if charStr == '*' and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
-                                if not '*' in self.compositionChar:
-                                    self.compositionChar += '*'
-                                    keyname = '＊'
-                                    self.setCompositionString(self.compositionString + keyname)
+                            if charStr == '*' and self.supportWildcard and self.selWildcardChar == charStr: # 如果按鍵及萬用字元為*
+                                self.compositionChar += '*'
+                                keyname = '＊'
+                                self.setCompositionString(self.compositionString + keyname)
                             else:
                                 if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
                                     CommitStr = self.SymbolscharCodeToFullshape(charCode)
@@ -792,7 +786,7 @@ class CheCJTextService(TextService):
                 candidates = self.cin.getCharDef(self.compositionChar)
             elif self.fullShapeSymbols and self.fsymbols.isInCharDef(self.compositionChar) and self.closemenu:
                 candidates = self.fsymbols.getCharDef(self.compositionChar)
-            elif self.msymbols.isInCharDef(self.compositionChar) and self.closemenu:
+            elif self.msymbols.isInCharDef(self.compositionChar) and self.closemenu and self.ctrlsymbolsmode:
                 candidates = self.msymbols.getCharDef(self.compositionChar)
             elif self.supportWildcard and self.selWildcardChar in self.compositionChar and self.closemenu:
                 if self.wildcardcandidates and self.wildcardcompositionChar == self.compositionChar:

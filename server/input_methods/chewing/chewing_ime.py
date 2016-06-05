@@ -202,7 +202,6 @@ class ChewingTextService(TextService):
         )
 
         # 設定
-        # FIXME: popup menu is not yet implemented
         self.addButton("settings",
             icon = os.path.join(self.icon_dir, "config.ico"),
             tooltip = "設定",

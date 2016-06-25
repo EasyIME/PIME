@@ -395,13 +395,13 @@ bool Client::sendOnMenu(std::string button_id, Json::Value& result) {
 
 static bool menuFromJson(ITfMenu* pMenu, const Json::Value& menuInfo) {
 	if (pMenu != nullptr && menuInfo.isArray()) {
-		for (auto it = menuInfo.begin(); it != menuInfo.end(); ++it) {
+		for (Json::Value::const_iterator it = menuInfo.begin(); it != menuInfo.end(); ++it) {
 			const Json::Value& item = *it;
 			UINT id = item.get("id", 0).asUInt();
 			std::wstring text = utf8ToUtf16(item.get("text", "").asCString());
 			
 			DWORD flags = 0;
-			const Json::Value* submenuInfo = nullptr;
+			Json::Value submenuInfo;
 			ITfMenu* submenu = nullptr;
 			if (id == 0 && text.empty())
 				flags = TF_LBMENUF_SEPARATOR;
@@ -411,15 +411,14 @@ static bool menuFromJson(ITfMenu* pMenu, const Json::Value& menuInfo) {
 				if (!item.get("enabled", true).asBool())
 					flags |= TF_LBMENUF_GRAYED;
 
-				const Json::Value& subMenuValue = item.get("submenu", Json::nullValue);
-				if (subMenuValue.isArray()) {
-					submenuInfo = &subMenuValue;
+				submenuInfo = item["submenu"];  // FIXME: this is a deep copy. too bad! :-(
+				if (submenuInfo.isArray()) {
 					flags |= TF_LBMENUF_SUBMENU;
 				}
 			}
-			pMenu->AddMenuItem(id, flags, NULL, NULL, text.c_str(), text.length(), submenuInfo != nullptr ? &submenu : nullptr);
-			if (submenu != nullptr && submenuInfo != nullptr) {
-				menuFromJson(submenu, *submenuInfo);
+			pMenu->AddMenuItem(id, flags, NULL, NULL, text.c_str(), text.length(), flags & TF_LBMENUF_SUBMENU ? &submenu : nullptr);
+			if (submenu != nullptr && submenuInfo.isArray()) {
+				menuFromJson(submenu, submenuInfo);
 			}
 		}
 		return true;

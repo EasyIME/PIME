@@ -42,7 +42,8 @@ TextService::TextService(ImeModule* module):
 	selKeys_(L"1234567890"),
 	candUseCursor_(false),
 	candFontSize_(16),
-	imeModeIcon_(nullptr) {
+	imeModeIcon_(nullptr),
+	currentLangProfile_(IID_NULL) {
 
 	// font for candidate and mesasge windows
 	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
@@ -87,6 +88,15 @@ void TextService::onActivate() {
 // virtual
 void TextService::onDeactivate() {
 	if(client_) {
+
+		// Windows does not deactivate current language profile before
+		// deactivating the whole text service. Let's do it ourselves.
+		if (!::IsEqualIID(currentLangProfile_, IID_NULL)) {
+			// deactive currently active language profile if there is any
+			client_->onLangProfileDeactivated(currentLangProfile_);
+			currentLangProfile_ = IID_NULL;
+		}
+		// deactivate the whole text service
 		client_->onDeactivate();
 		delete client_;
 		client_ = NULL;
@@ -220,13 +230,25 @@ void TextService::onCompositionTerminated(bool forced) {
 }
 
 void TextService::onLangProfileActivated(REFIID lang) {
-	if(client_)
+	if (client_) {
+		// Sometimes, Windows does not deactivate the old language profile before
+		// activating the new one. So here we do it by ourselves.
+		// If a new profile is activated, but there is an old one remaining active,
+		// deactive it first.
+		if (!::IsEqualIID(currentLangProfile_, IID_NULL)) {
+			// deactivate the current profile
+			client_->onLangProfileDeactivated(currentLangProfile_);
+		}
+		// activate the new profile
 		client_->onLangProfileActivated(lang);
+	}
+	currentLangProfile_ = lang;
 }
 
 void TextService::onLangProfileDeactivated(REFIID lang) {
 	if(client_)
 		client_->onLangProfileDeactivated(lang);
+	currentLangProfile_ = IID_NULL;
 }
 
 void TextService::createCandidateWindow(Ime::EditSession* session) {

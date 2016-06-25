@@ -62,11 +62,12 @@ class KeyEvent:
 class TextService:
     def __init__(self, client):
         self.client = client
+        self.isActivated = False
 
         self.keyboardOpen = False
         self.showCandidates = False
 
-        self.reply = {} # reply to the events
+        self.currentReply = {}  # reply to the events
         self.compositionString = ""
         self.commitString = ""
         self.candidateList = []
@@ -76,20 +77,18 @@ class TextService:
     def updateStatus(self, msg):
         pass
 
-    def fetchReply(self):
-        reply = self.reply
-        self.reply = {}
-        return reply
-
     # This should be implemented in the derived class
     def checkConfigChange(self):
         pass
 
-    def handleRequest(self, method, msg): # msg is a json object
-        success = True # if the method is successfully handled
-        ret = None # the return value of the method, if any
+    def handleRequest(self, msg):  # msg is a json object
+        method = msg.get("method", None)
+        seqNum = msg.get("seqNum", 0)
+        success = True  # if the method is successfully handled
+        ret = None  # the return value of the method, if any
 
-        self.checkConfigChange() # check if configurations are changed
+        if self.isActivated:
+            self.checkConfigChange()  # check if configurations are changed
 
         self.updateStatus(msg)
         if method == "filterKeyDown":
@@ -123,10 +122,23 @@ class TextService:
         elif method == "onCompositionTerminated":
             forced = msg["forced"]
             self.onCompositionTerminated(forced)
+        elif method == "onLangProfileActivated":
+            self.isActivated = True
+            self.onActivate()
+        elif method == "onLangProfileDeactivated":
+            self.onDeactivate()
+            self.isActivated = False
         else:
             success = False
 
-        return success, ret
+        # fetch the current reply of the method
+        reply = self.currentReply
+        self.currentReply = {}
+        if ret is not None:
+            reply["return"] = ret
+        reply["success"] = success
+        reply["seqNum"] = seqNum  # reply with sequence number added
+        return reply
 
     # methods that should be implemented by derived classes
     def onActivate(self):
@@ -181,70 +193,70 @@ class TextService:
     @toggled: is the button toggled, only valid if type is "toggle" (optional)
     """
     def addButton(self, button_id, **kwargs):
-        buttons = self.reply.setdefault("addButton", [])
+        buttons = self.currentReply.setdefault("addButton", [])
         info = kwargs
         info["id"] = button_id
         buttons.append(info)
 
     def removeButton(self, button_id):
-        buttons = self.reply.setdefault("removeButton", [])
+        buttons = self.currentReply.setdefault("removeButton", [])
         buttons.append(button_id)
 
     """
     See addButton() for allowed arguments.
     """
     def changeButton(self, button_id, **kwargs):
-        buttons = self.reply.setdefault("changeButton", [])
+        buttons = self.currentReply.setdefault("changeButton", [])
         info = kwargs
         info["id"] = button_id
         buttons.append(info)
 
     # preserved keys
     def addPreservedKey(self, keyCode, modifiers, guid):
-        keys = self.reply.setdefault("addPreservedKey", [])
+        keys = self.currentReply.setdefault("addPreservedKey", [])
         keys.append({
             "keyCode" : keyCode,
             "modifiers": modifiers,
             "guid": guid.lower()})
 
     def removePreservedKey(self, guid):
-        keys = self.reply.setdefault("removePreservedKey", [])
+        keys = self.currentReply.setdefault("removePreservedKey", [])
         keys.append(guid.lower())
 
     # composition string
     def setCompositionString(self, s):
         self.compositionString = s
-        self.reply["compositionString"] = s
+        self.currentReply["compositionString"] = s
 
     def setCompositionCursor(self, pos):
         self.compositionCursor = pos
-        self.reply["compositionCursor"] = pos
+        self.currentReply["compositionCursor"] = pos
 
     def setCommitString(self, s):
         self.commitString = s
-        self.reply["commitString"] = s
+        self.currentReply["commitString"] = s
 
     def setCandidateList(self, cand):
         self.candidateList = cand
-        self.reply["candidateList"] = cand
+        self.currentReply["candidateList"] = cand
 
     def setCandidateCursor(self, pos):
         self.candidateCursor = pos
-        self.reply["candidateCursor"] = pos
+        self.currentReply["candidateCursor"] = pos
 
     def setShowCandidates(self, show):
         self.showCandidates = show
-        self.reply["showCandidates"] = show
+        self.currentReply["showCandidates"] = show
 
     def setSelKeys(self, keys):
-        self.reply["setSelKeys"] = keys
+        self.currentReply["setSelKeys"] = keys
 
     '''
     Valid arguments:
     candFontName, cadFontSize, candPerRow, candUseCursor
     '''
     def customizeUI(self, **kwargs):
-        data = self.reply.setdefault("customizeUI", {})
+        data = self.currentReply.setdefault("customizeUI", {})
         data.update(kwargs)
 
     def isComposing(self):
@@ -257,7 +269,7 @@ class TextService:
     The currently shown message, if there is any, will be replaced by calling this method.
     '''
     def showMessage(self, message, duration=3):
-        self.reply["showMessage"] = {
+        self.currentReply["showMessage"] = {
             "message": message,
             "duration": duration
         }

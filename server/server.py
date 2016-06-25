@@ -36,13 +36,7 @@ class Client:
         self.pipe= pipe
         self.server = server
         self.service = None
-        self.reply = {}
-
-    # fetch current reply to the client request
-    def fetchReply(self):
-        reply = self.reply
-        self.reply = {}
-        return reply
+        self.currentReply = {}
 
     def init(self, msg):
         self.isWindows8Above = msg["isWindows8Above"]
@@ -50,66 +44,52 @@ class Client:
         self.isUiLess = msg["isUiLess"]
         self.isUiLess = msg["isConsole"]
 
-    def onActivate(self):
+    def onActivate(self, msg):
         pass
 
-    def onDeactivate(self):
-        service = self.service
-        if service:
-            service.onDeactivate()
-            self.reply.update(service.fetchReply())
-            self.service = None
+    def onDeactivate(self, msg):
+        pass
 
-    def onLangProfileActivated(self, guid):
-        service = self.service
-        # deactivate the current text service
-        if service:
-            service.onDeactivate()
-            self.reply.update(service.fetchReply())
+    def onLangProfileActivated(self, msg):
+        guid = msg["guid"]
         service = textServiceMgr.createService(self, guid)
         self.service = service
         # activate the new text service
         if service:
-            service.onActivate()
-            self.reply.update(service.fetchReply())
+            self.currentReply = service.handleRequest(msg)
 
-    def onLangProfileDeactivated(self, guid):
-        pass
+    def onLangProfileDeactivated(self, msg):
+        # deactivate the current text service
+        service = self.service
+        if service:
+            self.currentReply = service.handleRequest(msg)
 
     def handleRequest(self, msg): # msg is a json object
-        success = True
-        ret = None
         method = msg.get("method", None)
         seqNum = msg.get("seqNum", 0)
         print("handle message: ", threading.current_thread().name, method, seqNum)
 
         # these are messages handled by Client
-        handled = True
         if method == "init":
             self.init(msg)
         elif method == "onActivate":
-            self.onActivate()
+            self.onActivate(msg)
         elif method == "onDeactivate":
-            self.onDeactivate()
+            self.onDeactivate(msg)
         elif method == "onLangProfileActivated":
-            guid = msg["guid"]
-            self.onLangProfileActivated(guid)
+            self.onLangProfileActivated(msg)
         elif method == "onLangProfileDeactivated":
-            guid = msg["guid"]
-            self.onLangProfileDeactivated(guid)
+            self.onLangProfileDeactivated(msg)
         else:  # these are messages handled by the text service
             service = self.service
-            if service:
-                (success, ret) = service.handleRequest(method, msg)
-                if success:
-                    self.reply.update(service.fetchReply())
+            if service:  # the text service is responsible for replying to the msg
+                self.currentReply = service.handleRequest(msg)
 
-        reply = self.fetchReply()
-        if ret != None:
-            reply["return"] = ret
-        reply["success"] = success
-        reply["seqNum"] = seqNum # reply with sequence number added
-        # print("reply: ", reply)
+        reply = self.currentReply
+        self.currentReply = {}
+        if not reply:  # the text service does not handle the msg, and we handled it.
+            reply["success"] = True
+            reply["seqNum"] = seqNum # reply with sequence number added
         return reply
 
 
@@ -168,11 +148,10 @@ class ClientThread(threading.Thread):
                     server.release_lock() # release the lock
 
                     if running:
-                        reply = json.dumps(reply) # convert object to json
-
-                        data = bytes(reply, "UTF-8") # convert to UTF-8
+                        replyText = json.dumps(reply) # convert object to json
+                        print("reply: ", replyText)
+                        data = bytes(replyText, "UTF-8") # convert to UTF-8
                         data_len = c_ulong(len(data))
-                        # print("write reply:", data_len)
                         libpipe.write_pipe(pipe, data, data_len, None)
             except:
                 import traceback

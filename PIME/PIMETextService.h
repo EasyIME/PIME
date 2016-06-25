@@ -165,6 +165,7 @@ private:
 	HMENU popupMenu_;
 
 	Client* client_; // connection client
+	GUID currentLangProfile_;
 };
 
 }

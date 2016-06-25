@@ -25,13 +25,13 @@ var defaultConfig ={
     "cursorCandList": true
 };
 
-var chewingConfig = null;
+var chewingConfig = {};
 var symbolsChanged = false;
 var swkbChanged = false;
 
 function loadConfig() {
     $.get(apiUrl + "load/config", function(data, status) {
-        chewingConfig = data;
+		chewingConfig = data;
         // add missing values
         for(key in defaultConfig) {
             if(!chewingConfig.hasOwnProperty(key)) {
@@ -42,10 +42,14 @@ function loadConfig() {
     }, "json");
 
     // load symbols.dat
-    $("#symbols").load(apiUrl + "load/symbols");
+	$.get(apiUrl + "load/symbols", function(data, status) {
+		$("#symbols").val(data);
+	});
 
     // load swkb.dat
-    $("#ez_symbols").load(apiUrl + "load/swkb")
+	$.get(apiUrl + "load/swkb", function(data, status) {
+		$("#ez_symbols").val(data);
+	});
 }
 
 function saveConfig(callbackFunc) {

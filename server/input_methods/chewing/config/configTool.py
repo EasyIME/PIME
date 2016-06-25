@@ -49,7 +49,10 @@ class LoadHandler(tornado.web.RequestHandler):
     def load_config(self):
         try:
             with open(os.path.join(configDir, "config.json"), "r", encoding="UTF-8") as f:
-                self.write(f.read())
+                content = f.read()
+                if not content:
+                    content = "{}"
+                self.write(content)
         except Exception:
             self.write("{}")
 

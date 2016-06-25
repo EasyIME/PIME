@@ -73,12 +73,11 @@ public:
 
 private:
 	bool connectPipe();
-	bool sendRequest(const Json::Value& req, int seqNo, Json::Value& result);
+	bool sendRequest(Json::Value& req, Json::Value& result);
 	void closePipe();
 	void init();
 
 	void keyEventToJson(Ime::KeyEvent& keyEvent, Json::Value& jsonValue);
-	int addSeqNum(Json::Value& jsonValue);
 	bool handleReply(Json::Value& msg, Ime::EditSession* session = nullptr);
 	void updateStatus(Json::Value& msg, Ime::EditSession* session = nullptr);
 	void updateUI(const Json::Value& data);
@@ -87,6 +86,7 @@ private:
 	TextService* textService_;
 	HANDLE pipe_;
 	std::unordered_map<std::string, PIME::LangBarButton*> buttons_; // map buttons to string IDs
+	unsigned int newSeqNum_;
 };
 
 }

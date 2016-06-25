@@ -133,7 +133,7 @@ class ClientThread(threading.Thread):
                          msg += data
                     elif error == ERROR_IO_PENDING:
                          pass
-                    else: # the pipe is broken
+                    else:  # the pipe is broken
                         print("broken pipe")
                         running = False
                         read_more = False
@@ -142,7 +142,6 @@ class ClientThread(threading.Thread):
                     # Process the incoming message.
                     msg = json.loads(msg) # parse the json input
                     # print("received msg", success, msg)
-
                     server.acquire_lock() # acquire a lock
                     reply = client.handleRequest(msg)
                     server.release_lock() # release the lock
@@ -180,7 +179,6 @@ class Server():
     def run(self):
         while True:
             pipe = libpipe.connect_pipe(bytes("PIME", "UTF-8"))
-
             # client connected
             if pipe != -1:
                 print("client connected")
@@ -192,9 +190,7 @@ class Server():
                 # run a separate thread for this client
                 thread = ClientThread(client)
                 thread.start()
-
         return True
-
 
     def remove_client(self, client):
         self.lock.acquire()
@@ -203,7 +199,11 @@ class Server():
         self.lock.release()
 
 
-if __name__ == "__main__":
+def main():
     # listen to incoming pipe connections
     server = Server()
     server.run()
+
+
+if __name__ == "__main__":
+    main()

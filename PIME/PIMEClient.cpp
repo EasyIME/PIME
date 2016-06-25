@@ -33,12 +33,8 @@ namespace PIME {
 
 Client::Client(TextService* service):
 	textService_(service),
-	pipe_(INVALID_HANDLE_VALUE) {
-
-	static bool init_srand = false;
-	if (!init_srand) {
-		srand(time(NULL));
-	}
+	pipe_(INVALID_HANDLE_VALUE),
+	newSeqNum_(0) {
 }
 
 Client::~Client(void) {
@@ -67,12 +63,6 @@ void Client::keyEventToJson(Ime::KeyEvent& keyEvent, Json::Value& jsonValue) {
 		keyStates.append(states[i]);
 	}
 	jsonValue["keyStates"] = keyStates;
-}
-
-int Client::addSeqNum(Json::Value& jsonValue) {
-	int seqNum = rand();
-	jsonValue["seqNum"] = seqNum;
-	return seqNum;
 }
 
 bool Client::handleReply(Json::Value& msg, Ime::EditSession* session) {
@@ -288,23 +278,21 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 // handlers for the text service
 void Client::onActivate() {
 	Json::Value req;
-	int sn = addSeqNum(req);
 	req["method"] = "onActivate";
 	req["isKeyboardOpen"] = textService_->isKeyboardOpened();
 
 	Json::Value ret;
-	sendRequest(req, sn, ret);
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
 	}
 }
 
 void Client::onDeactivate() {
 	Json::Value req;
-	int sn = addSeqNum(req);
 	req["method"] = "onDeactivate";
 
 	Json::Value ret;
-	sendRequest(req, sn, ret);
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
 	}
 	LangBarButton::clearIconCache();
@@ -312,12 +300,11 @@ void Client::onDeactivate() {
 
 bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
 	Json::Value req;
-	int sn = addSeqNum(req);
 	req["method"] = "filterKeyDown";
 	keyEventToJson(keyEvent, req);
 
 	Json::Value ret;
-	sendRequest(req, sn, ret);
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
 		return ret["return"].asBool();
 	}
@@ -326,12 +313,11 @@ bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
 
 bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	Json::Value req;
-	int sn = addSeqNum(req);
 	req["method"] = "onKeyDown";
 	keyEventToJson(keyEvent, req);
 
 	Json::Value ret;
-	sendRequest(req, sn, ret);
+	sendRequest(req, ret);
 	if (handleReply(ret, session)) {
 		return ret["return"].asBool();
 	}
@@ -340,12 +326,11 @@ bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 
 bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
 	Json::Value req;
-	int sn = addSeqNum(req);
 	req["method"] = "filterKeyUp";
 	keyEventToJson(keyEvent, req);
 
 	Json::Value ret;
-	sendRequest(req, sn, ret);
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
 		return ret["return"].asBool();
 	}
@@ -354,12 +339,11 @@ bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
 
 bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	Json::Value req;
-	int sn = addSeqNum(req);
 	req["method"] = "onKeyUp";
 	keyEventToJson(keyEvent, req);
 
 	Json::Value ret;
-	sendRequest(req, sn, ret);
+	sendRequest(req, ret);
 	if (handleReply(ret, session)) {
 		return ret["return"].asBool();
 	}
@@ -370,13 +354,12 @@ bool Client::onPreservedKey(const GUID& guid) {
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(guid, &str))) {
 		Json::Value req;
-		int sn = addSeqNum(req);
 		req["method"] = "onPreservedKey";
 		req["guid"] = utf16ToUtf8(str);
 		::CoTaskMemFree(str);
 
 		Json::Value ret;
-		sendRequest(req, sn, ret);
+		sendRequest(req, ret);
 		if (handleReply(ret)) {
 			return ret["return"].asBool();
 		}
@@ -386,13 +369,12 @@ bool Client::onPreservedKey(const GUID& guid) {
 
 bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
 	Json::Value req;
-	int sn = addSeqNum(req);
 	req["method"] = "onCommand";
 	req["id"] = id;
 	req["type"] = type;
 
 	Json::Value ret;
-	sendRequest(req, sn, ret);
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
 		return ret["return"].asBool();
 	}
@@ -401,11 +383,10 @@ bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
 
 bool Client::sendOnMenu(std::string button_id, Json::Value& result) {
 	Json::Value req;
-	int sn = addSeqNum(req);
 	req["method"] = "onMenu";
 	req["id"] = button_id;
 
-	sendRequest(req, sn, result);
+	sendRequest(req, result);
 	if (handleReply(result)) {
 		return true;
 	}
@@ -504,13 +485,12 @@ void Client::onCompartmentChanged(const GUID& key) {
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(key, &str))) {
 		Json::Value req;
-		int sn = addSeqNum(req);
 		req["method"] = "onCompartmentChanged";
 		req["guid"] = utf16ToUtf8(str);
 		::CoTaskMemFree(str);
 
 		Json::Value ret;
-		sendRequest(req, sn, ret);
+		sendRequest(req, ret);
 		if (handleReply(ret)) {
 		}
 	}
@@ -519,12 +499,11 @@ void Client::onCompartmentChanged(const GUID& key) {
 // called when the keyboard is opened or closed
 void Client::onKeyboardStatusChanged(bool opened) {
 	Json::Value req;
-	int sn = addSeqNum(req);
 	req["method"] = "onKeyboardStatusChanged";
 	req["opened"] = opened;
 
 	Json::Value ret;
-	sendRequest(req, sn, ret);
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
 	}
 }
@@ -532,13 +511,11 @@ void Client::onKeyboardStatusChanged(bool opened) {
 // called just before current composition is terminated for doing cleanup.
 void Client::onCompositionTerminated(bool forced) {
 	Json::Value req;
-	int sn = addSeqNum(req);
-
 	req["method"] = "onCompositionTerminated";
 	req["forced"] = forced;
 
 	Json::Value ret;
-	sendRequest(req, sn, ret);
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
 	}
 }
@@ -547,13 +524,12 @@ void Client::onLangProfileActivated(REFIID lang) {
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
 		Json::Value req;
-		int sn = addSeqNum(req);
 		req["method"] = "onLangProfileActivated";
 		req["guid"] = utf16ToUtf8(str);
 		::CoTaskMemFree(str);
 
 		Json::Value ret;
-		sendRequest(req, sn, ret);
+		sendRequest(req, ret);
 		if (handleReply(ret)) {
 		}
 	}
@@ -563,13 +539,12 @@ void Client::onLangProfileDeactivated(REFIID lang) {
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
 		Json::Value req;
-		int sn = addSeqNum(req);
 		req["method"] = "onLangProfileDeactivated";
 		req["guid"] = utf16ToUtf8(str);
 		::CoTaskMemFree(str);
 
 		Json::Value ret;
-		sendRequest(req, sn, ret);
+		sendRequest(req, ret);
 		if (handleReply(ret)) {
 		}
 	}
@@ -578,8 +553,6 @@ void Client::onLangProfileDeactivated(REFIID lang) {
 
 void Client::init() {
 	Json::Value req;
-	int sn = addSeqNum(req);
-
 	req["method"] = "init";
 	req["id"] = "";
 	req["isWindows8Above"] = textService_->imeModule()->isWindows8Above();
@@ -588,12 +561,17 @@ void Client::init() {
 	req["isConsole"] = textService_->isConsole();
 
 	Json::Value ret;
-	sendRequest(req, sn, ret);
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
 	}
 }
 
-bool PIME::Client::sendRequest(const Json::Value& req, int seqNo, Json::Value & result) {
+// send the request to the server
+// a sequence number will be added to the req object automatically.
+bool PIME::Client::sendRequest(Json::Value& req, Json::Value & result) {
+	unsigned int seqNum = newSeqNum_++;
+	req["seqNum"] = seqNum; // add a sequence number for the request
+
 	std::string ret;
 	if (connectPipe()) { // ensure that we're connected
 		char buf[1024];
@@ -624,7 +602,12 @@ bool PIME::Client::sendRequest(const Json::Value& req, int seqNo, Json::Value & 
 		}
 	}
 	Json::Reader reader;
-	return reader.parse(ret, result);
+	bool success = reader.parse(ret, result);
+	if (success) {
+		if (result["seqNum"].asUInt() != seqNum) // sequence number mismatch
+			success = false;
+	}
+	return success;
 }
 
 bool Client::connectPipe() {

@@ -156,9 +156,31 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hprev, LPSTR cmd, int show) {
 
 	// monitor the server process and launch it again on crashes
 	for (;;) {
-		int n_handles = (server_process != INVALID_HANDLE_VALUE ? 1 : 0);
-		DWORD event = MsgWaitForMultipleObjects(n_handles, &server_process, FALSE, INFINITE, QS_ALLEVENTS);
-		if (event == (WAIT_OBJECT_0 + n_handles - 1)) { // the process is terminated
+		int n_handles = 0;
+		DWORD event = WAIT_OBJECT_0;
+		if (server_process != INVALID_HANDLE_VALUE) {
+			// NOTE:
+			// https://github.com/EasyIME/PIME/issues/67
+			// The use of MsgWaitForMultipleObjects() here makes Excel startup very slow for unknown reasons.
+			// This happens when QS_ALLEVENTS is passed to the wait function, or when NULL is passed to
+			// GetMessage() to retrieve all messages from all windows (from this thread).
+			// Clearly Excel is waiting for some event handled by our process, which should not happen if Windows
+			// kernel is designed correctly. So, I think it's a bug of either MsgWaitForMultipleObjects() or in Excel.
+			// Either limiting the types of messages to wait for or only GetMessage() on our server window can solve this.
+			n_handles = 1;
+			event = MsgWaitForMultipleObjects(n_handles, &server_process, FALSE, INFINITE, QS_TIMER|QS_SENDMESSAGE|QS_POSTMESSAGE);
+		}
+		if (event == (WAIT_OBJECT_0 + n_handles)) { // got window messages
+			MSG msg;
+			if (GetMessage(&msg, server_hwnd, 0, 0)) {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+			else { // no more messages
+				break;
+			}
+		}
+		else if (event == (WAIT_OBJECT_0 + n_handles - 1)) { // the process is terminated
 			// check the exit status of the server
 			DWORD exit_code;
 			GetExitCodeProcess(server_process, &exit_code);
@@ -169,16 +191,6 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hprev, LPSTR cmd, int show) {
 				if (n_crashes > MAX_CRASHES) // crash too many times, stop watching and quit
 					return 1;
 				scheduleRestartServer(); // schedule a timer to launch it again
-			}
-		}
-		else if (event == (WAIT_OBJECT_0 + n_handles)) { // got window messages
-			MSG msg;
-			if (GetMessage(&msg, NULL, 0, 0)) {
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-			else { // no more messages
-				break;
 			}
 		}
 	}

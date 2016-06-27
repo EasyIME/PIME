@@ -249,11 +249,10 @@ class ChewingTextService(TextService):
             self.lastKeyDownTime = time.time()
 
         # 使用者開始輸入，還沒送出前的編輯區內容稱 composition string
-        # isComposing() 是 False，表示目前編輯區是空的
-        # 若正在編輯中文，則任何按鍵我們都需要送給輸入法處理，直接 return True
-        # 另外，若使用 "`" key 輸入特殊符號，可能會有編輯區是空的
-        # 但選字清單開啟，輸入法需要處理的情況
-        if self.isComposing() or self.showCandidates:
+        # isComposing() 是 False，表示目前沒有正在編輯中文
+        # 另外，若使用 "`" key 輸入特殊符號，可能會有編輯區是空的，但選字清單開啟，輸入法需要處理的情況
+		# 此時 isComposing() 也會是 True
+        if self.isComposing():
             return True
         # --------------   以下都是「沒有」正在輸入中文的狀況   --------------
 
@@ -301,8 +300,8 @@ class ChewingTextService(TextService):
             else:
                 return False
 
-        # 中文模式下，當中文編輯區是空的，輸入法只需處理注音符號
-        if keyEvent.isBopomofo():
+        # 中文模式下，當中文編輯區是空的，輸入法只需處理注音符號以及 ` 按鍵，用來輸入符號
+        if keyEvent.isBopomofo() or chr(keyEvent.charCode) == '`':
             return True
 
         # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式

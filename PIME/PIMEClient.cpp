@@ -96,147 +96,48 @@ void Client::updateUI(const Json::Value& data) {
 void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 	// We need to handle ordering of some types of the requests.
 	// For example, setCompositionCursor() should happen after setCompositionCursor().
-	const Json::Value* commitStringVal = nullptr;
-	const Json::Value* compositionStringVal = nullptr;
-	const Json::Value* compositionCursorVal = nullptr;
-	const Json::Value* candCursorVal = nullptr;
-
-	for (auto it = msg.begin(); it != msg.end(); ++it) {
-		const char* name = it.memberName();
-		const Json::Value& value = *it;
-		if (session != nullptr) { // if an edit session is available
-			// commit string
-			if (value.isString() && strcmp(name, "commitString") == 0) {
-				commitStringVal = &value;
-				continue;
-			}
-			else if (value.isString() && strcmp(name, "compositionString") == 0) {
-				compositionStringVal = &value;
-				continue;
-			}
-			else if (value.isInt() && strcmp(name, "compositionCursor") == 0) {
-				compositionCursorVal = &value;
-				continue;
-			}
-			else if (value.isArray() && strcmp(name, "candidateList") == 0) {
-				// handle candidates
-				// FIXME: directly access private member is dirty!!!
-				vector<wstring>& candidates = textService_->candidates_;
-				candidates.clear();
-				for (auto cand_it = value.begin(); cand_it != value.end(); ++cand_it) {
-					wstring cand = utf8ToUtf16(cand_it->asCString());
-					candidates.push_back(cand);
-				}
-				textService_->updateCandidates(session);
-				continue;
-			}
-			else if (value.isBool() && strcmp(name, "showCandidates") == 0) {
-				bool showCandidates = value.asBool();
-				if (showCandidates) {
-					textService_->showCandidates(session);
-				}
-				else {
-					textService_->hideCandidates();
-				}
-				continue;
-			}
-			else if (value.isInt() && strcmp(name, "candidateCursor") == 0) {
-				candCursorVal = &value;
-				continue;
-			}
-		}
-
-		// language buttons
-		if (value.isArray() && strcmp(name, "addButton") == 0) {
-			for (auto btn_it = value.begin(); btn_it != value.end(); ++btn_it) {
-				const Json::Value& btn = *btn_it;
-				// FIXME: when to clear the id <=> button map??
-				PIME::LangBarButton* langBtn = PIME::LangBarButton::fromJson(textService_, btn);
-				if (langBtn != nullptr) {
-					buttons_[langBtn->id()] = langBtn; // insert into the map
-					textService_->addButton(langBtn);
-					langBtn->Release();
-				}
-			}
-		}
-		else if (value.isArray() && strcmp(name, "removeButton") == 0) {
-			// FIXME: handle windows-mode-icon
-			for (auto btn_it = value.begin(); btn_it != value.end(); ++btn_it) {
-				if (btn_it->isString()) {
-					string id = btn_it->asString();
-					auto map_it = buttons_.find(id);
-					if (map_it != buttons_.end()) {
-						textService_->removeButton(map_it->second);
-						buttons_.erase(map_it); // remove from the map
-					}
-				}
-			}
-		}
-		else if (value.isArray() && strcmp(name, "changeButton") == 0) {
-			// FIXME: handle windows-mode-icon
-			for (auto btn_it = value.begin(); btn_it != value.end(); ++btn_it) {
-				const Json::Value& btn = *btn_it;
-				if (btn.isObject()) {
-					string id = btn["id"].asString();
-					auto map_it = buttons_.find(id);
-					if (map_it != buttons_.end()) {
-						map_it->second->update(btn);
-					}
-				}
-			}
-		}
-		else if (value.isArray() && strcmp(name, "addPreservedKey") == 0) {
-			// preserved keys
-			for (auto key_it = value.begin(); key_it != value.end(); ++key_it) {
-				const Json::Value& key = *key_it;
-				if (key.isObject()) {
-					std::wstring guidStr = utf8ToUtf16(key["guid"].asCString());
-					CLSID guid = { 0 };
-					CLSIDFromString(guidStr.c_str(), &guid);
-					UINT keyCode = key["keyCode"].asUInt();
-					UINT modifiers = key["modifiers"].asUInt();
-					textService_->addPreservedKey(keyCode, modifiers, guid);
-				}
-			}
-		}
-		else if (value.isArray() && strcmp(name, "removePreservedKey") == 0) {
-			for (auto key_it = value.begin(); key_it != value.end(); ++key_it) {
-				if (key_it->isString()) {
-					std::wstring guidStr = utf8ToUtf16(key_it->asCString());
-					CLSID guid = { 0 };
-					CLSIDFromString(guidStr.c_str(), &guid);
-					textService_->removePreservedKey(guid);
-				}
-			}
-		}
-		else if (value.isBool() && strcmp(name, "openKeyboard") == 0) {
-			textService_->setKeyboardOpen(value.asBool());
-		}
-		// other configurations
-		else if (value.isString() && strcmp(name, "setSelKeys") == 0) {
-			// keys used to select candidates
-			std::wstring selKeys = utf8ToUtf16(value.asCString());
-			textService_->setSelKeys(selKeys);
-		}
-		else if (value.isObject() && strcmp(name, "customizeUI") == 0) {
-			// customize the UI
-			updateUI(value);
-		}
-		// show message
-		else if (value.isObject() && strcmp(name, "showMessage") == 0) {
-			const Json::Value& message = value["message"];
-			const Json::Value& duration = value["duration"];
-			if (message.isString() && duration.isInt()) {
-				textService_->showMessage(session, utf8ToUtf16(message.asCString()), duration.asInt());
-			}
-		}
-	}
-
-	// handle comosition and commit strings
 	if (session != nullptr) { // if an edit session is available
+		// handle candidate list
+		const auto& showCandidatesVal = msg["showCandidates"];
+		if (showCandidatesVal.isBool()) {
+			if (showCandidatesVal.asBool()) {
+				// start composition if we are not composing.
+				// this is required to get correctly position the candidate window
+				if (!textService_->isComposing()) {
+					textService_->startComposition(session->context());
+				}
+				textService_->showCandidates(session);
+			}
+			else {
+				textService_->hideCandidates();
+			}
+		}
+
+		const auto& candidateListVal = msg["candidateList"];
+		if (candidateListVal.isArray()) {
+			// handle candidates
+			// FIXME: directly access private member is dirty!!!
+			vector<wstring>& candidates = textService_->candidates_;
+			candidates.clear();
+			for (auto cand_it = candidateListVal.begin(); cand_it != candidateListVal.end(); ++cand_it) {
+				wstring cand = utf8ToUtf16(cand_it->asCString());
+				candidates.push_back(cand);
+			}
+			textService_->updateCandidates(session);
+		}
+
+		const auto& candidateCursorVal = msg["candidateCursor"];
+		if (candidateCursorVal.isInt()) {
+			if (textService_->candidateWindow_ != nullptr) {
+				textService_->candidateWindow_->setCurrentSel(candidateCursorVal.asInt());
+			}
+		}
+
+		// handle comosition and commit strings
 		bool endComposition = false;
-		if (commitStringVal != nullptr) {
-			std::wstring commitString = utf8ToUtf16(commitStringVal->asCString());
+		const auto& commitStringVal = msg["commitString"];
+		if (commitStringVal.isString()) {
+			std::wstring commitString = utf8ToUtf16(commitStringVal.asCString());
 			if (!commitString.empty()) {
 				if (!textService_->isComposing()) {
 					textService_->startComposition(session->context());
@@ -245,32 +146,137 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 				textService_->endComposition(session->context());
 			}
 		}
-		if (compositionStringVal != nullptr) {
+
+		const auto& compositionStringVal = msg["compositionString"];
+		if (compositionStringVal.isString()) {
 			// composition buffer
-			std::wstring compositionString = utf8ToUtf16(compositionStringVal->asCString());
+			std::wstring compositionString = utf8ToUtf16(compositionStringVal.asCString());
 			if (!textService_->isComposing()) {
 				textService_->startComposition(session->context());
 			}
 			textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
-			if (compositionString.empty()) {
+			if (compositionString.empty() && !textService_->showingCandidates()) {
+				// when the composition buffer is empty and we are not showing the candidate list, end composition.
 				endComposition = true;
 			}
 		}
-		if (compositionCursorVal != nullptr) {
+
+		const auto& compositionCursorVal = msg["compositionCursor"];
+		if (compositionStringVal.isInt()) {
 			// composition cursor
-			int compositionCursor = compositionCursorVal->asInt();
+			int compositionCursor = compositionCursorVal.asInt();
 			if (!textService_->isComposing()) {
 				textService_->startComposition(session->context());
 			}
 			textService_->setCompositionCursor(session, compositionCursor);
 		}
-		if (candCursorVal != nullptr) {
-			if (textService_->candidateWindow_ != nullptr) {
-				textService_->candidateWindow_->setCurrentSel(candCursorVal->asInt());
-			}
-		}
+
 		if (endComposition && session != nullptr) {
 			textService_->endComposition(session->context());
+		}
+	}
+
+	// language buttons
+	const auto& addButtonVal = msg["addButton"];
+	if (addButtonVal.isArray()) {
+		for (auto btn_it = addButtonVal.begin(); btn_it != addButtonVal.end(); ++btn_it) {
+			const Json::Value& btn = *btn_it;
+			// FIXME: when to clear the id <=> button map??
+			PIME::LangBarButton* langBtn = PIME::LangBarButton::fromJson(textService_, btn);
+			if (langBtn != nullptr) {
+				buttons_[langBtn->id()] = langBtn; // insert into the map
+				textService_->addButton(langBtn);
+				langBtn->Release();
+			}
+		}
+	}
+	
+	const auto& removeButtonVal = msg["removeButton"];
+	if (removeButtonVal.isArray()) {
+		// FIXME: handle windows-mode-icon
+		for (auto btn_it = removeButtonVal.begin(); btn_it != removeButtonVal.end(); ++btn_it) {
+			if (btn_it->isString()) {
+				string id = btn_it->asString();
+				auto map_it = buttons_.find(id);
+				if (map_it != buttons_.end()) {
+					textService_->removeButton(map_it->second);
+					buttons_.erase(map_it); // remove from the map
+				}
+			}
+		}
+	}
+
+	const auto& changeButtonVal = msg["changeButton"];
+	if (changeButtonVal.isArray()) {
+		// FIXME: handle windows-mode-icon
+		for (auto btn_it = changeButtonVal.begin(); btn_it != changeButtonVal.end(); ++btn_it) {
+			const Json::Value& btn = *btn_it;
+			if (btn.isObject()) {
+				string id = btn["id"].asString();
+				auto map_it = buttons_.find(id);
+				if (map_it != buttons_.end()) {
+					map_it->second->update(btn);
+				}
+			}
+		}
+	}
+
+	// preserved keys
+	const auto& addPreservedKeyVal = msg["addPreservedKey"];
+	if (addPreservedKeyVal.isArray()) {
+		// preserved keys
+		for (auto key_it = addPreservedKeyVal.begin(); key_it != addPreservedKeyVal.end(); ++key_it) {
+			const Json::Value& key = *key_it;
+			if (key.isObject()) {
+				std::wstring guidStr = utf8ToUtf16(key["guid"].asCString());
+				CLSID guid = { 0 };
+				CLSIDFromString(guidStr.c_str(), &guid);
+				UINT keyCode = key["keyCode"].asUInt();
+				UINT modifiers = key["modifiers"].asUInt();
+				textService_->addPreservedKey(keyCode, modifiers, guid);
+			}
+		}
+	}
+	
+	const auto& removePreservedKeyVal = msg["removePreservedKey"];
+	if (removePreservedKeyVal.isArray()) {
+		for (auto key_it = removePreservedKeyVal.begin(); key_it != removePreservedKeyVal.end(); ++key_it) {
+			if (key_it->isString()) {
+				std::wstring guidStr = utf8ToUtf16(key_it->asCString());
+				CLSID guid = { 0 };
+				CLSIDFromString(guidStr.c_str(), &guid);
+				textService_->removePreservedKey(guid);
+			}
+		}
+	}
+
+	// keyboard status
+	const auto& openKeyboardVal = msg["openKeyboard"];
+	if (openKeyboardVal.isBool()) {
+		textService_->setKeyboardOpen(openKeyboardVal.asBool());
+	}
+
+	// other configurations
+	const auto& setSelKeysVal = msg["setSelKeys"];
+	if (setSelKeysVal.isString()) {
+		// keys used to select candidates
+		std::wstring selKeys = utf8ToUtf16(setSelKeysVal.asCString());
+		textService_->setSelKeys(selKeys);
+	}
+	
+	const auto& customizeUIVal = msg["customizeUI"];
+	if (customizeUIVal.isObject()) {
+		// customize the UI
+		updateUI(customizeUIVal);
+	}
+
+	// show message
+	const auto& showMessageVal = msg["showMessage"];
+	if (showMessageVal.isObject()) {
+		const Json::Value& message = showMessageVal["message"];
+		const Json::Value& duration = showMessageVal["duration"];
+		if (message.isString() && duration.isInt()) {
+			textService_->showMessage(session, utf8ToUtf16(message.asCString()), duration.asInt());
 		}
 	}
 }

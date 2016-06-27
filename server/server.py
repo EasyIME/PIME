@@ -148,7 +148,7 @@ class ClientThread(threading.Thread):
 
                     if running:
                         replyText = json.dumps(reply) # convert object to json
-                        print("reply: ", replyText)
+                        # print("reply: ", replyText)
                         data = bytes(replyText, "UTF-8") # convert to UTF-8
                         data_len = c_ulong(len(data))
                         libpipe.write_pipe(pipe, data, data_len, None)

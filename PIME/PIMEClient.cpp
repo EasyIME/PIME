@@ -162,7 +162,7 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 		}
 
 		const auto& compositionCursorVal = msg["compositionCursor"];
-		if (compositionStringVal.isInt()) {
+		if (compositionCursorVal.isInt()) {
 			// composition cursor
 			int compositionCursor = compositionCursorVal.asInt();
 			if (!textService_->isComposing()) {
@@ -171,7 +171,7 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 			textService_->setCompositionCursor(session, compositionCursor);
 		}
 
-		if (endComposition && session != nullptr) {
+		if (endComposition) {
 			textService_->endComposition(session->context());
 		}
 	}

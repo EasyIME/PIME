@@ -160,7 +160,7 @@ class TextService:
         return False
 
     def onPreservedKey(self, guid):
-        print("onPreservedKey", guid)
+        # print("onPreservedKey", guid)
         return False
 
     def onCommand(self, commandId, commandType):

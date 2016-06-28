@@ -26,6 +26,7 @@
 #include "PIMELangBarButton.h"
 
 #include <unordered_map>
+#include <string>
 #include <json/json.h>
 
 namespace PIME {
@@ -35,8 +36,14 @@ class TextService;
 class Client
 {
 public:
-	Client(TextService* service);
+	// create a client connection to the input method server
+	// guid is the GUID of the language profile
+	Client(TextService* service, REFIID langProfileGuid);
 	~Client(void);
+
+	const std::string guid() const {
+		return guid_;
+	}
 
 	// handlers for the text service
 	void onActivate();
@@ -67,10 +74,6 @@ public:
 	// called just before current composition is terminated for doing cleanup.
 	void onCompositionTerminated(bool forced);
 
-	void onLangProfileActivated(REFIID lang);
-
-	void onLangProfileDeactivated(REFIID lang);
-
 private:
 	HANDLE connectPipe(const wchar_t* pipeName);
 	bool connectServerPipe();
@@ -86,6 +89,7 @@ private:
 	bool sendOnMenu(std::string button_id, Json::Value& result);
 
 	TextService* textService_;
+	std::string guid_;
 	HANDLE pipe_;
 	std::unordered_map<std::string, PIME::LangBarButton*> buttons_; // map buttons to string IDs
 	unsigned int newSeqNum_;

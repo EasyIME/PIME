@@ -31,10 +31,16 @@ using namespace std;
 
 namespace PIME {
 
-Client::Client(TextService* service):
+Client::Client(TextService* service, REFIID langProfileGuid):
 	textService_(service),
 	pipe_(INVALID_HANDLE_VALUE),
 	newSeqNum_(0) {
+
+	LPOLESTR guidStr = NULL;
+	if (SUCCEEDED(::StringFromCLSID(langProfileGuid, &guidStr))) {
+		guid_ = utf16ToUtf8(guidStr);
+		::CoTaskMemFree(guidStr);
+	}
 }
 
 Client::~Client(void) {
@@ -525,41 +531,10 @@ void Client::onCompositionTerminated(bool forced) {
 	}
 }
 
-void Client::onLangProfileActivated(REFIID lang) {
-	LPOLESTR str = NULL;
-	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
-		Json::Value req;
-		req["method"] = "onLangProfileActivated";
-		req["guid"] = utf16ToUtf8(str);
-		::CoTaskMemFree(str);
-
-		Json::Value ret;
-		sendRequest(req, ret);
-		if (handleReply(ret)) {
-		}
-	}
-}
-
-void Client::onLangProfileDeactivated(REFIID lang) {
-	LPOLESTR str = NULL;
-	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
-		Json::Value req;
-		req["method"] = "onLangProfileDeactivated";
-		req["guid"] = utf16ToUtf8(str);
-		::CoTaskMemFree(str);
-
-		Json::Value ret;
-		sendRequest(req, ret);
-		if (handleReply(ret)) {
-		}
-	}
-	LangBarButton::clearIconCache();
-}
-
 void Client::init() {
 	Json::Value req;
 	req["method"] = "init";
-	req["id"] = "";
+	req["id"] = guid_.c_str();  // language profile guid
 	req["isWindows8Above"] = textService_->imeModule()->isWindows8Above();
 	req["isMetroApp"] = textService_->isMetroApp();
 	req["isUiLess"] = textService_->isUiLess();

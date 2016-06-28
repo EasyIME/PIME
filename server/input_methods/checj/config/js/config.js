@@ -214,7 +214,8 @@ $(function() {
         "中標倉頡",
         "泰瑞倉頡",
         "亂倉打鳥",
-        "倉五"
+        "倉五",
+        "自由大新倉頡"
     ];
     var selCinType = $("#selCinType");
     for(var i = 0; i < selCins.length; ++i) {

@@ -300,8 +300,10 @@ class ChewingTextService(TextService):
             else:
                 return False
 
-        # 中文模式下，當中文編輯區是空的，輸入法只需處理注音符號以及 ` 按鍵，用來輸入符號
-        if keyEvent.isBopomofo() or chr(keyEvent.charCode) == '`':
+         # 中文模式下，當中文編輯區是空的，輸入法只需處理注音符號以及 ` 按鍵（特殊符號輸入），還有= [ ] \ '等五個字元，用來輸入符號
+        if keyEvent.isBopomofo() or chr(keyEvent.charCode) == '`' or chr(keyEvent.charCode) == '=' \
+	    or chr(keyEvent.charCode) == '[' or chr(keyEvent.charCode) == ']' \
+	    or chr(keyEvent.charCode) == '\\' or chr(keyEvent.charCode) == '\'':
             return True
 
         # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式

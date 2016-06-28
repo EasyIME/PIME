@@ -54,10 +54,6 @@ class KeyEvent:
     def isPrintableChar(self):
         return self.charCode > 0x1f and self.charCode != 0x7f
 
-    def isBopomofo(self):
-        return  (self.charCode >= 0x61 and self.charCode <= 0x7a) or (self.charCode >= 0x30 and self.charCode <= 0x39)\
-         or (self.charCode == 0x3b) or (self.charCode >= 0x2c and self.charCode <= 0x2f)
-
 
 class TextService:
     def __init__(self, client):

@@ -300,8 +300,11 @@ class ChewingTextService(TextService):
             else:
                 return False
 
-        # 中文模式下，當中文編輯區是空的，輸入法只需處理注音符號以及 ` 按鍵，用來輸入符號
-        if keyEvent.isBopomofo() or chr(keyEvent.charCode) == '`':
+        # 中文模式下，當中文編輯區是空的，輸入法只需處理注音符號和標點
+        # 大略可用是否為 printable char 來檢查
+        # 注意: 此處不能直接寫死檢查按鍵是否為注音或標點，因為在不同 keyboard layout，例如
+        # 倚天鍵盤或許氏...等，代表注音符號的按鍵全都不同
+        if keyEvent.isPrintableChar() and keyEvent.keyCode != VK_SPACE:
             return True
 
         # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
@@ -457,7 +460,7 @@ class ChewingTextService(TextService):
             # 有輸入完成的中文字串要送出(commit)到應用程式
             if chewingContext.commit_Check():
                 commitStr = chewingContext.commit_String().decode("UTF-8")
-
+                
                 # 如果使用打繁出簡，就轉成簡體中文
                 if self.outputSimpChinese:
                     commitStr = self.opencc.convert(commitStr)
@@ -607,7 +610,7 @@ class ChewingTextService(TextService):
             self.changeButton("switch-lang", icon=icon_path)
 
             if self.client.isWindows8Above: # windows 8 mode icon
-                # FIXME: we need a better set of icons to meet the
+                # FIXME: we need a better set of icons to meet the 
                 #        WIndows 8 IME guideline and UX guidelines.
                 self.changeButton("windows-mode-icon", icon=icon_path)
 

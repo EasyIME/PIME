@@ -36,6 +36,7 @@ class Client:
         self.pipe= pipe
         self.server = server
         self.service = None
+        self.currentReply = {}
 
     def init(self, msg):
         self.isWindows8Above = msg["isWindows8Above"]
@@ -43,65 +44,52 @@ class Client:
         self.isUiLess = msg["isUiLess"]
         self.isUiLess = msg["isConsole"]
 
-    def onActivate(self):
+    def onActivate(self, msg):
         pass
 
-    def onDeactivate(self):
-        if self.service:
-            self.service.onDeactivate()
-            self.service = None
+    def onDeactivate(self, msg):
+        pass
 
-    def onLangProfileActivated(self, guid):
-        service = self.service
-        # deactivate the current text service
-        if service:
-            service.onDeactivate()
+    def onLangProfileActivated(self, msg):
+        guid = msg["guid"]
         service = textServiceMgr.createService(self, guid)
         self.service = service
         # activate the new text service
         if service:
-            service.onActivate()
+            self.currentReply = service.handleRequest(msg)
 
-    def onLangProfileDeactivated(self, guid):
-        pass
+    def onLangProfileDeactivated(self, msg):
+        # deactivate the current text service
+        service = self.service
+        if service:
+            self.currentReply = service.handleRequest(msg)
 
     def handleRequest(self, msg): # msg is a json object
-        success = True
-        ret = None
         method = msg.get("method", None)
         seqNum = msg.get("seqNum", 0)
         print("handle message: ", threading.current_thread().name, method, seqNum)
 
         # these are messages handled by Client
-        handled = True
         if method == "init":
             self.init(msg)
         elif method == "onActivate":
-            self.onActivate()
+            self.onActivate(msg)
         elif method == "onDeactivate":
-            self.onDeactivate()
+            self.onDeactivate(msg)
         elif method == "onLangProfileActivated":
-            guid = msg["guid"]
-            self.onLangProfileActivated(guid)
+            self.onLangProfileActivated(msg)
         elif method == "onLangProfileDeactivated":
-            guid = msg["guid"]
-            self.onLangProfileDeactivated(guid)
-        else:
-            handled = False
+            self.onLangProfileDeactivated(msg)
+        else:  # these are messages handled by the text service
+            service = self.service
+            if service:  # the text service is responsible for replying to the msg
+                self.currentReply = service.handleRequest(msg)
 
-        reply = {}
-        # these are messages handled by the text service
-        service = self.service
-        if service:
-            if not handled: # if the request is not yet handled
-                (success, ret) = service.handleRequest(method, msg)
-            if success:
-                reply = service.getReply()
-            if ret != None:
-                reply["return"] = ret
-        reply["success"] = success
-        reply["seqNum"] = seqNum # reply with sequence number added
-        # print("reply: ", reply)
+        reply = self.currentReply
+        self.currentReply = {}
+        if not reply:  # the text service does not handle the msg, and we handled it.
+            reply["success"] = True
+            reply["seqNum"] = seqNum # reply with sequence number added
         return reply
 
 
@@ -145,7 +133,7 @@ class ClientThread(threading.Thread):
                          msg += data
                     elif error == ERROR_IO_PENDING:
                          pass
-                    else: # the pipe is broken
+                    else:  # the pipe is broken
                         print("broken pipe")
                         running = False
                         read_more = False
@@ -154,17 +142,15 @@ class ClientThread(threading.Thread):
                     # Process the incoming message.
                     msg = json.loads(msg) # parse the json input
                     # print("received msg", success, msg)
-
                     server.acquire_lock() # acquire a lock
                     reply = client.handleRequest(msg)
                     server.release_lock() # release the lock
 
                     if running:
-                        reply = json.dumps(reply) # convert object to json
-
-                        data = bytes(reply, "UTF-8") # convert to UTF-8
+                        replyText = json.dumps(reply) # convert object to json
+                        # print("reply: ", replyText)
+                        data = bytes(replyText, "UTF-8") # convert to UTF-8
                         data_len = c_ulong(len(data))
-                        # print("write reply:", data_len)
                         libpipe.write_pipe(pipe, data, data_len, None)
             except:
                 import traceback
@@ -193,7 +179,6 @@ class Server():
     def run(self):
         while True:
             pipe = libpipe.connect_pipe(bytes("PIME", "UTF-8"))
-
             # client connected
             if pipe != -1:
                 print("client connected")
@@ -205,9 +190,7 @@ class Server():
                 # run a separate thread for this client
                 thread = ClientThread(client)
                 thread.start()
-
         return True
-
 
     def remove_client(self, client):
         self.lock.acquire()
@@ -216,7 +199,11 @@ class Server():
         self.lock.release()
 
 
-if __name__ == "__main__":
+def main():
     # listen to incoming pipe connections
     server = Server()
     server.run()
+
+
+if __name__ == "__main__":
+    main()

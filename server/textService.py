@@ -15,17 +15,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-# button style constants used by language buttons (from ctfutb.h of Windows SDK)
-TF_LBI_STYLE_HIDDENSTATUSCONTROL = 0x00000001
-TF_LBI_STYLE_SHOWNINTRAY         = 0x00000002
-TF_LBI_STYLE_HIDEONNOOTHERITEMS  = 0x00000004
-TF_LBI_STYLE_SHOWNINTRAYONLY     = 0x00000008
-TF_LBI_STYLE_HIDDENBYDEFAULT     = 0x00000010
-TF_LBI_STYLE_TEXTCOLORICON       = 0x00000020
-TF_LBI_STYLE_BTN_BUTTON          = 0x00010000
-TF_LBI_STYLE_BTN_MENU            = 0x00020000
-TF_LBI_STYLE_BTN_TOGGLE          = 0x00040000
-
 # keyboard modifiers used by TSF (from msctf.h of Windows SDK)
 TF_MOD_ALT                       = 0x0001
 TF_MOD_CONTROL                   = 0x0002
@@ -69,11 +58,12 @@ class KeyEvent:
 class TextService:
     def __init__(self, client):
         self.client = client
+        self.isActivated = False
 
         self.keyboardOpen = False
         self.showCandidates = False
 
-        self.reply = {} # reply to the events
+        self.currentReply = {}  # reply to the events
         self.compositionString = ""
         self.commitString = ""
         self.candidateList = []
@@ -83,21 +73,18 @@ class TextService:
     def updateStatus(self, msg):
         pass
 
-    # encode current status into an json object
-    def getReply(self):
-        reply = self.reply
-        self.reply = {}
-        return reply
-
     # This should be implemented in the derived class
     def checkConfigChange(self):
         pass
 
-    def handleRequest(self, method, msg): # msg is a json object
-        success = True # if the method is successfully handled
-        ret = None # the return value of the method, if any
+    def handleRequest(self, msg):  # msg is a json object
+        method = msg.get("method", None)
+        seqNum = msg.get("seqNum", 0)
+        success = True  # if the method is successfully handled
+        ret = None  # the return value of the method, if any
 
-        self.checkConfigChange() # check if configurations are changed
+        if self.isActivated:
+            self.checkConfigChange()  # check if configurations are changed
 
         self.updateStatus(msg)
         if method == "filterKeyDown":
@@ -119,6 +106,9 @@ class TextService:
             commandId = msg["id"]
             commandType = msg["type"]
             self.onCommand(commandId, commandType)
+        elif method == "onMenu":
+            buttonId = msg["id"]
+            ret = self.onMenu(buttonId)
         elif method == "onCompartmentChanged":
             guid = msg["guid"].lower()
             self.onCompartmentChanged(guid)
@@ -128,11 +118,24 @@ class TextService:
         elif method == "onCompositionTerminated":
             forced = msg["forced"]
             self.onCompositionTerminated(forced)
+        elif method == "onLangProfileActivated":
+            self.isActivated = True
+            self.onActivate()
+        elif method == "onLangProfileDeactivated":
+            self.onDeactivate()
+            self.isActivated = False
         else:
             success = False
 
-        return success, ret
-        
+        # fetch the current reply of the method
+        reply = self.currentReply
+        self.currentReply = {}
+        if ret is not None:
+            reply["return"] = ret
+        reply["success"] = success
+        reply["seqNum"] = seqNum  # reply with sequence number added
+        return reply
+
     # methods that should be implemented by derived classes
     def onActivate(self):
         pass
@@ -153,11 +156,14 @@ class TextService:
         return False
 
     def onPreservedKey(self, guid):
-        print("onPreservedKey", guid)
+        # print("onPreservedKey", guid)
         return False
 
     def onCommand(self, commandId, commandType):
         pass
+
+    def onMenu(self, buttonId):
+        return None
 
     def onCompartmentChanged(self, guid):
         pass
@@ -178,74 +184,88 @@ class TextService:
         when the button is clicked.
     @text: text on the button (optional)
     @tooltip: (optional)
+    @type: "button", "menu", "toggle" (optional, button is the default)
     @enable: if the button is enabled (optional)
+    @toggled: is the button toggled, only valid if type is "toggle" (optional)
     """
     def addButton(self, button_id, **kwargs):
-        buttons = self.reply.setdefault("addButton", [])
+        buttons = self.currentReply.setdefault("addButton", [])
         info = kwargs
         info["id"] = button_id
         buttons.append(info)
 
     def removeButton(self, button_id):
-        buttons = self.reply.setdefault("removeButton", [])
+        buttons = self.currentReply.setdefault("removeButton", [])
         buttons.append(button_id)
 
     """
     See addButton() for allowed arguments.
     """
     def changeButton(self, button_id, **kwargs):
-        buttons = self.reply.setdefault("changeButton", [])
+        buttons = self.currentReply.setdefault("changeButton", [])
         info = kwargs
         info["id"] = button_id
         buttons.append(info)
 
     # preserved keys
     def addPreservedKey(self, keyCode, modifiers, guid):
-        keys = self.reply.setdefault("addPreservedKey", [])
+        keys = self.currentReply.setdefault("addPreservedKey", [])
         keys.append({
             "keyCode" : keyCode,
             "modifiers": modifiers,
             "guid": guid.lower()})
 
     def removePreservedKey(self, guid):
-        keys = self.reply.setdefault("removePreservedKey", [])
+        keys = self.currentReply.setdefault("removePreservedKey", [])
         keys.append(guid.lower())
 
     # composition string
     def setCompositionString(self, s):
         self.compositionString = s
-        self.reply["compositionString"] = s
+        self.currentReply["compositionString"] = s
 
     def setCompositionCursor(self, pos):
         self.compositionCursor = pos
-        self.reply["compositionCursor"] = pos
+        self.currentReply["compositionCursor"] = pos
 
     def setCommitString(self, s):
         self.commitString = s
-        self.reply["commitString"] = s
+        self.currentReply["commitString"] = s
 
     def setCandidateList(self, cand):
         self.candidateList = cand
-        self.reply["candidateList"] = cand
+        self.currentReply["candidateList"] = cand
 
     def setCandidateCursor(self, pos):
         self.candidateCursor = pos
-        self.reply["candidateCursor"] = pos
+        self.currentReply["candidateCursor"] = pos
 
     def setShowCandidates(self, show):
         self.showCandidates = show
-        self.reply["showCandidates"] = show
+        self.currentReply["showCandidates"] = show
 
     def setSelKeys(self, keys):
-        self.reply["setSelKeys"] = keys
+        self.currentReply["setSelKeys"] = keys
 
     '''
     Valid arguments:
     candFontName, cadFontSize, candPerRow, candUseCursor
     '''
     def customizeUI(self, **kwargs):
-        data = self.reply.setdefault("customizeUI", {})
+        data = self.currentReply.setdefault("customizeUI", {})
         data.update(kwargs)
 
     def isComposing(self):
-        return (self.compositionString != "")
+        return (self.compositionString != "" or self.showCandidates)
+
+    '''
+    Ask libIME to show a tooltip-like transient message to the user
+    @message is the message to show.
+    @duration is in seconds. After the specified duration, the message will be hidden.
+    The currently shown message, if there is any, will be replaced by calling this method.
+    '''
+    def showMessage(self, message, duration=3):
+        self.currentReply["showMessage"] = {
+            "message": message,
+            "duration": duration
+        }

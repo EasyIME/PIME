@@ -20,10 +20,9 @@
 #include "PIMEImeModule.h"
 #include "PIMETextService.h"
 #include <string>
+#include <fstream>
 #include <ShlObj.h>
-#include "rapidjson/document.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/filereadstream.h"
+#include <json/json.h>
 #include "../libIME/Utils.h"
 
 namespace PIME {
@@ -80,16 +79,14 @@ bool ImeModule::onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile
 					imejson += '\\';
 					imejson += findData.cFileName;
 					imejson += L"\\ime.json";
-					FILE* fp = _wfopen(imejson.c_str(), L"r");
+
+					std::ifstream fp(imejson, std::ifstream::binary);
 					if (fp) {
-						char buf[4096];
-						rapidjson::Document json;
-						rapidjson::FileReadStream stream(fp, buf, sizeof(buf));
-						json.ParseStream(stream);
-						fclose(fp);
-						if (guidStr == json["guid"].GetString()) {
+						Json::Value json;
+						fp >> json;
+						if (guidStr == json["guid"].asString()) {
 							// found the language profile
-							std::wstring relPath = utf8ToUtf16(json["configTool"].GetString());
+							std::wstring relPath = utf8ToUtf16(json.get("configTool", "").asCString());
 							if (!relPath.empty()) {
 								configTool = dirPath;
 								configTool += '\\';
@@ -105,10 +102,21 @@ bool ImeModule::onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile
 		} while (::FindNextFile(hFind, &findData));
 		CloseHandle(hFind);
 	}
-	if(!configTool.empty())
-		::ShellExecuteW(hwndParent, L"open", configTool.c_str(), NULL, NULL, SW_SHOWNORMAL);
+	if (!configTool.empty()) {
+		// check if this is a python program (ends with .py)
+		if (configTool.compare(configTool.length() - 3, 3, L".py") == 0) {
+			// find our own python 3 runtime.
+			std::wstring pythonPath = programDir_ + L"\\python\\pythonw.exe";
+			configTool = (L"\"" + configTool + L"\""); // quote the path to .py file.
+			::ShellExecuteW(hwndParent, L"open", pythonPath.c_str(), configTool.c_str(), NULL, SW_SHOWNORMAL);
+		}
+		else {
+			// execute the file directly
+			::ShellExecuteW(hwndParent, L"open", configTool.c_str(), NULL, NULL, SW_SHOWNORMAL);
+		}
+	}
 	return true;
 }
 
 
-} // namespace Chewing
+} // namespace PIME

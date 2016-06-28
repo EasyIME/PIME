@@ -1,4 +1,7 @@
-defaultConfig ={
+var apiUrl = "";
+var authToken = "";
+
+var defaultConfig ={
     "keyboardLayout": 0,
     "addPhraseForward": true,
     "defaultEnglish": false,
@@ -22,125 +25,57 @@ defaultConfig ={
     "cursorCandList": true
 };
 
-// unfortunately, here we use Windows-only features - ActiveX
-// However, it's really stupid that Scripting.FileSystemObject does not support UTF-8.
-// Luckily, there's an alternative, ADODB.Stream.
-// Reference: http://stackoverflow.com/questions/2524703/save-text-file-utf-8-encoded-with-vba
-// http://wiki.mcneel.com/developer/scriptsamples/readutf8
-function readFile(path) {
-    try {
-        var stream = new ActiveXObject("ADODB.Stream");
-        stream.Charset = "utf-8";
-        stream.Open();
-        stream.LoadFromFile(path);
-        var data = stream.ReadText();
-        stream.Close();
-        return data;
-    }
-    catch(err) {
-        return ""
-    }
-}
-
-function writeFile(path, data) {
-    try {
-        var stream = new ActiveXObject("ADODB.Stream");
-        stream.Charset = "utf-8";
-        stream.Open();
-        stream.WriteText(data);
-
-        // this trick is used to strip unicode BOM
-        // Reference: http://stackoverflow.com/questions/31435662/vba-save-a-file-with-utf-8-without-bom
-        var binaryStream = new ActiveXObject("ADODB.Stream");
-        binaryStream.Type = 1; // adTypeBinary: this is used to strip unicode BOM
-        binaryStream.Open();
-        stream.Position = 3; // skip unicode BOM
-        stream.CopyTo(binaryStream); // convert the UTF8 data to binary
-        binaryStream.SaveToFile(path, 2);
-        binaryStream.Close();
-        stream.Close();
-    }
-    catch(err) {
-        alert(err);
-    }
-}
-
-// This is Windows-only :-(
-function getConfigDir() {
-    var shell = new ActiveXObject("WScript.Shell");
-    var dirPath = shell.ExpandEnvironmentStrings("%USERPROFILE%\\PIME");
-    // ensure that the folder exists
-    var fso = new ActiveXObject("Scripting.FileSystemObject");
-    if(!fso.FolderExists(dirPath)) {
-        fso.CreateFolder(dirPath);
-    }
-    dirPath += "\\chewing";
-    if(!fso.FolderExists(dirPath)) {
-        fso.CreateFolder(dirPath);
-    }
-    return dirPath;
-}
-
-// This is Windows-only :-(
-function getDataDir() {
-    var shell = new ActiveXObject("WScript.Shell");
-    var progDir = shell.ExpandEnvironmentStrings("%PROGRAMFILES(x86)%");
-    if(progDir.charAt(0) == "%") { // expansion failed
-        progDir = shell.ExpandEnvironmentStrings("%PROGRAMFILES");
-    }
-    // FIXME: it's bad to hard code the path, but is there any better way?
-    return progDir + "\\PIME\\server\\input_methods\\chewing\\data";
-}
-
-var chewingConfig = null;
-var configDir = getConfigDir();
-var configFile = configDir + "\\config.json";
-var dataDir = getDataDir();
-var userSymbolsFile = configDir + "\\symbols.dat";
+var chewingConfig = {};
 var symbolsChanged = false;
-var userSwkbFile = configDir + "\\swkb.dat";
 var swkbChanged = false;
 
 function loadConfig() {
-    var str = readFile(configFile);
-    try {
-        chewingConfig = JSON.parse(str);
-    }
-    catch(err) {
-        chewingConfig = {};
-    }
-    // add missing values
-    for(key in defaultConfig) {
-        if(!chewingConfig.hasOwnProperty(key)) {
-            chewingConfig[key] = defaultConfig[key];
+    $.get(apiUrl + "load/config", function(data, status) {
+		chewingConfig = data;
+        // add missing values
+        for(key in defaultConfig) {
+            if(!chewingConfig.hasOwnProperty(key)) {
+                chewingConfig[key] = defaultConfig[key];
+            }
         }
-    }
+        initializeUI();
+    }, "json");
 
     // load symbols.dat
-    str = readFile(userSymbolsFile);
-    if(str == "")
-        str = readFile(dataDir + "\\symbols.dat");
-    $("#symbols").val(str);
+	$.get(apiUrl + "load/symbols", function(data, status) {
+		$("#symbols").val(data);
+	});
 
     // load swkb.dat
-    str = readFile(userSwkbFile);
-    if(str == "")
-        str = readFile(dataDir + "\\swkb.dat");
-    $("#ez_symbols").val(str);
+	$.get(apiUrl + "load/swkb", function(data, status) {
+		$("#ez_symbols").val(data);
+	});
 }
 
-function saveConfig() {
-    str = JSON.stringify(chewingConfig, null, 4);
-    writeFile(configFile, str);
+function saveConfig(callbackFunc) {
+    var str = JSON.stringify(chewingConfig, null, 4);
+    var requests = new Array();
+    requests.push($.post(apiUrl + "save/config",
+        { data: str }
+    ));
 
     if(symbolsChanged) {
         str = $("#symbols").val();
-        writeFile(userSymbolsFile, str);
+        requests.push($.post(apiUrl + "save/symbols",
+            { data: str }
+        ));
     }
     if(swkbChanged) {
         str = $("#ez_symbols").val();
-        writeFile(userSwkbFile, str);
+        requests.push($.post(apiUrl + "save/swkb",
+            { data: str }
+        ));
     }
+    // jQuery.when() receives any number of arguments, but since we have variable
+    // number of arguments, we use javascript method.apply() to workaround the limitation.
+    // Reference: http://stackoverflow.com/questions/14777031/what-does-when-apply-somearray-do
+    // call the callback function when all requests are done
+    $.when.apply($, requests).done(callbackFunc);
 }
 
 // update chewingConfig object with the value set by the user
@@ -175,15 +110,7 @@ function updateConfig() {
         chewingConfig.keyboardLayout = keyboardLayout;
 }
 
-// jQuery ready
-$(function() {
-    loadConfig();
-    $(document).tooltip();
-    $("#tabs").tabs({heightStyle:"auto"});
-
-    $("#candPerRow").spinner({min:1, max:10});
-    $("#candPerPage").spinner({min:1, max:10});
-    $("#fontSize").spinner({min:6, max:200});
+function initializeUI() {
 
     var selKeys=[
         "1234567890",
@@ -224,27 +151,6 @@ $(function() {
         keyboard_page.append(item);
     }
     $("#kb" + chewingConfig.keyboardLayout).prop("checked", true);
-
-    $("#symbols").change(function(){
-        symbolsChanged = true;
-    });
-
-    $("#ez_symbols").change(function(){
-        swkbChanged = true;
-    });
-    
-    $("#buttons").buttonset();
-    $("#ok").click(function() {
-        updateConfig();
-        saveConfig();
-        window.close();
-        return false;
-    });
-
-    $("#cancel").click(function() {
-        window.close();
-        return false;
-    });
 
     // set all initial values
     $("input").each(function(index, elem) {
@@ -309,4 +215,88 @@ $(function() {
         window.moveTo((screen.width - $(window).width())/2, (screen.height - $(window).height() - 40)/2);
     });
     */
+}
+
+// Microsoft HTA only  :-(
+function initAPIUrl() {
+    // get port number from HTA command line parameters
+    var params = ChewingConfig.commandLine.split(" ")
+    if(params.length > 2) {
+        authToken = params.pop();
+        var port = params.pop();
+        apiUrl = "http://localhost:" + port + "/";
+    }
+}
+
+function closeWindow() {
+    $.get(apiUrl + "quit", function() {
+        window.close();
+    });
+}
+
+// jQuery ready
+$(function() {
+
+    initAPIUrl();  // initialize the URL of API server
+    
+    // workaround the same origin policy of IE.
+    // http://stackoverflow.com/questions/7852225/is-it-safe-to-use-support-cors-true-in-jquery
+    $.support.cors = true;
+
+    // show PIME version number
+    $("#version").load("../../../../version.txt");
+
+    // setup UI
+    $(document).tooltip();
+    $(window).unload(function() {
+        alert("unload");
+        $.get(apiUrl + "quit");  // ask the server process to quit.
+    });
+
+    $("#tabs").tabs({heightStyle:"auto"});
+
+    $("#candPerRow").spinner({min:1, max:10});
+    $("#candPerPage").spinner({min:1, max:10});
+    $("#fontSize").spinner({min:6, max:200});
+
+    $("#symbols").change(function(){
+        symbolsChanged = true;
+    });
+
+    $("#ez_symbols").change(function(){
+        swkbChanged = true;
+    });
+
+    $("#buttons").buttonset();
+    // OK button
+    $("#ok").click(function() {
+        updateConfig(); // update the config based on the state of UI elements
+        saveConfig(function() {
+            closeWindow(); // called when the save operations are done
+        });
+        return false;
+    });
+
+    // Cancel button
+    $("#cancel").click(function() {
+        closeWindow();
+        return false;
+    });
+    
+    // authenticate to the configuration web service
+    $.post(apiUrl + "auth",
+        {"token":authToken},
+        function(data, status) {
+            // load configurations and update the UI accordingly
+            loadConfig();
+
+            // keep the server alive every 30 second
+            window.setInterval(function() {
+                $.ajax({
+                    url: apiUrl + "keep_alive",
+                    cache: false  // needs to turn off cache. otherwise the server will be requested only once.
+                });
+            }, 5 * 1000);
+        }
+    );
 });

@@ -1,5 +1,5 @@
 //
-//	Copyright (C) 2014 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+//	Copyright (C) 2015 - 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 //
 //	This library is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU Library General Public
@@ -20,31 +20,21 @@
 #include "PIMEClient.h"
 #include "libIME/Utils.h"
 #include <algorithm>
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
+#include <json/json.h>
+
 #include "PIMETextService.h"
 #include <cstdlib>
 #include <ctime>
 #include <memory>
 
 using namespace std;
-using namespace rapidjson;
 
 namespace PIME {
 
-// this is the GUID of the IME mode icon in Windows 8
-// the value is not available in older SDK versions, so let's define it ourselves.
-static const GUID _GUID_LBI_INPUTMODE =
-{ 0x2C77A81E, 0x41CC, 0x4178, { 0xA3, 0xA7, 0x5F, 0x8A, 0x98, 0x75, 0x68, 0xE6 } };
-
 Client::Client(TextService* service):
 	textService_(service),
-	pipe_(INVALID_HANDLE_VALUE) {
-
-	static bool init_srand = false;
-	if (!init_srand) {
-		srand(time(NULL));
-	}
+	pipe_(INVALID_HANDLE_VALUE),
+	newSeqNum_(0) {
 }
 
 Client::~Client(void) {
@@ -56,270 +46,98 @@ Client::~Client(void) {
 			textService_->removeButton(it->second);
 		}
 	}
-	clearIconCache();
+	LangBarButton::clearIconCache();
 }
 
 // pack a keyEvent object into a json value
 //static
-void Client::keyEventToJson(Writer<StringBuffer>& writer, Ime::KeyEvent& keyEvent) {
-	writer.String("charCode");
-	writer.Uint(keyEvent.charCode());
-
-	writer.String("keyCode");
-	writer.Uint(keyEvent.keyCode());
-
-	writer.String("repeatCount");
-	writer.Uint(keyEvent.repeatCount());
-
-	writer.String("scanCode");
-	writer.Uint(keyEvent.scanCode());
-
-	writer.String("isExtended");
-	writer.Bool(keyEvent.isExtended());
-
-	writer.String("keyStates");
-	writer.StartArray();
+void Client::keyEventToJson(Ime::KeyEvent& keyEvent, Json::Value& jsonValue) {
+	jsonValue["charCode"] = keyEvent.charCode();
+	jsonValue["keyCode"] = keyEvent.keyCode();
+	jsonValue["repeatCount"] = keyEvent.repeatCount();
+	jsonValue["scanCode"] = keyEvent.scanCode();
+	jsonValue["isExtended"] = keyEvent.isExtended();
+	Json::Value keyStates(Json::arrayValue);
 	const BYTE* states = keyEvent.keyStates();
 	for(int i = 0; i < 256; ++i) {
-		writer.Uint(states[i]);
+		keyStates.append(states[i]);
 	}
-	writer.EndArray();
+	jsonValue["keyStates"] = keyStates;
 }
 
-int Client::addSeqNum(Writer<StringBuffer>& writer) {
-	int seqNum = rand();
-	writer.String("seqNum");
-	writer.Uint(seqNum);
-	return seqNum;
+bool Client::handleReply(Json::Value& msg, Ime::EditSession* session) {
+	bool success = msg.get("success", false).asBool();
+	if (success) {
+		updateStatus(msg, session);
+	}
+	return success;
 }
 
-bool Client::handleReply(rapidjson::Document& msg, Ime::EditSession* session) {
-	auto it = msg.FindMember("success");
-	if (it != msg.MemberEnd() && it->value.IsBool()) {
-		bool success = it->value.GetBool();
-		if (success) {
-			updateStatus(msg, session);
-		}
-		return success;
-	}
-	return false;
-}
-
-void Client::updateLangBarButton(Ime::LangBarButton* btn, rapidjson::Value& info) {
-	auto it = info.FindMember("icon");
-	if (it != info.MemberEnd() && it->value.IsString()) {
-		wstring iconPath = utf8ToUtf16(it->value.GetString());
-		HICON icon = NULL;
-		auto icon_it = iconCache_.find(iconPath);
-		if (icon_it != iconCache_.end()) // found in the cache
-			icon = icon_it->second;
-		else { // not in the cache
-			icon = (HICON)LoadImageW(NULL, iconPath.c_str(), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_LOADFROMFILE);
-			iconCache_[iconPath] = icon; // cache the icon
-		}
-		if (icon)
-			btn->setIcon(icon);
-	}
-
-	it = info.FindMember("commandId");
-	if (it != info.MemberEnd() && it->value.IsUint()) {
-		UINT cmd = it->value.GetUint();
-		btn->setCommandId(cmd);
-	}
-
-	it = info.FindMember("text");
-	if (it != info.MemberEnd() && it->value.IsString()) {
-		std::wstring text = utf8ToUtf16(it->value.GetString());
-		btn->setText(text.c_str());
-	}
-
-	it = info.FindMember("tooltip");
-	if (it != info.MemberEnd() && it->value.IsString()) {
-		std::wstring tooltip = utf8ToUtf16(it->value.GetString());
-		btn->setTooltip(tooltip.c_str());
-	}
-
-	it = info.FindMember("enable");
-	if (it != info.MemberEnd() && it->value.IsBool()) {
-		bool enable = it->value.GetBool();
-		btn->setEnabled(enable);
-	}
-}
-
-void Client::updateUI(rapidjson::Value& data) {
-	for (auto it = data.MemberBegin(); it != data.MemberEnd(); ++it) {
-		const char* name = it->name.GetString();
-		if (it->value.IsString() && strcmp(name, "candFontName") == 0) {
-			wstring fontName = utf8ToUtf16(it->value.GetString());
+void Client::updateUI(const Json::Value& data) {
+	for (auto it = data.begin(); it != data.end(); ++it) {
+		const char* name = it.memberName();
+		const Json::Value& value = *it;
+		if (value.isString() && strcmp(name, "candFontName") == 0) {
+			wstring fontName = utf8ToUtf16(value.asCString());
 			textService_->setCandFontName(fontName);
 		}
-		else if (it->value.IsInt() && strcmp(name, "candFontSize") == 0) {
-			textService_->setCandFontSize(it->value.GetInt());
+		else if (value.isInt() && strcmp(name, "candFontSize") == 0) {
+			textService_->setCandFontSize(value.asInt());
 		}
-		else if (it->value.IsInt() && strcmp(name, "candPerRow") == 0) {
-			textService_->setCandPerRow(it->value.GetInt());
+		else if (value.isInt() && strcmp(name, "candPerRow") == 0) {
+			textService_->setCandPerRow(value.asInt());
 		}
-		else if (it->value.IsBool() && strcmp(name, "candUseCursor") == 0) {
-			textService_->setCandUseCursor(it->value.GetBool());
+		else if (value.isBool() && strcmp(name, "candUseCursor") == 0) {
+			textService_->setCandUseCursor(value.asBool());
 		}
 	}
 }
 
-void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
+void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 	// We need to handle ordering of some types of the requests.
 	// For example, setCompositionCursor() should happen after setCompositionCursor().
-	rapidjson::Document::ValueType* commitStringVal = nullptr;
-	rapidjson::Document::ValueType* compositionStringVal = nullptr;
-	rapidjson::Document::ValueType* compositionCursorVal = nullptr;
-	rapidjson::Document::ValueType* candCursorVal = nullptr;
-
-	for (auto it = msg.MemberBegin(); it != msg.MemberEnd(); ++it) {
-		const char* name = it->name.GetString();
-		if (session != nullptr) { // if an edit session is available
-			// commit string
-			if (it->value.IsString() && strcmp(name, "commitString") == 0) {
-				commitStringVal = &it->value;
-				continue;
-			}
-			else if (it->value.IsString() && strcmp(name, "compositionString") == 0) {
-				compositionStringVal = &it->value;
-				continue;
-			}
-			else if (it->value.IsInt() && strcmp(name, "compositionCursor") == 0) {
-				compositionCursorVal = &it->value;
-				continue;
-			}
-			else if (it->value.IsArray() && strcmp(name, "candidateList") == 0) {
-				// handle candidates
-				rapidjson::Value& candidateList = it->value;
-				// FIXME: directly access private member is dirty!!!
-				vector<wstring>& candidates = textService_->candidates_;
-				candidates.clear();
-				for (auto it = candidateList.Begin(); it < candidateList.End(); ++it) {
-					wstring cand = utf8ToUtf16(it->GetString());
-					candidates.push_back(cand);
-				}
-				textService_->updateCandidates(session);
-				continue;
-			}
-			else if (it->value.IsBool() && strcmp(name, "showCandidates") == 0) {
-				bool showCandidates = it->value.GetBool();
-				if (showCandidates) {
-					textService_->showCandidates(session);
-				}
-				else {
-					textService_->hideCandidates();
-				}
-				continue;
-			}
-			else if (it->value.IsInt() && strcmp(name, "candidateCursor") == 0) {
-				candCursorVal = &it->value;
-				continue;
-			}
-		}
-
-		// language buttons
-		if (it->value.IsArray() && strcmp(name, "addButton") == 0) {
-			rapidjson::Value& buttons = it->value;
-			for (auto btn_it = buttons.Begin(); btn_it < buttons.End(); ++btn_it) {
-				rapidjson::Value& btn = *btn_it;
-				if (btn.IsObject()) {
-					string id = btn["id"].GetString();
-
-					DWORD style = TF_LBI_STYLE_BTN_BUTTON;
-					auto prop_it = btn.FindMember("style");
-					if (prop_it != btn.MemberEnd())
-						style = prop_it->value.GetUint();
-
-					CLSID guid = { 0 }; // create a new GUID on-the-fly
-					if (id == "windows-mode-icon") {
-						// Windows 8 systray IME mode icon
-						guid = _GUID_LBI_INPUTMODE;
-					}
-					else {
-						CoCreateGuid(&guid);
-					}
-
-
-					// FIXME: when to clear the id <=> button map??
-					Ime::LangBarButton* langBtn = new Ime::LangBarButton(textService_, guid, 0, NULL, style);
-					buttons_[id] = langBtn; // insert into the map
-					updateLangBarButton(langBtn, btn);
-					textService_->addButton(langBtn);
-					langBtn->Release();
-				}
-			}
-		}
-		else if (it->value.IsArray() && strcmp(name, "removeButton") == 0) {
-			// FIXME: handle windows-mode-icon
-			rapidjson::Value& buttons = it->value;
-			for (auto btn_it = buttons.Begin(); btn_it < buttons.End(); ++btn_it) {
-				if (btn_it->IsString()) {
-					string id = btn_it->GetString();
-					auto map_it = buttons_.find(id);
-					if (map_it != buttons_.end()) {
-						textService_->removeButton(map_it->second);
-						buttons_.erase(map_it); // remove from the map
-					}
-				}
-			}
-		}
-		else if (it->value.IsArray() && strcmp(name, "changeButton") == 0) {
-			// FIXME: handle windows-mode-icon
-			rapidjson::Value& buttons = it->value;
-			for (auto btn_it = buttons.Begin(); btn_it < buttons.End(); ++btn_it) {
-				rapidjson::Value& btn = *btn_it;
-				if (btn.IsObject()) {
-					string id = btn["id"].GetString();
-					auto map_it = buttons_.find(id);
-					if (map_it != buttons_.end()) {
-						updateLangBarButton(map_it->second, btn);
-					}
-				}
-			}
-		}
-		else if (it->value.IsArray() && strcmp(name, "addPreservedKey") == 0) {
-			// preserved keys
-			rapidjson::Value& keys = it->value;
-			for (auto key_it = keys.Begin(); key_it < keys.End(); ++key_it) {
-				rapidjson::Value& key = *key_it;
-				if (key.IsObject()) {
-					std::wstring guidStr = utf8ToUtf16(key["guid"].GetString());
-					CLSID guid = { 0 };
-					CLSIDFromString(guidStr.c_str(), &guid);
-					UINT keyCode = key["keyCode"].GetUint();
-					UINT modifiers = key["modifiers"].GetUint();
-					textService_->addPreservedKey(keyCode, modifiers, guid);
-				}
-			}
-		}
-		else if (it->value.IsArray() && strcmp(name, "removePreservedKey") == 0) {
-			rapidjson::Value& keys = it->value;
-			for (auto key_it = keys.Begin(); key_it < keys.End(); ++key_it) {
-				if (key_it->IsString()) {
-					std::wstring guidStr = utf8ToUtf16(key_it->GetString());
-					CLSID guid = { 0 };
-					CLSIDFromString(guidStr.c_str(), &guid);
-					textService_->removePreservedKey(guid);
-				}
-			}
-		}
-		else if (it->value.IsString() && strcmp(name, "setSelKeys") == 0) {
-			// keys used to select candidates
-			std::wstring selKeys = utf8ToUtf16(it->value.GetString());
-			textService_->setSelKeys(selKeys);
-		}
-		else if (it->value.IsObject() && strcmp(name, "customizeUI") == 0) {
-			// customize the UI
-			updateUI(it->value);
-		}
-	}
-
-	// handle comosition and commit strings
 	if (session != nullptr) { // if an edit session is available
+		// handle candidate list
+		const auto& showCandidatesVal = msg["showCandidates"];
+		if (showCandidatesVal.isBool()) {
+			if (showCandidatesVal.asBool()) {
+				// start composition if we are not composing.
+				// this is required to get correctly position the candidate window
+				if (!textService_->isComposing()) {
+					textService_->startComposition(session->context());
+				}
+				textService_->showCandidates(session);
+			}
+			else {
+				textService_->hideCandidates();
+			}
+		}
+
+		const auto& candidateListVal = msg["candidateList"];
+		if (candidateListVal.isArray()) {
+			// handle candidates
+			// FIXME: directly access private member is dirty!!!
+			vector<wstring>& candidates = textService_->candidates_;
+			candidates.clear();
+			for (auto cand_it = candidateListVal.begin(); cand_it != candidateListVal.end(); ++cand_it) {
+				wstring cand = utf8ToUtf16(cand_it->asCString());
+				candidates.push_back(cand);
+			}
+			textService_->updateCandidates(session);
+		}
+
+		const auto& candidateCursorVal = msg["candidateCursor"];
+		if (candidateCursorVal.isInt()) {
+			if (textService_->candidateWindow_ != nullptr) {
+				textService_->candidateWindow_->setCurrentSel(candidateCursorVal.asInt());
+			}
+		}
+
+		// handle comosition and commit strings
 		bool endComposition = false;
-		if (commitStringVal != nullptr) {
-			std::wstring commitString = utf8ToUtf16(commitStringVal->GetString());
+		const auto& commitStringVal = msg["commitString"];
+		if (commitStringVal.isString()) {
+			std::wstring commitString = utf8ToUtf16(commitStringVal.asCString());
 			if (!commitString.empty()) {
 				if (!textService_->isComposing()) {
 					textService_->startComposition(session->context());
@@ -328,145 +146,212 @@ void Client::updateStatus(rapidjson::Document& msg, Ime::EditSession* session) {
 				textService_->endComposition(session->context());
 			}
 		}
-		if (compositionStringVal != nullptr) {
+
+		const auto& compositionStringVal = msg["compositionString"];
+		if (compositionStringVal.isString()) {
 			// composition buffer
-			std::wstring compositionString = utf8ToUtf16(compositionStringVal->GetString());
+			std::wstring compositionString = utf8ToUtf16(compositionStringVal.asCString());
 			if (!textService_->isComposing()) {
 				textService_->startComposition(session->context());
 			}
 			textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
-			if (compositionString.empty()) {
+			if (compositionString.empty() && !textService_->showingCandidates()) {
+				// when the composition buffer is empty and we are not showing the candidate list, end composition.
 				endComposition = true;
 			}
 		}
-		if (compositionCursorVal != nullptr) {
+
+		const auto& compositionCursorVal = msg["compositionCursor"];
+		if (compositionCursorVal.isInt()) {
 			// composition cursor
-			int compositionCursor = compositionCursorVal->GetInt();
+			int compositionCursor = compositionCursorVal.asInt();
 			if (!textService_->isComposing()) {
 				textService_->startComposition(session->context());
 			}
 			textService_->setCompositionCursor(session, compositionCursor);
 		}
-		if (candCursorVal != nullptr) {
-			if (textService_->candidateWindow_ != nullptr) {
-				textService_->candidateWindow_->setCurrentSel(candCursorVal->GetInt());
+
+		if (endComposition) {
+			textService_->endComposition(session->context());
+		}
+	}
+
+	// language buttons
+	const auto& addButtonVal = msg["addButton"];
+	if (addButtonVal.isArray()) {
+		for (auto btn_it = addButtonVal.begin(); btn_it != addButtonVal.end(); ++btn_it) {
+			const Json::Value& btn = *btn_it;
+			// FIXME: when to clear the id <=> button map??
+			PIME::LangBarButton* langBtn = PIME::LangBarButton::fromJson(textService_, btn);
+			if (langBtn != nullptr) {
+				buttons_[langBtn->id()] = langBtn; // insert into the map
+				textService_->addButton(langBtn);
+				langBtn->Release();
 			}
 		}
-		if (endComposition && session != nullptr) {
-			textService_->endComposition(session->context());
+	}
+	
+	const auto& removeButtonVal = msg["removeButton"];
+	if (removeButtonVal.isArray()) {
+		// FIXME: handle windows-mode-icon
+		for (auto btn_it = removeButtonVal.begin(); btn_it != removeButtonVal.end(); ++btn_it) {
+			if (btn_it->isString()) {
+				string id = btn_it->asString();
+				auto map_it = buttons_.find(id);
+				if (map_it != buttons_.end()) {
+					textService_->removeButton(map_it->second);
+					buttons_.erase(map_it); // remove from the map
+				}
+			}
+		}
+	}
+
+	const auto& changeButtonVal = msg["changeButton"];
+	if (changeButtonVal.isArray()) {
+		// FIXME: handle windows-mode-icon
+		for (auto btn_it = changeButtonVal.begin(); btn_it != changeButtonVal.end(); ++btn_it) {
+			const Json::Value& btn = *btn_it;
+			if (btn.isObject()) {
+				string id = btn["id"].asString();
+				auto map_it = buttons_.find(id);
+				if (map_it != buttons_.end()) {
+					map_it->second->update(btn);
+				}
+			}
+		}
+	}
+
+	// preserved keys
+	const auto& addPreservedKeyVal = msg["addPreservedKey"];
+	if (addPreservedKeyVal.isArray()) {
+		// preserved keys
+		for (auto key_it = addPreservedKeyVal.begin(); key_it != addPreservedKeyVal.end(); ++key_it) {
+			const Json::Value& key = *key_it;
+			if (key.isObject()) {
+				std::wstring guidStr = utf8ToUtf16(key["guid"].asCString());
+				CLSID guid = { 0 };
+				CLSIDFromString(guidStr.c_str(), &guid);
+				UINT keyCode = key["keyCode"].asUInt();
+				UINT modifiers = key["modifiers"].asUInt();
+				textService_->addPreservedKey(keyCode, modifiers, guid);
+			}
+		}
+	}
+	
+	const auto& removePreservedKeyVal = msg["removePreservedKey"];
+	if (removePreservedKeyVal.isArray()) {
+		for (auto key_it = removePreservedKeyVal.begin(); key_it != removePreservedKeyVal.end(); ++key_it) {
+			if (key_it->isString()) {
+				std::wstring guidStr = utf8ToUtf16(key_it->asCString());
+				CLSID guid = { 0 };
+				CLSIDFromString(guidStr.c_str(), &guid);
+				textService_->removePreservedKey(guid);
+			}
+		}
+	}
+
+	// keyboard status
+	const auto& openKeyboardVal = msg["openKeyboard"];
+	if (openKeyboardVal.isBool()) {
+		textService_->setKeyboardOpen(openKeyboardVal.asBool());
+	}
+
+	// other configurations
+	const auto& setSelKeysVal = msg["setSelKeys"];
+	if (setSelKeysVal.isString()) {
+		// keys used to select candidates
+		std::wstring selKeys = utf8ToUtf16(setSelKeysVal.asCString());
+		textService_->setSelKeys(selKeys);
+	}
+	
+	const auto& customizeUIVal = msg["customizeUI"];
+	if (customizeUIVal.isObject()) {
+		// customize the UI
+		updateUI(customizeUIVal);
+	}
+
+	// show message
+	const auto& showMessageVal = msg["showMessage"];
+	if (showMessageVal.isObject()) {
+		const Json::Value& message = showMessageVal["message"];
+		const Json::Value& duration = showMessageVal["duration"];
+		if (message.isString() && duration.isInt()) {
+			textService_->showMessage(session, utf8ToUtf16(message.asCString()), duration.asInt());
 		}
 	}
 }
 
 // handlers for the text service
 void Client::onActivate() {
-	StringBuffer s;
-	Writer<StringBuffer> writer(s);
-	writer.StartObject();
-	int sn = addSeqNum(writer);
+	Json::Value req;
+	req["method"] = "onActivate";
+	req["isKeyboardOpen"] = textService_->isKeyboardOpened();
 
-	writer.String("method");
-	writer.String("onActivate");
-
-	writer.EndObject();
-	s.GetString();
-	Document ret = sendRequest(s.GetString(), sn);
+	Json::Value ret;
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
 	}
 }
 
 void Client::onDeactivate() {
-	StringBuffer s;
-	Writer<StringBuffer> writer(s);
-	writer.StartObject();
-	int sn = addSeqNum(writer);
+	Json::Value req;
+	req["method"] = "onDeactivate";
 
-	writer.String("method");
-	writer.String("onDeactivate");
-
-	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+	Json::Value ret;
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
 	}
-	clearIconCache();
+	LangBarButton::clearIconCache();
 }
 
 bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
-	StringBuffer s;
-	Writer<StringBuffer> writer(s);
-	writer.StartObject();
+	Json::Value req;
+	req["method"] = "filterKeyDown";
+	keyEventToJson(keyEvent, req);
 
-	int sn = addSeqNum(writer);
-
-	writer.String("method");
-	writer.String("filterKeyDown");
-
-	keyEventToJson(writer, keyEvent);
-
-	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+	Json::Value ret;
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
-		return ret["return"].GetBool();
+		return ret["return"].asBool();
 	}
 	return false;
 }
 
 bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
-	StringBuffer s;
-	Writer<StringBuffer> writer(s);
-	writer.StartObject();
+	Json::Value req;
+	req["method"] = "onKeyDown";
+	keyEventToJson(keyEvent, req);
 
-	int sn = addSeqNum(writer);
-
-	writer.String("method");
-	writer.String("onKeyDown");
-
-	keyEventToJson(writer, keyEvent);
-
-	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+	Json::Value ret;
+	sendRequest(req, ret);
 	if (handleReply(ret, session)) {
-		return ret["return"].GetBool();
+		return ret["return"].asBool();
 	}
 	return false;
 }
 
 bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
-	StringBuffer s;
-	Writer<StringBuffer> writer(s);
-	writer.StartObject();
+	Json::Value req;
+	req["method"] = "filterKeyUp";
+	keyEventToJson(keyEvent, req);
 
-	int sn = addSeqNum(writer);
-
-	writer.String("method");
-	writer.String("filterKeyUp");
-
-	keyEventToJson(writer, keyEvent);
-
-	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+	Json::Value ret;
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
-		return ret["return"].GetBool();
+		return ret["return"].asBool();
 	}
 	return false;
 }
 
 bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
-	StringBuffer s;
-	Writer<StringBuffer> writer(s);
-	writer.StartObject();
+	Json::Value req;
+	req["method"] = "onKeyUp";
+	keyEventToJson(keyEvent, req);
 
-	int sn = addSeqNum(writer);
-
-	writer.String("method");
-	writer.String("onKeyUp");
-
-	keyEventToJson(writer, keyEvent);
-
-	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+	Json::Value ret;
+	sendRequest(req, ret);
 	if (handleReply(ret, session)) {
-		return ret["return"].GetBool();
+		return ret["return"].asBool();
 	}
 	return false;
 }
@@ -474,71 +359,143 @@ bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 bool Client::onPreservedKey(const GUID& guid) {
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(guid, &str))) {
-		StringBuffer s;
-		Writer<StringBuffer> writer(s);
-		writer.StartObject();
-
-		int sn = addSeqNum(writer);
-
-		writer.String("method");
-		writer.String("onPreservedKey");
-
-		writer.String("guid");
-		writer.String(utf16ToUtf8(str));
+		Json::Value req;
+		req["method"] = "onPreservedKey";
+		req["guid"] = utf16ToUtf8(str);
 		::CoTaskMemFree(str);
 
-		writer.EndObject();
-		Document ret = sendRequest(s.GetString(), sn);
+		Json::Value ret;
+		sendRequest(req, ret);
 		if (handleReply(ret)) {
-			return ret["return"].GetBool();
+			return ret["return"].asBool();
 		}
 	}
 	return false;
 }
 
 bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
-	StringBuffer s;
-	Writer<StringBuffer> writer(s);
-	writer.StartObject();
+	Json::Value req;
+	req["method"] = "onCommand";
+	req["id"] = id;
+	req["type"] = type;
 
-	int sn = addSeqNum(writer);
-
-	writer.String("method");
-	writer.String("onCommand");
-
-	writer.String("id");
-	writer.Uint(id);
-
-	writer.String("type");
-	writer.Uint(type);
-
-	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+	Json::Value ret;
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
-		return ret["return"].GetBool();
+		return ret["return"].asBool();
 	}
 	return false;
+}
+
+bool Client::sendOnMenu(std::string button_id, Json::Value& result) {
+	Json::Value req;
+	req["method"] = "onMenu";
+	req["id"] = button_id;
+
+	sendRequest(req, result);
+	if (handleReply(result)) {
+		return true;
+	}
+	return false;
+}
+
+static bool menuFromJson(ITfMenu* pMenu, const Json::Value& menuInfo) {
+	if (pMenu != nullptr && menuInfo.isArray()) {
+		for (Json::Value::const_iterator it = menuInfo.begin(); it != menuInfo.end(); ++it) {
+			const Json::Value& item = *it;
+			UINT id = item.get("id", 0).asUInt();
+			std::wstring text = utf8ToUtf16(item.get("text", "").asCString());
+			
+			DWORD flags = 0;
+			Json::Value submenuInfo;
+			ITfMenu* submenu = nullptr;
+			if (id == 0 && text.empty())
+				flags = TF_LBMENUF_SEPARATOR;
+			else {
+				if (item.get("checked", false).asBool())
+					flags |= TF_LBMENUF_CHECKED;
+				if (!item.get("enabled", true).asBool())
+					flags |= TF_LBMENUF_GRAYED;
+
+				submenuInfo = item["submenu"];  // FIXME: this is a deep copy. too bad! :-(
+				if (submenuInfo.isArray()) {
+					flags |= TF_LBMENUF_SUBMENU;
+				}
+			}
+			pMenu->AddMenuItem(id, flags, NULL, NULL, text.c_str(), text.length(), flags & TF_LBMENUF_SUBMENU ? &submenu : nullptr);
+			if (submenu != nullptr && submenuInfo.isArray()) {
+				menuFromJson(submenu, submenuInfo);
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+// called when a language bar button needs a menu
+// virtual
+bool Client::onMenu(LangBarButton* btn, ITfMenu* pMenu) {
+	Json::Value result;
+	if(sendOnMenu(btn->id(), result)) {
+		Json::Value& menuInfo = result["return"];
+		return menuFromJson(pMenu, menuInfo);
+	}
+	return false;
+}
+
+static HMENU menuFromJson(const Json::Value& menuInfo) {
+	if (menuInfo.isArray()) {
+		HMENU menu = ::CreatePopupMenu();
+		for (auto it = menuInfo.begin(); it != menuInfo.end(); ++it) {
+			const Json::Value& item = *it;
+			UINT id = item.get("id", 0).asUInt();
+			std::wstring text = utf8ToUtf16(item.get("text", "").asCString());
+
+			UINT flags = MF_STRING;
+			if (id == 0 && text.empty())
+				flags = MF_SEPARATOR;
+			else {
+				if (item.get("checked", false).asBool())
+					flags |= MF_CHECKED;
+				if (!item.get("enabled", true).asBool())
+					flags |= MF_GRAYED;
+
+				const Json::Value& subMenuValue = item.get("submenu", Json::nullValue);
+				if (subMenuValue.isArray()) {
+					HMENU submenu = menuFromJson(subMenuValue);
+					flags |= MF_POPUP;
+					id = UINT_PTR(submenu);
+				}
+			}
+			AppendMenu(menu, flags, id, text.c_str());
+		}
+		return menu;
+	}
+	return NULL;
+}
+
+// called when a language bar button needs a menu
+// virtual
+HMENU Client::onMenu(LangBarButton* btn) {
+	Json::Value result;
+	if (sendOnMenu(btn->id(), result)) {
+		Json::Value& menuInfo = result["return"];
+		return menuFromJson(menuInfo);
+	}
+	return NULL;
 }
 
 // called when a compartment value is changed
 void Client::onCompartmentChanged(const GUID& key) {
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(key, &str))) {
-		StringBuffer s;
-		Writer<StringBuffer> writer(s);
-		writer.StartObject();
-
-		int sn = addSeqNum(writer);
-
-		writer.String("method");
-		writer.String("onCompartmentChanged");
-
-		writer.String("guid");
-		writer.String(utf16ToUtf8(str));
+		Json::Value req;
+		req["method"] = "onCompartmentChanged";
+		req["guid"] = utf16ToUtf8(str);
 		::CoTaskMemFree(str);
 
-		writer.EndObject();
-		Document ret = sendRequest(s.GetString(), sn);
+		Json::Value ret;
+		sendRequest(req, ret);
 		if (handleReply(ret)) {
 		}
 	}
@@ -546,40 +503,24 @@ void Client::onCompartmentChanged(const GUID& key) {
 
 // called when the keyboard is opened or closed
 void Client::onKeyboardStatusChanged(bool opened) {
-	StringBuffer s;
-	Writer<StringBuffer> writer(s);
-	writer.StartObject();
+	Json::Value req;
+	req["method"] = "onKeyboardStatusChanged";
+	req["opened"] = opened;
 
-	int sn = addSeqNum(writer);
-
-	writer.String("method");
-	writer.String("onKeyboardStatusChanged");
-
-	writer.String("opened");
-	writer.Bool(opened);
-
-	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+	Json::Value ret;
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
 	}
 }
 
 // called just before current composition is terminated for doing cleanup.
 void Client::onCompositionTerminated(bool forced) {
-	StringBuffer s;
-	Writer<StringBuffer> writer(s);
-	writer.StartObject();
+	Json::Value req;
+	req["method"] = "onCompositionTerminated";
+	req["forced"] = forced;
 
-	int sn = addSeqNum(writer);
-
-	writer.String("method");
-	writer.String("onCompositionTerminated");
-
-	writer.String("forced");
-	writer.Bool(forced);
-
-	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+	Json::Value ret;
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
 	}
 }
@@ -587,21 +528,13 @@ void Client::onCompositionTerminated(bool forced) {
 void Client::onLangProfileActivated(REFIID lang) {
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
-
-		StringBuffer s;
-		Writer<StringBuffer> writer(s);
-		writer.StartObject();
-		int sn = addSeqNum(writer);
-
-		writer.String("method");
-		writer.String("onLangProfileActivated");
-
-		writer.String("guid");
-		writer.String(utf16ToUtf8(str));
+		Json::Value req;
+		req["method"] = "onLangProfileActivated";
+		req["guid"] = utf16ToUtf8(str);
 		::CoTaskMemFree(str);
 
-		writer.EndObject();
-		Document ret = sendRequest(s.GetString(), sn);
+		Json::Value ret;
+		sendRequest(req, ret);
 		if (handleReply(ret)) {
 		}
 	}
@@ -610,63 +543,47 @@ void Client::onLangProfileActivated(REFIID lang) {
 void Client::onLangProfileDeactivated(REFIID lang) {
 	LPOLESTR str = NULL;
 	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
-		StringBuffer s;
-		Writer<StringBuffer> writer(s);
-		writer.StartObject();
-		int sn = addSeqNum(writer);
-
-		writer.String("method");
-		writer.String("onLangProfileDeactivated");
-
-		writer.String("guid");
-		writer.String(utf16ToUtf8(str));
+		Json::Value req;
+		req["method"] = "onLangProfileDeactivated";
+		req["guid"] = utf16ToUtf8(str);
 		::CoTaskMemFree(str);
 
-		writer.EndObject();
-		Document ret = sendRequest(s.GetString(), sn);
+		Json::Value ret;
+		sendRequest(req, ret);
 		if (handleReply(ret)) {
 		}
 	}
-	clearIconCache();
+	LangBarButton::clearIconCache();
 }
 
 void Client::init() {
-	StringBuffer s;
-	Writer<StringBuffer> writer(s);
-	writer.StartObject();
+	Json::Value req;
+	req["method"] = "init";
+	req["id"] = "";
+	req["isWindows8Above"] = textService_->imeModule()->isWindows8Above();
+	req["isMetroApp"] = textService_->isMetroApp();
+	req["isUiLess"] = textService_->isUiLess();
+	req["isConsole"] = textService_->isConsole();
 
-	int sn = addSeqNum(writer);
-
-	writer.String("method");
-	writer.String("init");
-
-	writer.String("id"); // id of the input method
-	writer.String("");
-
-	writer.String("isWindows8Above");
-	writer.Bool(textService_->imeModule()->isWindows8Above());
-
-	writer.String("isMetroApp");
-	writer.Bool(textService_->isMetroApp());
-
-	writer.String("isUiLess");
-	writer.Bool(textService_->isUiLess());
-
-	writer.String("isConsole");
-	writer.Bool(textService_->isConsole());
-
-	writer.EndObject();
-	Document ret = sendRequest(s.GetString(), sn);
+	Json::Value ret;
+	sendRequest(req, ret);
 	if (handleReply(ret)) {
 	}
 }
 
-Document Client::sendRequest(std::string req, int seqNo) {
+// send the request to the server
+// a sequence number will be added to the req object automatically.
+bool PIME::Client::sendRequest(Json::Value& req, Json::Value & result) {
+	unsigned int seqNum = newSeqNum_++;
+	req["seqNum"] = seqNum; // add a sequence number for the request
+
 	std::string ret;
 	if (connectPipe()) { // ensure that we're connected
 		char buf[1024];
 		DWORD rlen = 0;
-		if(TransactNamedPipe(pipe_, (void*)req.c_str(), req.length(), buf, 1023, &rlen, NULL)) {
+		Json::FastWriter writer;
+		std::string reqStr = writer.write(req); // convert the json object to string
+		if(TransactNamedPipe(pipe_, (void*)reqStr.c_str(), reqStr.length(), buf, 1023, &rlen, NULL)) {
 			buf[rlen] = '\0';
 			ret = buf;
 		}
@@ -674,6 +591,7 @@ Document Client::sendRequest(std::string req, int seqNo) {
 			if (GetLastError() != ERROR_MORE_DATA) {
 				// unknown error happens, reset the pipe?
 				closePipe();
+				return false;
 			}
 			buf[rlen] = '\0';
 			ret = buf;
@@ -683,12 +601,18 @@ Document Client::sendRequest(std::string req, int seqNo) {
 					break;
 				buf[rlen] = '\0';
 				ret += buf;
+				if (success)
+					break;
 			}
 		}
 	}
-	Document d;
-	d.Parse(ret.c_str());
-	return d;
+	Json::Reader reader;
+	bool success = reader.parse(ret, result);
+	if (success) {
+		if (result["seqNum"].asUInt() != seqNum) // sequence number mismatch
+			success = false;
+	}
+	return success;
 }
 
 bool Client::connectPipe() {
@@ -738,16 +662,9 @@ void Client::closePipe() {
 	if (pipe_ != INVALID_HANDLE_VALUE) {
 		DisconnectNamedPipe(pipe_);
 		CloseHandle(pipe_);
-		clearIconCache();
+		LangBarButton::clearIconCache();
 		pipe_ = INVALID_HANDLE_VALUE;
 	}
-}
-
-void Client::clearIconCache() {
-	for (auto it = iconCache_.begin(); it != iconCache_.end(); ++it) {
-		DestroyIcon(it->second);
-	}
-	iconCache_.clear();
 }
 
 

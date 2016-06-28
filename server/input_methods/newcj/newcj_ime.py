@@ -15,8 +15,11 @@
 
 from keycodes import *  # for VK_XXX constants
 from textService import *
-from .libnewcj import NewCJContext
+from .cin import Cin
+
+import io
 import os.path
+import time
 
 CHINESE_MODE = 1
 ENGLISH_MODE = 0
@@ -28,6 +31,8 @@ ID_SWITCH_SHAPE = 2
 ID_SETTINGS = 3
 ID_MODE_ICON = 4
 
+MAX_CHAR_LENGTH = 5
+
 
 class NewCJTextService(TextService):
 	# compositionChar: a, b, c, d...
@@ -38,21 +43,58 @@ class NewCJTextService(TextService):
 		TextService.__init__(self, client)
 		self.curdir = os.path.abspath(os.path.dirname(__file__))
 		self.icon_dir = self.curdir
-
-		self.langMode = -1
+		self.candidates = []
+		self.langMode = CHINESE_MODE
 		self.shapeMode = -1
-		self.newCJContext = None
+		self.lastKeyDownCode = 0
+		self.lastKeyDownTime = 0.0
+
+		newcj_path = os.path.join(self.curdir, "newcj.cin")
+		with io.open(newcj_path, encoding='utf-8') as fs:
+			self.cin = Cin(fs)
+		# TODO: Can newcj.cin be loaded only at the first time the input method is initialized?
+		print('Finish loading')
 
 	# 輸入法被使用者啟用
 	def onActivate(self):
 		TextService.onActivate(self)
-		self.initNewCJContext()
 		self.customizeUI(candFontSize=20, candPerRow=1)
-		self.setSelKeys("1234567890")
+
+		if self.cin.getSelection():
+			self.setSelKeys(self.cin.getSelection())
+
+		# 切換中英文
+
+		icon_name = "chi.ico" if self.langMode == CHINESE_MODE else "eng.ico"
+		self.addButton("switch-lang",
+					   icon=os.path.join(self.icon_dir, icon_name),
+					   tooltip="中英文切換",
+					   commandId=ID_SWITCH_LANG
+					   )
+
+		# Windows 8 以上已取消語言列功能，改用 systray IME mode icon
+		if self.client.isWindows8Above:
+			self.addButton("windows-mode-icon",
+						   icon=os.path.join(self.icon_dir, icon_name),
+						   tooltip="中英文切換",
+						   commandId=ID_MODE_ICON
+						   )
 
 	def onDeactivate(self):
 		TextService.onDeactivate(self)
-		self.newCJContext = None
+		self.lastKeyDownCode = 0
+		self.removeButton("switch-lang")
+
+	def filterKeyUp(self, keyEvent):
+		# 剛才最後一個按下的鍵，和現在放開的鍵，都是 Shift
+		if self.lastKeyDownCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
+			pressedDuration = time.time() - self.lastKeyDownTime
+			# 按下和放開的時間相隔 < 0.5 秒
+			if pressedDuration < 0.5:
+				self.toggleLanguageMode()  # 切換中英文模式
+		self.lastKeyDownCode = 0
+		self.lastKeyDownTime = 0.0
+		return False
 
 	def filterKeyDown(self, keyEvent):
 		# 使用者開始輸入，還沒送出前的編輯區內容稱 composition string
@@ -60,6 +102,10 @@ class NewCJTextService(TextService):
 		# 若正在編輯中文，則任何按鍵我們都需要送給輸入法處理，直接 return True
 		# 另外，若使用 "`" key 輸入特殊符號，可能會有編輯區是空的
 		# 但選字清單開啟，輸入法需要處理的情況
+		self.lastKeyDownCode = keyEvent.keyCode
+		if self.lastKeyDownTime == 0.0:
+			self.lastKeyDownTime = time.time()
+
 		# TODO: 是否讓Ctrl+A, Ctrl+C, Ctrl+V 在這時可以用？
 		if self.isComposing() or self.showCandidates:
 			return True
@@ -95,77 +141,100 @@ class NewCJTextService(TextService):
 				return False
 
 		# 檢查按下的鍵是否為自由大新定義的符號
-		if self.isNewCJChardef(keyEvent.charCode):
+		if self.cin.isInKeyName(chr(keyEvent.charCode).lower()):
 			return True
 
 		# 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
 		return False
 
 	def onKeyDown(self, keyEvent):
-		newCJContext = self.newCJContext
+		candidates = self.candidates
+		# 大寫 Decimal
 		charCode = keyEvent.charCode
+		# 小寫 Decimal
 		keyCode = keyEvent.keyCode
 		charStr = chr(charCode)
+		charStrLow = charStr.lower()
 
-		candidates = []
-		if self.compositionChar in self.newCJContext.chardef:
-			candidates = self.newCJContext.chardef[self.compositionChar]
-		else:
-			self.resetComposition()
-		# handle candidate list
-		if self.showCandidates:
-			candLengthStr = str(len(candidates))
-			if len(candidates) > 9:
-				print('length of candidates > 9 !!!')
-			if keyCode == VK_UP or keyCode == VK_ESCAPE:
-				self.setShowCandidates(False)
-			elif keyCode >= ord('1') and keyCode <= ord('9'):
-				i = keyCode - ord('1')
-				cand = candidates[i]
-				i = self.compositionCursor - 1
-				if i < 0:
-					i = 0
-				self.commitString = self.compositionString[0:i] + cand + self.compositionString[i + 1:]
-				self.setCompositionString(self.commitString)
-				self.setShowCandidates(False)
-			return True
-		else:
-			if keyCode == VK_DOWN:
-				self.setCandidateList(candidates)
-				self.setShowCandidates(True)
-				return True
-		# handle normal keyboard input
-		if not self.isComposing():
-			if keyCode == VK_RETURN or keyCode == VK_BACK:
-				return False
-		if keyCode == VK_SPACE or keyCode == VK_RETURN or len(self.compositionString) > 5:
-			if self.commitString == '' and len(self.newCJContext.chardef[self.compositionChar]) >= 1:
-				self.commitString = self.newCJContext.chardef[self.compositionChar][0]
-			self.setCommitString(self.commitString)
-			print('commitString: ' + self.commitString)
-			self.resetComposition()
-		elif keyCode == VK_BACK and self.compositionString != "":
-			self.setCompositionString(self.compositionString[:-1])
-		elif keyCode == VK_LEFT:
-			i = self.compositionCursor - 1
-			if i >= 0:
-				self.setCompositionCursor(i)
-		elif keyCode == VK_RIGHT:
-			i = self.compositionCursor + 1
-			if i <= len(self.compositionString):
-				self.setCompositionCursor(i)
-		else:
-			char = charStr.lower()
-			self.compositionChar += char
-			if char in self.newCJContext.keyname:
-				keyname = self.newCJContext.keyname[char]
+		# 若目前輸入的按鍵是可見字元 (字母、數字、標點...等)
+		if keyEvent.isPrintableChar():
+			# 若按下的鍵在 cin 檔裡有定義
+			if self.cin.isInKeyName(charStrLow):
+				self.compositionChar += charStrLow
+				keyname = self.cin.getKeyName(charStrLow)
 				self.setCompositionString(self.compositionString + keyname)
 				self.setCompositionCursor(len(self.compositionString))
-				return True
-			return False
+			# 若字碼已經可組成一個字
+			if self.cin.isInCharDef(self.compositionChar):
+				candidates = self.cin.getCharDef(self.compositionChar)
+			elif len(self.compositionChar) > MAX_CHAR_LENGTH:
+				self.resetComposition()
+
+			if candidates:
+				print("candidates are {}".format(",".join(candidates)))
+				self.setCandidateList(candidates)
+				self.setShowCandidates(True)
+				if charStr in self.cin.getSelection():
+					i = keyCode - ord('1')
+					if i < len(candidates):
+						cand = candidates[i]
+						self.setCommitString(cand)
+						self.resetComposition()
+			else:
+				self.setShowCandidates(False)
+
+			# 按下空白或字碼超過5個時，將組成的字送出
+			if keyCode == VK_SPACE or len(self.compositionString) > MAX_CHAR_LENGTH:
+				if len(candidates) >= 1:
+					self.setCommitString(candidates[0])
+				self.resetComposition()
+
+			return True
+		else:
+			if not self.isComposing():
+				if keyCode == VK_RETURN or keyCode == VK_BACK:
+					return False
+			# 此時不在組成字的階段，刪掉一個字碼
+			elif keyCode == VK_BACK:
+				if self.compositionString != "":
+					self.setCompositionString(self.compositionString[:-1])
+					self.compositionChar = self.compositionChar[:-1]
+					if self.cin.isInCharDef(self.compositionChar):
+						candidates = self.cin.getCharDef(self.compositionChar)
+						self.setCandidateList(candidates)
+						self.setShowCandidates(True)
+					else:
+						self.setShowCandidates(False)
+
+			if keyCode == VK_ESCAPE and (self.showCandidates or len(self.compositionChar) > 0):
+				self.setShowCandidates(False)
+				self.resetComposition()
+			if self.showCandidates:
+				candCursor = self.candidateCursor  # 目前的游標位置
+				candCount = len(self.candidateList)  # 目前選字清單項目數
+				if keyCode == VK_UP:  # 游標上移
+					if candCursor >= 1:
+						candCursor -= 1
+				elif keyCode == VK_DOWN:  # 游標下移
+					if (candCursor + 1) < candCount:
+						candCursor += 1
+				elif keyCode == VK_RETURN:  # 按下 Enter 鍵
+					candidates = self.cin.getCharDef(self.compositionChar)
+					cand = candidates[candCursor]
+					self.setCommitString(cand)
+					self.resetComposition()
+					self.setCandidateCursor(0)
+					return
+				# 更新選字視窗游標位置
+				self.setCandidateCursor(candCursor)
 
 	def onCommand(self, commandId, commandType):
 		print("onCommand", commandId, commandType)
+
+		if commandId == ID_SWITCH_LANG:  # 切換中英文模式
+			self.toggleLanguageMode()
+		elif commandId == ID_MODE_ICON:  # windows 8 mode icon
+			self.toggleLanguageMode()  # 切換中英文模式
 
 	def isNumberChar(self, keyCode):
 		return keyCode >= 0x30 and keyCode <= 0x39
@@ -173,16 +242,23 @@ class NewCJTextService(TextService):
 	def resetComposition(self):
 		self.compositionChar = ''
 		self.setCompositionString('')
+		self.setShowCandidates(False)
 
-	def initNewCJContext(self):
-		self.newCJContext = NewCJContext()
-		self.newCJContext.loadTokens()
-		print('load tokens')
+	# 依照目前輸入法狀態，更新語言列顯示
+	def updateLangButtons(self):
+		icon_name = "chi.ico" if self.langMode == CHINESE_MODE else "eng.ico"
+		icon_path = os.path.join(self.icon_dir, icon_name)
+		self.changeButton("switch-lang", icon=icon_path)
 
-	# 確認是否是大新自由的字
-	def isNewCJChardef(self, charCode):
-		if charCode < 33 or charCode == 127:
-			return False
-		h = hex(charCode).split('x')[1]
-		charStr = bytearray.fromhex(str(h)).decode()
-		return charStr in self.newCJContext.chardef
+		if self.client.isWindows8Above:  # windows 8 mode icon
+			# FIXME: we need a better set of icons to meet the
+			#        WIndows 8 IME guideline and UX guidelines.
+			self.changeButton("windows-mode-icon", icon=icon_path)
+
+	# 切換中英文模式
+	def toggleLanguageMode(self):
+		if self.langMode == CHINESE_MODE:
+			self.langMode = ENGLISH_MODE
+		elif self.langMode == ENGLISH_MODE:
+			self.langMode = CHINESE_MODE
+		self.updateLangButtons()

@@ -99,8 +99,14 @@ class Cin(object):
     def getSelection(self):
         return self.selkey
 
+    def isInKeyName(self, key):
+        return key in self.keynames
+
     def getKeyName(self, key):
         return self.keynames[key]
+
+    def isInCharDef(self, key):
+        return key in self.chardefs
 
     def getCharDef(self, key):
         """ 

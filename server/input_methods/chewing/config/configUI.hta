@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="x-ua-compatible" content="ie=9">
+        <meta charset="utf-8">
+        <title>設定新酷音輸入法</title>
+        <link rel="stylesheet" type="text/css" href="js/jquery-ui-1.11.4/jquery-ui.min.css">
+        <link rel="stylesheet" type="text/css" href="js/jquery-ui-1.11.4/jquery-ui.theme.min.css">
+        <link rel="stylesheet" type="text/css" href="css/config.css">
+
+        <script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+        <script type="text/javascript" src="js/jquery-ui-1.11.4/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="js/config.js"></script>
+
+        <!-- We use Microsoft HTML application (Windows-only) -->
+        <hta:application
+            id="ChewingConfig"
+            border="thick"
+            borderstyle="normal"
+            contextmenu="no"
+            icon="images\logo.ico"
+            innerborder="no"
+            scroll="yes"
+            singleinstance="yes"
+            windowState="maximize"
+        />
+    </head>
+    <body>
+    <div id="tabs">
+        <ul>
+            <li><a href="#typing_page">打字行為</a></li>
+            <li><a href="#ui_page">介面外觀</a></li>
+            <li><a href="#keyboard_page">鍵盤設定</a></li>
+            <li><a href="#symbols_page">特殊符號</a></li>
+            <li><a href="#ez_symbols_page">簡易符號輸入</a></li>
+            <li><a href="#about_page">關於新酷音</a></li>
+        </ul>
+
+        <div id="typing_page">
+            <input type="checkbox" id="switchLangWithShift" name="switchLangWithShift" />
+            <label for="switchLangWithShift">使用 Shift 快速切換中英文</label><br>
+
+            <input type="checkbox" id="enableCapsLock" name="enableCapsLock" />
+            <label for="enableCapsLock">使用 CapsLock 切換中英文</label><br>
+
+            <input type="checkbox" id="escCleanAllBuf" name="escCleanAllBuf" />
+            <label for="escCleanAllBuf">使用 Esc 清空編輯區字串</label><br>
+
+            <input type="checkbox" id="fullShapeSymbols" name="fullShapeSymbols" />
+            <label for="fullShapeSymbols">按住 Shift 輸入全形標點符號</label><br>
+
+            <input type="checkbox" id="upperCaseWithShift" name="upperCaseWithShift" />
+            <label for="upperCaseWithShift">按住 Shift 輸入大寫英文字母</label><br>
+
+            <input type="checkbox" id="cursorCandList" name="cursorCandList" />
+            <label for="cursorCandList">使用方向鍵移動游標選字</label><br>
+
+            <input type="checkbox" id="showCandWithSpaceKey" name="showCandWithSpaceKey" />
+            <label for="showCandWithSpaceKey">按空白鍵叫出選字視窗</label><br>
+
+            <input type="checkbox" id="advanceAfterSelection" name="advanceAfterSelection" />
+            <label for="advanceAfterSelection">選字完畢自動跳到下一個字</label><br>
+
+            <label for="selKeyType">選字鍵: </label>
+            <select name="selKeyType" id="selKeyType">
+            </select><br>
+
+            <input type="checkbox" id="defaultFullSpace" name="defaultFullSpace" />
+            <label for="defaultFullSpace">預設以全形模式啟動</label><br>
+
+            <input type="checkbox" id="defaultEnglish" name="defaultEnglish" />
+            <label for="defaultEnglish">預設以英文模式啟動</label><br>
+
+            <input type="checkbox" id="outputSimpChinese" name="outputSimpChinese" />
+            <label for="outputSimpChinese">預設輸出簡體中文</label><br>
+
+            <input type="checkbox" id="addPhraseForward" name="addPhraseForward" />
+            <label for="addPhraseForward">Ctrl + 數字加入游標前方的詞</label><br>
+        </div>
+
+        <div id="ui_page">
+            <label for="candPerRow">每列顯示候選字個數: </label>
+            <input type="text" id="candPerRow" name="candPerRow" /><br>
+
+            <label for="candPerPage">每頁顯示候選字個數: </label>
+            <input type="text" id="candPerPage" name="candPerPage" /><br>
+
+            <label for="fontSize">選字及訊息視窗文字大小: </label>
+            <input type="text" id="fontSize" name="fontSize" /><br>
+
+			<div id="selExample">			
+			</div>
+            <!--
+            <input type="checkbox" id="colorCandWnd" name="colorCandWnd" />
+            <label for="colorCandWnd">用不同顏色顯示選字鍵和候選字: <label><br>
+            -->
+        </div>
+
+        <div id="keyboard_page">
+        <!-- keyboard layouts inserted here by javascript -->
+        </div>
+
+        <div id="symbols_page">
+            <textarea id="symbols"></textarea><br>
+            新酷音輸入法提供符號表，裡面的符號可以自訂。
+            以上是符號表的設定檔，語法相當簡單。<br>
+            每一行的內容都是： 「分類名稱」=「此分類下的所有符號」。
+            您也可以一行只放一個符號，則該符號會被放在最上層選單。
+        </div>
+
+        <div id="ez_symbols_page">
+            <input type="checkbox" id="easySymbolsWithShift" name="easySymbolsWithShift" />
+            <label for="easySymbolsWithShift">中文模式下按住 Shift 快速輸入符號</label><br>
+
+            <input type="checkbox" id="easySymbolsWithCtrl" name="easySymbolsWithCtrl" />
+            <label for="easySymbolsWithCtrl"  title="例如常用的複製貼上熱鍵 Ctrl+C, Ctrl+V，就會和這個功能衝突，需要切回英文模式才能使用" >中文模式下按住 Ctrl 快速輸入符號 (很容易和應用程式熱鍵衝突，不建議使用)</label>
+            <p>
+            以下是使用 Ctrl 或 Shift 快速輸入符號的設定，每一行表示一個鍵所對應的字串，
+            例如「m 新酷音」或是「L orz」等。<br>
+            每一行的格式必須符合：「Ta Tb」。其中 Ta 與 Tb 間必須有一個半形空白字元；
+            Ta 可以是 a-z 等字母；Tb 可以是長度 1 到 10 的任意中英文字串。
+            </p>
+            <textarea id="ez_symbols"></textarea>
+        </div>
+
+        <div id="about_page">
+            <img src="images/logo.png" alt="新酷音輸入法Logo"/><br>
+            PIME 輸入法平台版本：<span id="version"></span>
+            <p>最早的「酷音輸入法」是<a href="http://www.csie.ntu.edu.tw/~b6506053/">龔律全</a>與<a href="https://plus.google.com/u/0/106631098488727416298/posts">陳康本</a>兩人的資訊專題 (分別在兩人就讀台大資工系與台大電機系的時期)，由中央研究院資訊研究所的<a href="http://www.iis.sinica.edu.tw/~tshsu">徐讚昇</a>博士提供技術指導與超過兩年的經濟及設備支援，最終的成果選擇以 GPL 授權釋出，可說是 XIM (X Input Method) 中最接近新注音或是自然輸入法的實作，詳情可參閱龔律全所撰寫的<a href="http://chewing.im/doc/chewing-report.pdf">技術報告</a> (PDF)。</p>
+            <p>但是酷音輸入法的兩位原創者已不再維護，後續的發展由許多熱心的朋友移植到不同的平台上，諸如 TimHsu (crazykid) 與 jserv 維護的 JMCCE 1.4.x 中文終端機內建酷音輸入法、clkao 移植酷音到 MacOS X 與 IIIMF 架構，以及 gugod 接手 clkao 的 ChewingOSX 後，大幅改善實作的 SpaceChewing 計畫等。而新酷音就是扮演整合這些分支的角色，並且更廣泛移植與改良酷音輸入法的適用性，並且於 2004 年 12 月有獨立的專案資源，到目前為止，已有許多熱心的貢獻者加入開發行列，期待更多的朋友參與。</p>
+            <p>關於本計畫概況，可參閱新酷音計畫在 2004 國際開放源碼研討會 (ICOS 2004)上的<a href="http://chewing.im/doc/chewing-intro.html">簡報</a> (Adobe Flash 格式)。</p>
+            <p>本 Windows 版本是由<a href="https://github.com/PCMan">洪任諭(PCMan)</a>移植到 <a href="https://github.com/EasyIME/PIME">PIME 輸入法平台</a>上 Copyright &copy; 2015 - 2016</p>
+        </div>
+    </div>
+
+    <div id="buttons">
+        <button id="ok">確定</button>
+        <button id="cancel">取消</button>
+    </div>
+    </body>
+</html>

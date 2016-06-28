@@ -170,6 +170,7 @@ class TextService:
 
     def onCompositionTerminated(self, forced):
         self.commitString = ""
+        self.compositionString = ""
 
     def onKeyboardStatusChanged(self, opened):
         pass

@@ -672,6 +672,7 @@ class ChewingTextService(TextService):
             if chewingContext:
                 if self.showCandidates:
                     chewingContext.cand_close()
+                    self.setShowCandidates(False)
                 if chewingContext.bopomofo_Check():
                     chewingContext.clean_bopomofo_buf()
                 if chewingContext.buffer_Check():

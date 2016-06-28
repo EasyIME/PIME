@@ -23,7 +23,7 @@ from ctypes import *
 from serviceManager import textServiceMgr
 
 # import libpipe
-dll_path = os.path.join(os.path.dirname(__file__), "libpipe.dll")
+dll_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "libpipe.dll")
 libpipe = CDLL(dll_path)
 
 # define Win32 error codes for named pipe I/O

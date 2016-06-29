@@ -278,12 +278,6 @@ SubSection "輸入法模組"
 		File /r "..\server\input_methods\chewing"
 	SectionEnd
 
-	Section "自由大新倉頡" newcj
-		SectionIn 2
-		SetOutPath "$INSTDIR\server\input_methods"
-		File /r "..\server\input_methods\newcj"
-	SectionEnd
-
 	Section "酷倉" checj
 		SectionIn 2
 		SetOutPath "$INSTDIR\server\input_methods"

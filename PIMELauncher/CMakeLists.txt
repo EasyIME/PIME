@@ -13,5 +13,6 @@ add_executable(PIMELauncher WIN32
     # PIMELauncher.rc
 )
 
-#target_link_libraries(PIMETextService
-#)
+target_link_libraries(PIMELauncher 
+    libpipe
+)

@@ -17,6 +17,7 @@
 //	Boston, MA  02110-1301, USA.
 //
 
+#include "libpipe.h"
 #include <windows.h>
 #include <Lmcons.h> // for UNLEN
 #include <Winnt.h> // for security attributes constants

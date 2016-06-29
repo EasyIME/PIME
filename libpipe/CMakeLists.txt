@@ -11,5 +11,6 @@ include_directories(
 
 add_library(libpipe SHARED
 	libpipe.cpp
+	libpipe.h
 	libpipe.def
 )

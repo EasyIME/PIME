@@ -581,7 +581,6 @@ bool Client::sendRequest(Json::Value& req, Json::Value & result) {
 
 	std::string ret;
 	if (connectServerPipe()) { // ensure that we're connected
-		char buf[1024];
 		DWORD rlen = 0;
 		Json::FastWriter writer;
 		std::string reqStr = writer.write(req); // convert the json object to string
@@ -655,7 +654,7 @@ bool Client::connectServerPipe() {
 		// Here we do not hard-code the path of server pipe since different backends
 		// have different pipe names. Instead, we connect to PIMELauncher first, and
 		// query for the actual address of the server pipe.
-		wstring serverPipeName = L"\\\\.\\pipe\\";
+		wstring lancherPipeName = L"\\\\.\\pipe\\";
 		DWORD len = 0;
 		::GetUserNameW(NULL, &len); // get the required size of the buffer
 		if (len <= 0)
@@ -664,12 +663,28 @@ bool Client::connectServerPipe() {
 		unique_ptr<wchar_t> username(new wchar_t[len]);
 		if (!::GetUserNameW(username.get(), &len))
 			return false;
-		serverPipeName += username.get();
-		serverPipeName += L"\\PIME_pipe";
+		lancherPipeName += username.get();
+		lancherPipeName += L"\\PIME\\Launcher";
+		HANDLE launcherPipe = connectPipe(lancherPipeName.c_str());
+
+		wstring serverPipeName;
+		if (launcherPipe != INVALID_HANDLE_VALUE) {
+			// we have connected to PIMELauncher
+			// query for the pipe name of the actual input method server from PIMELauncher
+			std::string reply;
+			if (sendRequestText(launcherPipe, guid_.c_str(), guid_.length(), reply)) {
+				serverPipeName = utf8ToUtf16(reply.c_str());
+			}
+			DisconnectNamedPipe(launcherPipe);
+			CloseHandle(launcherPipe);
+		}
+
 		// try to connect to the input method server
-		pipe_ = connectPipe(serverPipeName.c_str());
-		if (pipe_ != INVALID_HANDLE_VALUE) // successfully connected to the server
-			init(); // send initialization info to the server
+		if (!serverPipeName.empty()) {
+			pipe_ = connectPipe(serverPipeName.c_str());
+			if (pipe_ != INVALID_HANDLE_VALUE) // successfully connected to the server
+				init(); // send initialization info to the server
+		}
 	}
 	return true;
 }

@@ -22,6 +22,7 @@
 #include <Shellapi.h>
 #include <cstring>
 #include <string>
+#include "../libpipe/libpipe.h"
 
 using namespace std;
 
@@ -124,6 +125,8 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hprev, LPSTR cmd, int show) {
 			quit = true;
 	}
 	LocalFree(argv);
+
+	HANDLE h = connect_pipe("TEST");
 
 	// we only allow running one instance of PIMELauncher
 	server_hwnd = FindWindow(wnd_class_name, NULL); // find existing instance

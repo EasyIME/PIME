@@ -23,7 +23,7 @@ from ctypes import *
 from serviceManager import textServiceMgr
 
 # import libpipe
-dll_path = os.path.join(os.path.dirname(__file__), "libpipe.dll")
+dll_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "libpipe.dll")
 libpipe = CDLL(dll_path)
 
 # define Win32 error codes for named pipe I/O
@@ -36,60 +36,31 @@ class Client:
         self.pipe= pipe
         self.server = server
         self.service = None
-        self.currentReply = {}
 
     def init(self, msg):
+        self.guid = msg["id"]
         self.isWindows8Above = msg["isWindows8Above"]
         self.isMetroApp = msg["isMetroApp"]
         self.isUiLess = msg["isUiLess"]
         self.isUiLess = msg["isConsole"]
-
-    def onActivate(self, msg):
-        pass
-
-    def onDeactivate(self, msg):
-        pass
-
-    def onLangProfileActivated(self, msg):
-        guid = msg["guid"]
-        service = textServiceMgr.createService(self, guid)
-        self.service = service
-        # activate the new text service
-        if service:
-            self.currentReply = service.handleRequest(msg)
-
-    def onLangProfileDeactivated(self, msg):
-        # deactivate the current text service
-        service = self.service
-        if service:
-            self.currentReply = service.handleRequest(msg)
+        # create the text service
+        self.service = textServiceMgr.createService(self, self.guid)
+        return (self.service is not None)
 
     def handleRequest(self, msg): # msg is a json object
         method = msg.get("method", None)
         seqNum = msg.get("seqNum", 0)
         print("handle message: ", threading.current_thread().name, method, seqNum)
-
-        # these are messages handled by Client
-        if method == "init":
-            self.init(msg)
-        elif method == "onActivate":
-            self.onActivate(msg)
-        elif method == "onDeactivate":
-            self.onDeactivate(msg)
-        elif method == "onLangProfileActivated":
-            self.onLangProfileActivated(msg)
-        elif method == "onLangProfileDeactivated":
-            self.onLangProfileDeactivated(msg)
-        else:  # these are messages handled by the text service
-            service = self.service
-            if service:  # the text service is responsible for replying to the msg
-                self.currentReply = service.handleRequest(msg)
-
-        reply = self.currentReply
-        self.currentReply = {}
-        if not reply:  # the text service does not handle the msg, and we handled it.
-            reply["success"] = True
-            reply["seqNum"] = seqNum # reply with sequence number added
+        service = self.service
+        if service:
+            # let the text service handle the message
+            reply = service.handleRequest(msg)
+        else:  # the text service is not yet initialized
+            reply = {"seqNum": seqNum}
+            success = False
+            if method == "init": # initialize the text service
+                success = self.init(msg)
+            reply["success"] = success
         return reply
 
 

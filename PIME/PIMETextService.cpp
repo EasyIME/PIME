@@ -76,38 +76,20 @@ TextService::~TextService(void) {
 
 // virtual
 void TextService::onActivate() {
-	if(!client_)
-		client_ = new Client(this);
-	client_->onActivate();
-
-	// DWORD configStamp = globalCompartmentValue(g_configChangedGuid);
-	if(imeModeIcon_) // windows 8 IME mode icon
-		imeModeIcon_->setEnabled(isKeyboardOpened());
+	// Since we support multiple language profiles in this text service,
+	// we do nothing when the whole text service is activated.
+	// Instead, we do the actual initilization for each language profile when it is activated.
+	// In PIME, we create different client connections for different language profiles.
 }
 
 // virtual
 void TextService::onDeactivate() {
 	if(client_) {
-
 		// Windows does not deactivate current language profile before
 		// deactivating the whole text service. Let's do it ourselves.
 		if (!::IsEqualIID(currentLangProfile_, IID_NULL)) {
-			// deactive currently active language profile if there is any
-			client_->onLangProfileDeactivated(currentLangProfile_);
-			currentLangProfile_ = IID_NULL;
+			onLangProfileDeactivated(currentLangProfile_);
 		}
-		// deactivate the whole text service
-		client_->onDeactivate();
-		delete client_;
-		client_ = NULL;
-	}
-
-	hideMessage();
-
-	if(candidateWindow_) {
-		showingCandidates_ = false;
-		delete candidateWindow_;
-		candidateWindow_ = NULL;
 	}
 }
 
@@ -230,25 +212,49 @@ void TextService::onCompositionTerminated(bool forced) {
 }
 
 void TextService::onLangProfileActivated(REFIID lang) {
-	if (client_) {
-		// Sometimes, Windows does not deactivate the old language profile before
-		// activating the new one. So here we do it by ourselves.
-		// If a new profile is activated, but there is an old one remaining active,
-		// deactive it first.
-		if (!::IsEqualIID(currentLangProfile_, IID_NULL)) {
-			// deactivate the current profile
-			client_->onLangProfileDeactivated(currentLangProfile_);
-		}
-		// activate the new profile
-		client_->onLangProfileActivated(lang);
+	// Sometimes, Windows does not deactivate the old language profile before
+	// activating the new one. So here we do it by ourselves.
+	// If a new profile is activated, but there is an old one remaining active,
+	// deactive it first.
+	if (!::IsEqualIID(currentLangProfile_, IID_NULL)) {
+		// deactivate the current profile
+		onLangProfileDeactivated(currentLangProfile_);
 	}
+
+	if (client_ != nullptr) {
+		return;
+	}
+
+	// create a new client connection to the input method server for the language profile
+	if (!client_) {
+		client_ = new Client(this, lang);
+	}
+	client_->onActivate();
+
+	if (imeModeIcon_) // windows 8 IME mode icon
+		imeModeIcon_->setEnabled(isKeyboardOpened());
 	currentLangProfile_ = lang;
 }
 
 void TextService::onLangProfileDeactivated(REFIID lang) {
-	if(client_)
-		client_->onLangProfileDeactivated(lang);
-	currentLangProfile_ = IID_NULL;
+	if (::IsEqualIID(lang, currentLangProfile_)) {
+		// deactive currently active language profile
+		if (client_) {
+			// disconnect from the server
+			client_->onDeactivate();
+			currentLangProfile_ = IID_NULL;
+			delete client_;
+			client_ = NULL;
+			// detroy UI resources
+			hideMessage();
+			if (candidateWindow_) {
+				showingCandidates_ = false;
+				delete candidateWindow_;
+				candidateWindow_ = NULL;
+			}
+		}
+		currentLangProfile_ = IID_NULL;
+	}
 }
 
 void TextService::createCandidateWindow(Ime::EditSession* session) {

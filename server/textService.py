@@ -118,10 +118,10 @@ class TextService:
         elif method == "onCompositionTerminated":
             forced = msg["forced"]
             self.onCompositionTerminated(forced)
-        elif method == "onLangProfileActivated":
+        elif method == "onActivate":
             self.isActivated = True
             self.onActivate()
-        elif method == "onLangProfileDeactivated":
+        elif method == "onDeactivate":
             self.onDeactivate()
             self.isActivated = False
         else:
@@ -170,6 +170,7 @@ class TextService:
 
     def onCompositionTerminated(self, forced):
         self.commitString = ""
+        self.compositionString = ""
 
     def onKeyboardStatusChanged(self, opened):
         pass

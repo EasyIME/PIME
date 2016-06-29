@@ -31,10 +31,16 @@ using namespace std;
 
 namespace PIME {
 
-Client::Client(TextService* service):
+Client::Client(TextService* service, REFIID langProfileGuid):
 	textService_(service),
 	pipe_(INVALID_HANDLE_VALUE),
 	newSeqNum_(0) {
+
+	LPOLESTR guidStr = NULL;
+	if (SUCCEEDED(::StringFromCLSID(langProfileGuid, &guidStr))) {
+		guid_ = utf16ToUtf8(guidStr);
+		::CoTaskMemFree(guidStr);
+	}
 }
 
 Client::~Client(void) {
@@ -525,41 +531,10 @@ void Client::onCompositionTerminated(bool forced) {
 	}
 }
 
-void Client::onLangProfileActivated(REFIID lang) {
-	LPOLESTR str = NULL;
-	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
-		Json::Value req;
-		req["method"] = "onLangProfileActivated";
-		req["guid"] = utf16ToUtf8(str);
-		::CoTaskMemFree(str);
-
-		Json::Value ret;
-		sendRequest(req, ret);
-		if (handleReply(ret)) {
-		}
-	}
-}
-
-void Client::onLangProfileDeactivated(REFIID lang) {
-	LPOLESTR str = NULL;
-	if (SUCCEEDED(::StringFromCLSID(lang, &str))) {
-		Json::Value req;
-		req["method"] = "onLangProfileDeactivated";
-		req["guid"] = utf16ToUtf8(str);
-		::CoTaskMemFree(str);
-
-		Json::Value ret;
-		sendRequest(req, ret);
-		if (handleReply(ret)) {
-		}
-	}
-	LangBarButton::clearIconCache();
-}
-
 void Client::init() {
 	Json::Value req;
 	req["method"] = "init";
-	req["id"] = "";
+	req["id"] = guid_.c_str();  // language profile guid
 	req["isWindows8Above"] = textService_->imeModule()->isWindows8Above();
 	req["isMetroApp"] = textService_->isMetroApp();
 	req["isUiLess"] = textService_->isUiLess();
@@ -571,39 +546,50 @@ void Client::init() {
 	}
 }
 
+bool Client::sendRequestText(HANDLE pipe, const char* data, int len, std::string& reply) {
+	char buf[1024];
+	DWORD rlen = 0;
+	if (TransactNamedPipe(pipe, (void*)data, len, buf, sizeof(buf) - 1, &rlen, NULL)) {
+		buf[rlen] = '\0';
+		reply = buf;
+	}
+	else { // error!
+		if (GetLastError() != ERROR_MORE_DATA) { // unknown error happens
+			return false;
+		}
+		// still has more data to read
+		buf[rlen] = '\0';
+		reply = buf;
+		for (;;) {
+			BOOL success = ReadFile(pipe, buf, sizeof(buf) - 1, &rlen, NULL);
+			if (!success && (GetLastError() != ERROR_MORE_DATA))
+				return false; // error reading the pipe
+			buf[rlen] = '\0';
+			reply += buf;
+			if (success)
+				break;
+		}
+	}
+	return true;
+}
+
 // send the request to the server
 // a sequence number will be added to the req object automatically.
-bool PIME::Client::sendRequest(Json::Value& req, Json::Value & result) {
+bool Client::sendRequest(Json::Value& req, Json::Value & result) {
 	unsigned int seqNum = newSeqNum_++;
 	req["seqNum"] = seqNum; // add a sequence number for the request
 
 	std::string ret;
-	if (connectPipe()) { // ensure that we're connected
+	if (connectServerPipe()) { // ensure that we're connected
 		char buf[1024];
 		DWORD rlen = 0;
 		Json::FastWriter writer;
 		std::string reqStr = writer.write(req); // convert the json object to string
-		if(TransactNamedPipe(pipe_, (void*)reqStr.c_str(), reqStr.length(), buf, 1023, &rlen, NULL)) {
-			buf[rlen] = '\0';
-			ret = buf;
-		}
-		else { // error!
-			if (GetLastError() != ERROR_MORE_DATA) {
-				// unknown error happens, reset the pipe?
-				closePipe();
-				return false;
-			}
-			buf[rlen] = '\0';
-			ret = buf;
-			for (;;) {
-				BOOL success = ReadFile(pipe_, buf, 1023, &rlen, NULL);
-				if (!success && (GetLastError() != ERROR_MORE_DATA))
-					break;
-				buf[rlen] = '\0';
-				ret += buf;
-				if (success)
-					break;
-			}
+		if (!sendRequestText(pipe_, reqStr.c_str(), reqStr.length(), ret)) {
+			// sending request to the server failed
+			// unknown error happens, reset the pipe?
+			closePipe();
+			return false;
 		}
 	}
 	Json::Reader reader;
@@ -615,9 +601,61 @@ bool PIME::Client::sendRequest(Json::Value& req, Json::Value & result) {
 	return success;
 }
 
-bool Client::connectPipe() {
+// establish a connection to the specified pipe and returns its handle
+HANDLE Client::connectPipe(const wchar_t* pipeName) {
+	bool hasErrors = false;
+	HANDLE pipe = INVALID_HANDLE_VALUE;
+	for (;;) {
+		pipe = CreateFile(pipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+		if (pipe != INVALID_HANDLE_VALUE) {
+			// the pipe is successfully created
+			// security check: make sure that we're connecting to the correct server
+			ULONG serverPid;
+			if (GetNamedPipeServerProcessId(pipe, &serverPid)) {
+				// FIXME: check the command line of the server?
+				// See this: http://www.codeproject.com/Articles/19685/Get-Process-Info-with-NtQueryInformationProcess
+				// Too bad! Undocumented Windows internal API might be needed here. :-(
+			}
+			break;
+		}
+		// being busy is not really an error since we just need to wait.
+		if (GetLastError() != ERROR_PIPE_BUSY) {
+			hasErrors = true; // otherwise, pipe creation fails
+			break;
+		}
+		// All pipe instances are busy, so wait for 10 seconds.
+		if (!WaitNamedPipe(pipeName, 10000)) {
+			hasErrors = true;
+			break;
+		}
+	}
+
+	if (!hasErrors) {
+		// The pipe is connected; change to message-read mode.
+		DWORD mode = PIPE_READMODE_MESSAGE;
+		if (!SetNamedPipeHandleState(pipe, &mode, NULL, NULL)) {
+			hasErrors = true;
+		}
+	}
+
+	// the pipe is created, but errors happened, destroy it.
+	if (hasErrors && pipe != INVALID_HANDLE_VALUE) {
+		DisconnectNamedPipe(pipe);
+		CloseHandle(pipe);
+		pipe = INVALID_HANDLE_VALUE;
+	}
+	return pipe;
+}
+
+// Ensure that we're connected to the PIME input method server
+// If we are already connected, the method simply returns true;
+// otherwise, it tries to establish the connection.
+bool Client::connectServerPipe() {
 	if (pipe_ == INVALID_HANDLE_VALUE) { // the pipe is not connected
-		wstring pipeName = L"\\\\.\\pipe\\";
+		// Here we do not hard-code the path of server pipe since different backends
+		// have different pipe names. Instead, we connect to PIMELauncher first, and
+		// query for the actual address of the server pipe.
+		wstring serverPipeName = L"\\\\.\\pipe\\";
 		DWORD len = 0;
 		::GetUserNameW(NULL, &len); // get the required size of the buffer
 		if (len <= 0)
@@ -626,34 +664,12 @@ bool Client::connectPipe() {
 		unique_ptr<wchar_t> username(new wchar_t[len]);
 		if (!::GetUserNameW(username.get(), &len))
 			return false;
-		pipeName += username.get();
-		pipeName += L"\\PIME_pipe";
-		for (;;) {
-			pipe_ = CreateFile(pipeName.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-			if (pipe_ != INVALID_HANDLE_VALUE) {
-				// security check: make sure that we're connecting to the correct server
-				ULONG serverPid;
-				if (GetNamedPipeServerProcessId(pipe_, &serverPid)) {
-					// FIXME: check the command line of the server?
-					// See this: http://www.codeproject.com/Articles/19685/Get-Process-Info-with-NtQueryInformationProcess
-					// Too bad! Undocumented Windows internal API might be needed here. :-(
-					break;
-				}
-			}
-			if (GetLastError() != ERROR_PIPE_BUSY)
-				return false;
-			// All pipe instances are busy, so wait for 10 seconds.
-			if (!WaitNamedPipe(pipeName.c_str(), 10000))
-				return false;
-		}
-		// The pipe is connected; change to message-read mode.
-		DWORD mode = PIPE_READMODE_MESSAGE;
-		BOOL success = SetNamedPipeHandleState(pipe_, &mode, NULL, NULL);
-		if (!success) {
-			closePipe();
-			return false;
-		}
-		init(); // send initialization info to the server
+		serverPipeName += username.get();
+		serverPipeName += L"\\PIME_pipe";
+		// try to connect to the input method server
+		pipe_ = connectPipe(serverPipeName.c_str());
+		if (pipe_ != INVALID_HANDLE_VALUE) // successfully connected to the server
+			init(); // send initialization info to the server
 	}
 	return true;
 }

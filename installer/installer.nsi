@@ -259,7 +259,10 @@ Section "PIME 輸入法平台" SecMain
 
     ; Install an embedable version of python 3.
     File /r "..\python"
-    
+
+    ; Install the libpipe dll.
+    File "..\build\libpipe\Release\libpipe.dll"
+
 	; Install the python server and input method modules
     ; FIXME: maybe we should install the pyc files later?
 	File /r /x "__pycache__" /x "meow" /x "chewing" /x "newcj" /x "checj" "..\server"
@@ -414,6 +417,7 @@ Section "Uninstall"
 	; Otherwise we cannot replace it.
 	ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
 	Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
+	Delete /REBOOTOK "$INSTDIR\libpipe.dll"
 
 	RMDir /REBOOTOK /r "$INSTDIR\x86"
 	RMDir /REBOOTOK /r "$INSTDIR\server"

@@ -43,7 +43,6 @@ AllowSkipFiles off ; cannot skip a file
 !define HOMEPAGE_URL "https://github.com/EasyIME/"
 
 !define chewing_value "0404:{35F67E9D-A54D-4177-9697-8B0AB71A9E04}{F80736AA-28DB-423A-92C9-5540F501C939}"
-!define newcj_value "0404:{35F67E9D-A54D-4177-9697-8B0AB71A9E04}{D5F17DA0-594A-5897-9B0C-9BA79F000000}"
 !define checj_value "0404:{35F67E9D-A54D-4177-9697-8B0AB71A9E04}{F828D2DC-81BE-466E-9CFE-24BB03172693}"
 
 Name "${PRODUCT_NAME}"
@@ -265,7 +264,7 @@ Section "PIME 輸入法平台" SecMain
 
 	; Install the python server and input method modules
     ; FIXME: maybe we should install the pyc files later?
-	File /r /x "__pycache__" /x "meow" /x "chewing" /x "newcj" /x "checj" "..\server"
+	File /r /x "__pycache__" /x "meow" /x "chewing" /x "checj" "..\server"
 
     ; Install the launcher and monitor of the server
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
@@ -276,12 +275,6 @@ SubSection "輸入法模組"
 		SectionIn 1 2
 		SetOutPath "$INSTDIR\server\input_methods"
 		File /r "..\server\input_methods\chewing"
-	SectionEnd
-
-	Section "自由大新倉頡" newcj
-		SectionIn 2
-		SetOutPath "$INSTDIR\server\input_methods"
-		File /r "..\server\input_methods\newcj"
 	SectionEnd
 
 	Section "酷倉" checj
@@ -333,7 +326,6 @@ Section "" Register
 			StrCmp $1 "" done
 			IntOp $0 $0 + 1
 			${If} $1 ==  ${chewing_value}
-			${OrIf} $1 == ${newcj_value}
 			${OrIf} $1 == ${checj_value}
 				IntOp $R0 $R0 + 0
 			${Else}
@@ -345,11 +337,6 @@ Section "" Register
 		${If} ${SectionIsSelected} ${chewing}
 			IntOp $R0 $R0 + 1
 			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value} $R0
-		${EndIf}
-
-		${If} ${SectionIsSelected} ${newcj}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${newcj_value} $R0
 		${EndIf}
 
 		${If} ${SectionIsSelected} ${checj}
@@ -388,7 +375,6 @@ LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} "安裝 ${PRODUCT_NAME} 主程式到你的電腦裏。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${chewing} "安裝新酷音輸入法模組。"
-	!insertmacro MUI_DESCRIPTION_TEXT ${newcj} "安裝自由大新倉頡輸入法模組。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${checj} "安裝酷倉輸入法模組。"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -401,7 +387,6 @@ Section "Uninstall"
 
 	${If} ${AtLeastWin8}
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value}
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW"  ${newcj_value}
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW"  ${checj_value}
 	${EndIf}
 

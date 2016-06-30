@@ -199,6 +199,8 @@ class ChecjConfig:
             self.selCinFile = "cin/newcj3.cin"
         elif self.selCinType == 6: 
             self.selCinFile = "cin/cj5.cin"
+        elif self.selCinType == 7: 
+            self.selCinFile = "cin/newcj.cin"
 
         CinPath = os.path.join(self.curdir, self.selCinFile)
         with io.open(CinPath, encoding='utf-8') as fs:

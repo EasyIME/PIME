@@ -365,7 +365,7 @@ class CheCJTextService(TextService):
             if len(self.compositionChar) == 0 and charStr == '`':
                 self.compositionChar += charStr
                 self.setCompositionString(self.compositionChar)
-                messagestr = '您已經按下了多功能前導字元鍵，加按 M 鍵可以呼出選單，請參閱使用說明以獲得更多幫助。'
+                messagestr = '多功能前導字元'
                 self.showMessage(messagestr, 5)
                 self.multifunctionmode = True
             elif len(self.compositionChar) == 1 and self.multifunctionmode:
@@ -414,12 +414,12 @@ class CheCJTextService(TextService):
                         self.resetComposition()
                         return True
 
-            # Unicode 編碼字元超過 8 + 2 個
-            if self.compositionChar[:2] == '`U' and len(self.compositionChar) > 10:
+            # Unicode 編碼字元超過 5 + 2 個
+            if self.compositionChar[:2] == '`U' and len(self.compositionChar) > 7:
                 self.setCompositionString(self.compositionString[:-1])
                 self.compositionChar = self.compositionChar[:-1]
 
-            # 按下的鍵為 CIN 內有定義的字根
+            # 按下的鍵為微軟有定義的字根
             if self.msymbols.isInCharDef(self.compositionChar[1:]) and self.closemenu and len(self.compositionChar) >= 2:
                 candidates = self.msymbols.getCharDef(self.compositionChar[1:])
                 self.setCompositionString(candidates[0])
@@ -939,10 +939,10 @@ class CheCJTextService(TextService):
                             else:
                                 if self.compositionChar[:2] == '`U':
                                     commitStr = chr(int(self.compositionChar[2:], 16))
-                                    self.setCommitString(commitStr)
-                                    self.resetComposition()
                                     messagestr = self.cin.getCharEncode(commitStr)
                                     self.showMessage(messagestr, 5)
+                                    self.setCommitString(commitStr)
+                                    self.resetComposition()
                         else:
                             self.showMessage("查無字根...", 3)
                 self.setShowCandidates(False)
@@ -1153,8 +1153,8 @@ class CheCJTextService(TextService):
     # forced 參數會是 True，在這種狀況下，要清除一些 buffer
     def onCompositionTerminated(self, forced):
         TextService.onCompositionTerminated(self, forced)
-        if forced:
-            self.resetComposition()
+        # if forced:
+            # self.resetComposition()
             
     # 重置輸入的字根
     def resetComposition(self):

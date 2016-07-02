@@ -665,25 +665,19 @@ bool Client::connectServerPipe() {
 			return false;
 		lancherPipeName += username.get();
 		lancherPipeName += L"\\PIME\\Launcher";
-		HANDLE launcherPipe = connectPipe(lancherPipeName.c_str());
 
-		wstring serverPipeName;
-		if (launcherPipe != INVALID_HANDLE_VALUE) {
-			// we have connected to PIMELauncher
-			// query for the pipe name of the actual input method server from PIMELauncher
-			std::string reply;
-			if (sendRequestText(launcherPipe, guid_.c_str(), guid_.length(), reply)) {
-				serverPipeName = utf8ToUtf16(reply.c_str());
+		// ask PIMELauncher for the real server address
+		DWORD rlen;
+		char serverPipeNameBuf[MAX_PATH];
+		if (::CallNamedPipe(lancherPipeName.c_str(), (LPVOID)guid_.c_str(), guid_.length(), serverPipeNameBuf, MAX_PATH, &rlen, 1000)) {
+			serverPipeNameBuf[rlen] = '\0';
+			// try to connect to the input method backend server
+			if (serverPipeNameBuf[0] != '\0') {
+				wstring serverPipeName = utf8ToUtf16(serverPipeNameBuf);
+				pipe_ = connectPipe(serverPipeName.c_str());
+				if (pipe_ != INVALID_HANDLE_VALUE) // successfully connected to the server
+					init(); // send initialization info to the server
 			}
-			DisconnectNamedPipe(launcherPipe);
-			CloseHandle(launcherPipe);
-		}
-
-		// try to connect to the input method server
-		if (!serverPipeName.empty()) {
-			pipe_ = connectPipe(serverPipeName.c_str());
-			if (pipe_ != INVALID_HANDLE_VALUE) // successfully connected to the server
-				init(); // send initialization info to the server
 		}
 	}
 	return true;

@@ -111,14 +111,20 @@ class ClientThread(threading.Thread):
 
                 if msg:
                     # Process the incoming message.
-                    msg = json.loads(msg) # parse the json input
-                    # print("received msg", success, msg)
-                    server.acquire_lock() # acquire a lock
-                    reply = client.handleRequest(msg)
-                    server.release_lock() # release the lock
-
-                    if running:
+                    if msg == "ping":  # ping from PIMELauncher
+                        replyText = "pong"  # tell PIMELauncher that we're alive
+                    elif msg == "quit":  # asked by PIMELauncher for terminating the server
+                        replyText = ""
+                        # FIXME: ask the server to quit
+                    else:
+                        msg = json.loads(msg) # parse the json input
+                        # print("received msg", success, msg)
+                        server.acquire_lock() # acquire a lock
+                        reply = client.handleRequest(msg)
                         replyText = json.dumps(reply) # convert object to json
+                        server.release_lock() # release the lock
+
+                    if running:  # the pipe is not briken
                         # print("reply: ", replyText)
                         data = bytes(replyText, "UTF-8") # convert to UTF-8
                         data_len = c_ulong(len(data))
@@ -149,7 +155,7 @@ class Server():
 
     def run(self):
         while True:
-            pipe = libpipe.connect_pipe(bytes("PIME", "UTF-8"))
+            pipe = libpipe.connect_pipe(bytes("python", "UTF-8"))
             # client connected
             if pipe != -1:
                 print("client connected")

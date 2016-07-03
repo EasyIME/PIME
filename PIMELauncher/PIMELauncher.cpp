@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <algorithm>
+#include <fstream>
 #include "../libpipe/libpipe.h"
 
 BackendServer::~BackendServer() {
@@ -59,7 +59,10 @@ void BackendServer::terminate() {
 	if (isRunning()) {
 		char buf[16];
 		DWORD rlen;
-		::CallNamedPipeA(pipeName_.c_str(), "quit", 4, buf, sizeof(buf) - 1, &rlen, 1000); // wait for 1 sec.
+		if (!::CallNamedPipeA(pipeName_.c_str(), "quit", 4, buf, sizeof(buf) - 1, &rlen, 1000)) { // wait for 1 sec.
+			// the RPC call fails, force termination
+			::TerminateProcess(process_, 0);
+		}
 		CloseHandle(process_);
 		process_ = INVALID_HANDLE_VALUE;
 	}
@@ -86,6 +89,15 @@ PIMELauncher::PIMELauncher():
 	// this can only be assigned once
 	assert(singleton_ == nullptr);
 	singleton_ = this;
+
+	// get the PIME directory
+	wchar_t topDirPathBuf[MAX_PATH];
+	DWORD len = GetModuleFileNameW(NULL, topDirPathBuf, MAX_PATH);
+	topDirPathBuf[len] = '\0';
+	wchar_t* p = wcsrchr(topDirPathBuf, '\\');
+	if (p)
+		*p = '\0';
+	topDirPath_ = topDirPathBuf;
 }
 
 PIMELauncher::~PIMELauncher() {
@@ -107,38 +119,36 @@ string PIMELauncher::getPipeName(const char* base_name) {
 
 // initialize info of supported backends
 bool PIMELauncher::initBackends() {
-	// get the PIME directory
-	DWORD len = GetModuleFileNameW(NULL, topDirPath_, MAX_PATH);
-	topDirPath_[len] = '\0';
-	wchar_t* p = wcsrchr(topDirPath_, '\\');
-	if (!p)
-		return false;
-	*p = '\0';
-
+	// FIXME: make this configurable from config files??
 	// the python backend
-	BackendServer& backend = backends_[0];
+	BackendServer& backend = backends_[BACKEND_PYTHON];
 	backend.name_ = "python";
 	backend.pipeName_ = getPipeName("python");
-
 	backend.command_ = topDirPath_;
 	backend.command_ += L"\\python\\pythonw.exe";
-
 	backend.workingDir_ = topDirPath_;
 	backend.workingDir_ += L"\\server";
-
+	// the parameter needs to be quoted
 	backend.params_ = L"\"" + backend.workingDir_ + L"\\server.py\"";
 
 	// TODO: node.js backend
-	BackendServer& backend2 = backends_[1];
+	BackendServer& backend2 = backends_[BACKEND_NODE];
 	backend2.name_ = "node";
 	backend2.pipeName_ = getPipeName("node");
+	/*
+	backend2.command_ = topDirPath_;
+	backend2.command_ += L"";
+	backend2.workingDir_ = topDirPath_;
+	backend2.workingDir_ += L"";
+	// the parameter needs to be quoted
+	backend2.params_ = L"\"" + backend2.workingDir_ + L"\\server.js\"";
+	*/
 	return true;
 }
 
 BackendServer* PIMELauncher::findBackend(const char* name) {
 	// for such a small list, linear search is often faster than hash table or map
-	int n_backends = sizeof(backends_) / sizeof(BackendServer);
-	for (int i = 0; i < n_backends; ++i) {
+	for (int i = 0; i < N_BACKENDS; ++i) {
 		BackendServer& backend = backends_[i];
 		if (backend.name_ == name)
 			return &backend;
@@ -148,9 +158,19 @@ BackendServer* PIMELauncher::findBackend(const char* name) {
 
 // initialize language profiles
 bool PIMELauncher::initProfiles() {
-	// FIXME: load from files instead of hard code
-	mapProfilesToBackends_["{F80736AA-28DB-423A-92C9-5540F501C939}"] = findBackend("python");
-	mapProfilesToBackends_["{F828D2DC-81BE-466E-9CFE-24BB03172693}"] = findBackend("python");
+	ifstream stream(topDirPath_ + L"\\profile_backends.cache");
+	string line;
+	while (getline(stream, line)) {
+		if (line.empty())
+			continue;
+		size_t sep = line.find('\t');
+		if (sep != -1) {
+			string guid = line.substr(0, sep);
+			string backend = line.substr(sep + 1);
+			mapProfilesToBackends_[guid] = findBackend(backend.c_str());
+		}
+	}
+	stream.close();
 	return true;
 }
 
@@ -190,8 +210,10 @@ string PIMELauncher::handleMessage(const string& msg) {
 	string reply;
 	if (msg == "quit") { // quit PIME
 		// try to terminate launched backend server processes
-		for (int i = 0; i < 2; ++i)
-			backends_[i].terminate();
+		for (int i = 0; i < 2; ++i) {
+			if(backends_[i].isRunning())
+				backends_[i].terminate();
+		}
 		ExitProcess(0); // quit PIMELauncher
 	}
 	else { // query for the backend pipe address of the language profile GUID

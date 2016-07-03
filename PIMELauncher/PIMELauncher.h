@@ -50,6 +50,12 @@ public:
 
 class PIMELauncher {
 public:
+	enum BackendType {
+		BACKEND_PYTHON = 0,
+		BACKEND_NODE,
+		N_BACKENDS
+	};
+
 	PIMELauncher();
 	~PIMELauncher();
 
@@ -78,11 +84,11 @@ private:
 	BackendServer* findBackend(const char* name);
 
 private:
-	wchar_t topDirPath_[MAX_PATH];
+	wstring topDirPath_;
 	bool quit_;
 	map<string, BackendServer*> mapProfilesToBackends_;
 	CRITICAL_SECTION serverLock_;
-	BackendServer backends_[2];
+	BackendServer backends_[N_BACKENDS];
 	static PIMELauncher* singleton_;
 };
 

@@ -17,6 +17,7 @@
 //	Boston, MA  02110-1301, USA.
 //
 
+#include "libpipe.h"
 #include <windows.h>
 #include <Lmcons.h> // for UNLEN
 #include <Winnt.h> // for security attributes constants
@@ -113,7 +114,7 @@ HANDLE connect_pipe(const char* app_name) {
 	if (GetUserNameA(username, &unlen)) {
 		// add username to the pipe path so it will not clash with other users' pipes.
 		char pipe_name[MAX_PATH];
-		sprintf(pipe_name, "\\\\.\\pipe\\%s\\%s_pipe", username, app_name);
+		sprintf(pipe_name, "\\\\.\\pipe\\%s\\PIME\\%s", username, app_name);
 		const size_t buffer_size = 1024;
 		// create the pipe
 		pipe = CreateNamedPipeA(pipe_name,

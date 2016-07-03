@@ -34,7 +34,9 @@ namespace PIME {
 Client::Client(TextService* service, REFIID langProfileGuid):
 	textService_(service),
 	pipe_(INVALID_HANDLE_VALUE),
-	newSeqNum_(0) {
+	newSeqNum_(0),
+	isActivated_(false),
+	connectingServerPipe_(false) {
 
 	LPOLESTR guidStr = NULL;
 	if (SUCCEEDED(::StringFromCLSID(langProfileGuid, &guidStr))) {
@@ -297,6 +299,7 @@ void Client::onActivate() {
 	sendRequest(req, ret);
 	if (handleReply(ret)) {
 	}
+	isActivated_ = true;
 }
 
 void Client::onDeactivate() {
@@ -308,6 +311,7 @@ void Client::onDeactivate() {
 	if (handleReply(ret)) {
 	}
 	LangBarButton::clearIconCache();
+	isActivated_ = false;
 }
 
 bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
@@ -562,8 +566,10 @@ bool Client::sendRequestText(HANDLE pipe, const char* data, int len, std::string
 		reply = buf;
 		for (;;) {
 			BOOL success = ReadFile(pipe, buf, sizeof(buf) - 1, &rlen, NULL);
-			if (!success && (GetLastError() != ERROR_MORE_DATA))
+			if (!success && (GetLastError() != ERROR_MORE_DATA)) {
+				// unknown error happens, reset the pipe?
 				return false; // error reading the pipe
+			}
 			buf[rlen] = '\0';
 			reply += buf;
 			if (success)
@@ -576,28 +582,42 @@ bool Client::sendRequestText(HANDLE pipe, const char* data, int len, std::string
 // send the request to the server
 // a sequence number will be added to the req object automatically.
 bool Client::sendRequest(Json::Value& req, Json::Value & result) {
+	bool success = false;
 	unsigned int seqNum = newSeqNum_++;
 	req["seqNum"] = seqNum; // add a sequence number for the request
-
 	std::string ret;
-	if (connectServerPipe()) { // ensure that we're connected
-		char buf[1024];
-		DWORD rlen = 0;
-		Json::FastWriter writer;
-		std::string reqStr = writer.write(req); // convert the json object to string
-		if (!sendRequestText(pipe_, reqStr.c_str(), reqStr.length(), ret)) {
-			// sending request to the server failed
-			// unknown error happens, reset the pipe?
-			closePipe();
-			return false;
+	DWORD rlen = 0;
+	Json::FastWriter writer;
+	std::string reqStr = writer.write(req); // convert the json object to string
+
+	for (int retry_connect = 1; retry_connect >= 0; --retry_connect) {
+		if (!connectingServerPipe_) {  // if we're not in the middle of initializing the pipe connection
+			if (!connectServerPipe()) {  // ensure that we're connected
+				continue;
+			}
 		}
-	}
-	Json::Reader reader;
-	bool success = reader.parse(ret, result);
-	if (success) {
-		if (result["seqNum"].asUInt() != seqNum) // sequence number mismatch
-			success = false;
-	}
+		// now we should be connected. if not, it's an error.
+		if (pipe_ == INVALID_HANDLE_VALUE)
+			break;
+
+		if (sendRequestText(pipe_, reqStr.c_str(), reqStr.length(), ret)) {
+			Json::Reader reader;
+			success = reader.parse(ret, result);
+			if (success) {
+				if (result["seqNum"].asUInt() != seqNum) // sequence number mismatch
+					success = false;
+			}
+			break; // send request succeeded, no more retries
+		}
+		else { // fail to send the request to the server
+			if (connectingServerPipe_) { // we're in the middle of initializing the pipe connection
+				break; // fail directly
+			}
+			else {
+				closePipe(); // close the pipe connection and try again
+			}
+		}
+	};
 	return success;
 }
 
@@ -652,10 +672,11 @@ HANDLE Client::connectPipe(const wchar_t* pipeName) {
 // otherwise, it tries to establish the connection.
 bool Client::connectServerPipe() {
 	if (pipe_ == INVALID_HANDLE_VALUE) { // the pipe is not connected
+		connectingServerPipe_ = true;
 		// Here we do not hard-code the path of server pipe since different backends
 		// have different pipe names. Instead, we connect to PIMELauncher first, and
 		// query for the actual address of the server pipe.
-		wstring serverPipeName = L"\\\\.\\pipe\\";
+		wstring lancherPipeName = L"\\\\.\\pipe\\";
 		DWORD len = 0;
 		::GetUserNameW(NULL, &len); // get the required size of the buffer
 		if (len <= 0)
@@ -664,12 +685,27 @@ bool Client::connectServerPipe() {
 		unique_ptr<wchar_t> username(new wchar_t[len]);
 		if (!::GetUserNameW(username.get(), &len))
 			return false;
-		serverPipeName += username.get();
-		serverPipeName += L"\\PIME_pipe";
-		// try to connect to the input method server
-		pipe_ = connectPipe(serverPipeName.c_str());
-		if (pipe_ != INVALID_HANDLE_VALUE) // successfully connected to the server
-			init(); // send initialization info to the server
+		lancherPipeName += username.get();
+		lancherPipeName += L"\\PIME\\Launcher";
+
+		// ask PIMELauncher for the real server address
+		DWORD rlen;
+		char serverPipeNameBuf[MAX_PATH];
+		if (::CallNamedPipe(lancherPipeName.c_str(), (LPVOID)guid_.c_str(), guid_.length(), serverPipeNameBuf, MAX_PATH, &rlen, 1000)) {
+			serverPipeNameBuf[rlen] = '\0';
+			// try to connect to the input method backend server
+			if (serverPipeNameBuf[0] != '\0') {
+				wstring serverPipeName = utf8ToUtf16(serverPipeNameBuf);
+				pipe_ = connectPipe(serverPipeName.c_str());
+				if (pipe_ != INVALID_HANDLE_VALUE) { // successfully connected to the server
+					init(); // send initialization info to the server
+					if (isActivated_)  // we lost connection while being activated
+						onActivate();  // activate the newly created connection
+				}
+			}
+		}
+		connectingServerPipe_ = false;
+		return (pipe_ != INVALID_HANDLE_VALUE);
 	}
 	return true;
 }

@@ -93,6 +93,8 @@ private:
 	HANDLE pipe_;
 	std::unordered_map<std::string, PIME::LangBarButton*> buttons_; // map buttons to string IDs
 	unsigned int newSeqNum_;
+	bool isActivated_;
+	bool connectingServerPipe_;
 };
 
 }

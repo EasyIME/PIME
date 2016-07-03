@@ -63,6 +63,7 @@ void BackendServer::terminate() {
 			// the RPC call fails, force termination
 			::TerminateProcess(process_, 0);
 		}
+		::WaitForSingleObject(process_, 3000); // wait for 3 seconds
 		CloseHandle(process_);
 		process_ = INVALID_HANDLE_VALUE;
 	}
@@ -79,6 +80,16 @@ bool BackendServer::isRunning() {
 		process_ = INVALID_HANDLE_VALUE;
 	}
 	return false;
+}
+
+bool BackendServer::ping(int timeout) {
+	// make sure the backend server is running
+	char buf[16];
+	DWORD rlen;
+	bool success = ::CallNamedPipeA(pipeName_.c_str(), "ping", 4, buf, sizeof(buf) - 1, &rlen, timeout);
+	if (success) {
+	}
+	return success;
 }
 
 
@@ -194,25 +205,12 @@ void PIMELauncher::terminateExistingLauncher() {
 	::CallNamedPipeA(pipe_name.c_str(), "quit", 4, buf, sizeof(buf) - 1, &rlen, 1000); // wait for 1 sec.
 }
 
-/*
-bool PIMELauncher::pingBackendServer(const string& pipe_name) {
-	// make sure the backend server is running
-	char buf[16];
-	DWORD rlen;
-	bool success = ::CallNamedPipeA(pipe_name.c_str(), "ping", 4, buf, sizeof(buf) - 1, &rlen, 1000); // wait for 1 sec.
-	if (success) {
-	}
-	return success;
-}
-*/
-
 string PIMELauncher::handleMessage(const string& msg) {
 	string reply;
 	if (msg == "quit") { // quit PIME
 		// try to terminate launched backend server processes
 		for (int i = 0; i < 2; ++i) {
-			if(backends_[i].isRunning())
-				backends_[i].terminate();
+			backends_[i].terminate();
 		}
 		ExitProcess(0); // quit PIMELauncher
 	}
@@ -222,9 +220,20 @@ string PIMELauncher::handleMessage(const string& msg) {
 		if (it != mapProfilesToBackends_.end()) { // found a backend
 			BackendServer* backend = it->second;
 			reply = backend->pipeName_;  // reply with the pipe name of the backend server
-			// ensure that the backend server is running...
-			if(!backend->isRunning()) {
+			// ensure that the backend server is running and responsive
+			if(!backend->ping()) {
+				// kill it if it's running, but not responsive
+				backend->terminate();
+				// Note: it's also possible that there is a backend server already launched manually
+				//		by the developer for debugging purpose. in this case, ping() will succeed.
 				backend->start();  // launch the backend server process
+				if (backend->isRunning()) {
+					// it takes some time for the server process to create the pipe
+					for (int i = 0; i < 30; ++i) {
+						if(backend->ping(100))
+							break; // wait until the backend server is ready
+					}
+				}
 			}
 		}
 	}

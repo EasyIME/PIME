@@ -699,8 +699,12 @@ bool Client::connectServerPipe() {
 				pipe_ = connectPipe(serverPipeName.c_str());
 				if (pipe_ != INVALID_HANDLE_VALUE) { // successfully connected to the server
 					init(); // send initialization info to the server
-					if (isActivated_)  // we lost connection while being activated
-						onActivate();  // activate the newly created connection
+					if (isActivated_) {  // we lost connection while being activated
+						IID currentProfile = textService_->currentLangProfile_;
+						textService_->onDeactivate();  // cleanup for the previous instance.
+						textService_->onActivate();  // activate the text service again.
+						textService_->onLangProfileActivated(currentProfile);
+					}
 				}
 			}
 		}
@@ -714,7 +718,6 @@ void Client::closePipe() {
 	if (pipe_ != INVALID_HANDLE_VALUE) {
 		DisconnectNamedPipe(pipe_);
 		CloseHandle(pipe_);
-		LangBarButton::clearIconCache();
 		pipe_ = INVALID_HANDLE_VALUE;
 	}
 }

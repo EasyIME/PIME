@@ -39,6 +39,7 @@ public:
 	void start();
 	void terminate();
 	bool isRunning();
+	bool ping(int timeout=3000);
 
 	string name_;
 	string pipeName_;
@@ -76,7 +77,6 @@ private:
 	static string getPipeName(const char* base_name);
 	static DWORD WINAPI clientPipeThread(LPVOID param);
 	string handleMessage(const string& msg);
-	// bool pingBackendServer(const string& pipe_name);
 	void terminateExistingLauncher();
 	void parseCommandLine(LPSTR cmd);
 	bool initProfiles();

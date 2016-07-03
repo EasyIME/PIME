@@ -61,6 +61,7 @@ class Client:
             if method == "init": # initialize the text service
                 success = self.init(msg)
             reply["success"] = success
+        # print(reply)
         return reply
 
 
@@ -111,9 +112,9 @@ class ClientThread(threading.Thread):
 
                 if msg:
                     # Process the incoming message.
-                    # if msg == "ping":  # ping from PIMELauncher
-                    #     replyText = "pong"  # tell PIMELauncher that we're alive
-                    if msg == "quit":  # asked by PIMELauncher for terminating the server
+                    if msg == "ping":  # ping from PIMELauncher
+                        replyText = "pong"  # tell PIMELauncher that we're alive
+                    elif msg == "quit":  # asked by PIMELauncher for terminating the server
                         replyText = ""
                         # FIXME: directly terminate the process is less graceful, but it should work
                         sys.exit(0)

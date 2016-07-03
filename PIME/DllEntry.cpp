@@ -40,14 +40,15 @@ STDAPI DllUnregisterServer(void) {
 	return g_imeModule->unregisterServer();
 }
 
-static Ime::LangProfileInfo langProfileFromJson(std::wstring file) {
+static Ime::LangProfileInfo langProfileFromJson(std::wstring file, std::string& guid) {
 	// load the json file to get the info of input method
 	std::ifstream fp(file, std::ifstream::binary);
 	if(fp) {
 		Json::Value json;
 		fp >> json;
 		auto name = utf8ToUtf16(json["name"].asCString());
-		auto guidStr = utf8ToUtf16(json["guid"].asCString());
+		guid = json["guid"].asCString();
+		auto guidStr = utf8ToUtf16(guid.c_str());
 		CLSID guid = {0};
 		CLSIDFromString (guidStr.c_str(), &guid);
 		// convert locale name to lanid
@@ -95,29 +96,45 @@ STDAPI DllRegisterServer(void) {
 	if (result != S_OK) // failed, fall back to C:\program files
 		result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
 	if (result == S_OK) { // program files folder is found
-		dirPath = path;
-		dirPath += L"\\PIme\\server\\input_methods";
-		// scan the dir for lang profile definition files
-		WIN32_FIND_DATA findData = {0};
-		HANDLE hFind = ::FindFirstFile((dirPath + L"\\*").c_str(), &findData);
-		if(hFind != INVALID_HANDLE_VALUE) {
-			do {
-				if(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { // this is a subdir
-					if(findData.cFileName[0] != '.') {
-						std::wstring imejson = dirPath;
-						imejson += '\\';
-						imejson += findData.cFileName;
-						imejson += L"\\ime.json";
-						// Make sure the file exists
-						DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
-						if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
-							// load the json file to get the info of input method
-							langProfiles.push_back(std::move(langProfileFromJson(imejson)));
+#ifndef _WIN64  // only for the 32-bit version
+		// also update the profile_backends.cache file.
+		std::wstring profile_backends = path;
+		profile_backends += L"\\PIME\\profile_backends.cache";
+		std::ofstream ofile(profile_backends);
+#endif
+		for (const auto backendDir : PIME::ImeModule::backendDirs_) {
+			std::string backendName = utf16ToUtf8(backendDir);
+			dirPath = path;
+			dirPath += L"\\PIME\\";
+			dirPath += backendDir;
+			dirPath += L"\\input_methods";
+			// scan the dir for lang profile definition files
+			WIN32_FIND_DATA findData = { 0 };
+			HANDLE hFind = ::FindFirstFile((dirPath + L"\\*").c_str(), &findData);
+			if (hFind != INVALID_HANDLE_VALUE) {
+				do {
+					if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { // this is a subdir
+						if (findData.cFileName[0] != '.') {
+							std::wstring imejson = dirPath;
+							imejson += '\\';
+							imejson += findData.cFileName;
+							imejson += L"\\ime.json";
+							// Make sure the file exists
+							DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
+							if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
+								// load the json file to get the info of input method
+								std::string guid;
+								langProfiles.push_back(std::move(langProfileFromJson(imejson, guid)));
+
+#ifndef _WIN64  // only for the 32-bit version
+								ofile << guid << "\t" << backendName << std::endl;
+#endif
+							}
 						}
 					}
-				}
-			} while(::FindNextFile(hFind, &findData));
-			CloseHandle(hFind);
+				} while (::FindNextFile(hFind, &findData));
+				CloseHandle(hFind);
+			}
 		}
 	}
 	return g_imeModule->registerServer(L"PIMETextService", langProfiles.data(), langProfiles.size());

@@ -136,9 +136,9 @@ bool PIMELauncher::initBackends() {
 	backend.name_ = "python";
 	backend.pipeName_ = getPipeName("python");
 	backend.command_ = topDirPath_;
-	backend.command_ += L"\\python\\pythonw.exe";
+	backend.command_ += L"\\python\\python3\\pythonw.exe";
 	backend.workingDir_ = topDirPath_;
-	backend.workingDir_ += L"\\server";
+	backend.workingDir_ += L"\\python";
 	// the parameter needs to be quoted
 	backend.params_ = L"\"" + backend.workingDir_ + L"\\server.py\"";
 

@@ -83,7 +83,7 @@ function getDataDir() {
         progDir = shell.ExpandEnvironmentStrings("%PROGRAMFILES");
     }
     // FIXME: it's bad to hard code the path, but is there any better way?
-    return progDir + "\\PIME\\server\\input_methods\\checj\\data";
+    return progDir + "\\PIME\\python\\input_methods\\checj\\data";
 }
 
 var checjConfig = null;

@@ -256,34 +256,30 @@ Section "PIME 輸入法平台" SecMain
     ; Install version info
     File "..\version.txt"
 
-    ; Install an embedable version of python 3.
-    File /r "..\python"
-
     ; Install the libpipe dll.
     File "..\build\libpipe\Release\libpipe.dll"
 
-	; Install the profile <--> backend mapping.
-	; FIXME: this should be automatically generated in the future
-	File "..\profile_backends.cache"
-	
-	; Install the python server and input method modules
-	File /r /x "__pycache__" /x "meow" /x "chewing" /x "checj" /x ".git" /x ".idea" "..\server"
+	; Install the python backend and input method modules along with an embedable version of python 3.
+	File /r /x "__pycache__" /x "meow" /x "chewing" /x "checj" /x ".git" /x ".idea" "..\python"
 
-    ; Install the launcher and monitor of the server
+	; Install the node.js backend and input method modules along with an embedable version of python 3.
+	; File /r "..\node"
+
+    ; Install the launcher responsible to launch the backends
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
 SectionEnd
 
 SubSection "輸入法模組"
 	Section "新酷音" chewing
 		SectionIn 1 2
-		SetOutPath "$INSTDIR\server\input_methods"
-		File /r "..\server\input_methods\chewing"
+		SetOutPath "$INSTDIR\python\input_methods"
+		File /r "..\python\input_methods\chewing"
 	SectionEnd
 
 	Section "酷倉" checj
 		SectionIn 2
-		SetOutPath "$INSTDIR\server\input_methods"
-		File /r "..\server\input_methods\checj"
+		SetOutPath "$INSTDIR\python\input_methods"
+		File /r "..\python\input_methods\checj"
 	SectionEnd
 SubSectionEnd
 
@@ -316,7 +312,7 @@ Section "" Register
 	WriteUninstaller "$INSTDIR\Uninstall.exe" ;Create uninstaller
 
 	; Compile all installed python modules to *.pyc files
-	nsExec::ExecToLog  '"$INSTDIR\python\python.exe" -m compileall "$INSTDIR\server"'
+	nsExec::ExecToLog  '"$INSTDIR\python\python.exe" -m compileall "$INSTDIR\python"'
 
 	; Launch the python server as current user (non-elevated process)
 	${StdUtils.ExecShellAsUser} $0 "$INSTDIR\PIMELauncher.exe" "open" ""
@@ -359,11 +355,11 @@ Section "" Register
 	; Create shortcuts
 	CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
 	${If} ${SectionIsSelected} ${chewing}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk" "$INSTDIR\python\pythonw.exe" '"$INSTDIR\server\input_methods\chewing\config\configTool.py"' "$INSTDIR\server\input_methods\chewing\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk" "$INSTDIR\python\pythonw.exe" '"$INSTDIR\python\input_methods\chewing\config\configTool.py"' "$INSTDIR\python\input_methods\chewing\icon.ico" 0
 	${EndIf}
 	
 	${If} ${SectionIsSelected} ${checj}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk" "$INSTDIR\server\input_methods\checj\config\config.hta" "" "$INSTDIR\server\input_methods\checj\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk" "$INSTDIR\python\input_methods\checj\config\config.hta" "" "$INSTDIR\python\input_methods\checj\icon.ico" 0
 	${EndIf}
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
@@ -406,10 +402,11 @@ Section "Uninstall"
 	ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
 	Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
 	Delete /REBOOTOK "$INSTDIR\libpipe.dll"
+	Delete "$INSTDIR\profile_backends.cache"
 
 	RMDir /REBOOTOK /r "$INSTDIR\x86"
-	RMDir /REBOOTOK /r "$INSTDIR\server"
 	RMDir /REBOOTOK /r "$INSTDIR\python"
+	; RMDir /REBOOTOK /r "$INSTDIR\node"
 
     ; Delete shortcuts
     Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"

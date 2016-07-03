@@ -22,6 +22,7 @@
 
 #include <LibIME/ImeModule.h>
 #include <string>
+#include <json/json.h>
 
 namespace PIME {
 
@@ -42,6 +43,11 @@ public:
 
 	// called when config dialog needs to be launched
 	virtual bool onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile);
+
+	bool loadImeInfo(const std::string&, std::wstring& filePath, Json::Value& content);
+
+public:
+	static const wchar_t* ImeModule::backendDirs_[2];
 
 private:
 	std::wstring userDir_;

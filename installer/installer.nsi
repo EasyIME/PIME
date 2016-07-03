@@ -262,9 +262,12 @@ Section "PIME 輸入法平台" SecMain
     ; Install the libpipe dll.
     File "..\build\libpipe\Release\libpipe.dll"
 
+	; Install the profile <--> backend mapping.
+	; FIXME: this should be automatically generated in the future
+	File "..\profile_backends.cache"
+	
 	; Install the python server and input method modules
-    ; FIXME: maybe we should install the pyc files later?
-	File /r /x "__pycache__" /x "meow" /x "chewing" /x "checj" "..\server"
+	File /r /x "__pycache__" /x "meow" /x "chewing" /x "checj" /x ".git" /x ".idea" "..\server"
 
     ; Install the launcher and monitor of the server
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"

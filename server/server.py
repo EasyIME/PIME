@@ -115,7 +115,8 @@ class ClientThread(threading.Thread):
                     #     replyText = "pong"  # tell PIMELauncher that we're alive
                     if msg == "quit":  # asked by PIMELauncher for terminating the server
                         replyText = ""
-                        # FIXME: ask the server to quit
+                        # FIXME: directly terminate the process is less graceful, but it should work
+                        sys.exit(0)
                     else:
                         msg = json.loads(msg) # parse the json input
                         # print("received msg", success, msg)

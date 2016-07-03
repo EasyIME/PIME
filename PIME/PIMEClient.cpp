@@ -26,6 +26,9 @@
 #include <cstdlib>
 #include <ctime>
 #include <memory>
+#include <fstream>
+#include <cctype>
+#include <algorithm>
 
 using namespace std;
 
@@ -41,8 +44,30 @@ Client::Client(TextService* service, REFIID langProfileGuid):
 	LPOLESTR guidStr = NULL;
 	if (SUCCEEDED(::StringFromCLSID(langProfileGuid, &guidStr))) {
 		guid_ = utf16ToUtf8(guidStr);
+		transform(guid_.begin(), guid_.end(), guid_.begin(), tolower);  // convert GUID to lwoer case
 		::CoTaskMemFree(guidStr);
 	}
+
+	// query the backend of this language profile
+	// FIXME: this requires file I/O everytime and might be cached in memory later.
+	wstring programDir = static_cast<PIME::ImeModule*>(textService_->imeModule())->programDir();
+	ifstream stream(programDir + L"\\profile_backends.cache");
+	string line;
+	while (getline(stream, line)) {
+		if (line.empty())
+			continue;
+		size_t sep = line.find('\t');
+		if (sep != -1) {
+			string guid = line.substr(0, sep);
+			transform(guid.begin(), guid.end(), guid.begin(), tolower);  // convert GUID to lwoer case
+			string backend = line.substr(sep + 1);
+			if (guid == guid_) {
+				backend_ = backend;
+				break;
+			}
+		}
+	}
+	stream.close();
 }
 
 Client::~Client(void) {
@@ -667,45 +692,62 @@ HANDLE Client::connectPipe(const wchar_t* pipeName) {
 	return pipe;
 }
 
+// Call PIMELauncher via IPC to launch the server process
+// Sometimes the server process might crash or be terminated for some reasons.
+// When we fail to get an IPC connection, ask PIMELauncher to restart our server.
+bool Client::launchServer() {
+	wstring lancherPipeName = getPipeName(L"Launcher");
+	DWORD rlen;
+	char buf[256];
+	string command = "launch\t";
+	command += backend_;
+	if (::CallNamedPipe(lancherPipeName.c_str(), (LPVOID)command.c_str(), command.length(), buf, sizeof(buf) - 1, &rlen, 3000)) {
+		return true;
+	}
+	return false;
+}
+
 // Ensure that we're connected to the PIME input method server
 // If we are already connected, the method simply returns true;
 // otherwise, it tries to establish the connection.
 bool Client::connectServerPipe() {
 	if (pipe_ == INVALID_HANDLE_VALUE) { // the pipe is not connected
 		connectingServerPipe_ = true;
-		// Here we do not hard-code the path of server pipe since different backends
-		// have different pipe names. Instead, we connect to PIMELauncher first, and
-		// query for the actual address of the server pipe.
-		wstring lancherPipeName = L"\\\\.\\pipe\\";
-		DWORD len = 0;
-		::GetUserNameW(NULL, &len); // get the required size of the buffer
-		if (len <= 0)
-			return false;
-		// add username to the pipe path so it won't clash with the other users' pipes
-		unique_ptr<wchar_t> username(new wchar_t[len]);
-		if (!::GetUserNameW(username.get(), &len))
-			return false;
-		lancherPipeName += username.get();
-		lancherPipeName += L"\\PIME\\Launcher";
-
-		// ask PIMELauncher for the real server address
-		DWORD rlen;
-		char serverPipeNameBuf[MAX_PATH];
-		if (::CallNamedPipe(lancherPipeName.c_str(), (LPVOID)guid_.c_str(), guid_.length(), serverPipeNameBuf, MAX_PATH, &rlen, 1000)) {
-			serverPipeNameBuf[rlen] = '\0';
-			// try to connect to the input method backend server
-			if (serverPipeNameBuf[0] != '\0') {
-				wstring serverPipeName = utf8ToUtf16(serverPipeNameBuf);
-				pipe_ = connectPipe(serverPipeName.c_str());
-				if (pipe_ != INVALID_HANDLE_VALUE) { // successfully connected to the server
-					init(); // send initialization info to the server
-					if (isActivated_) {  // we lost connection while being activated
-						IID currentProfile = textService_->currentLangProfile_;
-						textService_->onDeactivate();  // cleanup for the previous instance.
-						textService_->onActivate();  // activate the text service again.
-						textService_->onLangProfileActivated(currentProfile);
-					}
+		wstring serverPipeName = getPipeName(utf8ToUtf16(backend_.c_str()).c_str());
+		// try to connect to the backend server
+		pipe_ = connectPipe(serverPipeName.c_str());
+		
+		// fail to connect to the server
+		if (pipe_ == INVALID_HANDLE_VALUE) {
+			// ask PIMELauncher to launch the server for us.
+			if (launchServer()) {
+				// now the server should be started, try to connect to it.
+				for (int retry = 10; retry >= 0; --retry) { // try 10 times
+					pipe_ = connectPipe(serverPipeName.c_str());
+					if (pipe_ != INVALID_HANDLE_VALUE)
+						break;
+					Sleep(100);
 				}
+			}
+		}
+
+		if (pipe_ != INVALID_HANDLE_VALUE) { // successfully connected to the server
+			init(); // send initialization info to the server
+			if (isActivated_) {
+				// we lost connection while being activated previously
+				// re-initialize the whole text service.
+
+				// cleanup for the previous instance.
+				// remove all buttons
+				for (auto it = buttons_.begin(); it != buttons_.end(); ++it) {
+					textService_->removeButton(it->second);
+				}
+				buttons_.clear();
+
+				// FIXME: other cleanup might also be needed
+
+				// activate the text service again.
+				onActivate();
 			}
 		}
 		connectingServerPipe_ = false;
@@ -720,6 +762,22 @@ void Client::closePipe() {
 		CloseHandle(pipe_);
 		pipe_ = INVALID_HANDLE_VALUE;
 	}
+}
+
+wstring Client::getPipeName(const wchar_t* base_name) {
+	wstring pipeName = L"\\\\.\\pipe\\";
+	DWORD len = 0;
+	::GetUserNameW(NULL, &len); // get the required size of the buffer
+	if (len <= 0)
+		return false;
+	// add username to the pipe path so it won't clash with the other users' pipes
+	unique_ptr<wchar_t> username(new wchar_t[len]);
+	if (!::GetUserNameW(username.get(), &len))
+		return false;
+	pipeName += username.get();
+	pipeName += L"\\PIME\\";
+	pipeName += base_name;
+	return pipeName;
 }
 
 

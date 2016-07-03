@@ -77,6 +77,7 @@ public:
 private:
 	HANDLE connectPipe(const wchar_t* pipeName);
 	bool connectServerPipe();
+	bool launchServer();
 	bool sendRequestText(HANDLE pipe, const char* data, int len, std::string& reply);
 	bool sendRequest(Json::Value& req, Json::Value& result);
 	void closePipe();
@@ -88,6 +89,8 @@ private:
 	void updateUI(const Json::Value& data);
 	bool sendOnMenu(std::string button_id, Json::Value& result);
 
+	static std::wstring getPipeName(const wchar_t* base_name);
+
 	TextService* textService_;
 	std::string guid_;
 	HANDLE pipe_;
@@ -95,6 +98,7 @@ private:
 	unsigned int newSeqNum_;
 	bool isActivated_;
 	bool connectingServerPipe_;
+	std::string backend_;
 };
 
 }

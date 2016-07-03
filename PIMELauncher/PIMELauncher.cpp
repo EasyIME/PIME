@@ -96,7 +96,7 @@ bool BackendServer::ping(int timeout) {
 PIMELauncher* PIMELauncher::singleton_ = nullptr;
 
 PIMELauncher::PIMELauncher():
-	quit_(false) {
+	quitExistingLauncher_(false) {
 	// this can only be assigned once
 	assert(singleton_ == nullptr);
 	singleton_ = this;
@@ -167,24 +167,6 @@ BackendServer* PIMELauncher::findBackend(const char* name) {
 	return nullptr;
 }
 
-// initialize language profiles
-bool PIMELauncher::initProfiles() {
-	ifstream stream(topDirPath_ + L"\\profile_backends.cache");
-	string line;
-	while (getline(stream, line)) {
-		if (line.empty())
-			continue;
-		size_t sep = line.find('\t');
-		if (sep != -1) {
-			string guid = line.substr(0, sep);
-			string backend = line.substr(sep + 1);
-			mapProfilesToBackends_[guid] = findBackend(backend.c_str());
-		}
-	}
-	stream.close();
-	return true;
-}
-
 void PIMELauncher::parseCommandLine(LPSTR cmd) {
 	int argc;
 	wchar_t** argv = CommandLineToArgvW(GetCommandLine(), &argc);
@@ -192,7 +174,7 @@ void PIMELauncher::parseCommandLine(LPSTR cmd) {
 	for (int i = 1; i < argc; ++i) {
 		const wchar_t* arg = argv[i];
 		if (wcscmp(arg, L"/quit") == 0)
-			quit_ = true;
+			quitExistingLauncher_ = true;
 	}
 	LocalFree(argv);
 }
@@ -205,37 +187,46 @@ void PIMELauncher::terminateExistingLauncher() {
 	::CallNamedPipeA(pipe_name.c_str(), "quit", 4, buf, sizeof(buf) - 1, &rlen, 1000); // wait for 1 sec.
 }
 
-string PIMELauncher::handleMessage(const string& msg) {
-	string reply;
-	if (msg == "quit") { // quit PIME
-		// try to terminate launched backend server processes
-		for (int i = 0; i < 2; ++i) {
-			backends_[i].terminate();
-		}
-		ExitProcess(0); // quit PIMELauncher
+void PIMELauncher::quit() {
+	// try to terminate launched backend server processes
+	for (int i = 0; i < 2; ++i) {
+		backends_[i].terminate();
 	}
-	else { // query for the backend pipe address of the language profile GUID
-		// msg is a language profile GUID
-		auto it = mapProfilesToBackends_.find(msg);
-		if (it != mapProfilesToBackends_.end()) { // found a backend
-			BackendServer* backend = it->second;
-			reply = backend->pipeName_;  // reply with the pipe name of the backend server
-			// ensure that the backend server is running and responsive
-			if(!backend->ping()) {
-				// kill it if it's running, but not responsive
-				backend->terminate();
-				// Note: it's also possible that there is a backend server already launched manually
-				//		by the developer for debugging purpose. in this case, ping() will succeed.
-				backend->start();  // launch the backend server process
-				if (backend->isRunning()) {
-					// it takes some time for the server process to create the pipe
-					for (int i = 0; i < 30; ++i) {
-						if(backend->ping(100))
-							break; // wait until the backend server is ready
+	ExitProcess(0); // quit PIMELauncher
+}
+
+bool PIMELauncher::launchBackendByName(const char* name) {
+	// luanch the specified backend server
+	BackendServer* backend = findBackend(name);
+	if (backend != nullptr) {
+		// ensure that the backend server is running and responsive
+		if (!backend->ping()) {
+			// kill it if it's running, but not responsive
+			backend->terminate();
+			// Note: it's also possible that there is a backend server already launched manually
+			//		by the developer for debugging purpose. in this case, ping() will succeed.
+			backend->start();  // launch the backend server process
+			if (backend->isRunning()) {
+				// it takes some time for the server process to create the pipe
+				for (int i = 0; i < 30; ++i) {
+					if (backend->ping(100)) { // wait until the backend server is ready
+						return true;
 					}
 				}
 			}
 		}
+	}
+	return false;
+}
+
+string PIMELauncher::handleMessage(const string& msg) {
+	string reply;
+	if (msg == "quit") { // quit PIME
+		quit();
+	}
+	else if (msg.compare(0, 7, "launch\t") == 0) {
+		string backendName = msg.substr(7);
+		reply = launchBackendByName(backendName.c_str()) ? "ready" : "failed";
 	}
 	return reply;
 }
@@ -289,15 +280,13 @@ DWORD WINAPI PIMELauncher::clientPipeThread(LPVOID param) {
 
 int PIMELauncher::exec(LPSTR cmd) {
 	parseCommandLine(cmd);
-	if (quit_) { // terminate existing launcher process
+	if (quitExistingLauncher_) { // terminate existing launcher process
 		terminateExistingLauncher();
 		return 0;
 	}
 
 	// this is the first instance
 	if (!initBackends())
-		return 1;
-	if (!initProfiles())
 		return 1;
 
 	// main server loop

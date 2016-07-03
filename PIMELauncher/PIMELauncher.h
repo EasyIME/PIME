@@ -27,7 +27,6 @@
 #include <cstring>
 #include <string>
 #include <vector>
-#include <map>
 #include "../libpipe/libpipe.h"
 
 class BackendServer {
@@ -73,20 +72,21 @@ public:
 		::LeaveCriticalSection(&serverLock_); // release mutex
 	}
 
+	void quit();
+
 private:
 	static string getPipeName(const char* base_name);
 	static DWORD WINAPI clientPipeThread(LPVOID param);
 	string handleMessage(const string& msg);
 	void terminateExistingLauncher();
 	void parseCommandLine(LPSTR cmd);
-	bool initProfiles();
 	bool initBackends();
 	BackendServer* findBackend(const char* name);
+	bool launchBackendByName(const char* name);
 
 private:
 	wstring topDirPath_;
-	bool quit_;
-	map<string, BackendServer*> mapProfilesToBackends_;
+	bool quitExistingLauncher_;
 	CRITICAL_SECTION serverLock_;
 	BackendServer backends_[N_BACKENDS];
 	static PIMELauncher* singleton_;

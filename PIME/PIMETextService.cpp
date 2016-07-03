@@ -387,5 +387,4 @@ void CALLBACK TextService::onMessageTimeout(HWND hwnd, UINT msg, UINT_PTR id, DW
 void TextService::updateLangButtons() {
 }
 
-
 } // namespace PIME

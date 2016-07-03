@@ -129,6 +129,7 @@ public:
 	// message window
 	void showMessage(Ime::EditSession* session, std::wstring message, int duration = 3);
 	void hideMessage();
+
 private:
 	void onMessageTimeout();
 	static void CALLBACK onMessageTimeout(HWND hwnd, UINT msg, UINT_PTR id, DWORD time);

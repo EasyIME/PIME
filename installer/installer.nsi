@@ -27,6 +27,11 @@
 !addplugindir /x86-unicode "StdUtils.2015-11-16\Plugins\Release_Unicode"
 !include "StdUtils.nsh" ; for ExecShellAsUser()
 
+; We need the nsProcess plugin
+!addincludedir "nsProcess_1_6\Include"
+!addplugindir /x86-unicode "nsProcess_1_6\Plugins\x86-unicode"
+!include "nsProcess.nsh" ; for terminate pythonw process
+
 Unicode true ; turn on Unicode (This requires NSIS 3.0)
 SetCompressor /SOLID lzma ; use LZMA for best compression ratio
 SetCompressorDictSize 16 ; larger dictionary size for better compression ratio
@@ -93,14 +98,63 @@ Function uninstallOldVersion
 	ReadRegStr $R0 HKLM "${PRODUCT_UNINST_KEY}" "UninstallString"
 	${If} $R0 != ""
 		ClearErrors
-        ${If} ${FileExists} "$INSTDIR\Uninstall.exe"
-            MessageBox MB_OKCANCEL|MB_ICONQUESTION "偵測到已安裝舊版，是否要移除舊版後繼續安裝新版？" IDOK +2
-                Abort ; this is skipped if the user select OK
+		${If} ${FileExists} "$INSTDIR\Uninstall.exe"
+			MessageBox MB_OKCANCEL|MB_ICONQUESTION "偵測到已安裝舊版，是否要移除舊版後繼續安裝新版？" IDOK +2
+			Abort ; this is skipped if the user select OK
 
-            CopyFiles "$INSTDIR\Uninstall.exe" "$TEMP"
-            ExecWait '"$TEMP\Uninstall.exe" _?=$INSTDIR'
-            Delete "$TEMP\Uninstall.exe"
-        ${EndIf}
+			${nsProcess::FindProcess} "PIMELauncher.exe" $R0
+			StrCmp $R0 0 0 +2
+			${nsProcess::KillProcess} "PIMELauncher.exe" $R0
+
+			${nsProcess::FindProcess} "pythonw.exe" $R0
+			StrCmp $R0 0 0 +2
+			${nsProcess::KillProcess} "pythonw.exe" $R0
+
+			ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
+			${nsProcess::Unload}
+
+			; Remove the launcher from auto-start
+			DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
+			DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
+			DeleteRegKey /ifempty HKLM "Software\PIME"
+
+			${If} ${AtLeastWin8}
+				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value}
+				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${checj_value}
+			${EndIf}
+
+			; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
+			ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'
+			${If} ${RunningX64} 
+				SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
+				ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x64\PIMETextService.dll"'
+				RMDir /REBOOTOK /r "$INSTDIR\x64"
+			${EndIf}
+
+			Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
+			Delete /REBOOTOK "$INSTDIR\libpipe.dll"
+
+			RMDir /REBOOTOK /r "$INSTDIR\x86"
+			RMDir /REBOOTOK /r "$INSTDIR\server"
+			RMDir /REBOOTOK /r "$INSTDIR\python"
+
+			; Delete shortcuts
+			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
+			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk"
+			Delete "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk"
+			RMDir /r "$SMPROGRAMS\${PRODUCT_NAME}"
+
+			Delete "$INSTDIR\version.txt"
+			Delete "$INSTDIR\Uninstall.exe"
+			RMDir "$INSTDIR"
+
+			${If} ${RebootFlag}
+				MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +3
+				Reboot
+				Quit
+				Abort
+			${EndIf}
+		${EndIf}
 	${EndIf}
 
 	ClearErrors
@@ -365,7 +419,7 @@ Section "" Register
 SectionEnd
 
 ;Language strings
-LangString DESC_SecMain ${LANG_ENGLISH} "A test section." ; What's this??
+!define CHT 1028
 LangString INST_TYPE_STD ${CHT} "標準安裝"
 LangString INST_TYPE_FULL ${CHT} "完整安裝"
 LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解除安裝。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)"
@@ -386,7 +440,7 @@ Section "Uninstall"
 
 	${If} ${AtLeastWin8}
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value}
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW"  ${checj_value}
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${checj_value}
 	${EndIf}
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
@@ -399,7 +453,17 @@ Section "Uninstall"
 
 	; Try to terminate running PIMELauncher and the server process
 	; Otherwise we cannot replace it.
+	${nsProcess::FindProcess} "PIMELauncher.exe" $R0
+	StrCmp $R0 0 0 +2
+	${nsProcess::KillProcess} "PIMELauncher.exe" $R0
+
+	${nsProcess::FindProcess} "pythonw.exe" $R0
+	StrCmp $R0 0 0 +2
+	${nsProcess::KillProcess} "pythonw.exe" $R0
+
 	ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
+	${nsProcess::Unload}
+
 	Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
 	Delete /REBOOTOK "$INSTDIR\libpipe.dll"
 	Delete "$INSTDIR\profile_backends.cache"
@@ -412,15 +476,16 @@ Section "Uninstall"
     Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
     Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk"
     Delete "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk"
-    RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
+    RMDir /r "$SMPROGRAMS\${PRODUCT_NAME}"
 
 	Delete "$INSTDIR\version.txt"
 	Delete "$INSTDIR\Uninstall.exe"
 	RMDir "$INSTDIR"
 
 	${If} ${RebootFlag}
-		MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +2
+		MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +3
 		Reboot
+		Quit
 		Abort
 	${EndIf}
 SectionEnd

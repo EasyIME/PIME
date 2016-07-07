@@ -49,7 +49,7 @@ AllowSkipFiles off ; cannot skip a file
 
 !define CHEWING_GUID "{F80736AA-28DB-423A-92C9-5540F501C939}"
 !define CHECJ_GUID "{F828D2DC-81BE-466E-9CFE-24BB03172693}"
-!define CHELIU_GUID "{72844B94-5908-4674-8626-4353755BC5DB}"
+; !define CHELIU_GUID "{72844B94-5908-4674-8626-4353755BC5DB}"
 !define CHEARRAY_GUID "{BADFF6B6-0502-4F30-AEC2-BCCB92BCDDC6}"
 !define CHEDAYI_GUID "{E6943374-70F5-4540-AA0F-3205C7DCCA84}"
 
@@ -117,7 +117,7 @@ Function uninstallOldVersion
 			${If} ${AtLeastWin8}
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEWING_GUID}"
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHECJ_GUID}"
-				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHELIU_GUID}"
+				; DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHELIU_GUID}"
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEARRAY_GUID}"
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEDAYI_GUID}"
 			${EndIf}
@@ -191,17 +191,38 @@ Function uninstallOldVersion
 	; Ensure that old files are all deleted
 	${If} ${RunningX64}
 		${If} ${FileExists} "$INSTDIR\x64\PIMETextService.dll"
-		${AndIf} $UPDATEX64DLL == "True"
-			Delete /REBOOTOK "$INSTDIR\x64\PIMETextService.dll"
+			; Verify the MD5/SHA1 checksum of 64-bit PIMETextService.dll
+			StrCpy $0 "$INSTDIR\x64\PIMETextService.dll"
+			md5dll::GetMD5File "$0"
+			Pop $1
+			StrCpy $2 "..\build64\pime\Release\PIMETextService.dll"
+			md5dll::GetMD5File "$2"
+			Pop $3
+			${If} $1 == $3
+				StrCpy $UPDATEX64DLL "False"
+			${Else}
+				Delete /REBOOTOK "$INSTDIR\x64\PIMETextService.dll"
+				IfErrors 0 +2
+					Call .onInstFailed
+			${EndIf}
+		${EndIf}
+	${EndIf}
+
+	${If} ${FileExists} "$INSTDIR\x86\PIMETextService.dll"
+		; Verify the MD5/SHA1 checksum of 32-bit PIMETextService.dll
+		StrCpy $0 "$INSTDIR\x86\PIMETextService.dll"
+		md5dll::GetMD5File "$0"
+		Pop $1
+		StrCpy $2 "..\build\pime\Release\PIMETextService.dll"
+		md5dll::GetMD5File "$2"
+		Pop $3
+		${If} $1 == $3
+			StrCpy $UPDATEX86DLL "False"
+		${Else}
+			Delete /REBOOTOK "$INSTDIR\x86\PIMETextService.dll"
 			IfErrors 0 +2
 				Call .onInstFailed
 		${EndIf}
-	${EndIf}
-	${If} ${FileExists} "$INSTDIR\x86\PIMETextService.dll"
-	${AndIf} $UPDATEX86DLL == "True"
-		Delete /REBOOTOK "$INSTDIR\x86\PIMETextService.dll"
-		IfErrors 0 +2
-			Call .onInstFailed
 	${EndIf}
 
 	${If} ${RebootFlag}
@@ -358,7 +379,7 @@ Section "PIME 輸入法平台" SecMain
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
 SectionEnd
 
-SubSection "輸入法模組"
+SectionGroup /e "輸入法模組"
 	Section "新酷音" chewing
 		SectionIn 1 2
 		SetOutPath "$INSTDIR\python\input_methods"
@@ -370,13 +391,13 @@ SubSection "輸入法模組"
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r "..\python\input_methods\checj"
 	SectionEnd
-
+/*
 	Section "蝦米" cheliu
 		SectionIn 2
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r "..\python\input_methods\cheliu"
 	SectionEnd
-
+*/
 	Section "行列" chearray
 		SectionIn 2
 		SetOutPath "$INSTDIR\python\input_methods"
@@ -389,7 +410,7 @@ SubSection "輸入法模組"
 		File /r "..\python\input_methods\chedayi"
 	SectionEnd
 
-SubSectionEnd
+SectionGroupEnd
 
 Section "" Register
 	SectionIn 1 2
@@ -449,12 +470,12 @@ Section "" Register
 			IntOp $R0 $R0 + 1
 			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHECJ_GUID}" $R0
 		${EndIf}
-
+/*
 		${If} ${SectionIsSelected} ${cheliu}
 			IntOp $R0 $R0 + 1
 			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHELIU_GUID}" $R0
 		${EndIf}
-
+*/
 		${If} ${SectionIsSelected} ${chearray}
 			IntOp $R0 $R0 + 1
 			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEARRAY_GUID}" $R0
@@ -483,11 +504,11 @@ Section "" Register
 	${If} ${SectionIsSelected} ${checj}
 		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk" "$INSTDIR\python\input_methods\checj\config\config.hta" "" "$INSTDIR\python\input_methods\checj\icon.ico" 0
 	${EndIf}
-
+/*
 	${If} ${SectionIsSelected} ${cheliu}
 		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定蝦米輸入法.lnk" "$INSTDIR\python\input_methods\cheliu\config\config.hta" "" "$INSTDIR\python\input_methods\cheliu\icon.ico" 0
 	${EndIf}
-
+*/
 	${If} ${SectionIsSelected} ${chearray}
 		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定行列輸入法.lnk" "$INSTDIR\python\input_methods\chearray\config\config.hta" "" "$INSTDIR\python\input_methods\chearray\icon.ico" 0
 	${EndIf}
@@ -522,7 +543,7 @@ Section "Uninstall"
 	${If} ${AtLeastWin8}
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEWING_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHECJ_GUID}"
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHELIU_GUID}"
+		; DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHELIU_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEARRAY_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEDAYI_GUID}"
 	${EndIf}

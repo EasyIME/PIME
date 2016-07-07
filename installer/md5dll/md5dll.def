@@ -1,0 +1,10 @@
+LIBRARY MD5DLL
+DESCRIPTION "Implements MD5 Sum as NSIS plugin"
+EXPORTS
+GetMD5File    @1
+GetMD5String  @2
+GetMD5Random  @3
+
+;These are for compatibility with older versions of this plugin only {deprecated}
+GetFileMD5=GetMD5File @101 PRIVATE
+GetMD5=GetMD5String   @102 PRIVATE

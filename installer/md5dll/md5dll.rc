@@ -1,0 +1,100 @@
+#include <windows.h>
+
+#define APP_ICON		100
+
+#ifdef RC_INVOKED
+
+// Pretty icon displayed by Explorer
+// APP_ICON           ICON    DISCARDABLE     "md5dll.ico"
+
+// Version info viewable by Explorer
+#define _VM 0
+#define _VN 5
+#define _VI 0
+#define _VB 0
+
+#ifndef mk_str
+#define mk_str2(x) # x
+#define mk_str(x) mk_str2(x)
+#endif
+
+#define _VS mk_str(_VM) "." mk_str(_VN) "." mk_str(_VI) "-" mk_str(_VB) "\0"
+
+
+// normally found in <winver.h> included by <windows.h>
+// FILEFLAGS
+#define VS_FF_NORMAL            0x00000000L  // ok I made this one up
+#ifndef VS_FF_DEBUG
+#define VS_FF_DEBUG             0x00000001L
+#endif
+#ifndef VS_FF_PRERELEASE
+#define VS_FF_PRERELEASE        0x00000002L
+#endif
+// FILEOS
+#ifndef VOS_NT
+#define VOS_NT                  0x00040000L
+#endif
+#ifndef VOS__WINDOWS32
+#define VOS__WINDOWS32          0x00000004L
+#endif
+#ifndef VOS_NT_WINDOWS32
+#define VOS_NT_WINDOWS32        0x00040004L
+#endif
+// FILETYPE
+#ifndef VFT_APP
+#define VFT_APP                 0x00000001L
+#endif
+#ifndef VFT_DLL
+#define VFT_DLL                 0x00000002L
+#endif
+
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION _VM,_VN,_VI,_VB
+ PRODUCTVERSION _VM,_VN,_VI,_VB
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS VS_FF_DEBUG | VS_FF_PRERELEASE    // a debug build is never a release
+#else
+ FILEFLAGS VS_FF_NORMAL
+#endif
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_APP
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080904b0"
+        BEGIN
+            VALUE "Comments", "NSIS plugin to calculate MD5 sum.\0"
+            VALUE "CompanyName", "www.fdos.org\0"
+            VALUE "FileDescription", "MD5 message digest algorithm\0"
+            VALUE "FileVersion", _VS
+            VALUE "InternalName", "md5dll\0"
+// Only about the 1st 45+ characters are shown in Windows 2000 properties Version dialog
+            VALUE "LegalCopyright", "derivative of RSA Data Security, Inc. MD5 Message-Digest Algorithm\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "md5dll.dll\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "md5dll\0"
+            VALUE "ProductVersion", _VS
+#ifdef NSIS_UNICODE
+            VALUE "SpecialBuild", "UNICODE\0"
+#else
+            VALUE "SpecialBuild", "ANSI\0"
+#endif
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x809, 1200
+    END
+END
+
+#undef _VM
+#undef _VN
+#undef _VI
+#undef _VB
+#undef _VS
+
+#endif

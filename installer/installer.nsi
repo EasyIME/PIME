@@ -128,7 +128,7 @@ Function uninstallOldVersion
 			StrCpy $0 "$INSTDIR\x86\PIMETextService.dll"
 			md5dll::GetMD5File "$0"
 			Pop $1
-			StrCpy $2 "..\build\pime\Release\PIMETextService.dll"
+			StrCpy $2 "$PLUGINSDIR\PIMETextService_x86.dll"
 			md5dll::GetMD5File "$2"
 			Pop $3
 			${If} $1 == $3
@@ -144,7 +144,7 @@ Function uninstallOldVersion
 				StrCpy $0 "$INSTDIR\x64\PIMETextService.dll"
 				md5dll::GetMD5File "$0"
 				Pop $1
-				StrCpy $2 "..\build64\pime\Release\PIMETextService.dll"
+				StrCpy $2 "$PLUGINSDIR\PIMETextService_x64.dll"
 				md5dll::GetMD5File "$2"
 				Pop $3
 				${If} $1 == $3
@@ -195,7 +195,7 @@ Function uninstallOldVersion
 			StrCpy $0 "$INSTDIR\x64\PIMETextService.dll"
 			md5dll::GetMD5File "$0"
 			Pop $1
-			StrCpy $2 "..\build64\pime\Release\PIMETextService.dll"
+			StrCpy $2 "$PLUGINSDIR\PIMETextService_x64.dll"
 			md5dll::GetMD5File "$2"
 			Pop $3
 			${If} $1 == $3
@@ -213,7 +213,7 @@ Function uninstallOldVersion
 		StrCpy $0 "$INSTDIR\x86\PIMETextService.dll"
 		md5dll::GetMD5File "$0"
 		Pop $1
-		StrCpy $2 "..\build\pime\Release\PIMETextService.dll"
+		StrCpy $2 "$PLUGINSDIR\PIMETextService_x86.dll"
 		md5dll::GetMD5File "$2"
 		Pop $3
 		${If} $1 == $3
@@ -244,6 +244,8 @@ Function .onInit
 
 	InitPluginsDir
 	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\ieprotectedpage.ini"
+	File "/oname=$PLUGINSDIR\PIMETextService_x86.dll" "..\build\pime\Release\PIMETextService.dll"
+	File "/oname=$PLUGINSDIR\PIMETextService_x64.dll" "..\build64\pime\Release\PIMETextService.dll"
 
 	StrCpy $UPDATEX86DLL "True"
 	StrCpy $UPDATEX64DLL "True"

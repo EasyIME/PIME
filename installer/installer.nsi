@@ -42,8 +42,14 @@ AllowSkipFiles off ; cannot skip a file
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 !define HOMEPAGE_URL "https://github.com/EasyIME/"
 
-!define chewing_value "0404:{35F67E9D-A54D-4177-9697-8B0AB71A9E04}{F80736AA-28DB-423A-92C9-5540F501C939}"
-!define checj_value "0404:{35F67E9D-A54D-4177-9697-8B0AB71A9E04}{F828D2DC-81BE-466E-9CFE-24BB03172693}"
+!define PIME_CLSID "{35F67E9D-A54D-4177-9697-8B0AB71A9E04}"
+
+!define CHEWING_GUID "{F80736AA-28DB-423A-92C9-5540F501C939}"
+!define CHECJ_GUID "{F828D2DC-81BE-466E-9CFE-24BB03172693}"
+!define CHELIU_GUID "{72844B94-5908-4674-8626-4353755BC5DB}"
+!define CHEARRAY_GUID "{BADFF6B6-0502-4F30-AEC2-BCCB92BCDDC6}"
+!define CHEDAYI_GUID "{E6943374-70F5-4540-AA0F-3205C7DCCA84}"
+
 
 Name "${PRODUCT_NAME}"
 BrandingText "${PRODUCT_NAME}"
@@ -260,7 +266,7 @@ Section "PIME 輸入法平台" SecMain
     File "..\build\libpipe\Release\libpipe.dll"
 
 	; Install the python backend and input method modules along with an embedable version of python 3.
-	File /r /x "__pycache__" /x "meow" /x "chewing" /x "checj" /x ".git" /x ".idea" "..\python"
+	File /r /x "__pycache__" /x "meow" /x "chewing" /x "checj" /x "cheliu" /x "chearray" /x "chedayi" /x ".git" /x ".idea" "..\python"
 
 	; Install the node.js backend and input method modules along with an embedable version of python 3.
 	; File /r "..\node"
@@ -281,6 +287,25 @@ SubSection "輸入法模組"
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r "..\python\input_methods\checj"
 	SectionEnd
+
+	Section "蝦米" cheliu
+		SectionIn 2
+		SetOutPath "$INSTDIR\python\input_methods"
+		File /r "..\python\input_methods\cheliu"
+	SectionEnd
+
+	Section "行列" chearray
+		SectionIn 2
+		SetOutPath "$INSTDIR\python\input_methods"
+		File /r "..\python\input_methods\chearray"
+	SectionEnd
+
+	Section "大易" chedayi
+		SectionIn 2
+		SetOutPath "$INSTDIR\python\input_methods"
+		File /r "..\python\input_methods\chedayi"
+	SectionEnd
+
 SubSectionEnd
 
 Section "" Register
@@ -324,23 +349,33 @@ Section "" Register
 			EnumRegValue $1 HKCU "Control Panel\International\User Profile\zh-Hant-TW" $0
 			StrCmp $1 "" done
 			IntOp $0 $0 + 1
-			${If} $1 ==  ${chewing_value}
-			${OrIf} $1 == ${checj_value}
-				IntOp $R0 $R0 + 0
-			${Else}
-				IntOp $R0 $R0 + 1
-			${EndIf}
+			IntOp $R0 $R0 + 1
 			Goto loop
 		done:
 
 		${If} ${SectionIsSelected} ${chewing}
 			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value} $R0
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEWING_GUID}" $R0
 		${EndIf}
 
 		${If} ${SectionIsSelected} ${checj}
 			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${checj_value} $R0
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHECJ_GUID}" $R0
+		${EndIf}
+
+		${If} ${SectionIsSelected} ${cheliu}
+			IntOp $R0 $R0 + 1
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHELIU_GUID}" $R0
+		${EndIf}
+
+		${If} ${SectionIsSelected} ${chearray}
+			IntOp $R0 $R0 + 1
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEARRAY_GUID}" $R0
+		${EndIf}
+
+		${If} ${SectionIsSelected} ${chedayi}
+			IntOp $R0 $R0 + 1
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEDAYI_GUID}" $R0
 		${EndIf}
 	${EndIf}
 
@@ -357,15 +392,28 @@ Section "" Register
 	${If} ${SectionIsSelected} ${chewing}
 		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk" "$INSTDIR\python\pythonw.exe" '"$INSTDIR\python\input_methods\chewing\config\configTool.py"' "$INSTDIR\python\input_methods\chewing\icon.ico" 0
 	${EndIf}
-	
+
 	${If} ${SectionIsSelected} ${checj}
 		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk" "$INSTDIR\python\input_methods\checj\config\config.hta" "" "$INSTDIR\python\input_methods\checj\icon.ico" 0
 	${EndIf}
+
+	${If} ${SectionIsSelected} ${cheliu}
+		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定蝦米輸入法.lnk" "$INSTDIR\python\input_methods\cheliu\config\config.hta" "" "$INSTDIR\python\input_methods\cheliu\icon.ico" 0
+	${EndIf}
+
+	${If} ${SectionIsSelected} ${chearray}
+		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定行列輸入法.lnk" "$INSTDIR\python\input_methods\chearray\config\config.hta" "" "$INSTDIR\python\input_methods\chearray\icon.ico" 0
+	${EndIf}
+
+	${If} ${SectionIsSelected} ${chedayi}
+		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定大易輸入法.lnk" "$INSTDIR\python\input_methods\chedayi\config\config.hta" "" "$INSTDIR\python\input_methods\chedayi\icon.ico" 0
+	${EndIf}
+
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
 
 ;Language strings
-LangString DESC_SecMain ${LANG_ENGLISH} "A test section." ; What's this??
+!define CHT 1028
 LangString INST_TYPE_STD ${CHT} "標準安裝"
 LangString INST_TYPE_FULL ${CHT} "完整安裝"
 LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解除安裝。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)"
@@ -379,14 +427,17 @@ LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解
 
 ;Uninstaller Section
 Section "Uninstall"
-    ; Remove the launcher from auto-start
+	; Remove the launcher from auto-start
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
 	DeleteRegKey /ifempty HKLM "Software\PIME"
 
 	${If} ${AtLeastWin8}
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" ${chewing_value}
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW"  ${checj_value}
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEWING_GUID}"
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHECJ_GUID}"
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHELIU_GUID}"
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEARRAY_GUID}"
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEDAYI_GUID}"
 	${EndIf}
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
@@ -408,19 +459,23 @@ Section "Uninstall"
 	RMDir /REBOOTOK /r "$INSTDIR\python"
 	; RMDir /REBOOTOK /r "$INSTDIR\node"
 
-    ; Delete shortcuts
-    Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
-    Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk"
-    Delete "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk"
-    RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
+	; Delete shortcuts
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定蝦米輸入法.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定行列輸入法.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定大易輸入法.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk"
+	RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
 
 	Delete "$INSTDIR\version.txt"
 	Delete "$INSTDIR\Uninstall.exe"
 	RMDir "$INSTDIR"
 
 	${If} ${RebootFlag}
-		MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +2
+		MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +3
 		Reboot
+		Quit
 		Abort
 	${EndIf}
 SectionEnd

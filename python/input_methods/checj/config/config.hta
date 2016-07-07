@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- 此文件要取代所有「酷倉」、「倉頡」為新輸入法名稱, 以及 Cin 碼表內容 -->
 <html>
     <head>
         <meta http-equiv="x-ua-compatible" content="ie=9">
@@ -53,12 +54,16 @@
             <input type="checkbox" id="outputSimpChinese" name="outputSimpChinese" />
             <label for="outputSimpChinese">預設輸出簡體中文</label><br>
             
+            <!-- 如果使用的輸入法有使用鍵盤上方的數字鍵作為字根, 請不要加入此項目 -->
+            <input type="checkbox" id="directShowCand" name="directShowCand" />
+            <label for="directShowCand">直接顯示候選字清單 (不須按空白鍵)</label><br>
+
             <input type="checkbox" id="supportSymbolCoding" name="supportSymbolCoding" />
             <label for="supportSymbolCoding">支援 CIN 碼表中以符號字元所定義的編碼</label><br>
-            
+
             <br><input type="checkbox" id="supportWildcard" name="supportWildcard" />
             <label for="supportWildcard">支援以萬用字元代替組字字根</label><br>
-            
+
             <label for="selWildcardType">　 萬用字元: </label>
             <select name="selWildcardType" id="selWildcardType">
             </select><br>
@@ -78,7 +83,9 @@
             <label>中標倉頡: 採用CNS全字庫的倉頡輸入法碼表,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
             <label>泰瑞倉頡: 混合三代倉頡及五代倉頡的輸入法碼表,由 <a href="http://terryhung.pixnet.net/blog">泰瑞的世界</a> 整理提供。</label><br>
             <label>亂倉打鳥: 改良型的倉頡輸入法碼表,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
-            <label>倉五: 採用五代倉頡的輸入法碼表,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
+            <label>倉頡五代: 採用五代倉頡的輸入法碼表,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
+            <label>自由大新倉頡: 改良型的倉頡輸入法碼表,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
+            <label>快倉六代: 改良型的倉頡輸入法碼表,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
         </div>
         
         <div id="ui_page">
@@ -153,7 +160,7 @@
             PIME 輸入法平台網站：<a href="https://github.com/EasyIME/PIME">PIME 輸入法平台</a><br>
             PIME 輸入法平台版本：<span id="version"></span>
             <p>PIME 是在 Windows上使用 Python 3 開發 TSF 中文輸入法的平台，由作者 <a href="https://github.com/PCMan">洪任諭(PCMan)</a> 所開發，目前支援到 Windows 10，並且能支援 Windows app container (Metro mode)。可以讓開發者在不了解系統細節的情況下，單純使用 Python 就能實作支援 Windows 的輸入法模組。</p>
-            <p>酷倉是在 PIME 輸入法平台下，基於 CIN 碼表所實現的倉頡輸入法模組。本身移植了 PIME 平台下新酷音大部份的功能，並參考了微軟倉頡的一些操作方式，讓使用者轉移過來使用時，能夠馬上就上手，而不須要重新去適應。</p>
+            <p>酷倉是在 PIME 輸入法平台下，基於 CIN 碼表所實現的倉頡輸入法模組。本身移植了 PIME 平台下新酷音大部份的功能，並參考了微軟輸入法的一些操作方式，讓使用者轉移過來使用時，能夠馬上就上手，而不須要重新去適應。</p>
         </div>
     </div>
 

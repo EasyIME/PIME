@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="x-ua-compatible" content="ie=9">
+        <meta charset="utf-8">
+        <title>設定蝦米輸入法</title>
+        <link rel="stylesheet" type="text/css" href="js/jquery-ui-1.11.4/jquery-ui.min.css">
+        <link rel="stylesheet" type="text/css" href="js/jquery-ui-1.11.4/jquery-ui.theme.min.css">
+        <link rel="stylesheet" type="text/css" href="css/config.css">
+
+        <script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+        <script type="text/javascript" src="js/jquery-ui-1.11.4/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="js/config.js"></script>
+
+        <!-- We use Microsoft HTML application (Windows-only) -->
+        <hta:application
+            id="CheCJConfig"
+            border="thick"
+            borderstyle="normal"
+            contextmenu="no"
+            icon="images\logo.ico"
+            innerborder="no"
+            scroll="yes"
+            singleinstance="yes"
+            windowState="maximize"
+        />
+    </head>
+    <body>
+    <div id="tabs">
+        <ul>
+            <li><a href="#typing_page">打字行為</a></li>
+            <li><a href="#cin_page">輸入法碼表</a></li>
+            <li><a href="#ui_page">介面外觀</a></li>
+            <!-- <li><a href="#keyboard_page">鍵盤設定</a></li> -->
+            <li><a href="#symbols_page">特殊符號</a></li>
+            <li><a href="#fs_symbols_page">全形標點輸入</a></li>
+            <li><a href="#ez_symbols_page">簡易符號輸入</a></li>
+            <li><a href="#flangs_page">外語文字</a></li>
+            <li><a href="#help_page">使用說明</a></li>
+            <li><a href="#about_page">關於蝦米</a></li>
+        </ul>
+
+        <div id="typing_page">
+            <input type="checkbox" id="switchLangWithShift" name="switchLangWithShift" />
+            <label for="switchLangWithShift">使用 Shift 快速切換中英文</label><br>
+
+            <input type="checkbox" id="defaultFullSpace" name="defaultFullSpace" />
+            <label for="defaultFullSpace">預設以全形模式啟動</label><br>
+
+            <input type="checkbox" id="defaultEnglish" name="defaultEnglish" />
+            <label for="defaultEnglish">預設以英文模式啟動</label><br>
+
+            <input type="checkbox" id="outputSimpChinese" name="outputSimpChinese" />
+            <label for="outputSimpChinese">預設輸出簡體中文</label><br>
+            
+            <!-- 如果使用的輸入法有使用鍵盤上方的數字鍵作為字根, 請不要加入此項目 -->
+            <input type="checkbox" id="directShowCand" name="directShowCand" />
+            <label for="directShowCand">直接顯示候選字清單 (不須按空白鍵)</label><br>
+            
+            <input type="checkbox" id="supportSymbolCoding" name="supportSymbolCoding" />
+            <label for="supportSymbolCoding">支援 CIN 碼表中以符號字元所定義的編碼</label><br>
+            
+            <br><input type="checkbox" id="supportWildcard" name="supportWildcard" />
+            <label for="supportWildcard">支援以萬用字元代替組字字根</label><br>
+            
+            <label for="selWildcardType">　 萬用字元: </label>
+            <select name="selWildcardType" id="selWildcardType">
+            </select><br>
+            <br>
+
+        </div>
+        
+        <div id="cin_page">
+            <label for="selCinType">輸入法碼表: </label>
+            <select name="selCinType" id="selCinType">
+            </select><br>
+            
+            <br>
+            <label>嘸蝦米: 劉重次發明的嘸蝦米輸入法,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
+            <label>萬國蝦米: 相容劉重次發明的大字庫嘸蝦米輸入法,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
+        </div>
+        
+        <div id="ui_page">
+            <label for="candPerRow">每列顯示候選字個數: </label>
+            <input type="text" id="candPerRow" name="candPerRow" /><br>
+
+            <label for="candPerPage">每頁顯示候選字個數: </label>
+            <input type="text" id="candPerPage" name="candPerPage" /><br>
+            
+            <label for="candMaxItems">最大候選字個數: </label>
+            <input type="text" id="candMaxItems" name="candMaxItems" /><br>
+
+            <label for="fontSize">選字及訊息視窗文字大小: </label>
+            <input type="text" id="fontSize" name="fontSize" /><br>
+
+			<div id="selExample">			
+			</div>
+            <!--
+            <input type="checkbox" id="colorCandWnd" name="colorCandWnd" />
+            <label for="colorCandWnd">用不同顏色顯示選字鍵和候選字: <label><br>
+            -->
+        </div>
+
+        <div id="keyboard_page">
+        <!-- keyboard layouts inserted here by javascript -->
+        </div>
+
+        <div id="symbols_page">
+            <textarea id="symbols"></textarea><br>
+            蝦米輸入法提供符號表，裡面的符號可以自訂。
+            以上是符號表的設定檔，語法相當簡單。<br>
+            每一行的內容都是： 「分類名稱」=「此分類下的所有符號」。
+            您也可以一行只放一個符號，則該符號會被放在最上層選單。<br>
+        </div>
+        
+        <div id="fs_symbols_page">
+            <input type="checkbox" id="fullShapeSymbols" name="fullShapeSymbols" />
+            <label for="fullShapeSymbols">中文模式下按住 Shift 輸入全形標點符號</label><br>
+            <p>
+            以下是使用 Shift 輸入全形標點符號的設定，每一行表示一個 Shift+符號/數字鍵所對應的字串。<br>
+            每一行的格式必須符合：「Ta=Tb」。其中 Ta 與 Tb 間必須有一個半形「=」字元；<br>
+            Ta 可以是 Shift+符號/數字鍵所輸出的符號；Tb 可以是長度 1 到 10 的任意中英文字串。
+            </p>
+            <textarea id="fs_symbols"></textarea>
+        </div>
+
+        <div id="ez_symbols_page">
+            <input type="checkbox" id="easySymbolsWithShift" name="easySymbolsWithShift" />
+            <label for="easySymbolsWithShift">中文模式下按住 Shift 快速輸入符號</label><br>
+            <p>
+            以下是使用 Shift 快速輸入符號的設定，每一行表示一個鍵所對應的字串，
+            例如「m 新酷音」或是「L orz」等。<br>
+            每一行的格式必須符合：「Ta Tb」。其中 Ta 與 Tb 間必須有一個半形空白字元；<br>
+            Ta 可以是 a-z 等字母；Tb 可以是長度 1 到 10 的任意中英文字串。
+            </p>
+            <textarea id="ez_symbols"></textarea>
+        </div>
+        
+        <div id="flangs_page">
+            <textarea id="flangs"></textarea><br>
+            蝦米輸入法提供外語文字表，裡面的外語文字可以自訂。
+            以上是外語文字表的設定檔，語法相當簡單。<br>
+            每一行的內容都是： 「分類名稱」=「此分類下的所有符號」。
+            您也可以一行只放一個文字，則該文字會被放在最上層選單。<br>
+        </div>
+        
+        <div id="help_page">
+            <iframe id="help" src="help.htm"></iframe>
+        </div>
+
+        <div id="about_page">
+            PIME 輸入法平台網站：<a href="https://github.com/EasyIME/PIME">PIME 輸入法平台</a><br>
+            PIME 輸入法平台版本：<span id="version"></span>
+            <p>PIME 是在 Windows上使用 Python 3 開發 TSF 中文輸入法的平台，由作者 <a href="https://github.com/PCMan">洪任諭(PCMan)</a> 所開發，目前支援到 Windows 10，並且能支援 Windows app container (Metro mode)。可以讓開發者在不了解系統細節的情況下，單純使用 Python 就能實作支援 Windows 的輸入法模組。</p>
+            <p>蝦米是在 PIME 輸入法平台下，基於 CIN 碼表所實現的蝦米輸入法模組。本身移植了 PIME 平台下新酷音大部份的功能，並參考了微軟輸入法的一些操作方式，讓使用者轉移過來使用時，能夠馬上就上手，而不須要重新去適應。</p>
+        </div>
+    </div>
+
+    <div id="buttons">
+        <button id="ok">確定</button>
+        <button id="cancel">取消</button>
+    </div>
+    </body>
+</html>

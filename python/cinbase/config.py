@@ -19,31 +19,31 @@ import json
 import os
 import io
 import time
-from .cin import Cin
 
 DEF_FONT_SIZE = 16
-
-# from libchewing/include/internal/userphrase-private.h
-DB_NAME	= "checj.sqlite3"
 
 selKeys=(
     "1234567890"
 )
 
-class ChecjConfig:
-
+class CinBaseConfig:
+    
     def __init__(self):
+        self.imeDirName = ""
         self.candPerRow = 3
         self.defaultEnglish = False
         self.defaultFullSpace = False
         self.switchLangWithShift = True
         self.outputSimpChinese = False
+        self.directShowCand = False
         self.addPhraseForward = True
         self.colorCandWnd = True
         self.advanceAfterSelection = True
         self.fontSize = DEF_FONT_SIZE
         self.selCinType = 0
-        self.selCinFile = "cin/checj.cin"
+        self.selCinFile = ""
+        self.cinFileList = []
+        self.cindir = ""
         self.selKeyType = 0
         self.candPerPage = 9
         self.cursorCandList = True
@@ -63,19 +63,14 @@ class ChecjConfig:
         # version: last modified time of (config.json, symbols.dat, swkb.dat)
         self._version = (0.0, 0.0, 0.0)
         self._lastUpdateTime = 0.0
-        self.load() # try to load from the config file
-        self.loadCinFile()
 
     def getConfigDir(self):
-        config_dir = os.path.join(os.path.expanduser("~"), "PIME", "checj")
+        config_dir = os.path.join(os.path.expanduser("~"), "PIME", self.imeDirName)
         os.makedirs(config_dir, mode=0o700, exist_ok=True)
         return config_dir
 
     def getConfigFile(self, name="config.json"):
         return os.path.join(self.getConfigDir(), name)
-
-    def getUserPhrase(self):
-        return os.path.join(self.getConfigDir(), DB_NAME)
 
     def getSelKeys(self):
         return selKeys[self.selKeyType]
@@ -184,28 +179,7 @@ class ChecjConfig:
     def isFullReloadNeeded(self, currentVersion):
         return currentVersion[1:] != self._version[1:]
 
-    def loadCinFile(self):
-        if self.selCinType == 0: 
-            self.selCinFile = "cin/checj.cin"
-        elif self.selCinType == 1: 
-            self.selCinFile = "cin/mscj3.cin"
-        elif self.selCinType == 2: 
-            self.selCinFile = "cin/cj-ext.cin"
-        elif self.selCinType == 3: 
-            self.selCinFile = "cin/cnscj.cin"
-        elif self.selCinType == 4: 
-            self.selCinFile = "cin/thcj.cin"
-        elif self.selCinType == 5: 
-            self.selCinFile = "cin/newcj3.cin"
-        elif self.selCinType == 6: 
-            self.selCinFile = "cin/cj5.cin"
-        elif self.selCinType == 7: 
-            self.selCinFile = "cin/newcj.cin"
-
-        CinPath = os.path.join(self.curdir, self.selCinFile)
-        with io.open(CinPath, encoding='utf-8') as fs:
-            self.cin = Cin(fs)
 
 # globally shared config object
 # load configurations from a user-specific config file
-ChecjConfig = ChecjConfig()
+CinBaseConfig = CinBaseConfig()

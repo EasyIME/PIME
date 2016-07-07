@@ -1,3 +1,7 @@
+// 此文件須改 73 行,用戶設定檔儲存的資料夾名稱
+// 以及 213 行,輸入法碼表的中文名稱
+
+// 此輸入法模組預設設定值
 defaultConfig ={
     "defaultEnglish": false,
     "candPerRow": 3,
@@ -10,6 +14,7 @@ defaultConfig ={
     "colorCandWnd": true,
     "fontSize": 16,
     "outputSimpChinese": false,
+    "directShowCand": true,
     "supportSymbolCoding": false,
     "supportWildcard": true,
     "selWildcardType": "0",
@@ -83,7 +88,7 @@ function getDataDir() {
         progDir = shell.ExpandEnvironmentStrings("%PROGRAMFILES");
     }
     // FIXME: it's bad to hard code the path, but is there any better way?
-    return progDir + "\\PIME\\python\\input_methods\\checj\\data";
+    return progDir + "\\PIME\\python\\cinbase\\data";
 }
 
 var checjConfig = null;
@@ -214,8 +219,9 @@ $(function() {
         "中標倉頡",
         "泰瑞倉頡",
         "亂倉打鳥",
-        "倉五",
-        "自由大新倉頡"
+        "倉頡五代",
+        "自由大新倉頡",
+        "快倉六代"
     ];
     var selCinType = $("#selCinType");
     for(var i = 0; i < selCins.length; ++i) {

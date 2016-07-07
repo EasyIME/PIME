@@ -27,6 +27,9 @@
 !addplugindir /x86-unicode "StdUtils.2015-11-16\Plugins\Release_Unicode"
 !include "StdUtils.nsh" ; for ExecShellAsUser()
 
+; We need the MD5 plugin
+!addplugindir /x86-unicode "md5dll\UNICODE"
+
 Unicode true ; turn on Unicode (This requires NSIS 3.0)
 SetCompressor /SOLID lzma ; use LZMA for best compression ratio
 SetCompressorDictSize 16 ; larger dictionary size for better compression ratio
@@ -92,6 +95,9 @@ Page custom setIEProtectedPage leaveIEProtectedPage
 
 !insertmacro MUI_LANGUAGE "TradChinese" ; traditional Chinese
 
+var UPDATEX86DLL
+var UPDATEX64DLL
+
 ; Uninstall old versions
 Function uninstallOldVersion
 	ClearErrors
@@ -99,29 +105,103 @@ Function uninstallOldVersion
 	ReadRegStr $R0 HKLM "${PRODUCT_UNINST_KEY}" "UninstallString"
 	${If} $R0 != ""
 		ClearErrors
-        ${If} ${FileExists} "$INSTDIR\Uninstall.exe"
-            MessageBox MB_OKCANCEL|MB_ICONQUESTION "偵測到已安裝舊版，是否要移除舊版後繼續安裝新版？" IDOK +2
-                Abort ; this is skipped if the user select OK
+		${If} ${FileExists} "$INSTDIR\Uninstall.exe"
+			MessageBox MB_OKCANCEL|MB_ICONQUESTION "偵測到已安裝舊版，是否要移除舊版後繼續安裝新版？" IDOK +2
+			Abort ; this is skipped if the user select OK
 
-            CopyFiles "$INSTDIR\Uninstall.exe" "$TEMP"
-            ExecWait '"$TEMP\Uninstall.exe" _?=$INSTDIR'
-            Delete "$TEMP\Uninstall.exe"
-        ${EndIf}
+			; Remove the launcher from auto-start
+			DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
+			DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
+			DeleteRegKey /ifempty HKLM "Software\PIME"
+
+			${If} ${AtLeastWin8}
+				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEWING_GUID}"
+				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHECJ_GUID}"
+				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHELIU_GUID}"
+				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEARRAY_GUID}"
+				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEDAYI_GUID}"
+			${EndIf}
+
+			; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
+			ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'
+			; Verify the MD5/SHA1 checksum of 32-bit PIMETextService.dll
+			StrCpy $0 "$INSTDIR\x86\PIMETextService.dll"
+			md5dll::GetMD5File "$0"
+			Pop $1
+			StrCpy $2 "..\build\pime\Release\PIMETextService.dll"
+			md5dll::GetMD5File "$2"
+			Pop $3
+			${If} $1 == $3
+				StrCpy $UPDATEX86DLL "False"
+			${Else}
+				RMDir /REBOOTOK /r "$INSTDIR\x86"
+			${EndIf}
+
+			${If} ${RunningX64} 
+				SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
+				ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x64\PIMETextService.dll"'
+				; Verify the MD5/SHA1 checksum of 64-bit PIMETextService.dll
+				StrCpy $0 "$INSTDIR\x64\PIMETextService.dll"
+				md5dll::GetMD5File "$0"
+				Pop $1
+				StrCpy $2 "..\build64\pime\Release\PIMETextService.dll"
+				md5dll::GetMD5File "$2"
+				Pop $3
+				${If} $1 == $3
+					StrCpy $UPDATEX64DLL "False"
+				${Else}
+					RMDir /REBOOTOK /r "$INSTDIR\x64"
+				${EndIf}
+			${EndIf}
+
+			; Try to terminate running PIMELauncher and the server process
+			; Otherwise we cannot replace it.
+			ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
+
+			Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
+			Delete /REBOOTOK "$INSTDIR\libpipe.dll"
+			Delete "$INSTDIR\profile_backends.cache"
+
+			RMDir /REBOOTOK /r "$INSTDIR\python"
+			; RMDir /REBOOTOK /r "$INSTDIR\node"
+
+			; Delete shortcuts
+			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
+			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk"
+			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定蝦米輸入法.lnk"
+			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定行列輸入法.lnk"
+			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定大易輸入法.lnk"
+			Delete "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk"
+			RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
+
+			Delete "$INSTDIR\version.txt"
+			Delete "$INSTDIR\Uninstall.exe"
+			RMDir "$INSTDIR"
+
+			${If} ${RebootFlag}
+				MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +3
+				Reboot
+				Quit
+				Abort
+			${EndIf}
+		${EndIf}
 	${EndIf}
 
 	ClearErrors
 	; Ensure that old files are all deleted
 	${If} ${RunningX64}
 		${If} ${FileExists} "$INSTDIR\x64\PIMETextService.dll"
-            Delete /REBOOTOK "$INSTDIR\x64\PIMETextService.dll"
-            IfErrors 0 +2
-                Call .onInstFailed
+		${AndIf} $UPDATEX64DLL == "True"
+			Delete /REBOOTOK "$INSTDIR\x64\PIMETextService.dll"
+			IfErrors 0 +2
+				Call .onInstFailed
 		${EndIf}
 	${EndIf}
 	${If} ${FileExists} "$INSTDIR\x86\PIMETextService.dll"
-        Delete /REBOOTOK "$INSTDIR\x86\PIMETextService.dll"
-        IfErrors 0 +2
-            Call .onInstFailed
+	${AndIf} $UPDATEX86DLL == "True"
+		Delete /REBOOTOK "$INSTDIR\x86\PIMETextService.dll"
+		IfErrors 0 +2
+			Call .onInstFailed
 	${EndIf}
 
 	${If} ${RebootFlag}
@@ -143,6 +223,9 @@ Function .onInit
 
 	InitPluginsDir
 	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\ieprotectedpage.ini"
+
+	StrCpy $UPDATEX86DLL "True"
+	StrCpy $UPDATEX64DLL "True"
 
 	; check if old version is installed and uninstall it first
 	Call uninstallOldVersion
@@ -313,12 +396,16 @@ Section "" Register
 	; Install the text service dlls
 	${If} ${RunningX64} ; This is a 64-bit Windows system
 		SetOutPath "$INSTDIR\x64"
-		File "..\build64\pime\Release\PIMETextService.dll" ; put 64-bit PIMETextService.dll in x64 folder
+		${If} $UPDATEX64DLL == "True"
+			File "..\build64\pime\Release\PIMETextService.dll" ; put 64-bit PIMETextService.dll in x64 folder
+		${EndIf}
 		; Register COM objects (NSIS RegDLL command is broken and cannot be used)
 		ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x64\PIMETextService.dll"'
 	${EndIf}
 	SetOutPath "$INSTDIR\x86"
-	File "..\build\pime\Release\PIMETextService.dll" ; put 32-bit PIMETextService.dll in x86 folder
+	${If} $UPDATEX86DLL == "True"
+		File "..\build\pime\Release\PIMETextService.dll" ; put 32-bit PIMETextService.dll in x86 folder
+	${EndIf}
 	; Register COM objects (NSIS RegDLL command is broken and cannot be used)
 	ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x86\PIMETextService.dll"'
 

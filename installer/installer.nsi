@@ -468,7 +468,7 @@ Section "" Register
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayName" "PIME 輸入法"
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "Publisher" "PIME 開發團隊"
-	; WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\x86\PIMETextService.dll"
+	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\server\input_methods\chewing\icon.ico"
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${HOMEPAGE_URL}"
 	WriteUninstaller "$INSTDIR\Uninstall.exe" ;Create uninstaller

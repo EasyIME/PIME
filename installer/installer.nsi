@@ -52,6 +52,7 @@ AllowSkipFiles off ; cannot skip a file
 ; !define CHELIU_GUID "{72844B94-5908-4674-8626-4353755BC5DB}"
 !define CHEARRAY_GUID "{BADFF6B6-0502-4F30-AEC2-BCCB92BCDDC6}"
 !define CHEDAYI_GUID "{E6943374-70F5-4540-AA0F-3205C7DCCA84}"
+!define CHEENG_GUID "{88BB09A8-4603-4D78-B052-DEE9EAE697EC}"
 
 
 Name "${PRODUCT_NAME}"
@@ -120,6 +121,7 @@ Function uninstallOldVersion
 				; DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHELIU_GUID}"
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEARRAY_GUID}"
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEDAYI_GUID}"
+				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}"
 			${EndIf}
 
 			; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
@@ -252,7 +254,7 @@ Function .onInit
 
 	; check if old version is installed and uninstall it first
 	Call uninstallOldVersion
-
+	Call hideCheEngSection
 FunctionEnd
 
 ; called to show an error message when errors happen
@@ -372,12 +374,15 @@ Section "PIME 輸入法平台" SecMain
     File "..\build\libpipe\Release\libpipe.dll"
 
 	; Install the python backend and input method modules along with an embedable version of python 3.
-	File /r /x "__pycache__" /x "meow" /x "chewing" /x "checj" /x "cheliu" /x "chearray" /x "chedayi" /x ".git" /x ".idea" "..\python"
+	File /r /x "__pycache__" /x "input_methods" /x ".git" /x ".idea" "..\python"
+	SetOutPath "$INSTDIR\python\input_methods"
+	File "..\python\input_methods\__init__.py"
 
+	SetOutPath "$INSTDIR"
 	; Install the node.js backend and input method modules along with an embedable version of python 3.
 	; File /r "..\node"
 
-    ; Install the launcher responsible to launch the backends
+	; Install the launcher responsible to launch the backends
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
 SectionEnd
 
@@ -412,7 +417,20 @@ SectionGroup /e "輸入法模組"
 		File /r "..\python\input_methods\chedayi"
 	SectionEnd
 
+	Section /o "英數" cheeng
+		${If} ${AtLeastWin8}
+			SectionIn 2
+			SetOutPath "$INSTDIR\python\input_methods"
+			File /r "..\python\input_methods\cheeng"
+		${EndIf}
+	SectionEnd
 SectionGroupEnd
+
+Function hideCheEngSection
+	${IfNot} ${AtLeastWin8}
+		SectionSetText ${cheeng} ""
+	${EndIf}
+FunctionEnd
 
 Section "" Register
 	SectionIn 1 2
@@ -487,6 +505,11 @@ Section "" Register
 			IntOp $R0 $R0 + 1
 			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEDAYI_GUID}" $R0
 		${EndIf}
+
+		${If} ${SectionIsSelected} ${cheeng}
+			IntOp $R0 $R0 + 1
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}" $R0
+		${EndIf}
 	${EndIf}
 
 	; Custom IE Protected Mode
@@ -533,6 +556,10 @@ LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} "安裝 ${PRODUCT_NAME} 主程式到你的電腦裏。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${chewing} "安裝新酷音輸入法模組。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${checj} "安裝酷倉輸入法模組。"
+	; !insertmacro MUI_DESCRIPTION_TEXT ${cheliu} "安裝蝦米輸入法模組。"
+	!insertmacro MUI_DESCRIPTION_TEXT ${chearray} "安裝行列輸入法模組。"
+	!insertmacro MUI_DESCRIPTION_TEXT ${chedayi} "安裝大易輸入法模組。"
+	!insertmacro MUI_DESCRIPTION_TEXT ${cheeng} "安裝英數輸入法模組。"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;Uninstaller Section
@@ -548,6 +575,7 @@ Section "Uninstall"
 		; DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHELIU_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEARRAY_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEDAYI_GUID}"
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}"
 	${EndIf}
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)

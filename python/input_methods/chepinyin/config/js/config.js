@@ -14,6 +14,8 @@ defaultConfig ={
     "colorCandWnd": true,
     "fontSize": 16,
     "outputSimpChinese": false,
+    "autoClearCompositionChar": false,
+    "playSoundWhenNonCand": false,
     "directShowCand": false,
     "supportSymbolCoding": false,
     "supportWildcard": true,

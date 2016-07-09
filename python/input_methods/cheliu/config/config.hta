@@ -22,7 +22,7 @@
             innerborder="no"
             scroll="yes"
             singleinstance="yes"
-            windowState="maximize"
+            windowState="normal"
         />
     </head>
     <body>
@@ -52,7 +52,13 @@
 
             <input type="checkbox" id="outputSimpChinese" name="outputSimpChinese" />
             <label for="outputSimpChinese">預設輸出簡體中文</label><br>
-            
+
+            <input type="checkbox" id="autoClearCompositionChar" name="autoClearCompositionChar" />
+            <label for="autoClearCompositionChar">拆錯字碼時自動清除輸入字串</label><br>
+
+            <input type="checkbox" id="playSoundWhenNonCand" name="playSoundWhenNonCand" />
+            <label for="playSoundWhenNonCand">拆錯字碼時發出警告嗶聲提示</label><br>
+
             <!-- 如果使用的輸入法有使用鍵盤上方的數字鍵作為字根, 請不要加入此項目 -->
             <input type="checkbox" id="directShowCand" name="directShowCand" />
             <label for="directShowCand">直接顯示候選字清單 (不須按空白鍵)</label><br>

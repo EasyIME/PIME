@@ -20,6 +20,7 @@ import opencc  # OpenCC 繁體簡體中文轉換
 
 import io
 import math
+import winsound
 from .swkb import swkb
 from .symbols import symbols
 from .fsymbols import fsymbols
@@ -64,6 +65,8 @@ class CinBase:
         CinBaseTextService.langMode = -1
         CinBaseTextService.shapeMode = -1
         CinBaseTextService.outputSimpChinese = False
+        CinBaseTextService.autoClearCompositionChar = False
+        CinBaseTextService.playSoundWhenNonCand = False
         CinBaseTextService.directShowCand = False
         CinBaseTextService.fullShapeSymbols = False
         CinBaseTextService.easySymbolsWithShift = False
@@ -298,6 +301,8 @@ class CinBase:
             menu_easySymbolsWithShift = "停用 Shift 快速輸入符號" if CinBaseTextService.easySymbolsWithShift else "啟用 Shift 快速輸入符號"
             menu_supportSymbolCoding = "停用 Cin 碼表的符號編碼" if CinBaseTextService.supportSymbolCoding else "啟用 Cin 碼表的符號編碼"
             menu_supportWildcard = "停用以萬用字元代替組字字根" if CinBaseTextService.supportWildcard else "啟用以萬用字元代替組字字根"
+            menu_autoClearCompositionChar = "停用拆錯字碼時自動清除輸入字串" if CinBaseTextService.autoClearCompositionChar else "啟用拆錯字碼時自動清除輸入字串"
+            menu_playSoundWhenNonCand = "停用拆錯字碼時發出警告嗶聲提示" if CinBaseTextService.playSoundWhenNonCand else "啟用拆錯字碼時發出警告嗶聲提示"
             
             if not CinBaseTextService.closemenu:
                 CinBaseTextService.menutype = 0
@@ -378,7 +383,7 @@ class CinBase:
                     if CinBaseTextService.menutype == 0 and i == 2: # 切至功能開關頁面
                         candCursor = 0
                         currentCandPage = 0
-                        CinBaseTextService.menucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportSymbolCoding, menu_supportWildcard]
+                        CinBaseTextService.menucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportSymbolCoding, menu_supportWildcard, menu_autoClearCompositionChar, menu_playSoundWhenNonCand]
                         pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
                         CinBaseTextService.menutype = 1
                     elif CinBaseTextService.menutype == 0 and i == 3: # 切至特殊符號頁面
@@ -883,6 +888,11 @@ class CinBase:
                                     self.resetComposition(CinBaseTextService)
                         else:
                             CinBaseTextService.showMessage("查無字根...", 3)
+                            if CinBaseTextService.autoClearCompositionChar:
+                                self.resetComposition(CinBaseTextService)
+                            if CinBaseTextService.playSoundWhenNonCand:
+                                winsound.PlaySound('alert', winsound.SND_ASYNC)
+
                 CinBaseTextService.setShowCandidates(False)
 
         if not CinBaseTextService.closemenu:
@@ -1098,6 +1108,10 @@ class CinBase:
                 CinBaseTextService.supportSymbolCoding = not CinBaseTextService.supportSymbolCoding
             elif commandId == 3:
                 CinBaseTextService.supportWildcard = not CinBaseTextService.supportWildcard
+            elif commandId == 4:
+                CinBaseTextService.autoClearCompositionChar = not CinBaseTextService.autoClearCompositionChar
+            elif commandId == 5:
+                CinBaseTextService.playSoundWhenNonCand = not CinBaseTextService.playSoundWhenNonCand
         
     # 重置輸入的字根
     def resetComposition(self, CinBaseTextService):
@@ -1235,6 +1249,12 @@ class CinBase:
         
         # Shift 快速輸入符號?
         CinBaseTextService.easySymbolsWithShift = cfg.easySymbolsWithShift
+        
+        # 拆錯字碼時自動清除輸入字串?
+        CinBaseTextService.autoClearCompositionChar = cfg.autoClearCompositionChar
+        
+        # 拆錯字碼時發出警告嗶聲提示?
+        CinBaseTextService.playSoundWhenNonCand  = cfg.playSoundWhenNonCand 
         
         # 直接顯示候選字清單 (不須按空白鍵)?
         CinBaseTextService.directShowCand = cfg.directShowCand

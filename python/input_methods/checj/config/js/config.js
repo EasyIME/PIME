@@ -232,7 +232,7 @@ $(function() {
     selCinType.children().eq(checjConfig.selCinType).prop("selected", true);
 
     var selWildcards=[
-        "重　",
+        "Ｚ　",
         "＊　"
     ];
     var selWildcardType = $("#selWildcardType");

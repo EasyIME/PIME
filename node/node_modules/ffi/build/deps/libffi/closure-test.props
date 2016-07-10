@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(assemblerBeforeTargets)' == '' and '$(assemblerAfterTargets)' == '' and '$(ConfigurationType)' != 'Makefile'">
+    <assemblerBeforeTargets>Midl</assemblerBeforeTargets>
+    <assemblerAfterTargets>CustomBuild</assemblerAfterTargets>
+  </PropertyGroup>
+  <PropertyGroup>
+    <assemblerDependsOn Condition="'$(ConfigurationType)' != 'Makefile'">_SelectedFiles;$(assemblerDependsOn)</assemblerDependsOn>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <assembler>
+      <CommandLineTemplate>call ml &quot;/nologo&quot; &quot;/safeseh&quot; &quot;/c&quot; &quot;/Fo$(IntDir)%(Filename).obj&quot; &quot;%(Identity)&quot;</CommandLineTemplate>
+      <Outputs>$(IntDir)%(Filename).obj</Outputs>
+      <ExecutionDescription>Building assembly file %(Identity)</ExecutionDescription>
+      <AdditionalDependencies></AdditionalDependencies>
+    </assembler>
+  </ItemDefinitionGroup>
+</Project>

@@ -142,18 +142,16 @@ bool PIMELauncher::initBackends() {
 	// the parameter needs to be quoted
 	backend.params_ = L"\"" + backend.workingDir_ + L"\\server.py\"";
 
-	// TODO: node.js backend
 	BackendServer& backend2 = backends_[BACKEND_NODE];
 	backend2.name_ = "node";
 	backend2.pipeName_ = getPipeName("node");
-	/*
 	backend2.command_ = topDirPath_;
-	backend2.command_ += L"";
+	backend2.command_ += L"\\node\\node.exe";
 	backend2.workingDir_ = topDirPath_;
-	backend2.workingDir_ += L"";
+	backend2.workingDir_ += L"\\node";
 	// the parameter needs to be quoted
 	backend2.params_ = L"\"" + backend2.workingDir_ + L"\\server.js\"";
-	*/
+
 	return true;
 }
 

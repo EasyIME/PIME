@@ -141,7 +141,7 @@ Function uninstallOldVersion
 				RMDir /REBOOTOK /r "$INSTDIR\x86"
 			${EndIf}
 
-			${If} ${RunningX64} 
+			${If} ${RunningX64}
 				SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 				ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x64\PIMETextService.dll"'
 				; Verify the MD5/SHA1 checksum of 64-bit PIMETextService.dll
@@ -167,7 +167,7 @@ Function uninstallOldVersion
 			Delete "$INSTDIR\profile_backends.cache"
 
 			RMDir /REBOOTOK /r "$INSTDIR\python"
-			; RMDir /REBOOTOK /r "$INSTDIR\node"
+			RMDir /REBOOTOK /r "$INSTDIR\node"
 
 			; Delete shortcuts
 			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
@@ -243,7 +243,7 @@ Function .onInit
 		Quit
 	${EndIf}
 
-	${If} ${RunningX64} 
+	${If} ${RunningX64}
 		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 	${EndIf}
 
@@ -369,7 +369,7 @@ Section "PIME 輸入法平台" SecMain
 
 	SetOverwrite on ; overwrite existing files
 	SetOutPath "$INSTDIR"
-    
+
     ; Install version info
     File "..\version.txt"
 
@@ -382,8 +382,8 @@ Section "PIME 輸入法平台" SecMain
 	File "..\python\input_methods\__init__.py"
 
 	SetOutPath "$INSTDIR"
-	; Install the node.js backend and input method modules along with an embedable version of python 3.
-	; File /r "..\node"
+	; Install the node.js backend and input method modules along with an embedable version of node v6.
+	File /r /x "input_methods" "..\node"
 
 	; Install the launcher responsible to launch the backends
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
@@ -600,7 +600,7 @@ Section "Uninstall"
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 	ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'
-	${If} ${RunningX64} 
+	${If} ${RunningX64}
 		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 		ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x64\PIMETextService.dll"'
 		RMDir /REBOOTOK /r "$INSTDIR\x64"
@@ -615,7 +615,7 @@ Section "Uninstall"
 
 	RMDir /REBOOTOK /r "$INSTDIR\x86"
 	RMDir /REBOOTOK /r "$INSTDIR\python"
-	; RMDir /REBOOTOK /r "$INSTDIR\node"
+	RMDir /REBOOTOK /r "$INSTDIR\node"
 
 	; Delete shortcuts
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
@@ -638,4 +638,3 @@ Section "Uninstall"
 		Abort
 	${EndIf}
 SectionEnd
-

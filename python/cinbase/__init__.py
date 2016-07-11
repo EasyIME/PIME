@@ -99,6 +99,7 @@ class CinBase:
         CinBaseTextService.canUseNumberKey = True
         CinBaseTextService.endKeyList = []
         CinBaseTextService.useEndKey = False
+        CinBaseTextService.autoShowCandWhenMaxChar = False
         CinBaseTextService.lastCommitString = ""
         CinBaseTextService.lastCompositionCharLength = 0
         CinBaseTextService.menutype = 0
@@ -685,7 +686,7 @@ class CinBase:
                     if CinBaseTextService.compositionString == '':
                         self.resetComposition(CinBaseTextService)
 
-            # 組字字根超過5個
+            # 組字字根超過最大值
             if len(CinBaseTextService.compositionChar) > CinBaseTextService.maxCharLength:
                 if CinBaseTextService.cin.isInKeyName(CinBaseTextService.compositionChar[len(CinBaseTextService.compositionChar)-1:]):
                     keyLength = len(CinBaseTextService.cin.getKeyName(CinBaseTextService.compositionChar[len(CinBaseTextService.compositionChar)-1:]))
@@ -720,6 +721,7 @@ class CinBase:
             # 候選清單處理
             if candidates and not CinBaseTextService.phrasemode:
                 if not CinBaseTextService.directShowCand:
+                    # EndKey 處理 (拼音)
                     if CinBaseTextService.useEndKey:
                         if charStr in CinBaseTextService.endKeyList:
                             if not CinBaseTextService.isShowCandidates:
@@ -727,7 +729,22 @@ class CinBase:
                                 CinBaseTextService.canUseNumberKey = False
                             else:
                                 CinBaseTextService.canUseNumberKey = True
-                        
+                        else:
+                            if CinBaseTextService.isShowCandidates:
+                                CinBaseTextService.canUseNumberKey = True
+                    
+                    # 字滿處理 (大易)
+                    if CinBaseTextService.autoShowCandWhenMaxChar:
+                        if len(CinBaseTextService.compositionChar) == CinBaseTextService.maxCharLength:
+                            if not CinBaseTextService.isShowCandidates:
+                                CinBaseTextService.isShowCandidates = True
+                                CinBaseTextService.canUseNumberKey = False
+                            else:
+                                CinBaseTextService.canUseNumberKey = True
+                        else:
+                            if CinBaseTextService.isShowCandidates:
+                                CinBaseTextService.canUseNumberKey = True
+
                     if (keyCode == VK_SPACE or keyCode == VK_DOWN) and not CinBaseTextService.isShowCandidates:  # 按下空白鍵和向下鍵
                         # 如果只有一個候選字就直接出字
                         if len(candidates) == 1:

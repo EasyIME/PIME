@@ -93,6 +93,7 @@ class CheDayiTextService(TextService):
             self.maxCharLength = 4
         elif self.cfg.selCinType == 1:
             self.maxCharLength = 3
+        self.autoShowCandWhenMaxChar = True
         KeyState = self.cinbase.onKeyDown(self, keyEvent)
         return KeyState
 

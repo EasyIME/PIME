@@ -97,6 +97,8 @@ class CinBase:
         CinBaseTextService.isShowPhraseCandidates = False
         CinBaseTextService.canSetCommitString = True
         CinBaseTextService.canUseNumberKey = True
+        CinBaseTextService.endKeyList = []
+        CinBaseTextService.useEndKey = False
         CinBaseTextService.lastCommitString = ""
         CinBaseTextService.lastCompositionCharLength = 0
         CinBaseTextService.menutype = 0
@@ -718,7 +720,15 @@ class CinBase:
             # 候選清單處理
             if candidates and not CinBaseTextService.phrasemode:
                 if not CinBaseTextService.directShowCand:
-                    if (keyCode == VK_SPACE or keyCode == VK_DOWN) and not CinBaseTextService.isShowCandidates:  # 按下空白鍵
+                    if CinBaseTextService.useEndKey:
+                        if charStr in CinBaseTextService.endKeyList:
+                            if not CinBaseTextService.isShowCandidates:
+                                CinBaseTextService.isShowCandidates = True
+                                CinBaseTextService.canUseNumberKey = False
+                            else:
+                                CinBaseTextService.canUseNumberKey = True
+                        
+                    if (keyCode == VK_SPACE or keyCode == VK_DOWN) and not CinBaseTextService.isShowCandidates:  # 按下空白鍵和向下鍵
                         # 如果只有一個候選字就直接出字
                         if len(candidates) == 1:
                             if keyCode == VK_SPACE:

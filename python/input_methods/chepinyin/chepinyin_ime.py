@@ -90,6 +90,8 @@ class ChePinyinTextService(TextService):
 
     def onKeyDown(self, keyEvent):
         if self.cfg.selCinType == 0 or self.cfg.selCinType == 1 or self.cfg.selCinType == 2:
+            self.endKeyList = ["1", "2", "3", "4", "5"]
+            self.useEndKey = True
             self.directShowCand = False
     
         KeyState = self.cinbase.onKeyDown(self, keyEvent)

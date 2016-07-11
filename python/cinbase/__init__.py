@@ -20,6 +20,7 @@ import opencc  # OpenCC 繁體簡體中文轉換
 
 import io
 import math
+import copy
 import winsound
 from .swkb import swkb
 from .symbols import symbols
@@ -694,7 +695,7 @@ class CinBase:
             if CinBaseTextService.cin.isInCharDef(CinBaseTextService.compositionChar) and CinBaseTextService.closemenu:
                 candidates = CinBaseTextService.cin.getCharDef(CinBaseTextService.compositionChar)
                 if CinBaseTextService.sortByPhrase and candidates:
-                    candidates = self.sortByPhrase(CinBaseTextService, candidates)
+                    candidates = self.sortByPhrase(CinBaseTextService, copy.deepcopy(candidates))
             elif CinBaseTextService.fullShapeSymbols and CinBaseTextService.fsymbols.isInCharDef(CinBaseTextService.compositionChar) and CinBaseTextService.closemenu:
                 candidates = CinBaseTextService.fsymbols.getCharDef(CinBaseTextService.compositionChar)
             elif CinBaseTextService.msymbols.isInCharDef(CinBaseTextService.compositionChar) and CinBaseTextService.closemenu and CinBaseTextService.ctrlsymbolsmode:
@@ -711,7 +712,7 @@ class CinBase:
                     candidates = CinBaseTextService.wildcardcandidates
                 CinBaseTextService.isWildcardChardefs = True
                 if CinBaseTextService.sortByPhrase and candidates:
-                    candidates = self.sortByPhrase(CinBaseTextService, candidates)
+                    candidates = self.sortByPhrase(CinBaseTextService, copy.deepcopy(candidates))
         
         if CinBaseTextService.langMode == CHINESE_MODE and len(CinBaseTextService.compositionChar) >= 1:    
             # 候選清單處理
@@ -1042,6 +1043,10 @@ class CinBase:
                             pagecandidates = list(self.chunks(candidates, CinBaseTextService.candPerPage))
                             CinBaseTextService.setCandidateList(pagecandidates[currentCandPage])
                             CinBaseTextService.setShowCandidates(True)
+                    elif len(CinBaseTextService.compositionChar) == 0 and charStr == '`':
+                        CinBaseTextService.compositionChar += charStr
+                        CinBaseTextService.setCompositionString(CinBaseTextService.compositionChar)
+                        CinBaseTextService.multifunctionmode = True
                     
                 # 更新選字視窗游標位置及頁數
                 CinBaseTextService.setCandidateCursor(candCursor)
@@ -1395,10 +1400,6 @@ class CinBase:
         with io.open(flangsPath, encoding='utf-8') as fs:
             CinBaseTextService.flangs = flangs(fs)
 
-        phrasePath = cfg.findFile(datadirs, "phrase.dat")
-        with io.open(phrasePath, encoding='utf-8') as fs:
-            CinBaseTextService.phrase = phrase(fs)
-
         userphrasePath = cfg.findFile(datadirs, "userphrase.dat")
         with io.open(userphrasePath, encoding='utf-8') as fs:
             CinBaseTextService.userphrase = userphrase(fs)
@@ -1406,6 +1407,12 @@ class CinBase:
         msymbolsPath = cfg.findFile(datadirs, "msymbols.dat")
         with io.open(msymbolsPath, encoding='utf-8') as fs:
             CinBaseTextService.msymbols = msymbols(fs)
+            
+        if not PhraseData.phrase:
+            PhraseData.loadPhraseFile(CinBaseTextService)
+            CinBaseTextService.phrase = PhraseData.phrase
+        else:
+            CinBaseTextService.phrase = PhraseData.phrase
 
         self.applyConfig(CinBaseTextService) # 套用其餘的使用者設定
 
@@ -1486,5 +1493,17 @@ class CinBase:
             # 只有偵測到設定檔變更，需要套用新設定
             self.applyConfig(CinBaseTextService)
 
-
 CinBase = CinBase()
+
+class PhraseData:
+    def __init__(self):
+        self.phrase = None
+        
+    def loadPhraseFile(self, CinBaseTextService):
+        cfg = CinBaseTextService.cfg # 所有 TextService 共享一份設定物件
+        datadirs = (cfg.getConfigDir(), cfg.getDataDir())
+        
+        phrasePath = cfg.findFile(datadirs, "phrase.dat")
+        with io.open(phrasePath, encoding='utf-8') as fs:
+            self.phrase = phrase(fs)
+PhraseData = PhraseData()

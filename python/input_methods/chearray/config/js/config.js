@@ -1,5 +1,5 @@
-// 此文件須改 73 行,用戶設定檔儲存的資料夾名稱
-// 以及 213 行,輸入法碼表的中文名稱
+// 此文件須改 80 行,用戶設定檔儲存的資料夾名稱
+// 以及 231 行,輸入法碼表的中文名稱
 
 // 此輸入法模組預設設定值
 defaultConfig ={
@@ -20,7 +20,9 @@ defaultConfig ={
     "supportSymbolCoding": true,
     "supportWildcard": true,
     "selWildcardType": "1",
-    "candMaxItems": 100
+    "candMaxItems": 100,
+    "showPhrase": false,
+    "sortByPhrase": true
 };
 
 // unfortunately, here we use Windows-only features - ActiveX
@@ -90,7 +92,7 @@ function getDataDir() {
         progDir = shell.ExpandEnvironmentStrings("%PROGRAMFILES");
     }
     // FIXME: it's bad to hard code the path, but is there any better way?
-    return progDir + "\\PIME\\server\\cinbase\\data";
+    return progDir + "\\PIME\\python\\cinbase\\data";
 }
 
 var checjConfig = null;
@@ -103,6 +105,8 @@ var userSwkbFile = configDir + "\\swkb.dat";
 var swkbChanged = false;
 var userFsymbolsFile = configDir + "\\fsymbols.dat";
 var fsymbolsChanged = false;
+var userPhraseFile = configDir + "\\userphrase.dat";
+var phraseChanged = false;
 var userFlangsFile = configDir + "\\flangs.dat";
 var flangsChanged = false;
 
@@ -139,6 +143,12 @@ function loadConfig() {
         str = readFile(dataDir + "\\fsymbols.dat");
     $("#fs_symbols").val(str);
     
+    // load phrase.dat
+    str = readFile(userPhraseFile);
+    if(str == "")
+        str = readFile(dataDir + "\\userphrase.dat");
+    $("#phrase").val(str);
+    
     // load flangs.dat
     str = readFile(userFlangsFile);
     if(str == "")
@@ -161,6 +171,10 @@ function saveConfig() {
     if(fsymbolsChanged) {
         str = $("#fs_symbols").val();
         writeFile(userFsymbolsFile, str);
+    }
+    if(phraseChanged) {
+        str = $("#phrase").val();
+        writeFile(userPhraseFile, str);
     }
     if(flangsChanged) {
         str = $("#flangs").val();
@@ -249,6 +263,10 @@ $(function() {
     
     $("#fs_symbols").change(function(){
         fsymbolsChanged = true;
+    });
+    
+    $("#phrase").change(function(){
+        phraseChanged = true;
     });
     
     $("#flangs").change(function(){

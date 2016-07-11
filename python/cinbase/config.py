@@ -38,7 +38,6 @@ class CinBaseConfig:
         self.autoClearCompositionChar = False
         self.playSoundWhenNonCand = False
         self.directShowCand = False
-        self.addPhraseForward = True
         self.colorCandWnd = True
         self.advanceAfterSelection = True
         self.fontSize = DEF_FONT_SIZE
@@ -57,6 +56,8 @@ class CinBaseConfig:
         # self.easySymbolsWithCtrl = False
         self.upperCaseWithShift = True
         self.supportSymbolCoding = False
+        self.showPhrase = False
+        self.sortByPhrase = True
         self.supportWildcard = True
         self.selWildcardType = 0
         self.candMaxItems = 100
@@ -139,7 +140,7 @@ class CinBaseConfig:
                 ezSymbolsTime = os.path.getmtime(ezSymbolsFile)
             except Exception:
                 pass
-                
+
         fsymbolsTime = 0.0
         fsymbolsFile = self.findFile(datadirs, "fsymbols.dat")
         if fsymbolsFile:
@@ -147,7 +148,7 @@ class CinBaseConfig:
                 fsymbolsTime = os.path.getmtime(fsymbolsFile)
             except Exception:
                 pass
-                
+
         flangsTime = 0.0
         flangsFile = self.findFile(datadirs, "flangs.dat")
         if flangsFile:
@@ -156,8 +157,16 @@ class CinBaseConfig:
             except Exception:
                 pass
 
+        userphraseTime = 0.0
+        userphraseFile = self.findFile(datadirs, "userphrase.dat")
+        if userphraseFile:
+            try:
+                userphraseTime = os.path.getmtime(userphraseFile)
+            except Exception:
+                pass
+
         lastConfigTime = self._version[0]
-        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime, flangsTime)
+        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime, flangsTime, userphraseTime)
 
         # the main config file is changed, reload it
         if lastConfigTime != configTime:

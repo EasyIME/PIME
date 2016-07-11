@@ -34,11 +34,11 @@
             <li><a href="#ui_page">介面外觀</a></li>
             <!-- <li><a href="#keyboard_page">鍵盤設定</a></li> -->
             <li><a href="#symbols_page">特殊符號</a></li>
-            <li><a href="#fs_symbols_page">全形標點輸入</a></li>
-            <li><a href="#ez_symbols_page">簡易符號輸入</a></li>
+            <li><a href="#fs_symbols_page">全形標點</a></li>
+            <li><a href="#ez_symbols_page">簡易符號</a></li>
             <li><a href="#flangs_page">外語文字</a></li>
-            <li><a href="#help_page">使用說明</a></li>
-            <li><a href="#about_page">關於大易</a></li>
+            <li><a href="#help_page">說明</a></li>
+            <li><a href="#about_page">關於</a></li>
         </ul>
 
         <div id="typing_page">
@@ -60,6 +60,9 @@
             <input type="checkbox" id="playSoundWhenNonCand" name="playSoundWhenNonCand" />
             <label for="playSoundWhenNonCand">拆錯字碼時發出警告嗶聲提示</label><br>
 
+            <input type="checkbox" id="sortByPhrase" name="sortByPhrase" />
+            <label for="sortByPhrase">優先以聯想字詞排序候選清單</label><br>
+            
             <!-- 如果使用的輸入法有使用鍵盤上方的數字鍵作為字根, 請不要加入此項目 -->
             <!-- 
                 <input type="checkbox" id="directShowCand" name="directShowCand" />
@@ -115,11 +118,13 @@
         </div>
 
         <div id="symbols_page">
-            <textarea id="symbols"></textarea><br>
+            <textarea id="symbols"></textarea>
+            <p>
             大易輸入法提供符號表，裡面的符號可以自訂。
             以上是符號表的設定檔，語法相當簡單。<br>
-            每一行的內容都是： 「分類名稱」=「此分類下的所有符號」。
-            您也可以一行只放一個符號，則該符號會被放在最上層選單。<br>
+            每一行的內容都是： 「分類名稱」=「此分類下的所有符號」。<br>
+            您也可以一行只放一個符號，則該符號會被放在最上層選單。
+            <p>
         </div>
         
         <div id="fs_symbols_page">
@@ -144,13 +149,27 @@
             </p>
             <textarea id="ez_symbols"></textarea>
         </div>
+
+        <div id="phrase_page">
+            <input type="checkbox" id="showPhrase" name="showPhrase" />
+            <label for="showPhrase">中文模式下輸出字串後顯示聯想字詞</label><br>
+            <p>
+            大易輸入法提供聯想字詞表，裡面的聯想字詞可以自訂。
+            以上是聯想字詞表的設定檔，語法相當簡單。<br>
+            每一行的內容都是： 「中字」=「此中字相關的聯想字詞」。
+            若想要設定的聯想字詞不只一個，請以「,」號區隔。
+            </p>
+            <textarea id="phrase"></textarea>
+        </div>
         
         <div id="flangs_page">
-            <textarea id="flangs"></textarea><br>
+            <textarea id="flangs"></textarea>
+            <p>
             大易輸入法提供外語文字表，裡面的外語文字可以自訂。
             以上是外語文字表的設定檔，語法相當簡單。<br>
-            每一行的內容都是： 「分類名稱」=「此分類下的所有符號」。
-            您也可以一行只放一個文字，則該文字會被放在最上層選單。<br>
+            每一行的內容都是： 「分類名稱」=「此分類下的所有符號」。<br>
+            您也可以一行只放一個文字，則該文字會被放在最上層選單。
+            </p>
         </div>
         
         <div id="help_page">

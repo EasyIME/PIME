@@ -2,7 +2,7 @@ body {
     line-height: 150%;
 }
 
-#symbols, #ez_symbols, #fs_symbols, #flangs {
+#symbols, #ez_symbols, #fs_symbols, #phrase, #flangs {
     width: 100%;
     min-height: 320px;
 }

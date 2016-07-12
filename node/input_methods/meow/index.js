@@ -43,6 +43,11 @@ function respOnKeyDown(request, state) {
     return response;
   }
 
+  if (state['action'] === 'UPDATE_CANDIDATE') {
+    response['candidateCursor'] = state['candidateCursor'];
+    return response;
+  }
+
   if (state['action'] === 'SELECT_CANDIDATE') {
     response['compositionString'] = state['compositionString'];
     response['showCandidates']    = state['showCandidates'];
@@ -70,22 +75,74 @@ function reduceOnKeyDown(request, preState) {
     action = '',
     compositionString = '',
     compositionCursor = 0,
-    showCandidates = false
+    showCandidates = false,
+    candidateCursor = 0
   } = preState;
 
   let {keyCode} = request;
 
   if (showCandidates) {
 
-    if (keyCode === KEYCODE.VK_UP || keyCode === KEYCODE.VK_ESCAPE) {
+    if (keyCode === KEYCODE.VK_ESCAPE) {
       return Object.assign({}, preState, {
         action: 'SHOW_CANDIDATES',
         showCandidates: false
       });
+    }
 
-    } else if (keyCode >= '1'.charCodeAt(0) && keyCode <= '4'.charCodeAt(0)) {
+    if (keyCode === KEYCODE.VK_DOWN) {
+      candidateCursor = (candidateCursor + 3) % 4;
+      return Object.assign({}, preState, {
+        action: 'UPDATE_CANDIDATE',
+        candidateCursor
+      });
+    }
+
+    if (keyCode === KEYCODE.VK_UP) {
+      candidateCursor = candidateCursor < 3 ? 0 : candidateCursor - 3;
+      return Object.assign({}, preState, {
+        action: 'UPDATE_CANDIDATE',
+        candidateCursor
+      });
+    }
+
+    if (keyCode === KEYCODE.VK_RIGHT) {
+      candidateCursor = (candidateCursor + 1) % 4;
+      return Object.assign({}, preState, {
+        action: 'UPDATE_CANDIDATE',
+        candidateCursor
+      });
+    }
+
+    if (keyCode === KEYCODE.VK_LEFT) {
+      candidateCursor = candidateCursor == 0 ? 0 : candidateCursor - 1;
+      return Object.assign({}, preState, {
+        action: 'UPDATE_CANDIDATE',
+        candidateCursor
+      });
+    }
+
+    if (keyCode >= '1'.charCodeAt(0) && keyCode <= '4'.charCodeAt(0)) {
 
       let selectCandidate = candidateList[keyCode - '1'.charCodeAt(0)];
+      let cursor = compositionCursor - 1;
+
+      if (cursor < 0) {
+        cursor = 0;
+      }
+
+      compositionString = compositionString.substring(0, cursor) + selectCandidate + compositionString.substring(cursor + 1);
+
+      return Object.assign({}, preState, {
+        action: 'SELECT_CANDIDATE',
+        showCandidates: false,
+        compositionString
+      });
+    }
+
+    if (keyCode === KEYCODE.VK_RETURN) {
+
+      let selectCandidate = candidateList[candidateCursor];
       let cursor = compositionCursor - 1;
 
       if (cursor < 0) {
@@ -108,7 +165,8 @@ function reduceOnKeyDown(request, preState) {
     if (keyCode === KEYCODE.VK_DOWN) { // Show Candidate List
       return Object.assign({}, preState, {
         action: 'SHOW_CANDIDATES',
-        showCandidates: true
+        showCandidates: true,
+        candidateCursor: 0
       });
     }
 
@@ -181,7 +239,8 @@ module.exports = {
         action: '',
         compositionString: '',
         compositionCursor: 0,
-        showCandidates: false
+        showCandidates: false,
+        candidateCursor: 0
       });
     }
 

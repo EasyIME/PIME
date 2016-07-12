@@ -53,6 +53,7 @@ AllowSkipFiles off ; cannot skip a file
 !define CHEARRAY_GUID "{BADFF6B6-0502-4F30-AEC2-BCCB92BCDDC6}"
 !define CHEDAYI_GUID "{E6943374-70F5-4540-AA0F-3205C7DCCA84}"
 !define CHEPINYIN_GUID "{945765E9-9898-477B-B282-856FC3BA907E}"
+!define CHESIMPLEX_GUID "{C7E3DA59-A9D8-4A3B-90DC-58700FAF20CD}"
 !define CHEENG_GUID "{88BB09A8-4603-4D78-B052-DEE9EAE697EC}"
 
 
@@ -123,6 +124,7 @@ Function uninstallOldVersion
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEARRAY_GUID}"
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEDAYI_GUID}"
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEPINYIN_GUID}"
+				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHESIMPLEX_GUID}"
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}"
 			${EndIf}
 
@@ -176,6 +178,7 @@ Function uninstallOldVersion
 			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定行列輸入法.lnk"
 			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定大易輸入法.lnk"
 			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定拼音輸入法.lnk"
+			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定速成輸入法.lnk"
 			Delete "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk"
 			RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
 
@@ -426,6 +429,12 @@ SectionGroup /e "輸入法模組"
 		File /r "..\python\input_methods\chepinyin"
 	SectionEnd
 
+	Section "速成" chesimplex
+		SectionIn 2
+		SetOutPath "$INSTDIR\python\input_methods"
+		File /r "..\python\input_methods\chesimplex"
+	SectionEnd
+
 	Section /o "英數" cheeng
 		${If} ${AtLeastWin8}
 			SectionIn 2
@@ -520,6 +529,11 @@ Section "" Register
 			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEPINYIN_GUID}" $R0
 		${EndIf}
 
+		${If} ${SectionIsSelected} ${chesimplex}
+			IntOp $R0 $R0 + 1
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHESIMPLEX_GUID}" $R0
+		${EndIf}
+
 		${If} ${SectionIsSelected} ${cheeng}
 			IntOp $R0 $R0 + 1
 			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}" $R0
@@ -560,6 +574,10 @@ Section "" Register
 		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定拼音輸入法.lnk" "$INSTDIR\python\input_methods\chepinyin\config\config.hta" "" "$INSTDIR\python\input_methods\chepinyin\icon.ico" 0
 	${EndIf}
 
+	${If} ${SectionIsSelected} ${chesimplex}
+		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定速成輸入法.lnk" "$INSTDIR\python\input_methods\chesimplex\config\config.hta" "" "$INSTDIR\python\input_methods\chesimplex\icon.ico" 0
+	${EndIf}
+
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
 
@@ -578,6 +596,7 @@ LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解
 	!insertmacro MUI_DESCRIPTION_TEXT ${chearray} "安裝行列輸入法模組。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${chedayi} "安裝大易輸入法模組。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${chepinyin} "安裝拼音輸入法模組。"
+	!insertmacro MUI_DESCRIPTION_TEXT ${chesimplex} "安裝速成輸入法模組。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${cheeng} "安裝英數輸入法模組。"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -595,6 +614,7 @@ Section "Uninstall"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEARRAY_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEDAYI_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEPINYIN_GUID}"
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHESIMPLEX_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}"
 	${EndIf}
 
@@ -624,6 +644,7 @@ Section "Uninstall"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定行列輸入法.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定大易輸入法.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定拼音輸入法.lnk"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定速成輸入法.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk"
 	RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
 

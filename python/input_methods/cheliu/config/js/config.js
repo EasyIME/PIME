@@ -1,5 +1,11 @@
-// 此文件須改 80 行,用戶設定檔儲存的資料夾名稱
-// 以及 231 行,輸入法碼表的中文名稱
+// 此輸入法模組的資料夾名稱
+var imeFolderName = "cheliu"
+
+// 此輸入法模組使用的碼表
+var selCins=[
+    "嘸蝦米",
+    "萬國蝦米"
+];
 
 // 此輸入法模組預設設定值
 defaultConfig ={
@@ -24,6 +30,9 @@ defaultConfig ={
     "showPhrase": false,
     "sortByPhrase": true
 };
+
+// 以下無須修改
+// ==============================================================================================
 
 // unfortunately, here we use Windows-only features - ActiveX
 // However, it's really stupid that Scripting.FileSystemObject does not support UTF-8.
@@ -77,7 +86,7 @@ function getConfigDir() {
     if(!fso.FolderExists(dirPath)) {
         fso.CreateFolder(dirPath);
     }
-    dirPath += "\\cheliu";
+    dirPath += "\\" + imeFolderName;
     if(!fso.FolderExists(dirPath)) {
         fso.CreateFolder(dirPath);
     }
@@ -86,13 +95,8 @@ function getConfigDir() {
 
 // This is Windows-only :-(
 function getDataDir() {
-    var shell = new ActiveXObject("WScript.Shell");
-    var progDir = shell.ExpandEnvironmentStrings("%PROGRAMFILES(x86)%");
-    if(progDir.charAt(0) == "%") { // expansion failed
-        progDir = shell.ExpandEnvironmentStrings("%PROGRAMFILES");
-    }
-    // FIXME: it's bad to hard code the path, but is there any better way?
-    return progDir + "\\PIME\\python\\cinbase\\data";
+    progDir = location.pathname.replace( "input_methods\\" + imeFolderName + "\\config\\config.hta","cinbase\\data")
+    return progDir;
 }
 
 var checjConfig = null;
@@ -228,10 +232,6 @@ $(function() {
     $("#candMaxItems").spinner({min:100, max:10000});
     $("#fontSize").spinner({min:6, max:200});
 
-    var selCins=[
-        "嘸蝦米",
-        "萬國蝦米"
-    ];
     var selCinType = $("#selCinType");
     for(var i = 0; i < selCins.length; ++i) {
         var selCin = selCins[i];

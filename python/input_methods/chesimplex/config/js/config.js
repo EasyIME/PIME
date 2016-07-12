@@ -1,10 +1,11 @@
 // 此輸入法模組的資料夾名稱
-var imeFolderName = "chedayi"
+var imeFolderName = "chesimplex"
 
 // 此輸入法模組使用的碼表
 var selCins=[
-    "大易四碼",
-    "大易三碼"
+    "正體簡易",
+    "速成",
+    "簡易五代"
 ];
 
 // 此輸入法模組預設設定值
@@ -22,10 +23,10 @@ defaultConfig ={
     "outputSimpChinese": false,
     "autoClearCompositionChar": false,
     "playSoundWhenNonCand": false,
-    "directShowCand": false,
-    "supportSymbolCoding": true,
+    "directShowCand": true,
+    "supportSymbolCoding": false,
     "supportWildcard": true,
-    "selWildcardType": "1",
+    "selWildcardType": "0",
     "candMaxItems": 100,
     "showPhrase": false,
     "sortByPhrase": true
@@ -140,19 +141,19 @@ function loadConfig() {
     if(str == "")
         str = readFile(dataDir + "\\swkb.dat");
     $("#ez_symbols").val(str);
-    
+
     // load fsymbols.dat
     str = readFile(userFsymbolsFile);
     if(str == "")
         str = readFile(dataDir + "\\fsymbols.dat");
     $("#fs_symbols").val(str);
-    
+
     // load phrase.dat
     str = readFile(userPhraseFile);
     if(str == "")
         str = readFile(dataDir + "\\userphrase.dat");
     $("#phrase").val(str);
-    
+
     // load flangs.dat
     str = readFile(userFlangsFile);
     if(str == "")
@@ -251,7 +252,7 @@ $(function() {
         selWildcardType.append(item);
     }
     selWildcardType.children().eq(checjConfig.selWildcardType).prop("selected", true);
-    
+
     $("#symbols").change(function(){
         symbolsChanged = true;
     });
@@ -259,19 +260,19 @@ $(function() {
     $("#ez_symbols").change(function(){
         swkbChanged = true;
     });
-    
+
     $("#fs_symbols").change(function(){
         fsymbolsChanged = true;
     });
-    
+
     $("#phrase").change(function(){
         phraseChanged = true;
     });
-    
+
     $("#flangs").change(function(){
         flangsChanged = true;
     });
-    
+
     $("#buttons").buttonset();
     $("#ok").click(function() {
         updateConfig();

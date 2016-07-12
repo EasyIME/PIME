@@ -239,6 +239,12 @@ class CinBase:
         CinBaseTextService.isWildcardChardefs = False
         CinBaseTextService.canSetCommitString = True
         CinBaseTextService.showMessage("", 0)
+        
+        if CinBaseTextService.langMode == ENGLISH_MODE:
+            if CinBaseTextService.isComposing() or CinBaseTextService.showCandidates:
+                CinBaseTextService.setCommitString(charStr)
+                self.resetComposition(CinBaseTextService)
+                return True
 
         # 多功能前導字元 ---------------------------------------------------------
         if CinBaseTextService.langMode == CHINESE_MODE and not CinBaseTextService.showmenu:
@@ -1406,6 +1412,8 @@ class CinBase:
 
         # 預設全形 or 半形
         CinBaseTextService.shapeMode = FULLSHAPE_MODE if cfg.defaultFullSpace else HALFSHAPE_MODE
+
+        self.updateLangButtons(CinBaseTextService)
         
         # 所有 CheCJTextService 共享一份輸入法碼表
         CinBaseTextService.selCinType = cfg.selCinType

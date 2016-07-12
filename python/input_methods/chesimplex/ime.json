@@ -1,0 +1,11 @@
+{
+	"name":"速成輸入法 (PIME)",
+	"version": "1.00",
+	"guid": "{C7E3DA59-A9D8-4A3B-90DC-58700FAF20CD}",
+	"locale": "zh-TW",
+	"icon": "icon.ico",
+	"win8_icon": "",
+	"moduleName": "chesimplex_ime",
+	"serviceName": "CheSimplexTextService",
+	"configTool": "config\\config.hta"
+}

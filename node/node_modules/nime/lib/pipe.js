@@ -46,9 +46,9 @@ function createPIPE(dllPath = `${__dirname}/libpipe.dll`) {
     write(pipe, response, callback) {
 
       let error = ref.alloc(ref.types.long);
-      let msg = JSON.stringify(response);
-      let buf = new Buffer(msg, 'utf8');
-      let length = Buffer.byteLength(msg, 'utf8');
+
+      let buf = new Buffer(response, 'utf8');
+      let length = Buffer.byteLength(response, 'utf8');
 
       libPipe.write_pipe.async(pipe, buf, length, error, (err, len) => {
         if (err) {

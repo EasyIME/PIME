@@ -7,3 +7,8 @@ specs/
 
 # else
 .editorconfig
+.travis.yml
+
+# nime
+tests/
+example/

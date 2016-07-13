@@ -33,8 +33,8 @@ class ChePinyinTextService(TextService):
 
         # 輸入法模組自訂區域
         self.imeDirName = "chepinyin"
-        self.maxCharLength = 6 # 輸入法最大編碼字元數量
-        self.cinFileList = ["pinyin.cin", "thpinyin.cin", "roman.cin"]
+        self.maxCharLength = 7 # 輸入法最大編碼字元數量
+        self.cinFileList = ["thpinyin.cin", "pinyin.cin", "roman.cin"]
 
         self.cinbase = CinBase
         self.curdir = os.path.abspath(os.path.dirname(__file__))

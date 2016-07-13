@@ -34,7 +34,7 @@ class CheDayiTextService(TextService):
         # 輸入法模組自訂區域
         self.imeDirName = "chedayi"
         self.maxCharLength = 4 # 輸入法最大編碼字元數量
-        self.cinFileList = ["dayi4.cin", "dayi3.cin"]
+        self.cinFileList = ["thdayi.cin", "dayi4.cin", "dayi3.cin"]
 
         self.cinbase = CinBase
         self.curdir = os.path.abspath(os.path.dirname(__file__))
@@ -89,9 +89,9 @@ class CheDayiTextService(TextService):
 
 
     def onKeyDown(self, keyEvent):
-        if self.cfg.selCinType == 0:
+        if self.cfg.selCinType == 0 or self.cfg.selCinType == 1:
             self.maxCharLength = 4
-        elif self.cfg.selCinType == 1:
+        elif self.cfg.selCinType == 2:
             self.maxCharLength = 3
         self.autoShowCandWhenMaxChar = True
         KeyState = self.cinbase.onKeyDown(self, keyEvent)

@@ -3,8 +3,8 @@ var imeFolderName = "chepinyin"
 
 // 此輸入法模組使用的碼表
 var selCins=[
-    "正體拼音",
     "泰瑞拼音",
+    "正體拼音",
     "羅馬拼音"
 ];
 

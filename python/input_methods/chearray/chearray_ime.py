@@ -34,7 +34,7 @@ class CheArrayTextService(TextService):
         # 輸入法模組自訂區域
         self.imeDirName = "chearray"
         self.maxCharLength = 4 # 輸入法最大編碼字元數量
-        self.cinFileList = ["array30.cin", "ar30-big.cin", "array40.cin"]
+        self.cinFileList = ["tharray.cin", "array30.cin", "ar30-big.cin", "array40.cin"]
 
         self.cinbase = CinBase
         self.curdir = os.path.abspath(os.path.dirname(__file__))
@@ -89,15 +89,15 @@ class CheArrayTextService(TextService):
 
 
     def onKeyDown(self, keyEvent):
-        if self.cfg.selCinType != 0:
+        if self.cfg.selCinType != 0 or self.cfg.selCinType != 1:
             self.directShowCand = False
 
-        if self.cfg.selCinType == 1:
+        if self.cfg.selCinType == 0 or self.cfg.selCinType == 2:
             self.maxCharLength = 5
         else:
             self.maxCharLength = 4
 
-        if self.cfg.selCinType == 0 and self.compositionChar == 'w' and self.cinbase.isNumberChar(keyEvent.keyCode):
+        if self.cfg.selCinType == 1 and self.compositionChar == 'w' and self.cinbase.isNumberChar(keyEvent.keyCode):
             if self.cin.isInCharDef('w' + chr(keyEvent.charCode)):
                 self.compositionChar += chr(keyEvent.charCode)
                 self.setCompositionString(self.compositionString + chr(keyEvent.charCode))

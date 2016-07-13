@@ -3,6 +3,7 @@ var imeFolderName = "chearray"
 
 // 此輸入法模組使用的碼表
 var selCins=[
+    "泰瑞行列30",
     "行列30",
     "行列30大字集",
     "行列40"
@@ -23,7 +24,7 @@ defaultConfig ={
     "outputSimpChinese": false,
     "autoClearCompositionChar": false,
     "playSoundWhenNonCand": false,
-    "directShowCand": false,
+    "directShowCand": true,
     "supportSymbolCoding": true,
     "supportWildcard": true,
     "selWildcardType": 1,

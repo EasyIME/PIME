@@ -3,6 +3,7 @@ var imeFolderName = "chedayi"
 
 // 此輸入法模組使用的碼表
 var selCins=[
+    "泰瑞大易四碼",
     "大易四碼",
     "大易三碼"
 ];

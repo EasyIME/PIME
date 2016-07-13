@@ -12,7 +12,7 @@
     "outputSimpChinese": false,
     "autoClearCompositionChar": false,
     "playSoundWhenNonCand": false,
-    "directShowCand": false,
+    "directShowCand": true,
     "supportSymbolCoding": true,
     "supportWildcard": true,
     "selWildcardType": 1,

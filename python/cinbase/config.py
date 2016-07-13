@@ -84,11 +84,11 @@ class CinBaseConfig:
     def load(self):
         filename = self.getConfigFile()
         try:
-            if os.path.exists(filename):
-                with open(filename, "r") as f:
-                    self.__dict__.update(json.load(f))
-            else:
-                self.save()
+            if not os.path.exists(filename) or os.stat(filename).st_size == 0:
+                filename = os.path.join(self.getDefaultConfigDir(), "config.json")
+
+            with open(filename, "r") as f:
+                self.__dict__.update(json.load(f))
         except Exception:
             self.save()
         self.update()
@@ -105,6 +105,9 @@ class CinBaseConfig:
 
     def getDataDir(self):
         return os.path.join(os.path.dirname(__file__), "data")
+        
+    def getDefaultConfigDir(self):
+        return os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, "input_methods", self.imeDirName, "config"))
 
     def findFile(self, dirs, name):
         for dirname in dirs:

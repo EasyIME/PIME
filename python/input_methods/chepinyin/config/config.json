@@ -1,0 +1,22 @@
+{
+    "defaultEnglish": false,
+    "candPerRow": 3,
+    "easySymbolsWithShift": false,
+    "candPerPage": 9,
+    "defaultFullSpace": false,
+    "selCinType": 0,
+    "switchLangWithShift": true,
+    "fullShapeSymbols": false,
+    "colorCandWnd": true,
+    "fontSize": 16,
+    "outputSimpChinese": false,
+    "autoClearCompositionChar": false,
+    "playSoundWhenNonCand": false,
+    "directShowCand": false,
+    "supportSymbolCoding": false,
+    "supportWildcard": true,
+    "selWildcardType": 1,
+    "candMaxItems": 100,
+    "showPhrase": false,
+    "sortByPhrase": true
+}

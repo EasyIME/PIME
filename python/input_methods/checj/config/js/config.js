@@ -21,7 +21,7 @@ defaultConfig ={
     "easySymbolsWithShift": false,
     "candPerPage": 9,
     "defaultFullSpace": false,
-    "selCinType": "0",
+    "selCinType": 0,
     "switchLangWithShift": true,
     "fullShapeSymbols": false,
     "colorCandWnd": true,
@@ -32,7 +32,7 @@ defaultConfig ={
     "directShowCand": true,
     "supportSymbolCoding": false,
     "supportWildcard": true,
-    "selWildcardType": "0",
+    "selWildcardType": 0,
     "candMaxItems": 100,
     "showPhrase": false,
     "sortByPhrase": true

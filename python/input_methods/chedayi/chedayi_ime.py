@@ -44,6 +44,7 @@ class CheDayiTextService(TextService):
 
         # 初始化輸入行為設定
         self.cinbase.initTextService(self)
+        self.useDayiSymbols = True
 
         # 載入用戶設定值
         CinBaseConfig.__init__()
@@ -93,6 +94,21 @@ class CheDayiTextService(TextService):
             self.maxCharLength = 4
         elif self.cfg.selCinType == 2:
             self.maxCharLength = 3
+
+        charCode = keyEvent.charCode
+        keyCode = keyEvent.keyCode
+        charStr = chr(charCode)
+
+        # 大易符號 ---------------------------------------------------------
+        if self.langMode == 1 and not self.showmenu:
+            if len(self.compositionChar) == 0 and charStr == '=':
+                self.compositionChar += charStr
+                self.setCompositionString(self.compositionChar)
+                self.dayisymbolsmode = True
+            elif len(self.compositionChar) >= 1 and self.dayisymbolsmode:
+                if self.dsymbols.isInCharDef(self.compositionChar[1:] + charStr):
+                    self.compositionChar += charStr
+
         self.autoShowCandWhenMaxChar = True
         KeyState = self.cinbase.onKeyDown(self, keyEvent)
         return KeyState

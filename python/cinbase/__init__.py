@@ -24,6 +24,7 @@ import copy
 import winsound
 from .swkb import swkb
 from .symbols import symbols
+from .dsymbols import dsymbols
 from .fsymbols import fsymbols
 from .msymbols import msymbols
 from .flangs import flangs
@@ -46,7 +47,7 @@ ID_SETTINGS = 3
 ID_MODE_ICON = 4
 ID_WEBSITE = 5
 ID_BUGREPORT = 6
-ID_DICT_BUGREPORT = 7
+ID_FORUM = 7
 ID_MOEDICT = 8
 ID_DICT = 9
 ID_SIMPDICT = 10
@@ -99,6 +100,8 @@ class CinBase:
         CinBaseTextService.canUseNumberKey = True
         CinBaseTextService.endKeyList = []
         CinBaseTextService.useEndKey = False
+        CinBaseTextService.useDayiSymbols = False
+        CinBaseTextService.dayisymbolsmode = False
         CinBaseTextService.autoShowCandWhenMaxChar = False
         CinBaseTextService.lastCommitString = ""
         CinBaseTextService.lastCompositionCharLength = 0
@@ -223,6 +226,9 @@ class CinBase:
             
         # 中文模式下，若按下 ` 鍵，讓輸入法進行處理
         if keyEvent.isKeyDown(VK_OEM_3):
+            return True
+
+        if CinBaseTextService.useDayiSymbols and keyEvent.isKeyDown(VK_OEM_PLUS):
             return True
         
         # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
@@ -507,7 +513,7 @@ class CinBase:
                     CinBaseTextService.setCompositionString(candidates[0])
             
         # 按下的鍵為 CIN 內有定義的字根
-        if CinBaseTextService.cin.isInKeyName(charStrLow) and CinBaseTextService.closemenu and not CinBaseTextService.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not CinBaseTextService.ctrlsymbolsmode:
+        if CinBaseTextService.cin.isInKeyName(charStrLow) and CinBaseTextService.closemenu and not CinBaseTextService.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not CinBaseTextService.ctrlsymbolsmode and not CinBaseTextService.dayisymbolsmode:
             # 若按下 Shift 鍵
             if keyEvent.isKeyDown(VK_SHIFT) and CinBaseTextService.langMode == CHINESE_MODE:
                 CommitStr = charStr
@@ -592,7 +598,7 @@ class CinBase:
                         CinBaseTextService.setCompositionString(CinBaseTextService.compositionString + keyname)
                         CinBaseTextService.setCompositionCursor(len(CinBaseTextService.compositionString))
         # 按下的鍵不存在於 CIN 所定義的字根
-        elif not CinBaseTextService.cin.isInKeyName(charStrLow) and CinBaseTextService.closemenu and not CinBaseTextService.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not CinBaseTextService.ctrlsymbolsmode:
+        elif not CinBaseTextService.cin.isInKeyName(charStrLow) and CinBaseTextService.closemenu and not CinBaseTextService.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not CinBaseTextService.ctrlsymbolsmode and not CinBaseTextService.dayisymbolsmode:
             # 若按下 Shift 鍵
             if keyEvent.isKeyDown(VK_SHIFT) and CinBaseTextService.langMode == CHINESE_MODE:
                 # 如果停用 Shift 輸入全形標點
@@ -709,6 +715,10 @@ class CinBase:
                 candidates = CinBaseTextService.fsymbols.getCharDef(CinBaseTextService.compositionChar)
             elif CinBaseTextService.msymbols.isInCharDef(CinBaseTextService.compositionChar) and CinBaseTextService.closemenu and CinBaseTextService.ctrlsymbolsmode:
                 candidates = CinBaseTextService.msymbols.getCharDef(CinBaseTextService.compositionChar)
+            elif CinBaseTextService.dayisymbolsmode and CinBaseTextService.closemenu:
+                if CinBaseTextService.dsymbols.isInCharDef(CinBaseTextService.compositionChar[1:]):
+                    candidates = CinBaseTextService.dsymbols.getCharDef(CinBaseTextService.compositionChar[1:])
+                    CinBaseTextService.setCompositionString(candidates[0])
             elif CinBaseTextService.supportWildcard and CinBaseTextService.selWildcardChar in CinBaseTextService.compositionChar and CinBaseTextService.closemenu:
                 if CinBaseTextService.wildcardcandidates and CinBaseTextService.wildcardcompositionChar == CinBaseTextService.compositionChar:
                     candidates = CinBaseTextService.wildcardcandidates
@@ -738,15 +748,42 @@ class CinBase:
                         else:
                             if CinBaseTextService.isShowCandidates:
                                 CinBaseTextService.canUseNumberKey = True
-                    
-                    # 字滿處理 (大易)
-                    if CinBaseTextService.autoShowCandWhenMaxChar:
-                        if len(CinBaseTextService.compositionChar) == CinBaseTextService.maxCharLength:
-                            if not CinBaseTextService.isShowCandidates:
-                                CinBaseTextService.isShowCandidates = True
-                                CinBaseTextService.canUseNumberKey = False
+
+                    # 字滿及符號處理 (大易)
+                    if CinBaseTextService.autoShowCandWhenMaxChar or CinBaseTextService.dayisymbolsmode:
+                        if len(CinBaseTextService.compositionChar) == CinBaseTextService.maxCharLength or CinBaseTextService.dayisymbolsmode:
+                            if len(candidates) == 1:
+                                commitStr = candidates[0]
+                                CinBaseTextService.lastCommitString = commitStr
+
+                                # 如果使用萬用字元解碼
+                                if CinBaseTextService.isWildcardChardefs:
+                                    messagestr = CinBaseTextService.cin.getCharEncode(commitStr)
+                                    CinBaseTextService.showMessage(messagestr, 5)
+                                    CinBaseTextService.wildcardcandidates = []
+                                    CinBaseTextService.wildcardpagecandidates = []
+                                    CinBaseTextService.isWildcardChardefs = False
+
+                                # 如果使用打繁出簡，就轉成簡體中文
+                                if CinBaseTextService.outputSimpChinese:
+                                    commitStr = CinBaseTextService.opencc.convert(commitStr)
+
+                                CinBaseTextService.setCommitString(commitStr)
+
+                                if CinBaseTextService.showPhrase:
+                                    CinBaseTextService.phrasemode = True
+
+                                self.resetComposition(CinBaseTextService)
+                                candCursor = 0
+                                currentCandPage = 0
+                                CinBaseTextService.isShowCandidates = False
+                                CinBaseTextService.canSetCommitString = True
                             else:
-                                CinBaseTextService.canUseNumberKey = True
+                                if not CinBaseTextService.isShowCandidates:
+                                    CinBaseTextService.isShowCandidates = True
+                                    CinBaseTextService.canUseNumberKey = False
+                                else:
+                                    CinBaseTextService.canUseNumberKey = True
                         else:
                             if CinBaseTextService.isShowCandidates:
                                 CinBaseTextService.canUseNumberKey = True
@@ -1174,8 +1211,8 @@ class CinBase:
             os.startfile("https://github.com/EasyIME/PIME")
         elif commandId == ID_BUGREPORT: # visit bug tracker page
             os.startfile("https://github.com/EasyIME/PIME/issues")
-        elif commandId == ID_DICT_BUGREPORT:
-            os.startfile("https://github.com/KenLuoTW/PIME/issues")
+        elif commandId == ID_FORUM:
+            os.startfile("https://github.com/EasyIME/forum")
         elif commandId == ID_MOEDICT: # a very awesome online Chinese dictionary
             os.startfile("https://www.moedict.tw/")
         elif commandId == ID_DICT: # online Chinese dictonary
@@ -1198,8 +1235,8 @@ class CinBase:
             return [
                 {"text": "參觀 PIME 官方網站(&W)", "id": ID_WEBSITE},
                 {},
-                {"text": "軟體本身的建議及錯誤回報(&B)", "id": ID_BUGREPORT},
-                {"text": "輸入法模組錯誤回報 (&P)", "id": ID_DICT_BUGREPORT},
+                {"text": "PIME 錯誤回報(&B)", "id": ID_BUGREPORT},
+                {"text": "PIME 討論區 (&F)", "id": ID_FORUM},
                 {},
                 {"text": "設定輸入法模組(&C)", "id": ID_SETTINGS},
                 {},
@@ -1322,6 +1359,7 @@ class CinBase:
         CinBaseTextService.wildcardpagecandidates = []
         CinBaseTextService.multifunctionmode = False
         CinBaseTextService.ctrlsymbolsmode = False
+        CinBaseTextService.dayisymbolsmode = False
         CinBaseTextService.lastCompositionCharLength = 0
     
     # 判斷數字鍵?
@@ -1442,7 +1480,12 @@ class CinBase:
         msymbolsPath = cfg.findFile(datadirs, "msymbols.dat")
         with io.open(msymbolsPath, encoding='utf-8') as fs:
             CinBaseTextService.msymbols = msymbols(fs)
-            
+
+        if CinBaseTextService.useDayiSymbols:
+            dsymbolsPath = cfg.findFile(datadirs, "dsymbols.dat")
+            with io.open(dsymbolsPath, encoding='utf-8') as fs:
+                CinBaseTextService.dsymbols = dsymbols(fs)
+
         if not PhraseData.phrase:
             PhraseData.loadPhraseFile(CinBaseTextService)
             CinBaseTextService.phrase = PhraseData.phrase

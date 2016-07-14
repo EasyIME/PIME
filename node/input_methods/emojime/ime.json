@@ -1,10 +1,10 @@
 {
-	"name":"emojime",
-	"version": "0.2.0",
-	"guid": "{A381D463-9338-4FBD-B83D-66FFB03523B3}",
-	"locale": "zh-TW",
-	"icon": "icon.ico",
-	"win8_icon": "",
+  "name":"emojime",
+  "version": "0.2.0",
+  "guid": "{A381D463-9338-4FBD-B83D-66FFB03523B3}",
+  "locale": "zh-TW",
+  "icon": "icon.ico",
+  "win8_icon": "",
   "moduleName": "index",
   "serviceName": ""
 }

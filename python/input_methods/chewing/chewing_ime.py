@@ -347,12 +347,15 @@ class ChewingTextService(TextService):
                 # 若按下 Shift 鍵
                 if keyEvent.isKeyDown(VK_SHIFT):
                     if charStr.isalpha():  # 如果是英文字母
-                        temporaryEnglishMode = True  # 暫時切換成英文模式
-                        if not cfg.upperCaseWithShift:  # 如果沒有開啟 Shift 輸入大寫英文
-                            invertCase = True # 大寫字母轉成小寫
-                    # 如果不使用 Shift 輸入全形標點，或快速輸入符號功能，則暫時切成英文模式
-                    elif not cfg.fullShapeSymbols and not cfg.easySymbolsWithShift:
-                        temporaryEnglishMode = True
+                        # 如果不使用快速輸入符號功能，則暫時切成英文模式
+                        if not cfg.easySymbolsWithShift:
+                            temporaryEnglishMode = True  # 暫時切換成英文模式
+                            if not cfg.upperCaseWithShift:  # 如果沒有開啟 Shift 輸入大寫英文
+                                invertCase = True # 大寫字母轉成小寫
+                    else: # 如果不是英文字母
+                        # 如果不使用 Shift 輸入全形標點，則暫時切成英文模式
+                        if not cfg.fullShapeSymbols:
+                            temporaryEnglishMode = True
 
             if self.langMode == ENGLISH_MODE: # 英文模式
                 chewingContext.handle_Default(charCode)

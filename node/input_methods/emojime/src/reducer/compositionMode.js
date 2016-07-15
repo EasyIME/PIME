@@ -14,6 +14,16 @@ function compositionMode(request, preState) {
     showCandidates
   } = preState;
 
+  // ':' + space would fast input ': ' for typing
+  if (keyCode == KEYCODE.VK_SPACE && compositionString == ':') {
+    return Object.assign({}, preState, {
+      action: 'COMMIT_STRING',
+      compositionString: '',
+      compositionCursor: 0,
+      commitString: ': '
+    });
+  }
+
   // Show candidate list
   if (keyCode === KEYCODE.VK_DOWN) {
 
@@ -69,9 +79,10 @@ function compositionMode(request, preState) {
     });
   }
 
-  // Delete compositionString
+  // Delete compositionString. But should not delete ':' if has other char
   if (keyCode === KEYCODE.VK_BACK) {
-    if (compositionString === '') {
+    if ((compositionString === '') ||
+        (compositionCursor <= 1 && compositionString !== ':')) {
       return Object.assign({}, preState, {action: ''});
     }
     let cursor = compositionCursor;
@@ -102,7 +113,8 @@ function compositionMode(request, preState) {
 
   if (
     (charCode >= 'a'.charCodeAt(0) && charCode <= 'z'.charCodeAt(0)) ||
-    (charCode >= 'A'.charCodeAt(0) && charCode <= 'Z'.charCodeAt(0))) {
+    (charCode >= 'A'.charCodeAt(0) && charCode <= 'Z'.charCodeAt(0)) ||
+    (charCode == '_'.charCodeAt(0))) {
 
     return Object.assign({}, preState, {
       action: 'UPDATE_STRING',

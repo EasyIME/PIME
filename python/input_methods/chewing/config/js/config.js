@@ -138,9 +138,13 @@ function initializeUI() {
         "倚天 26 鍵",
         "DVORAK",
         "DVORAK 許氏",
+        "大千 26 鍵",
         "漢語拼音",
         "台灣華語羅馬拼音",
         "注音二式"
+        // wait for update libchewing 5.0
+        // "CARPALX",
+        // "注音二式"
     ];
     var keyboard_page = $("#keyboard_page");
     for(var i = 0; i < keyboardNames.length; ++i) {

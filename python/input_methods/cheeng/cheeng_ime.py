@@ -40,3 +40,10 @@ class CheEngTextService(TextService):
         if self.client.isWindows8Above:
             self.removeButton("windows-mode-icon")
 
+    # 鍵盤開啟/關閉時會被呼叫 (在 Windows 10 Ctrl+Space 時)
+    def onKeyboardStatusChanged(self, opened):
+        # Windows 8 systray IME mode icon
+        if self.client.isWindows8Above:
+            # 若鍵盤關閉，我們需要把 widnows 8 mode icon 設定為 disabled
+            self.changeButton("windows-mode-icon", enable=opened)
+        # FIXME: 是否需要同時 disable 其他語言列按鈕？

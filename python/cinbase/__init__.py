@@ -1264,7 +1264,6 @@ class CinBase:
         if CinBaseTextService.client.isWindows8Above:
             # 若鍵盤關閉，我們需要把 widnows 8 mode icon 設定為 disabled
             CinBaseTextService.changeButton("windows-mode-icon", enable=opened)
-            CinBaseTextService.changeButton("switch-lang", enable=opened)
         # FIXME: 是否需要同時 disable 其他語言列按鈕？
 
 

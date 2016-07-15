@@ -1,3 +1,19 @@
+<a name="0.3.0"></a>
+# [0.3.0](https://github.com/EasyIME/emojime/compare/v0.2.0...v0.3.0) (2016-07-15)
+
+
+### Bug Fixes
+
+* Should not delete the ':' if there have other char([edd90f8](https://github.com/EasyIME/emojime/commit/edd90f8))
+* Support _ char in composition mode([04b68b5](https://github.com/EasyIME/emojime/commit/04b68b5))
+
+
+### Features
+
+* ':' + `space` would fast input ': ' for normal typing([2bbe4e6](https://github.com/EasyIME/emojime/commit/2bbe4e6))
+
+
+
 <a name="0.2.0"></a>
 # 0.2.0 (2016-07-14)
 

@@ -1,6 +1,6 @@
 {
   "name": "emojime",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "The 'real' input method editor of Emoji on windows. Implement by emojione, PIME, NIME.",
   "main": "index.js",
   "scripts": {

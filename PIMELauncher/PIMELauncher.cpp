@@ -43,7 +43,7 @@ static HANDLE launchProcess(const wchar_t* file, const wchar_t* params, const wc
 	info.lpFile = file;
 	info.lpParameters = params;
 	info.lpDirectory = workingDir;
-	info.nShow = SW_SHOWNORMAL;
+	info.nShow = SW_HIDE;
 	if (ShellExecuteExW(&info))
 		process = info.hProcess;
 	DWORD err = GetLastError();

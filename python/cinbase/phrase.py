@@ -58,6 +58,6 @@ def rootSplit(line):
     if ',' in line:
         return line.split(',')
     else:
-        return []
+        return line
 
 __all__ = ["phrase"]

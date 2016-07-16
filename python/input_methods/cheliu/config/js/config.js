@@ -20,6 +20,7 @@ defaultConfig ={
     "colorCandWnd": true,
     "fontSize": 16,
     "outputSimpChinese": false,
+    "hidePromptMessages": true,
     "autoClearCompositionChar": false,
     "playSoundWhenNonCand": false,
     "directShowCand": true,

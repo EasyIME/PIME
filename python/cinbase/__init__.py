@@ -69,6 +69,7 @@ class CinBase:
         CinBaseTextService.langMode = -1
         CinBaseTextService.shapeMode = -1
         CinBaseTextService.outputSimpChinese = False
+        CinBaseTextService.hidePromptMessages = True
         CinBaseTextService.autoClearCompositionChar = False
         CinBaseTextService.playSoundWhenNonCand = False
         CinBaseTextService.directShowCand = False
@@ -257,8 +258,9 @@ class CinBase:
             if len(CinBaseTextService.compositionChar) == 0 and charStr == '`':
                 CinBaseTextService.compositionChar += charStr
                 CinBaseTextService.setCompositionString(CinBaseTextService.compositionChar)
-                messagestr = '多功能前導字元'
-                CinBaseTextService.showMessage(messagestr, 5)
+                if not CinBaseTextService.hidePromptMessages:
+                    messagestr = '多功能前導字元'
+                    CinBaseTextService.showMessage(messagestr, 5)
                 CinBaseTextService.multifunctionmode = True
             elif len(CinBaseTextService.compositionChar) == 1 and CinBaseTextService.multifunctionmode:
                 if charStrLow == 'm':
@@ -758,8 +760,9 @@ class CinBase:
 
                                 # 如果使用萬用字元解碼
                                 if CinBaseTextService.isWildcardChardefs:
-                                    messagestr = CinBaseTextService.cin.getCharEncode(commitStr)
-                                    CinBaseTextService.showMessage(messagestr, 5)
+                                    if not CinBaseTextService.hidePromptMessages:
+                                        messagestr = CinBaseTextService.cin.getCharEncode(commitStr)
+                                        CinBaseTextService.showMessage(messagestr, 5)
                                     CinBaseTextService.wildcardcandidates = []
                                     CinBaseTextService.wildcardpagecandidates = []
                                     CinBaseTextService.isWildcardChardefs = False
@@ -797,8 +800,9 @@ class CinBase:
                                 
                                 # 如果使用萬用字元解碼
                                 if CinBaseTextService.isWildcardChardefs:
-                                    messagestr = CinBaseTextService.cin.getCharEncode(commitStr)
-                                    CinBaseTextService.showMessage(messagestr, 5)
+                                    if not CinBaseTextService.hidePromptMessages:
+                                        messagestr = CinBaseTextService.cin.getCharEncode(commitStr)
+                                        CinBaseTextService.showMessage(messagestr, 5)
                                     CinBaseTextService.wildcardcandidates = []
                                     CinBaseTextService.wildcardpagecandidates = []
                                     CinBaseTextService.isWildcardChardefs = False
@@ -877,8 +881,9 @@ class CinBase:
 
                             # 如果使用萬用字元解碼
                             if CinBaseTextService.isWildcardChardefs:
-                                messagestr = CinBaseTextService.cin.getCharEncode(commitStr)
-                                CinBaseTextService.showMessage(messagestr, 5)
+                                if not CinBaseTextService.hidePromptMessages:
+                                    messagestr = CinBaseTextService.cin.getCharEncode(commitStr)
+                                    CinBaseTextService.showMessage(messagestr, 5)
                                 CinBaseTextService.wildcardcandidates = []
                                 CinBaseTextService.wildcardpagecandidates = []
                                 CinBaseTextService.isWildcardChardefs = False
@@ -940,8 +945,9 @@ class CinBase:
                     
                         # 如果使用萬用字元解碼
                         if CinBaseTextService.isWildcardChardefs:
-                            messagestr = CinBaseTextService.cin.getCharEncode(commitStr)
-                            CinBaseTextService.showMessage(messagestr, 5)
+                            if not CinBaseTextService.hidePromptMessages:
+                                messagestr = CinBaseTextService.cin.getCharEncode(commitStr)
+                                CinBaseTextService.showMessage(messagestr, 5)
                             CinBaseTextService.wildcardcandidates = []
                             CinBaseTextService.wildcardpagecandidates = []
                             CinBaseTextService.isWildcardChardefs = False
@@ -979,8 +985,9 @@ class CinBase:
                                 if CinBaseTextService.compositionChar[:2] == '`U':
                                     commitStr = chr(int(CinBaseTextService.compositionChar[2:], 16))
                                     CinBaseTextService.lastCommitString = commitStr
-                                    messagestr = CinBaseTextService.cin.getCharEncode(commitStr)
-                                    CinBaseTextService.showMessage(messagestr, 5)
+                                    if not CinBaseTextService.hidePromptMessages:
+                                        messagestr = CinBaseTextService.cin.getCharEncode(commitStr)
+                                        CinBaseTextService.showMessage(messagestr, 5)
                                     CinBaseTextService.setCommitString(commitStr)
                                     
                                     if CinBaseTextService.showPhrase:
@@ -1174,15 +1181,17 @@ class CinBase:
             CinBaseTextService.isLangModeChanged = False
             CinBaseTextService.showmenu = False
             CinBaseTextService.multifunctionmode = False
-            message = '中文模式' if CinBaseTextService.langMode == CHINESE_MODE else '英數模式'
-            CinBaseTextService.showMessage(message, 3)
+            if not CinBaseTextService.hidePromptMessages:
+                message = '中文模式' if CinBaseTextService.langMode == CHINESE_MODE else '英數模式'
+                CinBaseTextService.showMessage(message, 3)
             if CinBaseTextService.showCandidates or len(CinBaseTextService.compositionChar) > 0:
                 self.resetComposition(CinBaseTextService)
             
         if CinBaseTextService.isShapeModeChanged:
             CinBaseTextService.isShapeModeChanged = False
-            message = '半形模式' if CinBaseTextService.shapeMode == HALFSHAPE_MODE else '全形模式'
-            CinBaseTextService.showMessage(message, 3)
+            if not CinBaseTextService.hidePromptMessages:
+                message = '半形模式' if CinBaseTextService.shapeMode == HALFSHAPE_MODE else '全形模式'
+                CinBaseTextService.showMessage(message, 3)
             if CinBaseTextService.showCandidates or len(CinBaseTextService.compositionChar) > 0:
                 self.resetComposition(CinBaseTextService)
 
@@ -1520,6 +1529,9 @@ class CinBase:
 
         # Shift 快速輸入符號?
         CinBaseTextService.easySymbolsWithShift = cfg.easySymbolsWithShift
+        
+        # 隱藏提示訊息?
+        CinBaseTextService.hidePromptMessages = cfg.hidePromptMessages
 
         # 輸出字串後顯示聯想字詞?
         CinBaseTextService.showPhrase = cfg.showPhrase

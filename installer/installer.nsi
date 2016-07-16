@@ -491,7 +491,7 @@ Section "" Register
 	WriteUninstaller "$INSTDIR\Uninstall.exe" ;Create uninstaller
 
 	; Compile all installed python modules to *.pyc files
-	nsExec::ExecToLog  '"$INSTDIR\python\python.exe" -m compileall "$INSTDIR\python"'
+	nsExec::ExecToLog  '"$INSTDIR\python\python3\python.exe" -m compileall "$INSTDIR\python"'
 
 	; Launch the python server as current user (non-elevated process)
 	${StdUtils.ExecShellAsUser} $0 "$INSTDIR\PIMELauncher.exe" "open" ""
@@ -564,7 +564,7 @@ Section "" Register
 	; Create shortcuts
 	CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
 	${If} ${SectionIsSelected} ${chewing}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk" "$INSTDIR\python\pythonw.exe" '"$INSTDIR\python\input_methods\chewing\config\configTool.py"' "$INSTDIR\python\input_methods\chewing\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\input_methods\chewing\config\configTool.py"' "$INSTDIR\python\input_methods\chewing\icon.ico" 0
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${checj}

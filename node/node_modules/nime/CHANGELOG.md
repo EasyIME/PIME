@@ -1,3 +1,18 @@
+<a name="0.3.0"></a>
+# [0.3.0](https://github.com/jessy1092/NIME/compare/v0.2.1...v0.3.0) (2016-07-19)
+
+
+### Bug Fixes
+
+* Increase `UV_THREADPOOL_SIZE`=32 to service more client([5eb09dd](https://github.com/jessy1092/NIME/commit/5eb09dd))
+
+
+### Features
+
+* Let user can customize search services method([28c64e4](https://github.com/jessy1092/NIME/commit/28c64e4))
+
+
+
 <a name="0.2.1"></a>
 ## [0.2.1](https://github.com/jessy1092/NIME/compare/v0.2.0...v0.2.1) (2016-07-12)
 

@@ -21,6 +21,6 @@
   },
   "dependencies": {
     "debug": "^2.2.0",
-    "nime": "0.2.1"
+    "nime": "0.3.0"
   }
 }

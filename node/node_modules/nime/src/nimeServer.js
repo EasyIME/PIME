@@ -12,12 +12,18 @@ function createServer(dllPath, services = [{guid: '123', textService}]) {
   let id = 0;
   let pipe = pipeGen.createPIPE(dllPath);
 
-  function addConnection(socket) {
-    connections.push(socket);
+  function addConnection(socketInfo) {
+    connections.push(socketInfo);
   }
 
-  function deleteConnection(socket) {
-    connections = connections.filter(s => s !== socket);
+  function deleteConnection(delID) {
+    connections = connections.filter(({id}) => id !== delID);
+  }
+
+  function handleSocket(message) {
+    if (message['type'] === 'SOCKET_CLOSE') {
+      deleteConnection(message['id']);
+    }
   }
 
   function listen() {
@@ -27,16 +33,16 @@ function createServer(dllPath, services = [{guid: '123', textService}]) {
       debug('Connected');
 
       // Each connection create a socket to handle.
-      let socket = nimeSocket.createSocket(ref, pipe, this, services, id);
+      let socket = nimeSocket.createSocket(ref, pipe, {services, id}, handleSocket);
 
+      addConnection({id, socket});
       id += 1;
-      this.addConnection(socket);
 
       // Start read data
       socket.read();
 
       // Keep listen
-      this.listen();
+      listen();
     });
   }
 

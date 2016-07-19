@@ -13,7 +13,9 @@ Install PIME first. There are two ways to install.
 1. Install via [installer](https://github.com/EasyIME/PIME/releases)
 2. Build the PIME source code and register `PIMETextService.dll`. Please see [this](https://github.com/EasyIME/PIME#install) for more detail
 
-Please install PIME >= 0.03 version
+Please install PIME >= 0.14.* version
+
+There are `emojime` in PIME now. You can copy [emojime](https://github.com/EasyIME/emojime) into `example` folder for testing.
 
 
 #### Node
@@ -24,10 +26,13 @@ Please install PIME >= 0.03 version
 
 ## Development
 
-- npm i
-- npm start
+- `npm i`
+- `npm start`
 
-It would start example server to help develop core library.
+It would start [meow](/example/meow/README.md) example server to help develop core library.
+
+You can copy [emojime](https://github.com/EasyIME/emojime) into `example` folder for testing.
+
 
 ## Usage
 
@@ -39,15 +44,13 @@ npm install nime
 
 `ime.json` is to configure IME.
 
-There are two way to implement IME.
+Example for implementing IME.
 - [reduce-based](/example/meow/README.md): It uses the `textReducer` and `response` function to handle text and request.
 
 
-## Example
-
-It already implements meow IME for example.
-
-- `npm run start`
+> Because of PIME architecture, every client would use one thread for service.
+> So you can change the `UV_THREADPOOL_SIZE` number to decide how many client want to connect.
+> Nodejs default is `4`. I change to `32`. `31` for client. `1` for server. see [issue #7](https://github.com/EasyIME/NIME/issues/7)
 
 
 ## Reference

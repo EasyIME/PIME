@@ -1,0 +1,11 @@
+{
+	"name":"注音輸入法 (PIME)",
+	"version": "1.00",
+	"guid": "{EC866AD1-A8F1-4845-858F-04942FFAF6CD}",
+	"locale": "zh-TW",
+	"icon": "icon.ico",
+	"win8_icon": "",
+	"moduleName": "chephonetic_ime",
+	"serviceName": "ChePhoneticTextService",
+	"configTool": "config\\config.hta"
+}

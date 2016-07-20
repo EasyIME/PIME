@@ -11,6 +11,7 @@ var selCins=[
 
 // 此輸入法模組預設設定值
 defaultConfig ={
+    "keyboardLayout": 0,
     "defaultEnglish": false,
     "candPerRow": 3,
     "easySymbolsWithShift": false,
@@ -26,6 +27,7 @@ defaultConfig ={
     "autoClearCompositionChar": false,
     "playSoundWhenNonCand": false,
     "directShowCand": true,
+    "directCommitString": false,
     "supportSymbolCoding": true,
     "supportWildcard": true,
     "selWildcardType": 1,
@@ -344,11 +346,20 @@ $(function() {
 		}
 	});
 
-    /*
-    // resize and center the window
-    $(window).load(function() {
-        window.resizeTo($(document).width(), $(document).height() + 40);
-        window.moveTo((screen.width - $(window).width())/2, (screen.height - $(window).height() - 40)/2);
+    if ($('#directShowCand')[0].checked == false) {
+        $("#directCommitString")[0].disabled = false;
+    } else {
+        $("#directCommitString").prop("checked", false);
+        $("#directCommitString")[0].disabled = true;
+    }
+
+    $('#directShowCand').click(function() {
+        if ($('#directShowCand')[0].checked == false) {
+            $("#directCommitString")[0].disabled = false;
+        } else {
+            $("#directCommitString").prop("checked", false);
+            $("#directCommitString")[0].disabled = true;
+        }
     });
-    */
+
 });

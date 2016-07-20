@@ -1,4 +1,5 @@
 {
+    "keyboardLayout": 0,
     "defaultEnglish": false,
     "candPerRow": 3,
     "easySymbolsWithShift": false,
@@ -14,6 +15,7 @@
     "autoClearCompositionChar": false,
     "playSoundWhenNonCand": false,
     "directShowCand": false,
+    "directCommitString": false,
     "supportSymbolCoding": true,
     "supportWildcard": true,
     "selWildcardType": 1,

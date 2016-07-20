@@ -39,6 +39,7 @@ class CinBaseConfig:
         self.autoClearCompositionChar = False
         self.playSoundWhenNonCand = False
         self.directShowCand = False
+        self.directCommitString = False
         self.colorCandWnd = True
         self.advanceAfterSelection = True
         self.fontSize = DEF_FONT_SIZE
@@ -62,6 +63,7 @@ class CinBaseConfig:
         self.supportWildcard = True
         self.selWildcardType = 0
         self.candMaxItems = 100
+        self.keyboardType = 0
         self.curdir = os.path.abspath(os.path.dirname(__file__))
         
         # version: last modified time of (config.json, symbols.dat, swkb.dat)

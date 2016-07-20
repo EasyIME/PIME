@@ -65,7 +65,8 @@ class CinBase:
     def initTextService(self, CinBaseTextService):
         # 使用 OpenCC 繁體中文轉簡體
         CinBaseTextService.opencc = None
-        
+
+        CinBaseTextService.keyboardLayout = 0
         CinBaseTextService.langMode = -1
         CinBaseTextService.shapeMode = -1
         CinBaseTextService.outputSimpChinese = False
@@ -73,6 +74,7 @@ class CinBase:
         CinBaseTextService.autoClearCompositionChar = False
         CinBaseTextService.playSoundWhenNonCand = False
         CinBaseTextService.directShowCand = False
+        CinBaseTextService.directCommitString = False
         CinBaseTextService.fullShapeSymbols = False
         CinBaseTextService.easySymbolsWithShift = False
         CinBaseTextService.supportSymbolCoding = False
@@ -82,6 +84,7 @@ class CinBase:
         CinBaseTextService.lastKeyDownTime = 0.0
         
         CinBaseTextService.menucandidates = []
+        CinBaseTextService.smenucandidates = []
         CinBaseTextService.wildcardcandidates = []
         CinBaseTextService.wildcardpagecandidates = []
         CinBaseTextService.wildcardcompositionChar = ""
@@ -224,7 +227,13 @@ class CinBase:
         # 檢查按下的鍵是否為倉頡字根
         if CinBaseTextService.cin.isInKeyName(chr(keyEvent.charCode).lower()):
             return True
-            
+
+        # 中文模式下，當中文編輯區是空的，且不是預設鍵盤,輸入法需處理其它鍵盤所定義的字根
+        # 檢查按下的鍵是否為其它鍵盤定義的字根
+        if not CinBaseTextService.keyboardLayout == 0:
+            if chr(keyEvent.charCode).lower() in CinBaseTextService.kbtypelist[CinBaseTextService.keyboardLayout]:
+                return True
+
         # 中文模式下，若按下 ` 鍵，讓輸入法進行處理
         if keyEvent.isKeyDown(VK_OEM_3):
             return True
@@ -240,7 +249,12 @@ class CinBase:
         keyCode = keyEvent.keyCode
         charStr = chr(charCode)
 
-        # CheCJ
+        # 鍵盤對映 (注音)
+        if not CinBaseTextService.keyboardLayout == 0 and charStr.lower() in CinBaseTextService.kbtypelist[CinBaseTextService.keyboardLayout]:
+            if not keyEvent.isKeyDown(VK_SHIFT) and not keyEvent.isKeyDown(VK_CONTROL):
+                charIndex = CinBaseTextService.kbtypelist[CinBaseTextService.keyboardLayout].index(charStr.lower())
+                charStr = CinBaseTextService.kbtypelist[0][charIndex]
+
         candidates = []
         charStrLow = charStr.lower()
         CinBaseTextService.isWildcardChardefs = False
@@ -330,7 +344,12 @@ class CinBase:
             menu_playSoundWhenNonCand = "停用拆錯字碼時發出警告嗶聲提示" if CinBaseTextService.playSoundWhenNonCand else "啟用拆錯字碼時發出警告嗶聲提示"
             menu_showPhrase = "停用輸出字串後顯示聯想字詞" if CinBaseTextService.showPhrase else "啟用輸出字串後顯示聯想字詞"
             menu_sortByPhrase = "停用優先以聯想字詞排序候選清單" if CinBaseTextService.sortByPhrase else "啟用優先以聯想字詞排序候選清單"
-            
+
+            if CinBaseTextService.imeDirName == "chephonetic":
+                CinBaseTextService.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase]
+            else:
+                CinBaseTextService.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportSymbolCoding, menu_supportWildcard, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase]
+
             if not CinBaseTextService.closemenu:
                 CinBaseTextService.menutype = 0
                 menu = ["功能設定", menu_OutputSimpChinese, "功能開關", "特殊符號", "注音符號", "外語文字"]
@@ -410,7 +429,7 @@ class CinBase:
                     if CinBaseTextService.menutype == 0 and i == 2: # 切至功能開關頁面
                         candCursor = 0
                         currentCandPage = 0
-                        CinBaseTextService.menucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportSymbolCoding, menu_supportWildcard, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase]
+                        CinBaseTextService.menucandidates = CinBaseTextService.smenucandidates
                         pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
                         CinBaseTextService.menutype = 1
                     elif CinBaseTextService.menutype == 0 and i == 3: # 切至特殊符號頁面
@@ -423,12 +442,17 @@ class CinBase:
                         candCursor = 0
                         currentCandPage = 0
                         bopomofolist = []
-                        for i in range(0x3105,0x312A):
+                        for i in range(0x3105,0x311A):
                             bopomofolist.append(chr(i))
+                        for i in range(0x3127,0x312A):
+                            bopomofolist.append(chr(i))
+                        for i in range(0x311A,0x3127):
+                            bopomofolist.append(chr(i))
+                        bopomofolist.append(chr(0x02D9))
                         bopomofolist.append(chr(0x02CA))
                         bopomofolist.append(chr(0x02C7))
                         bopomofolist.append(chr(0x02CB))
-                        bopomofolist.append(chr(0x02D9))
+                        
                         CinBaseTextService.menucandidates = bopomofolist
                         pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
                         CinBaseTextService.menutype = 4
@@ -595,10 +619,23 @@ class CinBase:
                         # 不送出 CIN 所定義的字根
                         CinBaseTextService.compositionChar = CinBaseTextService.compositionChar
                     else:
-                        CinBaseTextService.compositionChar += charStrLow
-                        keyname = CinBaseTextService.cin.getKeyName(charStrLow)
-                        CinBaseTextService.setCompositionString(CinBaseTextService.compositionString + keyname)
-                        CinBaseTextService.setCompositionCursor(len(CinBaseTextService.compositionString))
+                        # 如果是注音輸入法
+                        if CinBaseTextService.imeDirName == "chephonetic":
+                            if not CinBaseTextService.keyboardLayout == 0 and not chr(charCode).lower() in CinBaseTextService.kbtypelist[CinBaseTextService.keyboardLayout]:
+                                CinBaseTextService.compositionChar = CinBaseTextService.compositionChar
+                            else:
+                                if len(CinBaseTextService.compositionChar) > 0:
+                                    CinBaseTextService.updateCompositionChar(charStrLow)
+                                else:
+                                    CinBaseTextService.compositionChar += charStrLow
+                                    keyname = CinBaseTextService.cin.getKeyName(charStrLow)
+                                    CinBaseTextService.setCompositionString(CinBaseTextService.compositionString + keyname)
+                                    CinBaseTextService.setCompositionCursor(len(CinBaseTextService.compositionString))
+                        else:        
+                            CinBaseTextService.compositionChar += charStrLow
+                            keyname = CinBaseTextService.cin.getKeyName(charStrLow)
+                            CinBaseTextService.setCompositionString(CinBaseTextService.compositionString + keyname)
+                            CinBaseTextService.setCompositionCursor(len(CinBaseTextService.compositionString))
         # 按下的鍵不存在於 CIN 所定義的字根
         elif not CinBaseTextService.cin.isInKeyName(charStrLow) and CinBaseTextService.closemenu and not CinBaseTextService.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not CinBaseTextService.ctrlsymbolsmode and not CinBaseTextService.dayisymbolsmode:
             # 若按下 Shift 鍵
@@ -739,7 +776,7 @@ class CinBase:
             # 候選清單處理
             if candidates and not CinBaseTextService.phrasemode:
                 if not CinBaseTextService.directShowCand:
-                    # EndKey 處理 (拼音)
+                    # EndKey 處理 (拼音、注音)
                     if CinBaseTextService.useEndKey:
                         if charStr in CinBaseTextService.endKeyList:
                             if not CinBaseTextService.isShowCandidates:
@@ -751,10 +788,10 @@ class CinBase:
                             if CinBaseTextService.isShowCandidates:
                                 CinBaseTextService.canUseNumberKey = True
 
-                    # 字滿及符號處理 (大易)
+                    # 字滿及符號處理 (大易、注音)
                     if CinBaseTextService.autoShowCandWhenMaxChar or CinBaseTextService.dayisymbolsmode:
                         if len(CinBaseTextService.compositionChar) == CinBaseTextService.maxCharLength or CinBaseTextService.dayisymbolsmode:
-                            if len(candidates) == 1:
+                            if len(candidates) == 1 and CinBaseTextService.directCommitString:
                                 commitStr = candidates[0]
                                 CinBaseTextService.lastCommitString = commitStr
 
@@ -786,14 +823,16 @@ class CinBase:
                                     CinBaseTextService.isShowCandidates = True
                                     CinBaseTextService.canUseNumberKey = False
                                 else:
-                                    CinBaseTextService.canUseNumberKey = True
+                                    if not CinBaseTextService.imeDirName == "chephonetic":
+                                        CinBaseTextService.canUseNumberKey = True
                         else:
                             if CinBaseTextService.isShowCandidates:
-                                CinBaseTextService.canUseNumberKey = True
+                                if not CinBaseTextService.imeDirName == "chephonetic":
+                                    CinBaseTextService.canUseNumberKey = True
 
                     if (keyCode == VK_SPACE or keyCode == VK_DOWN) and not CinBaseTextService.isShowCandidates:  # 按下空白鍵和向下鍵
                         # 如果只有一個候選字就直接出字
-                        if len(candidates) == 1:
+                        if len(candidates) == 1 and CinBaseTextService.directCommitString:
                             if keyCode == VK_SPACE:
                                 commitStr = candidates[0]
                                 CinBaseTextService.lastCommitString = commitStr
@@ -994,14 +1033,16 @@ class CinBase:
                                         CinBaseTextService.phrasemode = True
                                     self.resetComposition(CinBaseTextService)
                         else:
-                            CinBaseTextService.showMessage("查無字根...", 3)
+                            CinBaseTextService.showMessage("查無組字...", 3)
                             if CinBaseTextService.autoClearCompositionChar:
                                 self.resetComposition(CinBaseTextService)
                             if CinBaseTextService.playSoundWhenNonCand:
                                 winsound.PlaySound('alert', winsound.SND_ASYNC)
 
                 CinBaseTextService.setShowCandidates(False)
-        
+                CinBaseTextService.isShowCandidates = False
+
+        # 聯想字模式
         if CinBaseTextService.showPhrase and CinBaseTextService.phrasemode:
             phrasecandidates = []
             if CinBaseTextService.userphrase.isInCharDef(CinBaseTextService.lastCommitString):
@@ -1344,13 +1385,25 @@ class CinBase:
             elif commandId == 1:
                 CinBaseTextService.easySymbolsWithShift = not CinBaseTextService.easySymbolsWithShift
             elif commandId == 2:
-                CinBaseTextService.supportSymbolCoding = not CinBaseTextService.supportSymbolCoding
+                if CinBaseTextService.imeDirName == "chephonetic":
+                    CinBaseTextService.autoClearCompositionChar = not CinBaseTextService.autoClearCompositionChar
+                else:
+                    CinBaseTextService.supportSymbolCoding = not CinBaseTextService.supportSymbolCoding
             elif commandId == 3:
-                CinBaseTextService.supportWildcard = not CinBaseTextService.supportWildcard
+                if CinBaseTextService.imeDirName == "chephonetic":
+                    CinBaseTextService.playSoundWhenNonCand = not CinBaseTextService.playSoundWhenNonCand
+                else:
+                    CinBaseTextService.supportWildcard = not CinBaseTextService.supportWildcard
             elif commandId == 4:
-                CinBaseTextService.autoClearCompositionChar = not CinBaseTextService.autoClearCompositionChar
+                if CinBaseTextService.imeDirName == "chephonetic":
+                    CinBaseTextService.showPhrase = not CinBaseTextService.showPhrase
+                else:
+                    CinBaseTextService.autoClearCompositionChar = not CinBaseTextService.autoClearCompositionChar
             elif commandId == 5:
-                CinBaseTextService.playSoundWhenNonCand = not CinBaseTextService.playSoundWhenNonCand
+                if CinBaseTextService.imeDirName == "chephonetic":
+                    CinBaseTextService.sortByPhrase = not CinBaseTextService.sortByPhrase
+                else:
+                    CinBaseTextService.playSoundWhenNonCand = not CinBaseTextService.playSoundWhenNonCand
             elif commandId == 6:
                 CinBaseTextService.showPhrase = not CinBaseTextService.showPhrase
             elif commandId == 7:
@@ -1547,6 +1600,9 @@ class CinBase:
 
         # 直接顯示候選字清單 (不須按空白鍵)?
         CinBaseTextService.directShowCand = cfg.directShowCand
+
+        # 直接輸出候選字 (當候選字僅有一字)?
+        CinBaseTextService.directCommitString = cfg.directCommitString
 
         # 支援 CIN 碼表中以符號字元所定義的編碼?
         CinBaseTextService.supportSymbolCoding = cfg.supportSymbolCoding

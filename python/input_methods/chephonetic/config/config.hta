@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- 此文件要取代所有「拼音」、「拼音」為新輸入法名稱, 以及 Cin 碼表內容 -->
+<!-- 此文件要取代所有「注音」、「注音」為新輸入法名稱, 以及 Cin 碼表內容 -->
 <html>
     <head>
         <meta http-equiv="x-ua-compatible" content="ie=9">
         <meta charset="utf-8">
-        <title>設定拼音輸入法</title>
+        <title>設定注音輸入法</title>
         <link rel="stylesheet" type="text/css" href="../../../cinbase/js/jquery-ui-1.11.4/jquery-ui.min.css">
         <link rel="stylesheet" type="text/css" href="../../../cinbase/js/jquery-ui-1.11.4/jquery-ui.theme.min.css">
         <link rel="stylesheet" type="text/css" href="css/config.css">
@@ -32,7 +32,7 @@
             <li><a href="#typing_page">打字行為</a></li>
             <li><a href="#cin_page">輸入法碼表</a></li>
             <li><a href="#ui_page">介面外觀</a></li>
-            <!-- <li><a href="#keyboard_page">鍵盤設定</a></li> -->
+            <li><a href="#keyboard_page">鍵盤設定</a></li>
             <li><a href="#symbols_page">特殊符號</a></li>
             <li><a href="#fs_symbols_page">全形標點</a></li>
             <li><a href="#ez_symbols_page">簡易符號</a></li>
@@ -60,22 +60,23 @@
 
             <input type="checkbox" id="autoClearCompositionChar" name="autoClearCompositionChar" />
             <label for="autoClearCompositionChar">拆錯字碼時自動清除輸入字串</label><br>
-
+            
             <input type="checkbox" id="playSoundWhenNonCand" name="playSoundWhenNonCand" />
             <label for="playSoundWhenNonCand">拆錯字碼時發出警告嗶聲提示</label><br>
-
+            
             <input type="checkbox" id="sortByPhrase" name="sortByPhrase" />
             <label for="sortByPhrase">優先以聯想字詞排序候選清單</label><br>
 
-            <input type="checkbox" id="supportSymbolCoding" name="supportSymbolCoding" />
-            <label for="supportSymbolCoding">支援 CIN 碼表中以符號字元所定義的編碼</label><br>
+            <input type="checkbox" id="directCommitString" name="directCommitString" />
+            <label for="directCommitString">直接輸出候選字 (當候選字僅有一字)</label><br>
 
             <!-- 如果使用的輸入法有使用鍵盤上方的數字鍵作為字根, 請不要加入此項目 -->
-            <br><input type="checkbox" id="directShowCand" name="directShowCand" />
+<!--
+            <input type="checkbox" id="directShowCand" name="directShowCand" />
             <label for="directShowCand">直接顯示候選字清單 (不須按空白鍵)</label><br>
 
-            　 <input type="checkbox" id="directCommitString" name="directCommitString" />
-            <label for="directCommitString">直接輸出候選字 (當候選字僅有一字)</label><br>
+            <input type="checkbox" id="supportSymbolCoding" name="supportSymbolCoding" />
+            <label for="supportSymbolCoding">支援 CIN 碼表中以符號字元所定義的編碼</label><br>
 
             <br><input type="checkbox" id="supportWildcard" name="supportWildcard" />
             <label for="supportWildcard">支援以萬用字元代替組字字根</label><br>
@@ -83,10 +84,8 @@
             <label for="selWildcardType">　 萬用字元: </label>
             <select name="selWildcardType" id="selWildcardType">
             </select><br>
-
-            <br><label>泰瑞拼音輸入法碼表,不支援「直接顯示候選字清單 (不須按空白鍵)」項目。</label><br>
-            <label>正體拼音輸入法碼表,不支援「直接顯示候選字清單 (不須按空白鍵)」項目。</label><br>
-            <label>羅馬拼音輸入法碼表,不支援「直接顯示候選字清單 (不須按空白鍵)」項目。</label><br>
+            <br>
+-->
         </div>
         
         <div id="cin_page">
@@ -95,9 +94,9 @@
             </select><br>
             
             <br>
-            <label>泰瑞拼音: 洪泰瑞所整理的漢語拼音輸入法碼表,由 <a href="http://terryhung.pixnet.net/blog">泰瑞的世界</a> 整理提供。</label><br>
-            <label>正體拼音: 依據全字庫文字屬性規範的漢語拼音輸入法碼表,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
-            <label>羅馬拼音: 依據全字庫文字屬性規範的羅馬拼音輸入法碼表,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
+            <label>泰瑞注音: 洪泰瑞所整理的注音輸入法碼表,由 <a href="http://terryhung.pixnet.net/blog">泰瑞的世界</a> 整理提供。</label><br>
+            <label>中標注音: 採用CNS全字庫的注音輸入法碼表,由 <a href="http://www.openfoundry.org/of/projects/1603">cnsphone2010</a> 整理提供。</label><br>
+            <label>傳統注音: 採用傳統注音的輸入法碼表,由 <a href="https://github.com/lukhnos/openvanilla">OpenVanilla</a> 整理提供。</label><br>
         </div>
         
         <div id="ui_page">
@@ -128,7 +127,7 @@
         <div id="symbols_page">
             <textarea id="symbols"></textarea>
             <p>
-            拼音輸入法提供符號表，裡面的符號可以自訂。
+            注音輸入法提供符號表，裡面的符號可以自訂。
             以上是符號表的設定檔，語法相當簡單。<br>
             每一行的內容都是： 「分類名稱」=「此分類下的所有符號」。<br>
             您也可以一行只放一個符號，則該符號會被放在最上層選單。
@@ -157,29 +156,29 @@
             </p>
             <textarea id="ez_symbols"></textarea>
         </div>
-        
+
         <div id="phrase_page">
             <input type="checkbox" id="showPhrase" name="showPhrase" />
             <label for="showPhrase">中文模式下輸出字串後顯示聯想字詞</label><br>
             <p>
-            拼音輸入法提供聯想字詞表，裡面的聯想字詞可以自訂。
+            注音輸入法提供聯想字詞表，裡面的聯想字詞可以自訂。
             以上是聯想字詞表的設定檔，語法相當簡單。<br>
             每一行的內容都是： 「中字」=「此中字相關的聯想字詞」。
             若想要設定的聯想字詞不只一個，請以「,」號區隔。
             </p>
             <textarea id="phrase"></textarea>
         </div>
-        
+
         <div id="flangs_page">
             <textarea id="flangs"></textarea>
             <p>
-            拼音輸入法提供外語文字表，裡面的外語文字可以自訂。
+            注音輸入法提供外語文字表，裡面的外語文字可以自訂。
             以上是外語文字表的設定檔，語法相當簡單。<br>
             每一行的內容都是： 「分類名稱」=「此分類下的所有符號」。<br>
             您也可以一行只放一個文字，則該文字會被放在最上層選單。
             </p>
         </div>
-        
+
         <div id="help_page">
             <iframe id="help" src="help.htm"></iframe>
         </div>
@@ -188,7 +187,7 @@
             PIME 輸入法平台網站：<a href="https://github.com/EasyIME/PIME">PIME 輸入法平台</a><br>
             PIME 輸入法平台版本：<span id="version"></span>
             <p>PIME 是在 Windows上使用 Python 3 開發 TSF 中文輸入法的平台，由作者 <a href="https://github.com/PCMan">洪任諭(PCMan)</a> 所開發，目前支援到 Windows 10，並且能支援 Windows app container (Metro mode)。可以讓開發者在不了解系統細節的情況下，單純使用 Python 就能實作支援 Windows 的輸入法模組。</p>
-            <p>拼音是在 PIME 輸入法平台下，基於 CIN 碼表所實現的拼音輸入法模組。本身移植了 PIME 平台下新酷音大部份的功能，並參考了微軟輸入法的一些操作方式，讓使用者轉移過來使用時，能夠馬上就上手，而不須要重新去適應。</p>
+            <p>注音是在 PIME 輸入法平台下，基於 CIN 碼表所實現的注音輸入法模組。本身移植了 PIME 平台下新酷音大部份的功能，並參考了微軟輸入法的一些操作方式，讓使用者轉移過來使用時，能夠馬上就上手，而不須要重新去適應。</p>
         </div>
     </div>
 

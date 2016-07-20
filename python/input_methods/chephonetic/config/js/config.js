@@ -1,17 +1,18 @@
 // 此輸入法模組的資料夾名稱
-var imeFolderName = "checj"
+var imeFolderName = "chephonetic"
 
 // 此輸入法模組使用的碼表
 var selCins=[
-    "酷倉",
-    "倉頡",
-    "雅虎倉頡",
-    "中標倉頡",
-    "泰瑞倉頡",
-    "亂倉打鳥",
-    "倉頡五代",
-    "自由大新倉頡",
-    "快倉六代"
+    "泰瑞注音",
+    "中標注音",
+    "傳統注音"
+];
+
+var keyboardNames = [
+    "預設",
+    "倚天",
+    "IBM",
+    "精業"
 ];
 
 // 此輸入法模組預設設定值
@@ -31,11 +32,11 @@ defaultConfig ={
     "hidePromptMessages": true,
     "autoClearCompositionChar": false,
     "playSoundWhenNonCand": false,
-    "directShowCand": true,
+    "directShowCand": false,
     "directCommitString": false,
-    "supportSymbolCoding": false,
-    "supportWildcard": true,
-    "selWildcardType": 0,
+    "supportSymbolCoding": true,
+    "supportWildcard": false,
+    "selWildcardType": 1,
     "candMaxItems": 100,
     "showPhrase": false,
     "sortByPhrase": true
@@ -221,18 +222,23 @@ function updateConfig() {
     var selCin = parseInt($("#selCinType").find(":selected").val());
     if(!isNaN(selCin))
         checjConfig.selCinType = selCin;
-    
+
     // selWildcard
     var selWildcard = parseInt($("#selWildcardType").find(":selected").val());
     if(!isNaN(selWildcard))
         checjConfig.selWildcardType = selWildcard;
+
+    // keyboardLayout
+    var keyboardLayout = parseInt($("#keyboard_page").find("input:radio:checked").val());
+    if(!isNaN(keyboardLayout))
+        checjConfig.keyboardLayout = keyboardLayout;
 }
 
 // jQuery ready
 $(function() {
     // show PIME version number
     $("#version").load("../../../../version.txt");
-    
+
     loadConfig();
     $(document).tooltip();
     $("#tabs").tabs({heightStyle:"auto"});
@@ -261,6 +267,16 @@ $(function() {
         selWildcardType.append(item);
     }
     selWildcardType.children().eq(checjConfig.selWildcardType).prop("selected", true);
+
+    var keyboard_page = $("#keyboard_page");
+    for(var i = 0; i < keyboardNames.length; ++i) {
+        var id = "kb" + i;
+        var name = keyboardNames[i];
+        var item = '<input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '">' +
+            '<label for="' + id + '">' + name + '</label><br />';
+        keyboard_page.append(item);
+    }
+    $("#kb" + checjConfig.keyboardLayout).prop("checked", true);
 
     $("#symbols").change(function(){
         symbolsChanged = true;
@@ -308,7 +324,6 @@ $(function() {
             break;
         }
     });
-    
 	
 		// use for select example
 	function updateSelExample() {
@@ -351,21 +366,5 @@ $(function() {
 			updateSelExample();
 		}
 	});
-
-    if ($('#directShowCand')[0].checked == false) {
-        $("#directCommitString")[0].disabled = false;
-    } else {
-        $("#directCommitString").prop("checked", false);
-        $("#directCommitString")[0].disabled = true;
-    }
-
-    $('#directShowCand').click(function() {
-        if ($('#directShowCand')[0].checked == false) {
-            $("#directCommitString")[0].disabled = false;
-        } else {
-            $("#directCommitString").prop("checked", false);
-            $("#directCommitString")[0].disabled = true;
-        }
-    });
 
 });

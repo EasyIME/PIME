@@ -23,7 +23,7 @@
             innerborder="no"
             scroll="yes"
             singleinstance="yes"
-            windowState="normal"
+            windowState="maximize"
         />
     </head>
     <body>
@@ -67,12 +67,15 @@
             <input type="checkbox" id="sortByPhrase" name="sortByPhrase" />
             <label for="sortByPhrase">優先以聯想字詞排序候選清單</label><br>
 
-            <!-- 如果使用的輸入法有使用鍵盤上方的數字鍵作為字根, 請不要加入此項目 -->
-            <input type="checkbox" id="directShowCand" name="directShowCand" />
-            <label for="directShowCand">直接顯示候選字清單 (不須按空白鍵)</label><br>
-
             <input type="checkbox" id="supportSymbolCoding" name="supportSymbolCoding" />
             <label for="supportSymbolCoding">支援 CIN 碼表中以符號字元所定義的編碼</label><br>
+
+            <!-- 如果使用的輸入法有使用鍵盤上方的數字鍵作為字根, 請不要加入此項目 -->
+            <br><input type="checkbox" id="directShowCand" name="directShowCand" />
+            <label for="directShowCand">直接顯示候選字清單 (不須按空白鍵)</label><br>
+
+            　 <input type="checkbox" id="directCommitString" name="directCommitString" />
+            <label for="directCommitString">直接輸出候選字 (當候選字僅有一字)</label><br>
 
             <br><input type="checkbox" id="supportWildcard" name="supportWildcard" />
             <label for="supportWildcard">支援以萬用字元代替組字字根</label><br>

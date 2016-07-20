@@ -750,6 +750,11 @@ class CinBase:
                 candidates = CinBaseTextService.cin.getCharDef(CinBaseTextService.compositionChar)
                 if CinBaseTextService.sortByPhrase and candidates:
                     candidates = self.sortByPhrase(CinBaseTextService, copy.deepcopy(candidates))
+            elif CinBaseTextService.imeDirName == "chepinyin" and CinBaseTextService.cinFileList[CinBaseTextService.cfg.selCinType] == "thpinyin.cin":
+                if CinBaseTextService.cin.isInCharDef(CinBaseTextService.compositionChar + "1") and CinBaseTextService.closemenu:
+                    candidates = CinBaseTextService.cin.getCharDef(CinBaseTextService.compositionChar + '1')
+                    if CinBaseTextService.sortByPhrase and candidates:
+                        candidates = self.sortByPhrase(CinBaseTextService, copy.deepcopy(candidates))
             elif CinBaseTextService.fullShapeSymbols and CinBaseTextService.fsymbols.isInCharDef(CinBaseTextService.compositionChar) and CinBaseTextService.closemenu:
                 candidates = CinBaseTextService.fsymbols.getCharDef(CinBaseTextService.compositionChar)
             elif CinBaseTextService.msymbols.isInCharDef(CinBaseTextService.compositionChar) and CinBaseTextService.closemenu and CinBaseTextService.ctrlsymbolsmode:
@@ -765,6 +770,9 @@ class CinBase:
                     CinBaseTextService.setCandidateCursor(0)
                     CinBaseTextService.setCandidatePage(0)
                     CinBaseTextService.wildcardcandidates = CinBaseTextService.cin.getWildcardCharDefs(CinBaseTextService.compositionChar, CinBaseTextService.selWildcardChar, CinBaseTextService.candMaxItems)
+                    if CinBaseTextService.imeDirName == "chepinyin" and CinBaseTextService.cinFileList[CinBaseTextService.cfg.selCinType] == "thpinyin.cin":
+                        if not CinBaseTextService.wildcardcandidates:
+                            CinBaseTextService.wildcardcandidates = CinBaseTextService.cin.getWildcardCharDefs(CinBaseTextService.compositionChar + "1", CinBaseTextService.selWildcardChar, CinBaseTextService.candMaxItems)
                     CinBaseTextService.wildcardpagecandidates = []
                     CinBaseTextService.wildcardcompositionChar = CinBaseTextService.compositionChar
                     candidates = CinBaseTextService.wildcardcandidates

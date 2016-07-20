@@ -88,6 +88,8 @@ class SaveHandler(tornado.web.RequestHandler):
             # print(filename, data)
             with open(filename, "w", encoding="UTF-8") as f:
                 f.write(data)
+                if file == "symbols":
+                    f.write("\n")
             self.write("ok")
         except Exception:
             self.write("failed")

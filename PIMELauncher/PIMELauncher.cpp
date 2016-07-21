@@ -51,8 +51,10 @@ static HANDLE launchProcess(const wchar_t* file, const wchar_t* params, const wc
 }
 
 void BackendServer::start() {
-	if(process_ == INVALID_HANDLE_VALUE)
+	if(process_ == INVALID_HANDLE_VALUE){
+		SetEnvironmentVariable(L"UV_THREADPOOL_SIZE", L"64");
 		process_ = launchProcess(command_.c_str(), params_.c_str(), workingDir_.c_str());
+	}
 }
 
 void BackendServer::terminate() {

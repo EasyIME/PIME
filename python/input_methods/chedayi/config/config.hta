@@ -11,7 +11,7 @@
 
         <script type="text/javascript" src="../../../cinbase/config/js/jquery-1.12.0.min.js"></script>
         <script type="text/javascript" src="../../../cinbase/config/js/jquery-ui-1.11.4/jquery-ui.min.js"></script>
-        <script type="text/javascript" src="js/config.js"></script>
+        <script type="text/javascript" src="config.js"></script>
 
         <!-- We use Microsoft HTML application (Windows-only) -->
         <hta:application
@@ -54,7 +54,7 @@
 
             <input type="checkbox" id="outputSimpChinese" name="outputSimpChinese" />
             <label for="outputSimpChinese">預設輸出簡體中文</label><br>
-            
+
             <input type="checkbox" id="hidePromptMessages" name="hidePromptMessages" />
             <label for="hidePromptMessages">預設隱藏提示訊息</label><br>
 
@@ -67,8 +67,11 @@
             <input type="checkbox" id="sortByPhrase" name="sortByPhrase" />
             <label for="sortByPhrase">優先以聯想字詞排序候選清單</label><br>
 
-            <input type="checkbox" id="supportSymbolCoding" name="supportSymbolCoding" />
+            <br><input type="checkbox" id="supportSymbolCoding" name="supportSymbolCoding" />
             <label for="supportSymbolCoding">支援 CIN 碼表中以符號字元所定義的編碼</label><br>
+
+            <input type="checkbox" id="directShowCand" name="directShowCand" />
+            <label for="directShowCand">直接顯示候選字清單 (不須按空白鍵)</label><br>
 
             <input type="checkbox" id="directCommitString" name="directCommitString" />
             <label for="directCommitString">直接輸出候選字 (當候選字僅有一字)</label><br>
@@ -87,7 +90,40 @@
             <label for="selCinType">輸入法碼表: </label>
             <select name="selCinType" id="selCinType">
             </select><br>
-            
+            <p>
+            <table>
+                <tr>
+                    <td><label for="bopomofochardefs">注音符號: </label><font color="Blue">
+                    <label id="bopomofochardefs" name="bopomofochardefs" /></font></td>
+                    <td><label for="big5Fchardefs">Big5 常用字: </label><font color="Blue">
+                    <label id="big5Fchardefs" name="big5Fchardefs" /></font></td>
+                    <td><label for="big5LFchardefs">Big5 次常用字: </label><font color="Blue">
+                    <label id="big5LFchardefs" name="big5LFchardefs" /></font></td>
+                    <td><label for="big5Otherchardefs">Big5 其它漢字: </label><font color="Blue">
+                    <label id="big5Otherchardefs" name="big5Otherchardefs" /></font></td>
+                </tr>
+                <tr>
+                    <td><label for="cjkchardefs">CJK 漢字: </label><font color="Blue">
+                    <label id="cjkchardefs" name="cjkchardefs" /></font></td>
+                    <td><label for="cjkExtAchardefs">CJK 擴展 A 區: </label><font color="Blue">
+                    <label id="cjkExtAchardefs" name="cjkExtAchardefs" /></font></td>
+                    <td><label for="cjkExtBchardefs">CJK 擴展 B 區: </label><font color="Blue">
+                    <label id="cjkExtBchardefs" name="cjkExtBchardefs" /></font></td>
+                    <td><label for="cjkExtCchardefs">CJK 擴展 C 區: </label><font color="Blue">
+                    <label id="cjkExtCchardefs" name="cjkExtCchardefs" /></font></td>
+                </tr>
+                <tr>
+                    <td><label for="cjkExtDchardefs">CJK 擴展 D 區: </label><font color="Blue">
+                    <label id="cjkExtDchardefs" name="cjkExtDchardefs" /></font></td>
+                    <td><label for="cjkExtEchardefs">CJK 擴展 E 區: </label><font color="Blue">
+                    <label id="cjkExtEchardefs" name="cjkExtEchardefs" /></font></td>
+                    <td><label for="cjkOtherchardefs">CJK 其它漢字: </label><font color="Blue">
+                    <label id="cjkOtherchardefs" name="cjkOtherchardefs" /></font></td>
+                    <td><label for="cjkTotalchardefs">總計: </label><font color="Blue">
+                    <label id="cjkTotalchardefs" name="cjkTotalchardefs" /></font></td>
+                </tr>
+            </table>
+
             <br>
             <label>泰瑞拼音: 洪泰瑞所整理的大易四碼碼表,由 <a href="http://terryhung.pixnet.net/blog">泰瑞的世界</a> 整理提供。</label><br>
             <label>大易四碼: 王贊傑發明的大易輸入法四碼版,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>

@@ -51,3 +51,12 @@ body {
 #selExample span {
 	color:blue;
 }
+
+table {
+    border-collapse: collapse;
+    width: 1000px;
+}
+
+td {
+    text-align: left;
+}

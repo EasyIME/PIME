@@ -205,7 +205,7 @@ class CinBase:
                 # 若萬用字元使用*，輸入法需要處理*按鍵
                 if CinBaseTextService.selWildcardChar == '*' and keyEvent.keyCode == 0x38:
                     return True
-                
+
         # 不論中英文模式，NumPad 都允許直接輸入數字，輸入法不處理
         if keyEvent.isKeyToggled(VK_NUMLOCK): # NumLock is on
             # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
@@ -248,6 +248,12 @@ class CinBase:
         charCode = keyEvent.charCode
         keyCode = keyEvent.keyCode
         charStr = chr(charCode)
+        
+        # 不論中英文模式，NumPad 都允許直接輸入數字，輸入法不處理
+        if keyEvent.isKeyToggled(VK_NUMLOCK): # NumLock is on
+            # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
+            if keyEvent.keyCode >= VK_NUMPAD0 and keyEvent.keyCode <= VK_DIVIDE:
+                return True # bypass IME
 
         # 鍵盤對映 (注音)
         if not CinBaseTextService.keyboardLayout == 0 and charStr.lower() in CinBaseTextService.kbtypelist[CinBaseTextService.keyboardLayout]:
@@ -269,7 +275,7 @@ class CinBase:
 
         # 多功能前導字元 ---------------------------------------------------------
         if CinBaseTextService.langMode == CHINESE_MODE and not CinBaseTextService.showmenu:
-            if len(CinBaseTextService.compositionChar) == 0 and charStr == '`':
+            if len(CinBaseTextService.compositionChar) == 0 and charStr == '`' and not CinBaseTextService.imeDirName == "cheez":
                 CinBaseTextService.compositionChar += charStr
                 CinBaseTextService.setCompositionString(CinBaseTextService.compositionChar)
                 if not CinBaseTextService.hidePromptMessages:
@@ -332,6 +338,12 @@ class CinBase:
                 candidates = CinBaseTextService.msymbols.getCharDef(CinBaseTextService.compositionChar[1:])
                 CinBaseTextService.setCompositionString(candidates[0])
 
+        # 輕鬆輸入法進入選單模式
+        if CinBaseTextService.imeDirName == "cheez" and CinBaseTextService.compositionChar + charStrLow == 'menu':
+            CinBaseTextService.compositionChar = ''
+            CinBaseTextService.setCompositionString('')
+            CinBaseTextService.multifunctionmode = False
+            CinBaseTextService.closemenu = False
 
         # 功能選單 ----------------------------------------------------------------
         if CinBaseTextService.langMode == CHINESE_MODE and len(CinBaseTextService.compositionChar) == 0:
@@ -796,7 +808,7 @@ class CinBase:
                             if CinBaseTextService.isShowCandidates:
                                 CinBaseTextService.canUseNumberKey = True
 
-                    # 字滿及符號處理 (大易、注音)
+                    # 字滿及符號處理 (大易、注音、輕鬆)
                     if CinBaseTextService.autoShowCandWhenMaxChar or CinBaseTextService.dayisymbolsmode:
                         if len(CinBaseTextService.compositionChar) == CinBaseTextService.maxCharLength or CinBaseTextService.dayisymbolsmode:
                             if len(candidates) == 1 and CinBaseTextService.directCommitString:
@@ -1030,16 +1042,19 @@ class CinBase:
                                 self.resetComposition(CinBaseTextService)
                             else:
                                 if CinBaseTextService.compositionChar[:2] == '`U':
-                                    commitStr = chr(int(CinBaseTextService.compositionChar[2:], 16))
-                                    CinBaseTextService.lastCommitString = commitStr
-                                    if not CinBaseTextService.hidePromptMessages:
-                                        messagestr = CinBaseTextService.cin.getCharEncode(commitStr)
-                                        CinBaseTextService.showMessage(messagestr, 5)
-                                    CinBaseTextService.setCommitString(commitStr)
+                                    if len(CinBaseTextService.compositionChar) > 2:
+                                        commitStr = chr(int(CinBaseTextService.compositionChar[2:], 16))
+                                        CinBaseTextService.lastCommitString = commitStr
+                                        if not CinBaseTextService.hidePromptMessages:
+                                            messagestr = CinBaseTextService.cin.getCharEncode(commitStr)
+                                            CinBaseTextService.showMessage(messagestr, 5)
+                                        CinBaseTextService.setCommitString(commitStr)
                                     
-                                    if CinBaseTextService.showPhrase:
-                                        CinBaseTextService.phrasemode = True
-                                    self.resetComposition(CinBaseTextService)
+                                        if CinBaseTextService.showPhrase:
+                                            CinBaseTextService.phrasemode = True
+                                        self.resetComposition(CinBaseTextService)
+                                    else:
+                                        CinBaseTextService.showMessage("請輸入 Unicode 編碼...", 3)
                         else:
                             CinBaseTextService.showMessage("查無組字...", 3)
                             if CinBaseTextService.autoClearCompositionChar:

@@ -1,6 +1,8 @@
 from __future__ import print_function
 from __future__ import unicode_literals
+import os
 import re
+import json
 
 CIN_HEAD = "%gen_inp"
 ENAME_HEAD = "%ename"
@@ -36,6 +38,31 @@ class Cin(object):
 
         self.keynames = {}
         self.chardefs = {}
+        self.bopomofochardefs = {}
+        self.big5Fchardefs = {}
+        self.big5LFchardefs = {}
+        self.big5Otherchardefs = {}
+        self.cjkchardefs = {}
+        self.cjkExtAchardefs = {}
+        self.cjkExtBchardefs = {}
+        self.cjkExtCchardefs = {}
+        self.cjkExtDchardefs = {}
+        self.cjkExtEchardefs = {}
+        self.cjkOtherchardefs = {}
+        self.cincount = {}
+        self.cincount['bopomofochardefs'] = 0
+        self.cincount['big5Fchardefs'] = 0
+        self.cincount['big5LFchardefs'] = 0
+        self.cincount['big5Otherchardefs'] = 0
+        self.cincount['cjkchardefs'] = 0
+        self.cincount['cjkExtAchardefs'] = 0
+        self.cincount['cjkExtBchardefs'] = 0
+        self.cincount['cjkExtCchardefs'] = 0
+        self.cincount['cjkExtDchardefs'] = 0
+        self.cincount['cjkExtEchardefs'] = 0
+        self.cincount['cjkOtherchardefs'] = 0
+        self.cincount['cjkTotalchardefs'] = 0
+        self.curdir = os.path.abspath(os.path.dirname(__file__))
 
         for line in fs:
             line = re.sub('^ | $', '', line)
@@ -96,10 +123,83 @@ class Cin(object):
                 else:
                     root = root.strip()
 
-                try:
-                    self.chardefs[key].append(root)
-                except KeyError:
-                    self.chardefs[key] = [root]
+                matchstr = ''
+                if len(root) > 1:
+                    matchstr = root[0]
+                else:
+                    matchstr = root
+
+                if re.match('[\u3100-\u312F]|[\u02D9]|[\u02CA]|[\u02C7]|[\u02CB]', matchstr): # Bopomofo 區域
+                    try:
+                        self.bopomofochardefs[key].append(root) # 注音符號
+                    except KeyError:
+                        self.bopomofochardefs[key] = [root]
+                    self.cincount['bopomofochardefs'] += 1
+                elif re.match('[\u4E00-\u9FD5]', matchstr): # CJK Unified Ideographs 區域
+                    try:
+                        big5code = matchstr.encode('big5')
+
+                        if int(big5code.hex(), 16) in range(int('0xA440', 16), int('0xC67F', 16)): # Big5 常用字
+                            try:
+                                self.big5Fchardefs[key].append(root)
+                            except KeyError:
+                                self.big5Fchardefs[key] = [root]
+                            self.cincount['big5Fchardefs'] += 1
+                        elif int(big5code.hex(), 16) in range(int('0xC940', 16), int('0xF9D6', 16)): # Big5 次常用字
+                            try:
+                                self.big5LFchardefs[key].append(root)
+                            except KeyError:
+                                self.big5LFchardefs[key] = [root]
+                            self.cincount['big5LFchardefs'] += 1
+                        else: # Big5 其它漢字
+                            try:
+                                self.big5Otherchardefs[key].append(root)
+                            except KeyError:
+                                self.big5Otherchardefs[key] = [root]
+                            self.cincount['big5Otherchardefs'] += 1
+                    except: # CJK Unified Ideographs 漢字
+                        try:
+                            self.cjkchardefs[key].append(root)
+                        except KeyError:
+                            self.cjkchardefs[key] = [root]
+                        self.cincount['cjkchardefs'] += 1
+                elif re.match('[\u3400-\u4DB5]', matchstr): # CJK Unified Ideographs Extension A 區域
+                    try:
+                        self.cjkExtAchardefs[key].append(root) # CJK 擴展 A 區
+                    except KeyError:
+                        self.cjkExtAchardefs[key] = [root]
+                    self.cincount['cjkExtAchardefs'] += 1
+                elif re.match('[𠀀-𪛖]', matchstr): # CJK Unified Ideographs Extension B 區域
+                    try:
+                        self.cjkExtBchardefs[key].append(root) # CJK 擴展 B 區
+                    except KeyError:
+                        self.cjkExtBchardefs[key] = [root]
+                    self.cincount['cjkExtBchardefs'] += 1
+                elif re.match('[𪜀-𫜴]', matchstr): # CJK Unified Ideographs Extension C 區域
+                    try:
+                        self.cjkExtCchardefs[key].append(root) # CJK 擴展 C 區
+                    except KeyError:
+                        self.cjkExtCchardefs[key] = [root]
+                    self.cincount['cjkExtCchardefs'] += 1
+                elif re.match('[𫝀-𫠝]', matchstr): # CJK Unified Ideographs Extension D 區域
+                    try:
+                        self.cjkExtDchardefs[key].append(root) # CJK 擴展 D 區
+                    except KeyError:
+                        self.cjkExtDchardefs[key] = [root]
+                    self.cincount['cjkExtDchardefs'] += 1
+                elif re.match('[𫠠-𬺡]', matchstr): # CJK Unified Ideographs Extension E 區域
+                    try:
+                        self.cjkExtEchardefs[key].append(root) # CJK 擴展 E 區
+                    except KeyError:
+                        self.cjkExtEchardefs[key] = [root]
+                    self.cincount['cjkExtEchardefs'] += 1
+                else: # 不在 CJK Unified Ideographs 區域
+                    try:
+                        self.cjkOtherchardefs[key].append(root) # CJK 其它漢字或其它字集字元
+                    except KeyError:
+                        self.cjkOtherchardefs[key] = [root]
+                    self.cincount['cjkOtherchardefs'] += 1
+        self.mergeDicts(self.bopomofochardefs, self.big5Fchardefs, self.big5LFchardefs, self.big5Otherchardefs, self.cjkchardefs, self.cjkExtAchardefs, self.cjkExtBchardefs, self.cjkExtCchardefs, self.cjkExtDchardefs, self.cjkExtEchardefs, self.cjkOtherchardefs)
 
     def getEname(self):
         return self.ename
@@ -136,8 +236,13 @@ class Cin(object):
 
     def getWildcardCharDefs(self, CompositionChar, WildcardChar, candMaxItems):
         wildcardchardefs = []
-        cjkextchardefs = []
+        cjkextchardefs = {}
         matchchardefs = {}
+        highFrequencyWordCount = 0
+        lowFrequencyWordCount = 0
+        
+        for i in range(11):
+            cjkextchardefs[i] = []
 
         keyLength = len(CompositionChar)
         
@@ -152,22 +257,68 @@ class Cin(object):
 
         if matchchardefs:
             for chardef in matchchardefs:
-                for char in chardef:
-                    if re.match('[\u4e00-\u9fff]', char):
-                        if not char in wildcardchardefs:
-                            wildcardchardefs.append(char)
-                    else:
-                        if not char in cjkextchardefs:
-                            cjkextchardefs.append(char)
+                for matchstr in chardef:
+                    if re.match('[\u3100-\u312F]|[\u02D9]|[\u02CA]|[\u02C7]|[\u02CB]', matchstr): # Bopomofo 區域
+                        if not matchstr in cjkextchardefs[0]:
+                            cjkextchardefs[0].append(matchstr)
+                            highFrequencyWordCount += 1
+                    elif re.match('[\u4E00-\u9FD5]', matchstr): # CJK Unified Ideographs 區域
+                        try:
+                            big5code = matchstr.encode('big5')
 
-                    if len(wildcardchardefs) >= candMaxItems:
-                        return wildcardchardefs
+                            if int(big5code.hex(), 16) in range(int('0xA440', 16), int('0xC67F', 16)): # Big5 常用字
+                                if not matchstr in cjkextchardefs[1]:
+                                    cjkextchardefs[1].append(matchstr)
+                                    highFrequencyWordCount += 1
+                            elif int(big5code.hex(), 16) in range(int('0xC940', 16), int('0xF9D6', 16)): # Big5 次常用字
+                                if not matchstr in cjkextchardefs[2]:
+                                    cjkextchardefs[2].append(matchstr)
+                                    highFrequencyWordCount += 1
+                            else: # Big5 其它漢字
+                                if not matchstr in cjkextchardefs[3]:
+                                    cjkextchardefs[3].append(matchstr)
+                                    highFrequencyWordCount += 1
+                        except: # CJK Unified Ideographs 漢字
+                            if not matchstr in cjkextchardefs[4]:
+                                cjkextchardefs[4].append(matchstr)
+                                highFrequencyWordCount += 1
+                    elif re.match('[\u3400-\u4DB5]', matchstr): # CJK Unified Ideographs Extension A 區域
+                        if not matchstr in cjkextchardefs[5]:
+                            cjkextchardefs[5].append(matchstr)
+                            lowFrequencyWordCount += 1
+                    elif re.match('[𠀀-𪛖]', matchstr): # CJK Unified Ideographs Extension B 區域
+                        if not matchstr in cjkextchardefs[6]:
+                            cjkextchardefs[6].append(matchstr)
+                            lowFrequencyWordCount += 1
+                    elif re.match('[𪜀-𫜴]', matchstr): # CJK Unified Ideographs Extension C 區域
+                        if not matchstr in cjkextchardefs[7]:
+                            cjkextchardefs[7].append(matchstr)
+                            lowFrequencyWordCount += 1
+                    elif re.match('[𫝀-𫠝]', matchstr): # CJK Unified Ideographs Extension D 區域
+                        if not matchstr in cjkextchardefs[8]:
+                            cjkextchardefs[8].append(matchstr)
+                            lowFrequencyWordCount += 1
+                    elif re.match('[𫠠-𬺡]', matchstr): # CJK Unified Ideographs Extension E 區域
+                        if not matchstr in cjkextchardefs[9]:
+                            cjkextchardefs[9].append(matchstr)
+                            lowFrequencyWordCount += 1
+                    else: # 不在 CJK Unified Ideographs 區域
+                        if not matchstr in cjkextchardefs[10]:
+                            cjkextchardefs[10].append(matchstr)
+                            lowFrequencyWordCount += 1
+
+                    if highFrequencyWordCount + lowFrequencyWordCount >= candMaxItems:
+                        for key in cjkextchardefs:
+                            for char in cjkextchardefs[key]:
+                                if not char in wildcardchardefs:
+                                    wildcardchardefs.append(char)
+                                if len(wildcardchardefs) >= candMaxItems:
+                                    return wildcardchardefs
             
-            if len(cjkextchardefs) > 0:
-                for cjkextchar in cjkextchardefs:
-                    if not cjkextchar in wildcardchardefs:
-                        wildcardchardefs.append(cjkextchar)
-                    
+            for key in cjkextchardefs:
+                for char in cjkextchardefs[key]:
+                    if not char in wildcardchardefs:
+                        wildcardchardefs.append(char)
                     if len(wildcardchardefs) >= candMaxItems:
                         return wildcardchardefs
         return wildcardchardefs
@@ -188,6 +339,34 @@ class Cin(object):
         if result == root + ':':
             result = '查無字根...'
         return result
+
+    def mergeDicts(self, *chardefsdicts):
+        for chardefsdict in chardefsdicts:
+            for key in chardefsdict:
+                for root in chardefsdict[key]:
+                    try:
+                        self.chardefs[key].append(root)
+                    except KeyError:
+                        self.chardefs[key] = [root]
+                    self.cincount['cjkTotalchardefs'] += 1
+        self.saveCountFile()
+
+    def saveCountFile(self):
+        filename = self.getCountFile()
+        try:
+            with open(filename, "w") as f:
+                js = json.dump(self.cincount, f, indent=4)
+        except Exception:
+            pass # FIXME: handle I/O errors?
+
+    def getCountDir(self):
+        dirname = os.path.basename(self.curdir)
+        count_dir = os.path.join(os.path.expanduser("~"), "PIME", dirname)
+        os.makedirs(count_dir, mode=0o700, exist_ok=True)
+        return count_dir
+
+    def getCountFile(self, name="cincount.json"):
+        return os.path.join(self.getCountDir(), name)
 
 def head_rest(head, line):
     return line[len(head):].strip()

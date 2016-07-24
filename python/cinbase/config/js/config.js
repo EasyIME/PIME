@@ -1,48 +1,17 @@
-// 此輸入法模組的資料夾名稱
-var imeFolderName = "checj"
-
-// 此輸入法模組使用的碼表
-var selCins=[
-    "酷倉",
-    "倉頡",
-    "雅虎倉頡",
-    "中標倉頡",
-    "泰瑞倉頡",
-    "亂倉打鳥",
-    "倉頡五代",
-    "自由大新倉頡",
-    "快倉六代"
-];
-
-// 此輸入法模組預設設定值
-defaultConfig ={
-    "keyboardLayout": 0,
-    "defaultEnglish": false,
-    "candPerRow": 3,
-    "easySymbolsWithShift": false,
-    "candPerPage": 9,
-    "defaultFullSpace": false,
-    "selCinType": 0,
-    "switchLangWithShift": true,
-    "fullShapeSymbols": false,
-    "colorCandWnd": true,
-    "fontSize": 16,
-    "outputSimpChinese": false,
-    "hidePromptMessages": true,
-    "autoClearCompositionChar": false,
-    "playSoundWhenNonCand": false,
-    "directShowCand": true,
-    "directCommitString": false,
-    "supportSymbolCoding": false,
-    "supportWildcard": true,
-    "selWildcardType": 0,
-    "candMaxItems": 100,
-    "showPhrase": false,
-    "sortByPhrase": true
-};
-
-// 以下無須修改
-// ==============================================================================================
+var defaultcinCount = {
+    "cjkExtEchardefs": 0,
+    "cjkchardefs": 0,
+    "big5LFchardefs": 0,
+    "cjkExtCchardefs": 0,
+    "cjkOtherchardefs": 0,
+    "cjkExtDchardefs": 0,
+    "cjkTotalchardefs": 0,
+    "big5Fchardefs": 0,
+    "big5Otherchardefs": 0,
+    "cjkExtAchardefs": 0,
+    "bopomofochardefs": 0,
+    "cjkExtBchardefs": 0
+}
 
 // unfortunately, here we use Windows-only features - ActiveX
 // However, it's really stupid that Scripting.FileSystemObject does not support UTF-8.
@@ -112,6 +81,8 @@ function getDataDir() {
 var checjConfig = null;
 var configDir = getConfigDir();
 var configFile = configDir + "\\config.json";
+var cinCount = null;
+var cinCountFile = configDir + "\\cincount.json";
 var dataDir = getDataDir();
 var userSymbolsFile = configDir + "\\symbols.dat";
 var symbolsChanged = false;
@@ -132,12 +103,41 @@ function loadConfig() {
     catch(err) {
         checjConfig = {};
     }
+
     // add missing values
     for(key in defaultConfig) {
         if(!checjConfig.hasOwnProperty(key)) {
             checjConfig[key] = defaultConfig[key];
         }
     }
+
+    str = readFile(cinCountFile);
+    try {
+        cinCount = JSON.parse(str);
+    }
+    catch(err) {
+        cinCount = {};
+    }
+
+    // add missing values
+    for(key in defaultcinCount) {
+        if(!cinCount.hasOwnProperty(key)) {
+            cinCount[key] = defaultcinCount[key];
+        }
+    }
+
+    document.getElementById('bopomofochardefs').innerText = cinCount['bopomofochardefs']
+    document.getElementById('big5Fchardefs').innerText = cinCount['big5Fchardefs']
+    document.getElementById('big5LFchardefs').innerText = cinCount['big5LFchardefs']
+    document.getElementById('big5Otherchardefs').innerText = cinCount['big5Otherchardefs']
+    document.getElementById('cjkchardefs').innerText = cinCount['cjkchardefs']
+    document.getElementById('cjkExtAchardefs').innerText = cinCount['cjkExtAchardefs']
+    document.getElementById('cjkExtBchardefs').innerText = cinCount['cjkExtBchardefs']
+    document.getElementById('cjkExtCchardefs').innerText = cinCount['cjkExtCchardefs']
+    document.getElementById('cjkExtDchardefs').innerText = cinCount['cjkExtDchardefs']
+    document.getElementById('cjkExtEchardefs').innerText = cinCount['cjkExtEchardefs']
+    document.getElementById('cjkOtherchardefs').innerText = cinCount['cjkOtherchardefs']
+    document.getElementById('cjkTotalchardefs').innerText = cinCount['cjkTotalchardefs']
 
     // load symbols.dat
     str = readFile(userSymbolsFile);
@@ -150,19 +150,19 @@ function loadConfig() {
     if(str == "")
         str = readFile(dataDir + "\\swkb.dat");
     $("#ez_symbols").val(str);
-
+    
     // load fsymbols.dat
     str = readFile(userFsymbolsFile);
     if(str == "")
         str = readFile(dataDir + "\\fsymbols.dat");
     $("#fs_symbols").val(str);
-
+    
     // load phrase.dat
     str = readFile(userPhraseFile);
     if(str == "")
         str = readFile(dataDir + "\\userphrase.dat");
     $("#phrase").val(str);
-
+    
     // load flangs.dat
     str = readFile(userFlangsFile);
     if(str == "")
@@ -221,18 +221,23 @@ function updateConfig() {
     var selCin = parseInt($("#selCinType").find(":selected").val());
     if(!isNaN(selCin))
         checjConfig.selCinType = selCin;
-    
+
     // selWildcard
     var selWildcard = parseInt($("#selWildcardType").find(":selected").val());
     if(!isNaN(selWildcard))
         checjConfig.selWildcardType = selWildcard;
+
+    // keyboardLayout
+    var keyboardLayout = parseInt($("#keyboard_page").find("input:radio:checked").val());
+    if(!isNaN(keyboardLayout))
+        checjConfig.keyboardLayout = keyboardLayout;
 }
 
 // jQuery ready
 $(function() {
     // show PIME version number
     $("#version").load("../../../../version.txt");
-    
+
     loadConfig();
     $(document).tooltip();
     $("#tabs").tabs({heightStyle:"auto"});
@@ -262,6 +267,16 @@ $(function() {
     }
     selWildcardType.children().eq(checjConfig.selWildcardType).prop("selected", true);
 
+    var keyboard_page = $("#keyboard_page");
+    for(var i = 0; i < keyboardNames.length; ++i) {
+        var id = "kb" + i;
+        var name = keyboardNames[i];
+        var item = '<input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '">' +
+            '<label for="' + id + '">' + name + '</label><br />';
+        keyboard_page.append(item);
+    }
+    $("#kb" + checjConfig.keyboardLayout).prop("checked", true);
+
     $("#symbols").change(function(){
         symbolsChanged = true;
     });
@@ -269,19 +284,19 @@ $(function() {
     $("#ez_symbols").change(function(){
         swkbChanged = true;
     });
-
+    
     $("#fs_symbols").change(function(){
         fsymbolsChanged = true;
     });
-
+    
     $("#phrase").change(function(){
         phraseChanged = true;
     });
-
+    
     $("#flangs").change(function(){
         flangsChanged = true;
     });
-
+    
     $("#buttons").buttonset();
     $("#ok").click(function() {
         updateConfig();
@@ -308,7 +323,6 @@ $(function() {
             break;
         }
     });
-    
 	
 		// use for select example
 	function updateSelExample() {
@@ -351,21 +365,55 @@ $(function() {
 			updateSelExample();
 		}
 	});
-
-    if ($('#directShowCand')[0].checked == false) {
-        $("#directCommitString")[0].disabled = false;
-    } else {
-        $("#directCommitString").prop("checked", false);
-        $("#directCommitString")[0].disabled = true;
+    
+    function disableControlItem() {
+        var disabled = []
+        for(key in disableConfigItem) {
+            if (checjConfig.selCinType == key) {
+                if (disabled.indexOf(disableConfigItem[key][0]) < 0) {
+                    if (disableConfigItem[key][1] != null) {
+                        $('#' + disableConfigItem[key][0])[0].checked = disableConfigItem[key][1];
+                    }
+                    $('#' + disableConfigItem[key][0])[0].disabled = true;
+                    disabled.push(disableConfigItem[key][0])
+                }
+            } else if (key > 100) {
+                if (disableConfigItem[key][1] != null) {
+                    $('#' + disableConfigItem[key][0])[0].checked = disableConfigItem[key][1];
+                }
+                $('#' + disableConfigItem[key][0])[0].disabled = true;
+            } else {
+                if (disabled.indexOf(disableConfigItem[key][0]) < 0) {
+                    $('#' + disableConfigItem[key][0])[0].disabled = false;
+                }
+            }
+        }
+        
+        if ($('#directShowCand')[0].checked == false) {
+            $("#directCommitString")[0].disabled = false;
+        } else {
+            $("#directCommitString")[0].checked = false;
+            $("#directCommitString")[0].disabled = true;
+        }
     }
+    
+    disableControlItem();
 
+    // trigger event
     $('#directShowCand').click(function() {
         if ($('#directShowCand')[0].checked == false) {
             $("#directCommitString")[0].disabled = false;
         } else {
-            $("#directCommitString").prop("checked", false);
+            $("#directCommitString")[0].checked = false;
             $("#directCommitString")[0].disabled = true;
         }
+    });
+    
+    $("#selCinType").click(function() {
+        var selCin = parseInt($("#selCinType").find(":selected").val());
+        if(!isNaN(selCin))
+            checjConfig.selCinType = selCin;
+        disableControlItem();
     });
 
 });

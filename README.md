@@ -11,7 +11,7 @@ All parts are licensed under GNU LGPL v2.1 license.
 
 ## Tool Requirements
 *   [CMake](http://www.cmake.org/) >= 2.8.11
-*   [Visual Studio Express 2012](http://www.microsoft.com/visualstudio/eng/products/visual-studio-express-products)
+*   [Visual Studio 2015](https://www.visualstudio.com/)
 *   [git](http://windows.github.com/)
 
 ## How to Build
@@ -23,10 +23,8 @@ All parts are licensed under GNU LGPL v2.1 license.
 
 *   Use one of the following CMake commands to generate Visual Studio project
 
-        cmake -G "Visual Studio 11" -T "v110_xp" <path to PIME source folder>
-        cmake -G "Visual Studio 11 Win64" -T "v110_xp" <path to PIME source folder>
-
-*   NOTICE: The cmake command line argument -T "v110_xp" is required. Otherwise the compiled program won't run on Windows xp. (requires cmake 2.8.11 and VS express 2012 update)
+        cmake -G "Visual Studio 14 2015" <path to PIME source folder>
+        cmake -G "Visual Studio 14 2015 Win64" <path to PIME source folder>
 
 *   Open generated project with Visual Studio and build it
 
@@ -51,7 +49,8 @@ All parts are licensed under GNU LGPL v2.1 license.
 # Install
 *   Copy `PIMETextService.dll` to C:\Program Files (X86)\PIME\x86\.
 *   Copy `PIMETextService.dll` to C:\Program Files (X86)\PIME\x64\.
-*   Copy the folder `server` to `C:\Program Files (X86)\PIME\`
+*   Copy the folder `python` to `C:\Program Files (X86)\PIME\`
+*   Copy the folder `node` to `C:\Program Files (X86)\PIME\`
 *   Use `regsvr32` to register `PIMETextService.dll`. 64-bit system need to register both 32-bit and 64-bit `PIMETextService.dll`
 
         regsvr32 "C:\Program Files (X86)\PIME\x86\PIMETextService.dll" (run as administrator)

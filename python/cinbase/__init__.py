@@ -85,6 +85,7 @@ class CinBase:
         
         CinBaseTextService.menucandidates = []
         CinBaseTextService.smenucandidates = []
+        CinBaseTextService.smenuitems = []
         CinBaseTextService.wildcardcandidates = []
         CinBaseTextService.wildcardpagecandidates = []
         CinBaseTextService.wildcardcompositionChar = ""
@@ -359,8 +360,16 @@ class CinBase:
 
             if CinBaseTextService.imeDirName == "chephonetic":
                 CinBaseTextService.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase]
+                CinBaseTextService.smenuitems =  ["fullShapeSymbols", "easySymbolsWithShift", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase"]
+            elif CinBaseTextService.imeDirName == "cheez":
+                CinBaseTextService.smenucandidates = [menu_supportWildcard, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase]
+                CinBaseTextService.smenuitems = ["supportWildcard", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase"]
+            elif CinBaseTextService.imeDirName == "chearray" or CinBaseTextService.imeDirName == "chedayi":
+                CinBaseTextService.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportWildcard, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase]
+                CinBaseTextService.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "supportWildcard", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase"]
             else:
                 CinBaseTextService.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportSymbolCoding, menu_supportWildcard, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase]
+                CinBaseTextService.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "supportSymbolCoding", "supportWildcard", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase"]
 
             if not CinBaseTextService.closemenu:
                 CinBaseTextService.menutype = 0
@@ -553,7 +562,7 @@ class CinBase:
         # 按下的鍵為 CIN 內有定義的字根
         if CinBaseTextService.cin.isInKeyName(charStrLow) and CinBaseTextService.closemenu and not CinBaseTextService.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not CinBaseTextService.ctrlsymbolsmode and not CinBaseTextService.dayisymbolsmode:
             # 若按下 Shift 鍵
-            if keyEvent.isKeyDown(VK_SHIFT) and CinBaseTextService.langMode == CHINESE_MODE:
+            if keyEvent.isKeyDown(VK_SHIFT) and CinBaseTextService.langMode == CHINESE_MODE and not CinBaseTextService.imeDirName == "cheez":
                 CommitStr = charStr
                 # 使用 Shift 鍵做全形輸入 (easy symbol input)
                 # 這裡的 easy symbol input，是定義在 swkb.dat 設定檔中的符號
@@ -1403,35 +1412,24 @@ class CinBase:
             elif commandId == 1:
                 self.setOutputSimplifiedChinese(CinBaseTextService, not CinBaseTextService.outputSimpChinese)
         elif commandType == 1: # 功能開關
-            if commandId == 0:
+            commandItem = CinBaseTextService.smenuitems[commandId]
+            if commandItem == "fullShapeSymbols":
                 CinBaseTextService.fullShapeSymbols = not CinBaseTextService.fullShapeSymbols
-            elif commandId == 1:
+            elif commandItem == "easySymbolsWithShift":
                 CinBaseTextService.easySymbolsWithShift = not CinBaseTextService.easySymbolsWithShift
-            elif commandId == 2:
-                if CinBaseTextService.imeDirName == "chephonetic":
-                    CinBaseTextService.autoClearCompositionChar = not CinBaseTextService.autoClearCompositionChar
-                else:
-                    CinBaseTextService.supportSymbolCoding = not CinBaseTextService.supportSymbolCoding
-            elif commandId == 3:
-                if CinBaseTextService.imeDirName == "chephonetic":
-                    CinBaseTextService.playSoundWhenNonCand = not CinBaseTextService.playSoundWhenNonCand
-                else:
-                    CinBaseTextService.supportWildcard = not CinBaseTextService.supportWildcard
-            elif commandId == 4:
-                if CinBaseTextService.imeDirName == "chephonetic":
-                    CinBaseTextService.showPhrase = not CinBaseTextService.showPhrase
-                else:
-                    CinBaseTextService.autoClearCompositionChar = not CinBaseTextService.autoClearCompositionChar
-            elif commandId == 5:
-                if CinBaseTextService.imeDirName == "chephonetic":
-                    CinBaseTextService.sortByPhrase = not CinBaseTextService.sortByPhrase
-                else:
-                    CinBaseTextService.playSoundWhenNonCand = not CinBaseTextService.playSoundWhenNonCand
-            elif commandId == 6:
+            elif commandItem == "supportSymbolCoding":
+                CinBaseTextService.supportSymbolCoding = not CinBaseTextService.supportSymbolCoding
+            elif commandItem == "supportWildcard":
+                CinBaseTextService.supportWildcard = not CinBaseTextService.supportWildcard
+            elif commandItem == "autoClearCompositionChar":
+                CinBaseTextService.autoClearCompositionChar = not CinBaseTextService.autoClearCompositionChar
+            elif commandItem == "playSoundWhenNonCand":
+                CinBaseTextService.playSoundWhenNonCand = not CinBaseTextService.playSoundWhenNonCand
+            elif commandItem == "showPhrase":
                 CinBaseTextService.showPhrase = not CinBaseTextService.showPhrase
-            elif commandId == 7:
+            elif commandItem == "sortByPhrase":
                 CinBaseTextService.sortByPhrase = not CinBaseTextService.sortByPhrase
-        
+
     # 重置輸入的字根
     def resetComposition(self, CinBaseTextService):
         CinBaseTextService.compositionChar = ''

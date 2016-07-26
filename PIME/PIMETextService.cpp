@@ -37,6 +37,7 @@ TextService::TextService(ImeModule* module):
 	messageWindow_(nullptr),
 	messageTimerId_(0),
 	candidateWindow_(nullptr),
+	showingCandidates_(false),
 	updateFont_(false),
 	candPerRow_(10),
 	selKeys_(L"1234567890"),

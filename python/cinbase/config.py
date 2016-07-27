@@ -40,6 +40,7 @@ class CinBaseConfig:
         self.playSoundWhenNonCand = False
         self.directShowCand = False
         self.directCommitString = False
+        self.directCommitSymbol = False
         self.colorCandWnd = True
         self.advanceAfterSelection = True
         self.fontSize = DEF_FONT_SIZE

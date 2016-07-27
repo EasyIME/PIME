@@ -30,6 +30,7 @@ from .msymbols import msymbols
 from .flangs import flangs
 from .phrase import phrase
 from .userphrase import userphrase
+from .emoji import emoji
 
 CHINESE_MODE = 1
 ENGLISH_MODE = 0
@@ -58,6 +59,11 @@ ID_OUTPUT_SIMP_CHINESE = 13
 
 class CinBase:
     def __init__(self):
+        self.emoji = emoji
+        self.emojitype = 0
+        self.prevmenutypelist = []
+        self.prevmenucandlist = []
+        self.appendprevmenutype = True
         self.cinbasecurdir = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -75,6 +81,7 @@ class CinBase:
         CinBaseTextService.playSoundWhenNonCand = False
         CinBaseTextService.directShowCand = False
         CinBaseTextService.directCommitString = False
+        CinBaseTextService.directCommitSymbol = False
         CinBaseTextService.fullShapeSymbols = False
         CinBaseTextService.easySymbolsWithShift = False
         CinBaseTextService.supportSymbolCoding = False
@@ -85,7 +92,6 @@ class CinBase:
         
         CinBaseTextService.menucandidates = []
         CinBaseTextService.smenucandidates = []
-        CinBaseTextService.smenuitems = []
         CinBaseTextService.wildcardcandidates = []
         CinBaseTextService.wildcardpagecandidates = []
         CinBaseTextService.wildcardcompositionChar = ""
@@ -94,6 +100,7 @@ class CinBase:
         CinBaseTextService.switchmenu = False
         CinBaseTextService.closemenu = True
         CinBaseTextService.multifunctionmode = False
+        CinBaseTextService.emojimenumode = False
         CinBaseTextService.ctrlsymbolsmode = False
         CinBaseTextService.phrasemode = False
         CinBaseTextService.isWildcardChardefs = False
@@ -273,8 +280,11 @@ class CinBase:
                 CinBaseTextService.setCommitString(charStr)
                 self.resetComposition(CinBaseTextService)
                 return True
-
+        
         # 多功能前導字元 ---------------------------------------------------------
+        if CinBaseTextService.multifunctionmode:
+            CinBaseTextService.canUseNumberKey = True
+            
         if CinBaseTextService.langMode == CHINESE_MODE and not CinBaseTextService.showmenu:
             if len(CinBaseTextService.compositionChar) == 0 and charStr == '`' and not CinBaseTextService.imeDirName == "cheez":
                 CinBaseTextService.compositionChar += charStr
@@ -292,7 +302,15 @@ class CinBase:
                 elif charStrLow == 'u':
                     CinBaseTextService.compositionChar += charStr.upper()
                     CinBaseTextService.setCompositionString(CinBaseTextService.compositionChar)
+                elif charStrLow == 'e':
+                    CinBaseTextService.compositionChar = ''
+                    CinBaseTextService.setCompositionString('')
+                    CinBaseTextService.multifunctionmode = False
+                    CinBaseTextService.closemenu = False
+                    CinBaseTextService.emojimenumode = True
                 elif self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
+                    if self.isNumberChar(keyCode):
+                        CinBaseTextService.canUseNumberKey = False
                     CinBaseTextService.compositionChar += charStr
             elif len(CinBaseTextService.compositionChar) > 1 and CinBaseTextService.multifunctionmode:
                 if CinBaseTextService.msymbols.isInCharDef(CinBaseTextService.compositionChar[1:] + charStr):
@@ -371,13 +389,25 @@ class CinBase:
                 CinBaseTextService.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportSymbolCoding, menu_supportWildcard, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase]
                 CinBaseTextService.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "supportSymbolCoding", "supportWildcard", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase"]
 
-            if not CinBaseTextService.closemenu:
+            if not CinBaseTextService.closemenu and not CinBaseTextService.emojimenumode:
                 CinBaseTextService.menutype = 0
-                menu = ["功能設定", menu_OutputSimpChinese, "功能開關", "特殊符號", "注音符號", "外語文字"]
+                menu = ["功能設定", menu_OutputSimpChinese, "功能開關", "特殊符號", "注音符號", "外語文字", "表情符號"]
                 CinBaseTextService.setCandidateCursor(0)
                 CinBaseTextService.setCandidatePage(0)
                 CinBaseTextService.setCandidateList(menu)
                 CinBaseTextService.menucandidates = CinBaseTextService.candidateList
+                self.prevmenutypelist = []
+                self.prevmenucandlist = []
+                CinBaseTextService.showmenu = True
+            elif not CinBaseTextService.closemenu and CinBaseTextService.emojimenumode:
+                CinBaseTextService.menutype = 7
+                menu = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
+                CinBaseTextService.setCandidateCursor(0)
+                CinBaseTextService.setCandidatePage(0)
+                CinBaseTextService.setCandidateList(menu)
+                CinBaseTextService.menucandidates = CinBaseTextService.candidateList
+                self.prevmenutypelist = []
+                self.prevmenucandlist = []
                 CinBaseTextService.showmenu = True
                 
             if CinBaseTextService.showmenu:
@@ -418,11 +448,9 @@ class CinBase:
                     if (candCursor + 1) < candCount:
                         candCursor += 1
                 elif keyCode == VK_HOME:  # Home 鍵
-                    currentCandPage = 0
                     candCursor = 0
                 elif keyCode == VK_END:  # End 鍵
-                    currentCandPage = currentCandPageCount - 1
-                    candCursor = 0
+                    candCursor = len(pagecandidates[currentCandPage]) - 1
                 elif keyCode == VK_PRIOR:  # Page UP 鍵
                     if currentCandPage > 0:
                         currentCandPage -= 1
@@ -435,7 +463,10 @@ class CinBase:
                     candCursor = 0
                     currentCandPage = 0
                     CinBaseTextService.showmenu = False
+                    CinBaseTextService.emojimenumode = False
                     CinBaseTextService.menutype = 0
+                    self.prevmenutypelist = []
+                    self.prevmenucandlist = []
                     self.resetComposition(CinBaseTextService)
                 elif self.isNumberChar(keyCode) and not keyEvent.isKeyDown(VK_SHIFT): # 使用數字鍵輸出候選字
                     i = keyCode - ord('1')
@@ -443,6 +474,29 @@ class CinBase:
                 elif keyCode == VK_RETURN or keyCode == VK_SPACE:  # 按下 Enter 鍵或空白鍵
                     i = candCursor
                     CinBaseTextService.switchmenu = True
+                elif keyCode == VK_BACK:
+                    if self.prevmenutypelist:
+                        prevmenulist =[]
+                        prevmenutype = len(self.prevmenutypelist) - 1
+                        if self.prevmenutypelist[prevmenutype][:3] == "0,0":
+                            prevmenulist = self.prevmenutypelist[prevmenutype].split(',', 3)
+                            i = 0
+                            CinBaseTextService.menutype = 10
+                            self.prevmenucandlist = []
+                            self.prevmenucandlist.append(int(prevmenulist[2], 10))
+                            self.prevmenucandlist.append(int(prevmenulist[3], 10))
+                            self.appendprevmenutype = False
+                            CinBaseTextService.switchmenu = True
+                        else:
+                            prevmenulist = self.prevmenutypelist[prevmenutype].split(',', 3)
+                            i = int(prevmenulist[1], 10)
+                            CinBaseTextService.menutype = int(prevmenulist[0], 10)
+                            self.prevmenucandlist = []
+                            self.prevmenucandlist.append(int(prevmenulist[2], 10))
+                            self.prevmenucandlist.append(int(prevmenulist[3], 10))
+                            self.prevmenutypelist.remove(self.prevmenutypelist[prevmenutype])
+                            self.appendprevmenutype = False
+                            CinBaseTextService.switchmenu = True
 
                 # 選單切換及執行
                 if CinBaseTextService.switchmenu and i >= 0:
@@ -453,12 +507,14 @@ class CinBase:
                         CinBaseTextService.menucandidates = CinBaseTextService.smenucandidates
                         pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
                         CinBaseTextService.menutype = 1
+                        self.prevmenutypelist = ["0,0,2,0"]
                     elif CinBaseTextService.menutype == 0 and i == 3: # 切至特殊符號頁面
                         candCursor = 0
                         currentCandPage = 0
                         CinBaseTextService.menucandidates = CinBaseTextService.symbols.getKeyNames()
                         pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
                         CinBaseTextService.menutype = 2
+                        self.prevmenutypelist = ["0,0,3,0"]
                     elif CinBaseTextService.menutype == 0 and i == 4: # 切至注音符號頁面
                         candCursor = 0
                         currentCandPage = 0
@@ -477,58 +533,148 @@ class CinBase:
                         CinBaseTextService.menucandidates = bopomofolist
                         pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
                         CinBaseTextService.menutype = 4
+                        self.prevmenutypelist = ["0,0,4,0"]
                     elif CinBaseTextService.menutype == 0 and i == 5: # 切至外語文字頁面
                         candCursor = 0
                         currentCandPage = 0
                         CinBaseTextService.menucandidates = CinBaseTextService.flangs.getKeyNames()
                         pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
                         CinBaseTextService.menutype = 5
+                        self.prevmenutypelist = ["0,0,5,0"]
+                    elif CinBaseTextService.menutype == 0 and i == 6: # 切至表情符號頁面
+                        candCursor = 0
+                        currentCandPage = 0
+                        CinBaseTextService.menucandidates = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
+                        pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
+                        CinBaseTextService.menutype = 7
+                        if not CinBaseTextService.emojimenumode:
+                            self.prevmenutypelist = ["0,0,6,0"]
                     elif CinBaseTextService.menutype == 0: # 執行主頁面其它項目
                         self.onMenuCommand(CinBaseTextService, i, 0)
                         candCursor = 0
                         currentCandPage = 0
                         CinBaseTextService.showmenu = False
+                        CinBaseTextService.emojimenumode = False
+                        self.prevmenutypelist = []
                         self.resetComposition(CinBaseTextService)
                     elif CinBaseTextService.menutype == 1: # 執行功能開關頁面項目
                         self.onMenuCommand(CinBaseTextService, i, 1)
                         candCursor = 0
                         currentCandPage = 0
                         CinBaseTextService.showmenu = False
+                        CinBaseTextService.emojimenumode = False
                         CinBaseTextService.menutype = 0
+                        self.prevmenutypelist = []
                         self.resetComposition(CinBaseTextService)
                     elif CinBaseTextService.menutype == 2: # 切至特殊符號子頁面
+                        CinBaseTextService.menutype = 3
+                        if self.appendprevmenutype:
+                            self.prevmenutypelist.append("0,3," + str(candCursor) + "," + str(currentCandPage))
                         candCursor = 0
                         currentCandPage = 0
                         CinBaseTextService.menucandidates = CinBaseTextService.symbols.getCharDef(CinBaseTextService.candidateList[i])
                         pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
-                        CinBaseTextService.menutype = 3
                     elif CinBaseTextService.menutype == 3: # 執行特殊符號子頁面項目
                         CinBaseTextService.menutype = 0
+                        self.prevmenutypelist = []
                         candCursor = 0
                         currentCandPage = 0
                         CinBaseTextService.showmenu = False
+                        CinBaseTextService.emojimenumode = False
                         CinBaseTextService.setCommitString(CinBaseTextService.candidateList[i])
                         self.resetComposition(CinBaseTextService)
                     elif CinBaseTextService.menutype == 4: # 執行注音符號頁面項目
                         CinBaseTextService.menutype = 0
+                        self.prevmenutypelist = []
                         candCursor = 0
                         currentCandPage = 0
                         CinBaseTextService.showmenu = False
+                        CinBaseTextService.emojimenumode = False
                         CinBaseTextService.setCommitString(CinBaseTextService.candidateList[i])
                         self.resetComposition(CinBaseTextService)
                     elif CinBaseTextService.menutype == 5: # 切至外語文字子頁面
+                        CinBaseTextService.menutype = 6
+                        if self.appendprevmenutype:
+                            self.prevmenutypelist.append("0,5," + str(candCursor) + "," + str(currentCandPage))
                         candCursor = 0
                         currentCandPage = 0
                         CinBaseTextService.menucandidates = CinBaseTextService.flangs.getCharDef(CinBaseTextService.candidateList[i])
                         pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
-                        CinBaseTextService.menutype = 6
                     elif CinBaseTextService.menutype == 6: # 執行外語文字子頁面項目
                         CinBaseTextService.menutype = 0
+                        self.prevmenutypelist = []
                         candCursor = 0
                         currentCandPage = 0
                         CinBaseTextService.showmenu = False
+                        CinBaseTextService.emojimenumode = False
                         CinBaseTextService.setCommitString(CinBaseTextService.candidateList[i])
                         self.resetComposition(CinBaseTextService)
+                    elif CinBaseTextService.menutype == 7: # 切換至表情符號分類頁面
+                        CinBaseTextService.menutype = 8
+                        if self.appendprevmenutype:
+                            self.prevmenutypelist.append("0,6," + str(candCursor) + "," + str(currentCandPage))
+                        candCursor = 0
+                        currentCandPage = 0
+                        if i == 0:
+                            self.emojitype = 0
+                            CinBaseTextService.menucandidates = self.emoji.emoticons_keynames
+                        elif i == 1:
+                            self.emojitype = 1
+                            CinBaseTextService.menucandidates = self.emoji.pictographs_keynames
+                        elif i == 2:
+                            self.emojitype = 2
+                            CinBaseTextService.menucandidates = self.emoji.miscellaneous_keynames
+                        elif i == 3:
+                            self.emojitype = 3
+                            CinBaseTextService.menucandidates = self.emoji.dingbats_keynames
+                        elif i == 4:
+                            self.emojitype = 4
+                            CinBaseTextService.menucandidates = self.emoji.transport_keynames
+                        elif i == 5:
+                            self.emojitype = 5
+                            CinBaseTextService.menucandidates = self.emoji.modifiercolor
+                            CinBaseTextService.menutype = 9
+                        pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
+
+                    elif CinBaseTextService.menutype == 8: # 切換至表情符號分類子頁面
+                        CinBaseTextService.menutype = 9
+                        if self.appendprevmenutype:
+                            self.prevmenutypelist.append("7," + str(self.emojitype) + "," + str(candCursor) + "," + str(currentCandPage))
+                        candCursor = 0
+                        currentCandPage = 0
+                        if self.emojitype == 0:
+                            CinBaseTextService.menucandidates = self.emoji.getCharDef("emoticons", CinBaseTextService.candidateList[i])
+                        elif self.emojitype == 1:
+                            CinBaseTextService.menucandidates = self.emoji.getCharDef("pictographs", CinBaseTextService.candidateList[i])
+                        elif self.emojitype == 2:
+                            CinBaseTextService.menucandidates = self.emoji.getCharDef("miscellaneous", CinBaseTextService.candidateList[i])
+                        elif self.emojitype == 3:
+                            CinBaseTextService.menucandidates = self.emoji.getCharDef("dingbats", CinBaseTextService.candidateList[i])
+                        elif self.emojitype == 4:
+                            CinBaseTextService.menucandidates = self.emoji.getCharDef("transport", CinBaseTextService.candidateList[i])
+                        pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
+                    elif CinBaseTextService.menutype == 9: # 執行表情符號分類子頁面項目
+                        CinBaseTextService.menutype = 0
+                        self.prevmenutypelist = []
+                        candCursor = 0
+                        currentCandPage = 0
+                        CinBaseTextService.showmenu = False
+                        CinBaseTextService.emojimenumode = False
+                        CinBaseTextService.setCommitString(CinBaseTextService.candidateList[i])
+                        self.resetComposition(CinBaseTextService)
+                    elif CinBaseTextService.menutype == 10: # 回到主選單
+                        CinBaseTextService.menutype = 0
+                        self.prevmenutypelist = []
+                        candCursor = 0
+                        currentCandPage = 0
+                        CinBaseTextService.menucandidates = ["功能設定", menu_OutputSimpChinese, "功能開關", "特殊符號", "注音符號", "外語文字", "表情符號"]
+                        pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
+
+                    if self.prevmenucandlist:
+                        candCursor = self.prevmenucandlist[0]
+                        currentCandPage = self.prevmenucandlist[1]
+                        self.prevmenucandlist = []
+                        self.appendprevmenutype = True
 
                 # 更新選字視窗游標位置
                 CinBaseTextService.setCandidateCursor(candCursor)
@@ -767,12 +913,12 @@ class CinBase:
                 CinBaseTextService.setCompositionString(CinBaseTextService.compositionString[:-keyLength])
                 CinBaseTextService.compositionChar = CinBaseTextService.compositionChar[:-1]
 
-            if CinBaseTextService.cin.isInCharDef(CinBaseTextService.compositionChar) and CinBaseTextService.closemenu:
+            if CinBaseTextService.cin.isInCharDef(CinBaseTextService.compositionChar) and CinBaseTextService.closemenu and not CinBaseTextService.ctrlsymbolsmode:
                 candidates = CinBaseTextService.cin.getCharDef(CinBaseTextService.compositionChar)
                 if CinBaseTextService.sortByPhrase and candidates:
                     candidates = self.sortByPhrase(CinBaseTextService, copy.deepcopy(candidates))
             elif CinBaseTextService.imeDirName == "chepinyin" and CinBaseTextService.cinFileList[CinBaseTextService.cfg.selCinType] == "thpinyin.cin":
-                if CinBaseTextService.cin.isInCharDef(CinBaseTextService.compositionChar + "1") and CinBaseTextService.closemenu:
+                if CinBaseTextService.cin.isInCharDef(CinBaseTextService.compositionChar + "1") and CinBaseTextService.closemenu and not CinBaseTextService.ctrlsymbolsmode:
                     candidates = CinBaseTextService.cin.getCharDef(CinBaseTextService.compositionChar + '1')
                     if CinBaseTextService.sortByPhrase and candidates:
                         candidates = self.sortByPhrase(CinBaseTextService, copy.deepcopy(candidates))
@@ -918,7 +1064,7 @@ class CinBase:
 
                 
                 # 如果字根首字是符號就直接輸出
-                if (self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode)) and len(CinBaseTextService.compositionChar) == 1 and charStrLow == CinBaseTextService.compositionChar:
+                if (self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode)) and len(CinBaseTextService.compositionChar) == 1 and charStrLow == CinBaseTextService.compositionChar and CinBaseTextService.directCommitSymbol:
                     directout = True
                     if CinBaseTextService.cin.isInCharDef(CinBaseTextService.compositionChar) and CinBaseTextService.supportSymbolCoding and len(CinBaseTextService.cin.haveNextCharDef(CinBaseTextService.compositionChar)) > 1:
                         directout = False
@@ -931,7 +1077,7 @@ class CinBase:
                         currentCandPage = 0
                 
                 # 多功能前導字元
-                if CinBaseTextService.multifunctionmode:
+                if CinBaseTextService.multifunctionmode and CinBaseTextService.directCommitSymbol:
                     if len(candidates) == 1:
                         cand = candidates[0]
                         CinBaseTextService.setCommitString(cand)
@@ -993,11 +1139,9 @@ class CinBase:
                         if (candCursor + 1) < candCount:
                             candCursor += 1
                     elif keyCode == VK_HOME:  # Home 鍵
-                        currentCandPage = 0
                         candCursor = 0
                     elif keyCode == VK_END:  # End 鍵
-                        currentCandPage = currentCandPageCount - 1
-                        candCursor = 0
+                        candCursor = len(pagecandidates[currentCandPage]) - 1
                     elif keyCode == VK_PRIOR:  # Page UP 鍵
                         if currentCandPage > 0:
                             currentCandPage -= 1
@@ -1144,11 +1288,9 @@ class CinBase:
                     if (candCursor + 1) < candCount:
                         candCursor += 1
                 elif keyCode == VK_HOME:  # Home 鍵
-                    currentCandPage = 0
                     candCursor = 0
                 elif keyCode == VK_END:  # End 鍵
-                    currentCandPage = currentCandPageCount - 1
-                    candCursor = 0
+                    candCursor = len(pagecandidates[currentCandPage]) - 1
                 elif keyCode == VK_PRIOR:  # Page UP 鍵
                     if currentCandPage > 0:
                         currentCandPage -= 1
@@ -1622,8 +1764,11 @@ class CinBase:
         # 直接顯示候選字清單 (不須按空白鍵)?
         CinBaseTextService.directShowCand = cfg.directShowCand
 
-        # 直接輸出候選字 (當候選字僅有一字)?
+        # 直接輸出候選字 (當候選字僅有一個)?
         CinBaseTextService.directCommitString = cfg.directCommitString
+        
+        # 直接輸出候選符號 (當候選符號僅有一個)?
+        CinBaseTextService.directCommitSymbol = cfg.directCommitSymbol
 
         # 支援 CIN 碼表中以符號字元所定義的編碼?
         CinBaseTextService.supportSymbolCoding = cfg.supportSymbolCoding

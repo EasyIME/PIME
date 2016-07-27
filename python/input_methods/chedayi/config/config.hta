@@ -43,47 +43,6 @@
         </ul>
 
         <div id="typing_page">
-            <input type="checkbox" id="switchLangWithShift" name="switchLangWithShift" />
-            <label for="switchLangWithShift">使用 Shift 快速切換中英文</label><br>
-
-            <input type="checkbox" id="defaultFullSpace" name="defaultFullSpace" />
-            <label for="defaultFullSpace">預設以全形模式啟動</label><br>
-
-            <input type="checkbox" id="defaultEnglish" name="defaultEnglish" />
-            <label for="defaultEnglish">預設以英文模式啟動</label><br>
-
-            <input type="checkbox" id="outputSimpChinese" name="outputSimpChinese" />
-            <label for="outputSimpChinese">預設輸出簡體中文</label><br>
-
-            <input type="checkbox" id="hidePromptMessages" name="hidePromptMessages" />
-            <label for="hidePromptMessages">預設隱藏提示訊息</label><br>
-
-            <input type="checkbox" id="autoClearCompositionChar" name="autoClearCompositionChar" />
-            <label for="autoClearCompositionChar">拆錯字碼時自動清除輸入字串</label><br>
-
-            <input type="checkbox" id="playSoundWhenNonCand" name="playSoundWhenNonCand" />
-            <label for="playSoundWhenNonCand">拆錯字碼時發出警告嗶聲提示</label><br>
-
-            <input type="checkbox" id="sortByPhrase" name="sortByPhrase" />
-            <label for="sortByPhrase">優先以聯想字詞排序候選清單</label><br>
-
-            <br><input type="checkbox" id="supportSymbolCoding" name="supportSymbolCoding" />
-            <label for="supportSymbolCoding">支援 CIN 碼表中以符號字元所定義的編碼</label><br>
-
-            <input type="checkbox" id="directShowCand" name="directShowCand" />
-            <label for="directShowCand">直接顯示候選字清單 (不須按空白鍵)</label><br>
-
-            <input type="checkbox" id="directCommitString" name="directCommitString" />
-            <label for="directCommitString">直接輸出候選字 (當候選字僅有一字)</label><br>
-
-            <br><input type="checkbox" id="supportWildcard" name="supportWildcard" />
-            <label for="supportWildcard">支援以萬用字元代替組字字根</label><br>
-
-            <label for="selWildcardType">　 萬用字元: </label>
-            <select name="selWildcardType" id="selWildcardType">
-            </select><br>
-            <br>
-
         </div>
         
         <div id="cin_page">
@@ -91,37 +50,7 @@
             <select name="selCinType" id="selCinType">
             </select><br>
             <p>
-            <table>
-                <tr>
-                    <td><label for="bopomofochardefs">注音符號: </label><font color="Blue">
-                    <label id="bopomofochardefs" name="bopomofochardefs" /></font></td>
-                    <td><label for="big5Fchardefs">Big5 常用字: </label><font color="Blue">
-                    <label id="big5Fchardefs" name="big5Fchardefs" /></font></td>
-                    <td><label for="big5LFchardefs">Big5 次常用字: </label><font color="Blue">
-                    <label id="big5LFchardefs" name="big5LFchardefs" /></font></td>
-                    <td><label for="big5Otherchardefs">Big5 其它漢字: </label><font color="Blue">
-                    <label id="big5Otherchardefs" name="big5Otherchardefs" /></font></td>
-                </tr>
-                <tr>
-                    <td><label for="cjkchardefs">CJK 漢字: </label><font color="Blue">
-                    <label id="cjkchardefs" name="cjkchardefs" /></font></td>
-                    <td><label for="cjkExtAchardefs">CJK 擴展 A 區: </label><font color="Blue">
-                    <label id="cjkExtAchardefs" name="cjkExtAchardefs" /></font></td>
-                    <td><label for="cjkExtBchardefs">CJK 擴展 B 區: </label><font color="Blue">
-                    <label id="cjkExtBchardefs" name="cjkExtBchardefs" /></font></td>
-                    <td><label for="cjkExtCchardefs">CJK 擴展 C 區: </label><font color="Blue">
-                    <label id="cjkExtCchardefs" name="cjkExtCchardefs" /></font></td>
-                </tr>
-                <tr>
-                    <td><label for="cjkExtDchardefs">CJK 擴展 D 區: </label><font color="Blue">
-                    <label id="cjkExtDchardefs" name="cjkExtDchardefs" /></font></td>
-                    <td><label for="cjkExtEchardefs">CJK 擴展 E 區: </label><font color="Blue">
-                    <label id="cjkExtEchardefs" name="cjkExtEchardefs" /></font></td>
-                    <td><label for="cjkOtherchardefs">CJK 其它漢字: </label><font color="Blue">
-                    <label id="cjkOtherchardefs" name="cjkOtherchardefs" /></font></td>
-                    <td><label for="cjkTotalchardefs">總計: </label><font color="Blue">
-                    <label id="cjkTotalchardefs" name="cjkTotalchardefs" /></font></td>
-                </tr>
+            <table id="cin_count">
             </table>
 
             <br>
@@ -131,24 +60,6 @@
         </div>
         
         <div id="ui_page">
-            <label for="candPerRow">每列顯示候選字個數: </label>
-            <input type="text" id="candPerRow" name="candPerRow" /><br>
-
-            <label for="candPerPage">每頁顯示候選字個數: </label>
-            <input type="text" id="candPerPage" name="candPerPage" /><br>
-            
-            <label for="candMaxItems">最大候選字個數: </label>
-            <input type="text" id="candMaxItems" name="candMaxItems" /><br>
-
-            <label for="fontSize">選字及訊息視窗文字大小: </label>
-            <input type="text" id="fontSize" name="fontSize" /><br>
-
-			<div id="selExample">			
-			</div>
-            <!--
-            <input type="checkbox" id="colorCandWnd" name="colorCandWnd" />
-            <label for="colorCandWnd">用不同顏色顯示選字鍵和候選字: <label><br>
-            -->
         </div>
 
         <div id="keyboard_page">
@@ -156,58 +67,18 @@
         </div>
 
         <div id="symbols_page">
-            <textarea id="symbols"></textarea>
-            <p>
-            大易輸入法提供符號表，裡面的符號可以自訂。
-            以上是符號表的設定檔，語法相當簡單。<br>
-            每一行的內容都是： 「分類名稱」=「此分類下的所有符號」。<br>
-            您也可以一行只放一個符號，則該符號會被放在最上層選單。
-            <p>
         </div>
         
         <div id="fs_symbols_page">
-            <input type="checkbox" id="fullShapeSymbols" name="fullShapeSymbols" />
-            <label for="fullShapeSymbols">中文模式下按住 Shift 輸入全形標點符號</label><br>
-            <p>
-            以下是使用 Shift 輸入全形標點符號的設定，每一行表示一個 Shift+符號/數字鍵所對應的字串。<br>
-            每一行的格式必須符合：「Ta=Tb」。其中 Ta 與 Tb 間必須有一個半形「=」字元；<br>
-            Ta 可以是 Shift+符號/數字鍵所輸出的符號；Tb 可以是長度 1 到 10 的任意中英文字串。
-            </p>
-            <textarea id="fs_symbols"></textarea>
         </div>
 
         <div id="ez_symbols_page">
-            <input type="checkbox" id="easySymbolsWithShift" name="easySymbolsWithShift" />
-            <label for="easySymbolsWithShift">中文模式下按住 Shift 快速輸入符號</label><br>
-            <p>
-            以下是使用 Shift 快速輸入符號的設定，每一行表示一個鍵所對應的字串，
-            例如「m 新酷音」或是「L orz」等。<br>
-            每一行的格式必須符合：「Ta Tb」。其中 Ta 與 Tb 間必須有一個半形空白字元；<br>
-            Ta 可以是 a-z 等字母；Tb 可以是長度 1 到 10 的任意中英文字串。
-            </p>
-            <textarea id="ez_symbols"></textarea>
         </div>
 
         <div id="phrase_page">
-            <input type="checkbox" id="showPhrase" name="showPhrase" />
-            <label for="showPhrase">中文模式下輸出字串後顯示聯想字詞</label><br>
-            <p>
-            大易輸入法提供聯想字詞表，裡面的聯想字詞可以自訂。
-            以上是聯想字詞表的設定檔，語法相當簡單。<br>
-            每一行的內容都是： 「中字」=「此中字相關的聯想字詞」。
-            若想要設定的聯想字詞不只一個，請以「,」號區隔。
-            </p>
-            <textarea id="phrase"></textarea>
         </div>
         
         <div id="flangs_page">
-            <textarea id="flangs"></textarea>
-            <p>
-            大易輸入法提供外語文字表，裡面的外語文字可以自訂。
-            以上是外語文字表的設定檔，語法相當簡單。<br>
-            每一行的內容都是： 「分類名稱」=「此分類下的所有符號」。<br>
-            您也可以一行只放一個文字，則該文字會被放在最上層選單。
-            </p>
         </div>
         
         <div id="help_page">

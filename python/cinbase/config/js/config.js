@@ -236,8 +236,31 @@ function updateConfig() {
 // jQuery ready
 $(function() {
     // show PIME version number
+    $("#tabs").hide();
     $("#version").load("../../../../version.txt");
+    $("#typing_page").load("../../../cinbase/config/config.htm #typing_page")
+    $("#cin_count").load("../../../cinbase/config/config.htm #cin_count")
+    $("#ui_page").load("../../../cinbase/config/config.htm #ui_page")
+    $("#symbols_page").load("../../../cinbase/config/config.htm #symbols_page")
+    $("#fs_symbols_page").load("../../../cinbase/config/config.htm #fs_symbols_page")
+    $("#ez_symbols_page").load("../../../cinbase/config/config.htm #ez_symbols_page")
+    $("#phrase_page").load("../../../cinbase/config/config.htm #phrase_page")
+    $("#flangs_page").load("../../../cinbase/config/config.htm #flangs_page")
+    pageWait();
+});
 
+function pageWait() {
+    if (document.getElementById("flangs")) {
+        pageReady()
+    }
+    else
+    {
+        window.setTimeout(pageWait,100);
+    }
+}
+
+function pageReady() {
+    $("#tabs").show();
     loadConfig();
     $(document).tooltip();
     $("#tabs").tabs({heightStyle:"auto"});
@@ -416,4 +439,4 @@ $(function() {
         disableControlItem();
     });
 
-});
+}

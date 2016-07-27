@@ -16,6 +16,7 @@
     "playSoundWhenNonCand": false,
     "directShowCand": false,
     "directCommitString": false,
+    "directCommitSymbol": false,
     "supportSymbolCoding": false,
     "supportWildcard": true,
     "selWildcardType": 1,

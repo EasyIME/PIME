@@ -65,8 +65,10 @@ TextService::~TextService(void) {
 	if(popupMenu_)
 		::DestroyMenu(popupMenu_);
 
-	if(candidateWindow_)
+	if (candidateWindow_) {
+		hideCandidates();
 		candidateWindow_->Release();
+	}
 
 	if(messageWindow_)
 		hideMessage();
@@ -210,6 +212,9 @@ void TextService::onCompositionTerminated(bool forced) {
 		// we're still editing our composition and have something in the preedit buffer.
 		// however, some other applications grabs the focus and force us to terminate
 		// our composition.
+		if (showingCandidates()) // disable candidate window if it's opened
+			hideCandidates();
+		hideMessage(); // hide message window, if there's any
 	}
 	if(client_)
 		client_->onCompositionTerminated(forced);
@@ -251,11 +256,7 @@ void TextService::onLangProfileDeactivated(REFIID lang) {
 			client_ = NULL;
 			// detroy UI resources
 			hideMessage();
-			if (candidateWindow_) {
-				showingCandidates_ = false;
-				candidateWindow_->Release();
-				candidateWindow_ = NULL;
-			}
+			hideCandidates();
 		}
 		currentLangProfile_ = IID_NULL;
 	}

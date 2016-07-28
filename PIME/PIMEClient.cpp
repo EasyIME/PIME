@@ -184,14 +184,19 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 		const auto& compositionStringVal = msg["compositionString"];
 		if (compositionStringVal.isString()) {
 			// composition buffer
-			std::wstring compositionString = utf8ToUtf16(compositionStringVal.asCString());
-			if (!textService_->isComposing()) {
-				textService_->startComposition(session->context());
+			const std::wstring compositionString = utf8ToUtf16(compositionStringVal.asCString());
+			if (compositionString.empty()) {
+				if (textService_->isComposing() && !textService_->showingCandidates()) {
+					// when the composition buffer is empty and we are not showing the candidate list, end composition.
+					textService_->setCompositionString(session, L"", 0);
+					endComposition = true;
+				}
 			}
-			textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
-			if (compositionString.empty() && !textService_->showingCandidates()) {
-				// when the composition buffer is empty and we are not showing the candidate list, end composition.
-				endComposition = true;
+			else {
+				if (!textService_->isComposing()) {
+					textService_->startComposition(session->context());
+				}
+				textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
 			}
 		}
 

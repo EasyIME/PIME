@@ -163,6 +163,7 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 		if (candidateCursorVal.isInt()) {
 			if (textService_->candidateWindow_ != nullptr) {
 				textService_->candidateWindow_->setCurrentSel(candidateCursorVal.asInt());
+				textService_->refreshCandidates();
 			}
 		}
 

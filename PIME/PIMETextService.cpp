@@ -20,6 +20,7 @@
 #include "PIMETextService.h"
 #include <assert.h>
 #include <string>
+#include <libIME/ComPtr.h>
 #include <libIME/Utils.h>
 #include <libIME/LangBarButton.h>
 #include "PIMEImeModule.h"
@@ -36,6 +37,8 @@ TextService::TextService(ImeModule* module):
 	client_(nullptr),
 	messageWindow_(nullptr),
 	messageTimerId_(0),
+	validCandidateListElementId_(false),
+	candidateListElementId_(0),
 	candidateWindow_(nullptr),
 	showingCandidates_(false),
 	updateFont_(false),
@@ -63,7 +66,7 @@ TextService::~TextService(void) {
 		::DestroyMenu(popupMenu_);
 
 	if(candidateWindow_)
-		delete candidateWindow_;
+		candidateWindow_->Release();
 
 	if(messageWindow_)
 		hideMessage();
@@ -250,7 +253,7 @@ void TextService::onLangProfileDeactivated(REFIID lang) {
 			hideMessage();
 			if (candidateWindow_) {
 				showingCandidates_ = false;
-				delete candidateWindow_;
+				candidateWindow_->Release();
 				candidateWindow_ = NULL;
 			}
 		}
@@ -262,6 +265,14 @@ void TextService::createCandidateWindow(Ime::EditSession* session) {
 	if (!candidateWindow_) {
 		candidateWindow_ = new Ime::CandidateWindow(this, session);
 		candidateWindow_->setFont(font_);
+		Ime::ComQIPtr<ITfUIElementMgr> elementMgr = threadMgr();
+		if (elementMgr) {
+			BOOL pbShow = false;
+			if (validCandidateListElementId_ =
+				(elementMgr->BeginUIElement(candidateWindow_, &pbShow, &candidateListElementId_) == S_OK)) {
+				candidateWindow_->Show(pbShow);
+			}
+		}
 	}
 }
 
@@ -305,6 +316,22 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 		// FIXME: where should we put the candidate window?
 		candidateWindow_->move(textRect.left, textRect.bottom);
 	}
+
+	if (validCandidateListElementId_) {
+		Ime::ComQIPtr<ITfUIElementMgr> elementMgr = threadMgr();
+		if (elementMgr) {
+			elementMgr->UpdateUIElement(candidateListElementId_);
+		}
+	}
+}
+
+void TextService::refreshCandidates() {
+	if (validCandidateListElementId_) {
+		Ime::ComQIPtr<ITfUIElementMgr> elementMgr = threadMgr();
+		if (elementMgr) {
+			elementMgr->UpdateUIElement(candidateListElementId_);
+		}
+	}
 }
 
 // show candidate list window
@@ -321,15 +348,22 @@ void TextService::showCandidates(Ime::EditSession* session) {
 	// The candidate window created should be a child window of the composition window.
 	// Please see Ime::CandidateWindow::CandidateWindow() for an example.
 	createCandidateWindow(session);
-	candidateWindow_->show();
 	showingCandidates_ = true;
 }
 
 // hide candidate list window
 void TextService::hideCandidates() {
 	assert(candidateWindow_);
+	if (validCandidateListElementId_) {
+		Ime::ComQIPtr<ITfUIElementMgr> elementMgr = threadMgr();
+		if (elementMgr) {
+			elementMgr->EndUIElement(candidateListElementId_);
+			candidateListElementId_ = 0;
+			validCandidateListElementId_ = false;
+		}
+	}
 	if(candidateWindow_) {
-		delete candidateWindow_;
+		candidateWindow_->Release();
 		candidateWindow_ = NULL;
 	}
 	showingCandidates_ = false;

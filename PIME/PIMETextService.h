@@ -126,6 +126,8 @@ public:
 	void updateCandidates(Ime::EditSession* session);
 	void hideCandidates();
 
+	void refreshCandidates();
+
 	// message window
 	void showMessage(Ime::EditSession* session, std::wstring message, int duration = 3);
 	void hideMessage();
@@ -149,6 +151,8 @@ private:
 	void createCandidateWindow(Ime::EditSession* session);
 
 private:
+	bool validCandidateListElementId_;
+	DWORD candidateListElementId_;
 	Ime::CandidateWindow* candidateWindow_;
 	bool showingCandidates_;
 	std::vector<std::wstring> candidates_; // current candidate list

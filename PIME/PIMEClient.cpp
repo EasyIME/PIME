@@ -182,10 +182,12 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 		}
 
 		const auto& compositionStringVal = msg["compositionString"];
+		bool emptyComposition = false;
 		if (compositionStringVal.isString()) {
 			// composition buffer
 			const std::wstring compositionString = utf8ToUtf16(compositionStringVal.asCString());
 			if (compositionString.empty()) {
+				emptyComposition = true;
 				if (textService_->isComposing() && !textService_->showingCandidates()) {
 					// when the composition buffer is empty and we are not showing the candidate list, end composition.
 					textService_->setCompositionString(session, L"", 0);
@@ -203,11 +205,13 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 		const auto& compositionCursorVal = msg["compositionCursor"];
 		if (compositionCursorVal.isInt()) {
 			// composition cursor
-			int compositionCursor = compositionCursorVal.asInt();
-			if (!textService_->isComposing()) {
-				textService_->startComposition(session->context());
+			if (!emptyComposition) {
+				int compositionCursor = compositionCursorVal.asInt();
+				if (!textService_->isComposing()) {
+					textService_->startComposition(session->context());
+				}
+				textService_->setCompositionCursor(session, compositionCursor);
 			}
-			textService_->setCompositionCursor(session, compositionCursor);
 		}
 
 		if (endComposition) {

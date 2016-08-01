@@ -109,7 +109,8 @@ class CheDayiTextService(TextService):
                 if self.dsymbols.isInCharDef(self.compositionChar[1:] + charStr):
                     self.compositionChar += charStr
 
-        self.autoShowCandWhenMaxChar = True
+        if not self.directShowCand:
+            self.autoShowCandWhenMaxChar = True
         KeyState = self.cinbase.onKeyDown(self, keyEvent)
         return KeyState
 

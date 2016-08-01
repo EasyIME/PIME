@@ -265,8 +265,14 @@ function pageReady() {
     $(document).tooltip();
     $("#tabs").tabs({heightStyle:"auto"});
 
-    $("#candPerRow").spinner({min:1, max:10});
-    $("#candPerPage").spinner({min:1, max:10});
+    if (imeFolderName == "chedayi") {
+        $("#candPerRow").spinner({min:1, max:5});
+        $("#candPerPage").spinner({min:1, max:5});
+    }
+    else {
+        $("#candPerRow").spinner({min:1, max:10});
+        $("#candPerPage").spinner({min:1, max:10});
+    }
     $("#candMaxItems").spinner({min:100, max:10000});
     $("#fontSize").spinner({min:6, max:200});
 

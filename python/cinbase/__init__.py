@@ -76,6 +76,7 @@ class CinBase:
         CinBaseTextService.selKeys = "1234567890"
         CinBaseTextService.langMode = -1
         CinBaseTextService.shapeMode = -1
+        CinBaseTextService.switchPageWithSpace = False
         CinBaseTextService.outputSimpChinese = False
         CinBaseTextService.hidePromptMessages = True
         CinBaseTextService.autoClearCompositionChar = False
@@ -476,9 +477,20 @@ class CinBase:
                         candCursor = CinBaseTextService.selKeys.index(charStr)
                         itemName = CinBaseTextService.candidateList[candCursor]
                         CinBaseTextService.switchmenu = True
-                elif keyCode == VK_RETURN or keyCode == VK_SPACE:  # 按下 Enter 鍵或空白鍵
+                elif keyCode == VK_RETURN:  # 按下 Enter 鍵
                     itemName = CinBaseTextService.candidateList[candCursor]
                     CinBaseTextService.switchmenu = True
+                elif keyCode == VK_SPACE: # 按下空白鍵
+                    if CinBaseTextService.switchPageWithSpace:
+                        if (currentCandPage + 1) < currentCandPageCount:
+                            currentCandPage += 1
+                            candCursor = 0
+                        else:
+                            currentCandPage = 0
+                            candCursor = 0
+                    else:
+                        itemName = CinBaseTextService.candidateList[candCursor]
+                        CinBaseTextService.switchmenu = True
                 elif keyCode == VK_BACK:
                     if self.prevmenutypelist:
                         prevmenulist =[]
@@ -1086,7 +1098,7 @@ class CinBase:
                         if (currentCandPage + 1) < currentCandPageCount:
                             currentCandPage += 1
                             candCursor = 0
-                    elif (keyCode == VK_RETURN or keyCode == VK_SPACE) and CinBaseTextService.canSetCommitString:  # 按下 Enter 鍵或空白鍵
+                    elif (keyCode == VK_RETURN or (keyCode == VK_SPACE and (not CinBaseTextService.switchPageWithSpace or len(CinBaseTextService.candidateList) == 1))) and CinBaseTextService.canSetCommitString:  # 按下 Enter 鍵或空白鍵
                         # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                         commitStr = CinBaseTextService.candidateList[candCursor]
                         CinBaseTextService.lastCommitString = commitStr
@@ -1113,6 +1125,13 @@ class CinBase:
                         currentCandPage = 0
                         if not CinBaseTextService.directShowCand:
                             CinBaseTextService.isShowCandidates = False
+                    elif keyCode == VK_SPACE and CinBaseTextService.switchPageWithSpace: # 按下空白鍵
+                        if (currentCandPage + 1) < currentCandPageCount:
+                            currentCandPage += 1
+                            candCursor = 0
+                        else:
+                            currentCandPage = 0
+                            candCursor = 0
                     else: # 按下其它鍵，先將候選字游標位址及目前頁數歸零
                         if not CinBaseTextService.ctrlsymbolsmode:
                             candCursor = 0
@@ -1235,7 +1254,7 @@ class CinBase:
                     if (currentCandPage + 1) < currentCandPageCount:
                         currentCandPage += 1
                         candCursor = 0
-                elif keyCode == VK_RETURN or keyCode == VK_SPACE:  # 按下 Enter 鍵
+                elif keyCode == VK_RETURN or (keyCode == VK_SPACE and (not CinBaseTextService.switchPageWithSpace or len(CinBaseTextService.candidateList) == 1)):  # 按下 Enter 鍵或空白鍵
                     if CinBaseTextService.isShowPhraseCandidates:
                         # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                         commitStr = CinBaseTextService.candidateList[candCursor]
@@ -1254,8 +1273,13 @@ class CinBase:
                         
                         if not CinBaseTextService.directShowCand:
                             CinBaseTextService.isShowCandidates = False
+                elif keyCode == VK_SPACE and CinBaseTextService.switchPageWithSpace: # 按下空白鍵
+                    if (currentCandPage + 1) < currentCandPageCount:
+                        currentCandPage += 1
+                        candCursor = 0
                     else:
-                        CinBaseTextService.isShowPhraseCandidates = True
+                        currentCandPage = 0
+                        candCursor = 0
                 else: # 按下其它鍵，先將候選字游標位址及目前頁數歸零
                     CinBaseTextService.phrasemode = False
                     CinBaseTextService.isShowPhraseCandidates = False
@@ -1280,6 +1304,9 @@ class CinBase:
                 CinBaseTextService.setCandidateCursor(candCursor)
                 CinBaseTextService.setCandidatePage(currentCandPage)
                 CinBaseTextService.setCandidateList(pagecandidates[currentCandPage])
+                
+                if CinBaseTextService.showCandidates and CinBaseTextService.phrasemode:
+                    CinBaseTextService.isShowPhraseCandidates = True
             else:
                 CinBaseTextService.phrasemode = False
                 CinBaseTextService.isShowPhraseCandidates = False
@@ -1730,6 +1757,9 @@ class CinBase:
         # 設定選字按鍵 (123456..., asdf.... 等)
         # if CinBaseTextService.cin.getSelection():
         #     CinBaseTextService.setSelKeys(CinBaseTextService.cin.getSelection())
+        
+        # 使用空白鍵作為候選清單換頁鍵?
+        CinBaseTextService.switchPageWithSpace = cfg.switchPageWithSpace
 
         # 轉換輸出成簡體中文?
         self.setOutputSimplifiedChinese(CinBaseTextService, cfg.outputSimpChinese)

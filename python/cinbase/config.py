@@ -34,6 +34,7 @@ class CinBaseConfig:
         self.defaultEnglish = False
         self.defaultFullSpace = False
         self.switchLangWithShift = True
+        self.switchPageWithSpace = False
         self.outputSimpChinese = False
         self.hidePromptMessages = True
         self.autoClearCompositionChar = False

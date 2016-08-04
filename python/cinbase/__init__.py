@@ -21,6 +21,7 @@ import opencc  # OpenCC 繁體簡體中文轉換
 import io
 import math
 import copy
+import ctypes
 import winsound
 from .swkb import swkb
 from .symbols import symbols
@@ -59,6 +60,7 @@ ID_OUTPUT_SIMP_CHINESE = 13
 
 class CinBase:
     def __init__(self):
+        self.icondir = os.path.join(os.path.dirname(__file__), "icons")
         self.emoji = emoji
         self.emojitype = 0
         self.emojimenulist = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
@@ -121,6 +123,7 @@ class CinBase:
         CinBaseTextService.lastCompositionCharLength = 0
         CinBaseTextService.menutype = 0
         CinBaseTextService.resetMenuCand = False
+        CinBaseTextService.capsStates = True if self.getKeyState(VK_CAPITAL) else False
 
 
     # 輸入法被使用者啟用
@@ -132,15 +135,26 @@ class CinBase:
         # 切換中英文
         icon_name = "chi.ico" if CinBaseTextService.langMode == CHINESE_MODE else "eng.ico"
         CinBaseTextService.addButton("switch-lang",
-            icon=os.path.join(CinBaseTextService.icon_dir, icon_name),
+            icon=os.path.join(self.icondir, icon_name),
             tooltip="中英文切換",
             commandId=ID_SWITCH_LANG
         )
 
         # Windows 8 以上已取消語言列功能，改用 systray IME mode icon
         if CinBaseTextService.client.isWindows8Above:
+            if CinBaseTextService.langMode == CHINESE_MODE:
+                if CinBaseTextService.shapeMode == FULLSHAPE_MODE:
+                    icon_name = "chi_full_capson.ico" if CinBaseTextService.capsStates else "chi_full_capsoff.ico"
+                else:
+                    icon_name = "chi_half_capson.ico" if CinBaseTextService.capsStates else "chi_half_capsoff.ico"
+            else:
+                if CinBaseTextService.shapeMode == FULLSHAPE_MODE:
+                    icon_name = "eng_full_capson.ico" if CinBaseTextService.capsStates else "eng_full_capsoff.ico"
+                else:
+                    icon_name = "eng_half_capson.ico" if CinBaseTextService.capsStates else "eng_half_capsoff.ico"
+            
             CinBaseTextService.addButton("windows-mode-icon",
-                icon=os.path.join(CinBaseTextService.icon_dir, icon_name),
+                icon=os.path.join(self.icondir, icon_name),
                 tooltip="中英文切換",
                 commandId=ID_MODE_ICON
             )
@@ -148,14 +162,14 @@ class CinBase:
         # 切換全半形
         icon_name = "full.ico" if CinBaseTextService.shapeMode == FULLSHAPE_MODE else "half.ico"
         CinBaseTextService.addButton("switch-shape",
-            icon = os.path.join(CinBaseTextService.icon_dir, icon_name),
+            icon = os.path.join(self.icondir, icon_name),
             tooltip = "全形/半形切換",
             commandId = ID_SWITCH_SHAPE
         )
         
         # 設定
         CinBaseTextService.addButton("settings",
-            icon = os.path.join(CinBaseTextService.icon_dir, "config.ico"),
+            icon = os.path.join(self.icondir, "config.ico"),
             tooltip = "設定",
             type = "menu"
         )
@@ -259,7 +273,7 @@ class CinBase:
         charCode = keyEvent.charCode
         keyCode = keyEvent.keyCode
         charStr = chr(charCode)
-
+        
         # 不論中英文模式，NumPad 都允許直接輸入數字，輸入法不處理
         if keyEvent.isKeyToggled(VK_NUMLOCK): # NumLock is on
             # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
@@ -632,7 +646,7 @@ class CinBase:
         # 若按下 Shift 鍵,且沒有按下其它的按鍵
         if keyEvent.isKeyDown(VK_SHIFT) and not keyEvent.isPrintableChar():
             return False
-            
+
         # 若按下 Ctrl 鍵
         if keyEvent.isKeyDown(VK_CONTROL):
             # 若按下的是指定的符號鍵，輸入法需要處理此按鍵
@@ -1319,13 +1333,9 @@ class CinBase:
     # return True，系統會呼叫 onKeyUp() 進一步處理這個按鍵
     # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
     def filterKeyUp(self, CinBaseTextService, keyEvent):
-        # 如果按下 Alt，可能是應用程式熱鍵，輸入法不做處理
-        if keyEvent.isKeyDown(VK_MENU):
-            return False
-
-        # 如果按下 Ctrl 鍵
-        if keyEvent.isKeyDown(VK_CONTROL):
-            return False
+        # 不管中英文模式，只要放開 CapsLock 鍵，輸入法都須要處理
+        if CinBaseTextService.lastKeyDownCode == VK_CAPITAL and keyEvent.keyCode == VK_CAPITAL:
+            return True
 
         # 若啟用使用 Shift 鍵切換中英文模式
         if CinBaseTextService.cfg.switchLangWithShift:
@@ -1353,7 +1363,7 @@ class CinBase:
         CinBaseTextService.lastKeyDownCode = 0
         CinBaseTextService.lastKeyDownTime = 0.0
         
-        # 若按下 Shift 鍵,且觸發中英文切換
+        # 若放開 Shift 鍵,且觸發中英文切換
         if CinBaseTextService.isLangModeChanged and keyCode == VK_SHIFT:
             self.toggleLanguageMode(CinBaseTextService)  # 切換中英文模式
             CinBaseTextService.isLangModeChanged = False
@@ -1364,7 +1374,11 @@ class CinBase:
                 CinBaseTextService.showMessage(message, 3)
             if CinBaseTextService.showCandidates or len(CinBaseTextService.compositionChar) > 0:
                 self.resetComposition(CinBaseTextService)
-            
+
+        # 若放開 CapsLock 鍵
+        if keyEvent.keyCode == VK_CAPITAL:
+            self.updateLangButtons(CinBaseTextService)
+
         if CinBaseTextService.isShapeModeChanged:
             CinBaseTextService.isShapeModeChanged = False
             if not CinBaseTextService.hidePromptMessages:
@@ -1484,17 +1498,30 @@ class CinBase:
     def updateLangButtons(self, CinBaseTextService):
         # 如果中英文模式發生改變
         icon_name = "chi.ico" if CinBaseTextService.langMode == CHINESE_MODE else "eng.ico"
-        icon_path = os.path.join(CinBaseTextService.icon_dir, icon_name)
+        icon_path = os.path.join(self.icondir, icon_name)
         CinBaseTextService.changeButton("switch-lang", icon=icon_path)
-
+        
+        
         if CinBaseTextService.client.isWindows8Above:  # windows 8 mode icon
-            # FIXME: we need a better set of icons to meet the
-            #        WIndows 8 IME guideline and UX guidelines.
+            CinBaseTextService.capsStates = True if self.getKeyState(VK_CAPITAL) else False
+
+            if CinBaseTextService.langMode == CHINESE_MODE:
+                if CinBaseTextService.shapeMode == FULLSHAPE_MODE:
+                    icon_name = "chi_full_capson.ico" if CinBaseTextService.capsStates else "chi_full_capsoff.ico"
+                else:
+                    icon_name = "chi_half_capson.ico" if CinBaseTextService.capsStates else "chi_half_capsoff.ico"
+            else:
+                if CinBaseTextService.shapeMode == FULLSHAPE_MODE:
+                    icon_name = "eng_full_capson.ico" if CinBaseTextService.capsStates else "eng_full_capsoff.ico"
+                else:
+                    icon_name = "eng_half_capson.ico" if CinBaseTextService.capsStates else "eng_half_capsoff.ico"
+            
+            icon_path = os.path.join(self.icondir, icon_name)
             CinBaseTextService.changeButton("windows-mode-icon", icon=icon_path)
         
         # 如果全形半形模式改變
         icon_name = "full.ico" if CinBaseTextService.shapeMode == FULLSHAPE_MODE else "half.ico"
-        icon_path = os.path.join(CinBaseTextService.icon_dir, icon_name)
+        icon_path = os.path.join(self.icondir, icon_name)
         CinBaseTextService.changeButton("switch-shape", icon=icon_path)
 
 
@@ -1682,7 +1709,10 @@ class CinBase:
     def chunks(self, l, n):
         for i in range(0, len(l), n):
             yield l[i:i+n]
-            
+
+    def getKeyState(self, keyCode):
+        return ctypes.WinDLL("User32.dll").GetKeyState(keyCode)
+
     ################################################################
     # config 相關
     ################################################################

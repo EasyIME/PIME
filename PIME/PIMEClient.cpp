@@ -163,6 +163,7 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 		if (candidateCursorVal.isInt()) {
 			if (textService_->candidateWindow_ != nullptr) {
 				textService_->candidateWindow_->setCurrentSel(candidateCursorVal.asInt());
+				textService_->refreshCandidates();
 			}
 		}
 
@@ -181,27 +182,36 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 		}
 
 		const auto& compositionStringVal = msg["compositionString"];
+		bool emptyComposition = false;
 		if (compositionStringVal.isString()) {
 			// composition buffer
-			std::wstring compositionString = utf8ToUtf16(compositionStringVal.asCString());
-			if (!textService_->isComposing()) {
-				textService_->startComposition(session->context());
+			const std::wstring compositionString = utf8ToUtf16(compositionStringVal.asCString());
+			if (compositionString.empty()) {
+				emptyComposition = true;
+				if (textService_->isComposing() && !textService_->showingCandidates()) {
+					// when the composition buffer is empty and we are not showing the candidate list, end composition.
+					textService_->setCompositionString(session, L"", 0);
+					endComposition = true;
+				}
 			}
-			textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
-			if (compositionString.empty() && !textService_->showingCandidates()) {
-				// when the composition buffer is empty and we are not showing the candidate list, end composition.
-				endComposition = true;
+			else {
+				if (!textService_->isComposing()) {
+					textService_->startComposition(session->context());
+				}
+				textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
 			}
 		}
 
 		const auto& compositionCursorVal = msg["compositionCursor"];
 		if (compositionCursorVal.isInt()) {
 			// composition cursor
-			int compositionCursor = compositionCursorVal.asInt();
-			if (!textService_->isComposing()) {
-				textService_->startComposition(session->context());
+			if (!emptyComposition) {
+				int compositionCursor = compositionCursorVal.asInt();
+				if (!textService_->isComposing()) {
+					textService_->startComposition(session->context());
+				}
+				textService_->setCompositionCursor(session, compositionCursor);
 			}
-			textService_->setCompositionCursor(session, compositionCursor);
 		}
 
 		if (endComposition) {

@@ -105,9 +105,12 @@ class CheDayiTextService(TextService):
                 self.compositionChar += charStr
                 self.setCompositionString(self.compositionChar)
                 self.dayisymbolsmode = True
+            elif self.dayisymbolsmode and self.isShowCandidates:
+                self.canUseSelKey = True
             elif len(self.compositionChar) >= 1 and self.dayisymbolsmode:
                 if self.dsymbols.isInCharDef(self.compositionChar[1:] + charStr):
                     self.compositionChar += charStr
+                    self.canUseSelKey = False
 
         if not self.directShowCand:
             self.autoShowCandWhenMaxChar = True

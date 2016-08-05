@@ -16,7 +16,8 @@ defaultConfig = loadDefaultConfig("config.json")
 
 // 此輸入法模組在特定碼表須停用的設定項目 (從 0 開始, 100 之後代表全部碼表)
 var disableConfigItem = {
-    101: ["supportSymbolCoding", true]
+    101: ["supportSymbolCoding", true],
+    102: ["switchPageWithSpace", false]
 };
 
 

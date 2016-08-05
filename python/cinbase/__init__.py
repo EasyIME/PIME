@@ -61,6 +61,7 @@ ID_OUTPUT_SIMP_CHINESE = 13
 class CinBase:
     def __init__(self):
         self.icondir = os.path.join(os.path.dirname(__file__), "icons")
+        self.candselKeys = "1234567890"
         self.emoji = emoji
         self.emojitype = 0
         self.emojimenulist = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
@@ -70,7 +71,9 @@ class CinBase:
 
 
     # 初始化輸入行為設定
-    def initTextService(self, CinBaseTextService):
+    def initTextService(self, CinBaseTextService, TextService):
+        CinBaseTextService.TextService = TextService
+        CinBaseTextService.TextService.setSelKeys(CinBaseTextService, self.candselKeys)
         # 使用 OpenCC 繁體中文轉簡體
         CinBaseTextService.opencc = None
 
@@ -107,6 +110,7 @@ class CinBase:
         CinBaseTextService.emojimenumode = False
         CinBaseTextService.ctrlsymbolsmode = False
         CinBaseTextService.phrasemode = False
+        CinBaseTextService.isSelKeysChanged = False
         CinBaseTextService.isWildcardChardefs = False
         CinBaseTextService.isLangModeChanged = False
         CinBaseTextService.isShapeModeChanged = False
@@ -114,6 +118,7 @@ class CinBase:
         CinBaseTextService.isShowPhraseCandidates = False
         CinBaseTextService.canSetCommitString = True
         CinBaseTextService.canUseSelKey = True
+        CinBaseTextService.canUseSpaceAsPageKey = True
         CinBaseTextService.endKeyList = []
         CinBaseTextService.useEndKey = False
         CinBaseTextService.useDayiSymbols = False
@@ -286,6 +291,13 @@ class CinBase:
                 charIndex = CinBaseTextService.kbtypelist[CinBaseTextService.keyboardLayout].index(charStr.lower())
                 charStr = CinBaseTextService.kbtypelist[0][charIndex]
 
+        # 檢查選字鍵
+        if not CinBaseTextService.imeDirName == "chedayi":
+            if not self.candselKeys == "1234567890":
+                self.candselKeys = "1234567890"
+                CinBaseTextService.TextService.setSelKeys(CinBaseTextService, self.candselKeys)
+                CinBaseTextService.isSelKeysChanged = True
+
         candidates = []
         charStrLow = charStr.lower()
         CinBaseTextService.isWildcardChardefs = False
@@ -410,6 +422,14 @@ class CinBase:
                 CinBaseTextService.setCandidateCursor(0)
                 CinBaseTextService.setCandidatePage(0)
                 
+                # 大易須更換選字鍵
+                if CinBaseTextService.imeDirName == "chedayi":
+                    if not self.candselKeys == "1234567890":
+                        self.candselKeys = "1234567890"
+                        CinBaseTextService.TextService.setSelKeys(CinBaseTextService, self.candselKeys)
+                        CinBaseTextService.isSelKeysChanged = True
+                        CinBaseTextService.selKeys = "1234567890"
+                
                 if not CinBaseTextService.emojimenumode:
                     CinBaseTextService.menutype = 0
                     menu = ["功能設定", menu_OutputSimpChinese, "功能開關", "特殊符號", "注音符號", "外語文字", "表情符號"]
@@ -424,10 +444,6 @@ class CinBase:
                 CinBaseTextService.showmenu = True
 
             if CinBaseTextService.showmenu:
-                # 大易須更換選字鍵
-                if CinBaseTextService.imeDirName == "chedayi":
-                    CinBaseTextService.selKeys = "1234567890"
-            
                 CinBaseTextService.closemenu = False
                 candidates = CinBaseTextService.menucandidates
                 candCursor = CinBaseTextService.candidateCursor  # 目前的游標位置
@@ -438,7 +454,8 @@ class CinBase:
                 # 候選清單分頁
                 pagecandidates = list(self.chunks(candidates, CinBaseTextService.candPerPage))
                 CinBaseTextService.setCandidateList(pagecandidates[currentCandPage])
-                CinBaseTextService.setShowCandidates(True)
+                if not CinBaseTextService.isSelKeysChanged:
+                    CinBaseTextService.setShowCandidates(True)
                 CinBaseTextService.resetMenuCand = False
                 itemName = ""
 
@@ -495,7 +512,7 @@ class CinBase:
                     itemName = CinBaseTextService.candidateList[candCursor]
                     CinBaseTextService.switchmenu = True
                 elif keyCode == VK_SPACE: # 按下空白鍵
-                    if CinBaseTextService.switchPageWithSpace:
+                    if CinBaseTextService.switchPageWithSpace and currentCandPageCount > 1:
                         if (currentCandPage + 1) < currentCandPageCount:
                             currentCandPage += 1
                             candCursor = 0
@@ -661,8 +678,13 @@ class CinBase:
                     CinBaseTextService.setCompositionString(candidates[0])
 
         # 大易須換回選字鍵
-        if CinBaseTextService.imeDirName == "chedayi":
-            CinBaseTextService.selKeys = "'[]-\\"
+        if not CinBaseTextService.showmenu:
+            if CinBaseTextService.imeDirName == "chedayi":
+                if not self.candselKeys == "0123456789":
+                    self.candselKeys = "0123456789"
+                    CinBaseTextService.TextService.setSelKeys(CinBaseTextService, self.candselKeys)
+                    CinBaseTextService.isSelKeysChanged = True
+                    CinBaseTextService.selKeys = "'[]-\\"
 
         # 按下的鍵為 CIN 內有定義的字根
         if CinBaseTextService.cin.isInKeyName(charStrLow) and CinBaseTextService.closemenu and not CinBaseTextService.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not CinBaseTextService.ctrlsymbolsmode and not CinBaseTextService.dayisymbolsmode:
@@ -1002,6 +1024,8 @@ class CinBase:
                         else:
                             CinBaseTextService.isShowCandidates = True
                             CinBaseTextService.canSetCommitString = False
+                            if keyCode == VK_SPACE:
+                                CinBaseTextService.canUseSpaceAsPageKey = False
                 else:
                     CinBaseTextService.isShowCandidates = True
                     CinBaseTextService.canSetCommitString = True
@@ -1022,9 +1046,9 @@ class CinBase:
                     else:
                         pagecandidates = list(self.chunks(candidates, CinBaseTextService.candPerPage))
                     CinBaseTextService.setCandidateList(pagecandidates[currentCandPage])
-                    CinBaseTextService.setShowCandidates(True)
+                    if not CinBaseTextService.isSelKeysChanged:
+                        CinBaseTextService.setShowCandidates(True)
 
-                
                 # 如果字根首字是符號就直接輸出
                 if (self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode)) and len(CinBaseTextService.compositionChar) == 1 and charStrLow == CinBaseTextService.compositionChar and CinBaseTextService.directCommitSymbol:
                     directout = True
@@ -1050,7 +1074,10 @@ class CinBase:
                 if CinBaseTextService.isShowCandidates:
                     # 使用選字鍵執行項目或輸出候選字
                     if self.isInSelKeys(CinBaseTextService, charCode) and not keyEvent.isKeyDown(VK_SHIFT) and CinBaseTextService.canUseSelKey:
-                        i = CinBaseTextService.selKeys.index(charStr) 
+                        if CinBaseTextService.imeDirName == "chedayi":
+                            i = CinBaseTextService.selKeys.index(charStr) + 1
+                        else:
+                            i = CinBaseTextService.selKeys.index(charStr)
                         if i < CinBaseTextService.candPerPage and i < len(CinBaseTextService.candidateList):
                             commitStr = CinBaseTextService.candidateList[i]
                             CinBaseTextService.lastCommitString = commitStr
@@ -1112,7 +1139,7 @@ class CinBase:
                         if (currentCandPage + 1) < currentCandPageCount:
                             currentCandPage += 1
                             candCursor = 0
-                    elif (keyCode == VK_RETURN or (keyCode == VK_SPACE and (not CinBaseTextService.switchPageWithSpace or len(CinBaseTextService.candidateList) == 1))) and CinBaseTextService.canSetCommitString:  # 按下 Enter 鍵或空白鍵
+                    elif (keyCode == VK_RETURN or (keyCode == VK_SPACE and (not CinBaseTextService.switchPageWithSpace or currentCandPageCount <= 1))) and CinBaseTextService.canSetCommitString:  # 按下 Enter 鍵或空白鍵
                         # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                         commitStr = CinBaseTextService.candidateList[candCursor]
                         CinBaseTextService.lastCommitString = commitStr
@@ -1134,18 +1161,21 @@ class CinBase:
                         
                         if CinBaseTextService.showPhrase:
                             CinBaseTextService.phrasemode = True
+                            if keyCode == VK_SPACE:
+                                CinBaseTextService.canUseSpaceAsPageKey = False
                         self.resetComposition(CinBaseTextService)
                         candCursor = 0
                         currentCandPage = 0
                         if not CinBaseTextService.directShowCand:
                             CinBaseTextService.isShowCandidates = False
                     elif keyCode == VK_SPACE and CinBaseTextService.switchPageWithSpace: # 按下空白鍵
-                        if (currentCandPage + 1) < currentCandPageCount:
-                            currentCandPage += 1
-                            candCursor = 0
-                        else:
-                            currentCandPage = 0
-                            candCursor = 0
+                        if CinBaseTextService.canUseSpaceAsPageKey:
+                            if (currentCandPage + 1) < currentCandPageCount:
+                                currentCandPage += 1
+                                candCursor = 0
+                            else:
+                                currentCandPage = 0
+                                candCursor = 0
                     else: # 按下其它鍵，先將候選字游標位址及目前頁數歸零
                         if not CinBaseTextService.ctrlsymbolsmode:
                             candCursor = 0
@@ -1213,7 +1243,10 @@ class CinBase:
                 # 使用選字鍵執行項目或輸出候選字
                 if self.isInSelKeys(CinBaseTextService, charCode) and not keyEvent.isKeyDown(VK_SHIFT):
                     if CinBaseTextService.isShowPhraseCandidates:
-                        i = CinBaseTextService.selKeys.index(charStr) 
+                        if CinBaseTextService.imeDirName == "chedayi":
+                            i = CinBaseTextService.selKeys.index(charStr) + 1
+                        else:
+                            i = CinBaseTextService.selKeys.index(charStr) 
                         if i < CinBaseTextService.candPerPage and i < len(CinBaseTextService.candidateList):
                             commitStr = CinBaseTextService.candidateList[i]
 
@@ -1268,7 +1301,7 @@ class CinBase:
                     if (currentCandPage + 1) < currentCandPageCount:
                         currentCandPage += 1
                         candCursor = 0
-                elif keyCode == VK_RETURN or (keyCode == VK_SPACE and (not CinBaseTextService.switchPageWithSpace or len(CinBaseTextService.candidateList) == 1)):  # 按下 Enter 鍵或空白鍵
+                elif keyCode == VK_RETURN or (keyCode == VK_SPACE and (not CinBaseTextService.switchPageWithSpace or currentCandPageCount <= 1)):  # 按下 Enter 鍵或空白鍵
                     if CinBaseTextService.isShowPhraseCandidates:
                         # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                         commitStr = CinBaseTextService.candidateList[candCursor]
@@ -1288,12 +1321,13 @@ class CinBase:
                         if not CinBaseTextService.directShowCand:
                             CinBaseTextService.isShowCandidates = False
                 elif keyCode == VK_SPACE and CinBaseTextService.switchPageWithSpace: # 按下空白鍵
-                    if (currentCandPage + 1) < currentCandPageCount:
-                        currentCandPage += 1
-                        candCursor = 0
-                    else:
-                        currentCandPage = 0
-                        candCursor = 0
+                    if CinBaseTextService.canUseSpaceAsPageKey:
+                        if (currentCandPage + 1) < currentCandPageCount:
+                            currentCandPage += 1
+                            candCursor = 0
+                        else:
+                            currentCandPage = 0
+                            candCursor = 0
                 else: # 按下其它鍵，先將候選字游標位址及目前頁數歸零
                     CinBaseTextService.phrasemode = False
                     CinBaseTextService.isShowPhraseCandidates = False
@@ -1325,6 +1359,9 @@ class CinBase:
                 CinBaseTextService.phrasemode = False
                 CinBaseTextService.isShowPhraseCandidates = False
             
+        if not CinBaseTextService.canUseSpaceAsPageKey:
+            CinBaseTextService.canUseSpaceAsPageKey = True
+            
         if not CinBaseTextService.closemenu:
             CinBaseTextService.closemenu = True
         return True
@@ -1349,6 +1386,9 @@ class CinBase:
         
         # 若切換全形/半形模式
         if CinBaseTextService.isShapeModeChanged:
+            return True
+            
+        if CinBaseTextService.isSelKeysChanged:
             return True
             
         CinBaseTextService.lastKeyDownCode = 0
@@ -1387,6 +1427,12 @@ class CinBase:
             if CinBaseTextService.showCandidates or len(CinBaseTextService.compositionChar) > 0:
                 self.resetComposition(CinBaseTextService)
 
+        if CinBaseTextService.isSelKeysChanged:
+            CinBaseTextService.setCandidateList(CinBaseTextService.candidateList)
+            if CinBaseTextService.isShowCandidates:
+                CinBaseTextService.setShowCandidates(True)
+            CinBaseTextService.isSelKeysChanged = False
+            
 
     def onPreservedKey(self, CinBaseTextService, guid):
         CinBaseTextService.lastKeyDownCode = 0;
@@ -1618,6 +1664,7 @@ class CinBase:
         CinBaseTextService.compositionChar = ''
         CinBaseTextService.setCompositionString('')
         CinBaseTextService.setShowCandidates(False)
+        CinBaseTextService.isShowCandidates = False
         CinBaseTextService.setCandidateCursor(0)
         CinBaseTextService.setCandidatePage(0)
         CinBaseTextService.wildcardcandidates = []

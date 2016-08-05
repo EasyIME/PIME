@@ -43,7 +43,7 @@ class CheDayiTextService(TextService):
         self.icon_dir = self.curdir
 
         # 初始化輸入行為設定
-        self.cinbase.initTextService(self)
+        self.cinbase.initTextService(self, TextService)
         self.useDayiSymbols = True
 
         # 載入用戶設定值

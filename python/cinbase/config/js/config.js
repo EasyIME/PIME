@@ -266,8 +266,8 @@ function pageReady() {
     $("#tabs").tabs({heightStyle:"auto"});
 
     if (imeFolderName == "chedayi") {
-        $("#candPerRow").spinner({min:1, max:5});
-        $("#candPerPage").spinner({min:1, max:5});
+        $("#candPerRow").spinner({min:1, max:6});
+        $("#candPerPage").spinner({min:1, max:6});
     }
     else {
         $("#candPerRow").spinner({min:1, max:10});

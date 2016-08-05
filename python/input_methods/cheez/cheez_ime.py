@@ -43,7 +43,7 @@ class CheEZTextService(TextService):
         self.icon_dir = self.curdir
 
         # 初始化輸入行為設定
-        self.cinbase.initTextService(self)
+        self.cinbase.initTextService(self, TextService)
 
         # 載入用戶設定值
         CinBaseConfig.__init__()

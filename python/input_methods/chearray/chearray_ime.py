@@ -89,9 +89,6 @@ class CheArrayTextService(TextService):
 
 
     def onKeyDown(self, keyEvent):
-        if self.cfg.selCinType != 0 or self.cfg.selCinType != 1:
-            self.directShowCand = False
-
         if self.cfg.selCinType == 0 or self.cfg.selCinType == 2:
             self.maxCharLength = 5
         else:

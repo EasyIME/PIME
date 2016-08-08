@@ -60,14 +60,11 @@ ID_OUTPUT_SIMP_CHINESE = 13
 
 class CinBase:
     def __init__(self):
+        self.cinbasecurdir = os.path.abspath(os.path.dirname(__file__))
         self.icondir = os.path.join(os.path.dirname(__file__), "icons")
         self.candselKeys = "1234567890"
         self.emoji = emoji
-        self.emojitype = 0
         self.emojimenulist = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
-        self.prevmenutypelist = []
-        self.prevmenucandlist = []
-        self.cinbasecurdir = os.path.abspath(os.path.dirname(__file__))
 
 
     # 初始化輸入行為設定
@@ -103,6 +100,11 @@ class CinBase:
         CinBaseTextService.wildcardpagecandidates = []
         CinBaseTextService.wildcardcompositionChar = ""
         CinBaseTextService.currentCandPage = 0
+
+        CinBaseTextService.emojitype = 0
+        CinBaseTextService.prevmenutypelist = []
+        CinBaseTextService.prevmenucandlist = []
+
         CinBaseTextService.showmenu = False
         CinBaseTextService.switchmenu = False
         CinBaseTextService.closemenu = True
@@ -293,6 +295,7 @@ class CinBase:
 
         # 檢查選字鍵
         if not CinBaseTextService.imeDirName == "chedayi":
+            CinBaseTextService.selKeys = "1234567890"
             if not self.candselKeys == "1234567890":
                 self.candselKeys = "1234567890"
                 CinBaseTextService.TextService.setSelKeys(CinBaseTextService, self.candselKeys)
@@ -424,12 +427,13 @@ class CinBase:
                 
                 # 大易須更換選字鍵
                 if CinBaseTextService.imeDirName == "chedayi":
+                    CinBaseTextService.selKeys = "1234567890"
                     if not self.candselKeys == "1234567890":
                         self.candselKeys = "1234567890"
                         CinBaseTextService.TextService.setSelKeys(CinBaseTextService, self.candselKeys)
+                        CinBaseTextService.isShowCandidates = True
                         CinBaseTextService.isSelKeysChanged = True
-                        CinBaseTextService.selKeys = "1234567890"
-                
+
                 if not CinBaseTextService.emojimenumode:
                     CinBaseTextService.menutype = 0
                     menu = ["功能設定", menu_OutputSimpChinese, "功能開關", "特殊符號", "注音符號", "外語文字", "表情符號"]
@@ -439,8 +443,8 @@ class CinBase:
                     CinBaseTextService.setCandidateList(self.emojimenulist)
                     
                 CinBaseTextService.menucandidates = CinBaseTextService.candidateList
-                self.prevmenutypelist = []
-                self.prevmenucandlist = []
+                CinBaseTextService.prevmenutypelist = []
+                CinBaseTextService.prevmenucandlist = []
                 CinBaseTextService.showmenu = True
 
             if CinBaseTextService.showmenu:
@@ -500,8 +504,8 @@ class CinBase:
                     CinBaseTextService.showmenu = False
                     CinBaseTextService.emojimenumode = False
                     CinBaseTextService.menutype = 0
-                    self.prevmenutypelist = []
-                    self.prevmenucandlist = []
+                    CinBaseTextService.prevmenutypelist = []
+                    CinBaseTextService.prevmenucandlist = []
                     self.resetComposition(CinBaseTextService)
                 elif self.isInSelKeys(CinBaseTextService, charCode) and not keyEvent.isKeyDown(VK_SHIFT): # 使用選字鍵執行項目或輸出候選字
                     if CinBaseTextService.selKeys.index(charStr) < CinBaseTextService.candPerPage and CinBaseTextService.selKeys.index(charStr) < len(CinBaseTextService.candidateList):
@@ -523,15 +527,15 @@ class CinBase:
                         itemName = CinBaseTextService.candidateList[candCursor]
                         CinBaseTextService.switchmenu = True
                 elif keyCode == VK_BACK:
-                    if self.prevmenutypelist:
+                    if CinBaseTextService.prevmenutypelist:
                         prevmenulist =[]
-                        prevmenutype = len(self.prevmenutypelist) - 1
-                        prevmenulist = self.prevmenutypelist[prevmenutype].split(',', 2)
+                        prevmenutype = len(CinBaseTextService.prevmenutypelist) - 1
+                        prevmenulist = CinBaseTextService.prevmenutypelist[prevmenutype].split(',', 2)
                         CinBaseTextService.menutype = int(prevmenulist[0], 10)
-                        self.prevmenucandlist = []
-                        self.prevmenucandlist.append(int(prevmenulist[1], 10))
-                        self.prevmenucandlist.append(int(prevmenulist[2], 10))
-                        self.prevmenutypelist.remove(self.prevmenutypelist[prevmenutype])
+                        CinBaseTextService.prevmenucandlist = []
+                        CinBaseTextService.prevmenucandlist.append(int(prevmenulist[1], 10))
+                        CinBaseTextService.prevmenucandlist.append(int(prevmenulist[2], 10))
+                        CinBaseTextService.prevmenutypelist.remove(CinBaseTextService.prevmenutypelist[prevmenutype])
                         pagecandidates = self.switchMenuCand(CinBaseTextService, CinBaseTextService.menutype)
 
                 # 選單切換及執行
@@ -602,36 +606,36 @@ class CinBase:
                         menutype = 8
                         i = self.emojimenulist.index(CinBaseTextService.candidateList[candCursor])
                         if i == 0:
-                            self.emojitype = 0
+                            CinBaseTextService.emojitype = 0
                             CinBaseTextService.menucandidates = self.emoji.emoticons_keynames
                         elif i == 1:
-                            self.emojitype = 1
+                            CinBaseTextService.emojitype = 1
                             CinBaseTextService.menucandidates = self.emoji.pictographs_keynames
                         elif i == 2:
-                            self.emojitype = 2
+                            CinBaseTextService.emojitype = 2
                             CinBaseTextService.menucandidates = self.emoji.miscellaneous_keynames
                         elif i == 3:
-                            self.emojitype = 3
+                            CinBaseTextService.emojitype = 3
                             CinBaseTextService.menucandidates = self.emoji.dingbats_keynames
                         elif i == 4:
-                            self.emojitype = 4
+                            CinBaseTextService.emojitype = 4
                             CinBaseTextService.menucandidates = self.emoji.transport_keynames
                         elif i == 5:
-                            self.emojitype = 5
+                            CinBaseTextService.emojitype = 5
                             CinBaseTextService.menucandidates = self.emoji.modifiercolor
                             menutype = 9
                         pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
                         CinBaseTextService.resetMenuCand = self.switchMenuType(CinBaseTextService, menutype, ["7," + str(candCursor) + "," + str(currentCandPage)])
                     elif CinBaseTextService.menutype == 8: # 切換至表情符號分類子頁面
-                        if self.emojitype == 0:
+                        if CinBaseTextService.emojitype == 0:
                             CinBaseTextService.menucandidates = self.emoji.getCharDef("emoticons", CinBaseTextService.candidateList[candCursor])
-                        elif self.emojitype == 1:
+                        elif CinBaseTextService.emojitype == 1:
                             CinBaseTextService.menucandidates = self.emoji.getCharDef("pictographs", CinBaseTextService.candidateList[candCursor])
-                        elif self.emojitype == 2:
+                        elif CinBaseTextService.emojitype == 2:
                             CinBaseTextService.menucandidates = self.emoji.getCharDef("miscellaneous", CinBaseTextService.candidateList[candCursor])
-                        elif self.emojitype == 3:
+                        elif CinBaseTextService.emojitype == 3:
                             CinBaseTextService.menucandidates = self.emoji.getCharDef("dingbats", CinBaseTextService.candidateList[candCursor])
-                        elif self.emojitype == 4:
+                        elif CinBaseTextService.emojitype == 4:
                             CinBaseTextService.menucandidates = self.emoji.getCharDef("transport", CinBaseTextService.candidateList[candCursor])
                         pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))
                         CinBaseTextService.resetMenuCand = self.switchMenuType(CinBaseTextService, 9, ["8," + str(candCursor) + "," + str(currentCandPage)])
@@ -639,10 +643,10 @@ class CinBase:
                         CinBaseTextService.setCommitString(CinBaseTextService.candidateList[candCursor])
                         CinBaseTextService.resetMenuCand = self.closeMenuCand(CinBaseTextService)
 
-                if self.prevmenucandlist:
-                    candCursor = self.prevmenucandlist[0]
-                    currentCandPage = self.prevmenucandlist[1]
-                    self.prevmenucandlist = []
+                if CinBaseTextService.prevmenucandlist:
+                    candCursor = CinBaseTextService.prevmenucandlist[0]
+                    currentCandPage = CinBaseTextService.prevmenucandlist[1]
+                    CinBaseTextService.prevmenucandlist = []
 
                 if CinBaseTextService.resetMenuCand:
                     candCursor = 0
@@ -680,11 +684,11 @@ class CinBase:
         # 大易須換回選字鍵
         if not CinBaseTextService.showmenu:
             if CinBaseTextService.imeDirName == "chedayi":
+                CinBaseTextService.selKeys = "'[]-\\"
                 if not self.candselKeys == "0123456789":
                     self.candselKeys = "0123456789"
                     CinBaseTextService.TextService.setSelKeys(CinBaseTextService, self.candselKeys)
                     CinBaseTextService.isSelKeysChanged = True
-                    CinBaseTextService.selKeys = "'[]-\\"
 
         # 按下的鍵為 CIN 內有定義的字根
         if CinBaseTextService.cin.isInKeyName(charStrLow) and CinBaseTextService.closemenu and not CinBaseTextService.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not CinBaseTextService.ctrlsymbolsmode and not CinBaseTextService.dayisymbolsmode:
@@ -1613,12 +1617,12 @@ class CinBase:
     def switchMenuType(self, CinBaseTextService, menutype, prevmenutypelist):
         CinBaseTextService.menutype = menutype
         if menutype == 0:
-            self.prevmenutypelist = prevmenutypelist
+            CinBaseTextService.prevmenutypelist = prevmenutypelist
         else:
             if prevmenutypelist:
-                self.prevmenutypelist.append(prevmenutypelist[0])
+                CinBaseTextService.prevmenutypelist.append(prevmenutypelist[0])
             else:
-                self.prevmenutypelist = prevmenutypelist
+                CinBaseTextService.prevmenutypelist = prevmenutypelist
         return True
 
 
@@ -1626,7 +1630,7 @@ class CinBase:
         CinBaseTextService.showmenu = False
         CinBaseTextService.emojimenumode = False
         CinBaseTextService.menutype = 0
-        self.prevmenutypelist = []
+        CinBaseTextService.prevmenutypelist = []
         self.resetComposition(CinBaseTextService)
         return True
 
@@ -1642,17 +1646,17 @@ class CinBase:
         if menutype == 7:
             CinBaseTextService.menucandidates = self.emojimenulist
         if menutype == 8:
-            if self.emojitype == 0:
+            if CinBaseTextService.emojitype == 0:
                 CinBaseTextService.menucandidates = self.emoji.emoticons_keynames
-            elif self.emojitype == 1:
+            elif CinBaseTextService.emojitype == 1:
                 CinBaseTextService.menucandidates = self.emoji.pictographs_keynames
-            elif self.emojitype == 2:
+            elif CinBaseTextService.emojitype == 2:
                 CinBaseTextService.menucandidates = self.emoji.miscellaneous_keynames
-            elif self.emojitype == 3:
+            elif CinBaseTextService.emojitype == 3:
                 CinBaseTextService.menucandidates = self.emoji.dingbats_keynames
-            elif self.emojitype == 4:
+            elif CinBaseTextService.emojitype == 4:
                 CinBaseTextService.menucandidates = self.emoji.transport_keynames
-            elif self.emojitype == 5:
+            elif CinBaseTextService.emojitype == 5:
                 CinBaseTextService.menucandidates = self.emoji.modifiercolor
 
         pagecandidates = list(self.chunks(CinBaseTextService.menucandidates, CinBaseTextService.candPerPage))

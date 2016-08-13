@@ -1,0 +1,39 @@
+# Rime schema
+# encoding: utf-8
+
+schema:
+  schema_id: ipa_xsampa
+  name: X-SAMPA
+  version: "0.2"
+  author:
+    - Patrick <ipatrickmac@qq.com>
+    - GONG Chen <chen.sst@gmail.com>
+  description: |
+    IPA input method in X-SAMPA.
+    http://en.wikipedia.org/wiki/X-SAMPA
+
+switches:
+  - name: ascii_mode
+    reset: 0
+    states: [ 中文, 西文 ]
+
+engine:
+  processors:
+    - ascii_composer
+    - speller
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - abc_segmentor
+    - fallback_segmentor
+  translators:
+    - table_translator
+
+speller:
+  alphabet: 'ZYXWVUTSRQPONMLKJIHGFEDCBAzyxwvutsrqponmlkjihgfedcba_<>\`~."%'':@{}1234567890&?!^|=-+/'
+  delimiter: ' '
+
+translator:
+  dictionary: ipa_xsampa

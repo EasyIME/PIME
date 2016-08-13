@@ -1,0 +1,96 @@
+# Rime schema
+# encoding: utf-8
+
+schema:
+  schema_id: jyutping
+  name: 粵拼
+  version: "0.13"
+  author:
+    - 佛振 <chen.sst@gmail.com>
+  description: |
+    採用香港語言學會粵語拼音方案
+    http://www.lshk.org/cantonese.php
+    兼容教育學院拼音方案
+    碼表源自 scim-table-zh
+  dependencies:
+    - luna_pinyin
+
+switches:
+  - name: ascii_mode
+    reset: 0
+    states: [ 中文, 西文 ]
+  - name: full_shape
+    states: [ 半角, 全角 ]
+  - name: simplification
+    states: [ 漢字, 汉字 ]
+  - name: ascii_punct
+    states: [ 。，, ．， ]
+
+engine:
+  processors:
+    - ascii_composer
+    - recognizer
+    - key_binder
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - matcher
+    - abc_segmentor
+    - punct_segmentor
+    - fallback_segmentor
+  translators:
+    - punct_translator
+    - script_translator
+    - reverse_lookup_translator
+  filters:
+    - simplifier
+    - uniquifier
+
+speller:
+  alphabet: zyxwvutsrqponmlkjihgfedcba
+  delimiter: " '"
+  algebra:
+    - derive/^jy?([aeiou])/y$1/  # 容錯 je -> ye, jyu -> yu
+    - derive/^jyu/ju/            # 容錯 jyu -> ju
+    - derive/yu/y/               # 教院式 jyu -> jy
+    - derive/eoi$/oey/           # 教院式
+    - derive/eoi$/eoy/           # 容錯
+    - derive/eo/oe/              # 教院式
+    - derive/oe(ng|k)$/eo$1/     # 容錯
+    - derive/aa$/a/              # 容錯
+    - abbrev/^([a-z]).+$/$1/     # 首字母簡拼
+    - derive/^z/dz/              # 教院式
+    - derive/^c/ts/              # 教院式
+    - abbrev/^(ng).+$/$1/        # 聲母簡拼
+    - abbrev/^([gk]w).+$/$1/     # 聲母簡拼
+    - abbrev/^(dz).+$/$1/        # 聲母簡拼
+    - abbrev/^(ts).+$/$1/        # 聲母簡拼
+
+translator:
+  dictionary: jyutping
+  spelling_hints: 5
+
+reverse_lookup:
+  dictionary: luna_pinyin
+  prefix: "`"
+  suffix: "'"
+  tips: 〔拼音〕
+  preedit_format:
+    - xform/([nl])v/$1ü/
+    - xform/([nl])ue/$1üe/
+    - xform/([jqxy])v/$1u/
+
+punctuator:
+  import_preset: default
+
+key_binder:
+  import_preset: default
+
+recognizer:
+  import_preset: default
+  patterns:
+    reverse_lookup: "`[a-z]*'?$"

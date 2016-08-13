@@ -1,0 +1,108 @@
+# Rime schema
+# encoding: utf-8
+
+schema:
+  schema_id: wugniu
+  name: 上海新派
+  version: "0.15"
+  author:
+    - 上海閒話abc <tzyyiggnih@yahoo.com.cn>
+    - 吳語越音 <zhufya@mail.ustc.edu.cn>
+  description: |
+    上海言話（新派）
+    拼寫方案採用《吳語拉丁式注音法》
+    http://input.foruto.com/wu/method.html
+  dependencies:
+    - luna_pinyin
+
+switches:
+  - name: ascii_mode
+    reset: 0
+    states: [ 中文, 西文 ]
+  - name: full_shape
+    states: [ 半角, 全角 ]
+  - name: simplification
+    states: [ 漢字, 汉字 ]
+  - name: ascii_punct
+    states: [ 。，, ．， ]
+
+engine:
+  processors:
+    - ascii_composer
+    - recognizer
+    - key_binder
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - matcher
+    - abc_segmentor
+    - punct_segmentor
+    - fallback_segmentor
+  translators:
+    - punct_translator
+    - script_translator
+    - reverse_lookup_translator
+  filters:
+    - simplifier
+    - uniquifier
+
+speller:
+  alphabet: zyxwvutsrqponmlkjihgfedcba
+  delimiter: " '"
+  algebra:
+    - abbrev/^([bcdfghjklprstvwxyz]).+$/$1/       # 對齊標準行
+    - derive/^dz/z/                               # 模糊“從”“邪”
+    - derive/(.*)aoq/$1aq/                        # 模糊前後aq
+    - derive/(.*)ae/$1e/                          # 模糊“蘭”“雷”
+    - derive/^tzi/ci/                             # 以下四行是模糊分尖團音
+    - derive/^tsi/chi/
+    - derive/^zi/ji/
+    - derive/^si/xi/
+    - derive/^(c|ch|d?j|gn|x|y)i([aeou])/$1$2/    # 本行不要改動
+    - derive/^tzyu/tzy/                           # 以下四行是模糊“書”“詩”
+    - derive/^tsyu/tsy/
+    - derive/^zyu/zy/
+    - derive/^syu/sy/
+    - derive/(.*)ij/$1i/                          # 模糊“煙”“衣”
+    - derive/(.*)aon/$1an/                        # 模糊前後an
+    #- derive/(.*)iaq/$1iq/                        # 模糊“約”“一”
+    #- derive/^yaq/yiq/                            # 模糊“藥”“頁”
+    #- derive/(.*)aq/$1eq/                         # 模糊“搭”“得”
+    #- derive/(.*)eq/$1aq/
+    #- derive/^yeu/yu/                             # 模糊“遠”“與”
+    #- derive/(.*)ieu/$1iu/                        # 模糊“宛”“餵”
+    #- derive/^vu/wu/                              # 模糊“無”“何”
+    #- derive/(.*)ueu/$1eu/                        # 模糊“碗”“按”
+    #- derive/^weu/reu/                            # 模糊“換”“汗”
+    #- derive/^au/u/                               # 模糊“查”“坐”
+
+
+translator:
+  dictionary: wugniu_lopha
+  prism: wugniu
+  spelling_hints: 5
+
+reverse_lookup:
+  dictionary: luna_pinyin
+  prefix: "`"
+  suffix: "'"
+  tips: 〔拼音〕
+  preedit_format:
+    - xform/([nl])v/$1ü/
+    - xform/([nl])ue/$1üe/
+    - xform/([jqxy])v/$1u/
+
+punctuator:
+  import_preset: default
+
+key_binder:
+  import_preset: default
+
+recognizer:
+  import_preset: default
+  patterns:
+    reverse_lookup: "`[a-z]*'?$"

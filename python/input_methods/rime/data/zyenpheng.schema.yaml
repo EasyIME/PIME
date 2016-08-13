@@ -1,0 +1,91 @@
+﻿# Rime schema
+# encoding: utf-8
+
+schema:
+  schema_id: zyenpheng
+  name: 中古全拼
+  version: "2014.04.30"
+  author:
+    - 古韻 <biopolyhedron@gmail.com>
+  description: |
+    採用《廣韻》音系的中古漢語拼音，亦稱「古韻羅馬字」。
+    韻典網·廣韻 http://ytenx.org/kyonh/
+    http://zh.wikipedia.org/wiki/User:Polyhedron/中古漢語拼音
+  dependencies:
+    - luna_pinyin
+
+switches:
+  - name: ascii_mode
+    reset: 0
+    states: [ 中文, 西文 ]
+  - name: half_shape
+    states: [ 全角, 半角 ]
+  - name: simplification
+    states: [ 漢字, 汉字 ]
+  - name: ascii_punct
+    states: [ 。，, ．， ]
+
+engine:
+  processors:
+    - ascii_composer
+    - recognizer
+    - key_binder
+    - speller
+    - punctuator
+    - selector
+    - navigator
+    - express_editor
+  segmentors:
+    - ascii_segmentor
+    - matcher
+    - abc_segmentor
+    - punct_segmentor
+    - fallback_segmentor
+  translators:
+    - punct_translator
+    - script_translator
+    - reverse_lookup_translator
+  filters:
+    - simplifier
+    - uniquifier
+
+speller:
+  alphabet: zyxwvutsrqponmlkjihgfedcba
+  delimiter: " '"
+  algebra:
+    - "xform/'//"
+    - abbrev/^([a-z]).+$/$1/
+    - abbrev/^([ptkgc]h).+$/$1/
+    - abbrev/^(zs).+$/$1/
+    - abbrev/^(ng).+$/$1/
+    - abbrev/^([czs][hs]?j).+$/$1/
+    - abbrev/^ph.+$/f/
+    - abbrev/^th.+$/r/
+    - abbrev/^kh.+$/x/
+    - abbrev/^ch.+$/v/
+    - abbrev/^ng.+$/w/
+
+translator:
+  dictionary: zyenpheng
+  spelling_hints: 8
+
+reverse_lookup:
+  dictionary: luna_pinyin
+  prefix: "`"
+  suffix: "'"
+  tips: 〔拼音〕
+  preedit_format:
+    - xform/([nl])v/$1ü/
+    - xform/([nl])ue/$1üe/
+    - xform/([jqxy])v/$1u/
+
+punctuator:
+  import_preset: default
+
+key_binder:
+  import_preset: default
+
+recognizer:
+  import_preset: default
+  patterns:
+    reverse_lookup: "`[a-z]*'?$"

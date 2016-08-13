@@ -1,0 +1,205 @@
+# Rime dictionary
+# encoding: utf-8
+#
+# IPA input method in X-SAMPA
+#
+# http://en.wikipedia.org/wiki/X-SAMPA
+#
+# Table author:
+#  - Patrick <ipatrickmac@qq.com>
+#  - GONG Chen <chen.sst@gmail.com>
+#
+
+---
+name: ipa_xsampa
+version: "0.1"
+sort: original
+...
+
+#Lower case symbols
+a	a
+b	b
+ɓ	b_<
+c	c
+d	d
+ɖ	d`
+ɗ	d_<
+e	e
+f	f
+ɡ	g
+ɠ	g_<
+h	h
+ɦ	h\
+i	i
+j	j
+ʝ	j\
+k	k
+l	l
+ɭ	l`
+ɺ	l\
+m	m
+n	n
+ɳ	n`
+o	o
+p	p
+ɸ	p\
+q	q
+r	r
+ɽ	r`
+ɹ	r\
+ɻ	r\`
+s	s
+ʂ	s`
+ɕ	s\
+t	t
+ʈ	t`
+u	u
+v	v
+ʋ	v\
+w	w
+x	x
+ɧ	x\
+y	y
+z	z
+ʐ	z`
+ʑ	z\
+
+#Uppercase symbols
+ɑ	A
+β	B
+ʙ	B\
+ç	C
+ð	D
+ɛ	E
+ɱ	F
+ɣ	G
+ɢ	G\
+ʛ	G\_<
+ɥ	H
+ʜ	H\
+ɪ	I
+ᵻ	I\
+ɪ̈	I\
+ɲ	J
+ɟ	J\
+ʄ	J\_<
+ɬ	K
+ɮ	K\
+ʎ	L
+ʟ	L\
+ɯ	M
+ɰ	M\
+ŋ	N
+ɴ	N\
+ɔ	O
+ʘ	O\
+ʋ	P
+ɒ	Q
+ʁ	R
+ʀ	R\
+ʃ	S
+θ	T
+ʊ	U
+ᵿ	U\
+ʊ̈	U\
+ʌ	V
+ʍ	W
+χ	X
+ħ	X\
+ʏ	Y
+ʒ	Z
+
+#Other symbols
+.	.
+ˈ	"
+ˌ	%
+ʲ	'
+ː	:
+ˑ	:\
+-	-
+ə	@
+ɘ	@\
+æ	{
+ʉ	}
+ɨ	1
+ø	2
+ɜ	3
+ɞ	3\
+ɾ	4
+ɫ	5
+ɐ	6
+ɤ	7
+ɵ	8
+œ	9
+ɶ	&
+ʔ	?
+ʕ	?\
+#*
+#/
+<	<
+>	>
+ʢ	<\
+ʡ	>\
+ꜛ	^
+ꜜ	!
+ǃ	!\
+↑	^
+↓	!
+|	|
+ǀ	|\
+‖	||
+ǁ	|\|\
+ǂ	=\
+‿	-\
+
+#Diacritics
+̈	_"
+̟	_+
+̠	_-
+̌	_/
+̥	_0
+#_<
+̩	=
+̩	_=
+ʼ	_>
+ˤ	_?\
+̂	_\
+̯	_^
+̚	_}
+˞	`
+̃	~
+̃	_~
+̘	_A
+̺	_a
+̏	_B
+᷅	_B_L
+̜	_c
+̪	_d
+̴	_e
+↘	<F>
+̂	_F
+ˠ	_G
+́	_H
+᷄	_H_T
+ʰ	_h
+ʲ	_j
+̰	_k
+̀	_L
+ˡ	_l
+̄	_M
+̻	_m
+̼	_N
+ⁿ	_n
+̹	_O
+̞	_o
+̙	_q
+↗	<R>
+̌	_R
+᷈	_R_F
+̝	_r
+̋	_T
+̤	_t
+̬	_v
+ʷ	_w
+̆	_X
+̽	_x

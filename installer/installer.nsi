@@ -58,6 +58,7 @@ AllowSkipFiles off ; cannot skip a file
 !define CHEEZ_GUID "{1C26A656-3F2A-4A09-9CB0-12AC85100B86}"
 !define EMOJIME_GUID "{A381D463-9338-4FBD-B83D-66FFB03523B3}"
 !define CHEENG_GUID "{88BB09A8-4603-4D78-B052-DEE9EAE697EC}"
+!define RIME_GUID "{9C2D6C68-9EA6-4CFB-A769-7E619DB7F267}"
 
 
 Name "${PRODUCT_NAME}"
@@ -132,6 +133,7 @@ Function uninstallOldVersion
                 DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEEZ_GUID}"
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${EMOJIME_GUID}"
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}"
+				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${RIME_GUID}"
 			${EndIf}
 
 			; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
@@ -458,6 +460,12 @@ SectionGroup /e "輸入法模組"
 		File /r "..\python\input_methods\cheez"
 	SectionEnd
 
+	Section "中州韻" rime
+		SectionIn 2
+		SetOutPath "$INSTDIR\python\input_methods"
+		File /r "..\python\input_methods\rime"
+	SectionEnd
+
 	Section "emojime" emojime
 			SectionIn 2
 			SetOutPath "$INSTDIR\node\input_methods"
@@ -573,6 +581,11 @@ Section "" Register
 			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEEZ_GUID}" $R0
 		${EndIf}
 
+		${If} ${SectionIsSelected} ${rime}
+			IntOp $R0 $R0 + 1
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${RIME_GUID}" $R0
+		${EndIf}
+
 		${If} ${SectionIsSelected} ${emojime}
 			IntOp $R0 $R0 + 1
 			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${EMOJIME_GUID}" $R0
@@ -581,6 +594,11 @@ Section "" Register
 		${If} ${SectionIsSelected} ${cheeng}
 			IntOp $R0 $R0 + 1
 			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}" $R0
+		${EndIf}
+
+		${If} ${SectionIsSelected} ${rime}
+			IntOp $R0 $R0 + 1
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${RIME_GUID}" $R0
 		${EndIf}
 	${EndIf}
 
@@ -651,6 +669,7 @@ LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解
 	!insertmacro MUI_DESCRIPTION_TEXT ${chesimplex} "安裝速成輸入法模組。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${chephonetic} "安裝注音輸入法模組。"
     !insertmacro MUI_DESCRIPTION_TEXT ${cheez} "安裝輕鬆輸入法模組。"
+    !insertmacro MUI_DESCRIPTION_TEXT ${rime} "安裝中州韻輸入法引擎。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${emojime} "安裝 emojime 輸入法模組。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${cheeng} "安裝英數輸入法模組。"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
@@ -672,8 +691,10 @@ Section "Uninstall"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHESIMPLEX_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEPHONETIC_GUID}"
         DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEEZ_GUID}"
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${RIME_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${EMOJIME_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}"
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${RIME_GUID}"
 	${EndIf}
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)

@@ -1,0 +1,1021 @@
+# emoji.dict.yaml
+# 雪齋 <leoyoontsaw@gmail.com>
+# 編碼以Unicode分類爲主，瑾昀整理
+# 29-Apr-2014 添加字頻，字頻得自http://www.emojitracker.com，統計自twitter.com
+
+---
+name: emoji
+version: "2.5"
+sort: by_weight
+use_preset_vocabulary: false
+columns:
+  - text
+  - code
+  - weight
+...
+#天氣
+☀	sunny;tian'qi`weather	10908516
+☔	rain;tian'qi`weather	951774
+⛈	storm;tian'qi`weather
+⛆	haze;tian'qi`weather
+⛅	cloudy;tian'qi`weather	771487
+☁	cloud;tian'qi`weather	2024540
+❄	snow;tian'qi`weather	2407391
+⚡	lightening;tian'qi`weather	952903
+🌊	tsunami;tian'qi`weather	1043014
+🌀	typhoon;tian'qi`weather	1434111
+🌂	rain;tian'qi`weather	139837
+🌁	fog;tian'qi`weather	68865
+#自然
+🌃	night;zi'ran`nature	309628
+🌄	sunrise;zi'ran`nature	158657
+🌅	dawn;zi'ran`nature	447459
+🌆	dusk;zi'ran`nature	151344
+🌇	sunset;zi'ran`nature	137905
+🌈	rainbow;zi'ran`nature	713068
+🌉	night;zi'ran`nature	77242
+🌋	volcano;zi'ran`nature	102404
+🌌	milkyway;zi'ran`nature	384578
+#地球
+🌍	world;di'qiu`globe	1209176
+🌎	world;di'qiu`globe	1190195
+🌏	world;di'qiu`globe	557643
+🌐	globe;di'qiu	102806
+#天體
+🌑	newmoon;lunar;tian'ti`celestial	717191
+🌒	lunar;tian'ti`celestial	569330
+🌓	lunar;tian'ti`celestial	575153
+🌔	lunar;tian'ti`celestial	555204
+🌕	fullmoon,lunar;tian'ti`celestial	752822
+🌖	lunar;tian'ti`celestial	528816
+🌗	lunar;tian'ti`celestial	552074
+🌘	lunar;tian'ti`celestial	538503
+🌙	crescent,moon;tian'ti`celestial	1676075
+🌚	new,moon;tian'ti`celestial	5502431
+🌛	moon;tian'ti`celestial	386495
+🌜	moon;tian'ti`celestial	353601
+🌝	full,moon;tian'ti`celestial	1812416
+🌞	sun;tian'ti`celestial	3028152
+🌟	star;tian'ti`celestial	2380502
+🌠	star;tian'ti`celestial
+#植物
+🌰	chestnut,nut;zhi'wu`plant	189349
+🌱	seed,tree;zhi'wu`plant	215939
+🌲	evergreen,tree;zhi'wu`plant	265862
+🌳	deciduous,tree;zhi'wu`plant	284983
+🌴	palm,tree;zhi'wu`plant	1952713
+🌵	cactus;zhi'wu`plant	1770620
+🌷	tulip,flower;zhi'wu`plant	1383323
+🌸	cherry,flower;zhi'wu`plant	9835327
+🌹	rose,flower;zhi'wu`plant	11591746
+🌺	hibiscus,flower;zhi'wu`plant	2647722
+🌻	sun,flower;zhi'wu`plant	1607728
+🌼	blossom,flower;zhi'wu`plant	754131
+🌽	maize,harvest;zhi'wu`plant	231763
+🌾	rice,harvest;zhi'wu`plant	644982
+🌿	herb,leaf;zhi'wu`plant	667177
+🍀	fourleaf,leaf;zhi'wu`plant	1822124
+🍁	maple,leaf;zhi'wu`plant	1313274
+🍂	fallen,leaf;zhi'wu`plant	907880
+🍃	leaf,wind;zhi'wu`plant	1659761
+🍄	mushroom;zhi'wu`plant	360205
+#水果
+🍅	tomato,vagetable;shui'guo`fruit	142801
+🍆	eggplant,vegetable;shui'guo`fruit
+🍇	grape;shui'guo`fruit	408946
+🍈	pomelo;shui'guo`fruit	63763
+🍉	watermelon;shui'guo`fruit	839223
+🍊	orange;shui'guo`fruit	395798
+🍋	lemon;shui'guo`fruit	267089
+🍌	banana;shui'guo`fruit	968374
+🍍	pinapple;shui'guo`fruit	466668
+🍎	apple,red;shui'guo`fruit	479779
+🍏	apple,green;shui'guo`fruit	184593
+🍐	pear;shui'guo`fruit	96351
+🍑	peach;shui'guo`fruit	465304
+🍒	cherry;shui'guo`fruit	576022
+🍓	strawberry;shui'guo`fruit	658670
+#食物
+🍔	hamberger;shi'wu`food	918418
+🍕	pie;shi'wu`food	2646435
+🍖	meat,bone;shi'wu`food	232560
+🍗	chicken,leg;shi'wu`food	617039
+🍘	rice,cracker;shi'wu`food	36448
+🍙	rice,ball;shi'wu`food	68303
+🍚	rice;shi'wu`food	213603
+🍛	rice,curry;shi'wu`food	203831
+🍜	nuddle;shi'wu`food	458638
+🍝	spaghetti,nuddle;shi'wu`food	561103
+🍞	bread;shi'wu`food	355183
+🍟	french,fries;shi'wu`food	881153
+🍠	sweet,potato;shi'wu`food	59682
+🍡	dango,skewer;shi'wu`food	86912
+🍢	oden,skewer;shi'wu`food	94296
+🍣	sushi;shi'wu`food	279845
+🍤	fried,shrimp;shi'wu`food	356626
+🍥	fish,cake;shi'wu`food	223313
+🍦	icecream;shi'wu`food	951968
+🍧	icecream,shaved;shi'wu`food	313125
+🍨	icecream;shi'wu`food	192195
+🍩	doughnut;shi'wu`food	1334698
+🍪	cookie,biscuit;shi'wu`food	1042322
+🍫	chocolate;shi'wu`food	795966
+🍬	candy;shi'wu`food	368065
+🍭	lollipop,candy;shi'wu`food	838169
+🍮	custard,cake;shi'wu`food	193118
+🍯	honey,pot;shi'wu`food	164405
+🍰	cake,slice;shi'wu`food
+🍱	bentobox,meal;shi'wu`food	190598
+🍲	meal,pot;shi'wu`food	248437
+🍳	cooking,pan;shi'wu`food	371933
+#飲料
+🍵	tea,cup;yin'liao`beverage	236491
+🍶	shake,bottle;yin'liao`beverage	53858
+🍷	wine,glass;yin'liao`beverage	1092026
+🍸	cocktail,glass;yin'liao`beverage	880423
+🍹	drink,tropical;yin'liao`beverage	831315
+🍺	beer,mug;yin'liao`beverage	1207404
+🍻	beer,cheers;yin'liao`beverage	2660515
+🍼	baby,bottle;yin'liao`beverage	285011
+#節日
+🎀	ribbon;jie'ri`celebrate	3375792
+🎁	gift,package;jie'ri`celebrate	2080680
+🎂	birthday,cake;jie'ri`celebrate	1552281
+🎃	halloween,lantern;jie'ri`celebrate	842997
+🎄	christmas,tree;jie'ri`celebrate	1862210
+🎅	father,christmas;jie'ri`celebrate	1558671
+🎆	fireworks;jie'ri`celebrate	315235
+🎇	fireworks,spark;jie'ri`celebrate	140551
+🎈	balloon;jie'ri`celebrate	2657791
+🎉	party,popper;jie'ri`celebrate	9538587
+🎊	confetti,congratulations;jie'ri`celebrate	1514576
+🎋	tanabata,tree;jie'ri`celebrate	88966
+🎌	cross,flag;jie'ri`celebrate	52299
+🎍	pine,japan;jie'ri`celebrate	63549
+🎎	doll,japan;jie'ri`celebrate	200574
+🎏	carp,flag;jie'ri`celebrate	47774
+🎐	windchime,balloon;jie'ri`celebrate	64510
+🎑	mid,autumn;jie'ri`celebrate	20195
+🎒	school,entrence;jie'ri`celebrate	62518
+🎓	graduation,cap;jie'ri`celebrate	554877
+#娛樂
+🎠	carouselhorse,park;yu'le`entertainment	43177
+🎡	ferriswheel,park;yu'le`entertainment	94670
+🎢	rollercoaster,park;yu'le`entertainment	157053
+🎣	fishing;yu'le`entertainment	479270
+🎤	microphone,karaokay;yu'le`entertainment	2174297
+🎥	movie,cinema;yu'le`entertainment	1145741
+🎦	cinema,movie;yu'le`entertainment	22495
+🎧	headphone,music;yu'le`entertainment	7705315
+🎨	painting,art;yu'le`entertainment	433879
+🎩	theater,magician;yu'le`entertainment	317170
+🎪	circus,theater;yu'le`entertainment	43558
+🎫	ticket;yu'le`entertainment	26746
+🎬	action,movie;yu'le`entertainment	473788
+🎭	mask,party;yu'le`entertainment	279275
+#遊戲
+🎮	video,game;you'xi	800686
+🎯	dart,target;you'xi`game	219076
+🎰	gamble;you'xi`game	38954
+🎱	billiards;you'xi`game	151739
+⛄	snowman;you'xi`game	1314601
+🎲	dice;you'xi`game	91670
+🎳	bowling;you'xi`game	213258
+🎴	cards,flower;you'xi`game	20840
+#音樂
+🎵	note,music;yin'yue	3386847
+🎶	notes,music;yin'yue	24360083
+🎷	saxophone;yin'yue`music	73147
+🎸	guitar;yin'yue`music	698011
+🎹	piano;yin'yue`music	148245
+🎺	trumpet;yin'yue`music	63479
+🎻	violin;yin'yue`music	101300
+🎼	script,music;yin'yue	688214
+#運動
+🎽	sport,shirt;yun'dong`sport	91072
+🎾	tennis;yun'dong`sport	348955
+🎿	ski,boot;yun'dong`sport	132027
+🏀	basket,ball;yun'dong`sport	3174878
+🏁	racing;yun'dong`sport
+🏂	snowboard,ski;yun'dong`sport	258012
+🏃	run,race;yun'dong`sport	3139065
+🏄	surf;yun'dong`sport	505059
+🏆	win;yun'dong`sport	943031
+🏇	horse,racing;yun'dong`sport	147421
+🏈	football;yun'dong`sport	1935364
+🏉	football,rugby;yun'dong`sport	169892
+🏊	swim;yun'dong`sport	928274
+#建築
+🏠	house;jian'zhu`building	455959
+🏡	house,garden;jian'zhu`building	650064
+🏢	office,building;jian'zhu	108929
+🏣	post,japan;jian'zhu`building	12655
+🏤	post,europe;jian'zhu`building	56285
+🏥	hospital;jian'zhu`building	154418
+🏦	bank;jian'zhu`building	24374
+🏧	atm;jian'zhu`building	41189
+🏨	hotel;jian'zhu`building	44690
+🏩	hotel,love;jian'zhu`building	94572
+🏪	convenience,store;jian'zhu`building	25652
+🏫	school;jian'zhu`building	78016
+🏬	department,store;jian'zhu`building	13297
+🏭	factory;jian'zhu`building	9302
+🏮	lantern,izakaya;jian'zhu`building	17856
+🏯	japan,castle;jian'zhu`building	26602
+🏰	europe,castle;jian'zhu`building	73552
+#動物
+🐀	rat,mouse;dong'wu`animal	119682
+🐁	mouse;dong'wu`animal	43355
+🐂	ox;dong'wu`animal	96159
+🐃	buffalo,ox;dong'wu`animal	55424
+🐄	cow,ox;dong'wu`animal	161179
+🐅	tiger,cat;dong'wu`animal	169674
+🐆	leopard,cat;dong'wu`animal	84249
+🐇	rabbit;dong'wu`animal	137956
+🐈	cat;dong'wu`animal	188700
+🐉	dragon,snake;dong'wu`animal	151856
+🐊	crocodile,snake;dong'wu`animal	238894
+🐋	wheal;dong'wu`animal	458342
+🐌	snail,insect;dong'wu`animal	232225
+🐍	snake;dong'wu`animal	799236
+🐎	horse;dong'wu`animal	360988
+🐏	ram,sheep;dong'wu`animal	137730
+🐐	goat,sheep;dong'wu`animal	138297
+🐑	sheep;dong'wu`animal	303957
+🐒	monkey;dong'wu`animal	808799
+🐓	cock,chicken;dong'wu`animal	226548
+🐔	chicken;dong'wu`animal	453867
+🐕	dog;dong'wu`animal	108103
+🐖	pig;dong'wu`animal	111989
+🐗	boar,pig;dong'wu`animal	128526
+🐘	elephant;dong'wu`animal	595676
+🐙	octopus;dong'wu`animal	608731
+🐚	shell;dong'wu`animal	180517
+🐛	bug,insect;dong'wu`animal	277487
+🐜	ant,insect;dong'wu`animal	232611
+🐝	bee,insect;dong'wu`animal	741357
+🐞	beetle,incect;dong'wu`animal	173367
+🐟	fish;dong'wu`animal	476960
+🐠	fish;dong'wu`animal	558513
+🐡	fish;dong'wu`animal	84272
+🐢	turtle;dong'wu`animal	1108766
+🐣	chick,chicken;dong'wu`animal	878568
+🐤	chick,chicken;dong'wu`animal	266999
+🐥	chick,chicken;dong'wu`animal	693362
+🐦	bird;dong'wu`animal	347226
+🐧	penguin,bird;dong'wu`animal	2197214
+🐨	koala;dong'wu`animal	405843
+🐩	poodle,dog;dong'wu`animal	208888
+🐪	camel;dong'wu`animal	314073
+🐫	camel;dong'wu`animal	262439
+🐬	dolphin;dong'wu`animal	672425
+🐳	wheal;dong'wu`animal	803852
+#生肖
+🐭	mouse,shu;sheng'xiao`zodiac	384001
+🐮	ox,niu;sheng'xiao`zodiac	374332
+🐯	tiger,hu;sheng'xiao`zodiac	1111901
+🐰	rabit,tu;sheng'xiao`zodiac	839623
+🐲	dragon,long;sheng'xiao`zodiac	130431
+🐍	snake,she;sheng'xiao`zodiac	799236
+🐴	horse,ma;sheng'xiao`zodiac	539978
+🐏	sheep,yang;sheng'xiao`zodiac	137730
+🐵	monkey,hou;sheng'xiao`zodiac	378952
+🐔	chicken,ji;sheng'xiao`zodiac	453867
+🐶	dog,gou;sheng'xiao`zodiac	2760967
+🐷	pig,zhu;sheng'xiao`zodiac	1257035
+#獸面
+🐱	cat;shou'mian`animalface	2245073
+🐸	frog;shou'mian`animalface	576379
+🐹	hamster,mouse;shou'mian`animalface	216262
+🐺	wolf;shou'mian`animalface	339595
+🐻	bear;shou'mian`animalface	809156
+🐼	panda;shou'mian`animalface	947653
+🐽	stupid;shou'mian`animalface	426046
+🐾	paw;shou'mian`animalface	665221
+#五官
+👀	eye;wu'guan`body	23438909
+👂	ear;wu'guan`body	663356
+👃	nose;wu'guan`body	701279
+👄	mouth;wu'guan`body	1229323
+👅	tougue;wu'guan`body	2902990
+#手
+👆	up,direction;shou`hand	2257487
+👇	down,direction;shou`hand	2325308
+👈	left,direction;shou`hand	3478729
+👉	right,direction;shou`hand	3766346
+👊	fist;shou`hand	13226267
+👋	palm;shou`hand	12301045
+👌	ok;shou`hand	97194094
+👍	good;shou`hand	37332839
+👎	bad;shou`hand	8034991
+👏	clap;shou`hand	21997828
+👐	no;shou`hand	4304078
+🙌	no;shou`hand	35777430
+🙏	bless;shou`hand	26838022
+#衣物
+👑	clown;yi'wu`clothes	4125318
+👒	hat;yi'wu`clothes	101157
+👓	glasses;yi'wu`clothes	579839
+👔	shirt;yi'wu`clothes	233100
+👕	shirt;yi'wu`clothes	180050
+👖	pants;yi'wu`clothes	304600
+👗	dress;yi'wu`clothes	471785
+👘	dress;yi'wu`clothes	63144
+👙	bikini;yi'wu`clothes	652482
+👚	shirt;yi'wu`clothes	97509
+👛	bag;yi'wu`clothes
+👜	bag;yi'wu`clothes	212062
+👝	bag;yi'wu`clothes	25172
+👞	shoe;yi'wu`clothes	190592
+👟	shoe;yi'wu`clothes	646977
+👠	highheeled,shoe;yi'wu`clothes	622361
+👡	highheeled,shoe;yi'wu`clothes	110674
+👢	boot,shoe;yi'wu`clothes	139855
+👣	footprint;yi'wu`clothes	938055
+#頭
+👤	portrait;tou`head	215858
+👥	portrait;tou`head	234356
+👦	boy,head;tou`head
+👧	girl,head;tou`head	583781
+👨	man,head;tou`head
+👩	woman,head;tou`head
+👮	police;tou`head	325325
+👱	western,head;tou`head	297490
+👲	chinese,head;tou`head	505572
+👳	arabic,head;tou`head	874286
+👴	old,head;tou`head	601592
+👵	old,head;tou`head	795285
+👶	baby,head;tou`head	1684352
+👷	worker,head;tou`head	182830
+👸	queen;tou`head	2129888
+👹	evil;tou`head	1119758
+👺	evil;tou`head	390376
+👻	ghost;tou`head	2236829
+👼	angle;tou`head	2268270
+👽	ghost;tou`head	2040806
+👾	evil;tou`head	716605
+👿	evil;tou`head	1834205
+💀	dead;tou`head	5362119
+#人
+👯	dancing;ren`people	4291879
+👰	wendding;ren`people	582569
+👪	people;ren`people	712062
+👫	people;ren`people	2859426
+👬	people;ren`people	656135
+👭	people;ren`people	2617945
+💁	role;ren`people	33722403
+💂	role;ren`people	1324903
+💃	dancing;ren`people	6913103
+🙅	no;ren`people	10131547
+🙆	lookfar;ren`people	3963552
+🙇	working;ren`people	3390600
+🙋	hand,raise;ren`people	8177749
+🙍	upset;ren`people	3062491
+🙎	stare;ren`people	1068795
+#膚色
+🏻	white;fu'se`tone
+🏼	yellow;fu'se`tone
+🏽	brown;fu'se`tone
+🏾	dark;fu'se`tone
+🏿	black;fu'se`tone
+#化妝
+💄	lip,stick;hua'zhuang`makeup	627751
+💅	nail,polisher;hua'zhuang`makeup	2789941
+💆	face,massage;hua'zhuang`makeup	1698402
+💇	hair,cut;hua'zhuang`makeup	1007552
+💈	hair,cut;hua'zhuang`makeup	154896
+#愛情
+💋	kiss;ai'qing`love	15758247
+💌	love,letter;ai'qing`love	563476
+💍	ring;ai'qing`love	2066268
+💎	diamond;ai'qing`love	2569468
+💏	love;ai'qing`love	2616344
+💐	bouquet;ai'qing`love	1855112
+💑	love;ai'qing`love	1294906
+💒	wedding;ai'qing`love	117072
+#心
+💓	heart;xin	3465507
+💔	broken,heart;xin	16106883
+💕	heart;xin	60923922
+💖	heart;xin	10731414
+💗	heart;xin	11366103
+💘	heart;xin	7458038
+💙	heart;xin	13475552
+💚	heart;xin	6685368
+💛	heart;xin	7326096
+💜	heart;xin	15190285
+💝	heart;xin	1399543
+💞	heart;xin	9423084
+💟	heart;xin	780159
+#效果
+💠	icon;xiao'guo`comic	181185
+💡	bulb;xiao'guo`comic
+💢	hit;xiao'guo`comic	987600
+💣	bomb;xiao'guo`comic	1313794
+💤	sleepy;xiao'guo`comic	3956491
+💥	collision;xiao'guo`comic	2253170
+💦	sweat;xiao'guo`comic	2665811
+💧	tear;xiao'guo`comic	324942
+💨	dash;xiao'guo`comic	2457481
+💩	shit;xiao'guo`comic	6147261
+💪	muscle;xiao'guo`comic	9065904
+💫	dizzy;xiao'guo`comic	2151531
+💬	speech;xiao'guo`comic	595757
+💭	thought;xiao'guo`comic	2136072
+#錢
+💰	money;qian`money	2664138
+💱	money;qian`money	18349
+💲	money;qian`money	162062
+💳	bank,card;qian`money	188370
+💴	bill;qian`money	90155
+💵	bill;qian`money	1062479
+💶	bill;qian`money	116854
+💷	bill;qian`money	165502
+💸	bill;qian`money	1656248
+💹	stock;qian`money	10694
+#符號
+💺	chair,seat;fu'hao`symbol	221817
+💻	computer;fu'hao`symbol	198017
+💼	bag;fu'hao`symbol	97788
+💽	disc;fu'hao`symbol	72091
+💾	floppy,disc;fu'hao`symbol	21799
+💿	cd,disc;fu'hao`symbol	145015
+📀	dvd,disc;fu'hao`symbol	71893
+📁	folder;fu'hao`symbol	10000
+📂	folder;fu'hao`symbol	7982
+📃	page,print;fu'hao`symbol	30498
+📄	page;fu'hao`symbol	39447
+📅	calendar;fu'hao`symbol	54624
+📆	calendar;fu'hao`symbol	43575
+📇	card;fu'hao`symbol	15311
+📈	chart,prosperity;fu'hao`symbol	38156
+📉	chart,depression;fu'hao`symbol	26665
+📊	bar,chart;fu'hao`symbol	29180
+📋	clip,board;fu'hao`symbol	28205
+📌	pin;fu'hao`symbol	80723
+📍	pin;fu'hao`symbol	111597
+📎	clip;fu'hao`symbol	28624
+📏	ruler;fu'hao`symbol	20423
+📐	ruler;fu'hao`symbol	21127
+📑	book,mark;fu'hao`symbol	29100
+📒	note,book;fu'hao`symbol	65717
+📓	note,book;fu'hao`symbol
+📔	note,book;fu'hao`symbol	28900
+📕	note,book;fu'hao`symbol	81908
+📖	book,open;fu'hao`symbol	535575
+📗	book,green;fu'hao`symbol	35913
+📘	book,blue;fu'hao`symbol	39624
+📙	book,orange;fu'hao`symbol	26782
+📚	books;fu'hao`symbol	746311
+📛	name,bar;fu'hao`symbol	33931
+📜	script;fu'hao`symbol	52128
+🔞	numeric,sign;fu'hao`symbol	238572
+🔟	numeric,sign;fu'hao`symbol	103388
+🔠	uppercase;fu'hao`symbol	9838
+🔡	lowercase;fu'hao`symbol	6232
+🔢	numbermode;fu'hao`symbol	33889
+🔣	punctmode;fu'hao`symbol	9030
+🔤	englishmode;fu'hao`symbol	11369
+💮	good;fu'hao`symbol	125042
+💯	good;fu'hao`symbol	19994225
+#⃣	pound,mark;fu'hao`symbol
+⭕	yes;fu'hao`symbol	2252206
+❌	no;fu'hao`symbol	1488451
+#通訊
+📝	memo;tong'xun`communication	554135
+📞	tele,phone;tong'xun`communication	351898
+📟	pager;tong'xun`communication	20463
+📠	fax;tong'xun`communication	18040
+📡	antenna;tong'xun`communication	46362
+📢	speaker;tong'xun`communication	485610
+📣	speaker;tong'xun`communication	137956
+📤	outbox;tong'xun`communication	5938
+📥	inbox;tong'xun`communication	12050
+📦	gift;tong'xun`communication	141694
+📧	email;tong'xun`communication	24228
+📨	email;tong'xun`communication	16366
+📩	email;tong'xun`communication	111180
+📪	mail,box;tong'xun`communication	6542
+📫	mail,box;tong'xun`communication	17484
+📬	newmail,mailbox;tong'xun`communication	40688
+📭	empty,mailbox;tong'xun`communication	8317
+📮	post,box;tong'xun`communication	21236
+📯	horn;tong'xun`communication	28623
+📰	newspaper;tong'xun`communication	58629
+📱	mobile,phone;tong'xun`communication	860006
+📲	mobile,phone;tong'xun`communication	925009
+📳	mobile,phone;tong'xun`communication	20617
+📴	mobile,phone;tong'xun`communication	71891
+📵	no,phone;tong'xun`communication	54069
+📶	signal;tong'xun`communication	91599
+#工具
+💉	inject;gong'ju`tool	932696
+💊	pill;gong'ju`tool	537208
+📷	camara;gong'ju`tool	940278
+📹	vcr;gong'ju`tool	79204
+📺	tv;gong'ju`tool	718012
+📻	radio;gong'ju`tool	69636
+📼	video,cassette;gong'ju`tool	40853
+🍴	fork,knife;gong'ju`tool	1276553
+#介面
+🔀	random,play;jie'mian	14466
+🔁	repeat,play;jie'mian	141631
+🔂	nonrepeat,play;jie'mian	42656
+🔃	repeat,play;jie'mian	181917
+🔄	repeat,play;jie'mian	144265
+🔅	brightness,ui;jie'mian	75157
+🔆	brightness,ui;jie'mian	266473
+🔇	sound,ui;jie'mian	81339
+🔈	sound,ui;jie'mian
+🔉	sound,ui;jie'mian	20183
+🔊	sound,ui;jie'mian	634274
+🔋	battery,ui;jie'mian	189742
+🔌	plug,ui;jie'mian	257275
+🔍	zoom,ui;jie'mian	47211
+🔎	zoom,ui;jie'mian	60711
+🔏	lock,ui;jie'mian	16791
+🔐	lock,ui;jie'mian	470571
+🔑	key,ui;jie'mian	357330
+🔒	lock,ui;jie'mian	270377
+🔓	unlock,ui;jie'mian	182491
+🔔	ring,bell;jie'mian	136160
+🔕	ring,bell;jie'mian	33108
+🔖	book,mark;jie'mian	21147
+🔗	link,ui;jie'mian	39426
+🔘	button,ui;jie'mian	127482
+🔺	previous,ui;jie'mian	170080
+🔻	next,ui;jie'mian	153036
+🔼	previous,ui;jie'mian	40180
+🔽	next,ui;jie'mian	30991
+🆗	ok,buttom;jie'mian	377666
+🆕	new,ui;jie'mian	70256
+🆙	up;,uijiemian	196994
+🆒	cool,ui;jie'mian	524082
+🎦	camera,ui;jie'mian	22495
+📶	signal,ui;jie'mian	91599
+#箭頭
+🔙	back;jian'tou	199172
+🔚	end;jian'tou	61628
+🔛	on;jian'tou	76091
+🔜	soon;jian'tou	131712
+🔝	top;jian'tou	564521
+⬆	up,arrow;jian'tou	203143
+⬇	down,arrow;jian'tou	376244
+⬅	left,arrow;jian'tou	397957
+➡	right,arrow;jian'tou	739926
+↗	upright,arrow;jian'tou	308902
+↖	upleft,arrow;jian'tou	148750
+↘	downright,arrow;jian'tou	250329
+↙	downleft,arrow;jian'tou	376844
+◀	back,ui;jian'tou	791619
+▶	preceed,ui;jian'tou	2855698
+⏪	forward,ui;jian'tou	36449
+⏩	abckward,ui;jianyou	66389
+#輸入法
+🔥	fire;shu'ru'fa`input	5191394
+🔦	light;shu'ru'fa`input	95241
+🔧	tool;shu'ru'fa`input	55000
+🔨	tool;shu'ru'fa`input	235172
+🔩	tool;shu'ru'fa`input	84705
+🔪	knife;shu'ru'fa`input	1424148
+🔫	gun;shu'ru'fa`input	9571757
+🔬	micro,scope;shu'ru'fa`input	40423
+🔭	tele,scope;shu'ru'fa`input	80855
+🔮	cry,sadstal,ball;shu'ru'fa`input	429054
+🔯	hex,star;shu'ru'fa`input	62941
+🔰	shield;shu'ru'fa`input	71043
+🔱	triad;shu'ru'fa`input	181580
+#幾何
+🔲	square;ji'he`geometry	313362
+🔳	square;ji'he`geometry	77243
+🔴	circle;ji'he`geometry	1898394
+🔵	circle;ji'he`geometry	335148
+🔶	rhombic;ji'he`geometry	166498
+🔷	rhombic;ji'he`geometry	159605
+🔸	rhombic;ji'he`geometry	164997
+🔹	rhombic;ji'he`geometry	261498
+#宗敎
+🕀	cross;zong'jiao`religious
+🕁	cross;zong'jiao`religious
+🕂	cross;zong'jiao`religious
+🕃	religious;zong'jiao
+#鐘
+🕐	one,clock;zhong	85680
+🕑	two,clock;zhong	72299
+🕒	three,clock;zhong	63555
+🕓	four,clock;zhong	49878
+🕔	five,clock;zhong	39738
+🕕	six,clock;zhong	23945
+🕖	seven,clock;zhong	25045
+🕗	eight,clock;zhong	31827
+🕘	nine,clock;zhong	43726
+🕙	ten,clock;zhong	35423
+🕚	eleven,clock;zhong	29338
+🕛	twelve,clock;zhong	77109
+🕜	clock,onehalf;zhong	24059
+🕝	twohalf,clock;zhong	19605
+🕞	threehalf,clock;zhong	14573
+🕟	fourhalf,clock;zhong	16914
+🕠	fivehalf,clock;zhong	14460
+🕡	sixhalf,clock;zhong	8660
+🕢	sevenhalf,clock;zhong	21384
+🕣	eighthalf,clock;zhong	10890
+🕤	ninehalf,clock;zhong	16857
+🕥	tenhalfe,clock;zhong	22884
+🕦	elevenhalf,clock;zhong	23384
+🕧	twelvehalf,clock;zhong	19448
+#國
+🗻	japan;guo`landmark	118790
+🗼	france;guo`landmark	58285
+🗽	usa;guo`landmark	188015
+🗾	japan;guo`landmark	18168
+🗿	easter;guo`landmark	344879
+🇯🇵	japan,country;guo	137619
+🇰🇷	korea,country;guo	423154	63792
+🇨🇳	china,country;guo	53912
+🇺🇸	usa,country;guo	1874864	249847	80292
+🇫🇷	france,country;guo	423154	63792
+🇪🇸	spain,country;guo	1874864	249847	139766
+🇮🇹	italy,country;guo	504114
+🇷🇺	russia,country;guo	423154	80292	63792
+🇬🇧	uk,country;guo	499461
+🇩🇪	germany,country;guo	139766
+🇦🇺	austrilia,country;guo
+🇦🇹	austria,country;guo
+🇧🇪	belgium,country;guo
+🇧🇷	brazil,country;guo
+🇨🇦	canada,country;guo
+🇨🇱	chile,country;guo
+🇨🇴	colombia,country;guo
+🇩🇰	denmark,country;guo
+🇫🇮	finland,country;guo
+🇭🇰	hongkong,country;guo
+🇮🇳	india,country;guo
+🇮🇩	indonesia,country;guo
+🇮🇪	ireland,country;guo
+🇮🇱	israel,country;guo
+🇲🇴	macau,country;guo
+🇲🇾	malaysia,country;guo
+🇲🇽	mexico,country;guo
+🇳🇱	netherlands,country;guo
+🇳🇿	newzealand,country;guo
+🇳🇴	norway,country;guo
+🇵🇭	philippin,country;guo
+🇵🇱	poland,country;guo
+🇵🇹	portugal,country;guo
+🇵🇷	puertorico,country;guo
+🇸🇦	saudiarabia,country;guo
+🇸🇬	singapore,country;guo
+🇿🇦	southafrica,country;guo
+🇸🇪	sweden,country;guo
+🇹🇷	turkey,country;guo
+🇨🇭	switzerland,country;guo
+🇦🇪	unitedarab,country;guo
+🇻🇳	vietnam,country;guo
+#表情
+#微笑
+😀	smile,happy;biao'qing	5732540
+😉	smile,happy;biao'qing	34784906
+😊	smile,happy;biao'qing	87799028
+😅	smile,happy;biao'qing	12998885
+😇	smile,happy;biao'qing	3762620
+😈	smile,happy;biao'qing	12022677
+😎	smile,happy;biao'qing	28860296
+😺	smile,happy;biao'qing	841816
+#大笑
+😂	laugh,happy;biao'qing	241199504
+😃	laugh,happy;biao'qing	13208072
+😄	laugh,happy;biao'qing	22690419
+😆	laugh,happy;biao'qing	8660315
+😋	laugh,happy;biao'qing	25368750
+😸	laugh,happy;biao'qing	1349135
+😹	laugh,happy;biao'qing	3046282
+#厭惡
+😱	dislike,bad;biao'qing	17443628
+😲	dislike,bad;biao'qing	2292518
+😷	dislike,bad;biao'qing	12164762
+😗	dislike,bad;biao'qing	1007647
+😩	dislike,bad;biao'qing	77509573
+😴	dislike,bad;biao'qing	22627074
+😵	dislike,bad;biao'qing	2344824
+🙀	dislike,bad;biao'qing	1532341
+#嘆气
+😣	sigh,sad;biao'qing	11902724
+😥	sigh,sad;biao'qing	8279481
+😪	sigh,sad;biao'qing	14381841
+😞	sigh,sad;biao'qing	24327038
+😟	sigh,sad;biao'qing	4067110
+#哭泣
+😭	cry,sad;biao'qing	68806085
+😫	cry,sad;biao'qing	18084845
+#冷淡
+👽	indifferent;biao'qing	2040806
+😌	indifferent;biao'qing	31636039
+😒	indifferent;biao'qing	120603862
+😔	indifferent;biao'qing	79868168
+😚	indifferent;biao'qing	8044811
+😐	indifferent;biao'qing	19934628
+😑	indifferent;biao'qing	27128491
+😕	indifferent;biao'qing	20956092
+😶	indifferent;biao'qing	7690554
+#喜歡
+😍	like,happy;biao'qing	108789568
+😘	like,happy;biao'qing	89072430
+😙	like,happy;biao'qing	1719673
+😚	like,happy;biao'qing	8044811
+😻	like,happy;biao'qing	6298445
+😽	like,happy;biao'qing	1303998
+#驚喜
+😨	supprise;biao'qing	3633824
+😳	supprise;biao'qing	51861810
+😖	supprise;biao'qing	9940594
+😦	supprise;biao'qing	1695715
+😧	supprise;biao'qing	2069022
+😬	supprise;biao'qing	9749617
+😮	supprise;biao'qing	2636735
+😯	supprise;biao'qing	2548727
+#咧嘴笑
+😏	grin;biao'qing	71614858
+😁	grin;biao'qing	65097366
+😜	grin;biao'qing	25047549
+😝	grin;biao'qing	14206104
+😛	grin;biao'qing	6849627
+😼	grin;biao'qing	1676259
+#生气
+👿	angry,bad;biao'qing	1834205
+😠	angry,bad;biao'qing	9979042
+😡	angry,bad;biao'qing	19714661
+😤	angry,bad;biao'qing	13445053
+😾	angry,bad;biao'qing	958974
+#懷疑
+😢	doubt;biao'qing	19730321
+😓	doubt;biao'qing	8695126
+😰	doubt;biao'qing	5641447
+😿	doubt;biao'qing	1841188
+#猴子表情
+🙈	shy;biao'qing	30945531
+🙉	supprise;biao'qing	2704402
+🙊	laugh,happy;s;biao'qing	22319510
+#交通
+🚀	rocket;jiao'tong`transportation	975972
+🚁	helicopter;jiao'tong`transportation	80491
+🚂	train;jiao'tong`transportation	230112
+🚃	train;jiao'tong`transportation	64648
+🚄	fast,train;jiao'tong`transportation	46800
+🚅	fast,train;jiao'tong`transportation	27916
+🚆	fast,train;jiao'tong`transportation	33452
+🚇	metro;jiao'tong`transportation	40947
+🚈	train;jiao'tong`transportation	19827
+🚉	train;jiao'tong`transportation	70807
+🚊	tram;jiao'tong`transportation	73887
+🚋	tram;jiao'tong`transportation
+🚌	bus;jiao'tong`transportation	206132
+🚍	bus;jiao'tong`transportation	125304
+🚎	bus;jiao'tong`transportation	35618
+🚏	bus;jiao'tong`transportation	9794
+🚐	mini,bus;jiao'tong`transportation	39321
+🚑	ambulence,emergency;jiao'tong`transportation	127898
+🚒	fireman,emergency;jiao'tong`transportation	75797
+🚓	police,emergency;jiao'tong`transportation	180737
+🚔	taxi;jiao'tong`transportation	149871
+🚕	taxi;jiao'tong`transportation	114019
+🚖	car;jiao'tong`transportation	72780
+🚗	car;jiao'tong`transportation	1264744
+🚘	car;jiao'tong`transportation	664416
+🚙	truck;jiao'tong`transportation	474568
+🚚	truck;jiao'tong`transportation	65151
+🚛	truck;jiao'tong`transportation	47428
+🚝	railway;jiao'tong`transportation	17644
+🚞	railway;jiao'tong`transportation	14732
+🚟	cable,car;jiao'tong`transportation	3529
+🚠	cable,car;jiao'tong`transportation	5651
+🚡	cable,car;jiao'tong`transportation	7643
+🚢	ship;jiao'tong`transportation	129782
+🚣	ship;jiao'tong`transportation	234703
+🚤	ship;jiao'tong`transportation	98318
+#標誌
+🚥	traffic;biao'zhi`icon	29616
+🚦	traffic;biao'zhi`icon	100964
+🚧	traffic;biao'zhi`icon	48549
+🚨	traffic;biao'zhi`icon	551124
+🚩	flag;biao'zhi`icon	88212
+🚪	door;biao'zhi`icon	154974
+🚫	admin,sign;biao'zhi`icon	730602
+🚬	admin,sign;biao'zhi`icon	1052832
+🚭	admin,sign;biao'zhi`icon	60459
+🚮	admin,sign;biao'zhi`icon	91451
+🚯	admin,sign;biao'zhi`icon	9041
+🚰	admin,sign;biao'zhi`icon	17040
+🚱	admin,sign;biao'zhi`icon	8234
+🚲	road,sign;biao'zhi`icon	330838
+🚳	road,sign;biao'zhi`icon	5758
+🚴	road,sign;biao'zhi`icon	184153
+🚵	road,sign;biao'zhi`icon	32848
+🚶	road,sign;biao'zhi`icon	5583984
+🚷	road,sign;biao'zhi`icon	56872
+🚸	road,sign;biao'zhi`icon	15503
+🚹	wc;biao'zhi`icon	39606
+🚺	wc;biao'zhi`icon	74818
+🚻	wc;biao'zhi`icon	24966
+🚼	wc;biao'zhi`icon	205220
+🚽	wc;biao'zhi`icon	241549
+🚾	wc;biao'zhi`icon	39773
+🚿	wc;biao'zhi`icon	776310
+🛀	wc;biao'zhi`icon	406079
+🛁	wc;biao'zhi`icon	59030
+🛂	borderadmin;biao'zhi`icon	3810
+🛃	borderadmin;biao'zhi`icon	3849
+🛄	luggage;biao'zhi`icon	2872
+🛅	luggage;biao'zhi`icon	2430
+#數字
+1⃣	one,squared;shu'zi`number
+2⃣	two,squared;shu'zi`number
+3⃣	three,squared;shu'zi`number
+4⃣	four,squared;shu'zi`number
+5⃣	five,squared;shu'zi`number
+6⃣	six,squared;shu'zi`number
+7⃣	seven,squared;shu'zi`number
+8⃣	eight,squared;shu'zi`number
+9⃣	nine,squared;shu'zi`number
+0⃣	zero,squared;shu'zi`number
+🄂	one,withcomma;shu'zi`number
+🄃	two,withcomma;shu'zi`number
+🄄	three,withcomma;shu'zi`number
+🄅	four,withcomma;shu'zi`number
+🄆	five,withcomma;shu'zi`number
+🄇	six,withcomma;shu'zi`number
+🄈	seven,withcomma;shu'zi`number
+🄉	eight,withcomma;shu'zi`number
+🄊	nine,withcomma;shu'zi`number
+🄁	zero,withcomma;shu'zi`number
+#字
+🈵	man,hanzi;zi`kanji	9333
+🈳	kong,hanzi;zi`kanji	9490
+🉐	de,hanzi;zi`kanji	39631
+🈹	ge,hanzi;zi`kanji	13020
+🈯	zhi,hanzi;zi`kanji	7260
+🈺	ying,hanzi;zi`kanji	4969
+🈶	you,hanzi;zi`kanji	4236
+🈚	wu,hanzi;zi`kanji	3202
+🈷	yue,hanzi;zi`kanji	2862
+🈸	shen,hanzi;zi`kanji	3594
+🈐	shou,hanzi;zi`kanji
+🈑	zi,hanzi;zi`kanji
+🈒	shuang,hanzi;zi`kanji
+🈩	yi,hanzi;zi`kanji
+🈔	er,hanzi;zi`kanji
+🈪	san,hanzi;zi`kanji
+🈬	zuo,hanzi;zi`kanji
+🈭	zhong,hanzi;zi`kanji
+🈮	you,hanzi;zi`kanji
+🈕	duo,hanzi;zi`kanji
+🈖	jie,hanzi;zi`kanji
+🈗	tian,hanzi;zi`kanji
+🈘	jiao,hanzi;zi`kanji
+🈙	ying,hanzi;zi`kanji
+🈛	liao,hanzi;zi`kanji
+🈜	qian,hanzi;zi`kanji
+🈝	hou,hanzi;zi`kanji
+🈞	zai,hanzi;zi`kanji
+🈟	xin,hanzi;zi`kanji
+🈠	chu,hanzi;zi`kanji
+🈡	zhong,hanzi;zi`kanji
+🈢	sheng,hanzi;zi`kanji
+🈣	fan,hanzi;zi`kanji
+🈤	sheng,hanzi;zi`kanji
+🈥	chui,hanzi;zi`kanji
+🈦	yan,hanzi;zi`kanji
+🈧	tou,hanzi;zi`kanji
+🈨	bu,hanzi;zi`kanji
+🈫	you,hanzi;zi`kanji
+🈰	zou,hanzi;zi`kanji
+🈱	da,hanzi;zi`kanji
+🈲	jin,hanzi;zi`kanji	9435
+🈴	he,hanzi;zi`kanji	7790
+🈂	sa;zi`katakana	5296
+🈁	koko;zi`katakana	3188
+🈓	de;zi`katakana
+#星座
+♈	aries;xing'zuo`horoscope	157740
+♉	taurus;xing'zuo`horoscope	126345
+♊	gemini;xing'zuo`horoscope	128460
+♋	cancer;xing'zuo`horoscope	201504
+♌	leo;xing'zuo`horoscope	140977
+♍	virgo;xing'zuo`horoscope	119390
+♎	libra;xing'zuo`horoscope	102128
+♏	scorpio;xing'zuo`horoscope	168885
+♐	sagittarius;xing'zuo`horoscope	101701
+♑	capricorn;xing'zuo`horoscope	76847
+♒	aquarius;xing'zuo`horoscope	121862
+♓	pices;xing'zuo`horoscope	89859
+⛎	ophiuchus;xing'zuo`horoscope	12220
+#字母
+#帶括號
+🄐	lettera,bracket;zi'mu
+🄑	letterb,bracket;zi'mu
+🄒	letterc,bracket;zi'mu
+🄓	letterd,bracket;zi'mu
+🄔	lettere,bracket;zi'mu
+🄕	letterf,bracket;zi'mu
+🄖	letterg,bracket;zi'mu
+🄗	letterh,bracket;zi'mu
+🄘	letteri,bracket;zi'mu
+🄙	letterj,bracket;zi'mu
+🄚	letterk,bracket;zi'mu
+🄛	letterl,bracket;zi'mu
+🄜	letterm,bracket;zi'mu
+🄝	lettern,bracket;zi'mu
+🄞	lettero,bracket;zi'mu
+🄟	letterp,bracket;zi'mu
+🄠	letterq,bracket;zi'mu
+🄡	letterr,bracket;zi'mu
+🄢	letters,bracket;zi'mu
+🄣	lettert,bracket;zi'mu
+🄤	letteru,bracket;zi'mu
+🄥	letterv,bracket;zi'mu
+🄦	letterw,bracket;zi'mu
+🄧	letterx,bracket;zi'mu
+🄨	lettery,bracket;zi'mu
+🄩	letterz,bracket;zi'mu
+#帶方框
+🄰	lettera,squared;zi'mu
+🄱	letterb,squared;zi'mu
+🄲	letterc,squared;zi'mu
+🄳	letterd,squared;zi'mu
+🄴	lettere,squared;zi'mu
+🄵	letterf,squared;zi'mu
+🄶	letterg,squared;zi'mu
+🄷	letterh,squared;zi'mu
+🄸	letteri,squared;zi'mu
+🄹	letterj,squared;zi'mu
+🄺	letterk,squared;zi'mu
+🄻	letterl,squared;zi'mu
+🄼	letterm,squared;zi'mu
+🄽	lettern,squared;zi'mu
+🄾	lettero,squared;zi'mu
+🄿	letterp,squared;zi'mu
+🅀	letterq,squared;zi'mu
+🅁	letterr,squared;zi'mu
+🅂	letters,squared;zi'mu
+🅃	lettert,squared;zi'mu
+🅄	letteru,squared;zi'mu
+🅅	letterv,squared;zi'mu
+🅆	letterw,squared;zi'mu
+🅇	letterx,squared;zi'mu
+🅈	lettery,squared;zi'mu
+🅉	letterz,squared;zi'mu
+#帶圓圈
+🅐	lettera,circled;zi'mu
+🅑	letterb,circled;zi'mu
+🅒	letterc,circled;zi'mu
+🅓	letterd,circled;zi'mu
+🅔	lettere,circled;zi'mu
+🅕	letterf,circled;zi'mu
+🅖	letterg,circled;zi'mu
+🅗	letterh,circled;zi'mu
+🅘	letteri,circled;zi'mu
+🅙	letterj,circled;zi'mu
+🅚	letterk,circled;zi'mu
+🅛	letterl,circled;zi'mu
+🅜	letterm,circled;zi'mu
+🅝	lettern,circled;zi'mu
+🅞	lettero,circled;zi'mu
+🅟	letterp,circled;zi'mu
+🅠	letterq,circled;zi'mu
+🅡	letterr,circled;zi'mu
+🅢	letters,circled;zi'mu
+🅣	lettert,circled;zi'mu
+🅤	letteru,circled;zi'mu
+🅥	letterv,circled;zi'mu
+🅦	letterw,circled;zi'mu
+🅧	letterx,circled;zi'mu
+🅨	lettery,circled;zi'mu
+🅩	letterz,circled;zi'mu
+#帶圓角方框
+🅰	lettera,roundsqr;zi'mu`bloodtype	206533
+🅱	letterb,roundsqr;zi'mu`bloodtype	157653
+🅲	letterc,roundsqr;zi'mu
+🅳	letterd,roundsqr;zi'mu
+🅴	lettere,roundsqr;zi'mu
+🅵	letterf,roundsqr;zi'mu
+🅶	letterg,roundsqr;zi'mu
+🅷	letterh,roundsqr;zi'mu
+🅸	letteri,roundsqr;zi'mu
+🅹	letterj,roundsqr;zi'mu
+🅺	letterk,roundsqr;zi'mu
+🅻	letterl,roundsqr;zi'mu
+🅼	letterm,roundsqr;zi'mu
+🅽	lettern,roundsqr;zi'mu
+🅾	lettero,roundsqr;zi'mu`bloodtype
+🅿	letterp,roundsqr;zi'mu	20655
+🆀	letterq,roundsqr;zi'mu
+🆁	letterr,roundsqr;zi'mu
+🆂	letters,roundsqr;zi'mu
+🆃	lettert,roundsqr;zi'mu
+🆄	letteru,roundsqr;zi'mu
+🆅	letterv,roundsqr;zi'mu
+🆆	letterw,roundsqr;zi'mu
+🆇	letterx,roundsqr;zi'mu
+🆈	lettery,roundsqr;zi'mu
+🆉	letterz,roundsqr;zi'mu
+🆎	letterab,roundsqr;zi'mu`bloodtype	25807

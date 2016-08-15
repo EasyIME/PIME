@@ -38,13 +38,17 @@ shared_dir = os.path.join(curdir, "data")
 rimeInit(datadir=shared_dir, userdir=user_dir, appname=APP, appver=APP_VERSION, fullcheck=first_run)
 rime.deploy_config_file(CONFIG_FILE.encode("UTF-8"), b'config_version')
 
-objects = {}
+hide_candidate = False
+
 def rimeCallback(context_object, session_id, message_type, message_value):
-    obj = objects[context_object]
-    print(obj, session_id.contents if session_id else 0, message_type, message_value)
-    #obj.showMessage(message_value.decode("UTF-8"), 2)
-    obj.setCompositionString(message_value.decode("UTF-8"))
-#rime_callback = RimeNotificationHandler(rimeCallback)
+    global hide_candidate
+    if message_type == b'option':
+        if message_value == b'hide_candidate':
+            hide_candidate = True
+        if message_value == b'!hide_candidate':
+            hide_candidate = False
+rime_callback = RimeNotificationHandler(rimeCallback)
+rime.set_notification_handler(rime_callback, None)
 
 class RimeTextService(TextService):   
     session_id = None
@@ -55,11 +59,9 @@ class RimeTextService(TextService):
 
     def __init__(self, client):
         TextService.__init__(self, client)
-        #objects[id(self)] = self
 
     def onActivate(self):
         TextService.onActivate(self)
-        #rime.set_notification_handler(rime_callback, id(self))
         self.createSession()
 
         if not self.style.display_tray_icon: return
@@ -203,7 +205,7 @@ class RimeTextService(TextService):
         elif self.style.inline_preedit == "preview":
             preedit = context.commit_text_preview.decode("UTF-8")
             self.setCompositionString(preedit)
-            self.setCompositionCursor(len(preedit))            
+            self.setCompositionCursor(len(preedit))
         elif self.style.inline_preedit == "input":
             preedit = rime.get_input(self.session_id).decode("UTF-8")
             self.setCompositionString(preedit)
@@ -219,7 +221,7 @@ class RimeTextService(TextService):
             if select_keys:
                 self.setSelKeys(select_keys.decode("UTF-8"))
 
-        if context.menu.num_candidates:
+        if context.menu.num_candidates and not hide_candidate:
             n = context.menu.num_candidates
             candidates = []
             for i in range(n):

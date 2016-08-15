@@ -61,6 +61,7 @@ class RimeTextService(TextService):
         #rime.set_notification_handler(rime_callback, id(self))
         self.createSession()
 
+        if not self.style.display_tray_icon: return
         # 切換中英文
         is_ascii_mode = rime.get_option(self.session_id, b'ascii_mode')
         is_full_shape = rime.get_option(self.session_id, b'full_shape')
@@ -110,6 +111,7 @@ class RimeTextService(TextService):
     def onDeactivate(self):
         TextService.onDeactivate(self)
         self.destroySession()
+        if not self.style.display_tray_icon: return
         self.removeButton("switch-lang")
         self.removeButton("switch-shape")
         self.removeButton("settings")
@@ -148,10 +150,12 @@ class RimeTextService(TextService):
             rime.destroy_session(self.session_id)
         self.session_id = None
         #rime.finalize()
-        self.style = None
+        #self.style = None
 
     # 依照目前輸入法狀態，更新語言列顯示
     def updateLangStatus(self):
+        if not self.style.display_tray_icon:
+            return
         if not self.session_id:
             return
         rime_status = RimeStatus()
@@ -169,7 +173,7 @@ class RimeTextService(TextService):
         icon_path = os.path.join(self.icon_dir, icon_name)
         self.changeButton("switch-shape", icon=icon_path)
 
-        if self.client.isWindows8Above: # windows 8 mode icon
+        if self.style.display_tray_icon and self.client.isWindows8Above: # windows 8 mode icon
             # FIXME: we need a better set of icons to meet the 
             #        WIndows 8 IME guideline and UX guidelines.
             icon_name = "%s_%s_capsoff.ico" % ("eng" if is_ascii_mode else "chi", "full" if is_full_shape else "half")
@@ -297,7 +301,7 @@ class RimeTextService(TextService):
             # self.hideMessage() # hide message window, if there's any
             self.destroySession()
             rime.finalize()
-
+        if not self.style.display_tray_icon: return
         # Windows 8 systray IME mode icon
         if self.client.isWindows8Above:
             # 若鍵盤關閉，我們需要把 widnows 8 mode icon 設定為 disabled

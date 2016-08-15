@@ -16,6 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+from opencc import OpenCC
 from ctypes import *
 import sys, os
 
@@ -294,10 +295,15 @@ commands = {
     "get_schema_list": ID_SCHEMA_LIST
 }
 
+def rimGetString(config, name):
+    cstring = rime.config_get_cstring(config, name.encode("UTF-8"))
+    return cstring.decode("UTF-8") if cstring else ""
+
 class RimeStyle:
     font_face = "MingLiu"
     candidate_format = "{0} {1}"
     inline_preedit = "false"
+    menu_opencc = None
     font_point = 20
     candidate_per_row = 1
     inline_code = False
@@ -316,9 +322,11 @@ class RimeStyle:
         config = RimeConfig()
         if not rime.config_open(appname.encode("UTF-8"), config):
             return
-        self.font_face = rime.config_get_cstring(config, b'style/font_face').decode("UTF-8")
-        self.candidate_format = rime.config_get_cstring(config, b'style/candidate_format').decode("UTF-8")
-        self.inline_preedit = rime.config_get_cstring(config, b'style/inline_preedit').decode("UTF-8")
+        self.font_face = rimGetString(config, 'style/font_face')
+        self.candidate_format = rimGetString(config, 'style/candidate_format')
+        self.inline_preedit = rimGetString(config, 'style/inline_preedit')
+        menu_opencc_config = rimGetString(config, 'style/menu_opencc')
+        self.menu_opencc = OpenCC(menu_opencc_config) if menu_opencc_config else None
         value = c_int()
         if rime.config_get_int(config, b'style/font_point', value):
             self.font_point = value.value
@@ -361,6 +369,8 @@ class RimeStyle:
             for i in range(n):
                 schema_id = schema_list.list[i].schema_id
                 name = schema_list.list[i].name.decode("UTF-8")
+                if self.menu_opencc:
+                    name = self.menu_opencc.convert(name)
                 self.schemas.append(schema_id)
                 d = {'text': name, 'id': ID_SCHEMA + i}
                 if schema_id == current_schema_id:
@@ -399,6 +409,8 @@ class RimeStyle:
                 self.options.append(name)
             if text:
                 d["text"] = text.decode("UTF-8")
+                if self.menu_opencc:
+                    d["text"] = self.menu_opencc.convert(d["text"])
                 submenu = self.config_get_menu(config, iterator.path + b'/submenu')
                 if submenu:
                     d["submenu"] = submenu

@@ -1,7 +1,7 @@
 # Weasel settings
 # encoding: utf-8
 
-config_version: "0.01"
+config_version: "0.02"
 
 #app_options:
 #  cmd.exe:
@@ -17,6 +17,7 @@ style:
   candidate_per_row: 1
   candidate_use_cursor: true
   soft_cursor: false
+  menu_opencc: "" #tw2s.json, t2s.json
 
 menu:
   - name: ascii_mode

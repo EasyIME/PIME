@@ -133,7 +133,7 @@ Function uninstallOldVersion
                 DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEEZ_GUID}"
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${EMOJIME_GUID}"
 				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}"
-				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${RIME_GUID}"
+				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hans-CN" "0804:${PIME_CLSID}${RIME_GUID}"
 			${EndIf}
 
 			; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
@@ -583,7 +583,7 @@ Section "" Register
 
 		${If} ${SectionIsSelected} ${rime}
 			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${RIME_GUID}" $R0
+			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hans-CN" "0804:${PIME_CLSID}${RIME_GUID}" $R0
 		${EndIf}
 
 		${If} ${SectionIsSelected} ${emojime}
@@ -596,10 +596,6 @@ Section "" Register
 			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}" $R0
 		${EndIf}
 
-		${If} ${SectionIsSelected} ${rime}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${RIME_GUID}" $R0
-		${EndIf}
 	${EndIf}
 
 	; Custom IE Protected Mode
@@ -691,10 +687,9 @@ Section "Uninstall"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHESIMPLEX_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEPHONETIC_GUID}"
         DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEEZ_GUID}"
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${RIME_GUID}"
+		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hans-CN" "0804:${PIME_CLSID}${RIME_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${EMOJIME_GUID}"
 		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}"
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${RIME_GUID}"
 	${EndIf}
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)

@@ -64,40 +64,39 @@ class RimeTextService(TextService):
         self.createSession()
 
         if not self.style.display_tray_icon: return
-        # 切換中英文
+
         is_ascii_mode = rime.get_option(self.session_id, b'ascii_mode')
         is_full_shape = rime.get_option(self.session_id, b'full_shape')
 
-        icon_name = "eng.ico" if is_ascii_mode else "chi.ico"
-        self.addButton("switch-lang",
-            icon = os.path.join(self.icon_dir, icon_name),
-            tooltip = "中英文切換",
-            commandId = ID_ASCII_MODE
-        )
-
-        # 切換全半形
-        icon_name = "full.ico" if is_full_shape else "half.ico"
-        self.addButton("switch-shape",
-            icon = os.path.join(self.icon_dir, icon_name),
-            tooltip = "全形/半形切換",
-            commandId = ID_FULL_SHAPE
-        )
-
         # Windows 8 以上已取消語言列功能，改用 systray IME mode icon
-        icon_name = "%s_%s_capsoff.ico" % ("eng" if is_ascii_mode else "chi", "full" if is_full_shape else "half")
         if self.client.isWindows8Above:
+            icon_name = "%s_%s_capsoff.ico" % ("eng" if is_ascii_mode else "chi", "full" if is_full_shape else "half")
             self.addButton("windows-mode-icon",
                 icon = os.path.join(self.icon_dir, icon_name),
                 tooltip = "中英文切換",
                 commandId = ID_MODE_ICON
             )
+        else:
+            icon_name = "eng.ico" if is_ascii_mode else "chi.ico"
+            self.addButton("switch-lang",
+                icon = os.path.join(self.icon_dir, icon_name),
+                tooltip = "中英文切換",
+                commandId = ID_ASCII_MODE
+            )
 
-        # 設定
-        self.addButton("settings",
-            icon = os.path.join(self.icon_dir, "config.ico"),
-            tooltip = "設定",
-            type = "menu"
-        )
+            # 切換全半形
+            icon_name = "full.ico" if is_full_shape else "half.ico"
+            self.addButton("switch-shape",
+                icon = os.path.join(self.icon_dir, icon_name),
+                tooltip = "全形/半形切換",
+                commandId = ID_FULL_SHAPE
+            )
+            # 設定
+            self.addButton("settings",
+                icon = os.path.join(self.icon_dir, "config.ico"),
+                tooltip = "設定",
+                type = "menu"
+            )
 
     def createSession(self):
         if not (self.session_id and rime.find_session(self.session_id)):
@@ -156,31 +155,25 @@ class RimeTextService(TextService):
 
     # 依照目前輸入法狀態，更新語言列顯示
     def updateLangStatus(self):
-        if not self.style.display_tray_icon:
-            return
-        if not self.session_id:
-            return
-        rime_status = RimeStatus()
-        if not rime.get_status(self.session_id, rime_status):
-            return
-        is_ascii_mode = rime_status.is_ascii_mode
-        is_full_shape = rime_status.is_full_shape
-        rime.free_status(rime_status)
+        if not self.session_id: return
+        if not self.style.display_tray_icon: return
+        is_ascii_mode = rime.get_option(self.session_id, b'ascii_mode')
+        is_full_shape = rime.get_option(self.session_id, b'full_shape')
 
-        icon_name = "eng.ico" if is_ascii_mode else "chi.ico"
-        icon_path = os.path.join(self.icon_dir, icon_name)
-        self.changeButton("switch-lang", icon=icon_path)
-
-        icon_name = "full.ico" if is_full_shape else "half.ico"
-        icon_path = os.path.join(self.icon_dir, icon_name)
-        self.changeButton("switch-shape", icon=icon_path)
-
-        if self.style.display_tray_icon and self.client.isWindows8Above: # windows 8 mode icon
+        if self.client.isWindows8Above: # windows 8 mode icon
             # FIXME: we need a better set of icons to meet the 
             #        WIndows 8 IME guideline and UX guidelines.
             icon_name = "%s_%s_capsoff.ico" % ("eng" if is_ascii_mode else "chi", "full" if is_full_shape else "half")
             icon_path = os.path.join(self.icon_dir, icon_name)
             self.changeButton("windows-mode-icon", icon=icon_path)
+        else:
+            icon_name = "eng.ico" if is_ascii_mode else "chi.ico"
+            icon_path = os.path.join(self.icon_dir, icon_name)
+            self.changeButton("switch-lang", icon=icon_path)
+
+            icon_name = "full.ico" if is_full_shape else "half.ico"
+            icon_path = os.path.join(self.icon_dir, icon_name)
+            self.changeButton("switch-shape", icon=icon_path)
 
     def onKey(self):
         self.updateLangStatus()
@@ -249,10 +242,10 @@ class RimeTextService(TextService):
     def toggleOption(self, name):
         ret = rime.get_option(self.session_id, name)
         rime.set_option(self.session_id, name, not ret)
-        self.onKey()
+        self.updateLangStatus()
         
     def onCommand(self, commandId, commandType):
-        print("onCommand", commandId, commandType)
+        # print("onCommand", commandId, commandType)
         if commandId >= ID_URI:
             os.startfile(self.style.get_uri(commandId))
         elif commandId >= ID_SCHEMA:

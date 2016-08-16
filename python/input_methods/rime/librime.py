@@ -18,6 +18,7 @@
 
 from opencc import OpenCC
 from ctypes import *
+from time import time
 import sys, os
 
 RIME = "rime"
@@ -270,6 +271,18 @@ def rimeInit(datadir="data", userdir="data", fullcheck=True, appname="python", a
         if rime.start_maintenance(fullcheck):
             rime.join_maintenance_thread()
 
+def rimeGetString(config, name):
+    cstring = rime.config_get_cstring(config, name.encode("UTF-8"))
+    return cstring.decode("UTF-8") if cstring else ""
+
+def rimeSelectSchema(session_id, schema_id):
+    rime.select_schema(session_id, schema_id)
+    user_config = RimeConfig()
+    if rime.config_open(b'user', user_config):
+        rime.config_set_string(user_config, b'var/previously_selected_schema', schema_id)
+        rime.config_set_int(user_config, b'var/schema_access_time/' + schema_id, c_int(int(time())))
+        rime.config_close(user_config)
+
 # 選單項目和語言列按鈕的 command ID
 ID_MODE_ICON = 1
 ID_ASCII_MODE = 2
@@ -295,10 +308,6 @@ commands = {
     "get_schema_list": ID_SCHEMA_LIST
 }
 
-def rimGetString(config, name):
-    cstring = rime.config_get_cstring(config, name.encode("UTF-8"))
-    return cstring.decode("UTF-8") if cstring else ""
-
 class RimeStyle:
     font_face = "MingLiu"
     candidate_format = "{0} {1}"
@@ -322,10 +331,10 @@ class RimeStyle:
         config = RimeConfig()
         if not rime.config_open(appname.encode("UTF-8"), config):
             return
-        self.font_face = rimGetString(config, 'style/font_face')
-        self.candidate_format = rimGetString(config, 'style/candidate_format')
-        self.inline_preedit = rimGetString(config, 'style/inline_preedit')
-        menu_opencc_config = rimGetString(config, 'style/menu_opencc')
+        self.font_face = rimeGetString(config, 'style/font_face')
+        self.candidate_format = rimeGetString(config, 'style/candidate_format')
+        self.inline_preedit = rimeGetString(config, 'style/inline_preedit')
+        menu_opencc_config = rimeGetString(config, 'style/menu_opencc')
         self.menu_opencc = OpenCC(menu_opencc_config) if menu_opencc_config else None
         value = c_int()
         if rime.config_get_int(config, b'style/font_point', value):

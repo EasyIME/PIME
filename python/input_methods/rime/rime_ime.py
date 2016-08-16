@@ -23,7 +23,6 @@ from textService import *
 
 from ctypes import *
 import os
-from time import time
 
 APP = "PIME"
 APP_VERSION = "0.01"
@@ -258,12 +257,7 @@ class RimeTextService(TextService):
             os.startfile(self.style.get_uri(commandId))
         elif commandId >= ID_SCHEMA:
             schema_id = self.style.get_schema(commandId)
-            rime.select_schema(self.session_id, schema_id)
-            user_config = RimeConfig()
-            if rime.config_open(b'user', user_config):
-                rime.config_set_string(user_config, b'var/previously_selected_schema', schema_id)
-                rime.config_set_int(user_config, b'var/schema_access_time/' + schema_id, c_int(int(time())))
-                rime.config_close(user_config)
+            rimeSelectSchema(self.session_id, schema_id)
         elif commandId >= ID_OPTION:
             self.toggleOption(self.style.get_option(commandId))
         elif commandId in (ID_ASCII_MODE, ID_MODE_ICON) and commandType == COMMAND_LEFT_CLICK:  # 切換中英文模式

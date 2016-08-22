@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 from .librime import *
-from .rime_keyevent import translateKeyCode, translateModifiers
+from .rime_keyevent import translateKeyCode, translateModifiers, RELEASE_MASK
 
 from keycodes import * # for VK_XXX constants
 from textService import *
@@ -55,6 +55,8 @@ class RimeTextService(TextService):
     style = None
     lastKeyDownCode = None
     lastKeyDownRet = True
+    lastKeyUpCode = None
+    lastKeyUpRet = True
 
     def __init__(self, client):
         TextService.__init__(self, client)
@@ -121,23 +123,33 @@ class RimeTextService(TextService):
 
     def processKey(self, keyEvent, isUp = False):
         self.createSession()
+        print("session",self.session_id.contents if self.session_id else None, rime)
+        if not self.isComposing() and keyEvent.keyCode == VK_RETURN:
+                return False
         ret = rime.process_key(self.session_id, translateKeyCode(keyEvent), translateModifiers(keyEvent, isUp))
-        #print("Up" if isUp else "Down", keyEvent.keyCode,keyEvent.repeatCount)
-        self.lastKeyDownRet = ret
-        if keyEvent.keyCode in (VK_SHIFT, VK_CONTROL, VK_MENU): return True
+        print("Up" if isUp else "Down", keyEvent.keyCode,keyEvent.repeatCount,keyEvent.scanCode,translateKeyCode(keyEvent), translateModifiers(keyEvent, isUp), "ret", ret)
+        if (keyEvent.keyCode in (VK_SHIFT, VK_CONTROL, VK_CAPITAL)) and translateModifiers(keyEvent, isUp) == RELEASE_MASK:
+            ret = True
         return ret
 
     def filterKeyDown(self, keyEvent):
         #print("keyDown", keyEvent.keyCode,keyEvent.repeatCount)
         if self.lastKeyDownCode == keyEvent.keyCode:
             self.lastKeyDownCode = None
-            return self.lastKeyDownRet
-        self.lastKeyDownCode = keyEvent.keyCode
-        return self.processKey(keyEvent)
+        else:
+            self.lastKeyDownCode = keyEvent.keyCode
+            self.lastKeyDownRet = self.processKey(keyEvent)
+        self.lastKeyUpCode = None
+        return self.lastKeyDownRet
 
     def filterKeyUp(self, keyEvent):
+        if self.lastKeyUpCode == keyEvent.keyCode:
+            self.lastKeyUpCode = None
+        else:
+            self.lastKeyUpCode = keyEvent.keyCode
+            self.lastKeyUpRet = self.processKey(keyEvent, True)
         self.lastKeyDownCode = None
-        return self.processKey(keyEvent, True)
+        return self.lastKeyUpRet
 
     def clear(self):
         self.setShowCandidates(False)
@@ -189,12 +201,12 @@ class RimeTextService(TextService):
             self.clear()
             return True
 
-        if self.style.inline_preedit == "composition":
+        if self.style.inline_preedit in ("composition", "true"):
             composition = context.composition.preedit
             preedit = composition.decode("UTF-8") if composition else ""
             self.setCompositionString(preedit)
             self.setCompositionCursor(len(composition[:context.composition.cursor_pos].decode("UTF-8")) if composition else 0)
-        elif self.style.inline_preedit == "preview":
+        elif self.style.inline_preedit in ("preview", "preedit"):
             preedit = context.commit_text_preview.decode("UTF-8")
             self.setCompositionString(preedit)
             self.setCompositionCursor(len(preedit))

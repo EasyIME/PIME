@@ -316,9 +316,9 @@ VKMaps = {
 def translateKeyCode(keyEvent):
     keyCode = keyEvent.keyCode
     if keyCode == VK_SHIFT:
-        keyCode = VK_RSHIFT if keyEvent.isKeyDown(VK_RSHIFT) else VK_LSHIFT
+        keyCode = VK_RSHIFT if keyEvent.isKeyToggled(VK_RSHIFT) else VK_LSHIFT
     elif keyCode == VK_CONTROL:
-        keyCode = VK_RCONTROL if keyEvent.isKeyDown(VK_RCONTROL) else VK_LCONTROL
+        keyCode = VK_RCONTROL if keyEvent.isKeyToggled(VK_RCONTROL) else VK_LCONTROL
 
     result = VoidSymbol
     if keyCode in VKMaps:
@@ -329,13 +329,13 @@ def translateKeyCode(keyEvent):
 
 def translateModifiers(keyEvent, isUp = False):
     result = 0
-    if keyEvent.isKeyDown(VK_SHIFT):
+    if keyEvent.keyCode != VK_SHIFT and keyEvent.isKeyDown(VK_SHIFT):
         result |= SHIFT_MASK
-    if keyEvent.isKeyDown(VK_CAPITAL):
+    if keyEvent.keyCode != VK_CAPITAL and keyEvent.isKeyDown(VK_CAPITAL):
         result |= LOCK_MASK
-    if keyEvent.isKeyDown(VK_CONTROL):
+    if keyEvent.keyCode != VK_CONTROL and keyEvent.isKeyDown(VK_CONTROL):
         result |= CONTROL_MASK
-    if keyEvent.isKeyDown(VK_MENU):
+    if keyEvent.keyCode != VK_MENU and keyEvent.isKeyDown(VK_MENU):
         result |= ALT_MASK
     if isUp:
         result |= RELEASE_MASK

@@ -339,6 +339,8 @@ class RimeStyle:
         value = c_int()
         if rime.config_get_int(config, b'style/font_point', value):
             self.font_point = value.value
+        if rime.config_get_bool(config, b'style/horizontal', value):
+            self.candidate_per_row = 10 if bool(value) else 1
         if rime.config_get_int(config, b'style/candidate_per_row', value):
             self.candidate_per_row = value.value
         if rime.config_get_bool(config, b'style/display_tray_icon', value):
@@ -426,14 +428,12 @@ class RimeStyle:
             menu.append(d)
         rime.config_end(iterator)
         return menu
-        
-if __name__ == "__main__":
-    rimeInit()
-    session_id = rime.create_session()
-    RimeStyle("PIME", session_id)
-    result = rime.process_key(session_id, ord('a'), 0)
+
+def processKey(session_id, keycode, mask):
+    print("process_key", keycode, "ret", rime.process_key(session_id, keycode, mask))
     status = RimeStatus()
     if rime.get_status(session_id, status):
+        print("is_composing",  status.is_composing)
         print("is_ascii_mode",  status.is_ascii_mode)
         print("current_schema", status.schema_name.decode("UTF-8"))
         rime.free_status(status)
@@ -446,7 +446,7 @@ if __name__ == "__main__":
     context = RimeContext()
     if not rime.get_context(session_id, context) or context.composition.length == 0:
         rime.free_context(context)
-        exit()
+        exit
 
     if context.commit_text_preview:
         commit_text_preview = context.commit_text_preview.decode("UTF-8")
@@ -479,7 +479,15 @@ if __name__ == "__main__":
                 s += b' ' + cand.comment
             candidates.append(s.decode("UTF-8"))
         print(candidates)
-
     rime.free_context(context)
+
+if __name__ == "__main__":
+    rimeInit()
+    session_id = rime.create_session()
+    RimeStyle("PIME", session_id)
+    processKey(session_id, ord('a'), 0)
+    #processKey(session_id, ord('a'), 1<<30)
+    processKey(session_id, 0xFFE2, 0)
+    processKey(session_id, 0xFFE2,1 << 30)
     rime.destroy_session(session_id)
     rime.finalize()

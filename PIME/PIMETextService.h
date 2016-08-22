@@ -149,6 +149,7 @@ private:
 	void toggleSimplifiedChinese(); // toggle output traditional or simplified Chinese
 
 	void createCandidateWindow(Ime::EditSession* session);
+	int candFontHeight();
 
 private:
 	bool validCandidateListElementId_;

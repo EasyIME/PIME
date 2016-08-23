@@ -54,6 +54,7 @@ class RimeTextService(TextService):
     icon_dir = os.path.join(curdir, "icons")
     style = None
     lastKeyDownCode = None
+    lastKeySkip = 0
     lastKeyDownRet = True
     lastKeyUpCode = None
     lastKeyUpRet = True
@@ -137,9 +138,13 @@ class RimeTextService(TextService):
     def filterKeyDown(self, keyEvent):
         #print("keyDown", keyEvent.keyCode,keyEvent.repeatCount)
         if self.lastKeyDownCode == keyEvent.keyCode:
-            self.lastKeyDownCode = None
+            self.lastKeySkip += 1
+            if self.lastKeySkip >= 2:
+                self.lastKeyDownCode = None
+                self.lastKeySkip = 0
         else:
             self.lastKeyDownCode = keyEvent.keyCode
+            self.lastKeySkip = 0
             self.lastKeyDownRet = self.processKey(keyEvent)
         self.lastKeyUpCode = None
         return self.lastKeyDownRet
@@ -151,6 +156,7 @@ class RimeTextService(TextService):
             self.lastKeyUpCode = keyEvent.keyCode
             self.lastKeyUpRet = self.processKey(keyEvent, True)
         self.lastKeyDownCode = None
+        self.lastKeySkip = 0
         return self.lastKeyUpRet
 
     def clear(self):

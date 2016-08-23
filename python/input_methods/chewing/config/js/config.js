@@ -18,7 +18,7 @@ var defaultConfig ={
     "fullShapeSymbols": true,
     "colorCandWnd": true,
     "advanceAfterSelection": true,
-    "fontSize": 16,
+    "fontSize": 12,
     "outputSimpChinese": false,
     "upperCaseWithShift": false,
     "escCleanAllBuf": false,
@@ -192,7 +192,7 @@ function initializeUI() {
 	}
 	
 	// setup selExample default style
-	$("#selExample").css("font-size", $("#fontSize").val() + "px");
+	$("#selExample").css("font-size", $("#fontSize").val() + "pt");
 	updateSelExample();
 
 	// trigger event
@@ -201,13 +201,13 @@ function initializeUI() {
 	});	
 	
 	$("#ui_page input").on("change", function() {
-		$("#selExample").css("font-size", $("#fontSize").val() + "px");
+		$("#selExample").css("font-size", $("#fontSize").val() + "pt");
 		updateSelExample();
 	});
 	
 	$("#ui_page input").on("keydown", function(e) {
 		if (e.keyCode == 38 || e.keyCode==40) {
-			$("#selExample").css("font-size", $("#fontSize").val() + "px");
+			$("#selExample").css("font-size", $("#fontSize").val() + "pt");
 			updateSelExample();
 		}
 	});

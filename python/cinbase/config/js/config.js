@@ -375,7 +375,7 @@ function pageReady() {
 	}
 	
 	// setup selExample default style
-	$("#selExample").css("font-size", $("#fontSize").val() + "px");
+	$("#selExample").css("font-size", $("#fontSize").val() + "pt");
 	updateSelExample();
 
 	// trigger event
@@ -384,13 +384,13 @@ function pageReady() {
 	});	
 	
 	$("#ui_page input").on("change", function() {
-		$("#selExample").css("font-size", $("#fontSize").val() + "px");
+		$("#selExample").css("font-size", $("#fontSize").val() + "pt");
 		updateSelExample();
 	});
 	
 	$("#ui_page input").on("keydown", function(e) {
 		if (e.keyCode == 38 || e.keyCode==40) {
-			$("#selExample").css("font-size", $("#fontSize").val() + "px");
+			$("#selExample").css("font-size", $("#fontSize").val() + "pt");
 			updateSelExample();
 		}
 	});

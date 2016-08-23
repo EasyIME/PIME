@@ -15,14 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
+import os, sys
 from ctypes import CDLL, c_char_p
 
 OPENCC_DEFAULT_CONFIG_SIMP_TO_TRAD = "s2t.json"
 OPENCC_DEFAULT_CONFIG_TRAD_TO_SIMP = "t2s.json"
 
 _opencc_dir = os.path.dirname(__file__)
-_libopencc = CDLL(os.path.join(_opencc_dir, "opencc.dll"))
+if sys.platform == "win32": # Windows
+    _libopencc = CDLL(os.path.join(_opencc_dir, "opencc.dll"))
+else: # UNIX-like systems
+    _libopencc = CDLL("libopencc.so")
 _libopencc.opencc_error.restype = c_char_p
 
 class OpenCC:

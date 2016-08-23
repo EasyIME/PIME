@@ -274,7 +274,7 @@ class RimeTextService(TextService):
         elif commandId == ID_SHARED_DIR:
             os.startfile(shared_dir)
         elif commandId == ID_SYNC_DIR:
-            sync_dir = rime.get_sync_dir().decode("UTF-8")
+            sync_dir = rime.get_sync_dir().decode(ENC)
             if os.path.isdir(sync_dir):
                 os.startfile(sync_dir)
         elif commandId == ID_SYNC:

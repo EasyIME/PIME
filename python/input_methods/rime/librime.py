@@ -24,6 +24,7 @@ if __name__ == "__main__":
     sys.path.append('../../')
 from opencc import OpenCC
 
+ENC = sys.getfilesystemencoding()
 RIME = "rime"
 _librime = None
 if sys.platform == "win32": # Windows
@@ -259,20 +260,20 @@ def rimeNotificationHandler(context_object, session_id, message_type, message_va
     print(context_object, session_id.contents if session_id else 0, message_type, message_value)
 
 def rimeInit(datadir="data", userdir="data", fullcheck=True, appname="python", appver="0.01"):
-        traits = RimeTraits(
-            shared_data_dir=c_char_p(datadir.encode("UTF-8")),
-            user_data_dir=c_char_p(userdir.encode("UTF-8")),
-            distribution_name=c_char_p(RIME.encode("UTF-8")),
-            distribution_code_name=c_char_p(appname.encode("UTF-8")),
-            distribution_version=c_char_p(appver.encode("UTF-8")),
-            app_name=c_char_p(("%s.%s"%(RIME, appname)).encode("UTF-8"))
-            )
-        rime.setup(traits)
-        #cb = RimeNotificationHandler(rimeNotificationHandler)
-        #rime.set_notification_handler(cb, byref(rime))
-        rime.initialize(None)
-        if rime.start_maintenance(fullcheck):
-            rime.join_maintenance_thread()
+    traits = RimeTraits(
+        shared_data_dir=c_char_p(datadir.encode(ENC)),
+        user_data_dir=c_char_p(userdir.encode(ENC)),
+        distribution_name=c_char_p(RIME.encode("UTF-8")),
+        distribution_code_name=c_char_p(appname.encode("UTF-8")),
+        distribution_version=c_char_p(appver.encode("UTF-8")),
+        app_name=c_char_p(("%s.%s"%(RIME, appname)).encode("UTF-8"))
+        )
+    rime.setup(traits)
+    #cb = RimeNotificationHandler(rimeNotificationHandler)
+    #rime.set_notification_handler(cb, byref(rime))
+    rime.initialize(None)
+    if rime.start_maintenance(fullcheck):
+        rime.join_maintenance_thread()
 
 def rimeGetString(config, name):
     cstring = rime.config_get_cstring(config, name.encode("UTF-8"))
@@ -409,7 +410,7 @@ class RimeStyle:
                 if ID_SCHEMA_LIST == d["id"]:
                     d["submenu"] = self.get_schema_list()
                 elif ID_SYNC_DIR == d["id"]:
-                    d["enabled"] = os.path.isdir(rime.get_sync_dir().decode("UTF-8"))
+                    d["enabled"] = os.path.isdir(rime.get_sync_dir().decode(ENC))
             elif uri:
                 d["id"] = ID_URI + len(self.uris)
                 self.uris.append(uri.decode("UTF-8"))

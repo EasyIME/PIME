@@ -123,9 +123,9 @@ class RimeTextService(TextService):
 
     def processKey(self, keyEvent, isUp = False):
         self.createSession()
-        print("session",self.session_id.contents if self.session_id else None, rime)
+        print("session", self.session_id.contents if self.session_id else None, rime)
         if not self.isComposing() and keyEvent.keyCode == VK_RETURN:
-                return False
+            return False
         ret = rime.process_key(self.session_id, translateKeyCode(keyEvent), translateModifiers(keyEvent, isUp))
         print("Up" if isUp else "Down", keyEvent.keyCode,keyEvent.repeatCount,keyEvent.scanCode,translateKeyCode(keyEvent), translateModifiers(keyEvent, isUp), "ret", ret)
         if (keyEvent.keyCode in (VK_SHIFT, VK_CONTROL, VK_CAPITAL)) and translateModifiers(keyEvent, isUp) == RELEASE_MASK:
@@ -218,8 +218,8 @@ class RimeTextService(TextService):
         if context.menu.page_size:
             select_keys = b''
             if context.select_labels:
-                for b in context.select_labels:
-                    select_keys += b
+                for i in range(context.menu.page_size):
+                    select_keys += context.select_labels[i]
             elif context.menu.select_keys:
                 select_keys = context.menu.select_keys
             if select_keys:

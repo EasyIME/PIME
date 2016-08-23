@@ -16,10 +16,13 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-from opencc import OpenCC
 from ctypes import *
 from time import time
 import sys, os
+
+if __name__ == "__main__":
+    sys.path.append('../../')
+from opencc import OpenCC
 
 RIME = "rime"
 _librime = None
@@ -462,8 +465,8 @@ def processKey(session_id, keycode, mask):
         print("page_size",context.menu.page_size)
         select_keys = b''
         if context.select_labels:
-            for i in context.select_labels:
-                select_keys += i
+            for i in range(context.menu.page_size):
+                select_keys += context.select_labels[i]
         elif context.menu.select_keys:
             select_keys = context.menu.select_keys
         if select_keys:

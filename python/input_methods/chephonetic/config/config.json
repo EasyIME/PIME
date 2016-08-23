@@ -10,7 +10,7 @@
     "switchPageWithSpace": false,
     "fullShapeSymbols": false,
     "colorCandWnd": true,
-    "fontSize": 16,
+    "fontSize": 12,
     "outputSimpChinese": false,
     "hidePromptMessages": true,
     "autoClearCompositionChar": false,

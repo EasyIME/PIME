@@ -45,7 +45,7 @@ TextService::TextService(ImeModule* module):
 	candPerRow_(10),
 	selKeys_(L"1234567890"),
 	candUseCursor_(false),
-	candFontSize_(16),
+	candFontSize_(12),
 	imeModeIcon_(nullptr),
 	currentLangProfile_(IID_NULL) {
 

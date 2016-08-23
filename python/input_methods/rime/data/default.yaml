@@ -6,9 +6,10 @@ config_version: "0.36"
 schema_list:
   - schema: luna_pinyin
   - schema: cangjie5
+  - schema: wubi86
   - schema: luna_pinyin_fluency
   - schema: luna_pinyin_simp
-  - schema: luna_pinyin_tw
+  - schema: bopomofo_tw
 
 switcher:
   caption: 〔方案選單〕

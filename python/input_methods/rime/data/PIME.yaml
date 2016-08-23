@@ -13,7 +13,7 @@ style:
   font_point: 12
   inline_preedit: composition #composition, preview, input, false
   display_tray_icon: true
-  candidate_format: "{0} {1}  " #0-candidate, 1-comment
+  candidate_format: "{0} {1}" #0-candidate, 1-comment
   candidate_per_row: 1
   candidate_use_cursor: true
   soft_cursor: false

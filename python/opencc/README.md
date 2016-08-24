@@ -1,5 +1,8 @@
 # Open Chinese Convert 開放中文轉換
 
+[ ![Download](https://api.bintray.com/packages/byvoid/opencc/OpenCC/images/download.svg) ](https://bintray.com/byvoid/opencc/OpenCC/_latestVersion)
+[![Build Status](https://travis-ci.org/BYVoid/OpenCC.svg?branch=master)](https://travis-ci.org/BYVoid/OpenCC)
+
 ## Introduction 介紹
 
 Open Chinese Convert (OpenCC, 開放中文轉換) is an opensource project for conversion between Traditional Chinese and Simplified Chinese, supporting character-level conversion, phrase-level conversion, variant conversion and regional idioms among Mainland China, Taiwan and Hong kong.
@@ -13,7 +16,7 @@ Open Chinese Convert (OpenCC, 開放中文轉換) is an opensource project for c
 * 嚴格審校一簡對多繁詞條，原則爲「能分則不合」。
 * 支持中國大陸、臺灣、香港異體字和地區習慣用詞轉換，如「裏」「裡」、「鼠標」「滑鼠」。
 * 詞庫和函數庫完全分離，可以自由修改、導入、擴展。
-* 支持C、C++、Python、PHP、Java、Ruby、Node.js。
+* 支持C、C++、Python、PHP、Java、Ruby、Node.js and Android。
 * 兼容Windows、Linux、Mac平臺。
 
 ### Links 相關鏈接
@@ -53,6 +56,8 @@ https://bintray.com/byvoid/opencc/OpenCC
 * `hk2s.json` Traditional Chinese (Hong Kong Standard) to Simplified Chinese 香港繁體（香港小學學習字詞表標準）到簡體
 * `s2twp.json` Simplified Chinese to Traditional Chinese (Taiwan Standard) with Taiwanese idiom 簡體到繁體（臺灣正體標準）並轉換爲臺灣常用詞彙
 * `tw2sp.json` Traditional Chinese (Taiwan Standard) to Simplified Chinese with Mainland Chinese idiom 繁體（臺灣正體標準）到簡體並轉換爲中國大陸常用詞彙
+* `t2tw.json` Traditional Chinese (OpenCC Standard) to Taiwan Standard 繁體（OpenCC 標準）到臺灣正體
+* `t2hk.json` Traditional Chinese (OpenCC Standard) to Hong Kong Standard 繁體（OpenCC 標準）到香港繁體（香港小學學習字詞表標準）
 
 ## Development Documentation 開發文檔
 
@@ -60,32 +65,45 @@ https://bintray.com/byvoid/opencc/OpenCC
 
 ## Build 編譯
 
-[![Build Status](https://travis-ci.org/BYVoid/OpenCC.png?branch=master)](https://travis-ci.org/BYVoid/OpenCC)
-
 ### Build with CMake
 
-Linux/OSX (gcc 4.6 or clang 3.2 is required):
+Linux (gcc 4.6 is required):
 
 ```
 make
 sudo make install
 ```
 
+Mac OS X (clang 3.2 is required):
+
+```
+make PREFIX=/usr/local
+sudo make PREFIX=/usr/local install
+```
+
 Windows MSYS:
 
 ```
-cmake .. -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX="" -DCMAKE_BUILD_TYPE=Release
-make
+cmake -H. -Bbuild -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX="path/to/install"
+cmake --build build --config Release --target install
 ```
 
 Windows Visual Studio (2013 or higher required):
 
 ```
-cmake .. -G "Visual Studio 12" -DCMAKE_INSTALL_PREFIX="" -DCMAKE_BUILD_TYPE=Release
-make
+cmake -H. -Bbuild -G"Visual Studio 12" -DCMAKE_INSTALL_PREFIX="path/to/install"
+cmake --build build --config Release --target install
 ```
 
-### Projects using Opencc 使用OpenCC的項目
+### iOS
+
+See https://github.com/gelosie/OpenCC/tree/master/iOS
+
+### Android
+
+See [android-opencc](https://github.com/qichuan/android-opencc)
+
+## Projects using Opencc 使用OpenCC的項目
 
 * [ibus-pinyin](http://code.google.com/p/ibus/)
 * [fcitx](http://code.google.com/p/fcitx/)
@@ -94,6 +112,8 @@ make
 * [ibus-libpinyin](https://github.com/libpinyin/ibus-libpinyin)
 * [BYVBlog](https://github.com/byvoid/byvblog)
 * [豆瓣同城微信](http://weixinqiao.com/douban-event/)
+* [alfred-chinese-converter](https://github.com/amowu/alfred-chinese-converter)
+* [GoldenDict](https://github.com/goldendict/goldendict)
 
 ## License 許可協議
 
@@ -106,6 +126,10 @@ Apache License 2.0
 * [rapidjson](https://github.com/miloyip/rapidjson) MIT License
 
 All these libraries are statically linked.
+
+## Change History 版本歷史
+
+https://github.com/BYVoid/OpenCC/blob/master/NEWS.md
 
 ## Contributors 貢獻者
 
@@ -130,3 +154,17 @@ All these libraries are statically linked.
 * [stony](https://github.com/stony-shixz)
 * [steelywing](https://github.com/steelywing)
 * [吕旭东](https://github.com/lvxudong)
+* [Weng Xuetian](https://github.com/wengxt)
+* [Ma Tao](https://github.com/iwater)
+* [Heinz Wiesinger](https://github.com/pprkut)
+* [J.W](https://github.com/jakwings)
+* [Amo Wu](https://github.com/amowu)
+* [Mark Tsai](https://github.com/mxgit1090)
+* [Zhe Wang](https://github.com/0x1997)
+* [sgqy](https://github.com/sgqy)
+* [Qichuan (Sean) ZHANG](https://github.com/qichuan)
+* [Flandre Scarlet](https://github.com/XadillaX)
+* [宋辰文](https://github.com/songchenwen)
+* [iwater](https://github.com/iwater)
+
+Please update this list you have contributed OpenCC.

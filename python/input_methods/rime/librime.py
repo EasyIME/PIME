@@ -25,7 +25,7 @@ if __name__ == "__main__":
 from opencc import OpenCC
 
 ENC = sys.getfilesystemencoding()
-RIME = "rime"
+RIME = "Rime"
 _librime = None
 if sys.platform == "win32": # Windows
     import os.path

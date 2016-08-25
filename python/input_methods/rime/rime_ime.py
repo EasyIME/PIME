@@ -28,7 +28,7 @@ APP = "PIME"
 APP_VERSION = "0.01"
 CONFIG_FILE = APP + ".yaml"
 
-user_dir = os.path.join(os.path.expanduser("~"), APP, RIME)
+user_dir = os.path.join(os.path.expandvars("%APPDATA%"), APP, RIME)
 first_run = not os.path.isdir(user_dir)
 if first_run:
     os.makedirs(user_dir, mode=0o700, exist_ok=True)

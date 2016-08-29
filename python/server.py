@@ -24,12 +24,13 @@ from serviceManager import textServiceMgr
 
 # import libpipe
 dll_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "libpipe.dll")
+if not os.path.exists(dll_path):
+    dll_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "../libpipe.dll")
 libpipe = CDLL(dll_path)
 
 # define Win32 error codes for named pipe I/O
 ERROR_MORE_DATA = 234
 ERROR_IO_PENDING = 997
-
 
 class Client:
     def __init__(self, server, pipe):

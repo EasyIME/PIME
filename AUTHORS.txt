@@ -1,2 +1,20 @@
-Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
-Ahbong Chang (cwahbong)
+Hong Jen Yee (PCMan) <pcman.tw@gmail.com>:
+* Original author of PIME and libIME
+* Intial port of the chewing module
+
+Ken Luo <ken670128@hotmail.com>:
+* All cin-based python modules:
+* NSIS installer
+
+lyenliang <lyenliang@gmail.com>:
+* new cj input method module (merged into checj later)
+
+Jessy Lee <jessy1092@gmail.com>L
+* Node.js support
+* emojime input module
+
+Ahbong Chang (cwahbong) <cw.ahbong@gmail.com>:
+* TSF UILess mode support
+
+Osfans <waxaca@163.com>:
+* RIME support

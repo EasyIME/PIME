@@ -20,7 +20,7 @@ import os
 import io
 import time
 
-DEF_FONT_SIZE = 16
+DEF_FONT_SIZE = 12
 
 selKeys=(
     "1234567890"

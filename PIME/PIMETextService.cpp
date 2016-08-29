@@ -45,7 +45,7 @@ TextService::TextService(ImeModule* module):
 	candPerRow_(10),
 	selKeys_(L"1234567890"),
 	candUseCursor_(false),
-	candFontSize_(16),
+	candFontSize_(12),
 	imeModeIcon_(nullptr),
 	currentLangProfile_(IID_NULL) {
 
@@ -53,7 +53,7 @@ TextService::TextService(ImeModule* module):
 	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 	LOGFONT lf;
 	GetObject(font_, sizeof(lf), &lf);
-	lf.lfHeight = candFontSize_; // FIXME: make this configurable
+	lf.lfHeight = candFontHeight(); // FIXME: make this configurable
 	lf.lfWeight = FW_NORMAL;
 	font_ = CreateFontIndirect(&lf);
 }
@@ -287,7 +287,7 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 		LOGFONT lf;
 		GetObject(font_, sizeof(lf), &lf);
 		::DeleteObject(font_); // delete old font
-		lf.lfHeight = candFontSize_; // apply the new size
+		lf.lfHeight = candFontHeight(); // apply the new size
 		if (!candFontName_.empty()) { // apply new font name
 			wcsncpy(lf.lfFaceName, candFontName_.c_str(), 31);
 		}
@@ -423,4 +423,14 @@ void CALLBACK TextService::onMessageTimeout(HWND hwnd, UINT msg, UINT_PTR id, DW
 void TextService::updateLangButtons() {
 }
 
+int TextService::candFontHeight() {
+	int candFontHeight_ = candFontSize_;
+	HDC hdc = GetDC(NULL);
+	if (hdc)
+	{
+		candFontHeight_ = -MulDiv(candFontSize_, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+		ReleaseDC(NULL, hdc);
+	}
+	return candFontHeight_;
+}
 } // namespace PIME

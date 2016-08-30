@@ -704,7 +704,10 @@ class CinBase:
                         candidates = []
                     else: # 不在快速符號表裡
                         if CinBaseTextService.shapeMode == FULLSHAPE_MODE: # 全形模式
-                            CommitStr = self.charCodeToFullshape(charCode)
+                            CommitStr = self.charCodeToFullshape(CinBaseTextService, charCode, keyCode)
+                        else:
+                            if CinBaseTextService.outputSmallLetterWithShift:
+                                CommitStr = charStr.upper() if CinBaseTextService.capsStates else charStr.lower()
                     CinBaseTextService.setCommitString(CommitStr)
                     self.resetComposition(CinBaseTextService)
                 # 如果啟用 Shift 輸入全形標點
@@ -733,7 +736,10 @@ class CinBase:
                                 self.resetComposition(CinBaseTextService)
                     else: #如果是字母
                         if CinBaseTextService.shapeMode == FULLSHAPE_MODE: # 全形模式
-                            CommitStr = self.charCodeToFullshape(charCode)
+                            CommitStr = self.charCodeToFullshape(CinBaseTextService, charCode, keyCode)
+                        else:
+                            if CinBaseTextService.outputSmallLetterWithShift:
+                                CommitStr = charStr.upper() if CinBaseTextService.capsStates else charStr.lower()
                         CinBaseTextService.setCommitString(CommitStr)
                         self.resetComposition(CinBaseTextService)
                 else: # 如果未使用 SHIFT 輸入快速符號或全形標點
@@ -753,7 +759,10 @@ class CinBase:
                                 if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
                                     CommitStr = self.SymbolscharCodeToFullshape(charCode)
                                 else:
-                                    CommitStr = self.charCodeToFullshape(charCode)
+                                    CommitStr = self.charCodeToFullshape(CinBaseTextService, charCode, keyCode)
+                            else:
+                                if self.isLetterChar(keyCode) and CinBaseTextService.outputSmallLetterWithShift:
+                                    CommitStr = charStr.upper() if CinBaseTextService.capsStates else charStr.lower()
                             CinBaseTextService.setCommitString(CommitStr)
                             self.resetComposition(CinBaseTextService)
             else: # 若沒按下 Shift 鍵
@@ -763,7 +772,7 @@ class CinBase:
                     if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
                         CommitStr = self.SymbolscharCodeToFullshape(charCode)
                     else:
-                        CommitStr = self.charCodeToFullshape(charCode)
+                        CommitStr = self.charCodeToFullshape(CinBaseTextService, charCode, keyCode)
                     CinBaseTextService.setCommitString(CommitStr)
                     self.resetComposition(CinBaseTextService)
                 else: # 送出 CIN 所定義的字根
@@ -808,7 +817,7 @@ class CinBase:
                             if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
                                 CommitStr = self.SymbolscharCodeToFullshape(charCode)
                             else:
-                                CommitStr = self.charCodeToFullshape(charCode)
+                                CommitStr = self.charCodeToFullshape(CinBaseTextService, charCode, keyCode)
                             CinBaseTextService.setCommitString(CommitStr)
                             self.resetComposition(CinBaseTextService)
                     else: # 半形模式直接輸出不作處理
@@ -818,6 +827,8 @@ class CinBase:
                             CinBaseTextService.setCompositionString(CinBaseTextService.compositionString + keyname)
                         else:
                             CommitStr = charStr
+                            if self.isLetterChar(keyCode) and CinBaseTextService.outputSmallLetterWithShift:
+                                CommitStr = charStr.upper() if CinBaseTextService.capsStates else charStr.lower()
                             CinBaseTextService.setCommitString(CommitStr)
                             self.resetComposition(CinBaseTextService)
                 else: # 如果啟用 Shift 輸入全形標點
@@ -843,7 +854,7 @@ class CinBase:
                                 if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
                                     CommitStr = self.SymbolscharCodeToFullshape(charCode)
                                 else:
-                                    CommitStr = self.charCodeToFullshape(charCode)
+                                    CommitStr = self.charCodeToFullshape(CinBaseTextService, charCode, keyCode)
                                 CinBaseTextService.setCommitString(CommitStr)
                                 self.resetComposition(CinBaseTextService)
                                 
@@ -853,7 +864,7 @@ class CinBase:
                     if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
                         CommitStr = self.SymbolscharCodeToFullshape(charCode)
                     else:
-                        CommitStr = self.charCodeToFullshape(charCode)
+                        CommitStr = self.charCodeToFullshape(CinBaseTextService, charCode, keyCode)
                     CinBaseTextService.setCommitString(CommitStr)
                     self.resetComposition(CinBaseTextService)
 
@@ -1702,7 +1713,11 @@ class CinBase:
         return False
 
     # 一般字元轉全形
-    def charCodeToFullshape(self, charCode):
+    def charCodeToFullshape(self, cbTS, charCode, keyCode):
+        if cbTS.langMode == CHINESE_MODE and cbTS.outputSmallLetterWithShift and self.isLetterChar(keyCode):
+            char = chr(charCode).upper() if cbTS.capsStates else chr(charCode).lower()
+            charCode = ord(char)
+
         charStr = ''
         if charCode < 0x0020 or charCode > 0x7e:
             charStr = chr(charCode)
@@ -1712,7 +1727,7 @@ class CinBase:
             charCode += 0xfee0
             charStr = chr(charCode)
         return charStr
-        
+
     # 符號字元轉全形
     def SymbolscharCodeToFullshape(self, charCode):
         charStr = ''
@@ -1838,7 +1853,10 @@ class CinBase:
         # 設定選字按鍵 (123456..., asdf.... 等)
         # if CinBaseTextService.cin.getSelection():
         #     CinBaseTextService.setSelKeys(CinBaseTextService.cin.getSelection())
-        
+
+        # 押住 Shift 輸出英文時預設小寫?
+        CinBaseTextService.outputSmallLetterWithShift = cfg.outputSmallLetterWithShift
+
         # 使用空白鍵作為候選清單換頁鍵?
         CinBaseTextService.switchPageWithSpace = cfg.switchPageWithSpace
 

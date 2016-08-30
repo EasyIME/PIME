@@ -7,6 +7,7 @@
     "defaultFullSpace": false,
     "selCinType": 0,
     "switchLangWithShift": true,
+    "outputSmallLetterWithShift": false,
     "switchPageWithSpace": false,
     "fullShapeSymbols": false,
     "colorCandWnd": true,

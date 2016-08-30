@@ -35,6 +35,7 @@ class CinBaseConfig:
         self.defaultEnglish = False
         self.defaultFullSpace = False
         self.switchLangWithShift = True
+        self.outputSmallLetterWithShift = False
         self.switchPageWithSpace = False
         self.outputSimpChinese = False
         self.hidePromptMessages = True
@@ -100,7 +101,6 @@ class CinBaseConfig:
                     dst_dir = self.getConfigDir()
                     self.copytree(src_dir, dst_dir)
                     filename = self.getConfigFile()
-                    shutil.rmtree(src_dir)
 
             with open(filename, "r") as f:
                 self.__dict__.update(json.load(f))

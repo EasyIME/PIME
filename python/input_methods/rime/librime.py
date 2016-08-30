@@ -18,7 +18,7 @@
 
 from ctypes import *
 from time import time
-import sys, os
+import sys, os, glob, shutil
 
 if __name__ == "__main__":
     sys.path.append('../../')
@@ -260,6 +260,12 @@ def rimeNotificationHandler(context_object, session_id, message_type, message_va
     print(context_object, session_id.contents if session_id else 0, message_type, message_value)
 
 def rimeInit(datadir="data", userdir="data", fullcheck=True, appname="python", appver="0.01"):
+    opencc_dir = os.path.join(userdir, "opencc")
+    if not os.path.isdir(opencc_dir):
+        os.makedirs(opencc_dir, mode=0o700, exist_ok=True)
+        for f in glob.glob("%s/../../../opencc/*.*o*"%datadir):
+            shutil.copy(f, opencc_dir)
+
     traits = RimeTraits(
         shared_data_dir=c_char_p(datadir.encode(ENC)),
         user_data_dir=c_char_p(userdir.encode(ENC)),

@@ -216,15 +216,21 @@ class Cin(object):
     def getKeyName(self, key):
         return self.keynames[key]
 
+    def isHaveKey(self, val):
+        return True if [key for key, value in self.chardefs.items() if val in value] else False
+
+    def getKey(self, val):
+        return [key for key, value in self.chardefs.items() if val in value][0]
+
     def isInCharDef(self, key):
         return key in self.chardefs
-        
+
     def getCharDef(self, key):
         """ 
         will return a list conaining all possible result
         """
         return self.chardefs[key]
-        
+
     def haveNextCharDef(self, key):
         chardefslist = []
         for chardef in self.chardefs:
@@ -361,7 +367,7 @@ class Cin(object):
 
     def getCountDir(self):
         dirname = os.path.basename(self.curdir)
-        count_dir = os.path.join(os.path.expanduser("~"), "PIME", dirname)
+        count_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", dirname)
         os.makedirs(count_dir, mode=0o700, exist_ok=True)
         return count_dir
 

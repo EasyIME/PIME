@@ -19,6 +19,7 @@ import json
 import os
 import io
 import time
+import shutil
 
 DEF_FONT_SIZE = 12
 
@@ -73,7 +74,7 @@ class CinBaseConfig:
         self._lastUpdateTime = 0.0
 
     def getConfigDir(self):
-        config_dir = os.path.join(os.path.expanduser("~"), "PIME", self.imeDirName)
+        config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", self.imeDirName)
         os.makedirs(config_dir, mode=0o700, exist_ok=True)
         return config_dir
 
@@ -90,7 +91,16 @@ class CinBaseConfig:
         filename = self.getConfigFile()
         try:
             if not os.path.exists(filename) or os.stat(filename).st_size == 0:
-                filename = os.path.join(self.getDefaultConfigDir(), "config.json")
+                filename = os.path.join(os.path.expanduser("~"), "PIME", self.imeDirName, "config.json")
+
+                if not os.path.exists(filename) or os.stat(filename).st_size == 0:
+                    filename = os.path.join(self.getDefaultConfigDir(), "config.json")
+                else:
+                    src_dir = os.path.join(os.path.expanduser("~"), "PIME", self.imeDirName)
+                    dst_dir = self.getConfigDir()
+                    self.copytree(src_dir, dst_dir)
+                    filename = self.getConfigFile()
+                    shutil.rmtree(src_dir)
 
             with open(filename, "r") as f:
                 self.__dict__.update(json.load(f))
@@ -120,6 +130,15 @@ class CinBaseConfig:
             if os.path.exists(path):
                 return path
         return None
+
+    def copytree(slef, src, dst, symlinks=False, ignore=None):
+        for item in os.listdir(src):
+            s = os.path.join(src, item)
+            d = os.path.join(dst, item)
+            if os.path.isdir(s):
+                shutil.copytree(s, d, symlinks, ignore)
+            else:
+                shutil.copy2(s, d)
 
     # check if the config files are changed and relaod as needed
     def update(self):

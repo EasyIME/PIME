@@ -59,7 +59,7 @@ function writeFile(path, data) {
 // This is Windows-only :-(
 function getConfigDir() {
     var shell = new ActiveXObject("WScript.Shell");
-    var dirPath = shell.ExpandEnvironmentStrings("%USERPROFILE%\\PIME");
+    var dirPath = shell.ExpandEnvironmentStrings("%APPDATA%\\PIME");
     // ensure that the folder exists
     var fso = new ActiveXObject("Scripting.FileSystemObject");
     if(!fso.FolderExists(dirPath)) {

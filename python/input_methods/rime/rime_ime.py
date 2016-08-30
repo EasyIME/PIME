@@ -72,35 +72,37 @@ class RimeTextService(TextService):
         is_ascii_mode = rime.get_option(self.session_id, b'ascii_mode')
         is_full_shape = rime.get_option(self.session_id, b'full_shape')
 
-        # Windows 8 以上已取消語言列功能，改用 systray IME mode icon
+        # Windows 8 以上systray IME mode icon
         if self.client.isWindows8Above:
             icon_name = "%s_%s_capsoff.ico" % ("eng" if is_ascii_mode else "chi", "full" if is_full_shape else "half")
             self.addButton("windows-mode-icon",
                 icon = os.path.join(self.icon_dir, icon_name),
-                tooltip = "中英文切換",
+                tooltip = "中西文切換",
                 commandId = ID_MODE_ICON
             )
-        else:
-            icon_name = "eng.ico" if is_ascii_mode else "chi.ico"
-            self.addButton("switch-lang",
-                icon = os.path.join(self.icon_dir, icon_name),
-                tooltip = "中英文切換",
-                commandId = ID_ASCII_MODE
-            )
 
-            # 切換全半形
-            icon_name = "full.ico" if is_full_shape else "half.ico"
-            self.addButton("switch-shape",
-                icon = os.path.join(self.icon_dir, icon_name),
-                tooltip = "全形/半形切換",
-                commandId = ID_FULL_SHAPE
-            )
-            # 設定
-            self.addButton("settings",
-                icon = os.path.join(self.icon_dir, "config.ico"),
-                tooltip = "設定",
-                type = "menu"
-            )
+        icon_name = "eng.ico" if is_ascii_mode else "chi.ico"
+        self.addButton("switch-lang",
+            icon = os.path.join(self.icon_dir, icon_name),
+            text = "中西文切換",
+            tooltip = "中西文切換",
+            commandId = ID_ASCII_MODE,
+        )
+        # 切換全半形
+        icon_name = "full.ico" if is_full_shape else "half.ico"
+        self.addButton("switch-shape",
+            icon = os.path.join(self.icon_dir, icon_name),
+            text = "全半角切換",
+            tooltip = "全角/半角切換",
+            commandId = ID_FULL_SHAPE
+        )
+        # 設定
+        self.addButton("settings",
+            icon = os.path.join(self.icon_dir, "config.ico"),
+            text = "設定",
+            tooltip = "設定",
+            type = "menu"
+        )
 
     def createSession(self):
         if not (self.session_id and rime.find_session(self.session_id)):
@@ -186,14 +188,14 @@ class RimeTextService(TextService):
             icon_name = "%s_%s_capsoff.ico" % ("eng" if is_ascii_mode else "chi", "full" if is_full_shape else "half")
             icon_path = os.path.join(self.icon_dir, icon_name)
             self.changeButton("windows-mode-icon", icon=icon_path)
-        else:
-            icon_name = "eng.ico" if is_ascii_mode else "chi.ico"
-            icon_path = os.path.join(self.icon_dir, icon_name)
-            self.changeButton("switch-lang", icon=icon_path)
 
-            icon_name = "full.ico" if is_full_shape else "half.ico"
-            icon_path = os.path.join(self.icon_dir, icon_name)
-            self.changeButton("switch-shape", icon=icon_path)
+        icon_name = "eng.ico" if is_ascii_mode else "chi.ico"
+        icon_path = os.path.join(self.icon_dir, icon_name)
+        self.changeButton("switch-lang", icon=icon_path)
+
+        icon_name = "full.ico" if is_full_shape else "half.ico"
+        icon_path = os.path.join(self.icon_dir, icon_name)
+        self.changeButton("switch-shape", icon=icon_path)
 
     def onKey(self):
         self.updateLangStatus()
@@ -265,7 +267,8 @@ class RimeTextService(TextService):
         self.updateLangStatus()
         
     def onCommand(self, commandId, commandType):
-        # print("onCommand", commandId, commandType)
+        print("onCommand", commandId, commandType)
+        global user_dir, shared_dir
         if commandId >= ID_URI:
             os.startfile(self.style.get_uri(commandId))
         elif commandId >= ID_SCHEMA:
@@ -275,9 +278,9 @@ class RimeTextService(TextService):
             self.toggleOption(self.style.get_option(commandId))
         elif commandId in (ID_ASCII_MODE, ID_MODE_ICON) and commandType == COMMAND_LEFT_CLICK:  # 切換中英文模式
             self.toggleOption(b'ascii_mode')
-        elif commandId == ID_FULL_SHAPE:  # 切換中英文模式
+        elif commandId == ID_FULL_SHAPE:  # 切換全半角
             self.toggleOption(b'full_shape')
-        elif commandId == ID_USER_DIR: # visit chewing google groups website
+        elif commandId == ID_USER_DIR:
             os.startfile(user_dir)
         elif commandId == ID_SHARED_DIR:
             os.startfile(shared_dir)

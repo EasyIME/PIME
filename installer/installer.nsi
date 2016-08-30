@@ -642,7 +642,7 @@ LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解
 	!insertmacro MUI_DESCRIPTION_TEXT ${chesimplex} "安裝速成輸入法模組。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${chephonetic} "安裝注音輸入法模組。"
     !insertmacro MUI_DESCRIPTION_TEXT ${cheez} "安裝輕鬆輸入法模組。"
-    !insertmacro MUI_DESCRIPTION_TEXT ${rime} "安裝中州韻輸入法引擎。"
+    !insertmacro MUI_DESCRIPTION_TEXT ${rime} "安裝中州韻輸入法引擎，內含拼音、注音、倉頡、五筆、粵拼、吳語等數種輸入方案。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${emojime} "安裝 emojime 輸入法模組。"
 	!insertmacro MUI_DESCRIPTION_TEXT ${cheeng} "安裝英數輸入法模組。"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END

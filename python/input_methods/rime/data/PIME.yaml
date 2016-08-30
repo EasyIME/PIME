@@ -1,7 +1,7 @@
 # Weasel settings
 # encoding: utf-8
 
-config_version: "0.03"
+config_version: "0.04"
 
 #app_options:
 #  cmd.exe:
@@ -50,12 +50,12 @@ menu:
         uri: "https://github.com/osfans/rime-tool"
       - text: "RIME官網"
         uri: "http://rime.im/"
-      - text: "同文安卓輸入法平臺官網"
-        uri: "https://github.com/osfans/trime/releases"
-      - text: "Prime輸入法平臺官網"
-        uri: "https://github.com/osfans/PIME/releases"
       - text: "RIME建議及錯誤回報"
         uri: "https://github.com/rime/home/"
+      - text: "同文安卓輸入法平臺官網"
+        uri: "https://github.com/osfans/trime/releases"
+      - text: "PIME輸入法平臺RIME定製版官網"
+        uri: "https://github.com/osfans/PIME/releases"
   - text: "PIME輸入法平臺(&P)"
     submenu:
       - text: "PIME開發討論區"

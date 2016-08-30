@@ -23,7 +23,7 @@ from ctypes import windll  # for calling Windows api
 import uuid  # use to generate a random auth token
 import random
 
-configDir = os.path.expanduser("~\\PIME\\chewing")
+configDir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", "chewing")
 dataDir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 
 SERVER_TIMEOUT = 120

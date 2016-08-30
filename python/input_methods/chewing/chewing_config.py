@@ -18,6 +18,7 @@
 import json
 import os
 import time
+import shutil
 
 DEF_FONT_SIZE = 16
 
@@ -64,7 +65,7 @@ class ChewingConfig:
         self.load() # try to load from the config file
 
     def getConfigDir(self):
-        config_dir = os.path.join(os.path.expanduser("~"), "PIME", "chewing")
+        config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", "chewing")
         os.makedirs(config_dir, mode=0o700, exist_ok=True)
         return config_dir
 
@@ -87,7 +88,15 @@ class ChewingConfig:
                 with open(filename, "r") as f:
                     self.__dict__.update(json.load(f))
             else:
-                self.save()
+                filename = os.path.join(os.path.expanduser("~"), "PIME", "chewing", "config.json")
+                if not os.path.exists(filename) or os.stat(filename).st_size == 0:
+                    self.save()
+                else:
+                    src_dir = os.path.join(os.path.expanduser("~"), "PIME", "chewing")
+                    dst_dir = self.getConfigDir()
+                    self.copytree(src_dir, dst_dir)
+                    filename = self.getConfigFile()
+
         except Exception:
             self.save()
         self.update()
@@ -111,6 +120,15 @@ class ChewingConfig:
             if os.path.exists(path):
                 return path
         return None
+
+    def copytree(slef, src, dst, symlinks=False, ignore=None):
+        for item in os.listdir(src):
+            s = os.path.join(src, item)
+            d = os.path.join(dst, item)
+            if os.path.isdir(s):
+                shutil.copytree(s, d, symlinks, ignore)
+            else:
+                shutil.copy2(s, d)
 
     # check if the config files are changed and relaod as needed
     def update(self):

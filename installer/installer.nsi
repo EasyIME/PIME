@@ -39,7 +39,6 @@ AllowSkipFiles off ; cannot skip a file
 !define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\orange-install.ico"
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\orange-uninstall.ico"
 
-!define PRODUCT_NAME "PIME 輸入法"
 !define /file PRODUCT_VERSION "..\version.txt"
 
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
@@ -60,9 +59,8 @@ AllowSkipFiles off ; cannot skip a file
 !define CHEENG_GUID "{88BB09A8-4603-4D78-B052-DEE9EAE697EC}"
 !define RIME_GUID "{9C2D6C68-9EA6-4CFB-A769-7E619DB7F267}"
 
-
-Name "${PRODUCT_NAME}"
-BrandingText "${PRODUCT_NAME}"
+Name "$(PRODUCT_NAME)"
+BrandingText "$(PRODUCT_NAME)"
 
 OutFile "PIME-${PRODUCT_VERSION}-setup.exe" ; The generated installer file name
 
@@ -92,7 +90,7 @@ Page custom setIEProtectedPage leaveIEProtectedPage
 
 ; finish page
 !define MUI_FINISHPAGE_LINK_LOCATION "${HOMEPAGE_URL}"
-!define MUI_FINISHPAGE_LINK "PIME 專案網頁 ${MUI_FINISHPAGE_LINK_LOCATION}"
+!define MUI_FINISHPAGE_LINK "$(PRODUCT_PAGE) ${MUI_FINISHPAGE_LINK_LOCATION}"
 !insertmacro MUI_PAGE_FINISH
 
 ; uninstallation pages
@@ -100,7 +98,22 @@ Page custom setIEProtectedPage leaveIEProtectedPage
 !insertmacro MUI_UNPAGE_INSTFILES
 ;--------------------------------
 
-!insertmacro MUI_LANGUAGE "TradChinese" ; traditional Chinese
+!macro LANG_LOAD LANGLOAD
+  !insertmacro MUI_LANGUAGE "${LANGLOAD}"
+  !include "locale\${LANGLOAD}.nsh"
+  !undef LANG
+!macroend
+ 
+!macro LANG_STRING NAME VALUE
+  LangString "${NAME}" "${LANG_${LANG}}" "${VALUE}"
+!macroend
+ 
+!macro LANG_UNSTRING NAME VALUE
+  !insertmacro LANG_STRING "un.${NAME}" "${VALUE}"
+!macroend
+
+!insertmacro LANG_LOAD "TradChinese" ; traditional Chinese
+!insertmacro LANG_LOAD "SimpChinese" ; Simplified Chinese
 
 var UPDATEX86DLL
 var UPDATEX64DLL
@@ -113,7 +126,7 @@ Function uninstallOldVersion
 	${If} $R0 != ""
 		ClearErrors
 		${If} ${FileExists} "$INSTDIR\Uninstall.exe"
-			MessageBox MB_OKCANCEL|MB_ICONQUESTION "偵測到已安裝舊版，是否要移除舊版後繼續安裝新版？" IDOK +2
+			MessageBox MB_OKCANCEL|MB_ICONQUESTION $(UNINSTALL_OLD) IDOK +2
 			Abort ; this is skipped if the user select OK
 
 			; Remove the launcher from auto-start
@@ -183,17 +196,17 @@ Function uninstallOldVersion
 			RMDir /REBOOTOK /r "$INSTDIR\server"
 
 			; Delete shortcuts
-			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
-			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk"
-			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定蝦米輸入法.lnk"
-			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定行列輸入法.lnk"
-			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定大易輸入法.lnk"
-			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定拼音輸入法.lnk"
-			Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定速成輸入法.lnk"
-            Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定注音輸入法.lnk"
-            Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定輕鬆輸入法.lnk"
-			Delete "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk"
-			RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
+			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING).lnk"
+			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHECJ).lnk"
+			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHELIU).lnk"
+			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEARRAY).lnk"
+			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEDAYI).lnk"
+			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPINYIN).lnk"
+			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk"
+			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk"
+			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk"
+			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
+			RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
 
 			Delete "$INSTDIR\version.txt"
 			Delete "$INSTDIR\Uninstall.exe"
@@ -253,9 +266,23 @@ FunctionEnd
 
 ; Called during installer initialization
 Function .onInit
+	;Language selection dialog
+
+	Push ""
+	Push ${LANG_TRADCHINESE}
+	Push "繁體中文"
+	Push ${LANG_SIMPCHINESE}
+	Push "简体中文"
+	Push A ; A means auto count languages
+	       ; for the auto count to work the first empty push (Push "") must remain
+	LangDLL::LangDialog $(INSTALLER_LANGUAGE_TITLE) $(INSTALL_LANGUAGE_MESSAGE)
+
+	Pop $LANGUAGE
+	StrCmp $LANGUAGE "cancel" 0 +2
+		Abort
 	; Currently, we're not able to support Windows xp since it has an incomplete TSF.
 	${IfNot} ${AtLeastWinVista}
-		MessageBox MB_ICONSTOP|MB_OK "抱歉，本程式目前只能支援 Windows Vista 以上版本"
+		MessageBox MB_ICONSTOP|MB_OK $(AtLeastWinVista_MESSAGE)
 		Quit
 	${EndIf}
 
@@ -279,12 +306,12 @@ FunctionEnd
 ; called to show an error message when errors happen
 Function .onInstFailed
 	${If} ${RebootFlag}
-		MessageBox MB_YESNO "安裝發生錯誤，無法完成。$\r$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)" IDNO +3
+		MessageBox MB_YESNO $(REBOOT_QUESTION) IDNO +3
 		Reboot
 		Quit
 		Abort
 	${Else}
-		MessageBox MB_ICONSTOP|MB_OK "安裝發生錯誤，無法完成。$\n$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。"
+		MessageBox MB_ICONSTOP|MB_OK $(INST_FAILED_MESSAGE)
 		Abort
 	${EndIf}
 FunctionEnd
@@ -294,13 +321,13 @@ Function ensureVCRedist
     ; Reference: https://blogs.msdn.microsoft.com/vcblog/2015/03/03/introducing-the-universal-crt/
     ;            https://docs.python.org/3/using/windows.html#embedded-distribution
     ${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
-        MessageBox MB_YESNO|MB_ICONQUESTION "這個程式需要微軟 VC++ 2015 runtime 更新才能運作，要自動下載安裝？" IDYES +2
+        MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VC2015_QUESTION) IDYES +2
             Abort ; this is skipped if the user select Yes
         ; Download VC++ 2015 redistibutable (x86 version)
         nsisdl::download "http://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe" "$TEMP\vc2015_redist.x86.exe"
         Pop $R0 ;Get the return value
         ${If} $R0 != "success"
-            MessageBox MB_ICONSTOP|MB_OK "無法正確下載，請稍後再試，或手動安裝 VC++ 2015 runtime (x86)"
+            MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VC2015_FAILED_MESSAGE)
             Abort
         ${EndIf}
 
@@ -309,7 +336,7 @@ Function ensureVCRedist
 
         ; check again is ucrtbase.dll is available
         ${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
-            MessageBox MB_ICONSTOP|MB_OK "VC++ 2015 runtime (x86) 並未正確安裝，請參閱相關微軟文件進行更新。"
+            MessageBox MB_ICONSTOP|MB_OK $(INST_VC2015_FAILED_MESSAGE)
             ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
             Abort
         ${EndIf}
@@ -324,7 +351,7 @@ Function setIEProtectedPage
 	${Endif}
 	InstallOptions::initDialog /NOUNLOAD "$PLUGINSDIR\ieprotectedpage.ini"
 	Pop $HWND
-	!insertmacro MUI_HEADER_TEXT "變更 IE 設定" "PIME 輸入法須要變更 IE 設定，才能在 IE 裡使用。"
+	!insertmacro MUI_HEADER_TEXT $(IEProtectedPage_TITLE) $(IEProtectedPage_MESSAGE)
 
 	GetDlgItem $0 $HWND 1205
 	EnableWindow $0 0
@@ -350,7 +377,7 @@ InstType "$(INST_TYPE_STD)"
 InstType "$(INST_TYPE_FULL)"
 
 ;Installer Sections
-Section "PIME 輸入法平台" SecMain
+Section $(SECTION_MAIN) SecMain
 	SectionIn 1 2 RO
     ; Ensure that we have VC++ 2015 runtime (for python 3.5)
     Call ensureVCRedist
@@ -382,62 +409,62 @@ Section "PIME 輸入法平台" SecMain
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
 SectionEnd
 
-SectionGroup /e "輸入法模組"
-	Section "新酷音" chewing
+SectionGroup /e $(SECTION_GROUP)
+	Section $(CHEWING) chewing
 		SectionIn 1 2
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r "..\python\input_methods\chewing"
 	SectionEnd
 
-	Section "酷倉" checj
+	Section $(CHECJ) checj
 		SectionIn 2
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r "..\python\input_methods\checj"
 	SectionEnd
 /*
-	Section "蝦米" cheliu
+	Section $(CHELIU) cheliu
 		SectionIn 2
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r "..\python\input_methods\cheliu"
 	SectionEnd
 */
-	Section "行列" chearray
+	Section $(CHEARRAY) chearray
 		SectionIn 2
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r "..\python\input_methods\chearray"
 	SectionEnd
 
-	Section "大易" chedayi
+	Section $(CHEDAYI) chedayi
 		SectionIn 2
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r "..\python\input_methods\chedayi"
 	SectionEnd
 
-	Section "拼音" chepinyin
+	Section $(CHEPINYIN) chepinyin
 		SectionIn 2
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r "..\python\input_methods\chepinyin"
 	SectionEnd
 
-	Section "速成" chesimplex
+	Section $(CHESIMPLEX) chesimplex
 		SectionIn 2
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r "..\python\input_methods\chesimplex"
 	SectionEnd
 
-	Section "注音" chephonetic
+	Section $(CHEPHONETIC) chephonetic
 		SectionIn 2
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r "..\python\input_methods\chephonetic"
 	SectionEnd
     
-	Section "輕鬆" cheez
+	Section $(CHEEZ) cheez
 		SectionIn 2
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r "..\python\input_methods\cheez"
 	SectionEnd
 
-	Section "中州韻" rime
+	Section $(RIME) rime
 		SectionIn 2
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r /x "brise" "..\python\input_methods\rime"
@@ -451,13 +478,13 @@ SectionGroup /e "輸入法模組"
 		File "..\python\opencc\*.json" "..\python\opencc\*.ocd"
 	SectionEnd
 
-	Section "emojime" emojime
+	Section $(EMOJIME) emojime
 			SectionIn 2
 			SetOutPath "$INSTDIR\node\input_methods"
 			File /r "..\node\input_methods\emojime"
 	SectionEnd
 
-	Section "英數" cheeng
+	Section $(CHEENG) cheeng
 		${If} ${AtLeastWin8}
 			SectionIn 2
 			SetOutPath "$INSTDIR\python\input_methods"
@@ -496,9 +523,9 @@ Section "" Register
 	;Store installation folder in the registry
 	WriteRegStr HKLM "Software\PIME" "" $INSTDIR
 	;Write an entry to Add & Remove applications
-	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayName" "PIME 輸入法"
+	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayName" $(PRODUCT_NAME)
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "Publisher" "PIME 開發團隊"
+	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "Publisher" $(PRODUCT_PUBLISHER)
 	; WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\x86\PIMETextService.dll"
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${HOMEPAGE_URL}"
@@ -592,67 +619,61 @@ Section "" Register
 	${EndIf}
 
 	; Create shortcuts
-	CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
+	CreateDirectory "$SMPROGRAMS\$(PRODUCT_NAME)"
 	${If} ${SectionIsSelected} ${chewing}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\input_methods\chewing\config\configTool.py"' "$INSTDIR\python\input_methods\chewing\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\input_methods\chewing\config\configTool.py"' "$INSTDIR\python\input_methods\chewing\icon.ico" 0
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${checj}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk" "$INSTDIR\python\input_methods\checj\config\config.hta" "" "$INSTDIR\python\input_methods\checj\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHECJ).lnk" "$INSTDIR\python\input_methods\checj\config\config.hta" "" "$INSTDIR\python\input_methods\checj\icon.ico" 0
 	${EndIf}
 /*
 	${If} ${SectionIsSelected} ${cheliu}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定蝦米輸入法.lnk" "$INSTDIR\python\input_methods\cheliu\config\config.hta" "" "$INSTDIR\python\input_methods\cheliu\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHELIU).lnk" "$INSTDIR\python\input_methods\cheliu\config\config.hta" "" "$INSTDIR\python\input_methods\cheliu\icon.ico" 0
 	${EndIf}
 */
 	${If} ${SectionIsSelected} ${chearray}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定行列輸入法.lnk" "$INSTDIR\python\input_methods\chearray\config\config.hta" "" "$INSTDIR\python\input_methods\chearray\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEARRAY).lnk" "$INSTDIR\python\input_methods\chearray\config\config.hta" "" "$INSTDIR\python\input_methods\chearray\icon.ico" 0
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${chedayi}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定大易輸入法.lnk" "$INSTDIR\python\input_methods\chedayi\config\config.hta" "" "$INSTDIR\python\input_methods\chedayi\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEDAYI).lnk" "$INSTDIR\python\input_methods\chedayi\config\config.hta" "" "$INSTDIR\python\input_methods\chedayi\icon.ico" 0
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${chepinyin}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定拼音輸入法.lnk" "$INSTDIR\python\input_methods\chepinyin\config\config.hta" "" "$INSTDIR\python\input_methods\chepinyin\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPINYIN).lnk" "$INSTDIR\python\input_methods\chepinyin\config\config.hta" "" "$INSTDIR\python\input_methods\chepinyin\icon.ico" 0
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${chesimplex}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定速成輸入法.lnk" "$INSTDIR\python\input_methods\chesimplex\config\config.hta" "" "$INSTDIR\python\input_methods\chesimplex\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk" "$INSTDIR\python\input_methods\chesimplex\config\config.hta" "" "$INSTDIR\python\input_methods\chesimplex\icon.ico" 0
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${chephonetic}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定注音輸入法.lnk" "$INSTDIR\python\input_methods\chephonetic\config\config.hta" "" "$INSTDIR\python\input_methods\chephonetic\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk" "$INSTDIR\python\input_methods\chephonetic\config\config.hta" "" "$INSTDIR\python\input_methods\chephonetic\icon.ico" 0
 	${EndIf}
     
 	${If} ${SectionIsSelected} ${cheez}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\設定輕鬆輸入法.lnk" "$INSTDIR\python\input_methods\cheez\config\config.hta" "" "$INSTDIR\python\input_methods\cheez\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk" "$INSTDIR\python\input_methods\cheez\config\config.hta" "" "$INSTDIR\python\input_methods\cheez\icon.ico" 0
 	${EndIf}
 
-	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk" "$INSTDIR\Uninstall.exe"
+	CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)$(UNINSTALL_PIME)\.lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
-
-;Language strings
-!define CHT 1028
-LangString INST_TYPE_STD ${CHT} "標準安裝"
-LangString INST_TYPE_FULL ${CHT} "完整安裝"
-LangString MB_REBOOT_REQUIRED ${CHT} "安裝程式需要重新開機來完成解除安裝。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)"
 
 ;Assign language strings to sections
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} "安裝 ${PRODUCT_NAME} 主程式到你的電腦裏。"
-	!insertmacro MUI_DESCRIPTION_TEXT ${chewing} "安裝新酷音輸入法模組。"
-	!insertmacro MUI_DESCRIPTION_TEXT ${checj} "安裝酷倉輸入法模組。"
-	; !insertmacro MUI_DESCRIPTION_TEXT ${cheliu} "安裝蝦米輸入法模組。"
-	!insertmacro MUI_DESCRIPTION_TEXT ${chearray} "安裝行列輸入法模組。"
-	!insertmacro MUI_DESCRIPTION_TEXT ${chedayi} "安裝大易輸入法模組。"
-	!insertmacro MUI_DESCRIPTION_TEXT ${chepinyin} "安裝拼音輸入法模組。"
-	!insertmacro MUI_DESCRIPTION_TEXT ${chesimplex} "安裝速成輸入法模組。"
-	!insertmacro MUI_DESCRIPTION_TEXT ${chephonetic} "安裝注音輸入法模組。"
-    !insertmacro MUI_DESCRIPTION_TEXT ${cheez} "安裝輕鬆輸入法模組。"
-    !insertmacro MUI_DESCRIPTION_TEXT ${rime} "安裝中州韻輸入法引擎，內含拼音、注音、倉頡、五筆、粵拼、吳語等數種輸入方案。"
-	!insertmacro MUI_DESCRIPTION_TEXT ${emojime} "安裝 emojime 輸入法模組。"
-	!insertmacro MUI_DESCRIPTION_TEXT ${cheeng} "安裝英數輸入法模組。"
+	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} $(SecMain_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${chewing} $(chewing_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${checj} $(checj_DESC)
+	; !insertmacro MUI_DESCRIPTION_TEXT ${cheliu} $(cheliu_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${chearray} $(chearray_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${chedayi} $(chedayi_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${chepinyin} $(chepinyin_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${chesimplex} $(chesimplex_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${chephonetic} $(chephonetic_DESC)
+    !insertmacro MUI_DESCRIPTION_TEXT ${cheez} $(cheez_DESC)
+    !insertmacro MUI_DESCRIPTION_TEXT ${rime} $(rime_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${emojime} $(emojime_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${cheeng} $(cheeng_DESC)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;Uninstaller Section
@@ -700,17 +721,17 @@ Section "Uninstall"
 	RMDir /REBOOTOK /r "$INSTDIR\server"
 
 	; Delete shortcuts
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定新酷音輸入法.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定酷倉輸入法.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定蝦米輸入法.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定行列輸入法.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定大易輸入法.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定拼音輸入法.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定速成輸入法.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定注音輸入法.lnk"
-    Delete "$SMPROGRAMS\${PRODUCT_NAME}\設定輕鬆輸入法.lnk"
-	Delete "$SMPROGRAMS\${PRODUCT_NAME}\解除安裝 PIME.lnk"
-	RMDir "$SMPROGRAMS\${PRODUCT_NAME}"
+	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING).lnk"
+	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHECJ).lnk"
+	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHELIU).lnk"
+	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEARRAY).lnk"
+	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEDAYI).lnk"
+	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPINYIN).lnk"
+	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk"
+	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk"
+    Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk"
+	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
+	RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
 
 	Delete "$INSTDIR\version.txt"
 	Delete "$INSTDIR\Uninstall.exe"

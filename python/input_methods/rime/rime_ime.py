@@ -217,7 +217,7 @@ class RimeTextService(TextService):
             self.setCompositionString(preedit)
             self.setCompositionCursor(len(composition[:context.composition.cursor_pos].decode("UTF-8")) if composition else 0)
         elif self.style.inline_preedit in ("preview", "preedit"):
-            preedit = context.commit_text_preview.decode("UTF-8")
+            preedit = context.commit_text_preview.decode("UTF-8") if context.commit_text_preview else ""
             self.setCompositionString(preedit)
             self.setCompositionCursor(len(preedit))
         elif self.style.inline_preedit == "input":

@@ -440,7 +440,15 @@ SectionGroup /e "輸入法模組"
 	Section "中州韻" rime
 		SectionIn 2
 		SetOutPath "$INSTDIR\python\input_methods"
-		File /r "..\python\input_methods\rime"
+		File /r /x "brise" "..\python\input_methods\rime"
+		SetOutPath "$INSTDIR\python\input_methods\rime\data"
+		File "..\python\input_methods\rime\brise\*.txt"
+		File "..\python\input_methods\rime\brise\*.yaml"
+		File "..\python\input_methods\rime\brise\preset\*.yaml"
+		File "..\python\input_methods\rime\brise\supplement\*.yaml"
+		File "..\python\input_methods\rime\brise\extra\*.yaml"
+		SetOutPath "$INSTDIR\python\input_methods\rime\data\opencc"
+		File "..\python\opencc\*.json" "..\python\opencc\*.ocd"
 	SectionEnd
 
 	Section "emojime" emojime

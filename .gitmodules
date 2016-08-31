@@ -4,3 +4,6 @@
 [submodule "libIME"]
 	path = libIME
 	url = https://github.com/EasyIME/libIME.git
+[submodule "python/input_methods/rime/brise"]
+	path = python/input_methods/rime/brise
+	url = https://github.com/rime/brise.git

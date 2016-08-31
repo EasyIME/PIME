@@ -1,7 +1,7 @@
 # Weasel settings
 # encoding: utf-8
 
-config_version: "0.04"
+config_version: "0.05"
 
 #app_options:
 #  cmd.exe:
@@ -41,6 +41,8 @@ menu:
       command: "get_shared_data_dir"
     - text: "同步文件夾"
       command: "get_sync_dir"
+    - text: "日誌文件夾"
+      command: "get_log_dir"
   - text: ""
   - text: "中州韻輸入法引擎(&R)"
     submenu:

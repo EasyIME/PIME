@@ -288,6 +288,8 @@ class RimeTextService(TextService):
             sync_dir = rime.get_sync_dir().decode(ENC)
             if os.path.isdir(sync_dir):
                 os.startfile(sync_dir)
+        elif commandId == ID_LOG_DIR:
+            os.startfile(os.path.expandvars("%TEMP%"))
         elif commandId == ID_SYNC:
             rime.sync_user_data()
         elif commandId == ID_DEPLOY:

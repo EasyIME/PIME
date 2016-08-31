@@ -298,6 +298,7 @@ ID_SYNC_DIR = 12
 ID_SHARED_DIR = 13
 ID_USER_DIR = 14
 ID_SCHEMA_LIST = 15
+ID_LOG_DIR = 16
 
 ID_URI = 300 #os.startfile
 ID_SCHEMA = 200 #rime.select_schema
@@ -309,7 +310,8 @@ commands = {
     "get_sync_dir": ID_SYNC_DIR,
     "get_shared_data_dir": ID_SHARED_DIR,
     "get_user_data_dir": ID_USER_DIR,
-    "get_schema_list": ID_SCHEMA_LIST
+    "get_schema_list": ID_SCHEMA_LIST,
+    "get_log_dir": ID_LOG_DIR,
 }
 
 class RimeStyle:

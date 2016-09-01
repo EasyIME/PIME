@@ -82,7 +82,7 @@ RequestExecutionLevel admin
 ; Custom IE Protected Mode
 ; custom page
 Var HWND
-ReserveFile ".\resource\ieprotectedpage.ini"
+ReserveFile ".\resource\zh_TW\ieprotectedpage.ini" ".\resource\zh_CN\ieprotectedpage.ini"
 Page custom setIEProtectedPage leaveIEProtectedPage
 
 ; installation progress page
@@ -291,7 +291,10 @@ Function .onInit
 	${EndIf}
 
 	InitPluginsDir
-	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\ieprotectedpage.ini"
+	StrCmp $LANGUAGE "2052" 0 +3
+	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\zh_CN\ieprotectedpage.ini"
+	Goto +2
+	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\zh_TW\ieprotectedpage.ini"
 	File "/oname=$PLUGINSDIR\PIMETextService_x86.dll" "..\build\pime\Release\PIMETextService.dll"
 	File "/oname=$PLUGINSDIR\PIMETextService_x64.dll" "..\build64\pime\Release\PIMETextService.dll"
 

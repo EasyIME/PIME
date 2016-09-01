@@ -37,15 +37,8 @@ shared_dir = os.path.join(curdir, "data")
 rimeInit(datadir=shared_dir, userdir=user_dir, appname=APP, appver=APP_VERSION, fullcheck=first_run)
 rime.deploy_config_file(CONFIG_FILE.encode("UTF-8"), b'config_version')
 
-hide_candidate = False
-
 def rimeCallback(context_object, session_id, message_type, message_value):
-    global hide_candidate
-    if message_type == b'option':
-        if message_value == b'hide_candidate':
-            hide_candidate = True
-        if message_value == b'!hide_candidate':
-            hide_candidate = False
+    pass
 rime_callback = RimeNotificationHandler(rimeCallback)
 rime.set_notification_handler(rime_callback, None)
 
@@ -235,6 +228,7 @@ class RimeTextService(TextService):
             if select_keys:
                 self.setSelKeys(select_keys.decode("UTF-8"))
 
+        hide_candidate = rime.get_option(self.session_id, b'_hide_candidate')
         if context.menu.num_candidates and not hide_candidate:
             n = context.menu.num_candidates
             candidates = []

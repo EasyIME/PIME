@@ -2,7 +2,7 @@
 	"name":"新酷音輸入法.py",
 	"version": "0.1",
 	"guid": "{F80736AA-28DB-423A-92C9-5540F501C939}",
-	"locale": "zh-TW",
+	"locale": "zh-Hant-TW",
 	"icon": "icon.ico",
 	"win8_icon": "",
 	"moduleName": "chewing_ime",

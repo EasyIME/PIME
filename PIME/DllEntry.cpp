@@ -40,7 +40,7 @@ STDAPI DllUnregisterServer(void) {
 	return g_imeModule->unregisterServer();
 }
 
-static Ime::LangProfileInfo langProfileFromJson(std::wstring file, std::string& guid) {
+static inline Ime::LangProfileInfo langProfileFromJson(std::wstring file, std::string& guid) {
 	// load the json file to get the info of input method
 	std::ifstream fp(file, std::ifstream::binary);
 	if(fp) {
@@ -53,8 +53,6 @@ static Ime::LangProfileInfo langProfileFromJson(std::wstring file, std::string& 
 		CLSIDFromString (guidStr.c_str(), &guid);
 		// convert locale name to lanid
 		auto locale = utf8ToUtf16(json["locale"].asCString());
-		LCID lcid = LocaleNameToLCID(locale.c_str(), 0);
-		LANGID langid = LANGIDFROMLCID(lcid);
 		// ::MessageBox(0, name.c_str(), 0, 0);
 		auto iconFile = utf8ToUtf16(json["icon"].asCString());
 		if (!iconFile.empty() && PathIsRelative(iconFile.c_str())) {
@@ -67,12 +65,12 @@ static Ime::LangProfileInfo langProfileFromJson(std::wstring file, std::string& 
 		Ime::LangProfileInfo langProfile = {
 			name,
 			guid,
-			langid,
+			locale,
 			iconFile
 		};
-		return std::move(langProfile);
+		return langProfile;
 	}
-	return std::move(Ime::LangProfileInfo());
+	return Ime::LangProfileInfo();
 }
 
 STDAPI DllRegisterServer(void) {

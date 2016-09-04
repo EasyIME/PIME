@@ -2,7 +2,7 @@
 	"name":"輕鬆輸入法 (PIME)",
 	"version": "1.00",
 	"guid": "{1C26A656-3F2A-4A09-9CB0-12AC85100B86}",
-	"locale": "zh-TW",
+	"locale": "zh-Hant-TW",
 	"icon": "icon.ico",
 	"win8_icon": "",
 	"moduleName": "cheez_ime",

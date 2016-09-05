@@ -44,21 +44,6 @@ AllowSkipFiles off ; cannot skip a file
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 !define HOMEPAGE_URL "https://github.com/EasyIME/"
 
-!define PIME_CLSID "{35F67E9D-A54D-4177-9697-8B0AB71A9E04}"
-
-!define CHEWING_GUID "{F80736AA-28DB-423A-92C9-5540F501C939}"
-!define CHECJ_GUID "{F828D2DC-81BE-466E-9CFE-24BB03172693}"
-; !define CHELIU_GUID "{72844B94-5908-4674-8626-4353755BC5DB}"
-!define CHEARRAY_GUID "{BADFF6B6-0502-4F30-AEC2-BCCB92BCDDC6}"
-!define CHEDAYI_GUID "{E6943374-70F5-4540-AA0F-3205C7DCCA84}"
-!define CHEPINYIN_GUID "{945765E9-9898-477B-B282-856FC3BA907E}"
-!define CHESIMPLEX_GUID "{C7E3DA59-A9D8-4A3B-90DC-58700FAF20CD}"
-!define CHEPHONETIC_GUID "{EC866AD1-A8F1-4845-858F-04942FFAF6CD}"
-!define CHEEZ_GUID "{1C26A656-3F2A-4A09-9CB0-12AC85100B86}"
-!define EMOJIME_GUID "{A381D463-9338-4FBD-B83D-66FFB03523B3}"
-!define CHEENG_GUID "{88BB09A8-4603-4D78-B052-DEE9EAE697EC}"
-!define RIME_GUID "{9C2D6C68-9EA6-4CFB-A769-7E619DB7F267}"
-
 Name "$(PRODUCT_NAME)"
 BrandingText "$(PRODUCT_NAME)"
 
@@ -133,21 +118,6 @@ Function uninstallOldVersion
 			DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 			DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
 			DeleteRegKey /ifempty HKLM "Software\PIME"
-
-			${If} ${AtLeastWin8}
-				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEWING_GUID}"
-				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHECJ_GUID}"
-				; DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHELIU_GUID}"
-				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEARRAY_GUID}"
-				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEDAYI_GUID}"
-				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEPINYIN_GUID}"
-				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHESIMPLEX_GUID}"
-                DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEPHONETIC_GUID}"
-                DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEEZ_GUID}"
-				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${EMOJIME_GUID}"
-				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}"
-				DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hans-CN" "0804:${PIME_CLSID}${RIME_GUID}"
-			${EndIf}
 
 			; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 			ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'
@@ -540,79 +510,6 @@ Section "" Register
 	; Launch the python server as current user (non-elevated process)
 	${StdUtils.ExecShellAsUser} $0 "$INSTDIR\PIMELauncher.exe" "open" ""
 
-	${If} ${AtLeastWin8}
-		StrCpy $R0 0
-		StrCpy $0 0
-		loop:
-			EnumRegValue $1 HKCU "Control Panel\International\User Profile\zh-Hant-TW" $0
-			StrCmp $1 "" done
-			IntOp $0 $0 + 1
-			IntOp $R0 $R0 + 1
-			Goto loop
-		done:
-
-		${If} ${SectionIsSelected} ${chewing}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEWING_GUID}" $R0
-		${EndIf}
-
-		${If} ${SectionIsSelected} ${checj}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHECJ_GUID}" $R0
-		${EndIf}
-/*
-		${If} ${SectionIsSelected} ${cheliu}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHELIU_GUID}" $R0
-		${EndIf}
-*/
-		${If} ${SectionIsSelected} ${chearray}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEARRAY_GUID}" $R0
-		${EndIf}
-
-		${If} ${SectionIsSelected} ${chedayi}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEDAYI_GUID}" $R0
-		${EndIf}
-
-		${If} ${SectionIsSelected} ${chepinyin}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEPINYIN_GUID}" $R0
-		${EndIf}
-
-		${If} ${SectionIsSelected} ${chesimplex}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHESIMPLEX_GUID}" $R0
-		${EndIf}
-
-		${If} ${SectionIsSelected} ${chephonetic}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEPHONETIC_GUID}" $R0
-		${EndIf}
-        
-		${If} ${SectionIsSelected} ${cheez}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEEZ_GUID}" $R0
-		${EndIf}
-
-		${If} ${SectionIsSelected} ${rime}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hans-CN" "0804:${PIME_CLSID}${RIME_GUID}" $R0
-		${EndIf}
-
-		${If} ${SectionIsSelected} ${emojime}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${EMOJIME_GUID}" $R0
-		${EndIf}
-
-		${If} ${SectionIsSelected} ${cheeng}
-			IntOp $R0 $R0 + 1
-			WriteRegDWORD HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}" $R0
-		${EndIf}
-
-	${EndIf}
-
 	; Custom IE Protected Mode
 	ReadINIStr $0 "$PLUGINSDIR\ieprotectedpage.ini" "Field 2" State
 	${If} $0 == "1"
@@ -685,21 +582,6 @@ Section "Uninstall"
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
 	DeleteRegKey /ifempty HKLM "Software\PIME"
-
-	${If} ${AtLeastWin8}
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEWING_GUID}"
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHECJ_GUID}"
-		; DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHELIU_GUID}"
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEARRAY_GUID}"
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEDAYI_GUID}"
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEPINYIN_GUID}"
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHESIMPLEX_GUID}"
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEPHONETIC_GUID}"
-        DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEEZ_GUID}"
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hans-CN" "0804:${PIME_CLSID}${RIME_GUID}"
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${EMOJIME_GUID}"
-		DeleteRegValue HKCU "Control Panel\International\User Profile\zh-Hant-TW" "0404:${PIME_CLSID}${CHEENG_GUID}"
-	${EndIf}
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 	ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'

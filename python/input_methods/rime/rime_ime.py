@@ -124,6 +124,8 @@ class RimeTextService(TextService):
         if not isUp: self.keyComposing = self.isComposing()
         ret = rime.process_key(self.session_id, translateKeyCode(keyEvent), translateModifiers(keyEvent, isUp))
         print("Up" if isUp else "Down", keyEvent.keyCode,keyEvent.repeatCount,keyEvent.scanCode,translateKeyCode(keyEvent), translateModifiers(keyEvent, isUp), "ret", ret)
+        if ret:
+            return True
         if self.keyComposing and keyEvent.keyCode == VK_RETURN:
             return True
         if (keyEvent.keyCode in (VK_SHIFT, VK_CONTROL, VK_CAPITAL)) and translateModifiers(keyEvent, isUp) in (0, RELEASE_MASK):

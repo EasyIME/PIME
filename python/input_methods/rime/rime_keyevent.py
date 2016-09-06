@@ -329,19 +329,20 @@ def translateKeyCode(keyEvent):
 
 def translateModifiers(keyEvent, isUp = False):
     result = 0
-    if keyEvent.keyCode != VK_SHIFT and keyEvent.isKeyDown(VK_SHIFT):
+    keyCode = keyEvent.keyCode
+    if keyCode != VK_SHIFT and keyEvent.isKeyDown(VK_SHIFT):
         result |= SHIFT_MASK
-    if keyEvent.keyCode != VK_CAPITAL and keyEvent.isKeyDown(VK_CAPITAL):
+    if keyEvent.isKeyToggled(VK_CAPITAL):
         result |= LOCK_MASK
-    if keyEvent.keyCode != VK_CONTROL and keyEvent.isKeyDown(VK_CONTROL):
+    if keyCode != VK_CONTROL and keyEvent.isKeyDown(VK_CONTROL):
         result |= CONTROL_MASK
-    if keyEvent.keyCode != VK_MENU and keyEvent.isKeyDown(VK_MENU):
+    if keyCode != VK_MENU and keyEvent.isKeyDown(VK_MENU):
         result |= ALT_MASK
     if isUp:
         result |= RELEASE_MASK
-    """if (key.IsCaptital() and not isUp:
+    if keyCode == VK_CAPITAL and not isUp:
     # NOTE: rime assumes XK_Caps_Lock to be sent before modifier changes,
     # while VK_CAPITAL has the modifier changed already.
     # so it is necessary to revert LOCK_MASK
-        result ^= LOCK_MASK"""
+        result ^= LOCK_MASK
     return result

@@ -61,20 +61,16 @@ class RimeTextService(TextService):
         self.createSession()
 
         if not self.style.display_tray_icon: return
-
-        is_ascii_mode = rime.get_option(self.session_id, b'ascii_mode')
-        is_full_shape = rime.get_option(self.session_id, b'full_shape')
-
         # Windows 8 以上systray IME mode icon
         if self.client.isWindows8Above:
-            icon_name = "%s_%s_capsoff.ico" % ("eng" if is_ascii_mode else "chi", "full" if is_full_shape else "half")
+            icon_name = "%s_%s_caps%s.ico" % ("eng", "full", "on")
             self.addButton("windows-mode-icon",
                 icon = os.path.join(self.icon_dir, icon_name),
                 tooltip = "中西文切換",
                 commandId = ID_MODE_ICON
             )
 
-        icon_name = "eng.ico" if is_ascii_mode else "chi.ico"
+        icon_name = "eng.ico"
         self.addButton("switch-lang",
             icon = os.path.join(self.icon_dir, icon_name),
             text = "中西文切換",
@@ -82,7 +78,7 @@ class RimeTextService(TextService):
             commandId = ID_ASCII_MODE,
         )
         # 切換全半形
-        icon_name = "full.ico" if is_full_shape else "half.ico"
+        icon_name = "full.ico"
         self.addButton("switch-shape",
             icon = os.path.join(self.icon_dir, icon_name),
             text = "全半角切換",
@@ -96,6 +92,7 @@ class RimeTextService(TextService):
             tooltip = "設定",
             type = "menu"
         )
+        self.updateLangStatus()
 
     def createSession(self):
         if not (self.session_id and rime.find_session(self.session_id)):
@@ -170,17 +167,21 @@ class RimeTextService(TextService):
         #rime.finalize()
         #self.style = None
 
+    def getKeyState(self, keyCode):
+        return WinDLL("User32.dll").GetKeyState(keyCode)
+
     # 依照目前輸入法狀態，更新語言列顯示
     def updateLangStatus(self):
         if not self.session_id: return
         if not self.style.display_tray_icon: return
         is_ascii_mode = rime.get_option(self.session_id, b'ascii_mode')
         is_full_shape = rime.get_option(self.session_id, b'full_shape')
+        is_caps_on = self.getKeyState(VK_CAPITAL)
 
         if self.client.isWindows8Above: # windows 8 mode icon
             # FIXME: we need a better set of icons to meet the 
             #        WIndows 8 IME guideline and UX guidelines.
-            icon_name = "%s_%s_capsoff.ico" % ("eng" if is_ascii_mode else "chi", "full" if is_full_shape else "half")
+            icon_name = "%s_%s_caps%s.ico" % ("eng" if is_ascii_mode else "chi", "full" if is_full_shape else "half", "on" if is_caps_on else "off")
             icon_path = os.path.join(self.icon_dir, icon_name)
             self.changeButton("windows-mode-icon", icon=icon_path)
 

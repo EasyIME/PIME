@@ -18,8 +18,8 @@ defaultConfig = loadDefaultConfig("config.json")
 // 此輸入法模組在特定碼表須停用的設定項目 (從 0 開始, 100 之後代表全部碼表)
 var disableConfigItem = {
     101: ["directShowCand", false],
-    102: ["supportSymbolCoding", true],
-    103: ["fullShapeSymbols", false],
+    102: ["fullShapeSymbols", false],
+    103: ["directOutFSymbols", false],
     104: ["easySymbolsWithShift", false]
 };
 

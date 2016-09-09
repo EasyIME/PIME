@@ -46,6 +46,12 @@ class msymbols(object):
     def getKeyNames(self):
         return self.keynames
 
+    def isHaveKey(self, val):
+        return True if [key for key, value in self.chardefs.items() if val in value] else False
+
+    def getKey(self, val):
+        return [key for key, value in self.chardefs.items() if val in value][0]
+
 
 def safeSplit(line):
     if '=' in line:

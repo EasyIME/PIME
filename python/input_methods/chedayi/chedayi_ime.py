@@ -45,6 +45,7 @@ class CheDayiTextService(TextService):
         # 初始化輸入行為設定
         self.cinbase.initTextService(self, TextService)
         self.useDayiSymbols = True
+        self.selDayiSymbolCharType = 0
 
         # 載入用戶設定值
         CinBaseConfig.__init__()
@@ -100,17 +101,24 @@ class CheDayiTextService(TextService):
         charStr = chr(charCode)
 
         # 大易符號 ---------------------------------------------------------
+        self.DayiSymbolChar = "=" if self.selDayiSymbolCharType == 0 else "'"
+        self.DayiSymbolString = "巷" if self.selDayiSymbolCharType == 0 else "號"
+        
         if self.langMode == 1 and not self.showmenu:
-            if len(self.compositionChar) == 0 and charStr == '=':
+            if len(self.compositionChar) == 0 and not self.phrasemode and charStr == self.DayiSymbolChar and not keyEvent.isKeyDown(VK_CONTROL):
                 self.compositionChar += charStr
-                self.setCompositionString(self.compositionChar)
                 self.dayisymbolsmode = True
+                if self.compositionBufferMode:
+                    self.cinbase.setCompositionBufferString(self, self.DayiSymbolString, 0)
+                else:
+                    self.setCompositionString(self.DayiSymbolString)
             elif self.dayisymbolsmode and self.isShowCandidates:
                 self.canUseSelKey = True
             elif len(self.compositionChar) >= 1 and self.dayisymbolsmode:
                 if self.dsymbols.isInCharDef(self.compositionChar[1:] + charStr):
                     self.compositionChar += charStr
                     self.canUseSelKey = False
+                    candidates = self.dsymbols.getCharDef(self.compositionChar[1:])
 
         if not self.directShowCand:
             self.autoShowCandWhenMaxChar = True
@@ -175,4 +183,18 @@ class CinTable:
         self.cin = None
         with io.open(CinPath, encoding='utf-8') as fs:
             self.cin = Cin(fs)
+        
+        dayiAddressCharList = "'[]-\\="
+        dayiAddressStringList = "號路街鄉鎮巷"
+        for addchar in dayiAddressCharList:
+            if not self.cin.isInKeyName(addchar):
+                self.cin.keynames[addchar] = dayiAddressStringList[dayiAddressCharList.index(addchar)]
+            
+            if self.cin.isInCharDef(addchar):
+                charDefs = self.cin.getCharDef(addchar)
+                if not dayiAddressStringList[dayiAddressCharList.index(addchar)] in charDefs:
+                    self.cin.chardefs[addchar].append(dayiAddressStringList[dayiAddressCharList.index(addchar)])
+            else:
+                self.cin.chardefs[addchar] = [dayiAddressStringList[dayiAddressCharList.index(addchar)]]
+
 CinTable = CinTable()

@@ -22,9 +22,8 @@ defaultConfig = loadDefaultConfig("config.json")
 // 此輸入法模組在特定碼表須停用的設定項目 (從 0 開始, 100 之後代表全部碼表)
 var disableConfigItem = {
     101: ["directShowCand", false],
-    102: ["supportSymbolCoding", true],
-    103: ["supportWildcard", false],
-    104: ["selWildcardType", null]
+    102: ["supportWildcard", false],
+    103: ["selWildcardType", null]
 };
 
 

@@ -8,54 +8,66 @@
     </head>
     <body>
         <div id="typing_page">
-            <input type="checkbox" id="switchLangWithShift" name="switchLangWithShift" />
-            <label for="switchLangWithShift">使用 Shift 快速切換中英文</label><br>
+            <div class="divfloat typingLeft">
+                <input type="checkbox" id="switchLangWithShift" name="switchLangWithShift" />
+                <label for="switchLangWithShift">使用 Shift 快速切換中英文</label><br>
 
-            <input type="checkbox" id="outputSmallLetterWithShift" name="outputSmallLetterWithShift" />
-            <label for="outputSmallLetterWithShift">押住 Shift 輸出英文時預設小寫</label><br>
+                <input type="checkbox" id="outputSmallLetterWithShift" name="outputSmallLetterWithShift" />
+                <label for="outputSmallLetterWithShift">押住 Shift 輸出英文時預設小寫</label><br>
 
-            <input type="checkbox" id="switchPageWithSpace" name="switchPageWithSpace" />
-            <label for="switchPageWithSpace">使用空白鍵作為候選清單換頁鍵</label><br>
+                <input type="checkbox" id="switchPageWithSpace" name="switchPageWithSpace" />
+                <label for="switchPageWithSpace">使用空白鍵作為候選清單換頁鍵</label><br>
 
-            <input type="checkbox" id="defaultFullSpace" name="defaultFullSpace" />
-            <label for="defaultFullSpace">預設以全形模式啟動</label><br>
+                <input type="checkbox" id="defaultFullSpace" name="defaultFullSpace" />
+                <label for="defaultFullSpace">預設以全形模式啟動</label><br>
 
-            <input type="checkbox" id="defaultEnglish" name="defaultEnglish" />
-            <label for="defaultEnglish">預設以英文模式啟動</label><br>
+                <input type="checkbox" id="defaultEnglish" name="defaultEnglish" />
+                <label for="defaultEnglish">預設以英文模式啟動</label><br>
 
-            <input type="checkbox" id="outputSimpChinese" name="outputSimpChinese" />
-            <label for="outputSimpChinese">預設輸出簡體中文</label><br>
+                <input type="checkbox" id="outputSimpChinese" name="outputSimpChinese" />
+                <label for="outputSimpChinese">預設輸出簡體中文</label><br>
 
-            <input type="checkbox" id="hidePromptMessages" name="hidePromptMessages" />
-            <label for="hidePromptMessages">預設隱藏提示訊息</label><br>
+                <input type="checkbox" id="hidePromptMessages" name="hidePromptMessages" />
+                <label for="hidePromptMessages">預設隱藏提示訊息</label><br>
 
-            <input type="checkbox" id="autoClearCompositionChar" name="autoClearCompositionChar" />
-            <label for="autoClearCompositionChar">拆錯字碼時自動清除輸入字串</label><br>
+                <input type="checkbox" id="autoClearCompositionChar" name="autoClearCompositionChar" />
+                <label for="autoClearCompositionChar">拆錯字碼時自動清除輸入字串</label><br>
 
-            <input type="checkbox" id="playSoundWhenNonCand" name="playSoundWhenNonCand" />
-            <label for="playSoundWhenNonCand">拆錯字碼時發出警告嗶聲提示</label><br>
+                <input type="checkbox" id="playSoundWhenNonCand" name="playSoundWhenNonCand" />
+                <label for="playSoundWhenNonCand">拆錯字碼時發出警告嗶聲提示</label><br>
 
-            <input type="checkbox" id="sortByPhrase" name="sortByPhrase" />
-            <label for="sortByPhrase">優先以聯想字詞排序候選清單</label><br>
+                <input type="checkbox" id="sortByPhrase" name="sortByPhrase" />
+                <label for="sortByPhrase">優先以聯想字詞排序候選清單</label><br>
 
-            <input type="checkbox" id="directCommitSymbol" name="directCommitSymbol" />
-            <label for="directCommitSymbol">直接輸出候選符號 (當候選符號僅有一個)</label><br>
+                <input type="checkbox" id="directCommitSymbol" name="directCommitSymbol" />
+                <label for="directCommitSymbol">標點符號自動確認輸入</label><br>
+                
+                <input type="checkbox" id="directOutMSymbols" name="directOutMSymbols" />
+                <label for="directOutMSymbols">允許內建符號輸入方式連續輸入</label><br>
 
-            <br><input type="checkbox" id="supportSymbolCoding" name="supportSymbolCoding" />
-            <label for="supportSymbolCoding">支援 CIN 碼表中以符號字元所定義的編碼</label><br>
+                <br><input type="checkbox" id="directShowCand" name="directShowCand" />
+                <label for="directShowCand">直接顯示候選字清單 (不須按空白鍵)</label><br>
 
-            <input type="checkbox" id="directShowCand" name="directShowCand" />
-            <label for="directShowCand">直接顯示候選字清單 (不須按空白鍵)</label><br>
+                <input type="checkbox" id="directCommitString" name="directCommitString" />
+                <label for="directCommitString">直接輸出候選字 (當候選字僅有一個)</label><br>
 
-            <input type="checkbox" id="directCommitString" name="directCommitString" />
-            <label for="directCommitString">直接輸出候選字 (當候選字僅有一個)</label><br>
+                <br><input type="checkbox" id="supportWildcard" name="supportWildcard" />
+                <label for="supportWildcard">支援以萬用字元代替組字字根</label><br>
 
-            <br><input type="checkbox" id="supportWildcard" name="supportWildcard" />
-            <label for="supportWildcard">支援以萬用字元代替組字字根</label><br>
+                <label for="selWildcardType">　 萬用字元: </label>
+                <select name="selWildcardType" id="selWildcardType">
+                </select><br>
+            </div>
+            <div class="divfloat typingRight">
+                <fieldset>
+                    <legend><B>智能輸入</B></legend>
+                    <input type="checkbox" id="compositionBufferMode" name="compositionBufferMode" />
+                    <label for="compositionBufferMode">啟用組字編輯模式</label><br>
 
-            <label for="selWildcardType">　 萬用字元: </label>
-            <select name="selWildcardType" id="selWildcardType">
-            </select><br>
+                    <input type="checkbox" id="autoMoveCursorInBrackets" name="autoMoveCursorInBrackets" />
+                    <label for="autoMoveCursorInBrackets">自動移動組字游標至括號中間</label><br>
+                </fieldset>
+            </div>
         </div>
         
         <table id="cin_count">
@@ -104,8 +116,8 @@
             <label for="fontSize">選字及訊息視窗文字大小: </label>
             <input type="text" id="fontSize" name="fontSize" /><br>
 
-			<div id="selExample">			
-			</div>
+            <div id="selExample">
+            </div>
             <!--
             <input type="checkbox" id="colorCandWnd" name="colorCandWnd" />
             <label for="colorCandWnd">用不同顏色顯示選字鍵和候選字: <label><br>
@@ -125,10 +137,13 @@
         <div id="fs_symbols_page">
             <input type="checkbox" id="fullShapeSymbols" name="fullShapeSymbols" />
             <label for="fullShapeSymbols">中文模式下按住 Shift 輸入全形標點符號</label><br>
+            
+            <input type="checkbox" id="directOutFSymbols" name="directOutFSymbols" />
+            <label for="directOutFSymbols">允許全形標點連續輸入</label><br>
             <p>
             以下是使用 Shift 輸入全形標點符號的設定，每一行表示一個 Shift+符號/數字鍵所對應的字串。<br>
             每一行的格式必須符合：「Ta=Tb」。其中 Ta 與 Tb 間必須有一個半形「=」字元；<br>
-            Ta 可以是 Shift+符號/數字鍵所輸出的符號；Tb 可以是長度 1 到 10 的任意中英文字串。
+            Ta 可以是 Shift+符號/數字鍵所輸出的符號；Tb 可以是任意中英文字串,每個字元都會成為一個候選符號。
             </p>
             <textarea id="fs_symbols"></textarea>
         </div>

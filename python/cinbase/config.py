@@ -56,18 +56,22 @@ class CinBaseConfig:
         self.cursorCandList = True
         self.enableCapsLock = True
         self.fullShapeSymbols = False
+        self.directOutFSymbols = False
+        self.directOutMSymbols = True
         # self.phraseMark = True
         self.escCleanAllBuf = True
         self.easySymbolsWithShift = False
         # self.easySymbolsWithCtrl = False
         self.upperCaseWithShift = True
-        self.supportSymbolCoding = False
         self.showPhrase = False
         self.sortByPhrase = True
         self.supportWildcard = True
+        self.compositionBufferMode = False
+        self.autoMoveCursorInBrackets = False
         self.selWildcardType = 0
         self.candMaxItems = 100
         self.keyboardType = 0
+        self.selDayiSymbolCharType = 0
         self.curdir = os.path.abspath(os.path.dirname(__file__))
         
         # version: last modified time of (config.json, symbols.dat, swkb.dat)

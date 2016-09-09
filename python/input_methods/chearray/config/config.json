@@ -10,6 +10,7 @@
     "outputSmallLetterWithShift": false,
     "switchPageWithSpace": false,
     "fullShapeSymbols": false,
+    "directOutFSymbols": false,
     "colorCandWnd": true,
     "fontSize": 12,
     "outputSimpChinese": false,
@@ -18,11 +19,13 @@
     "playSoundWhenNonCand": false,
     "directShowCand": true,
     "directCommitString": false,
-    "directCommitSymbol": false,
-    "supportSymbolCoding": true,
+    "directCommitSymbol": true,
+    "directOutMSymbols": true,
     "supportWildcard": true,
     "selWildcardType": 1,
     "candMaxItems": 100,
     "showPhrase": false,
-    "sortByPhrase": true
+    "sortByPhrase": true,
+    "compositionBufferMode": false,
+    "autoMoveCursorInBrackets": false
 }

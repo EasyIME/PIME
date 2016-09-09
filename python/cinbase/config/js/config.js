@@ -13,6 +13,8 @@ var defaultcinCount = {
     "cjkExtBchardefs": 0
 }
 
+var debugMode = false;
+
 // unfortunately, here we use Windows-only features - ActiveX
 // However, it's really stupid that Scripting.FileSystemObject does not support UTF-8.
 // Luckily, there's an alternative, ADODB.Stream.
@@ -231,6 +233,13 @@ function updateConfig() {
     var keyboardLayout = parseInt($("#keyboard_page").find("input:radio:checked").val());
     if(!isNaN(keyboardLayout))
         checjConfig.keyboardLayout = keyboardLayout;
+
+    // selDayiSymbolChar
+    if(imeFolderName == "chedayi") {
+        var selDayiSymbolChar = parseInt($("#selDayiSymbolCharType").find(":selected").val());
+        if(!isNaN(selDayiSymbolChar))
+            checjConfig.selDayiSymbolCharType = selDayiSymbolChar;
+    }
 }
 
 // jQuery ready
@@ -305,6 +314,20 @@ function pageReady() {
         keyboard_page.append(item);
     }
     $("#kb" + checjConfig.keyboardLayout).prop("checked", true);
+
+    if(imeFolderName == "chedayi") {
+        var selDayiSymbolChars=[
+            "＝　",
+            "號　"
+        ];
+        var selDayiSymbolCharType = $("#selDayiSymbolCharType");
+        for(var i = 0; i < selDayiSymbolChars.length; ++i) {
+            var selDayiSymbolChar = selDayiSymbolChars[i];
+            var item = '<option value="' + i + '">' + selDayiSymbolChar + '</option>';
+            selDayiSymbolCharType.append(item);
+        }
+        selDayiSymbolCharType.children().eq(checjConfig.selDayiSymbolCharType).prop("selected", true);
+    }
 
     $("#symbols").change(function(){
         symbolsChanged = true;
@@ -418,11 +441,23 @@ function pageReady() {
             }
         }
         
-        if ($('#directShowCand')[0].checked == false) {
+        if ($('#directShowCand')[0].checked == false && $('#compositionBufferMode')[0].checked == false) {
             $("#directCommitString")[0].disabled = false;
         } else {
             $("#directCommitString")[0].checked = false;
             $("#directCommitString")[0].disabled = true;
+        }
+        
+        if ($('#compositionBufferMode')[0].checked == false) {
+            $("#autoMoveCursorInBrackets")[0].disabled = true;
+        } else {
+            $("#autoMoveCursorInBrackets")[0].disabled = false;
+        }
+        
+        if ($('#fullShapeSymbols')[0].checked == false) {
+            $("#directOutFSymbols")[0].disabled = true;
+        } else {
+            $("#directOutFSymbols")[0].disabled = false;
         }
     }
     
@@ -430,11 +465,34 @@ function pageReady() {
 
     // trigger event
     $('#directShowCand').click(function() {
-        if ($('#directShowCand')[0].checked == false) {
+        if ($('#directShowCand')[0].checked == false && $('#compositionBufferMode')[0].checked == false) {
             $("#directCommitString")[0].disabled = false;
         } else {
             $("#directCommitString")[0].checked = false;
             $("#directCommitString")[0].disabled = true;
+        }
+    });
+    
+    $('#compositionBufferMode').click(function() {
+        if ($('#compositionBufferMode')[0].checked == false && $('#directShowCand')[0].checked == false) {
+            $("#directCommitString")[0].disabled = false;
+        } else {
+            $("#directCommitString")[0].checked = false;
+            $("#directCommitString")[0].disabled = true;
+        }
+        
+        if ($('#compositionBufferMode')[0].checked == false) {
+            $("#autoMoveCursorInBrackets")[0].disabled = true;
+        } else {
+            $("#autoMoveCursorInBrackets")[0].disabled = false;
+        }
+    });
+    
+    $('#fullShapeSymbols').click(function() {
+        if ($('#fullShapeSymbols')[0].checked == false) {
+            $("#directOutFSymbols")[0].disabled = true;
+        } else {
+            $("#directOutFSymbols")[0].disabled = false;
         }
     });
     
@@ -444,5 +502,12 @@ function pageReady() {
             checjConfig.selCinType = selCin;
         disableControlItem();
     });
+    
+    if(!debugMode) {
+        $("#compositionBufferMode")[0].disabled = true;
+        $("#autoMoveCursorInBrackets")[0].disabled = true;
+        $("#compositionBufferMode")[0].checked = false;
+        $("#autoMoveCursorInBrackets")[0].checked = false;
+    }
 
 }

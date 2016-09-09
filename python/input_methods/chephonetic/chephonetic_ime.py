@@ -173,6 +173,7 @@ class ChePhoneticTextService(TextService):
 
     def updateCompositionChar(self, charStr):
         compositionChar = ['', '', '', '']
+        charLength = len(self.compositionChar)
 
         for c in self.compositionChar:
             if c in self.zhuintab[0]:
@@ -193,16 +194,19 @@ class ChePhoneticTextService(TextService):
         elif charStr in self.zhuintab[3]:
             compositionChar[3] = charStr
 
-        keyname = ''
+        keynames = ''
         compchar = ''
         for i in compositionChar:
             if not i == '':
                 compchar += i
-                keyname += self.cin.getKeyName(i)
+                keynames += self.cin.getKeyName(i)
 
         self.compositionChar = compchar
-        self.setCompositionString(keyname)
-        self.setCompositionCursor(len(self.compositionString))
+        if self.compositionBufferMode:
+            self.cinbase.setCompositionBufferString(self, keynames, charLength)
+        else:
+            self.setCompositionString(keynames)
+            self.setCompositionCursor(len(self.compositionString))
 
 
 class CinTable:

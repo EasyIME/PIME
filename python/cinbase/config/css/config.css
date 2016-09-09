@@ -2,6 +2,15 @@ body {
     line-height: 150%;
 }
 
+table {
+    border-collapse: collapse;
+    width: 1000px;
+}
+
+td {
+    text-align: left;
+}
+
 #symbols, #ez_symbols, #fs_symbols, #phrase, #flangs {
     width: 100%;
     min-height: 320px;
@@ -52,11 +61,22 @@ body {
 	color:blue;
 }
 
-table {
-    border-collapse: collapse;
-    width: 1000px;
+.divfloat {
+    float: left;
 }
 
-td {
-    text-align: left;
+.typingLeft {
+    width: 600px;
+}
+
+.typingLeftMin {
+    width: 400px;
+}
+
+.typingRight {
+    width: calc(100% - 600px);
+}
+
+.divclear {
+    clear: both;
 }

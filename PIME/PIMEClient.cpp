@@ -318,14 +318,19 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 
 	// show message
 	const auto& showMessageVal = msg["showMessage"];
+	bool endComposition = false;
 	if (showMessageVal.isObject()) {
 		const Json::Value& message = showMessageVal["message"];
 		const Json::Value& duration = showMessageVal["duration"];
 		if (message.isString() && duration.isInt()) {
 			if (!textService_->isComposing()) {
 				textService_->startComposition(session->context());
+				endComposition = true;
 			}
 			textService_->showMessage(session, utf8ToUtf16(message.asCString()), duration.asInt());
+			if (endComposition) {
+				textService_->endComposition(session->context());
+			}
 		}
 	}
 }

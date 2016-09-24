@@ -2150,9 +2150,9 @@ class CinBase:
 
 
     def onCommand(self, cbTS, commandId, commandType):
-        if commandId == ID_SWITCH_LANG and commandType == COMMAND_LEFT_CLICK:  # 切換中英文模式
+        if commandId == ID_SWITCH_LANG and commandType == 0:  # 切換中英文模式
             self.toggleLanguageMode(cbTS)
-        elif commandId == ID_SWITCH_SHAPE and commandType == COMMAND_LEFT_CLICK:  # 切換全形/半形
+        elif commandId == ID_SWITCH_SHAPE and commandType == 0:  # 切換全形/半形
             self.toggleShapeMode(cbTS)
         elif commandId == ID_SETTINGS:  # 開啟設定工具
             config_tool = os.path.join(cbTS.curdir, "config", "config.hta")

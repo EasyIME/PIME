@@ -139,7 +139,6 @@ class CinBase:
         cbTS.isShowCandidates = False
         cbTS.isShowPhraseCandidates = False
         cbTS.isShowMessage = False
-        cbTS.isResetComposition = False
         cbTS.canSetCommitString = True
         cbTS.canUseSelKey = True
         cbTS.canUseSpaceAsPageKey = True
@@ -382,7 +381,6 @@ class CinBase:
 
         candidates = []
         cbTS.isWildcardChardefs = False
-        cbTS.isResetComposition = False
         cbTS.canSetCommitString = True
         cbTS.keyUsedState = False
 
@@ -548,7 +546,6 @@ class CinBase:
                 if not cbTS.compositionBufferMode:
                     cbTS.setCommitString(cbTS.compositionString)
                     self.resetComposition(cbTS)
-                    cbTS.isResetComposition = False
                     cbTS.keepComposition = True
                 else:
                     cbTS.compositionBufferType = "msymbols"
@@ -565,7 +562,6 @@ class CinBase:
                             cChar = cbTS.compositionChar[commitStr.index(cStr)] if cbTS.compositionChar[0] != "`" else cbTS.compositionChar[commitStr.index(cStr) + 1]
                             self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, cChar, cbTS.compositionBufferCursor - strLength)
                     self.resetComposition(cbTS)
-                    cbTS.isResetComposition = False
                     cbTS.menusymbolsmode = False
         elif cbTS.multifunctionmode and not cbTS.menusymbolsmode and not cbTS.directCommitSymbol:
             if cbTS.msymbols.isInCharDef(cbTS.compositionChar[1:]):
@@ -954,7 +950,6 @@ class CinBase:
                 if not cbTS.compositionBufferMode:
                     cbTS.setCommitString(cbTS.compositionString)
                     self.resetComposition(cbTS)
-                    cbTS.isResetComposition = False
                     cbTS.keepComposition = True
                 else:
                     cbTS.compositionBufferType = "msymbols"
@@ -971,7 +966,6 @@ class CinBase:
                             cChar = cbTS.compositionChar[commitStr.index(cStr)]
                             self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, cChar, cbTS.compositionBufferCursor - strLength)
                     self.resetComposition(cbTS)
-                    cbTS.isResetComposition = False
                 cbTS.ctrlsymbolsmode = False
                 
         # 大易須換回選字鍵
@@ -2057,11 +2051,6 @@ class CinBase:
         #print('Type = ' + cbTS.compositionBufferType)
         #print(cbTS.compositionBufferChar)
 
-        if cbTS.isResetComposition and not cbTS.phrasemode:
-            cbTS.isResetComposition = False
-            cbTS.setCandidateList([])
-            cbTS.setShowCandidates(False)
-
         return True
 
     # 使用者放開按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
@@ -2428,7 +2417,6 @@ class CinBase:
         cbTS.keepComposition = False
         cbTS.selcandmode = False
         cbTS.lastCompositionCharLength = 0
-        cbTS.isResetComposition = True
 
     # 重置輸入的字根
     def resetCompositionBuffer(self, cbTS):
@@ -2758,8 +2746,9 @@ class CinBase:
 
         # 設定 UI 外觀
         cbTS.customizeUI(candFontSize = cfg.fontSize,
-                                        candPerRow = cfg.candPerRow,
-                                        candUseCursor = cfg.cursorCandList)
+                        candFontName = 'MingLiu',
+                        candPerRow = cfg.candPerRow,
+                        candUseCursor = cfg.cursorCandList)
 
         # 設定選字按鍵 (123456..., asdf.... 等)
         # if cbTS.cin.getSelection():

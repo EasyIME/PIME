@@ -130,6 +130,46 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 	// We need to handle ordering of some types of the requests.
 	// For example, setCompositionCursor() should happen after setCompositionCursor().
 	if (session != nullptr) { // if an edit session is available
+		// handle candidate list
+		const auto& showCandidatesVal = msg["showCandidates"];
+		if (showCandidatesVal.isBool()) {
+			if (showCandidatesVal.asBool()) {
+				// start composition if we are not composing.
+				// this is required to get correctly position the candidate window
+				if (!textService_->isComposing()) {
+					textService_->startComposition(session->context());
+				}
+				textService_->showCandidates(session);
+			}
+			else {
+				textService_->hideCandidates();
+			}
+		}
+
+		const auto& candidateListVal = msg["candidateList"];
+		if (candidateListVal.isArray()) {
+			// handle candidates
+			// FIXME: directly access private member is dirty!!!
+			vector<wstring>& candidates = textService_->candidates_;
+			candidates.clear();
+			for (auto cand_it = candidateListVal.begin(); cand_it != candidateListVal.end(); ++cand_it) {
+				wstring cand = utf8ToUtf16(cand_it->asCString());
+				candidates.push_back(cand);
+			}
+			textService_->updateCandidates(session);
+			if (!showCandidatesVal.asBool()) {
+				textService_->hideCandidates();
+			}
+		}
+
+		const auto& candidateCursorVal = msg["candidateCursor"];
+		if (candidateCursorVal.isInt()) {
+			if (textService_->candidateWindow_ != nullptr) {
+				textService_->candidateWindow_->setCurrentSel(candidateCursorVal.asInt());
+				textService_->refreshCandidates();
+			}
+		}
+
 		// handle comosition and commit strings
 		bool endComposition = false;
 		const auto& commitStringVal = msg["commitString"];
@@ -174,43 +214,6 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 					textService_->startComposition(session->context());
 				}
 				textService_->setCompositionCursor(session, compositionCursor);
-			}
-		}
-
-		const auto& candidateListVal = msg["candidateList"];
-		if (candidateListVal.isArray()) {
-			// handle candidates
-			// FIXME: directly access private member is dirty!!!
-			vector<wstring>& candidates = textService_->candidates_;
-			candidates.clear();
-			for (auto cand_it = candidateListVal.begin(); cand_it != candidateListVal.end(); ++cand_it) {
-				wstring cand = utf8ToUtf16(cand_it->asCString());
-				candidates.push_back(cand);
-			}
-			textService_->updateCandidates(session);
-		}
-
-		const auto& candidateCursorVal = msg["candidateCursor"];
-		if (candidateCursorVal.isInt()) {
-			if (textService_->candidateWindow_ != nullptr) {
-				textService_->candidateWindow_->setCurrentSel(candidateCursorVal.asInt());
-				textService_->refreshCandidates();
-			}
-		}
-
-		// handle candidate list
-		const auto& showCandidatesVal = msg["showCandidates"];
-		if (showCandidatesVal.isBool()) {
-			if (showCandidatesVal.asBool()) {
-				// start composition if we are not composing.
-				// this is required to get correctly position the candidate window
-				if (!textService_->isComposing()) {
-					textService_->startComposition(session->context());
-				}
-				textService_->showCandidates(session);
-			}
-			else {
-				textService_->hideCandidates();
 			}
 		}
 
@@ -323,9 +326,6 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 				textService_->startComposition(session->context());
 			}
 			textService_->showMessage(session, utf8ToUtf16(message.asCString()), duration.asInt());
-			if (!textService_->isComposing()) {
-				textService_->endComposition(session->context());
-			}
 		}
 	}
 }

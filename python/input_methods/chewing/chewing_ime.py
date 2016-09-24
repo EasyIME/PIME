@@ -129,7 +129,8 @@ class ChewingTextService(TextService):
         chewingContext.set_spaceAsSelection(cfg.showCandWithSpaceKey);
 
         # 設定 UI 外觀
-        self.customizeUI(candFontSize = cfg.fontSize,
+        self.customizeUI(candFontName = 'MingLiu',
+                        candFontSize = cfg.fontSize,
                         candPerRow = cfg.candPerRow,
                         candUseCursor = cfg.cursorCandList)
 
@@ -450,6 +451,7 @@ class ChewingTextService(TextService):
                 # 檢查選字清單是否改變 (沒效率但是簡單)
                 if candidates != self.candidateList:
                     self.setCandidateList(candidates)  # 更新候選字清單
+                    self.setShowCandidates(True)
                     if cfg.cursorCandList:  # 如果啟用選字清單內使用游標選字
                         self.setCandidateCursor(0)  # 重設游標位置
 

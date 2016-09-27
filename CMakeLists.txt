@@ -16,5 +16,9 @@ add_definitions(
 add_subdirectory(${PROJECT_SOURCE_DIR}/libIME)
 add_subdirectory(${PROJECT_SOURCE_DIR}/jsoncpp)
 add_subdirectory(${PROJECT_SOURCE_DIR}/PIME)
-add_subdirectory(${PROJECT_SOURCE_DIR}/PIMELauncher)
-add_subdirectory(${PROJECT_SOURCE_DIR}/libpipe)
+
+# only build the following components for 32-bit x86 platform
+if("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")
+    add_subdirectory(${PROJECT_SOURCE_DIR}/PIMELauncher)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/libpipe)
+endif("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")

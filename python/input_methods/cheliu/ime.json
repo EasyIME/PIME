@@ -3,6 +3,7 @@
 	"version": "1.00",
 	"guid": "{72844B94-5908-4674-8626-4353755BC5DB}",
 	"locale": "zh-Hant-TW",
+    "fallbackLocale": "zh-TW",
 	"icon": "icon.ico",
 	"win8_icon": "",
 	"moduleName": "cheliu_ime",

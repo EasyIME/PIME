@@ -53,6 +53,7 @@ static inline Ime::LangProfileInfo langProfileFromJson(std::wstring file, std::s
 		CLSIDFromString (guidStr.c_str(), &guid);
 		// convert locale name to lanid
 		auto locale = utf8ToUtf16(json["locale"].asCString());
+		auto fallbackLocale = utf8ToUtf16(json["fallbackLocale"].asCString());
 		// ::MessageBox(0, name.c_str(), 0, 0);
 		auto iconFile = utf8ToUtf16(json["icon"].asCString());
 		if (!iconFile.empty() && PathIsRelative(iconFile.c_str())) {
@@ -66,6 +67,7 @@ static inline Ime::LangProfileInfo langProfileFromJson(std::wstring file, std::s
 			name,
 			guid,
 			locale,
+			fallbackLocale,
 			iconFile
 		};
 		return langProfile;
@@ -74,7 +76,6 @@ static inline Ime::LangProfileInfo langProfileFromJson(std::wstring file, std::s
 }
 
 STDAPI DllRegisterServer(void) {
-	// ::LoadStringW(g_imeModule->hInstance(), IDS_CHEWING, name, 32);
 	int iconIndex = 0; // use classic icon
 	if(g_imeModule->isWindows8Above())
 		iconIndex = 1; // use Windows 8 style IME icon

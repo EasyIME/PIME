@@ -3,6 +3,7 @@
 	"version": "1.00",
 	"guid": "{BADFF6B6-0502-4F30-AEC2-BCCB92BCDDC6}",
 	"locale": "zh-Hant-TW",
+    "fallbackLocale": "zh-TW",
 	"icon": "icon.ico",
 	"win8_icon": "",
 	"moduleName": "chearray_ime",

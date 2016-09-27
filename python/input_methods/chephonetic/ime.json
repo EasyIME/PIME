@@ -3,6 +3,7 @@
 	"version": "1.00",
 	"guid": "{EC866AD1-A8F1-4845-858F-04942FFAF6CD}",
 	"locale": "zh-Hant-TW",
+    "fallbackLocale": "zh-TW",
 	"icon": "icon.ico",
 	"win8_icon": "",
 	"moduleName": "chephonetic_ime",

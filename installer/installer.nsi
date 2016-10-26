@@ -67,7 +67,9 @@ RequestExecutionLevel admin
 ; Custom IE Protected Mode
 ; custom page
 Var HWND
-ReserveFile ".\resource\zh_TW\ieprotectedpage.ini" ".\resource\zh_CN\ieprotectedpage.ini"
+ReserveFile ".\resource\zh_TW\ieprotectedpage.ini" \
+            ".\resource\zh_CN\ieprotectedpage.ini" \
+            ".\resource\en_US\ieprotectedpage.ini"
 Page custom setIEProtectedPage leaveIEProtectedPage
 
 ; installation progress page
@@ -97,8 +99,9 @@ Page custom setIEProtectedPage leaveIEProtectedPage
   !insertmacro LANG_STRING "un.${NAME}" "${VALUE}"
 !macroend
 
-!insertmacro LANG_LOAD "TradChinese" ; traditional Chinese
+!insertmacro LANG_LOAD "TradChinese" ; Traditional Chinese
 !insertmacro LANG_LOAD "SimpChinese" ; Simplified Chinese
+!insertmacro LANG_LOAD "English" ; English
 
 var UPDATEX86DLL
 var UPDATEX64DLL
@@ -243,6 +246,8 @@ Function .onInit
 	Push "繁體中文"
 	Push ${LANG_SIMPCHINESE}
 	Push "简体中文"
+	Push ${LANG_ENGLISH}
+	Push "English"
 	Push A ; A means auto count languages
 	       ; for the auto count to work the first empty push (Push "") must remain
 	LangDLL::LangDialog $(INSTALLER_LANGUAGE_TITLE) $(INSTALL_LANGUAGE_MESSAGE)
@@ -261,10 +266,13 @@ Function .onInit
 	${EndIf}
 
 	InitPluginsDir
-	StrCmp $LANGUAGE "2052" 0 +3
+	StrCmp $LANGUAGE "2052" 0 +4
+	StrCmp $LANGUAGE "1033" 0 +5
 	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\zh_CN\ieprotectedpage.ini"
 	Goto +2
 	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\zh_TW\ieprotectedpage.ini"
+	Goto +2
+	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\en_US\ieprotectedpage.ini"
 	File "/oname=$PLUGINSDIR\PIMETextService_x86.dll" "..\build\pime\Release\PIMETextService.dll"
 	File "/oname=$PLUGINSDIR\PIMETextService_x64.dll" "..\build64\pime\Release\PIMETextService.dll"
 

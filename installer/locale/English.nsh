@@ -3,7 +3,7 @@
 !insertmacro LANG_STRING INSTALLER_LANGUAGE_TITLE "The installer language"
 !insertmacro LANG_STRING INSTALL_LANGUAGE_MESSAGE "Please select the installer language"
 
-!insertmacro LANG_STRING PRODUCT_NAME "PIME Input"
+!insertmacro LANG_STRING PRODUCT_NAME "PIME Input Methods"
 
 !insertmacro LANG_STRING INST_TYPE_STD "Standard installation"
 !insertmacro LANG_STRING INST_TYPE_FULL "Full installation"
@@ -23,7 +23,7 @@
 !insertmacro LANG_STRING IEProtectedPage_MESSAGE "PIME needs to change the IE settings in order to be used in IE."
 
 !insertmacro LANG_STRING SECTION_MAIN "PIME input method platform"
-!insertmacro LANG_STRING SECTION_GROUP "Input method module"
+!insertmacro LANG_STRING SECTION_GROUP "Input method modules"
 
 !insertmacro LANG_STRING CHEWING "新酷音"
 !insertmacro LANG_STRING CHECJ "酷仓"
@@ -34,7 +34,7 @@
 !insertmacro LANG_STRING CHESIMPLEX "速成"
 !insertmacro LANG_STRING CHEPHONETIC "Phonetic"
 !insertmacro LANG_STRING CHEEZ "轻松"
-!insertmacro LANG_STRING RIME "中州韵"
+!insertmacro LANG_STRING RIME "Rime"
 !insertmacro LANG_STRING EMOJIME "emojime"
 !insertmacro LANG_STRING CHEENG "英数"
 

@@ -47,27 +47,6 @@ Client::Client(TextService* service, REFIID langProfileGuid):
 		transform(guid_.begin(), guid_.end(), guid_.begin(), tolower);  // convert GUID to lwoer case
 		::CoTaskMemFree(guidStr);
 	}
-
-	// query the backend of this language profile
-	// FIXME: this requires file I/O everytime and might be cached in memory later.
-	wstring programDir = static_cast<PIME::ImeModule*>(textService_->imeModule())->programDir();
-	ifstream stream(programDir + L"\\profile_backends.cache");
-	string line;
-	while (getline(stream, line)) {
-		if (line.empty())
-			continue;
-		size_t sep = line.find('\t');
-		if (sep != -1) {
-			string guid = line.substr(0, sep);
-			transform(guid.begin(), guid.end(), guid.begin(), tolower);  // convert GUID to lwoer case
-			string backend = line.substr(sep + 1);
-			if (guid == guid_) {
-				backend_ = backend;
-				break;
-			}
-		}
-	}
-	stream.close();
 }
 
 Client::~Client(void) {
@@ -713,20 +692,6 @@ HANDLE Client::connectPipe(const wchar_t* pipeName) {
 	return pipe;
 }
 
-// Call PIMELauncher via IPC to launch the server process
-// Sometimes the server process might crash or be terminated for some reasons.
-// When we fail to get an IPC connection, ask PIMELauncher to restart our server.
-bool Client::launchServer() {
-	wstring lancherPipeName = getPipeName(L"Launcher");
-	DWORD rlen;
-	char buf[256];
-	string command = "launch\t";
-	command += backend_;
-	if (::CallNamedPipe(lancherPipeName.c_str(), (LPVOID)command.c_str(), command.length(), buf, sizeof(buf) - 1, &rlen, 3000)) {
-		return true;
-	}
-	return false;
-}
 
 // Ensure that we're connected to the PIME input method server
 // If we are already connected, the method simply returns true;
@@ -734,23 +699,9 @@ bool Client::launchServer() {
 bool Client::connectServerPipe() {
 	if (pipe_ == INVALID_HANDLE_VALUE) { // the pipe is not connected
 		connectingServerPipe_ = true;
-		wstring serverPipeName = getPipeName(utf8ToUtf16(backend_.c_str()).c_str());
-		// try to connect to the backend server
+		wstring serverPipeName = getPipeName(L"Launcher");
+		// try to connect to the server
 		pipe_ = connectPipe(serverPipeName.c_str());
-		
-		// fail to connect to the server
-		if (pipe_ == INVALID_HANDLE_VALUE) {
-			// ask PIMELauncher to launch the server for us.
-			if (launchServer()) {
-				// now the server should be started, try to connect to it.
-				for (int retry = 10; retry >= 0; --retry) { // try 10 times
-					pipe_ = connectPipe(serverPipeName.c_str());
-					if (pipe_ != INVALID_HANDLE_VALUE)
-						break;
-					Sleep(100);
-				}
-			}
-		}
 
 		if (pipe_ != INVALID_HANDLE_VALUE) { // successfully connected to the server
 			init(); // send initialization info to the server

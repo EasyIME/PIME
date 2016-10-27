@@ -95,12 +95,6 @@ STDAPI DllRegisterServer(void) {
 	if (result != S_OK) // failed, fall back to C:\program files
 		result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
 	if (result == S_OK) { // program files folder is found
-#ifndef _WIN64  // only for the 32-bit version
-		// also update the profile_backends.cache file.
-		std::wstring profile_backends = path;
-		profile_backends += L"\\PIME\\profile_backends.cache";
-		std::ofstream ofile(profile_backends);
-#endif
 		for (const auto backendDir : PIME::ImeModule::backendDirs_) {
 			std::string backendName = utf16ToUtf8(backendDir);
 			dirPath = path;
@@ -124,15 +118,11 @@ STDAPI DllRegisterServer(void) {
 								// load the json file to get the info of input method
 								std::string guid;
 								langProfiles.push_back(std::move(langProfileFromJson(imejson, guid)));
-
-#ifndef _WIN64  // only for the 32-bit version
-								ofile << guid << "\t" << backendName << std::endl;
-#endif
 							}
 						}
 					}
 				} while (::FindNextFile(hFind, &findData));
-				CloseHandle(hFind);
+				::FindClose(hFind);
 			}
 		}
 	}

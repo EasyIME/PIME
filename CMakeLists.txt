@@ -20,5 +20,4 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/PIME)
 # only build the following components for 32-bit x86 platform
 if("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")
     add_subdirectory(${PROJECT_SOURCE_DIR}/PIMELauncher)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/libpipe)
 endif("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")

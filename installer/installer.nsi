@@ -159,9 +159,8 @@ Function uninstallOldVersion
 			ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
 
 			Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
-			Delete /REBOOTOK "$INSTDIR\libpipe.dll"
-			Delete "$INSTDIR\profile_backends.cache"
 
+            Delete "$INSTDIR\backends.json"
 			RMDir /REBOOTOK /r "$INSTDIR\python"
 			RMDir /REBOOTOK /r "$INSTDIR\node"
 
@@ -374,8 +373,8 @@ Section $(SECTION_MAIN) SecMain
     ; Install version info
     File "..\version.txt"
 
-    ; Install the libpipe dll.
-    File "..\build\libpipe\Release\libpipe.dll"
+    ; Install backend informations
+    File "..\backends.json"
 
 	; Install the python backend and input method modules along with an embedable version of python 3.
 	File /r /x "__pycache__" /x "input_methods" /x ".git" /x ".idea" "..\python"
@@ -603,12 +602,11 @@ Section "Uninstall"
 	; Otherwise we cannot replace it.
 	ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
 	Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
-	Delete /REBOOTOK "$INSTDIR\libpipe.dll"
-	Delete "$INSTDIR\profile_backends.cache"
 
 	RMDir /REBOOTOK /r "$INSTDIR\x86"
 	RMDir /REBOOTOK /r "$INSTDIR\python"
 	RMDir /REBOOTOK /r "$INSTDIR\node"
+    Delete "$INSTDIR\backends.json"
 
 	; Only exist in earlier versions, but need to delete it.
 	RMDir /REBOOTOK /r "$INSTDIR\server"

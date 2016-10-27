@@ -98,7 +98,6 @@ private:
 	unsigned int newSeqNum_;
 	bool isActivated_;
 	bool connectingServerPipe_;
-	std::string backend_;
 };
 
 }

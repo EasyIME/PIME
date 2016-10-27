@@ -19,7 +19,4 @@ build_script:
 
 after_build:
   - appveyor.after_build.bat
-
-artifacts:
-  - path: installer\PIME-0.15.2-setup.exe
-    name: Installer
+  - ps: .\appveyor.artifacts.ps1

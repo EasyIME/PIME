@@ -1,15 +1,5 @@
-mkdir build
-cd build
-cmake -G "Visual Studio 14 2015" ..
-cmake --build . --config Release
-cd ..
+cmake . -Bbuild -G"Visual Studio 14 2015"
+cmake --build build --config Release
 
-mkdir build64
-cd build64
-cmake -G "Visual Studio 14 2015 Win64" ..
-cmake --build . --config Release --target PIMETextService
-cd ..
-
-cd installer
-makensis installer.nsi
-pause
+cmake . -Bbuild64 -G"Visual Studio 14 2015 Win64"
+cmake --build build64 --config Release --target PIMETextService

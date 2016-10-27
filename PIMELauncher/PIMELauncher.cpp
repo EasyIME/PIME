@@ -28,76 +28,16 @@
 #include <vector>
 #include <map>
 #include <fstream>
+#include <algorithm>
+#include <json/json.h>
 #include "../libpipe/libpipe.h"
-
-BackendServer::~BackendServer() {
-	terminate();
-}
-
-static HANDLE launchProcess(const wchar_t* file, const wchar_t* params, const wchar_t* workingDir) {
-	HANDLE process = INVALID_HANDLE_VALUE;
-	SHELLEXECUTEINFOW info = { 0 };
-	info.cbSize = sizeof(info);
-	info.fMask = SEE_MASK_NOCLOSEPROCESS;
-	info.lpVerb = L"open";
-	info.lpFile = file;
-	info.lpParameters = params;
-	info.lpDirectory = workingDir;
-	info.nShow = SW_HIDE;
-	if (ShellExecuteExW(&info))
-		process = info.hProcess;
-	DWORD err = GetLastError();
-	return process;
-}
-
-void BackendServer::start() {
-	if(process_ == INVALID_HANDLE_VALUE){
-		SetEnvironmentVariable(L"UV_THREADPOOL_SIZE", L"64");
-		process_ = launchProcess(command_.c_str(), params_.c_str(), workingDir_.c_str());
-	}
-}
-
-void BackendServer::terminate() {
-	if (isRunning()) {
-		char buf[16];
-		DWORD rlen;
-		if (!::CallNamedPipeA(pipeName_.c_str(), "quit", 4, buf, sizeof(buf) - 1, &rlen, 1000)) { // wait for 1 sec.
-			// the RPC call fails, force termination
-			::TerminateProcess(process_, 0);
-		}
-		::WaitForSingleObject(process_, 3000); // wait for 3 seconds
-		CloseHandle(process_);
-		process_ = INVALID_HANDLE_VALUE;
-	}
-}
-
-bool BackendServer::isRunning() {
-	if (process_ != INVALID_HANDLE_VALUE) {
-		DWORD code;
-		if (GetExitCodeProcess(process_, &code) && code == STILL_ACTIVE) {
-			return true;
-		}
-		// the process is dead, close its handle
-		CloseHandle(process_);
-		process_ = INVALID_HANDLE_VALUE;
-	}
-	return false;
-}
-
-bool BackendServer::ping(int timeout) {
-	// make sure the backend server is running
-	char buf[16];
-	DWORD rlen;
-	bool success = ::CallNamedPipeA(pipeName_.c_str(), "ping", 4, buf, sizeof(buf) - 1, &rlen, timeout);
-	if (success) {
-	}
-	return success;
-}
+#include "ClientConnection.h"
 
 
 PIMELauncher* PIMELauncher::singleton_ = nullptr;
 
 PIMELauncher::PIMELauncher():
+	pendingPipeConnection_(false),
 	quitExistingLauncher_(false) {
 	// this can only be assigned once
 	assert(singleton_ == nullptr);
@@ -114,6 +54,17 @@ PIMELauncher::PIMELauncher():
 }
 
 PIMELauncher::~PIMELauncher() {
+	if (connectPipeOverlapped_.hEvent != INVALID_HANDLE_VALUE)
+		CloseHandle(connectPipeOverlapped_.hEvent);
+
+	if (everyoneSID_ != nullptr)
+		FreeSid(everyoneSID_);
+	if (allAppsSID_ != nullptr)
+		FreeSid(allAppsSID_);
+	if (securittyDescriptor_ != nullptr)
+		LocalFree(securittyDescriptor_);
+	if (acl_ != nullptr)
+		LocalFree(acl_);
 }
 
 string PIMELauncher::getPipeName(const char* base_name) {
@@ -138,7 +89,7 @@ bool PIMELauncher::initBackends() {
 	backend.name_ = "python";
 	backend.pipeName_ = getPipeName("python");
 	backend.command_ = topDirPath_;
-	backend.command_ += L"\\python\\python3\\pythonw.exe";
+	backend.command_ += L"\\python\\python3\\python.exe";
 	backend.workingDir_ = topDirPath_;
 	backend.workingDir_ += L"\\python";
 	// the parameter needs to be quoted
@@ -154,10 +105,26 @@ bool PIMELauncher::initBackends() {
 	// the parameter needs to be quoted
 	backend2.params_ = L"\"" + backend2.workingDir_ + L"\\server.js\"";
 
+	// maps language profiles to backend names
+	ifstream stream(topDirPath_ + L"\\profile_backends.cache");
+	string line;
+	while (getline(stream, line)) {
+		if (line.empty())
+			continue;
+		size_t sep = line.find('\t');
+		if (sep != -1) {
+			string guid = line.substr(0, sep);
+			transform(guid.begin(), guid.end(), guid.begin(), tolower);  // convert GUID to lwoer case
+			string backendName = line.substr(sep + 1);
+			// map text service GUID to its backend server
+			backendMap_.insert(std::make_pair(guid, findBackendByName(backendName.c_str())));
+		}
+	}
+	stream.close();
 	return true;
 }
 
-BackendServer* PIMELauncher::findBackend(const char* name) {
+BackendServer* PIMELauncher::findBackendByName(const char* name) {
 	// for such a small list, linear search is often faster than hash table or map
 	for (int i = 0; i < N_BACKENDS; ++i) {
 		BackendServer& backend = backends_[i];
@@ -197,7 +164,7 @@ void PIMELauncher::quit() {
 
 bool PIMELauncher::launchBackendByName(const char* name) {
 	// luanch the specified backend server
-	BackendServer* backend = findBackend(name);
+	BackendServer* backend = findBackendByName(name);
 	if (backend != nullptr) {
 		// ensure that the backend server is running and responsive
 		if (!backend->ping()) {
@@ -219,62 +186,123 @@ bool PIMELauncher::launchBackendByName(const char* name) {
 	return false;
 }
 
-string PIMELauncher::handleMessage(const string& msg) {
-	string reply;
-	if (msg == "quit") { // quit PIME
-		quit();
+
+void PIMELauncher::initSecurityAttributes() {
+	// create security attributes for the pipe
+	// http://msdn.microsoft.com/en-us/library/windows/desktop/hh448449(v=vs.85).aspx
+	// define new Win 8 app related constants
+	memset(&explicitAccesses_, 0, sizeof(explicitAccesses_));
+	// Create a well-known SID for the Everyone group.
+	// FIXME: we should limit the access to current user only
+	// See this article for details: https://msdn.microsoft.com/en-us/library/windows/desktop/hh448493(v=vs.85).aspx
+
+	SID_IDENTIFIER_AUTHORITY worldSidAuthority = SECURITY_WORLD_SID_AUTHORITY;
+	AllocateAndInitializeSid(&worldSidAuthority, 1,
+		SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &everyoneSID_);
+
+	// https://services.land.vic.gov.au/ArcGIS10.1/edESRIArcGIS10_01_01_3143/Python/pywin32/PLATLIB/win32/Demos/security/explicit_entries.py
+
+	explicitAccesses_[0].grfAccessPermissions = GENERIC_ALL;
+	explicitAccesses_[0].grfAccessMode = SET_ACCESS;
+	explicitAccesses_[0].grfInheritance = SUB_CONTAINERS_AND_OBJECTS_INHERIT;
+	explicitAccesses_[0].Trustee.pMultipleTrustee = NULL;
+	explicitAccesses_[0].Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+	explicitAccesses_[0].Trustee.TrusteeForm = TRUSTEE_IS_SID;
+	explicitAccesses_[0].Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+	explicitAccesses_[0].Trustee.ptstrName = (LPTSTR)everyoneSID_;
+
+	// FIXME: will this work under Windows 7 and Vista?
+	// create SID for app containers
+	SID_IDENTIFIER_AUTHORITY appPackageAuthority = SECURITY_APP_PACKAGE_AUTHORITY;
+	AllocateAndInitializeSid(&appPackageAuthority,
+		SECURITY_BUILTIN_APP_PACKAGE_RID_COUNT,
+		SECURITY_APP_PACKAGE_BASE_RID,
+		SECURITY_BUILTIN_PACKAGE_ANY_PACKAGE,
+		0, 0, 0, 0, 0, 0, &allAppsSID_);
+
+	explicitAccesses_[1].grfAccessPermissions = GENERIC_ALL;
+	explicitAccesses_[1].grfAccessMode = SET_ACCESS;
+	explicitAccesses_[1].grfInheritance = SUB_CONTAINERS_AND_OBJECTS_INHERIT;
+	explicitAccesses_[1].Trustee.pMultipleTrustee = NULL;
+	explicitAccesses_[1].Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
+	explicitAccesses_[1].Trustee.TrusteeForm = TRUSTEE_IS_SID;
+	explicitAccesses_[1].Trustee.TrusteeType = TRUSTEE_IS_GROUP;
+	explicitAccesses_[1].Trustee.ptstrName = (LPTSTR)allAppsSID_;
+
+	// create DACL
+	DWORD err = SetEntriesInAcl(2, explicitAccesses_, NULL, &acl_);
+	if (0 == err) {
+		// security descriptor
+		securittyDescriptor_ = (PSECURITY_DESCRIPTOR)LocalAlloc(LPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
+		InitializeSecurityDescriptor(securittyDescriptor_, SECURITY_DESCRIPTOR_REVISION);
+
+		// Add the ACL to the security descriptor. 
+		SetSecurityDescriptorDacl(securittyDescriptor_, TRUE, acl_, FALSE);
 	}
-	else if (msg.compare(0, 7, "launch\t") == 0) {
-		string backendName = msg.substr(7);
-		reply = launchBackendByName(backendName.c_str()) ? "ready" : "failed";
-	}
-	return reply;
+
+	securityAttributes_.nLength = sizeof(SECURITY_ATTRIBUTES);
+	securityAttributes_.lpSecurityDescriptor = securittyDescriptor_;
+	securityAttributes_.bInheritHandle = TRUE;
 }
 
-// called from a worker thread to read the incoming data from the connected pipe
-DWORD WINAPI PIMELauncher::clientPipeThread(LPVOID param) {
-	HANDLE client_pipe = reinterpret_cast<HANDLE>(param);
-	bool running = true;
-	while (running) { // run the loop to read data from the pipe
-		char buf[512];
-		DWORD err;
-		bool read_more = true;
-		string msg;
-		do {
-			int rlen = read_pipe(client_pipe, buf, sizeof(buf) - 1, &err);
-			if (rlen > 0) {
-				buf[rlen] = '\0';
-				msg += buf;
-			}
 
-			switch (err) {
-			case 0: // finish of this message
-				read_more = false;
-				break;
-			case ERROR_MORE_DATA: // need further reads
-			case ERROR_IO_PENDING:
-				read_more = true;
-				break;
-			default: // the pipe is broken, disconnect!
-				running = false;
-				read_more = false;
-			}
-		} while (read_more);
-
-		// finish reading an incoming message, handle it!
-		singleton_->lock();
-		// only handle message from one pipe thread at a time
-		string reply = singleton_->handleMessage(msg);
-		if (!reply.empty()) {
-			write_pipe(client_pipe, reply.c_str(), reply.length(), &err);
-		}
-		singleton_->unlock();
-		running = false; // Currently, we only handle one message.
+// References:
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa365588(v=vs.85).aspx
+HANDLE PIMELauncher::createPipe(const wchar_t* app_name) {
+	HANDLE pipe = INVALID_HANDLE_VALUE;
+	wchar_t username[UNLEN + 1];
+	DWORD unlen = UNLEN + 1;
+	if (GetUserNameW(username, &unlen)) {
+		// add username to the pipe path so it will not clash with other users' pipes.
+		wchar_t pipe_name[MAX_PATH];
+		wsprintf(pipe_name, L"\\\\.\\pipe\\%s\\PIME\\%s", username, app_name);
+		const size_t buffer_size = 1024;
+		// create the pipe
+		pipe = CreateNamedPipeW(pipe_name,
+			PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
+			PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+			PIPE_UNLIMITED_INSTANCES,
+			buffer_size,
+			buffer_size,
+			NMPWAIT_USE_DEFAULT_WAIT,
+			&securityAttributes_);
 	}
-	close_pipe(client_pipe);
-	// notify the server that we're done. (maybe using PostThreadMessage? or event?)
+	return pipe;
+}
 
-	return 0;
+void PIMELauncher::closePipe(HANDLE pipe) {
+	FlushFileBuffers(pipe);
+	DisconnectNamedPipe(pipe);
+	CloseHandle(pipe);
+}
+
+
+HANDLE PIMELauncher::acceptClientPipe() {
+	HANDLE client_pipe = createPipe(L"Launcher");
+	if (client_pipe != INVALID_HANDLE_VALUE) {
+		if (ConnectNamedPipe(client_pipe, &connectPipeOverlapped_)) {
+			// connection to client succeded without blocking (the event is signaled)
+			pendingPipeConnection_ = false;
+		}
+		else { // connection fails
+			switch (GetLastError()) {
+			case ERROR_IO_PENDING:
+				// The overlapped connection in progress and we need to wait
+				pendingPipeConnection_ = true;
+				break;
+			case ERROR_PIPE_CONNECTED:
+				// the client is already connected before we call ConnectNamedPipe()
+				SetEvent(connectPipeOverlapped_.hEvent); // signal the event manually
+				pendingPipeConnection_ = false;
+				break;
+			default: // unknown errors
+				pendingPipeConnection_ = false;
+				CloseHandle(client_pipe);
+				client_pipe = INVALID_HANDLE_VALUE;
+			}
+		}
+	}
+	return client_pipe;
 }
 
 
@@ -289,17 +317,50 @@ int PIMELauncher::exec(LPSTR cmd) {
 	if (!initBackends())
 		return 1;
 
-	// main server loop
-	::InitializeCriticalSection(&serverLock_);
+	// preparing for the server pipe
+	initSecurityAttributes();
+	// notification for new incoming connections
+	memset(&connectPipeOverlapped_, 0, sizeof(connectPipeOverlapped_));
+	// event used to notify new incoming pipe connections
+	connectPipeOverlapped_.hEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
+	if (connectPipeOverlapped_.hEvent == NULL)
+		return -1;
+
+	// main server loop, accepting new incoming clients
+	HANDLE client_pipe = acceptClientPipe();
 	for (;;) {
-		// wait for incoming pipe connection
-		HANDLE client_pipe = connect_pipe("Launcher"); // this is a blocking call
-		if (client_pipe != INVALID_HANDLE_VALUE) { // client connected
-			// ::EnterCriticalSection(&lock); // lock mutex
-			// clients.push_back(client);
-			// ::LeaveCriticalSection(&lock); // unlock mutex
-			// run a separate thread for this client
-			HANDLE thread = ::CreateThread(NULL, 0, clientPipeThread, reinterpret_cast<LPVOID>(client_pipe), 0, NULL);
+		// wait for incoming pipe connection to complete
+		DWORD waitResult = WaitForSingleObjectEx(connectPipeOverlapped_.hEvent, INFINITE, TRUE);
+		switch (waitResult) {
+		case WAIT_OBJECT_0:  // new incoming connection (ConnectNamedPipe() is finished)
+			if (pendingPipeConnection_) {
+				DWORD rlen;
+				bool success = GetOverlappedResult(client_pipe, &connectPipeOverlapped_, &rlen, FALSE);
+				if (!success) { // connection failed
+					closePipe(client_pipe);
+					client_pipe = INVALID_HANDLE_VALUE;
+				}
+			}
+
+			// handle the newly connected client
+			if (client_pipe != INVALID_HANDLE_VALUE) {
+				ClientConnection* client = new ClientConnection(client_pipe, this);
+				clients_[client_pipe] = client;
+				client->asyncReadClient();  // read data from the client asynchronously
+			}
+
+			// try to accept the next client connection
+			client_pipe = acceptClientPipe();
+			break;
+		case WAIT_IO_COMPLETION:  // some overlapped I/O is finished (handled in completion routines)
+			while (!finishedRequests_.empty()) {
+				AsyncRequest* request = finishedRequests_.front();
+				finishedRequests_.pop();
+
+			}
+			break;
+		default:
+			return -1;  // some unknown errors hapened
 		}
 	}
 	return 0;

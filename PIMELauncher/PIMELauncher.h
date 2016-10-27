@@ -20,33 +20,32 @@
 #ifndef _PIME_LAUNCHER_H_
 #define _PIME_LAUNCHER_H_
 
+// #include <uv.h>  // need to be put before windows.h for unknown reasons :-(
 #include <Windows.h>
 #include <ShlObj.h>
 #include <Shellapi.h>
 #include <Lmcons.h> // for UNLEN
+#include <Winnt.h> // for security attributes constants
+#include <aclapi.h> // for ACL
 #include <cstring>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include "../libpipe/libpipe.h"
+#include "BackendServer.h"
+#include <queue>
 
-class BackendServer {
-public:
-	BackendServer() : process_(INVALID_HANDLE_VALUE) {
-	}
-	~BackendServer();
+class ClientConnection;
 
-	void start();
-	void terminate();
-	bool isRunning();
-	bool ping(int timeout=3000);
-
-	string name_;
-	string pipeName_;
-	wstring command_;
-	wstring params_;
-	wstring workingDir_;
-	HANDLE process_;
+struct AsyncRequest {
+	OVERLAPPED overlapped;
+	ClientConnection*  client;
+	char buf[1024];
+	DWORD errCode;
+	DWORD numBytes;
+	bool success;
 };
+
 
 class PIMELauncher {
 public:
@@ -59,37 +58,59 @@ public:
 	PIMELauncher();
 	~PIMELauncher();
 
+
 	int exec(LPSTR cmd);
 	static PIMELauncher* get() { // get the singleton object
 		return singleton_;
 	}
 
-	void lock() {
-		::EnterCriticalSection(&serverLock_); // acquire mutex
-	}
-
-	void unlock() {
-		::LeaveCriticalSection(&serverLock_); // release mutex
-	}
-
 	void quit();
+
+	BackendServer* findBackendForClient(const char* guid) {
+		auto it = backendMap_.find(guid);
+		if (it != backendMap_.end())  // found the backend for the text service
+			return it->second;
+		return nullptr;
+	}
+
+	BackendServer* findBackendByName(const char* name);
+
+	void queueAsyncResult(AsyncRequest* request) {
+		finishedRequests_.push(request);
+	}
 
 private:
 	static string getPipeName(const char* base_name);
 	static DWORD WINAPI clientPipeThread(LPVOID param);
-	string handleMessage(const string& msg);
+	void initSecurityAttributes();
+	HANDLE acceptClientPipe();
+	HANDLE createPipe(const wchar_t * app_name);
+	void closePipe(HANDLE pipe);
 	void terminateExistingLauncher();
 	void parseCommandLine(LPSTR cmd);
 	bool initBackends();
-	BackendServer* findBackend(const char* name);
 	bool launchBackendByName(const char* name);
 
 private:
+	// security attribute stuff for creating the server pipe
+	PSECURITY_DESCRIPTOR securittyDescriptor_;
+	SECURITY_ATTRIBUTES securityAttributes_;
+	PACL acl_;
+	EXPLICIT_ACCESS explicitAccesses_[2];
+	PSID everyoneSID_;
+	PSID allAppsSID_;
+
+	OVERLAPPED connectPipeOverlapped_;
+	bool pendingPipeConnection_;
+
+
 	wstring topDirPath_;
 	bool quitExistingLauncher_;
-	CRITICAL_SECTION serverLock_;
 	BackendServer backends_[N_BACKENDS];
 	static PIMELauncher* singleton_;
+	std::unordered_map<std::string, BackendServer*> backendMap_;
+	std::unordered_map<HANDLE, ClientConnection*> clients_;
+	std::queue<AsyncRequest*> finishedRequests_;
 };
 
 

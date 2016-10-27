@@ -15,26 +15,23 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-import threading
 import json
 import sys
 import os
-from ctypes import *
+import random
+import uuid
+
+import tornado.ioloop
+import tornado.web
+
 from serviceManager import textServiceMgr
 
-# import libpipe
-dll_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "libpipe.dll")
-if not os.path.exists(dll_path):
-    dll_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "../libpipe.dll")
-libpipe = CDLL(dll_path)
 
-# define Win32 error codes for named pipe I/O
-ERROR_MORE_DATA = 234
-ERROR_IO_PENDING = 997
+server = None
 
-class Client:
-    def __init__(self, server, pipe):
-        self.pipe= pipe
+
+class Client(object):
+    def __init__(self, server):
         self.server = server
         self.service = None
 
@@ -51,7 +48,7 @@ class Client:
     def handleRequest(self, msg): # msg is a json object
         method = msg.get("method", None)
         seqNum = msg.get("seqNum", 0)
-        print("handle message: ", threading.current_thread().name, method, seqNum)
+        # print("handle message: ", str(id(self)), method, seqNum)
         service = self.service
         if service:
             # let the text service handle the message
@@ -65,122 +62,95 @@ class Client:
         # print(reply)
         return reply
 
+        
+class MainHandler(tornado.web.RequestHandler):
 
-class ClientThread(threading.Thread):
-    def __init__(self, client):
-        threading.Thread.__init__(self)
-        self.client = client
-        self.buf = create_string_buffer(512)
+    def get(self, args):  # ping the API endpoint
+        self.write("pong")
 
-    def run(self):
-        client = self.client
-        pipe = client.pipe
-        server = client.server
+    def post(self, client_id=None):
+        global server
+        if not client_id:  # add new client
+            client_id = server.new_client()
+            self.write(client_id)
+        else:  # existing client
+            client = server.clients.get(client_id, None)
+            if client:
+                msg = json.loads(self.request.body.decode("UTF-8"))
+                # print("received msg", success, msg)
+                reply = client.handleRequest(msg)
+                replyText = json.dumps(reply) # convert object to json
+                self.write(replyText)
+            else:
+                self.write("")
 
-        running = True
-        while running:
-            # Read client requests from the pipe.
-            try:
-                read_more = True
-                msg = ""
-                while read_more:
-                    # read data from the pipe
-                    error = c_ulong(0)
-                    buf_len = c_ulong(512)
-                    read_len = libpipe.read_pipe(pipe, self.buf, buf_len, pointer(error))
-                    error = error.value
-                    # print("read: ", read_len, "error:", error)
-
-                    # convert content in the read buffer to unicode
-                    if read_len > 0:
-                        data = self.buf.raw[:read_len]
-                        data = data.decode("UTF-8")
-                    else:
-                        data = ""
-                    # print("data: ", data)
-
-                    if error == 0: # success
-                        msg += data
-                        read_more = False
-                    elif error == ERROR_MORE_DATA:
-                         msg += data
-                    elif error == ERROR_IO_PENDING:
-                         pass
-                    else:  # the pipe is broken
-                        print("broken pipe")
-                        running = False
-                        read_more = False
-
-                if msg:
-                    # Process the incoming message.
-                    if msg == "ping":  # ping from PIMELauncher
-                        replyText = "pong"  # tell PIMELauncher that we're alive
-                    elif msg == "quit":  # asked by PIMELauncher for terminating the server
-                        replyText = ""
-                        # FIXME: directly terminate the process is less graceful, but it should work
-                        sys.exit(0)
-                    else:
-                        msg = json.loads(msg) # parse the json input
-                        # print("received msg", success, msg)
-                        server.acquire_lock() # acquire a lock
-                        reply = client.handleRequest(msg)
-                        replyText = json.dumps(reply) # convert object to json
-                        server.release_lock() # release the lock
-
-                    if running:  # the pipe is not briken
-                        # print("reply: ", replyText)
-                        data = bytes(replyText, "UTF-8") # convert to UTF-8
-                        data_len = c_ulong(len(data))
-                        libpipe.write_pipe(pipe, data, data_len, None)
-            except:
-                import traceback
-                # print callstatck to know where the exceptions is
-                traceback.print_exc()
-
-                print("exception!", sys.exc_info())
-                break
-
-        libpipe.close_pipe(pipe)
-        server.remove_client(client)
+    def delete(self, client_id=None):
+        if client_id:
+            server.remove_client(client_id)
+        else:  # terminate the server itself
+            server.exit()
 
 
-# listen to incoming named pipe connections
-class Server():
+class Server(object):
     def __init__(self):
-        self.lock = threading.Lock()
-        self.clients = []
+        self.clients = {}
+        # FIXME: this uses the AppData/Roaming dir, but we want the local one.
+        #        alternatively, use the AppData/Temp dir.
+        self.config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME")
+        os.makedirs(self.config_dir, mode=0o700, exist_ok=True)
 
-    def acquire_lock(self):
-        self.lock.acquire()
+        self.status_dir = os.path.join(os.path.expandvars("%LOCALAPPDATA%"), "PIME", "status")  # local app data
+        self.status_filename = os.path.join(self.status_dir, "python.json")
+        os.makedirs(self.status_dir, mode=0o700, exist_ok=True)
 
-    def release_lock(self):
-        self.lock.release()
+    def __del__(self):
+        if self.status_filename:
+            os.unlink(self.status_filename)
 
     def run(self):
+        app = tornado.web.Application([
+            (r"/(.*)", MainHandler),
+        ])
+        # find an available port
         while True:
-            pipe = libpipe.connect_pipe(bytes("python", "UTF-8"))
-            # client connected
-            if pipe != -1:
-                print("client connected")
-                # create a Client instance for the client
-                client = Client(self, pipe)
-                self.lock.acquire()
-                self.clients.append(client)
-                self.lock.release()
-                # run a separate thread for this client
-                thread = ClientThread(client)
-                thread.start()
-        return True
+            port = random.randint(1025, 65535)
+            try:
+                app.listen(port, "127.0.0.1")
+                break
+            except OSError:  # port is in use, try another one
+                continue
 
-    def remove_client(self, client):
-        self.lock.acquire()
-        self.clients.remove(client)
-        print("client disconnected")
-        self.lock.release()
+        # write the server info to file
+        with open(self.status_filename, "w") as f:
+            info = {
+                "pid": os.getpid(),  # process ID
+                "port": port,  # the http port
+                "access_token": str(uuid.uuid4())  # access token to this server
+            }
+            json.dump(info, f, indent=2)
+
+        # setup the main event loop
+        loop = tornado.ioloop.IOLoop.current()
+        loop.start()
+
+    def new_client(self):
+        # create a Client instance for the client
+        client = Client(self)
+        client_id = str(id(client))
+        self.clients[client_id] = client
+        print("new client:", client_id)
+        return client_id
+
+    def remove_client(self, client_id):
+        print("client disconnected:", client_id)
+        del self.clients[client_id]
+
+    def exit(self):
+        tornado.ioloop.IOLoop.current().stop()
 
 
 def main():
-    # listen to incoming pipe connections
+    global server
     server = Server()
     server.run()
 

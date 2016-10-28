@@ -20,6 +20,9 @@ import json
 import sys
 import os
 from ctypes import *
+import tornado.ioloop
+import tornado.web
+
 from serviceManager import textServiceMgr
 
 # import libpipe
@@ -28,9 +31,6 @@ if not os.path.exists(dll_path):
     dll_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "../libpipe.dll")
 libpipe = CDLL(dll_path)
 
-# define Win32 error codes for named pipe I/O
-ERROR_MORE_DATA = 234
-ERROR_IO_PENDING = 997
 
 class Client:
     def __init__(self, server, pipe):
@@ -143,34 +143,35 @@ class ClientThread(threading.Thread):
         libpipe.close_pipe(pipe)
         server.remove_client(client)
 
+server = None
+        
+class MainHandler(tornado.web.RequestHandler):
+
+    def post(self):
+        client_id = self.get_argument("client")
+        msg = json.loads(self.request.body)
+        
+        
 
 # listen to incoming named pipe connections
 class Server():
     def __init__(self):
-        self.lock = threading.Lock()
         self.clients = []
 
-    def acquire_lock(self):
-        self.lock.acquire()
-
-    def release_lock(self):
-        self.lock.release()
-
     def run(self):
-        while True:
-            pipe = libpipe.connect_pipe(bytes("python", "UTF-8"))
-            # client connected
-            if pipe != -1:
-                print("client connected")
-                # create a Client instance for the client
-                client = Client(self, pipe)
-                self.lock.acquire()
-                self.clients.append(client)
-                self.lock.release()
-                # run a separate thread for this client
-                thread = ClientThread(client)
-                thread.start()
-        return True
+        app = tornado.web.Application([
+            (r"/", MainHandler),
+        ])
+        app.listen(port, "127.0.0.1")
+
+        # setup the main event loop
+        loop = tornado.ioloop.IOLoop.current()
+        loop.start()
+            # create a Client instance for the client
+            client = Client(self, pipe)
+            self.lock.acquire()
+            self.clients.append(client)
+            self.lock.release()
 
     def remove_client(self, client):
         self.lock.acquire()
@@ -180,6 +181,7 @@ class Server():
 
 
 def main():
+    global server
     # listen to incoming pipe connections
     server = Server()
     server.run()

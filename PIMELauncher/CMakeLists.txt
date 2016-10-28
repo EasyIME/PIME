@@ -12,8 +12,6 @@ add_executable(PIMELauncher WIN32
     PIMELauncher.h
     BackendServer.cpp
     BackendServer.h
-    ClientConnection.cpp
-    ClientConnection.h
     # resources
     # PIMELauncher.rc
 )
@@ -21,4 +19,5 @@ add_executable(PIMELauncher WIN32
 target_link_libraries(PIMELauncher 
     libpipe
     jsoncpp_lib_static
+    Wininet
 )

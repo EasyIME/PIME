@@ -28,32 +28,52 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include "../libpipe/libpipe.h"
+#include <WinInet.h>
+
 
 class BackendServer {
 public:
-	BackendServer():
-		process_(INVALID_HANDLE_VALUE),
-		stdin_(INVALID_HANDLE_VALUE),
-		stdout_(INVALID_HANDLE_VALUE) {
-	}
+	enum BackendType {
+		BACKEND_PYTHON = 0,
+		BACKEND_NODE,
+		N_BACKENDS
+	};
+
+	BackendServer();
 	~BackendServer();
+
+	static void init(const std::wstring& topDirPath);
+	static void finalize();
+
+	static BackendServer* fromTextServiceGuid(const char* guid);
+	static BackendServer* fromName(const char* name);
 
 	void start();
 	void terminate();
 	bool isRunning();
-	bool ping(int timeout=3000);
+	bool ping(int timeout = 3000);
+	std::string handleClientMessage(std::string& message);
 
-	string name_;
-	string pipeName_;
-	wstring command_;
-	wstring params_;
-	wstring workingDir_;
+private:
+	std::string name_;
+
+	// the web API endpoint of the backend
+	std::string apiHost_;
+	int apiPort_;
+	std::string accessToken_;
+	HINTERNET httpConnection_; // http connection
+
+	// command to launch the server process
+	std::wstring command_;
+	std::wstring params_;
+	std::wstring workingDir_;
 	HANDLE process_;
-	HANDLE stdin_;
-	HANDLE stdout_;
-};
 
+
+	static HINTERNET internet_;
+	static BackendServer backends_[N_BACKENDS];
+	static std::unordered_map<std::string, BackendServer*> backendMap_;
+};
 
 
 #endif // _BACKEND_SERVER_H_

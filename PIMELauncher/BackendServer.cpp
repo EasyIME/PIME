@@ -30,94 +30,119 @@
 #include <fstream>
 #include <algorithm>
 #include <json/json.h>
-#include "../libpipe/libpipe.h"
 #include "BackendServer.h"
+
+using namespace std;
+
+HINTERNET BackendServer::internet_ = NULL;
+
+BackendServer BackendServer::backends_[N_BACKENDS];
+
+std::unordered_map<std::string, BackendServer*> BackendServer::backendMap_;
+
+// static
+void BackendServer::init(const std::wstring& topDirPath) {
+	// FIXME: make this configurable from config files??
+	// the python backend
+	BackendServer& backend = backends_[BACKEND_PYTHON];
+	backend.name_ = "python";
+	backend.apiHost_ = "127.0.0.1";
+	backend.apiPort_ = 5566;
+	backend.command_ = topDirPath;
+	backend.command_ += L"\\python\\python3\\python.exe";
+	backend.workingDir_ = topDirPath;
+	backend.workingDir_ += L"\\python";
+	// the parameter needs to be quoted
+	backend.params_ = L"\"" + backend.workingDir_ + L"\\server.py\"";
+
+	BackendServer& backend2 = backends_[BACKEND_NODE];
+	backend2.name_ = "node";
+	backend2.apiHost_ = "127.0.0.1";
+	backend2.command_ = topDirPath;
+	backend2.command_ += L"\\node\\node.exe";
+	backend2.workingDir_ = topDirPath;
+	backend2.workingDir_ += L"\\node";
+	// the parameter needs to be quoted
+	backend2.params_ = L"\"" + backend2.workingDir_ + L"\\server.js\"";
+
+	// maps language profiles to backend names
+	ifstream stream(topDirPath + L"\\profile_backends.cache");
+	string line;
+	while (getline(stream, line)) {
+		if (line.empty())
+			continue;
+		size_t sep = line.find('\t');
+		if (sep != -1) {
+			string guid = line.substr(0, sep);
+			transform(guid.begin(), guid.end(), guid.begin(), tolower);  // convert GUID to lwoer case
+			string backendName = line.substr(sep + 1);
+			// map text service GUID to its backend server
+			backendMap_.insert(std::make_pair(guid, fromName(backendName.c_str())));
+		}
+	}
+	stream.close();
+
+	// initialize WinInet for http functions
+	internet_ = InternetOpenA(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+}
+
+// static
+void BackendServer::finalize() {
+	// try to terminate launched backend server processes
+	for (int i = 0; i < 2; ++i) {
+		backends_[i].terminate();
+	}
+
+	InternetCloseHandle(internet_);
+}
+
+BackendServer::BackendServer():
+	apiPort_(0),
+	httpConnection_(NULL),
+	process_(INVALID_HANDLE_VALUE) {
+}
 
 BackendServer::~BackendServer() {
 	terminate();
 }
 
-
 void BackendServer::start() {
 	if(process_ == INVALID_HANDLE_VALUE) {
-		// Use I/O redirection to control the stdio of the child process
-		// Reference: https://msdn.microsoft.com/zh-tw/library/windows/desktop/ms682499(v=vs.85).aspx
+		// create the child process
+		PROCESS_INFORMATION pi;
+		memset(&pi, 0, sizeof(pi));
 
-		// set up the pipe handles for the stdio of the child process.
-		SECURITY_ATTRIBUTES sa;
-		sa.nLength = sizeof(sa);
-		sa.bInheritHandle = TRUE;
-		sa.lpSecurityDescriptor = NULL;
+		STARTUPINFO si;
+		memset(&si, 0, sizeof(si));
+		si.cb = sizeof(si);
+		si.wShowWindow = SW_HIDE;
+		si.dwFlags = STARTF_USESHOWWINDOW;
 
-		// create a pipe for the child stdout
-		HANDLE childStdoutR = INVALID_HANDLE_VALUE;
-		HANDLE childStdoutW = INVALID_HANDLE_VALUE;
-		bool pipesCreated = CreatePipe(&childStdoutR, &childStdoutW, &sa, 0);
+		std::wstring commandLine;
+		commandLine += L'\"';
+		commandLine += command_;
+		commandLine += L"\" ";
 
-		// our read end of the pipe should not be inherited by the child
-		if(pipesCreated)
-			pipesCreated = SetHandleInformation(childStdoutR, HANDLE_FLAG_INHERIT, 0);
+		commandLine += params_;
 
-		// create a pipe for the child stdin
-		HANDLE childStdinR = INVALID_HANDLE_VALUE;
-		HANDLE childStdinW = INVALID_HANDLE_VALUE;
-		if (pipesCreated)
-			pipesCreated = CreatePipe(&childStdinR, &childStdinW, &sa, 0);
-
-		// our write end of the pipe should not be inherited by the child
-		if(pipesCreated)
-			pipesCreated = SetHandleInformation(childStdinW, HANDLE_FLAG_INHERIT, 0);
-
-		if (pipesCreated) { // pipes are correctly created
-			// create the child process
-			PROCESS_INFORMATION pi;
-			memset(&pi, 0, sizeof(pi));
-
-			STARTUPINFO si;
-			memset(&si, 0, sizeof(si));
-			si.cb = sizeof(si);
-			si.hStdInput = childStdinR;
-			si.hStdOutput = childStdoutW;
-			si.hStdError = childStdoutW;  // FIXME: use a different fd from stdout
-			si.wShowWindow = SW_HIDE;
-			si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-
-			std::wstring commandLine;
-			commandLine += L'\"';
-			commandLine += command_;
-			commandLine += L"\" ";
-
-			commandLine += params_;
-
-			wchar_t* commandLineBuf = wcsdup(commandLine.c_str());  // the buffer needs to be writable
-			if (CreateProcessW(NULL, commandLineBuf, NULL, NULL, TRUE, 0, NULL, workingDir_.c_str(), &si, &pi)) {
-				process_ = pi.hProcess;
-			}
-			free(commandLineBuf);
+		wchar_t* commandLineBuf = wcsdup(commandLine.c_str());  // the buffer needs to be writable
+		if (CreateProcessW(NULL, commandLineBuf, NULL, NULL, TRUE, 0, NULL, workingDir_.c_str(), &si, &pi)) {
+			process_ = pi.hProcess;
 		}
-
-		CloseHandle(childStdinR);
-		CloseHandle(childStdoutW);
-		if (process_ != INVALID_HANDLE_VALUE) { // process created
-			stdin_ = childStdinW;
-			stdout_ = childStdoutR;
-		}
-		else {  // process creation fails
-			CloseHandle(childStdinW);
-			CloseHandle(childStdoutR);
-		}
+		free(commandLineBuf);
 	}
 }
 
 void BackendServer::terminate() {
 	if (isRunning()) {
-		char buf[16];
-		DWORD rlen;
-		if (!::CallNamedPipeA(pipeName_.c_str(), "quit", 4, buf, sizeof(buf) - 1, &rlen, 1000)) { // wait for 1 sec.
-			// the RPC call fails, force termination
-			::TerminateProcess(process_, 0);
+		if (httpConnection_) {
+			if (handleClientMessage(std::string("quit")).empty())
+				// the RPC call fails, force termination
+				::TerminateProcess(process_, 0);
+			InternetCloseHandle(httpConnection_);
+			httpConnection_ = NULL;
 		}
-		::WaitForSingleObject(process_, 3000); // wait for 3 seconds
+		::WaitForSingleObject(process_, 3000); // wait for 3 seconds for the process to terminate
 		CloseHandle(process_);
 		process_ = INVALID_HANDLE_VALUE;
 	}
@@ -137,12 +162,54 @@ bool BackendServer::isRunning() {
 }
 
 bool BackendServer::ping(int timeout) {
+	bool success = false;
 	// make sure the backend server is running
-	char buf[16];
-	DWORD rlen;
-	bool success = ::CallNamedPipeA(pipeName_.c_str(), "ping", 4, buf, sizeof(buf) - 1, &rlen, timeout);
-	if (success) {
+	if (httpConnection_) {
+		if (!handleClientMessage(std::string("ping")).empty()) {
+			success = true;
+		}
 	}
 	return success;
+}
+
+std::string BackendServer::handleClientMessage(std::string& message) {
+	std::string response;
+	if(!httpConnection_)
+		httpConnection_ = InternetConnectA(internet_, apiHost_.c_str(), apiPort_, NULL, NULL, INTERNET_SERVICE_HTTP, 0, NULL);
+
+	if (httpConnection_) {
+		HINTERNET req = HttpOpenRequestA(httpConnection_, "POST", "/", NULL, NULL, NULL, 0, NULL);
+		if (req) {
+			if (HttpSendRequestA(req, NULL, 0, (void*)message.c_str(), message.length())) {
+				char buf[1024];
+				DWORD read_len = 0;
+				while (InternetReadFile(req, buf, 1023, &read_len)) {
+					if (read_len == 0)
+						break;
+					buf[read_len] = 0;
+					response += buf;
+				}
+			}
+			InternetCloseHandle(req);
+		}
+	}
+	return response;
+}
+
+BackendServer* BackendServer::fromName(const char* name) {
+	// for such a small list, linear search is often faster than hash table or map
+	for (int i = 0; i < N_BACKENDS; ++i) {
+		BackendServer& backend = backends_[i];
+		if (backend.name_ == name)
+			return &backend;
+	}
+	return nullptr;
+}
+
+BackendServer* BackendServer::fromTextServiceGuid(const char* guid) {
+	auto it = backendMap_.find(guid);
+	if (it != backendMap_.end())  // found the backend for the text service
+		return it->second;
+	return nullptr;
 }
 

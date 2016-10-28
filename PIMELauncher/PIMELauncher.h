@@ -31,33 +31,70 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include "../libpipe/libpipe.h"
 #include "BackendServer.h"
 #include <queue>
 
-class ClientConnection;
+
+struct ClientInfo {
+	HANDLE pipe_;
+	BackendServer* backend_;
+	std::string textServiceGuid_;
+	std::string clientId_;
+
+	std::string readBuf_;
+
+	ClientInfo(HANDLE pipe):
+		pipe_(pipe),
+		backend_(nullptr) {
+	}
+};
+
+
+class PIMELauncher;
 
 struct AsyncRequest {
-	OVERLAPPED overlapped;
-	ClientConnection*  client;
-	char buf[1024];
-	DWORD errCode;
-	DWORD numBytes;
-	bool success;
+	enum Type {
+		ASYNC_READ,
+		ASYNC_WRITE
+	};
+
+	OVERLAPPED overlapped_;
+	PIMELauncher* server_;
+	ClientInfo*  client_;
+	Type type_;
+	char *buf_;
+	int bufSize_;
+	DWORD errCode_;
+	DWORD numBytes_;
+	bool success_;
+
+	AsyncRequest(PIMELauncher* server, ClientInfo* client, Type type, int bufSize, const char* bufContent = nullptr):
+		server_(server),
+		client_(client),
+		type_(type),
+		buf_(new char[bufSize]),
+		bufSize_(bufSize),
+		errCode_(0),
+		numBytes_(0),
+		success_(false) {
+		memset(&overlapped_, 0, sizeof(OVERLAPPED));
+		buf_ = new char[bufSize];
+		if (bufContent != nullptr) {
+			memcpy(buf_, bufContent, bufSize);
+		}
+	}
+
+	~AsyncRequest() {
+		delete []buf_;
+	}
 };
 
 
 class PIMELauncher {
 public:
-	enum BackendType {
-		BACKEND_PYTHON = 0,
-		BACKEND_NODE,
-		N_BACKENDS
-	};
 
 	PIMELauncher();
 	~PIMELauncher();
-
 
 	int exec(LPSTR cmd);
 	static PIMELauncher* get() { // get the singleton object
@@ -66,30 +103,27 @@ public:
 
 	void quit();
 
-	BackendServer* findBackendForClient(const char* guid) {
-		auto it = backendMap_.find(guid);
-		if (it != backendMap_.end())  // found the backend for the text service
-			return it->second;
-		return nullptr;
-	}
-
-	BackendServer* findBackendByName(const char* name);
-
-	void queueAsyncResult(AsyncRequest* request) {
-		finishedRequests_.push(request);
-	}
+	void readClient(ClientInfo* client);
+	void writeClient(ClientInfo* client, const char* data, int len);
+	void closeClient(ClientInfo* client);
 
 private:
-	static string getPipeName(const char* base_name);
-	static DWORD WINAPI clientPipeThread(LPVOID param);
+	static std::string getPipeName(const char* base_name);
 	void initSecurityAttributes();
 	HANDLE acceptClientPipe();
 	HANDLE createPipe(const wchar_t * app_name);
 	void closePipe(HANDLE pipe);
 	void terminateExistingLauncher();
 	void parseCommandLine(LPSTR cmd);
-	bool initBackends();
-	bool launchBackendByName(const char* name);
+	// bool launchBackendByName(const char* name);
+
+	static void CALLBACK _onFinishedCallback(DWORD err, DWORD numBytes, OVERLAPPED* overlapped);
+
+	void onReadFinished(AsyncRequest* req);
+
+	void onWriteFinished(AsyncRequest* req);
+
+	void handleClientMessage(ClientInfo* client);
 
 private:
 	// security attribute stuff for creating the server pipe
@@ -104,12 +138,10 @@ private:
 	bool pendingPipeConnection_;
 
 
-	wstring topDirPath_;
+	std::wstring topDirPath_;
 	bool quitExistingLauncher_;
-	BackendServer backends_[N_BACKENDS];
 	static PIMELauncher* singleton_;
-	std::unordered_map<std::string, BackendServer*> backendMap_;
-	std::unordered_map<HANDLE, ClientConnection*> clients_;
+	std::unordered_map<HANDLE, ClientInfo*> clients_;
 	std::queue<AsyncRequest*> finishedRequests_;
 };
 

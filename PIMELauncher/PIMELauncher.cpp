@@ -30,8 +30,8 @@
 #include <fstream>
 #include <algorithm>
 #include <json/json.h>
-#include "../libpipe/libpipe.h"
-#include "ClientConnection.h"
+
+using namespace std;
 
 
 PIMELauncher* PIMELauncher::singleton_ = nullptr;
@@ -81,59 +81,6 @@ string PIMELauncher::getPipeName(const char* base_name) {
 	return pipe_name;
 }
 
-// initialize info of supported backends
-bool PIMELauncher::initBackends() {
-	// FIXME: make this configurable from config files??
-	// the python backend
-	BackendServer& backend = backends_[BACKEND_PYTHON];
-	backend.name_ = "python";
-	backend.pipeName_ = getPipeName("python");
-	backend.command_ = topDirPath_;
-	backend.command_ += L"\\python\\python3\\python.exe";
-	backend.workingDir_ = topDirPath_;
-	backend.workingDir_ += L"\\python";
-	// the parameter needs to be quoted
-	backend.params_ = L"\"" + backend.workingDir_ + L"\\server.py\"";
-
-	BackendServer& backend2 = backends_[BACKEND_NODE];
-	backend2.name_ = "node";
-	backend2.pipeName_ = getPipeName("node");
-	backend2.command_ = topDirPath_;
-	backend2.command_ += L"\\node\\node.exe";
-	backend2.workingDir_ = topDirPath_;
-	backend2.workingDir_ += L"\\node";
-	// the parameter needs to be quoted
-	backend2.params_ = L"\"" + backend2.workingDir_ + L"\\server.js\"";
-
-	// maps language profiles to backend names
-	ifstream stream(topDirPath_ + L"\\profile_backends.cache");
-	string line;
-	while (getline(stream, line)) {
-		if (line.empty())
-			continue;
-		size_t sep = line.find('\t');
-		if (sep != -1) {
-			string guid = line.substr(0, sep);
-			transform(guid.begin(), guid.end(), guid.begin(), tolower);  // convert GUID to lwoer case
-			string backendName = line.substr(sep + 1);
-			// map text service GUID to its backend server
-			backendMap_.insert(std::make_pair(guid, findBackendByName(backendName.c_str())));
-		}
-	}
-	stream.close();
-	return true;
-}
-
-BackendServer* PIMELauncher::findBackendByName(const char* name) {
-	// for such a small list, linear search is often faster than hash table or map
-	for (int i = 0; i < N_BACKENDS; ++i) {
-		BackendServer& backend = backends_[i];
-		if (backend.name_ == name)
-			return &backend;
-	}
-	return nullptr;
-}
-
 void PIMELauncher::parseCommandLine(LPSTR cmd) {
 	int argc;
 	wchar_t** argv = CommandLineToArgvW(GetCommandLine(), &argc);
@@ -155,13 +102,11 @@ void PIMELauncher::terminateExistingLauncher() {
 }
 
 void PIMELauncher::quit() {
-	// try to terminate launched backend server processes
-	for (int i = 0; i < 2; ++i) {
-		backends_[i].terminate();
-	}
+	BackendServer::finalize();
 	ExitProcess(0); // quit PIMELauncher
 }
 
+#if 0
 bool PIMELauncher::launchBackendByName(const char* name) {
 	// luanch the specified backend server
 	BackendServer* backend = findBackendByName(name);
@@ -185,7 +130,7 @@ bool PIMELauncher::launchBackendByName(const char* name) {
 	}
 	return false;
 }
-
+#endif
 
 void PIMELauncher::initSecurityAttributes() {
 	// create security attributes for the pipe
@@ -314,8 +259,7 @@ int PIMELauncher::exec(LPSTR cmd) {
 	}
 
 	// this is the first instance
-	if (!initBackends())
-		return 1;
+	BackendServer::init(topDirPath_);
 
 	// preparing for the server pipe
 	initSecurityAttributes();
@@ -344,9 +288,9 @@ int PIMELauncher::exec(LPSTR cmd) {
 
 			// handle the newly connected client
 			if (client_pipe != INVALID_HANDLE_VALUE) {
-				ClientConnection* client = new ClientConnection(client_pipe, this);
+				ClientInfo* client = new ClientInfo(client_pipe);
 				clients_[client_pipe] = client;
-				client->asyncReadClient();  // read data from the client asynchronously
+				readClient(client);  // read data from the client asynchronously
 			}
 
 			// try to accept the next client connection
@@ -354,9 +298,17 @@ int PIMELauncher::exec(LPSTR cmd) {
 			break;
 		case WAIT_IO_COMPLETION:  // some overlapped I/O is finished (handled in completion routines)
 			while (!finishedRequests_.empty()) {
-				AsyncRequest* request = finishedRequests_.front();
+				AsyncRequest* req = finishedRequests_.front();
 				finishedRequests_.pop();
-
+				switch (req->type_) {
+				case AsyncRequest::ASYNC_READ:
+					onReadFinished(req);
+					break;
+				case AsyncRequest::ASYNC_WRITE:
+					onWriteFinished(req);
+					break;
+				}
+				delete req;
 			}
 			break;
 		default:
@@ -365,6 +317,74 @@ int PIMELauncher::exec(LPSTR cmd) {
 	}
 	return 0;
 }
+
+void PIMELauncher::readClient(ClientInfo* client) {
+	AsyncRequest* req = new AsyncRequest(this, client, AsyncRequest::ASYNC_READ, 1024, nullptr);
+	ReadFileEx(client->pipe_, req->buf_, req->bufSize_, (OVERLAPPED*)req, &_onFinishedCallback);
+}
+
+void PIMELauncher::writeClient(ClientInfo* client, const char* data, int len) {
+	AsyncRequest* req = new AsyncRequest(this, client, AsyncRequest::ASYNC_WRITE, len, data);
+	WriteFileEx(client->pipe_, req->buf_, req->bufSize_, (OVERLAPPED*)req, &_onFinishedCallback);
+}
+
+// static
+void CALLBACK PIMELauncher::_onFinishedCallback(DWORD err, DWORD numBytes, OVERLAPPED* overlapped) {
+	AsyncRequest* req = reinterpret_cast<AsyncRequest*>(overlapped);
+	req->errCode_ = err;
+	req->numBytes_ = numBytes;
+	req->server_->finishedRequests_.push(req);
+}
+
+void PIMELauncher::onReadFinished(AsyncRequest* req) {
+	if (req->numBytes_ > 0) {
+		req->client_->readBuf_.append(req->buf_, req->numBytes_);
+	}
+
+	switch (req->errCode_) {
+	case 0: // finish of this message
+		// TODO: call the backend to handle the message
+		handleClientMessage(req->client_);
+		break;
+	case ERROR_MORE_DATA: // need further reads to get the whole message
+		readClient(req->client_);
+		break;
+	case ERROR_IO_PENDING:
+		break;
+	default: // the pipe is broken, disconnect!
+		closeClient(req->client_);
+	}
+}
+
+
+void PIMELauncher::onWriteFinished(AsyncRequest* req) {
+}
+
+void PIMELauncher::handleClientMessage(ClientInfo* client) {
+	// call the backend to handle this message
+	if (client->backend_ == nullptr) {
+		// backend is unknown, parse the json
+		if (client->backend_ == nullptr) {
+			// fail to find a usable backend
+			client->readBuf_.clear();
+		}
+	}
+	// pass the incoming message to the backend and get the response
+	std::string response = client->backend_->handleClientMessage(client->readBuf_);
+	client->readBuf_.clear();
+
+	// pass the response back to the client
+	writeClient(client, response.c_str(), response.length());
+}
+
+void PIMELauncher::closeClient(ClientInfo* client) {
+	clients_.erase(client->pipe_);
+	if (client->pipe_ != INVALID_HANDLE_VALUE)
+		::CloseHandle(client->pipe_);
+	// FIXME: if the client has some pending requests, how to cancel them?
+	delete client;
+}
+
 
 int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hprev, LPSTR cmd, int show) {
 	PIMELauncher launcher;

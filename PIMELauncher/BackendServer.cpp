@@ -58,6 +58,7 @@ void BackendServer::init(const std::wstring& topDirPath) {
 	BackendServer& backend2 = backends_[BACKEND_NODE];
 	backend2.name_ = "node";
 	backend2.apiHost_ = "127.0.0.1";
+	backend.apiPort_ = 5566;
 	backend2.command_ = topDirPath;
 	backend2.command_ += L"\\node\\node.exe";
 	backend2.workingDir_ = topDirPath;
@@ -136,9 +137,12 @@ void BackendServer::start() {
 void BackendServer::terminate() {
 	if (isRunning()) {
 		if (httpConnection_) {
+			/*
+			FIXME:
 			if (handleClientMessage(std::string("quit")).empty())
 				// the RPC call fails, force termination
 				::TerminateProcess(process_, 0);
+			*/
 			InternetCloseHandle(httpConnection_);
 			httpConnection_ = NULL;
 		}
@@ -164,21 +168,84 @@ bool BackendServer::isRunning() {
 bool BackendServer::ping(int timeout) {
 	bool success = false;
 	// make sure the backend server is running
+	if (!httpConnection_)
+		httpConnection_ = InternetConnectA(internet_, apiHost_.c_str(), apiPort_, NULL, NULL, INTERNET_SERVICE_HTTP, 0, NULL);
+
 	if (httpConnection_) {
-		if (!handleClientMessage(std::string("ping")).empty()) {
-			success = true;
+		HINTERNET req = HttpOpenRequestA(httpConnection_, "GET", "/", NULL, NULL, NULL, 0, NULL);
+		if (req) {
+			if (HttpSendRequestA(req, NULL, 0, NULL, 0)) {
+				char buf[32];
+				DWORD read_len = 0;
+				while (InternetReadFile(req, buf, 31, &read_len)) {
+					if (read_len == 0)
+						break;
+					buf[read_len] = 0;
+					success = strcmp(buf, "pong");
+				}
+			}
+			InternetCloseHandle(req);
 		}
 	}
 	return success;
 }
 
-std::string BackendServer::handleClientMessage(std::string& message) {
+std::string BackendServer::newClient() {
+	std::string response;
+	if (!httpConnection_)
+		httpConnection_ = InternetConnectA(internet_, apiHost_.c_str(), apiPort_, NULL, NULL, INTERNET_SERVICE_HTTP, 0, NULL);
+
+	if (httpConnection_) {
+		HINTERNET req = HttpOpenRequestA(httpConnection_, "POST", "/", NULL, NULL, NULL, 0, NULL);
+		if (req) {
+			std::string message;
+			if (HttpSendRequestA(req, NULL, 0, (void*)message.c_str(), message.length())) {
+				char buf[1024];
+				DWORD read_len = 0;
+				while (InternetReadFile(req, buf, 1023, &read_len)) {
+					if (read_len == 0)
+						break;
+					buf[read_len] = 0;
+					response += buf;
+				}
+			}
+			InternetCloseHandle(req);
+		}
+	}
+	return response;
+}
+
+void BackendServer::removeClient(const std::string& clientId) {
+	if (!httpConnection_)
+		httpConnection_ = InternetConnectA(internet_, apiHost_.c_str(), apiPort_, NULL, NULL, INTERNET_SERVICE_HTTP, 0, NULL);
+
+	if (httpConnection_) {
+		HINTERNET req = HttpOpenRequestA(httpConnection_, "DELETE", ("/" + clientId).c_str(), NULL, NULL, NULL, 0, NULL);
+		if (req) {
+			std::string message;
+			std::string response;
+			if (HttpSendRequestA(req, NULL, 0, (void*)message.c_str(), message.length())) {
+				char buf[1024];
+				DWORD read_len = 0;
+				while (InternetReadFile(req, buf, 1023, &read_len)) {
+					if (read_len == 0)
+						break;
+					buf[read_len] = 0;
+					response += buf;
+				}
+			}
+			InternetCloseHandle(req);
+		}
+	}
+}
+
+std::string BackendServer::handleClientMessage(const std::string& clientId, const std::string& message) {
 	std::string response;
 	if(!httpConnection_)
 		httpConnection_ = InternetConnectA(internet_, apiHost_.c_str(), apiPort_, NULL, NULL, INTERNET_SERVICE_HTTP, 0, NULL);
 
 	if (httpConnection_) {
-		HINTERNET req = HttpOpenRequestA(httpConnection_, "POST", "/", NULL, NULL, NULL, 0, NULL);
+		HINTERNET req = HttpOpenRequestA(httpConnection_, "POST", ("/" + clientId).c_str(), NULL, NULL, NULL, 0, NULL);
 		if (req) {
 			if (HttpSendRequestA(req, NULL, 0, (void*)message.c_str(), message.length())) {
 				char buf[1024];

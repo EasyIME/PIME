@@ -358,19 +358,26 @@ void PIMELauncher::onReadFinished(AsyncRequest* req) {
 
 
 void PIMELauncher::onWriteFinished(AsyncRequest* req) {
+	readClient(req->client_);  // read more data from this client
 }
 
 void PIMELauncher::handleClientMessage(ClientInfo* client) {
 	// call the backend to handle this message
 	if (client->backend_ == nullptr) {
 		// backend is unknown, parse the json
+		// FIXME: do not hard-code
+		client->backend_ = BackendServer::fromName("python");
 		if (client->backend_ == nullptr) {
 			// fail to find a usable backend
 			client->readBuf_.clear();
+			return;
+		}
+		else {
+			client->clientId_ = client->backend_->newClient();
 		}
 	}
 	// pass the incoming message to the backend and get the response
-	std::string response = client->backend_->handleClientMessage(client->readBuf_);
+	std::string response = client->backend_->handleClientMessage(client->clientId_, client->readBuf_);
 	client->readBuf_.clear();
 
 	// pass the response back to the client
@@ -378,6 +385,11 @@ void PIMELauncher::handleClientMessage(ClientInfo* client) {
 }
 
 void PIMELauncher::closeClient(ClientInfo* client) {
+	if (client->backend_ != nullptr) {
+		if(!client->clientId_.empty())
+			client->backend_->removeClient(client->clientId_);
+	}
+
 	clients_.erase(client->pipe_);
 	if (client->pipe_ != INVALID_HANDLE_VALUE)
 		::CloseHandle(client->pipe_);

@@ -52,7 +52,10 @@ public:
 	void terminate();
 	bool isRunning();
 	bool ping(int timeout = 3000);
-	std::string handleClientMessage(std::string& message);
+
+	std::string newClient();
+	void removeClient(const std::string& clientId);
+	std::string handleClientMessage(const std::string& clientId, const std::string& message);
 
 private:
 	std::string name_;

@@ -67,6 +67,15 @@ void BackendServer::init(const std::wstring& topDirPath) {
 	backend2.params_ = L"\"" + backend2.workingDir_ + L"\\server.js\"";
 
 	// maps language profiles to backend names
+	initInputMethods(topDirPath);
+
+	// initialize WinInet for http functions
+	internet_ = InternetOpenA(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+}
+
+// static
+void BackendServer::initInputMethods(const std::wstring& topDirPath) {
+	// maps language profiles to backend names
 	ifstream stream(topDirPath + L"\\profile_backends.cache");
 	string line;
 	while (getline(stream, line)) {
@@ -82,9 +91,6 @@ void BackendServer::init(const std::wstring& topDirPath) {
 		}
 	}
 	stream.close();
-
-	// initialize WinInet for http functions
-	internet_ = InternetOpenA(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
 }
 
 // static
@@ -191,75 +197,16 @@ bool BackendServer::ping(int timeout) {
 }
 
 std::string BackendServer::newClient() {
-	std::string response;
-	if (!httpConnection_)
-		httpConnection_ = InternetConnectA(internet_, apiHost_.c_str(), apiPort_, NULL, NULL, INTERNET_SERVICE_HTTP, 0, NULL);
-
-	if (httpConnection_) {
-		HINTERNET req = HttpOpenRequestA(httpConnection_, "POST", "/", NULL, NULL, NULL, 0, NULL);
-		if (req) {
-			std::string message;
-			if (HttpSendRequestA(req, NULL, 0, (void*)message.c_str(), message.length())) {
-				char buf[1024];
-				DWORD read_len = 0;
-				while (InternetReadFile(req, buf, 1023, &read_len)) {
-					if (read_len == 0)
-						break;
-					buf[read_len] = 0;
-					response += buf;
-				}
-			}
-			InternetCloseHandle(req);
-		}
-	}
+	std::string response = sendHttpRequest("POST", "/");
 	return response;
 }
 
 void BackendServer::removeClient(const std::string& clientId) {
-	if (!httpConnection_)
-		httpConnection_ = InternetConnectA(internet_, apiHost_.c_str(), apiPort_, NULL, NULL, INTERNET_SERVICE_HTTP, 0, NULL);
-
-	if (httpConnection_) {
-		HINTERNET req = HttpOpenRequestA(httpConnection_, "DELETE", ("/" + clientId).c_str(), NULL, NULL, NULL, 0, NULL);
-		if (req) {
-			std::string message;
-			std::string response;
-			if (HttpSendRequestA(req, NULL, 0, (void*)message.c_str(), message.length())) {
-				char buf[1024];
-				DWORD read_len = 0;
-				while (InternetReadFile(req, buf, 1023, &read_len)) {
-					if (read_len == 0)
-						break;
-					buf[read_len] = 0;
-					response += buf;
-				}
-			}
-			InternetCloseHandle(req);
-		}
-	}
+	std::string response = sendHttpRequest("DELETE", ("/" + clientId).c_str());
 }
 
 std::string BackendServer::handleClientMessage(const std::string& clientId, const std::string& message) {
-	std::string response;
-	if(!httpConnection_)
-		httpConnection_ = InternetConnectA(internet_, apiHost_.c_str(), apiPort_, NULL, NULL, INTERNET_SERVICE_HTTP, 0, NULL);
-
-	if (httpConnection_) {
-		HINTERNET req = HttpOpenRequestA(httpConnection_, "POST", ("/" + clientId).c_str(), NULL, NULL, NULL, 0, NULL);
-		if (req) {
-			if (HttpSendRequestA(req, NULL, 0, (void*)message.c_str(), message.length())) {
-				char buf[1024];
-				DWORD read_len = 0;
-				while (InternetReadFile(req, buf, 1023, &read_len)) {
-					if (read_len == 0)
-						break;
-					buf[read_len] = 0;
-					response += buf;
-				}
-			}
-			InternetCloseHandle(req);
-		}
-	}
+	std::string response = sendHttpRequest("POST", ("/" + clientId).c_str(), message.c_str(), message.length());
 	return response;
 }
 
@@ -280,3 +227,35 @@ BackendServer* BackendServer::fromTextServiceGuid(const char* guid) {
 	return nullptr;
 }
 
+std::string BackendServer::sendHttpRequest(const char* method, const char* path, const char* data, int len) {
+	std::string response;
+	if (ensureConnection()) { // ensure the http connection
+		HINTERNET req = HttpOpenRequestA(httpConnection_, method, path, NULL, NULL, NULL, 0, NULL);
+		if (req) {
+			if (HttpSendRequestA(req, NULL, 0, (void*)data, len)) {
+				char buf[1024];
+				DWORD read_len = 0;
+				while (InternetReadFile(req, buf, 1023, &read_len)) {
+					if (read_len == 0)
+						break;
+					buf[read_len] = 0;
+					response += buf;
+				}
+			}
+			InternetCloseHandle(req);
+		}
+	}
+	return response;
+}
+
+bool BackendServer::ensureConnection() {
+	if (!isRunning()) {
+		//start();
+	}
+
+	if (!httpConnection_) {
+		httpConnection_ = InternetConnectA(internet_, apiHost_.c_str(), apiPort_, NULL, NULL, INTERNET_SERVICE_HTTP, 0, NULL);
+		return httpConnection_ != NULL;
+	}
+	return true;
+}

@@ -365,15 +365,22 @@ void PIMELauncher::handleClientMessage(ClientInfo* client) {
 	// call the backend to handle this message
 	if (client->backend_ == nullptr) {
 		// backend is unknown, parse the json
-		// FIXME: do not hard-code
-		client->backend_ = BackendServer::fromName("python");
+		Json::Value msg;
+		Json::Reader reader;
+		if (reader.parse(client->readBuf_, msg)) {
+			const char* method = msg["method"].asCString();
+			if (method != nullptr) {
+				if (strcmp(method, "init") == 0) {  // the client connects to us the first time
+					const char* guid = msg["id"].asCString();
+					client->backend_ = BackendServer::fromTextServiceGuid(guid);
+					client->clientId_ = client->backend_->newClient();
+				}
+			}
+		}
 		if (client->backend_ == nullptr) {
 			// fail to find a usable backend
 			client->readBuf_.clear();
 			return;
-		}
-		else {
-			client->clientId_ = client->backend_->newClient();
 		}
 	}
 	// pass the incoming message to the backend and get the response

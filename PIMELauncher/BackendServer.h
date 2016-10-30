@@ -56,6 +56,11 @@ public:
 	std::string newClient();
 	void removeClient(const std::string& clientId);
 	std::string handleClientMessage(const std::string& clientId, const std::string& message);
+	std::string sendHttpRequest(const char* method, const char* path, const char* data = nullptr, int len = 0);
+
+private:
+	static void initInputMethods(const std::wstring& topDirPath);
+	bool ensureConnection();
 
 private:
 	std::string name_;

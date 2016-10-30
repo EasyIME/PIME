@@ -29,6 +29,7 @@
 #include <vector>
 #include <unordered_map>
 #include <WinInet.h>
+#include <json/json.h>
 
 
 class BackendServer {
@@ -40,6 +41,7 @@ public:
 	};
 
 	BackendServer();
+	BackendServer(const Json::Value& info);
 	~BackendServer();
 
 	static void init(const std::wstring& topDirPath);

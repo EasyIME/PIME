@@ -12,6 +12,8 @@ add_executable(PIMELauncher WIN32
     PIMELauncher.h
     BackendServer.cpp
     BackendServer.h
+    Utils.cpp
+    Utils.h
     # resources
     # PIMELauncher.rc
 )

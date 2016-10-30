@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <json/json.h>
 #include "BackendServer.h"
+#include "Utils.h"
 
 using namespace std;
 
@@ -42,6 +43,16 @@ std::unordered_map<std::string, BackendServer*> BackendServer::backendMap_;
 
 // static
 void BackendServer::init(const std::wstring& topDirPath) {
+	Json::Value backends;
+	if (loadJsonFile(topDirPath + L"\\backends.json", &backends)) {
+		if (backends.isArray()) {
+			for (auto it = backends.begin(); it != backends.end(); ++it) {
+				auto& backendInfo = *it;
+				BackendServer* backend = new BackendServer(backendInfo);
+			}
+		}
+	}
+
 	// FIXME: make this configurable from config files??
 	// the python backend
 	BackendServer& backend = backends_[BACKEND_PYTHON];
@@ -76,21 +87,45 @@ void BackendServer::init(const std::wstring& topDirPath) {
 // static
 void BackendServer::initInputMethods(const std::wstring& topDirPath) {
 	// maps language profiles to backend names
-	ifstream stream(topDirPath + L"\\profile_backends.cache");
-	string line;
-	while (getline(stream, line)) {
-		if (line.empty())
-			continue;
-		size_t sep = line.find('\t');
-		if (sep != -1) {
-			string guid = line.substr(0, sep);
-			transform(guid.begin(), guid.end(), guid.begin(), tolower);  // convert GUID to lwoer case
-			string backendName = line.substr(sep + 1);
-			// map text service GUID to its backend server
-			backendMap_.insert(std::make_pair(guid, fromName(backendName.c_str())));
+	const wchar_t* backendDirs[] = {
+		L"python",
+		L"node"
+	};
+	for (const auto backendDir : backendDirs) {
+		std::string backendName;// = utf16ToUtf8(backendDir);
+		// FIXME: replace with utf8 conversion
+		for (auto wname = backendDir; *wname; ++wname)
+			backendName += char(*wname);
+		std::wstring dirPath = topDirPath + backendDir + L"\\input_methods";
+		// scan the dir for lang profile definition files (ime.json)
+		WIN32_FIND_DATA findData = { 0 };
+		HANDLE hFind = ::FindFirstFile((dirPath + L"\\*").c_str(), &findData);
+		if (hFind != INVALID_HANDLE_VALUE) {
+			do {
+				if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { // this is a subdir
+					if (findData.cFileName[0] != '.') {
+						std::wstring imejson = dirPath;
+						imejson += '\\';
+						imejson += findData.cFileName;
+						imejson += L"\\ime.json";
+						// Make sure the file exists
+						DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
+						if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
+							// load the json file to get the info of input method
+							Json::Value json;
+							if (loadJsonFile(imejson, json)) {
+								std::string guid = json["guid"].asCString();
+								transform(guid.begin(), guid.end(), guid.begin(), tolower);  // convert GUID to lwoer case
+																							 // map text service GUID to its backend server
+								backendMap_.insert(std::make_pair(guid, fromName(backendName.c_str())));
+							}
+						}
+					}
+				}
+			} while (::FindNextFile(hFind, &findData));
+			CloseHandle(hFind);
 		}
 	}
-	stream.close();
 }
 
 // static
@@ -107,6 +142,15 @@ BackendServer::BackendServer():
 	apiPort_(0),
 	httpConnection_(NULL),
 	process_(INVALID_HANDLE_VALUE) {
+}
+
+BackendServer::BackendServer(const Json::Value& info):
+	BackendServer(),
+	name_(info["name"].asCString()),
+	command_(info["command"]).asCString(),
+	workingDir_(info["workingDir"].asCString()),
+	param_(info["param"].asCString())
+{
 }
 
 BackendServer::~BackendServer() {

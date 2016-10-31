@@ -53,6 +53,9 @@ PipeServer::PipeServer() :
 		*p = '\0';
 
 	topDirPath_ = topDirPathBuf;
+
+	// must set CWD to our dir. otherwise the backends won't launch.
+	::SetCurrentDirectoryW(topDirPath_.c_str());
 }
 
 PipeServer::~PipeServer() {

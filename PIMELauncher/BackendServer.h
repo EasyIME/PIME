@@ -31,14 +31,10 @@
 #include <WinInet.h>
 #include <json/json.h>
 
+namespace PIME {
 
 class BackendServer {
 public:
-	enum BackendType {
-		BACKEND_PYTHON = 0,
-		BACKEND_NODE,
-		N_BACKENDS
-	};
 
 	BackendServer();
 	BackendServer(const Json::Value& info);
@@ -47,22 +43,24 @@ public:
 	static void init(const std::wstring& topDirPath);
 	static void finalize();
 
-	static BackendServer* fromTextServiceGuid(const char* guid);
+	static BackendServer* fromLangProfileGuid(const char* guid);
 	static BackendServer* fromName(const char* name);
 
-	void start();
-	void terminate();
-	bool isRunning();
-	bool ping(int timeout = 3000);
+	void startProcess();
+	void terminateProcess();
+	bool isProcessRunning();
 
-	std::string newClient();
+	std::string addNewClient();
 	void removeClient(const std::string& clientId);
+
 	std::string handleClientMessage(const std::string& clientId, const std::string& message);
-	std::string sendHttpRequest(const char* method, const char* path, const char* data = nullptr, int len = 0);
 
 private:
 	static void initInputMethods(const std::wstring& topDirPath);
-	bool ensureConnection();
+	bool ensureProcessRunning();
+	bool ensureHttpConnection();
+	bool readHttpServerStatus(double timeoutSeconds = 0.0);
+	std::string sendHttpRequest(const char* method, const char* path, const char* data = nullptr, int len = 0);
 
 private:
 	std::string name_;
@@ -71,19 +69,22 @@ private:
 	std::string apiHost_;
 	int apiPort_;
 	std::string accessToken_;
+	bool httpServerReady_;
 	HINTERNET httpConnection_; // http connection
 
 	// command to launch the server process
 	std::wstring command_;
 	std::wstring params_;
 	std::wstring workingDir_;
-	HANDLE process_;
-
+	HANDLE processHandle_;
+	DWORD processId_;
+	FILETIME processStartTime_;
 
 	static HINTERNET internet_;
-	static BackendServer backends_[N_BACKENDS];
+	static std::vector<BackendServer*> backends_;
 	static std::unordered_map<std::string, BackendServer*> backendMap_;
 };
 
+} // namespace PIME
 
 #endif // _BACKEND_SERVER_H_

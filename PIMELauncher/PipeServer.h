@@ -17,10 +17,9 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#ifndef _PIME_LAUNCHER_H_
-#define _PIME_LAUNCHER_H_
+#ifndef _PIME_PIPE_SERVER_H_
+#define _PIME_PIPE_SERVER_H_
 
-// #include <uv.h>  // need to be put before windows.h for unknown reasons :-(
 #include <Windows.h>
 #include <ShlObj.h>
 #include <Shellapi.h>
@@ -35,6 +34,8 @@
 #include <queue>
 
 
+namespace PIME {
+
 struct ClientInfo {
 	HANDLE pipe_;
 	BackendServer* backend_;
@@ -43,14 +44,14 @@ struct ClientInfo {
 
 	std::string readBuf_;
 
-	ClientInfo(HANDLE pipe):
+	ClientInfo(HANDLE pipe) :
 		pipe_(pipe),
 		backend_(nullptr) {
 	}
 };
 
 
-class PIMELauncher;
+class PipeServer;
 
 struct AsyncRequest {
 	enum Type {
@@ -59,7 +60,7 @@ struct AsyncRequest {
 	};
 
 	OVERLAPPED overlapped_;
-	PIMELauncher* server_;
+	PipeServer* server_;
 	ClientInfo*  client_;
 	Type type_;
 	char *buf_;
@@ -68,7 +69,7 @@ struct AsyncRequest {
 	DWORD numBytes_;
 	bool success_;
 
-	AsyncRequest(PIMELauncher* server, ClientInfo* client, Type type, int bufSize, const char* bufContent = nullptr):
+	AsyncRequest(PipeServer* server, ClientInfo* client, Type type, int bufSize, const char* bufContent = nullptr) :
 		server_(server),
 		client_(client),
 		type_(type),
@@ -85,19 +86,19 @@ struct AsyncRequest {
 	}
 
 	~AsyncRequest() {
-		delete []buf_;
+		delete[]buf_;
 	}
 };
 
 
-class PIMELauncher {
+class PipeServer {
 public:
 
-	PIMELauncher();
-	~PIMELauncher();
+	PipeServer();
+	~PipeServer();
 
 	int exec(LPSTR cmd);
-	static PIMELauncher* get() { // get the singleton object
+	static PipeServer* get() { // get the singleton object
 		return singleton_;
 	}
 
@@ -137,13 +138,13 @@ private:
 	OVERLAPPED connectPipeOverlapped_;
 	bool pendingPipeConnection_;
 
-
 	std::wstring topDirPath_;
 	bool quitExistingLauncher_;
-	static PIMELauncher* singleton_;
+	static PipeServer* singleton_;
 	std::unordered_map<HANDLE, ClientInfo*> clients_;
 	std::queue<AsyncRequest*> finishedRequests_;
 };
 
+} // namespace PIME
 
-#endif // _PIME_LAUNCHER_H_
+#endif // _PIME_PIPE_SERVER_H_

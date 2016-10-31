@@ -132,7 +132,7 @@ STDAPI DllRegisterServer(void) {
 						}
 					}
 				} while (::FindNextFile(hFind, &findData));
-				CloseHandle(hFind);
+				::FindClose(hFind);
 			}
 		}
 	}

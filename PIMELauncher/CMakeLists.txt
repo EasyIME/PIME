@@ -9,7 +9,8 @@ include_directories(
 
 add_executable(PIMELauncher WIN32
     PIMELauncher.cpp
-    PIMELauncher.h
+    PipeServer.cpp
+    PipeServer.h
     BackendServer.cpp
     BackendServer.h
     Utils.cpp

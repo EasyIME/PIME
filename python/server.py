@@ -20,7 +20,6 @@ import sys
 import os
 import random
 import uuid
-import time
 
 import tornado.ioloop
 import tornado.web
@@ -86,8 +85,10 @@ class MainHandler(tornado.web.RequestHandler):
                 self.write("")
 
     def delete(self, client_id=None):
-     if client_id:
-         server.remove_client(client_id)
+        if client_id:
+            server.remove_client(client_id)
+        else:  # terminate the server itself
+            server.exit()
 
 
 class Server(object):
@@ -95,14 +96,17 @@ class Server(object):
         self.clients = {}
         # FIXME: this uses the AppData/Roaming dir, but we want the local one.
         #        alternatively, use the AppData/Temp dir.
-        self.config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", "run")
-        self.info_file = os.path.join(self.config_dir, "python.json")
+        self.config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME")
         os.makedirs(self.config_dir, mode=0o700, exist_ok=True)
 
+        self.status_dir = os.path.join(os.path.expandvars("%LOCALAPPDATA%"), "PIME", "status")  # local app data
+        self.status_filename = os.path.join(self.status_dir, "python.json")
+        os.makedirs(self.status_dir, mode=0o700, exist_ok=True)
+
     def __del__(self):
-        if self.info_file:
-            os.unlink(self.info_file)
-        
+        if self.status_filename:
+            os.unlink(self.status_filename)
+
     def run(self):
         app = tornado.web.Application([
             (r"/(.*)", MainHandler),
@@ -117,12 +121,11 @@ class Server(object):
                 continue
 
         # write the server info to file
-        with open(self.info_file, "w") as f:
+        with open(self.status_filename, "w") as f:
             info = {
                 "pid": os.getpid(),  # process ID
                 "port": port,  # the http port
-                "access_token": str(uuid.uuid4()),  # access token to this server
-                "timestamp": int(time.time())
+                "access_token": str(uuid.uuid4())  # access token to this server
             }
             json.dump(info, f, indent=2)
 
@@ -141,6 +144,9 @@ class Server(object):
     def remove_client(self, client_id):
         print("client disconnected:", client_id)
         del self.clients[client_id]
+
+    def exit(self):
+        tornado.ioloop.IOLoop.current().stop()
 
 
 def main():

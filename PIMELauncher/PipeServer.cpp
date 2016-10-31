@@ -350,8 +350,10 @@ void PipeServer::handleClientMessage(ClientInfo* client) {
 				if (strcmp(method, "init") == 0) {  // the client connects to us the first time
 					const char* guid = msg["id"].asCString();
 					client->backend_ = BackendServer::fromLangProfileGuid(guid);
-					if (client->backend_ == nullptr)
+					if (client->backend_ == nullptr) {
+						// FIXME: write some response to indicate the failure
 						return;
+					}
 					client->clientId_ = client->backend_->addNewClient();
 				}
 			}
@@ -359,6 +361,7 @@ void PipeServer::handleClientMessage(ClientInfo* client) {
 		if (client->backend_ == nullptr) {
 			// fail to find a usable backend
 			client->readBuf_.clear();
+			// FIXME: write some response to indicate the failure
 			return;
 		}
 	}

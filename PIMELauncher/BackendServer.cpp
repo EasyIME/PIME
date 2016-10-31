@@ -79,7 +79,7 @@ void BackendServer::init(const std::wstring& topDirPath) {
 void BackendServer::initInputMethods(const std::wstring& topDirPath) {
 	// maps language profiles to backend names
 	for (BackendServer* backend : backends_) {
-		std::wstring dirPath = topDirPath + utf8Codec.from_bytes(backend->name_) + L"\\input_methods";
+		std::wstring dirPath = topDirPath + L"\\" + utf8Codec.from_bytes(backend->name_) + L"\\input_methods";
 		// scan the dir for lang profile definition files (ime.json)
 		WIN32_FIND_DATA findData = { 0 };
 		HANDLE hFind = ::FindFirstFile((dirPath + L"\\*").c_str(), &findData);
@@ -215,20 +215,68 @@ bool BackendServer::readHttpServerStatus(double timeoutSeconds) {
 		if (loadJsonFile(filename, status)) {
 			WIN32_FILE_ATTRIBUTE_DATA attrib;
 			GetFileAttributesEx(filename.c_str(), GetFileExInfoStandard, &attrib);
-			// check if the file is updated after the process is started
-			if (::CompareFileTime(&processStartTime_, &attrib.ftLastWriteTime) < 0) {
-				DWORD pid = status.get("pid", 0).asUInt();
-				if (pid == processId_) {  // the PID is the same as our backend process
+			DWORD pid = status.get("pid", 0).asUInt();
+			int port = status.get("port", 0).asInt();
+			const char* token = status.get("access_token", "").asCString();
+
+			if (processHandle_ != INVALID_HANDLE_VALUE) {
+				// we already launched the backend server process and is waiting for its status update.
+				// check if the file is updated after the process is started
+				if (::CompareFileTime(&processStartTime_, &attrib.ftLastWriteTime) < 0) {
+					if (pid == processId_) {  // the PID is the same as our backend process
+						// read the info
+						if (port > 0)
+							apiPort_ = port;
+						if (token && *token)
+							accessToken_ = token;
+
+						httpServerReady_ = true;  // the http server is up and running
+						break;
+					}
+				}
+			}
+			else {
+				// we havn't launch the backend process yet.
+				// see if there is an existing server process and try to adopt it.
+				bool isValid = false;
+				HANDLE existingProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+				if (existingProcess != INVALID_HANDLE_VALUE) {
+					DWORD statusCode = 0;
+					// the process is still alive
+					if (::GetExitCodeProcess(existingProcess, &statusCode) && statusCode == STILL_ACTIVE) {
+						// get the process started time
+						FILETIME createTime, exitTime, kernTime, userTime;
+						::GetProcessTimes(existingProcess, &createTime, &exitTime, &kernTime, &userTime);
+						// make sure the status file is updated after the process is started
+						ULARGE_INTEGER ctime;
+						ctime.LowPart = createTime.dwLowDateTime;
+						ctime.HighPart = createTime.dwHighDateTime;
+						ULARGE_INTEGER mtime;
+						mtime.LowPart = attrib.ftLastWriteTime.dwLowDateTime;
+						mtime.HighPart = attrib.ftLastWriteTime.dwHighDateTime;
+						auto diff = mtime.QuadPart - ctime.QuadPart;
+						// the sever status file is created after the process is started and
+						// the last modified time of the status file is within 15-seconds after the process
+						// has been started (so the file is indeed created on process startup.
+						// We treat this as a valid process. In theory, there might still be race conditions,
+						// but these checks should be enough in practice.
+						if (diff > 0 && diff < 15 * 10e7) {
+							isValid = true;
+						}
+					}
+				}
+				if (isValid) {  // the existing process is valid
+					processHandle_ = existingProcess;
 					// read the info
-					int port = status.get("port", 0).asInt();
 					if (port > 0)
 						apiPort_ = port;
-					const char* token = status.get("access_token", "").asCString();
 					if (token && *token)
 						accessToken_ = token;
-
 					httpServerReady_ = true;  // the http server is up and running
-					return true;
+					break;
+				}
+				else {
+					::CloseHandle(existingProcess);
 				}
 			}
 		}
@@ -238,7 +286,7 @@ bool BackendServer::readHttpServerStatus(double timeoutSeconds) {
 			break;  // timeout! reading server status failed ==> stop!
 		::Sleep(100); // wait for a while and try again
 	}
-	return false;
+	return httpServerReady_;
 }
 
 // check if the backend server process is running
@@ -315,7 +363,9 @@ std::string BackendServer::sendHttpRequest(const char* method, const char* path,
 // ensure the backend server is running (if not, start the server as needed)
 bool BackendServer::ensureProcessRunning() {
 	if (!isProcessRunning()) {
-		startProcess(); // start the server process
+		if (!readHttpServerStatus(0.0)) {  // try if we can find an existing process
+			startProcess(); // start the server process
+		}
 		return isProcessRunning();
 	}
 	return true;

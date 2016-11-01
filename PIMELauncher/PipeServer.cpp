@@ -342,6 +342,12 @@ void PipeServer::onWriteFinished(AsyncRequest* req) {
 }
 
 void PipeServer::handleClientMessage(ClientInfo* client) {
+	// special handling, asked for quitting PIMELauncher.
+	if (client->readBuf_ == "quit") {
+		quit();
+		return;
+	}
+
 	// call the backend to handle this message
 	if (client->backend_ == nullptr) {
 		// backend is unknown, parse the json

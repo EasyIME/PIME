@@ -4,6 +4,7 @@
         "command": "python\\python3\\python.exe",
         "workingDir": "python",
         "params": "server.py",
+        "protocol": "http",
         "host": "127.0.0.1",
         "port": 0
     },
@@ -12,6 +13,7 @@
         "command": "node\\node.exe",
         "workingDir": "node",
         "params": "server.js",
+        "protocol": "http",
         "host": "127.0.0.1",
         "port": 0
     }

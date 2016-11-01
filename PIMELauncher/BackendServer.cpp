@@ -21,6 +21,7 @@
 #include <ShlObj.h>
 #include <Shellapi.h>
 #include <Lmcons.h> // for UNLEN
+#include <Wincrypt.h>  // for CryptBinaryToString (used for base64 encoding)
 #include <cstring>
 #include <cassert>
 #include <chrono>  // C++ 11 clock functions
@@ -97,7 +98,7 @@ void BackendServer::initInputMethods(const std::wstring& topDirPath) {
 							// load the json file to get the info of input method
 							Json::Value json;
 							if (loadJsonFile(imejson, json)) {
-								std::string guid = json["guid"].asCString();
+								std::string guid = json["guid"].asString();
 								transform(guid.begin(), guid.end(), guid.begin(), tolower);  // convert GUID to lwoer case
 								// map text service GUID to its backend server
 								backendMap_.insert(std::make_pair(guid, fromName(backend->name_.c_str())));
@@ -131,14 +132,15 @@ BackendServer::BackendServer() :
 }
 
 BackendServer::BackendServer(const Json::Value& info) :
-	name_(info["name"].asCString()),
-	apiHost_(info["host"].asCString()),
+	name_(info["name"].asString()),
+	protocol_(info["protocol"].asString()),
+	apiHost_(info["host"].asString()),
 	apiPort_(info["port"].asInt()),
 	httpServerReady_(false),
 	httpConnection_(NULL),
-	command_(utf8Codec.from_bytes(info["command"].asCString())),
-	workingDir_(utf8Codec.from_bytes(info["workingDir"].asCString())),
-	params_(utf8Codec.from_bytes(info["params"].asCString())),
+	command_(utf8Codec.from_bytes(info["command"].asString())),
+	workingDir_(utf8Codec.from_bytes(info["workingDir"].asString())),
+	params_(utf8Codec.from_bytes(info["params"].asString())),
 	processHandle_(INVALID_HANDLE_VALUE),
 	processId_(0) {
 }
@@ -217,7 +219,7 @@ bool BackendServer::readHttpServerStatus(double timeoutSeconds) {
 			GetFileAttributesEx(filename.c_str(), GetFileExInfoStandard, &attrib);
 			DWORD pid = status.get("pid", 0).asUInt();
 			int port = status.get("port", 0).asInt();
-			const char* token = status.get("access_token", "").asCString();
+			std::string token = status.get("access_token", "").asString();
 
 			if (processHandle_ != INVALID_HANDLE_VALUE) {
 				// we already launched the backend server process and is waiting for its status update.
@@ -227,8 +229,9 @@ bool BackendServer::readHttpServerStatus(double timeoutSeconds) {
 						// read the info
 						if (port > 0)
 							apiPort_ = port;
-						if (token && *token)
+						if (!token.empty()) {
 							accessToken_ = token;
+						}
 
 						httpServerReady_ = true;  // the http server is up and running
 						break;
@@ -270,7 +273,7 @@ bool BackendServer::readHttpServerStatus(double timeoutSeconds) {
 					// read the info
 					if (port > 0)
 						apiPort_ = port;
-					if (token && *token)
+					if (!token.empty())
 						accessToken_ = token;
 					httpServerReady_ = true;  // the http server is up and running
 					break;
@@ -342,9 +345,14 @@ BackendServer* BackendServer::fromLangProfileGuid(const char* guid) {
 std::string BackendServer::sendHttpRequest(const char* method, const char* path, const char* data, int len) {
 	std::string response;
 	if (ensureHttpConnection()) { // ensure the http connection
-		HINTERNET req = HttpOpenRequestA(httpConnection_, method, path, NULL, NULL, NULL, 0, NULL);
+		DWORD flags = 0;
+		if (protocol_ == "https")
+			flags |= INTERNET_FLAG_SECURE;
+		HINTERNET req = HttpOpenRequestA(httpConnection_, method, path, NULL, NULL, NULL, flags, NULL);
 		if (req) {
-			if (HttpSendRequestA(req, NULL, 0, (void*)data, len)) {
+			// http basic authentication
+			std::string basicAuthHeader = "Authentication: Basic " + httpBasicAuth_;
+			if (HttpSendRequestA(req, basicAuthHeader.c_str(), basicAuthHeader.length(), (void*)data, len)) {
 				char buf[1024];
 				DWORD read_len = 0;
 				while (InternetReadFile(req, buf, 1023, &read_len)) {
@@ -384,6 +392,16 @@ bool BackendServer::ensureHttpConnection() {
 
 	// ensure we have a valid http connection to the server process
 	if (!httpConnection_) {
+		// generate http basic auth info (base64 encoded user:password pair)
+		std::string userPass = "PIME:" + accessToken_;
+		DWORD base64Len = userPass.length() * 2;
+		char* base64Buf = new char[base64Len];
+		if (CryptBinaryToStringA((BYTE*)userPass.c_str(), userPass.length(), CRYPT_STRING_BASE64|CRYPT_STRING_NOCRLF, base64Buf, &base64Len)) {
+			base64Buf[base64Len] = '\0';
+			httpBasicAuth_ = base64Buf;
+		}
+		delete[]base64Buf;
+
 		httpConnection_ = InternetConnectA(internet_, apiHost_.c_str(), apiPort_, NULL, NULL, INTERNET_SERVICE_HTTP, 0, NULL);
 		return httpConnection_ != NULL;
 	}

@@ -66,9 +66,11 @@ private:
 	std::string name_;
 
 	// the web API endpoint of the backend
+	std::string protocol_;  // should be http or https
 	std::string apiHost_;
 	int apiPort_;
 	std::string accessToken_;
+	std::string httpBasicAuth_;
 	bool httpServerReady_;
 	HINTERNET httpConnection_; // http connection
 

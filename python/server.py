@@ -20,6 +20,7 @@ import sys
 import os
 import random
 import uuid
+from base64 import b64encode
 
 import tornado.ioloop
 import tornado.web
@@ -65,11 +66,17 @@ class Client(object):
         
 class MainHandler(tornado.web.RequestHandler):
 
-    def get(self, args):  # ping the API endpoint
-        self.write("pong")
+    def is_authenticated(self):
+        global server
+        user_pass = self.request.headers.get("Authentication", None)
+        return user_pass == server.http_basic_auth
 
     def post(self, client_id=None):
         global server
+        if not self.is_authenticated():
+            self.write("")
+            return
+
         if not client_id:  # add new client
             client_id = server.new_client()
             self.write(client_id)
@@ -85,6 +92,10 @@ class MainHandler(tornado.web.RequestHandler):
                 self.write("")
 
     def delete(self, client_id=None):
+        if not self.is_authenticated():
+            self.write("")
+            return
+
         if client_id:
             server.remove_client(client_id)
         else:  # terminate the server itself
@@ -99,9 +110,15 @@ class Server(object):
         self.config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME")
         os.makedirs(self.config_dir, mode=0o700, exist_ok=True)
 
-        self.status_dir = os.path.join(os.path.expandvars("%LOCALAPPDATA%"), "PIME", "status")  # local app data
-        self.status_filename = os.path.join(self.status_dir, "python.json")
+        self.status_dir = os.path.join(os.path.expandvars("%LOCALAPPDATA%"), "PIME", "status")  # local app data dir
+        self.status_filename = os.path.join(self.status_dir, "python.json")  # the runtime status file
         os.makedirs(self.status_dir, mode=0o700, exist_ok=True)
+
+        self.access_token = str(uuid.uuid4())  # token used to access the web service
+
+        # http basic authentication header
+        user_pass = b"PIME:" + self.access_token.encode("ascii")
+        self.http_basic_auth = "Basic " + b64encode(user_pass).decode("ascii")
 
     def __del__(self):
         if self.status_filename:
@@ -125,7 +142,7 @@ class Server(object):
             info = {
                 "pid": os.getpid(),  # process ID
                 "port": port,  # the http port
-                "access_token": str(uuid.uuid4())  # access token to this server
+                "access_token": self.access_token  # access token to this server
             }
             json.dump(info, f, indent=2)
 

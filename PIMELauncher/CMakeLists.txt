@@ -21,5 +21,6 @@ add_executable(PIMELauncher WIN32
 
 target_link_libraries(PIMELauncher 
     jsoncpp_lib_static
-    Wininet
+    Wininet  # for http connections
+    Crypt32  # for base64 encode
 )

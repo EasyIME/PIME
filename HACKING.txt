@@ -2,7 +2,7 @@ For those who want to hack PIME, here is a simple hacking guide.
 
 PIME has a server/client architecture.
 The client part is a text service dll file written in C++ and Windows TSF.
-The server part can be written in any scripting language (currently python).
+The server part can be written in any scripting language (currently python and node.js).
 The text service dll is just a thin client and is only responsible for passing
 key events to the server process, and then retrieve the composition results
 of current input from the server.
@@ -10,6 +10,25 @@ Hence all input method modules are implemented in the server side.
 When the user select an input method, Windows loads our dll in the app process.
 Then, the client dll communicate with the server process via IPC.
 The data sent over IPC are all in json format encoded in UTF-8.
+------------------------------------------------------------------------------
+
+The IPC (Inter-Process Communication) Architecture
+
+      <user input>
+           |
+     (via windows TSF)
+           |
+    PIMETextService.dll (client)
+           |
+     (via Windows named pipe)
+           |
+    PIMELauncher.exe (middleware)
+           |
+      (via http REST api)
+           |
+    backend web services (python or node.js)
+
+------------------------------------------------------------------------------
 
 Directory structure
 * PIME:
@@ -18,21 +37,10 @@ Directory structure
   Therefore the dll must support the same CPU architecture as the app processes.
   So, you need to build both 64-bit and 32-bit versions of the dll.
   Please refer to README.md for details about how to do it with cmake.
-
-* server:
-  The main server process in which all input methods should be implemented.
-  Ideally this can be written in any languages and currently the implementation
-  is in python 3.
   
-* server/input_methods:
-  All input method modules should go here. If you're trying to implement your
-  own input method, you should put your module in this directory.
-
 * PIMELauncher:
-  Launches and monitors the python server process.
-  When the python server process crashes accidentally, the launcher tries to restart it.
-  If the server process crashes too often (exceeds 10 times), the launcher will stop
-  watching the server process and quit.
+  Launches and the backend server processes on demand and monitor their status.
+  If the backend servers crash, PIMELauncher is responsible for restarting them.
   After installation, PIMELauncher will be launched automatically upon every login.
 
 * cmake:
@@ -47,17 +55,30 @@ Directory structure
   A nice C++ wrapper library for TSF. If you want to implement a TSF input method,
   consider using this library instead of do all the hard work yourself.
   This is an independent library which can be used outside PIME.
-  
-* libpipe:
-  The IPC mechanism used by PIME server and client is Windows named pipe.
-  It's not provided by standard python. This library implement simple IPC
-  over named pipe and expose some public APIs for use with ctypes.
-  With this, we don't need to do Windows API programming in python.
 
-* python:
-  The embedable version of python 3.5 32-bit.
-  We force the use of this version to avoid any potential conflicts with 
-  existing python installations.
-
-*	rapidjson:
+* jsoncpp:
   Third party library used to handle json data in C++.
+
+* backends.json:
+  A list of supported backend engines and their parameters.
+  Currently only python and node.js are supported.
+  
+* python:
+  The python backend of PIME
+
+  * python/python3:
+    The embedable version of python 3.5 32-bit.
+    We force the use of this version to avoid any potential conflicts with 
+    existing python installations.
+
+  * python/input_methods:
+    All input method modules implemented using Python 3. If you're trying to implement your
+    own input method, you should put your module in this directory.
+
+* node
+  node.js backend of PIME, including node.js 6.3 binaries.
+
+  * node/input_methods:
+    All input method modules implemented using node.js. If you're trying to implement your
+    own input method, you should put your module in this directory.
+

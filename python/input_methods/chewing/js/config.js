@@ -1,81 +1,35 @@
-var apiUrl = "";
-var authToken = "";
-
-var defaultConfig ={
-    "keyboardLayout": 0,
-    "addPhraseForward": true,
-    "defaultEnglish": false,
-    "candPerRow": 3,
-    "easySymbolsWithShift": true,
-    "easySymbolsWithCtrl": false,
-    "candPerPage": 9,
-    "defaultFullSpace": false,
-    "selKeyType": "0",
-    // "phraseMark": 1,
-    "switchLangWithShift": true,
-    "enableCapsLock": true,
-    "showCandWithSpaceKey": false,
-    "fullShapeSymbols": true,
-    "colorCandWnd": true,
-    "advanceAfterSelection": true,
-    "fontSize": 12,
-    "outputSimpChinese": false,
-    "upperCaseWithShift": false,
-    "escCleanAllBuf": false,
-    "cursorCandList": true
-};
-
 var chewingConfig = {};
 var symbolsChanged = false;
 var swkbChanged = false;
 
 function loadConfig() {
-    $.get(apiUrl + "load/config", function(data, status) {
-		chewingConfig = data;
-        // add missing values
-        for(key in defaultConfig) {
-            if(!chewingConfig.hasOwnProperty(key)) {
-                chewingConfig[key] = defaultConfig[key];
-            }
-        }
+    $.get("/config", function(data, status) {
+		chewingConfig = data.config;
+		$("#symbols").val(data.symbols);
+		$("#ez_symbols").val(data.swkb);
         initializeUI();
     }, "json");
-
-    // load symbols.dat
-	$.get(apiUrl + "load/symbols", function(data, status) {
-		$("#symbols").val(data);
-	});
-
-    // load swkb.dat
-	$.get(apiUrl + "load/swkb", function(data, status) {
-		$("#ez_symbols").val(data);
-	});
 }
 
 function saveConfig(callbackFunc) {
-    var str = JSON.stringify(chewingConfig, null, 4);
-    var requests = new Array();
-    requests.push($.post(apiUrl + "save/config",
-        { data: str }
-    ));
-
+    var data = {
+        "config": chewingConfig
+    }
     if(symbolsChanged) {
-        str = $("#symbols").val();
-        requests.push($.post(apiUrl + "save/symbols",
-            { data: str }
-        ));
+        data.symbols = $("#symbols").val();
     }
     if(swkbChanged) {
-        str = $("#ez_symbols").val();
-        requests.push($.post(apiUrl + "save/swkb",
-            { data: str }
-        ));
+        data.swkb = $("#ez_symbols").val();
     }
-    // jQuery.when() receives any number of arguments, but since we have variable
-    // number of arguments, we use javascript method.apply() to workaround the limitation.
-    // Reference: http://stackoverflow.com/questions/14777031/what-does-when-apply-somearray-do
-    // call the callback function when all requests are done
-    $.when.apply($, requests).done(callbackFunc);
+
+    $.ajax({
+        url: "/config",
+        method: "POST",
+        success: callbackFunc,
+        contentType: "application/json",
+        data: JSON.stringify(data),
+        dataType:"json"
+    });
 }
 
 // update chewingConfig object with the value set by the user
@@ -211,51 +165,29 @@ function initializeUI() {
 			updateSelExample();
 		}
 	});
-
-    /*
-    // resize and center the window
-    $(window).load(function() {
-        window.resizeTo($(document).width(), $(document).height() + 40);
-        window.moveTo((screen.width - $(window).width())/2, (screen.height - $(window).height() - 40)/2);
-    });
-    */
-}
-
-// Microsoft HTA only  :-(
-function initAPIUrl() {
-    // get port number from HTA command line parameters
-    var params = ChewingConfig.commandLine.split(" ")
-    if(params.length > 2) {
-        authToken = params.pop();
-        var port = params.pop();
-        apiUrl = "http://localhost:" + port + "/";
-    }
 }
 
 function closeWindow() {
-    $.get(apiUrl + "quit", function() {
-        window.close();
+    $.ajax({
+        url: "/config",
+        type: "DELETE",
+        success: function() {
+            window.close();
+        }
     });
 }
 
 // jQuery ready
 $(function() {
-
-    initAPIUrl();  // initialize the URL of API server
-    
     // workaround the same origin policy of IE.
     // http://stackoverflow.com/questions/7852225/is-it-safe-to-use-support-cors-true-in-jquery
     $.support.cors = true;
 
     // show PIME version number
-    $("#version").load("../../../../version.txt");
+    $("#version").load("/version.txt");
 
     // setup UI
     $(document).tooltip();
-    $(window).unload(function() {
-        alert("unload");
-        $.get(apiUrl + "quit");  // ask the server process to quit.
-    });
 
     $("#tabs").tabs({heightStyle:"auto"});
 
@@ -272,12 +204,11 @@ $(function() {
     });
 
     $("#buttons").buttonset();
+
     // OK button
     $("#ok").click(function() {
         updateConfig(); // update the config based on the state of UI elements
-        saveConfig(function() {
-            closeWindow(); // called when the save operations are done
-        });
+        saveConfig(closeWindow);
         return false;
     });
 
@@ -286,21 +217,15 @@ $(function() {
         closeWindow();
         return false;
     });
-    
-    // authenticate to the configuration web service
-    $.post(apiUrl + "auth",
-        {"token":authToken},
-        function(data, status) {
-            // load configurations and update the UI accordingly
-            loadConfig();
 
-            // keep the server alive every 30 second
-            window.setInterval(function() {
-                $.ajax({
-                    url: apiUrl + "keep_alive",
-                    cache: false  // needs to turn off cache. otherwise the server will be requested only once.
-                });
-            }, 5 * 1000);
-        }
-    );
+    // load configurations and update the UI accordingly
+    loadConfig();
+
+    // keep the server alive every 30 second
+    window.setInterval(function() {
+        $.ajax({
+            url: "/keep_alive",
+            cache: false  // needs to turn off cache. otherwise the server will be requested only once.
+        });
+    }, 5 * 1000);
 });

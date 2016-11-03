@@ -101,11 +101,14 @@ class ChewingConfig:
             self.save()
         self.update()
 
+    def toJson(self):
+        return {key: value for key, value in self.__dict__.items() if not key.startswith("_")}
+
     def save(self):
         filename = self.getConfigFile()
         try:
             with open(filename, "w") as f:
-                json = {key: value for key, value in self.__dict__.items() if not key.startswith("_")}
+                json = self.toJson()
                 js = json.dump(json, f, indent=4)
             self.update()
         except Exception:

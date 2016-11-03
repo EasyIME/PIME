@@ -30,3 +30,22 @@ body {
 #selExample span {
 	color:blue;
 }
+
+#top_box {
+    width: 60%;
+    margin: auto;
+}
+
+#phrase_table {
+    width: 100%;
+}
+
+#phrase_table th, td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+#phrase_table tr:hover {
+    background-color: #f5f5f5
+}

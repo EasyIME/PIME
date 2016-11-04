@@ -21,7 +21,9 @@
 #include "PIMETextService.h"
 #include <string>
 #include <fstream>
+#include <cstring>
 #include <ShlObj.h>
+#include <Shlwapi.h>
 #include <json/json.h>
 #include "../libIME/Utils.h"
 
@@ -31,11 +33,6 @@ namespace PIME {
 // {35F67E9D-A54D-4177-9697-8B0AB71A9E04}
 const GUID g_textServiceClsid = 
 { 0x35f67e9d, 0xa54d, 0x4177, { 0x96, 0x97, 0x8b, 0xa, 0xb7, 0x1a, 0x9e, 0x4 } };
-
-const wchar_t* ImeModule::backendDirs_[] = {
-	L"python",
-	L"node"
-};
 
 ImeModule::ImeModule(HMODULE module):
 	Ime::ImeModule(module, g_textServiceClsid) {
@@ -49,6 +46,19 @@ ImeModule::ImeModule(HMODULE module):
 	if(result == S_OK) { // program files folder is found
 		programDir_ = path;
 		programDir_ += L"\\PIME";
+
+		// load backend information
+		std::ifstream fp(programDir_ + L"\\backends.json", std::ifstream::binary);
+		if (fp) {
+			Json::Value backendsInfo;
+			fp >> backendsInfo;
+			if (backendsInfo.isArray()) {
+				for (const auto& backend: backendsInfo) {
+					std::wstring name = utf8ToUtf16(backend["name"].asCString());
+					backendDirs_.push_back(name);
+				}
+			}
+		}
 	}
 }
 
@@ -66,6 +76,7 @@ bool ImeModule::loadImeInfo(const std::string& guid, std::wstring& filePath, Jso
 	// find the input method module
 	for (const auto backendDir : backendDirs_) {
 		std::wstring dirPath = programDir_;
+		dirPath += '\\';
 		dirPath += backendDir;
 		dirPath += L"\\input_methods";
 		// scan the dir for lang profile definition files
@@ -79,21 +90,21 @@ bool ImeModule::loadImeInfo(const std::string& guid, std::wstring& filePath, Jso
 						imejson += '\\';
 						imejson += findData.cFileName;
 						imejson += L"\\ime.json";
-
 						std::ifstream fp(imejson, std::ifstream::binary);
 						if (fp) {
 							content.clear();
 							fp >> content;
-							if (guid == content["guid"].asString()) {
+							if (stricmp(guid.c_str(), content["guid"].asCString()) == 0) {
 								// found the language profile
 								found = true;
+								filePath = imejson;
 								break;
 							}
 						}
 					}
 				}
 			} while (::FindNextFile(hFind, &findData));
-			CloseHandle(hFind);
+			::FindClose(hFind);
 		}
 		if (found)
 			break;
@@ -110,33 +121,46 @@ bool ImeModule::onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile
 	std::string guidStr = utf16ToUtf8(pGuidStr);
 	CoTaskMemFree(pGuidStr);
 
-	std::wstring configTool;
+	std::wstring configCommandLine;
+	std::wstring imeDir;
 	// find the input method module
 	std::wstring infoFilePath;
 	Json::Value info;
 	if (loadImeInfo(guidStr, infoFilePath, info)) {
-		std::wstring relPath = utf8ToUtf16(info.get("configTool", "").asCString());
-		if (!relPath.empty()) {
-			// get the full path of the config tool
-			std::wstring imeDir = infoFilePath.substr(0, infoFilePath.length() - 8); // remove "ime.json" from file path
-			configTool = imeDir;
-			configTool += relPath;
-		}
+		configCommandLine = utf8ToUtf16(info.get("configTool", "").asCString());
+		// get the dir of ime.json file
+		imeDir = infoFilePath.substr(0, infoFilePath.length() - 8); // remove "ime.json" from file path
 	}
 
-	if (!configTool.empty()) {
-		// FIXME: support node.js?
-		// check if this is a python program (ends with .py)
-		if (configTool.compare(configTool.length() - 3, 3, L".py") == 0) {
-			// find our own python 3 runtime.
-			std::wstring pythonPath = programDir_ + L"\\python\\python3\\pythonw.exe";
-			configTool = (L"\"" + configTool + L"\""); // quote the path to .py file.
-			::ShellExecuteW(hwndParent, L"open", pythonPath.c_str(), configTool.c_str(), NULL, SW_SHOWNORMAL);
+	if (!configCommandLine.empty()) { // command line is found
+		int argc;
+		wchar_t** argv = CommandLineToArgvW(configCommandLine.c_str(), &argc);  // split the parameters
+		// reconstruct a quoted version of command line
+		std::wstring exeFile = argv[0];
+		
+		// for some mysterious reasons, relative paths do not work here (according to Win32 API doc it should work).
+		if (PathIsRelative(exeFile.c_str())) {  // convert it to an absolute path
+			wchar_t absPath[MAX_PATH];
+			PathCanonicalize(absPath, (imeDir + exeFile).c_str());
+			exeFile = absPath;
 		}
-		else {
-			// execute the file directly
-			::ShellExecuteW(hwndParent, L"open", configTool.c_str(), NULL, NULL, SW_SHOWNORMAL);
+		// build the parameters
+		std::wstring params;
+		for (int i = 1; i < argc; ++i) {
+			wchar_t buf[MAX_PATH];
+			wcscpy(buf, argv[i]);
+			PathQuoteSpacesW(buf);
+			params += buf;
+			params += ' ';
 		}
+		::LocalFree(argv);
+
+		// execute the config tool
+		::ShellExecuteW(hwndParent, L"open", exeFile.c_str(), params.empty() ? NULL : params.c_str(), imeDir.c_str(), SW_SHOWNORMAL);
+	}
+	else {
+		// FIXME: this message should be localized.
+		::MessageBoxW(hwndParent, L"The input module does not have a config tool.", NULL, MB_OK);
 	}
 	return true;
 }

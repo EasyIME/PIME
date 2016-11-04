@@ -22,6 +22,7 @@
 
 #include <LibIME/ImeModule.h>
 #include <string>
+#include <vector>
 #include <json/json.h>
 
 namespace PIME {
@@ -46,12 +47,14 @@ public:
 
 	bool loadImeInfo(const std::string&, std::wstring& filePath, Json::Value& content);
 
-public:
-	static const wchar_t* ImeModule::backendDirs_[2];
+	const std::vector<std::wstring>& backendDirs() {
+		return backendDirs_;
+	}
 
 private:
 	std::wstring userDir_;
 	std::wstring programDir_;
+	std::vector<std::wstring> backendDirs_;
 };
 
 }

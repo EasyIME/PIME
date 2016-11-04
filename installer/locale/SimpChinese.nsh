@@ -53,13 +53,14 @@
 !insertmacro LANG_STRING cheeng_DESC "安装英数输入法模块。"
 
 !insertmacro LANG_STRING SET_CHEWING "设置新酷音输入法"
-!insertmacro LANG_STRING SET_CHECJ 设置酷仓输入法
-!insertmacro LANG_STRING SET_CHELIU 设置虾米输入法
-!insertmacro LANG_STRING SET_CHEARRAY 设置行列输入法
-!insertmacro LANG_STRING SET_CHEDAYI 设置大易输入法
-!insertmacro LANG_STRING SET_CHEPINYIN 设置拼音输入法
-!insertmacro LANG_STRING SET_CHESIMPLEX 设置速成输入法
-!insertmacro LANG_STRING SET_CHEPHONETIC 设置注音输入法
-!insertmacro LANG_STRING SET_CHEEZ 设置轻松输入法
+!insertmacro LANG_STRING SET_CHEWING_PHRASES "编辑新酷音使用者辞库"
+!insertmacro LANG_STRING SET_CHECJ "设置酷仓输入法"
+!insertmacro LANG_STRING SET_CHELIU "设置虾米输入法"
+!insertmacro LANG_STRING SET_CHEARRAY "设置行列输入法"
+!insertmacro LANG_STRING SET_CHEDAYI "设置大易输入法"
+!insertmacro LANG_STRING SET_CHEPINYIN "设置拼音输入法"
+!insertmacro LANG_STRING SET_CHESIMPLEX "设置速成输入法"
+!insertmacro LANG_STRING SET_CHEPHONETIC "设置注音输入法"
+!insertmacro LANG_STRING SET_CHEEZ "设置轻松输入法"
 
 !insertmacro LANG_STRING UNINSTALL_PIME "卸载 PIME"

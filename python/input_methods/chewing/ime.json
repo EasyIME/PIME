@@ -8,5 +8,7 @@
 	"win8_icon": "",
 	"moduleName": "chewing_ime",
 	"serviceName": "ChewingTextService",
-    "configTool": "..\\..\\python3\\pythonw.exe config_tool.py config"
+    "configTool": "..\\..\\python3\\pythonw.exe",
+    "configToolParams": "config_tool.py config",
+    "configToolDir": "."
 }

@@ -53,6 +53,8 @@
 !insertmacro LANG_STRING cheeng_DESC "安装英数输入法模块。"
 
 !insertmacro LANG_STRING SET_CHEWING "设置新酷音输入法"
+!insertmacro LANG_STRING SET_CHEWING_PHRASES "编辑新酷音使用者辞库"
+
 !insertmacro LANG_STRING SET_CHECJ "设置酷仓输入法"
 !insertmacro LANG_STRING SET_CHELIU "设置虾米输入法"
 !insertmacro LANG_STRING SET_CHEARRAY "设置行列输入法"

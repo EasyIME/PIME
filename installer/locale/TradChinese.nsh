@@ -53,13 +53,15 @@
 !insertmacro LANG_STRING cheeng_DESC "安裝英數輸入法模組。"
 
 !insertmacro LANG_STRING SET_CHEWING "設定新酷音輸入法"
-!insertmacro LANG_STRING SET_CHECJ 設定酷倉輸入法
-!insertmacro LANG_STRING SET_CHELIU 設定蝦米輸入法
-!insertmacro LANG_STRING SET_CHEARRAY 設定行列輸入法
-!insertmacro LANG_STRING SET_CHEDAYI 設定大易輸入法
-!insertmacro LANG_STRING SET_CHEPINYIN 設定拼音輸入法
-!insertmacro LANG_STRING SET_CHESIMPLEX 設定速成輸入法
-!insertmacro LANG_STRING SET_CHEPHONETIC 設定注音輸入法
-!insertmacro LANG_STRING SET_CHEEZ 設定輕鬆輸入法
+!insertmacro LANG_STRING SET_CHEWING_PHRASES "編輯新酷音使用者辭庫"
+
+!insertmacro LANG_STRING SET_CHECJ "設定酷倉輸入法"
+!insertmacro LANG_STRING SET_CHELIU "設定蝦米輸入法"
+!insertmacro LANG_STRING SET_CHEARRAY "設定行列輸入法"
+!insertmacro LANG_STRING SET_CHEDAYI "設定大易輸入法"
+!insertmacro LANG_STRING SET_CHEPINYIN "設定拼音輸入法"
+!insertmacro LANG_STRING SET_CHESIMPLEX "設定速成輸入法"
+!insertmacro LANG_STRING SET_CHEPHONETIC "設定注音輸入法"
+!insertmacro LANG_STRING SET_CHEEZ "設定輕鬆輸入法"
 
 !insertmacro LANG_STRING UNINSTALL_PIME "解除安裝 PIME"

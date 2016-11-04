@@ -121,42 +121,40 @@ bool ImeModule::onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile
 	std::string guidStr = utf16ToUtf8(pGuidStr);
 	CoTaskMemFree(pGuidStr);
 
-	std::wstring configCommandLine;
-	std::wstring imeDir;
+	std::wstring configCommand;
+	std::wstring configParams;
+	std::wstring configDir;
+
 	// find the input method module
 	std::wstring infoFilePath;
 	Json::Value info;
 	if (loadImeInfo(guidStr, infoFilePath, info)) {
-		configCommandLine = utf8ToUtf16(info.get("configTool", "").asCString());
-		// get the dir of ime.json file
-		imeDir = infoFilePath.substr(0, infoFilePath.length() - 8); // remove "ime.json" from file path
+		std::wstring currentDir = infoFilePath.substr(0, infoFilePath.length() - 8); // remove "ime.json" from file path
+		configCommand = utf8ToUtf16(info.get("configTool", "").asCString());
+		configParams = utf8ToUtf16(info.get("configToolParams", "").asCString());
+		configDir = utf8ToUtf16(info.get("configToolDir", "").asCString());
+		// for some mysterious reasons, relative paths do not work here (according to Win32 API doc it should work).
+		if (PathIsRelative(configCommand.c_str())) {  // convert it to an absolute path
+			wchar_t absPath[MAX_PATH];
+			PathCanonicalize(absPath, (currentDir + configCommand).c_str());
+			configCommand = absPath;
+		}
+		if (!configDir.empty()) {
+			if (PathIsRelative(configDir.c_str())) {  // convert it to an absolute path
+				wchar_t absPath[MAX_PATH];
+				PathCanonicalize(absPath, (currentDir + configDir).c_str());
+				configDir = absPath;
+			}
+		}
 	}
 
-	if (!configCommandLine.empty()) { // command line is found
-		int argc;
-		wchar_t** argv = CommandLineToArgvW(configCommandLine.c_str(), &argc);  // split the parameters
-		// reconstruct a quoted version of command line
-		std::wstring exeFile = argv[0];
-		
-		// for some mysterious reasons, relative paths do not work here (according to Win32 API doc it should work).
-		if (PathIsRelative(exeFile.c_str())) {  // convert it to an absolute path
-			wchar_t absPath[MAX_PATH];
-			PathCanonicalize(absPath, (imeDir + exeFile).c_str());
-			exeFile = absPath;
-		}
-		// build the parameters
-		std::wstring params;
-		for (int i = 1; i < argc; ++i) {
-			wchar_t buf[MAX_PATH];
-			wcscpy(buf, argv[i]);
-			PathQuoteSpacesW(buf);
-			params += buf;
-			params += ' ';
-		}
-		::LocalFree(argv);
-
+	if (!configCommand.empty()) { // command line is found
 		// execute the config tool
-		::ShellExecuteW(hwndParent, L"open", exeFile.c_str(), params.empty() ? NULL : params.c_str(), imeDir.c_str(), SW_SHOWNORMAL);
+		::ShellExecuteW(hwndParent, L"open", 
+			configCommand.c_str(),
+			configParams.empty() ? NULL : configParams.c_str(),
+			configDir.empty() ? NULL : configDir.c_str(),
+			SW_SHOWNORMAL);
 	}
 	else {
 		// FIXME: this message should be localized.

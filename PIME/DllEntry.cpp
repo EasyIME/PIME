@@ -79,51 +79,36 @@ STDAPI DllRegisterServer(void) {
 	int iconIndex = 0; // use classic icon
 	if(g_imeModule->isWindows8Above())
 		iconIndex = 1; // use Windows 8 style IME icon
-
-	wchar_t modulePath[MAX_PATH];
-	int len = ::GetModuleFileName(g_imeModule->hInstance(), modulePath, MAX_PATH);
-	while(modulePath[len] != '\\')
-		--len;
-	modulePath[len] = '\0';
-	// std::wstring dirPath = modulePath;
 	std::vector<Ime::LangProfileInfo> langProfiles;
 	std::wstring dirPath;
-	// get the program data directory
-	// try C:\program files (x86) first
-	wchar_t path[MAX_PATH];
-	HRESULT result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILESX86, NULL, 0, path);
-	if (result != S_OK) // failed, fall back to C:\program files
-		result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
-	if (result == S_OK) { // program files folder is found
-		for (const auto backendDir : g_imeModule->backendDirs()) {
-			std::string backendName = utf16ToUtf8(backendDir.c_str());
-			dirPath = path;
-			dirPath += L"\\PIME\\";
-			dirPath += backendDir;
-			dirPath += L"\\input_methods";
-			// scan the dir for lang profile definition files
-			WIN32_FIND_DATA findData = { 0 };
-			HANDLE hFind = ::FindFirstFile((dirPath + L"\\*").c_str(), &findData);
-			if (hFind != INVALID_HANDLE_VALUE) {
-				do {
-					if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { // this is a subdir
-						if (findData.cFileName[0] != '.') {
-							std::wstring imejson = dirPath;
-							imejson += '\\';
-							imejson += findData.cFileName;
-							imejson += L"\\ime.json";
-							// Make sure the file exists
-							DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
-							if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
-								// load the json file to get the info of input method
-								std::string guid;
-								langProfiles.push_back(std::move(langProfileFromJson(imejson, guid)));
-							}
+	for (const auto backendDir: g_imeModule->backendDirs()) {
+		std::string backendName = utf16ToUtf8(backendDir.c_str());
+		dirPath = g_imeModule->programDir();
+		dirPath += L'\\';
+		dirPath += backendDir;
+		dirPath += L"\\input_methods";
+		// scan the dir for lang profile definition files
+		WIN32_FIND_DATA findData = { 0 };
+		HANDLE hFind = ::FindFirstFile((dirPath + L"\\*").c_str(), &findData);
+		if (hFind != INVALID_HANDLE_VALUE) {
+			do {
+				if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { // this is a subdir
+					if (findData.cFileName[0] != '.') {
+						std::wstring imejson = dirPath;
+						imejson += '\\';
+						imejson += findData.cFileName;
+						imejson += L"\\ime.json";
+						// Make sure the file exists
+						DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
+						if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
+							// load the json file to get the info of input method
+							std::string guid;
+							langProfiles.push_back(std::move(langProfileFromJson(imejson, guid)));
 						}
 					}
-				} while (::FindNextFile(hFind, &findData));
-				::FindClose(hFind);
-			}
+				}
+			} while (::FindNextFile(hFind, &findData));
+			::FindClose(hFind);
 		}
 	}
 	return g_imeModule->registerServer(L"PIMETextService", langProfiles.data(), langProfiles.size());

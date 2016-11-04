@@ -95,8 +95,8 @@ STDAPI DllRegisterServer(void) {
 	if (result != S_OK) // failed, fall back to C:\program files
 		result = ::SHGetFolderPathW(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path);
 	if (result == S_OK) { // program files folder is found
-		for (const auto backendDir : PIME::ImeModule::backendDirs_) {
-			std::string backendName = utf16ToUtf8(backendDir);
+		for (const auto backendDir : g_imeModule->backendDirs()) {
+			std::string backendName = utf16ToUtf8(backendDir.c_str());
 			dirPath = path;
 			dirPath += L"\\PIME\\";
 			dirPath += backendDir;

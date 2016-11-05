@@ -14,7 +14,14 @@ add_definitions(
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/libIME)
+
+# turn of some unnecessary build options for jsoncpp
+# Reference: http://stackoverflow.com/questions/3766740/overriding-a-default-option-value-in-cmake-from-a-parent-cmakelists-txt
+set(JSONCPP_WITH_TESTS OFF CACHE BOOL "")
+set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF CACHE BOOL "")
+set(JSONCPP_WITH_PKGCONFIG_SUPPORT OFF CACHE BOOL "")
 add_subdirectory(${PROJECT_SOURCE_DIR}/jsoncpp)
+
 add_subdirectory(${PROJECT_SOURCE_DIR}/PIME)
 
 # only build the following components for 32-bit x86 platform

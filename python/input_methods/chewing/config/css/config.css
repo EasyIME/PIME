@@ -13,6 +13,10 @@ body {
     float: right;
 }
 
+#ui_page {
+    height:auto !important;
+}
+
 #selExample{
 	line-height: 110%;
 	border-top: 1px solid grey;

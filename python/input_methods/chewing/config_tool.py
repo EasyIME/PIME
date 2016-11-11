@@ -91,6 +91,18 @@ class ConfigHandler(BaseHandler):
     def post(self):  # save config
         data = tornado.escape.json_decode(self.request.body)
         print(data)
+        # ensure the config dir exists
+        os.makedirs(configDir, exist_ok=True)
+        # write the config to files
+        config = data.get("config", None)
+        if config:
+            self.save_file("config.json", json.dumps(config, indent=2))
+        symbols = data.get("symbols", None)
+        if symbols:
+            self.save_file("symbols.dat", symbols)
+        swkb = data.get("swkb", None)
+        if swkb:
+            self.save_file("swkb.dat", swkb)
         self.write("ok")
 
     @tornado.web.authenticated
@@ -120,10 +132,9 @@ class ConfigHandler(BaseHandler):
         except Exception:
             return ""
 
-    def save_file(self, filename):
+    def save_file(self, filename, data):
         try:
-            # print(filename, data)
-            with open(filename, "w", encoding="UTF-8") as f:
+            with open(os.path.join(configDir, filename), "w", encoding="UTF-8") as f:
                 f.write(data)
                 if file == "symbols":
                     f.write("\n")

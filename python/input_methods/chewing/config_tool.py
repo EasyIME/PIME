@@ -23,14 +23,14 @@ import uuid  # use to generate a random auth token
 import random
 import json
 
-import chewing_config
+from chewing_config import chewingConfig
 from libchewing import ChewingContext
 from ctypes import c_uint, byref, create_string_buffer
 
 
 configDir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", "chewing")
 currentDir = os.path.dirname(__file__)
-dataDir = os.path.join(os.path.dirname(currentDir), "data")
+dataDir = os.path.join(currentDir, "data")
 localDataDir = os.path.join(os.path.expandvars("%LOCALAPPDATA%"), "PIME", "chewing")
 
 COOKIE_ID = "chewing_config_token"
@@ -38,31 +38,14 @@ COOKIE_ID = "chewing_config_token"
 SERVER_TIMEOUT = 120
 timeout_handler = None
 
-chewing_ctx = ChewingContext()  # libchewing context
 
-
-class SaveHandler(tornado.web.RequestHandler):
-    def post(self, file):
-        data = self.get_argument("data", '')
-        if file == "config":
-            filename = "config.json"
-        elif file == "symbols":
-            filename = "symbols.dat"
-        elif file == "swkb":
-            filename = "swkb.dat"
-        else:
-            return
-        os.makedirs(configDir, exist_ok=True)
-        filename = os.path.join(configDir, filename)
-        try:
-            # print(filename, data)
-            with open(filename, "w", encoding="UTF-8") as f:
-                f.write(data)
-                if file == "symbols":
-                    f.write("\n")
-            self.write("ok")
-        except Exception:
-            self.write("failed")
+# syspath 參數可包含多個路徑，用 ; 分隔
+# 此處把 user 設定檔目錄插入到 system-wide 資料檔路徑前
+# 如此使用者變更設定後，可以比系統預設值有優先權
+search_paths = ";".join((chewingConfig.getConfigDir(), dataDir)).encode("UTF-8")
+user_phrase = chewingConfig.getUserPhrase().encode("UTF-8")
+print(search_paths, user_phrase)
+chewing_ctx = ChewingContext(syspath = search_paths, userpath = user_phrase)  # new libchewing context
 
 
 def quit_server():
@@ -117,7 +100,7 @@ class ConfigHandler(BaseHandler):
         self.write("ok")
 
     def load_config(self):
-        config = chewing_config.chewingConfig.toJson()  # the default settings
+        config = chewingConfig.toJson()  # the default settings
         try:
             with open(os.path.join(configDir, "config.json"), "r", encoding="UTF-8") as f:
                 # override default values with user config
@@ -155,7 +138,8 @@ class UserPhraseHandler(BaseHandler):
         phrase_len = c_uint(0)
         bopomofo_len = c_uint(0)
         phrases = []
-        chewing_ctx.userphrase_enumerate()
+        ret = chewing_ctx.userphrase_enumerate()
+        print(chewing_ctx, ret)
         while chewing_ctx.userphrase_has_next(byref(phrase_len), byref(bopomofo_len)):
             phrase_buf = create_string_buffer(phrase_len.value)
             bopomofo_buf = create_string_buffer(bopomofo_len.value)

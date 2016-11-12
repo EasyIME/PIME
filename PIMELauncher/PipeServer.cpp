@@ -384,8 +384,10 @@ void PipeServer::handleClientMessage(ClientInfo* client) {
 
 void PipeServer::closeClient(ClientInfo* client) {
 	if (client->backend_ != nullptr) {
-		if (!client->clientId_.empty())
+		if (!client->clientId_.empty()) {
 			client->backend_->removeClient(client->clientId_);
+			client->clientId_.clear();
+		}
 	}
 
 	clients_.erase(client->pipe_);

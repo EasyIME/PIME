@@ -29,6 +29,7 @@
 #include <fstream>
 #include <cctype>
 #include <algorithm>
+#include <Winnls.h>  // for IS_HIGH_SURROGATE() macro for checking UTF16 surrogate pairs
 
 using namespace std;
 
@@ -165,9 +166,12 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 
 		const auto& compositionStringVal = msg["compositionString"];
 		bool emptyComposition = false;
+		bool hasCompositionString = false;
+		std::wstring compositionString;
 		if (compositionStringVal.isString()) {
 			// composition buffer
-			const std::wstring compositionString = utf8ToUtf16(compositionStringVal.asCString());
+			compositionString = utf8ToUtf16(compositionStringVal.asCString());
+			hasCompositionString = true;
 			if (compositionString.empty()) {
 				emptyComposition = true;
 				if (textService_->isComposing() && !textService_->showingCandidates()) {
@@ -192,7 +196,21 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 				if (!textService_->isComposing()) {
 					textService_->startComposition(session->context());
 				}
-				textService_->setCompositionCursor(session, compositionCursor);
+				// NOTE:
+				// This fixes PIME bug #166: incorrect handling of UTF-16 surrogate pairs.
+				// The TSF API unfortunately treat a UTF-16 surrogate pair as two characters while
+				// they actually represent one unicode character only. To workaround this TSF bug,
+				// we get the composition string, and try to move the cursor twice when a UTF-16
+				// surrogate pair is found.
+				if(!hasCompositionString)
+					compositionString = textService_->compositionString(session);
+				int fixedCursorPos = 0;
+				for (int i = 0; i < compositionCursor; ++i) {
+					++fixedCursorPos;
+					if (IS_HIGH_SURROGATE(compositionString[i])) // this is the first part of a UTF16 surrogate pair (Windows uses UTF16-LE)
+						++fixedCursorPos;
+				}
+				textService_->setCompositionCursor(session, fixedCursorPos);
 			}
 		}
 

@@ -153,14 +153,17 @@ class Server(object):
     def new_client(self):
         # create a Client instance for the client
         client = Client(self)
-        client_id = str(id(client))
+        client_id = str(uuid.uuid4())
         self.clients[client_id] = client
         print("new client:", client_id)
         return client_id
 
     def remove_client(self, client_id):
         print("client disconnected:", client_id)
-        del self.clients[client_id]
+        try:
+            del self.clients[client_id]
+        except KeyError:
+            pass
 
     def exit(self):
         tornado.ioloop.IOLoop.current().stop()

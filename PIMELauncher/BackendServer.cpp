@@ -345,7 +345,8 @@ BackendServer* BackendServer::fromLangProfileGuid(const char* guid) {
 std::string BackendServer::sendHttpRequest(const char* method, const char* path, const char* data, int len) {
 	std::string response;
 	if (ensureHttpConnection()) { // ensure the http connection
-		DWORD flags = 0;
+		// avoid any caching (according to the API doc, WinInet does not cache for POST or DELETE, but unfortunately this is not true.)
+		DWORD flags = INTERNET_FLAG_DONT_CACHE|INTERNET_FLAG_RELOAD;
 		if (protocol_ == "https")
 			flags |= INTERNET_FLAG_SECURE;
 		HINTERNET req = HttpOpenRequestA(httpConnection_, method, path, NULL, NULL, NULL, flags, NULL);

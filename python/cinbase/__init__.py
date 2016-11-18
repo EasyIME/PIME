@@ -140,6 +140,7 @@ class CinBase:
         cbTS.isShowPhraseCandidates = False
         cbTS.isShowMessage = False
         cbTS.canSetCommitString = True
+        cbTS.canSetPhraseCommitString = False
         cbTS.canUseSelKey = True
         cbTS.canUseSpaceAsPageKey = True
         cbTS.endKeyList = []
@@ -978,7 +979,7 @@ class CinBase:
                     cbTS.isSelKeysChanged = True
 
         # 按下的鍵為 CIN 內有定義的字根
-        if cbTS.cin.isInKeyName(charStrLow) and cbTS.closemenu and not cbTS.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not cbTS.ctrlsymbolsmode and not cbTS.dayisymbolsmode and not cbTS.selcandmode and not cbTS.tempEnglishMode:
+        if cbTS.cin.isInKeyName(charStrLow) and cbTS.closemenu and not cbTS.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not cbTS.ctrlsymbolsmode and not cbTS.dayisymbolsmode and not cbTS.selcandmode and not cbTS.tempEnglishMode and not cbTS.phrasemode:
             # 若按下 Shift 鍵
             if keyEvent.isKeyDown(VK_SHIFT) and cbTS.langMode == CHINESE_MODE and not cbTS.imeDirName == "cheez":
                 CommitStr = charStr
@@ -1152,7 +1153,7 @@ class CinBase:
                             else:
                                 cbTS.menusymbolsmode = False
         # 按下的鍵不存在於 CIN 所定義的字根
-        elif not cbTS.cin.isInKeyName(charStrLow) and cbTS.closemenu and not cbTS.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not cbTS.ctrlsymbolsmode and not cbTS.dayisymbolsmode and not cbTS.selcandmode and not cbTS.tempEnglishMode:
+        elif not cbTS.cin.isInKeyName(charStrLow) and cbTS.closemenu and not cbTS.multifunctionmode and not keyEvent.isKeyDown(VK_CONTROL) and not cbTS.ctrlsymbolsmode and not cbTS.dayisymbolsmode and not cbTS.selcandmode and not cbTS.tempEnglishMode and not cbTS.phrasemode:
             # 若按下 Shift 鍵
             if keyEvent.isKeyDown(VK_SHIFT) and cbTS.langMode == CHINESE_MODE:
                 # 如果按鍵及萬用字元為*
@@ -1861,6 +1862,9 @@ class CinBase:
 
         # 聯想字模式
         if cbTS.showPhrase and cbTS.phrasemode:
+            if self.isNumberChar(keyCode) and keyEvent.isKeyDown(VK_SHIFT) and not cbTS.imeDirName == "chedayi":
+                charCode = keyCode
+                charStr = chr(charCode)
             phrasecandidates = []
             if cbTS.userphrase.isInCharDef(cbTS.lastCommitString):
                 phrasecandidates = cbTS.userphrase.getCharDef(cbTS.lastCommitString)
@@ -1876,6 +1880,11 @@ class CinBase:
                 candCount = len(cbTS.candidateList)  # 目前選字清單項目數
                 currentCandPageCount = math.ceil(len(phrasecandidates) / cbTS.candPerPage) # 目前的選字清單總頁數
                 currentCandPage = cbTS.currentCandPage # 目前的選字清單頁數
+                
+                if cbTS.showCandidates:
+                    cbTS.canSetPhraseCommitString = True
+                else:
+                    cbTS.canSetPhraseCommitString = False
 
                 # 候選清單分頁
                 pagecandidates = list(self.chunks(phrasecandidates, cbTS.candPerPage))
@@ -1883,7 +1892,7 @@ class CinBase:
                 cbTS.setShowCandidates(True)
 
                 # 使用選字鍵執行項目或輸出候選字
-                if self.isInSelKeys(cbTS, charCode) and not keyEvent.isKeyDown(VK_SHIFT):
+                if (self.isInSelKeys(cbTS, charCode) and keyEvent.isKeyDown(VK_SHIFT) and not cbTS.imeDirName == "chedayi") or (self.isInSelKeys(cbTS, charCode) and not keyEvent.isKeyDown(VK_SHIFT) and cbTS.imeDirName == "chedayi"):
                     if cbTS.isShowPhraseCandidates:
                         if cbTS.imeDirName == "chedayi":
                             i = cbTS.selKeys.index(charStr) + 1
@@ -1905,6 +1914,7 @@ class CinBase:
                                 cbTS.canSetCommitString = True
                                 cbTS.isShowCandidates = False
                     else:
+                        cbTS.isShowPhraseCandidates = True
                         cbTS.isShowPhraseCandidates = True
                 elif keyCode == VK_UP:  # 游標上移
                     if (candCursor - cbTS.candPerRow) < 0:
@@ -1965,44 +1975,45 @@ class CinBase:
                             currentCandPage = 0
                             candCursor = 0
                 else: # 按下其它鍵，先將候選字游標位址及目前頁數歸零
-                    cbTS.phrasemode = False
-                    cbTS.isShowPhraseCandidates = False
-                    self.resetComposition(cbTS)
-                    candCursor = 0
-                    currentCandPage = 0
+                    if cbTS.canSetPhraseCommitString or cbTS.multifunctionmode:
+                        cbTS.phrasemode = False
+                        cbTS.isShowPhraseCandidates = False
+                        self.resetComposition(cbTS)
+                        candCursor = 0
+                        currentCandPage = 0
 
-                    if cbTS.cin.isInKeyName(charStrLow) and not keyEvent.isKeyDown(VK_SHIFT):
-                        cbTS.compositionChar = charStrLow
-                        keyname = cbTS.cin.getKeyName(charStrLow)
+                        if cbTS.cin.isInKeyName(charStrLow) and not keyEvent.isKeyDown(VK_SHIFT):
+                            cbTS.compositionChar = charStrLow
+                            keyname = cbTS.cin.getKeyName(charStrLow)
                         
-                        if cbTS.imeDirName == "chedayi":
-                            if cbTS.selDayiSymbolCharType == 0:
-                                if cbTS.compositionChar == '=':
-                                    keyname = cbTS.DayiSymbolString
-                                    cbTS.dayisymbolsmode = True
+                            if cbTS.imeDirName == "chedayi":
+                                if cbTS.selDayiSymbolCharType == 0:
+                                    if cbTS.compositionChar == '=':
+                                        keyname = cbTS.DayiSymbolString
+                                        cbTS.dayisymbolsmode = True
+                                else:
+                                    if cbTS.compositionChar == "'":
+                                        keyname = cbTS.DayiSymbolString
+                                        cbTS.dayisymbolsmode = True
+
+                            if not cbTS.compositionBufferMode:
+                                cbTS.setCompositionString(keyname)
+                                cbTS.setCompositionCursor(len(cbTS.compositionString))
+                        
+                            if cbTS.directShowCand and candidates and not cbTS.dayisymbolsmode:
+                                pagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
+                                cbTS.setCandidateList(pagecandidates[currentCandPage])
+                                cbTS.setShowCandidates(True)
+                        elif len(cbTS.compositionChar) == 0 and charStr == '`':
+                            cbTS.compositionChar += charStr
+                            cbTS.multifunctionmode = True
+                            if not cbTS.compositionBufferMode:
+                                cbTS.setCompositionString(cbTS.compositionChar)
+                        elif keyEvent.isPrintableChar() and not keyEvent.isKeyDown(VK_SHIFT) and cbTS.shapeMode == HALFSHAPE_MODE:
+                            if cbTS.compositionBufferMode:
+                                self.setCompositionBufferString(cbTS, charStr, 0)
                             else:
-                                if cbTS.compositionChar == "'":
-                                    keyname = cbTS.DayiSymbolString
-                                    cbTS.dayisymbolsmode = True
-
-                        if not cbTS.compositionBufferMode:
-                            cbTS.setCompositionString(keyname)
-                            cbTS.setCompositionCursor(len(cbTS.compositionString))
-                        
-                        if cbTS.directShowCand and candidates and not cbTS.dayisymbolsmode:
-                            pagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
-                            cbTS.setCandidateList(pagecandidates[currentCandPage])
-                            cbTS.setShowCandidates(True)
-                    elif len(cbTS.compositionChar) == 0 and charStr == '`':
-                        cbTS.compositionChar += charStr
-                        cbTS.multifunctionmode = True
-                        if not cbTS.compositionBufferMode:
-                            cbTS.setCompositionString(cbTS.compositionChar)
-                    elif keyEvent.isPrintableChar() and not keyEvent.isKeyDown(VK_SHIFT) and cbTS.shapeMode == HALFSHAPE_MODE:
-                        if cbTS.compositionBufferMode:
-                            self.setCompositionBufferString(cbTS, charStr, 0)
-                        else:
-                            cbTS.setCommitString(charStr)
+                                cbTS.setCommitString(charStr)
 
                 # 更新選字視窗游標位置及頁數
                 cbTS.setCandidateCursor(candCursor)

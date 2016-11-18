@@ -199,7 +199,7 @@ class Cin(object):
                     except KeyError:
                         self.cjkOtherchardefs[key] = [root]
                     self.cincount['cjkOtherchardefs'] += 1
-        self.mergeDicts(self.bopomofochardefs, self.big5Fchardefs, self.big5LFchardefs, self.big5Otherchardefs, self.cjkchardefs, self.cjkExtAchardefs, self.cjkExtBchardefs, self.cjkExtCchardefs, self.cjkExtDchardefs, self.cjkExtEchardefs, self.cjkOtherchardefs)
+        self.mergeDicts(self.big5Fchardefs, self.big5LFchardefs, self.big5Otherchardefs, self.bopomofochardefs, self.cjkchardefs, self.cjkExtAchardefs, self.cjkExtBchardefs, self.cjkExtCchardefs, self.cjkExtDchardefs, self.cjkExtEchardefs, self.cjkOtherchardefs)
 
     def getEname(self):
         return self.ename
@@ -264,11 +264,7 @@ class Cin(object):
         if matchchardefs:
             for chardef in matchchardefs:
                 for matchstr in chardef:
-                    if re.match('[\u3100-\u312F]|[\u02D9]|[\u02CA]|[\u02C7]|[\u02CB]', matchstr): # Bopomofo 區域
-                        if not matchstr in cjkextchardefs[0]:
-                            cjkextchardefs[0].append(matchstr)
-                            highFrequencyWordCount += 1
-                    elif re.match('[\u4E00-\u9FD5]', matchstr): # CJK Unified Ideographs 區域
+                    if re.match('[\u4E00-\u9FD5]', matchstr): # CJK Unified Ideographs 區域
                         try:
                             big5code = matchstr.encode('big5')
 
@@ -288,6 +284,10 @@ class Cin(object):
                             if not matchstr in cjkextchardefs[4]:
                                 cjkextchardefs[4].append(matchstr)
                                 highFrequencyWordCount += 1
+                    elif re.match('[\u3100-\u312F]|[\u02D9]|[\u02CA]|[\u02C7]|[\u02CB]', matchstr): # Bopomofo 區域
+                        if not matchstr in cjkextchardefs[0]:
+                            cjkextchardefs[0].append(matchstr)
+                            highFrequencyWordCount += 1
                     elif re.match('[\u3400-\u4DB5]', matchstr): # CJK Unified Ideographs Extension A 區域
                         if not matchstr in cjkextchardefs[5]:
                             cjkextchardefs[5].append(matchstr)

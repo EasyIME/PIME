@@ -2085,10 +2085,7 @@ class CinBase:
         cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
 
-        # 不管中英文模式，只要放開 CapsLock 鍵，輸入法都須要處理
-        if cbTS.lastKeyDownCode == VK_CAPITAL and keyEvent.keyCode == VK_CAPITAL:
-            return True
-        
+       
         # 若切換全形/半形模式
         if cbTS.isShapeModeChanged:
             return True
@@ -2296,11 +2293,9 @@ class CinBase:
         icon_name = "chi.ico" if cbTS.langMode == CHINESE_MODE else "eng.ico"
         icon_path = os.path.join(self.icondir, icon_name)
         cbTS.changeButton("switch-lang", icon=icon_path)
-        
+        cbTS.capsStates = True if self.getKeyState(VK_CAPITAL) else False
         
         if cbTS.client.isWindows8Above:  # windows 8 mode icon
-            cbTS.capsStates = True if self.getKeyState(VK_CAPITAL) else False
-
             if cbTS.langMode == CHINESE_MODE:
                 if cbTS.shapeMode == FULLSHAPE_MODE:
                     icon_name = "chi_full_capson.ico" if cbTS.capsStates else "chi_full_capsoff.ico"

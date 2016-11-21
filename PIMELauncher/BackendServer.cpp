@@ -165,6 +165,7 @@ void BackendServer::startProcess() {
 		wchar_t* commandLineBuf = wcsdup(commandLine.c_str());  // the buffer needs to be writable
 		if (CreateProcessW(NULL, commandLineBuf, NULL, NULL, TRUE, 0, NULL, workingDir_.c_str(), &si, &pi)) {
 			processHandle_ = pi.hProcess;
+			CloseHandle(pi.hThread);
 		}
 		free(commandLineBuf);
 

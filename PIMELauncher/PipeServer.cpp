@@ -38,6 +38,10 @@ namespace PIME {
 PipeServer* PipeServer::singleton_ = nullptr;
 
 PipeServer::PipeServer() :
+	securittyDescriptor_(nullptr),
+	acl_(nullptr),
+	everyoneSID_(nullptr),
+	allAppsSID_(nullptr),
 	pendingPipeConnection_(false),
 	quitExistingLauncher_(false) {
 	// this can only be assigned once

@@ -5,8 +5,6 @@ let NIME  = require('nime');
 
 let {loadServices, loadServiceById} = require('./loadServices');
 
-debug(`Thread pool: ${process.env.UV_THREADPOOL_SIZE} can service ${process.env.UV_THREADPOOL_SIZE - 1} clients`);
-
 let services = loadServices();
 
 if (services.length == 0) {
@@ -14,7 +12,7 @@ if (services.length == 0) {
   process.exit(1);
 }
 
-let server = NIME.createServer('../libpipe.dll', (request) => {
+let server = NIME.createServer((request) => {
 
   let service = null;
 

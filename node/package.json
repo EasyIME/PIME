@@ -4,7 +4,7 @@
   "description": "Implement input methods easily for Windows with nodejs",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "cross-env debug=nime:* node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -21,6 +21,6 @@
   },
   "dependencies": {
     "debug": "^2.2.0",
-    "nime": "0.3.0"
+    "nime": "0.4.1"
   }
 }

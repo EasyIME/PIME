@@ -60,7 +60,7 @@ private:
 	bool ensureProcessRunning();
 	bool ensureHttpConnection();
 	bool readHttpServerStatus(double timeoutSeconds = 0.0);
-	std::string sendHttpRequest(const char* method, const char* path, const char* data = nullptr, int len = 0);
+	std::string sendHttpRequest(const char* method, const char* path, const char* data = nullptr, int len = 0, const char* header = nullptr);
 
 private:
 	std::string name_;

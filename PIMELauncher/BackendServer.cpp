@@ -322,7 +322,8 @@ void BackendServer::removeClient(const std::string& clientId) {
 }
 
 std::string BackendServer::handleClientMessage(const std::string& clientId, const std::string& message) {
-	std::string response = sendHttpRequest("POST", ("/" + clientId).c_str(), message.c_str(), message.length());
+	const char header[] = "Content-Type: application/json"; // explicitly specify that the message body is in json
+	std::string response = sendHttpRequest("POST", ("/" + clientId).c_str(), message.c_str(), message.length(), header);
 	return response;
 }
 
@@ -342,7 +343,7 @@ BackendServer* BackendServer::fromLangProfileGuid(const char* guid) {
 	return nullptr;
 }
 
-std::string BackendServer::sendHttpRequest(const char* method, const char* path, const char* data, int len) {
+std::string BackendServer::sendHttpRequest(const char * method, const char * path, const char * data, int len, const char * header) {
 	std::string response;
 	if (ensureHttpConnection()) { // ensure the http connection
 		// avoid any caching (according to the API doc, WinInet does not cache for POST or DELETE, but unfortunately this is not true.)
@@ -352,8 +353,13 @@ std::string BackendServer::sendHttpRequest(const char* method, const char* path,
 		HINTERNET req = HttpOpenRequestA(httpConnection_, method, path, NULL, NULL, NULL, flags, NULL);
 		if (req) {
 			// http basic authentication
-			std::string basicAuthHeader = "Authentication: Basic " + httpBasicAuth_;
-			if (HttpSendRequestA(req, basicAuthHeader.c_str(), basicAuthHeader.length(), (void*)data, len)) {
+			std::string headerBuf = "Authentication: Basic " + httpBasicAuth_;
+			// add optional headers
+			if (header) {
+				headerBuf += "\r\n";
+				headerBuf += header;
+			}
+			if (HttpSendRequestA(req, headerBuf.c_str(), headerBuf.length(), (void*)data, len)) {
 				char buf[1024];
 				DWORD read_len = 0;
 				while (InternetReadFile(req, buf, 1023, &read_len)) {

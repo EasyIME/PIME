@@ -540,12 +540,11 @@ class ChewingTextService(TextService):
         elif commandId == ID_SWITCH_SHAPE and commandType == COMMAND_LEFT_CLICK:  # 切換全形/半形
             self.toggleShapeMode()
         elif commandId == ID_SETTINGS:  # 開啟設定工具
-            config_tool = '"{0}"'.format(os.path.join(self.curdir, "config", "configTool.py"))
+            config_tool = '"{0}"'.format(os.path.join(self.curdir, "config_tool.py"))
             python_exe = sys.executable  # 找到 python 執行檔
             # 使用我們自帶的 python runtime exe 執行 config tool
             # 此處也可以用 subprocess，不過使用 windows API 比較方便
-            r = windll.shell32.ShellExecuteW(None, "open", python_exe, config_tool, os.path.dirname(config_tool), 1)  # SW_SHOWNORMAL = 1
-            print(r)
+            r = windll.shell32.ShellExecuteW(None, "open", python_exe, config_tool, self.curdir, 0)  # SW_HIDE = 0 (hide the window)
         elif commandId == ID_MODE_ICON: # windows 8 mode icon
             self.toggleLanguageMode()  # 切換中英文模式
         elif commandId == ID_ABOUT: # 關於新酷音輸入法

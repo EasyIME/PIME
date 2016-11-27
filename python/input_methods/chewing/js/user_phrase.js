@@ -14,16 +14,6 @@ function loadUserPhrases() {
     }, "json");
 }
 
-function closeWindow() {
-    $.ajax({
-        url: "/config",
-        type: "DELETE",
-        success: function() {
-            window.close();
-        }
-    });
-}
-
 // called when the OK button of the "add phrase" dialog is clicked
 function onAddPhrase() {
     var phrase = $("#phrase_input").val();
@@ -114,11 +104,11 @@ $(function() {
 
     loadUserPhrases();
     
-    // keep the server alive every 30 second
+    // keep the server alive every 20 second
     window.setInterval(function() {
         $.ajax({
             url: "/keep_alive",
             cache: false  // needs to turn off cache. otherwise the server will be requested only once.
         });
-    }, 5 * 1000);
+    }, 20 * 1000);
 });

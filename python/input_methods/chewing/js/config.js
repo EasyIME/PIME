@@ -167,16 +167,6 @@ function initializeUI() {
 	});
 }
 
-function closeWindow() {
-    $.ajax({
-        url: "/config",
-        type: "DELETE",
-        success: function() {
-            window.close();
-        }
-    });
-}
-
 // jQuery ready
 $(function() {
     // workaround the same origin policy of IE.
@@ -208,24 +198,20 @@ $(function() {
     // OK button
     $("#ok").click(function() {
         updateConfig(); // update the config based on the state of UI elements
-        saveConfig(closeWindow);
-        return false;
-    });
-
-    // Cancel button
-    $("#cancel").click(function() {
-        closeWindow();
+        saveConfig(function() {
+			alert("設定已儲存!");
+		});
         return false;
     });
 
     // load configurations and update the UI accordingly
     loadConfig();
 
-    // keep the server alive every 30 second
+    // keep the server alive every 20 second
     window.setInterval(function() {
         $.ajax({
             url: "/keep_alive",
             cache: false  // needs to turn off cache. otherwise the server will be requested only once.
         });
-    }, 5 * 1000);
+    }, 20 * 1000);
 });

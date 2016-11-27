@@ -28,30 +28,23 @@ from libchewing import ChewingContext
 from ctypes import c_uint, byref, create_string_buffer
 
 
-configDir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", "chewing")
-currentDir = os.path.dirname(__file__)
-dataDir = os.path.join(currentDir, "data")
-localDataDir = os.path.join(os.path.expandvars("%LOCALAPPDATA%"), "PIME", "chewing")
+config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", "chewing")
+current_dir = os.path.dirname(__file__)
+data_dir = os.path.join(current_dir, "data")
+localdata_dir = os.path.join(os.path.expandvars("%LOCALAPPDATA%"), "PIME", "chewing")
 
 COOKIE_ID = "chewing_config_token"
 
 SERVER_TIMEOUT = 120
-timeout_handler = None
 
 
 # syspath 參數可包含多個路徑，用 ; 分隔
 # 此處把 user 設定檔目錄插入到 system-wide 資料檔路徑前
 # 如此使用者變更設定後，可以比系統預設值有優先權
-search_paths = ";".join((chewingConfig.getConfigDir(), dataDir)).encode("UTF-8")
+search_paths = ";".join((chewingConfig.getConfigDir(), data_dir)).encode("UTF-8")
 user_phrase = chewingConfig.getUserPhrase().encode("UTF-8")
-print(search_paths, user_phrase)
+# print(search_paths, user_phrase)
 chewing_ctx = ChewingContext(syspath = search_paths, userpath = user_phrase)  # new libchewing context
-
-
-def quit_server():
-    # terminate the server process
-    tornado.ioloop.IOLoop.current().close()
-    sys.exit(0)
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -59,18 +52,16 @@ class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):  # override the login check
         return self.get_cookie(COOKIE_ID)
 
+    def prepare(self):  # called before every request
+        self.application.reset_timeout()  # reset the quit server timeout
+
 
 class KeepAliveHandler(BaseHandler):
 
-
     @tornado.web.authenticated
     def get(self):
-        global timeout_handler
-        loop = tornado.ioloop.IOLoop.current()
-        if timeout_handler:
-            loop.remove_timeout(timeout_handler)
-            timeout_handler = loop.call_later(SERVER_TIMEOUT, quit_server)
-        self.write("ok")
+        # the actual keep-alive is done inside BaseHandler.prepare()
+        self.write('{"return":true}')
 
 
 class ConfigHandler(BaseHandler):
@@ -92,7 +83,7 @@ class ConfigHandler(BaseHandler):
         data = tornado.escape.json_decode(self.request.body)
         print(data)
         # ensure the config dir exists
-        os.makedirs(configDir, exist_ok=True)
+        os.makedirs(config_dir, exist_ok=True)
         # write the config to files
         config = data.get("config", None)
         if config:
@@ -103,18 +94,12 @@ class ConfigHandler(BaseHandler):
         swkb = data.get("swkb", None)
         if swkb:
             self.save_file("swkb.dat", swkb)
-        self.write("ok")
-
-    @tornado.web.authenticated
-    def delete(self):  # quit
-        loop = tornado.ioloop.IOLoop.current()
-        loop.call_later(0, quit_server)
-        self.write("ok")
+        self.write('{"return":true}')
 
     def load_config(self):
         config = chewingConfig.toJson()  # the default settings
         try:
-            with open(os.path.join(configDir, "config.json"), "r", encoding="UTF-8") as f:
+            with open(os.path.join(config_dir, "config.json"), "r", encoding="UTF-8") as f:
                 # override default values with user config
                 config.update(json.load(f))
         except Exception as e:
@@ -123,18 +108,18 @@ class ConfigHandler(BaseHandler):
 
     def load_data(self, name):
         try:
-            userFile = os.path.join(configDir, name)
+            userFile = os.path.join(config_dir, name)
             with open(userFile, "r", encoding="UTF-8") as f:
                 return f.read()
         except FileNotFoundError:
-            with open(os.path.join(dataDir, name), "r", encoding="UTF-8") as f:
+            with open(os.path.join(data_dir, name), "r", encoding="UTF-8") as f:
                 return f.read()
         except Exception:
             return ""
 
     def save_file(self, filename, data):
         try:
-            with open(os.path.join(configDir, filename), "w", encoding="UTF-8") as f:
+            with open(os.path.join(config_dir, filename), "w", encoding="UTF-8") as f:
                 f.write(data)
                 if file == "symbols":
                     f.write("\n")
@@ -193,65 +178,84 @@ class LoginHandler(BaseHandler):
             self.redirect("/{}.html".format(page_name))
 
 
-def launch_browser(port, page_name, access_token):
-    user_html = """<html>
-<form id="auth" action="http://127.0.0.1:{PORT}/login/{PAGE_NAME}" method="POST">
-    <input type="hidden" name="token" value="{TOKEN}">
-</form>
-<script type="text/javascript">
-    document.getElementById("auth").submit();
-</script>
-</html>""".format(PORT=port, PAGE_NAME=page_name, TOKEN=access_token)
-    # use a local html file to send access token to our service via http POST for authentication.
-    os.makedirs(localDataDir, exist_ok=True)
-    filename = os.path.join(localDataDir, "launch_{}.html".format(page_name))
-    with open(filename, "w") as f:
-        f.write(user_html)
-        os.startfile(filename)
+
+class ConfigApp(tornado.web.Application):
+
+    def __init__(self):
+        # generate a new auth token using UUID
+        self.access_token = uuid.uuid4().hex
+        settings = {
+            "access_token": self.access_token, # our custom setting
+            "login_url": "/version",
+            "debug": True
+        }
+        handlers = [
+            (r"/(.*\.html)", tornado.web.StaticFileHandler, {"path": current_dir}),
+            (r"/((css|images|js)/.*)", tornado.web.StaticFileHandler, {"path": current_dir}),
+            (r"/(version.txt)", tornado.web.StaticFileHandler, {"path": os.path.relpath("../../../", current_dir)}),
+            (r"/config", ConfigHandler),  # main configuration handler
+            (r"/user_phrases", UserPhraseHandler),  # user phrase editor
+            (r"/keep_alive", KeepAliveHandler),  # keep the api server alive
+            (r"/login/(.*)", LoginHandler),  # authentication
+        ]
+        super().__init__(handlers, **settings)
+        self.timeout_handler = None
+        self.port = 0
+
+    def launch_browser(self, tool_name):
+        user_html = """<html>
+    <form id="auth" action="http://127.0.0.1:{PORT}/login/{PAGE_NAME}" method="POST">
+        <input type="hidden" name="token" value="{TOKEN}">
+    </form>
+    <script type="text/javascript">
+        document.getElementById("auth").submit();
+    </script>
+    </html>""".format(PORT=self.port, PAGE_NAME=tool_name, TOKEN=self.access_token)
+        # use a local html file to send access token to our service via http POST for authentication.
+        os.makedirs(localdata_dir, exist_ok=True)
+        filename = os.path.join(localdata_dir, "launch_{}.html".format(tool_name))
+        with open(filename, "w") as f:
+            f.write(user_html)
+            os.startfile(filename)
+
+    def run(self, tool_name):
+        # find a port number that's available
+        random.seed()
+        while True:
+            port = random.randint(1025, 65535)
+            try:
+                self.listen(port, "127.0.0.1")
+                break
+            except OSError:  # it's possible that the port we want to use is already in use
+                continue
+        self.port = port
+
+        self.launch_browser(tool_name)
+
+        # setup the main event loop
+        loop = tornado.ioloop.IOLoop.current()
+        self.timeout_handler = loop.call_later(SERVER_TIMEOUT, self.quit)
+        loop.start()
+
+    def reset_timeout(self):
+        loop = tornado.ioloop.IOLoop.current()
+        if self.timeout_handler:
+            loop.remove_timeout(self.timeout_handler)
+            self.timeout_handler = loop.call_later(SERVER_TIMEOUT, self.quit)
+
+    def quit(self):
+        # terminate the server process
+        tornado.ioloop.IOLoop.current().close()
+        sys.exit(0)
 
 
 def main():
-    # generate a new auth token using UUID
-    access_token = uuid.uuid4().hex
-    settings = {
-        "access_token": access_token, # our custom setting
-        "login_url": "/version",
-        "debug": True
-    }
- 
-    app = tornado.web.Application([
-        (r"/(.*\.html)", tornado.web.StaticFileHandler, {"path": currentDir}),
-        (r"/((css|images|js)/.*)", tornado.web.StaticFileHandler, {"path": currentDir}),
-        (r"/(version.txt)", tornado.web.StaticFileHandler, {"path": os.path.relpath("../../../", currentDir)}),
-        (r"/config", ConfigHandler),  # main configuration handler
-        (r"/user_phrases", UserPhraseHandler),  # user phrase editor
-        (r"/keep_alive", KeepAliveHandler),  # keep the api server alive
-        (r"/login/(.*)", LoginHandler),  # authentication
-    ], **settings)
-
-    # find a port number that's available
-    random.seed()
-    while True:
-        port = random.randint(1025, 65535)
-        try:
-            app.listen(port, "127.0.0.1")
-            break
-        except OSError:  # it's possible that the port we want to use is already in use
-            continue
-
-    # launch web browser
+    app = ConfigApp()
     if len(sys.argv) >= 2 and sys.argv[1] == "user_phrase_editor":
-        page_name = "user_phrase_editor"
+        tool_name = "user_phrase_editor"
     else:
-        page_name = "config_tool"
-
-    launch_browser(port, page_name, access_token)
-
-    # setup the main event loop
-    loop = tornado.ioloop.IOLoop.current()
-    global timeout_handler
-    timeout_handler = loop.call_later(SERVER_TIMEOUT, quit_server)
-    loop.start()
+        tool_name = "config_tool"
+    app.run(tool_name)
 
 
 if __name__ == "__main__":

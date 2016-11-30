@@ -21,6 +21,10 @@
 #include "PipeServer.h"
 
 int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hprev, LPSTR cmd, int show) {
+	// Disable all Windows error reporting message boxes since
+	// this will block user input. We want to handle the errors silently.
+	::SetErrorMode(SEM_NOOPENFILEERRORBOX|SEM_FAILCRITICALERRORS|SEM_NOGPFAULTERRORBOX|SEM_NOALIGNMENTFAULTEXCEPT);
+
 	PIME::PipeServer server;
 	return server.exec(cmd);
 }

@@ -47,19 +47,6 @@ PipeServer::PipeServer() :
 	// this can only be assigned once
 	assert(singleton_ == nullptr);
 	singleton_ = this;
-
-	// get the PIME directory
-	wchar_t topDirPathBuf[MAX_PATH];
-	DWORD len = GetModuleFileNameW(NULL, topDirPathBuf, MAX_PATH);
-	topDirPathBuf[len] = '\0';
-	wchar_t* p = wcsrchr(topDirPathBuf, '\\');
-	if (p)
-		*p = '\0';
-
-	topDirPath_ = topDirPathBuf;
-
-	// must set CWD to our dir. otherwise the backends won't launch.
-	::SetCurrentDirectoryW(topDirPath_.c_str());
 }
 
 PipeServer::~PipeServer() {
@@ -241,6 +228,23 @@ int PipeServer::exec(LPSTR cmd) {
 		terminateExistingLauncher();
 		return 0;
 	}
+
+	// get the PIME directory
+	wchar_t exeFilePathBuf[MAX_PATH];
+	DWORD len = GetModuleFileNameW(NULL, exeFilePathBuf, MAX_PATH);
+	exeFilePathBuf[len] = '\0';
+
+	// Ask Windows to restart our process when crashes happen.
+	RegisterApplicationRestart(exeFilePathBuf, 0);
+
+	// strip the filename part to get dir path
+	wchar_t* p = wcsrchr(exeFilePathBuf, '\\');
+	if (p)
+		*p = '\0';
+	topDirPath_ = exeFilePathBuf;
+
+	// must set CWD to our dir. otherwise the backends won't launch.
+	::SetCurrentDirectoryW(topDirPath_.c_str());
 
 	// this is the first instance
 	BackendServer::init(topDirPath_);

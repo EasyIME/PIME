@@ -1,17 +1,22 @@
 function loadUserPhrases() {
+    // Loading effect
+    $("#reload .ui-button-text").html("載入中...");
+    $("#reload").addClass("ui-state-hover");
+    
     $.get("/user_phrases", function(data, status) {
         if(data.data != undefined) {
             var user_phrases = data.data;
-            var rows = [];
+            var table_content = "";
             for(var i = 0; i < user_phrases.length; ++i) {
-                var item = user_phrases[i];
-                var row = '<tr><td><input type="checkbox">' + item.phrase + '</td><td>' + item.bopomofo + '</td></tr>';
-                rows.push(row);
-            }
-            var table_content = rows.join("\n");
-            $("#table_content").html(table_content);
+                var item = user_phrases[i];                                
+                table_content += '<tr><td><input type="checkbox" data-phrase="' + item.phrase + '" data-bopomofo="' + item.bopomofo + '">' + item.phrase + '</td><td>' + item.bopomofo + '</td></tr>';                
+            }                        
+            $("#table_content").html(table_content);            
         }
-    }, "json");
+        
+        $("#reload .ui-button-text").html("重新載入");
+        $("#reload").removeClass("ui-state-hover");
+    }, "json");    
 }
 
 // called when the OK button of the "add phrase" dialog is clicked
@@ -41,7 +46,12 @@ function onAddPhrase() {
 }
 
 function onRemovePhrase() {
-    if(!confirm("確定刪除? (無法復原)"))
+    var confirm_text = "確定刪除以下詞彙？（此動作無法復原）";
+    $("#table_content input[type=checkbox]:checked").each(function(idx, item) {        
+        confirm_text += "\n- " + $(item).data('phrase');       
+    });
+    
+    if(!confirm(confirm_text))
         return;
 
     var phrases = [];
@@ -61,7 +71,10 @@ function onRemovePhrase() {
         contentType: "application/json",
         data: JSON.stringify(data),
         dataType: "json",
-        success: loadUserPhrases
+        success: function(){
+            alert("刪除詞彙成功！");
+            loadUserPhrases();
+        }
     });
 }
 

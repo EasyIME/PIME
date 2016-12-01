@@ -9,13 +9,20 @@ function loadUserPhrases() {
             var table_content = "";
             for(var i = 0; i < user_phrases.length; ++i) {
                 var item = user_phrases[i];                                
-                table_content += '<tr><td><input type="checkbox" data-phrase="' + item.phrase + '" data-bopomofo="' + item.bopomofo + '">' + item.phrase + '</td><td>' + item.bopomofo + '</td></tr>';                
+                table_content += '<tr><td><input type="checkbox" data-phrase="' + item.phrase + '" data-bopomofo="' + item.bopomofo + '">' + item.phrase + '</td><td>' + item.bopomofo + '</td><td><button class="remove_phrase">刪除「' + item.phrase + '」</button></td></tr>';                
             }                        
             $("#table_content").html(table_content);            
         }
         
+        // Disable loading effect
         $("#reload .ui-button-text").html("重新載入");
         $("#reload").removeClass("ui-state-hover");
+        
+        // Register remove phrase button click event
+        $(".remove_phrase").click(function(){
+            var delete_phrase = {phrase: $(this).parent().prev().prev().children().data("phrase"), bopomofo: $(this).parent().prev().prev().children().data("bopomofo")};
+            onRemovePhrase(delete_phrase);
+        })
     }, "json");    
 }
 
@@ -24,12 +31,10 @@ function onAddPhrase() {
     var phrase = $("#phrase_input").val();
     var bopomofo = $("#bopomofo_input").val();
     var data = {
-        add: [
-            {
-                phrase: phrase,
-                bopomofo: bopomofo
-            }
-        ]
+        add: [{
+            phrase: phrase,
+            bopomofo: bopomofo
+        }]
     }
     $.ajax({
         url: "/user_phrases",
@@ -45,31 +50,36 @@ function onAddPhrase() {
     });
 }
 
-function onRemovePhrase() {
-    var confirm_text = "確定刪除以下詞彙？（此動作無法復原）";
-    $("#table_content input[type=checkbox]:checked").each(function(idx, item) {        
-        confirm_text += "\n- " + $(item).data('phrase');       
-    });
-    
-    if(!confirm(confirm_text))
-        return;
+// Execute remove phrase
+function onRemovePhrase(delete_phrase) {         
+    var phrases = [];           
+    if (delete_phrase.phrase == null) {        
+        if ($("#table_content input[type=checkbox]:checked").length == 0)
+            return;
+        
+        var confirm_text = "確定刪除以下詞彙？（此動作無法復原）";
+        $("#table_content input[type=checkbox]:checked").each(function(idx, item) {        
+            confirm_text += "\n- " + $(item).data("phrase");
+            phrases.push({
+                phrase: $(item).data("phrase"),  // 詞彙
+                bopomofo: $(item).data("bopomofo") // 注音
+            });
+        });                               
+    } else {
+        var confirm_text = "確定刪除詞彙「" + delete_phrase.phrase + "」？（此動作無法復原）";
+        phrases.push(delete_phrase);
+        console.log(phrases);
+       
+    }
 
-    var phrases = [];
-    $("#table_content input[type=checkbox]:checked").each(function(idx, item) {
-        var phrase_td = $(item).parent();
-        phrases.push({
-            phrase: phrase_td.text(),  // 詞彙
-            bopomofo: phrase_td.next().text() // 注音
-        });
-    });
-    var data = {
-        remove: phrases
-    };
+    if (!confirm(confirm_text))
+        return;        
+    
     $.ajax({
         url: "/user_phrases",
         method: "POST",
         contentType: "application/json",
-        data: JSON.stringify(data),
+        data: JSON.stringify({remove: phrases}),
         dataType: "json",
         success: function(){
             alert("刪除詞彙成功！");
@@ -110,12 +120,12 @@ $(function() {
         $("#bopomofo_input").val("");
         $("#add_dialog").dialog("open");
     });
-    $("#remove").click(onRemovePhrase);
+    $("#remove").click(onRemovePhrase);    
     $("#reload").click(loadUserPhrases);
     // $("#import").click(onImportPhrase);
     // $("#export").click(onExportPhrase);
 
-    loadUserPhrases();
+    loadUserPhrases();       
     
     // keep the server alive every 20 second
     window.setInterval(function() {

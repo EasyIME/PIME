@@ -14,6 +14,8 @@ function loadUserPhrases() {
             $("#table_content").html(table_content);            
         }
         
+        $("#phrase_count").html("共&nbsp;" + user_phrases.length + "&nbsp;個詞彙"); 
+        
         // Disable loading effect
         $("#reload .ui-button-text").html("重新載入");
         $("#reload").removeClass("ui-state-hover");
@@ -22,7 +24,12 @@ function loadUserPhrases() {
         $(".remove_phrase").click(function(){
             var delete_phrase = {phrase: $(this).parent().prev().prev().children().data("phrase"), bopomofo: $(this).parent().prev().prev().children().data("bopomofo")};
             onRemovePhrase(delete_phrase);
-        })
+        });
+        
+        // Register select phrase checked effect
+        $("#table_content input").click(function(){            
+            $(this).parent().parent().toggleClass("phrase_selected");
+        });
     }, "json");    
 }
 
@@ -67,9 +74,7 @@ function onRemovePhrase(delete_phrase) {
         });                               
     } else {
         var confirm_text = "確定刪除詞彙「" + delete_phrase.phrase + "」？（此動作無法復原）";
-        phrases.push(delete_phrase);
-        console.log(phrases);
-       
+        phrases.push(delete_phrase);               
     }
 
     if (!confirm(confirm_text))

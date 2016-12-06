@@ -2,42 +2,42 @@ body {
     line-height: 150%;
 }
 
-#symbols, #ez_symbols {
-    width: 100%;
+#symbols, #ez_symbols, #ui_page {
     min-height: 320px;
+    width: 100%;
 }
 
 #buttons {
+    float: right;
     margin: 4px;
     position: relative;
-    float: right;
 }
 
 #ui_page {
-    height:auto !important;
+    height: auto !important;
 }
 
-#selExample{
-	line-height: 110%;
-	border-top: 1px solid grey;
-	border-left: 1px solid grey;
-	border-right: 2px solid black;
-	border-bottom: 1px solid black;
-	background-color: white;
-	padding: 4px;
-    min-width: 2.3em;
+#selExample {
+    background-color: white;
+    border-bottom: 1px solid black;
+    border-left: 1px solid grey;
+    border-right: 2px solid black;
+    border-top: 1px solid grey;
+    display: inline-block;
     font-family: serif;
-	display: inline-block;
-	margin-top: 5px;
+    line-height: 110%;
+    margin-top: 5px;
+    min-width: 2.3em;
+    padding: 4px;
 }
 
 #selExample span {
-	color:blue;
+    color: blue;
 }
 
 #top_box {
-    width: 60%;
     margin: auto;
+    width: 60%;
 }
 
 #phrase_table {
@@ -45,11 +45,15 @@ body {
 }
 
 #phrase_table th, td {
+    border-bottom: 1px solid #ddd;
     padding: 8px;
     text-align: left;
-    border-bottom: 1px solid #ddd;
 }
 
-#phrase_table tr:hover {
-    background-color: #f5f5f5
+#table_content tr:hover, .phrase_selected {
+    background-color: #dce0e8;
+}
+
+.phrase_selected {
+    font-weight: bold;
 }

@@ -6,52 +6,51 @@
         <title>使用者辭庫編輯 - 新酷音輸入法</title>
         <link rel="shortcut icon" href="images/logo.ico" type="image/vnd.microsoft.icon">
 
-        <link rel="stylesheet" type="text/css" href="js/jquery-ui-1.11.4/jquery-ui.min.css">
-        <link rel="stylesheet" type="text/css" href="js/jquery-ui-1.11.4/jquery-ui.theme.min.css">
-        <link rel="stylesheet" type="text/css" href="css/config.css">
+        <link rel="stylesheet" href="js/jquery-ui-1.11.4/jquery-ui.min.css">
+        <link rel="stylesheet" href="js/jquery-ui-1.11.4/jquery-ui.theme.min.css">
+        <link rel="stylesheet" href="css/config.css">
 
-        <script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
-        <script type="text/javascript" src="js/jquery-ui-1.11.4/jquery-ui.min.js"></script>
+        <script src="js/jquery-1.12.0.min.js"></script>
+        <script src="js/jquery-ui-1.11.4/jquery-ui.min.js"></script>
 
-        <script type="text/javascript" src="js/user_phrase.js"></script>
+        <script src="js/user_phrase.js"></script>
     </head>
+    
     <body>
+        <div id="top_box">
+            <strong>注意事項：</strong>
+            <ul>
+                <li>此處所做修改都是立即套用，無法取消，請謹慎使用。</li>
+                <li>目前還在測試階段，缺少對無效輸入的錯誤檢查。若加入新詞失敗，通常是輸入錯誤，或內建辭庫已有此詞彙</li>
+                <li>本程式介面很醜，但是完全是 html5 + Javascript 寫成 (backend API 為 python)。如果您是懂 javascript 前端的 open source 開發者，歡迎貢獻 patch 改進</li>
+                <li>大量匯入/匯出功能目前尚未實作，但後端 API 已經完成，只要有人協助接上前端就能用</li>
+            </ul>
+            <hr />
 
-    <div id="top_box">
-        <strong>注意事項：</strong>
-        <ul>
-            <li>此處所做修改都是立即套用，無法取消，請謹慎使用。</li>
-            <li>目前還在測試階段，缺少對無效輸入的錯誤檢查。若加入新詞失敗，通常是輸入錯誤，或內建辭庫已有此詞彙</li>
-            <li>本程式介面很醜，但是完全是 html5 + Javascript 寫成 (backend API 為 python)。如果您是懂 javascript 前端的 open source 開發者，歡迎貢獻 patch 改進</li>
-            <li>大量匯入/匯出功能目前尚未實作，但後端 API 已經完成，只要有人協助接上前端就能用</li>
-        </ul>
-        <hr />
+            <div id="buttons">
+                <button id="add">新增自訂詞彙</button>
+                <button id="remove">刪除選取詞彙</button>
+                <button id="reload">重新載入</button>
+                <button id="import" disabled>從檔案匯入</button>
+                <button id="export" disabled>匯出辭庫</button>
+            </div>
 
-        <div id="buttons">
-            <button id="add">新增自訂詞彙</button>
-            <button id="remove">刪除選取詞彙</button>
-            <button id="reload">重新載入</button>
-            <button id="import" disabled>從檔案匯入</button>
-            <button id="export" disabled>匯出辭庫</button>
+            <table id="phrase_table">
+                <thead>
+                    <tr>
+                        <th>自訂詞彙</th>
+                        <th>注音符號</th>
+                        <th id="phrase_count"></th>
+                    </tr>
+                </thead>
+                <tbody id="table_content" />
+            </table>
+
+            <!-- Add new phrase dialog -->
+            <div id="add_dialog" title="新增自訂詞彙">
+                請輸入字詞: <input type="text" id="phrase_input" /><br />
+                對應的注音: <input type="text" id="bopomofo_input" />
+            </div>
         </div>
-
-        <table id="phrase_table">
-            <thead>
-                <tr>
-                    <th>自訂詞彙</th>
-                    <th>注音符號</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody id="table_content" />
-        </table>
-
-        <!-- Add new phrase dialog -->
-        <div id="add_dialog" title="新增自訂詞彙">
-            請輸入字詞: <input type="text" id="phrase_input" /><br />
-            對應的注音: <input type="text" id="bopomofo_input" />
-        </div>
-    </div>
-
     </body>
 </html>

@@ -12,6 +12,25 @@ function loadConfig() {
 }
 
 function saveConfig(callbackFunc) {
+    // Check symbols format
+    var symbols_array = $("#symbols").val().split("\n");
+    for (var i = 0; i < symbols_array.length; i++) {
+        if (symbols_array[i].length > 1 && symbols_array[i].search("=") == -1) {
+            $("#tabs").tabs( "option", "active", 3);
+            $("#symbols").blur();
+            
+            // Count select range          
+            var selectionStart = 1;
+            for (var j = 0; j < i; j++) {
+                selectionStart += symbols_array[j].length;
+            }
+            $("#symbols").prop("selectionStart", selectionStart);            
+            $("#symbols").prop("selectionEnd",  selectionStart + symbols_array[i].length);            
+            alert("特殊符號設定第 " + (i + 1) + " 行格式錯誤\n單行不能超過一個字元，或是沒有'='符號區隔");
+            return;
+        }
+    }    
+    
     var data = {
         "config": chewingConfig
     }

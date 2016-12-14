@@ -41,7 +41,7 @@ class ChewingConfig:
         self.candPerRow = 3
         self.defaultEnglish = False
         self.defaultFullSpace = False
-        self.showCandWithSpaceKey = False
+        self.spaceKeyAction = 1
         self.switchLangWithShift = True
         self.outputSimpChinese = False
         self.addPhraseForward = True

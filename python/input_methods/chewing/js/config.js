@@ -61,18 +61,18 @@ function updateConfig() {
         var item = $(this);
         var id = item.attr("id");
         switch(item.attr("type")) {
-        case "checkbox":
-            chewingConfig[id] = item.prop("checked");
-            break;
-        case "text":
-            var val = item.val();
-            if(typeof chewingConfig[id] == "number") {
-                var intVal = parseInt(val);
-                if(!isNaN(intVal))
-                    val = intVal;
-            }
-            chewingConfig[id] = val;
-            break;
+            case "checkbox":
+                chewingConfig[id] = item.prop("checked");
+                break;
+            case "text":
+                var val = item.val();
+                if(typeof chewingConfig[id] == "number") {
+                    var intVal = parseInt(val);
+                    if(!isNaN(intVal))
+                        val = intVal;
+                }
+                chewingConfig[id] = val;
+                break;
         }
     });
 

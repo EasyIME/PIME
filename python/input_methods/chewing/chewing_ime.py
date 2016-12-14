@@ -125,8 +125,8 @@ class ChewingTextService(TextService):
         # 鍵盤 layout 種類
         chewingContext.set_KBType(cfg.keyboardLayout);
 
-        # 按下 Space 鍵開啟選字視窗
-        chewingContext.set_spaceAsSelection(cfg.showCandWithSpaceKey);
+        # Space 鍵行為
+        chewingContext.set_spaceAsSelection(cfg.spaceKeyAction);
 
         # 設定 UI 外觀
         self.customizeUI(candFontName = 'MingLiu',

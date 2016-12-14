@@ -57,21 +57,17 @@ function updateConfig() {
     chewingConfig = {};
 
     // get values from checkboxes ans text
-    $("input").each(function(index, elem) {
-        var item = $(this);
-        var id = item.attr("id");
-        switch(item.attr("type")) {
+    $("input").each(function(index, inputItem) {        
+        switch(inputItem.type) {
             case "checkbox":
-                chewingConfig[id] = item.prop("checked");
+                chewingConfig[inputItem.name] = inputItem.checked;
                 break;
             case "text":
-                var val = item.val();
-                if(typeof chewingConfig[id] == "number") {
-                    var intVal = parseInt(val);
-                    if(!isNaN(intVal))
-                        val = intVal;
-                }
-                chewingConfig[id] = val;
+                var inputValue = inputItem.value;      
+                if($.isNumeric(inputValue)) {
+                    inputValue = parseInt(inputValue);
+                } 
+                chewingConfig[inputItem.name] = inputValue;                                
                 break;
         }
     });

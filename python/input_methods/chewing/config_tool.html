@@ -42,18 +42,17 @@
                 <input type="checkbox" id="upperCaseWithShift" name="upperCaseWithShift" />
                 <label for="upperCaseWithShift">按住 Shift 輸入大寫英文字母</label><br>
 
-                <input type="checkbox" id="cursorCandList" name="cursorCandList" />
-                <label for="cursorCandList">使用方向鍵移動游標選字</label><br>
-
-                <input type="checkbox" id="showCandWithSpaceKey" name="showCandWithSpaceKey" />
-                <label for="showCandWithSpaceKey">按空白鍵叫出選字視窗</label><br>
-
                 <input type="checkbox" id="advanceAfterSelection" name="advanceAfterSelection" />
                 <label for="advanceAfterSelection">選字完畢自動跳到下一個字</label><br>
+                
+                <input type="checkbox" id="cursorCandList" name="cursorCandList" />
+                <label for="cursorCandList">使用方向鍵移動游標選字</label><br>
+                
+                <label for="spaceKeyAction">◆ 使用空白鍵：</label>
+                <select name="spaceKeyAction" id="spaceKeyAction"></select><br>               
 
-                <label for="selKeyType">選字鍵: </label>
-                <select name="selKeyType" id="selKeyType">
-                </select><br>
+                <label for="selKeyType">◆ 設定選字鍵：</label>
+                <select name="selKeyType" id="selKeyType"></select><br>
 
                 <input type="checkbox" id="defaultFullSpace" name="defaultFullSpace" />
                 <label for="defaultFullSpace">預設以全形模式啟動</label><br>
@@ -69,13 +68,13 @@
             </div>
 
             <div id="ui_page">
-                <label for="candPerRow">每列顯示候選字個數: </label>
+                <label for="candPerRow">每列顯示候選字個數：</label>
                 <input type="text" id="candPerRow" name="candPerRow" /><br>
 
-                <label for="candPerPage">每頁顯示候選字個數: </label>
+                <label for="candPerPage">每頁顯示候選字個數：</label>
                 <input type="text" id="candPerPage" name="candPerPage" /><br>
 
-                <label for="fontSize">選字及訊息視窗文字大小: </label>
+                <label for="fontSize">選字及訊息視窗文字大小：</label>
                 <input type="text" id="fontSize" name="fontSize" /><br>
 
                 <div id="selExample">			

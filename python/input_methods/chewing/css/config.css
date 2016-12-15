@@ -3,14 +3,14 @@ body {
 }
 
 #symbols, #ez_symbols, #ui_page {
-    min-height: 320px;
     width: 100%;
+    min-height: 320px;
 }
 
 #buttons {
+    position: relative;
     float: right;
     margin: 4px;
-    position: relative;
 }
 
 #ui_page {
@@ -18,17 +18,17 @@ body {
 }
 
 #selExample {
-    background-color: white;
-    border-bottom: 1px solid black;
-    border-left: 1px solid grey;
-    border-right: 2px solid black;
-    border-top: 1px solid grey;
-    display: inline-block;
     font-family: serif;
     line-height: 110%;
-    margin-top: 5px;
+    display: inline-block;
     min-width: 2.3em;
+    margin-top: 5px;
     padding: 4px;
+    border-top: 1px solid grey;
+    border-right: 2px solid black;
+    border-bottom: 1px solid black;
+    border-left: 1px solid grey;
+    background-color: white;
 }
 
 #selExample span {
@@ -36,8 +36,8 @@ body {
 }
 
 #top_box {
-    margin: auto;
     width: 60%;
+    margin: auto;
 }
 
 #phrase_table {
@@ -45,9 +45,9 @@ body {
 }
 
 #phrase_table th, td {
-    border-bottom: 1px solid #ddd;
     padding: 8px;
     text-align: left;
+    border-bottom: 1px solid #dddddd;
 }
 
 #table_content tr:hover, .phrase_selected {

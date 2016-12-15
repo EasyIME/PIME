@@ -276,7 +276,7 @@ int PipeServer::exec(LPSTR cmd) {
 
 			// handle the newly connected client
 			if (client_pipe != INVALID_HANDLE_VALUE) {
-				ClientInfo* client = new ClientInfo(client_pipe);
+				auto client = std::make_shared<ClientInfo>(client_pipe);
 				clients_[client_pipe] = client;
 				readClient(client);  // read data from the client asynchronously
 			}
@@ -306,14 +306,14 @@ int PipeServer::exec(LPSTR cmd) {
 	return 0;
 }
 
-void PipeServer::readClient(ClientInfo* client) {
+void PipeServer::readClient(const shared_ptr<ClientInfo>& client) {
 	AsyncRequest* req = new AsyncRequest(this, client, AsyncRequest::ASYNC_READ, 1024, nullptr);
-	ReadFileEx(client->pipe_, req->buf_, req->bufSize_, (OVERLAPPED*)req, &_onFinishedCallback);
+	ReadFileEx(client->pipe_, req->buf_.get(), req->bufSize_, (OVERLAPPED*)req, &_onFinishedCallback);
 }
 
-void PipeServer::writeClient(ClientInfo* client, const char* data, int len) {
+void PipeServer::writeClient(const shared_ptr<ClientInfo>& client, const char* data, int len) {
 	AsyncRequest* req = new AsyncRequest(this, client, AsyncRequest::ASYNC_WRITE, len, data);
-	WriteFileEx(client->pipe_, req->buf_, req->bufSize_, (OVERLAPPED*)req, &_onFinishedCallback);
+	WriteFileEx(client->pipe_, req->buf_.get(), req->bufSize_, (OVERLAPPED*)req, &_onFinishedCallback);
 }
 
 // static
@@ -325,31 +325,41 @@ void CALLBACK PipeServer::_onFinishedCallback(DWORD err, DWORD numBytes, OVERLAP
 }
 
 void PipeServer::onReadFinished(AsyncRequest* req) {
+	auto client = req->client_.lock();
+	if (!client)
+		return;
 	if (req->numBytes_ > 0) {
-		req->client_->readBuf_.append(req->buf_, req->numBytes_);
+		client->readBuf_.append(req->buf_.get(), req->numBytes_);
 	}
 
 	switch (req->errCode_) {
 	case 0: // finish of this message
 		// TODO: call the backend to handle the message
-		handleClientMessage(req->client_);
+		handleClientMessage(client);
 		break;
 	case ERROR_MORE_DATA: // need further reads to get the whole message
-		readClient(req->client_);
+		readClient(client);
 		break;
 	case ERROR_IO_PENDING:
 		break;
 	default: // the pipe is broken, disconnect!
-		closeClient(req->client_);
+		closeClient(client);
 	}
 }
 
 
 void PipeServer::onWriteFinished(AsyncRequest* req) {
-	readClient(req->client_);  // read more data from this client
+	auto client = req->client_.lock();
+	if (!client)
+		return;
+	if (req->errCode_ != 0) { // errors
+		closeClient(client);
+		return;
+	}
+	readClient(client);  // read more data from this client
 }
 
-void PipeServer::handleClientMessage(ClientInfo* client) {
+void PipeServer::handleClientMessage(const shared_ptr<ClientInfo>& client) {
 	// special handling, asked for quitting PIMELauncher.
 	if (client->readBuf_ == "quit") {
 		quit();
@@ -390,7 +400,7 @@ void PipeServer::handleClientMessage(ClientInfo* client) {
 	writeClient(client, response.c_str(), response.length());
 }
 
-void PipeServer::closeClient(ClientInfo* client) {
+void PipeServer::closeClient(const shared_ptr<ClientInfo>& client) {
 	if (client->backend_ != nullptr) {
 		if (!client->clientId_.empty()) {
 			client->backend_->removeClient(client->clientId_);
@@ -401,8 +411,6 @@ void PipeServer::closeClient(ClientInfo* client) {
 	clients_.erase(client->pipe_);
 	if (client->pipe_ != INVALID_HANDLE_VALUE)
 		::CloseHandle(client->pipe_);
-	// FIXME: if the client has some pending requests, how to cancel them?
-	delete client;
 }
 
 } // namespace PIME

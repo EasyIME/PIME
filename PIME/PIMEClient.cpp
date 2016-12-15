@@ -686,8 +686,8 @@ HANDLE Client::connectPipe(const wchar_t* pipeName) {
 			hasErrors = true; // otherwise, pipe creation fails
 			break;
 		}
-		// All pipe instances are busy, so wait for 10 seconds.
-		if (!WaitNamedPipe(pipeName, 10000)) {
+		// All pipe instances are busy, so wait for 2 seconds.
+		if (!WaitNamedPipe(pipeName, 2000)) {
 			hasErrors = true;
 			break;
 		}
@@ -761,7 +761,7 @@ wstring Client::getPipeName(const wchar_t* base_name) {
 	if (len <= 0)
 		return false;
 	// add username to the pipe path so it won't clash with the other users' pipes
-	unique_ptr<wchar_t> username(new wchar_t[len]);
+	unique_ptr<wchar_t[]> username(new wchar_t[len]);
 	if (!::GetUserNameW(username.get(), &len))
 		return false;
 	pipeName += username.get();

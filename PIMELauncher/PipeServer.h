@@ -30,8 +30,9 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include "BackendServer.h"
 #include <queue>
+#include <memory>
+#include "BackendServer.h"
 
 
 namespace PIME {
@@ -61,15 +62,15 @@ struct AsyncRequest {
 
 	OVERLAPPED overlapped_;
 	PipeServer* server_;
-	ClientInfo*  client_;
+	std::weak_ptr<ClientInfo>  client_;
 	Type type_;
-	char *buf_;
+	std::unique_ptr<char[]> buf_;
 	int bufSize_;
 	DWORD errCode_;
 	DWORD numBytes_;
 	bool success_;
 
-	AsyncRequest(PipeServer* server, ClientInfo* client, Type type, int bufSize, const char* bufContent = nullptr) :
+	AsyncRequest(PipeServer* server, const std::shared_ptr<ClientInfo>& client, Type type, int bufSize, const char* bufContent = nullptr) :
 		server_(server),
 		client_(client),
 		type_(type),
@@ -79,14 +80,12 @@ struct AsyncRequest {
 		numBytes_(0),
 		success_(false) {
 		memset(&overlapped_, 0, sizeof(OVERLAPPED));
-		buf_ = new char[bufSize];
 		if (bufContent != nullptr) {
-			memcpy(buf_, bufContent, bufSize);
+			memcpy(buf_.get(), bufContent, bufSize);
 		}
 	}
 
 	~AsyncRequest() {
-		delete[]buf_;
 	}
 };
 
@@ -104,9 +103,9 @@ public:
 
 	void quit();
 
-	void readClient(ClientInfo* client);
-	void writeClient(ClientInfo* client, const char* data, int len);
-	void closeClient(ClientInfo* client);
+	void readClient(const std::shared_ptr<ClientInfo>& client);
+	void writeClient(const std::shared_ptr<ClientInfo>& client, const char* data, int len);
+	void closeClient(const std::shared_ptr<ClientInfo>& client);
 
 private:
 	static std::string getPipeName(const char* base_name);
@@ -124,7 +123,7 @@ private:
 
 	void onWriteFinished(AsyncRequest* req);
 
-	void handleClientMessage(ClientInfo* client);
+	void handleClientMessage(const std::shared_ptr<ClientInfo>& client);
 
 private:
 	// security attribute stuff for creating the server pipe
@@ -141,7 +140,7 @@ private:
 	std::wstring topDirPath_;
 	bool quitExistingLauncher_;
 	static PipeServer* singleton_;
-	std::unordered_map<HANDLE, ClientInfo*> clients_;
+	std::unordered_map<HANDLE, std::shared_ptr<ClientInfo>> clients_;
 	std::queue<AsyncRequest*> finishedRequests_;
 };
 

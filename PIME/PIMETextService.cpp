@@ -46,8 +46,7 @@ TextService::TextService(ImeModule* module):
 	selKeys_(L"1234567890"),
 	candUseCursor_(false),
 	candFontSize_(12),
-	imeModeIcon_(nullptr),
-	currentLangProfile_(IID_NULL) {
+	imeModeIcon_(nullptr) {
 
 	// font for candidate and mesasge windows
 	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
@@ -59,8 +58,9 @@ TextService::TextService(ImeModule* module):
 }
 
 TextService::~TextService(void) {
-	if(client_)
-		delete client_;
+	if (client_) {
+		closeClient();
+	}
 
 	if(popupMenu_)
 		::DestroyMenu(popupMenu_);
@@ -91,11 +91,7 @@ void TextService::onActivate() {
 // virtual
 void TextService::onDeactivate() {
 	if(client_) {
-		// Windows does not deactivate current language profile before
-		// deactivating the whole text service. Let's do it ourselves.
-		if (!::IsEqualIID(currentLangProfile_, IID_NULL)) {
-			onLangProfileDeactivated(currentLangProfile_);
-		}
+		closeClient();
 	}
 }
 
@@ -225,52 +221,30 @@ void TextService::onLangProfileActivated(REFIID lang) {
 	// activating the new one. So here we do it by ourselves.
 	// If a new profile is activated, but there is an old one remaining active,
 	// deactive it first.
-	if (!::IsEqualIID(currentLangProfile_, IID_NULL)) {
-		// deactivate the current profile
-		onLangProfileDeactivated(currentLangProfile_);
-	}
-
-	if (client_ != nullptr) {
-		return;
-	}
+	if (client_ != nullptr)
+		closeClient();
 
 	// create a new client connection to the input method server for the language profile
-	if (!client_) {
-		client_ = new Client(this, lang);
-	}
+	client_ = std::make_unique<Client>(this, lang);
 	client_->onActivate();
 
 	if (imeModeIcon_) // windows 8 IME mode icon
 		imeModeIcon_->setEnabled(isKeyboardOpened());
-	currentLangProfile_ = lang;
 }
 
 void TextService::onLangProfileDeactivated(REFIID lang) {
-	if (::IsEqualIID(lang, currentLangProfile_)) {
-		// deactive currently active language profile
-		if (client_) {
-			// disconnect from the server
-			client_->onDeactivate();
-			currentLangProfile_ = IID_NULL;
-			delete client_;
-			client_ = NULL;
-			// detroy UI resources
-			hideMessage();
-			hideCandidates();
-		}
-		currentLangProfile_ = IID_NULL;
-	}
+	closeClient();
 }
 
 void TextService::createCandidateWindow(Ime::EditSession* session) {
 	if (!candidateWindow_) {
-		candidateWindow_ = new Ime::CandidateWindow(this, session);
+		candidateWindow_ = make_unique<Ime::CandidateWindow>(this, session);
 		candidateWindow_->setFont(font_);
 		Ime::ComQIPtr<ITfUIElementMgr> elementMgr = threadMgr();
 		if (elementMgr) {
 			BOOL pbShow = false;
 			if (validCandidateListElementId_ =
-				(elementMgr->BeginUIElement(candidateWindow_, &pbShow, &candidateListElementId_) == S_OK)) {
+				(elementMgr->BeginUIElement(candidateWindow_.get(), &pbShow, &candidateListElementId_) == S_OK)) {
 				candidateWindow_->Show(pbShow);
 			}
 		}
@@ -354,7 +328,6 @@ void TextService::showCandidates(Ime::EditSession* session) {
 
 // hide candidate list window
 void TextService::hideCandidates() {
-	assert(candidateWindow_);
 	if (validCandidateListElementId_) {
 		Ime::ComQIPtr<ITfUIElementMgr> elementMgr = threadMgr();
 		if (elementMgr) {
@@ -375,7 +348,7 @@ void TextService::showMessage(Ime::EditSession* session, std::wstring message, i
 	// remove previous message if there's any
 	hideMessage();
 	// FIXME: reuse the window whenever possible
-	messageWindow_ = new Ime::MessageWindow(this, session);
+	messageWindow_ = make_unique<Ime::MessageWindow>(this, session);
 	messageWindow_->setFont(font_);
 	messageWindow_->setText(message);
 	
@@ -399,8 +372,7 @@ void TextService::hideMessage() {
 		messageTimerId_ = 0;
 	}
 	if(messageWindow_) {
-		delete messageWindow_;
-		messageWindow_ = NULL;
+		messageWindow_ = nullptr;
 	}
 }
 
@@ -433,4 +405,17 @@ int TextService::candFontHeight() {
 	}
 	return candFontHeight_;
 }
+
+void TextService::closeClient() {
+	// deactive currently active language profile
+	if (client_) {
+		// disconnect from the server
+		client_->onDeactivate();
+		client_ = nullptr;
+		// detroy UI resources
+		hideMessage();
+		hideCandidates();
+	}
+}
+
 } // namespace PIME

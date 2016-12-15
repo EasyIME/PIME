@@ -28,6 +28,8 @@
 #include "PIMEImeModule.h"
 #include <sys/types.h>
 #include "PIMEClient.h"
+#include <memory>
+
 
 namespace PIME {
 
@@ -151,13 +153,15 @@ private:
 	void createCandidateWindow(Ime::EditSession* session);
 	int candFontHeight();
 
+	void closeClient();
+
 private:
 	bool validCandidateListElementId_;
 	DWORD candidateListElementId_;
-	Ime::CandidateWindow* candidateWindow_;
+	std::unique_ptr<Ime::CandidateWindow> candidateWindow_;
 	bool showingCandidates_;
 	std::vector<std::wstring> candidates_; // current candidate list
-	Ime::MessageWindow* messageWindow_;
+	std::unique_ptr<Ime::MessageWindow> messageWindow_;
 	UINT messageTimerId_;
 	HFONT font_;
 	bool updateFont_;
@@ -167,10 +171,10 @@ private:
 	std::wstring candFontName_;
 	int candFontSize_;
 
-	Ime::LangBarButton* imeModeIcon_; // IME mode icon, a special language button (Windows 8 only)
+	std::unique_ptr<Ime::LangBarButton> imeModeIcon_; // IME mode icon, a special language button (Windows 8 only)
 	HMENU popupMenu_;
 
-	Client* client_; // connection client
+	std::unique_ptr<Client> client_; // connection client
 	GUID currentLangProfile_;
 };
 

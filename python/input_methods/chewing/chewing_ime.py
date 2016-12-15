@@ -664,6 +664,7 @@ class ChewingTextService(TextService):
             # 若鍵盤關閉，我們需要把 widnows 8 mode icon 設定為 disabled
             self.changeButton("windows-mode-icon", enable=opened)
         # FIXME: 是否需要同時 disable 其他語言列按鈕？
+        self.updateLangButtons()
 
     # 當中文編輯結束時會被呼叫。若中文編輯不是正常結束，而是因為使用者
     # 切換到其他應用程式或其他原因，導致我們的輸入法被強制關閉，此時

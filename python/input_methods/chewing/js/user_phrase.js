@@ -1,6 +1,6 @@
 function loadUserPhrases() {
     // Loading effect
-    $("#reload .ui-button-text").html("載入中...");
+    $("#reload").html("載入中...");
     $("#reload").addClass("ui-state-hover");
 
     $.get("/user_phrases", function(data, status) {
@@ -16,7 +16,7 @@ function loadUserPhrases() {
         $("#phrase_count").html("共&nbsp;" + user_phrases.length + "&nbsp;個詞彙");
 
         // Disable loading effect
-        $("#reload .ui-button-text").html("重新載入");
+        $("#reload").html("重新載入");
         $("#reload").removeClass("ui-state-hover");
 
         // Register remove phrase button click event

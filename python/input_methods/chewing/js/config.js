@@ -16,7 +16,7 @@ function saveConfig(callbackFunc) {
     var symbols_array = $("#symbols").val().split("\n");
     for (var i = 0; i < symbols_array.length; i++) {
         if (symbols_array[i].length > 1 && symbols_array[i].search("=") == -1) {
-            $("#tabs").tabs( "option", "active", 3);
+            $("#tabs").tabs("option", "active", 3);
             $("#symbols").blur();
 
             // Count select range
@@ -25,7 +25,7 @@ function saveConfig(callbackFunc) {
                 selectionStart += symbols_array[j].length;
             }
             $("#symbols").prop("selectionStart", selectionStart);
-            $("#symbols").prop("selectionEnd",  selectionStart + symbols_array[i].length);
+            $("#symbols").prop("selectionEnd", selectionStart + symbols_array[i].length);
             alert("特殊符號設定第 " + (i + 1) + " 行格式錯誤\n單行不能超過一個字元，或是沒有'='符號區隔");
             return;
         }
@@ -34,10 +34,10 @@ function saveConfig(callbackFunc) {
     var data = {
         "config": chewingConfig
     }
-    if(symbolsChanged) {
+    if (symbolsChanged) {
         data.symbols = $("#symbols").val();
     }
-    if(swkbChanged) {
+    if (swkbChanged) {
         data.swkb = $("#ez_symbols").val();
     }
 
@@ -47,7 +47,7 @@ function saveConfig(callbackFunc) {
         success: callbackFunc,
         contentType: "application/json",
         data: JSON.stringify(data),
-        dataType:"json"
+        dataType: "json"
     });
 }
 
@@ -57,36 +57,36 @@ function updateConfig() {
     chewingConfig = {};
 
     // get values from checkboxes ans text
-    $("input").each(function(index, inputItem) {        
-        switch(inputItem.type) {
+    $("input").each(function(index, inputItem) {
+        switch (inputItem.type) {
             case "checkbox":
                 chewingConfig[inputItem.name] = inputItem.checked;
                 break;
             case "text":
-                var inputValue = inputItem.value;      
-                if($.isNumeric(inputValue)) {
+                var inputValue = inputItem.value;
+                if ($.isNumeric(inputValue)) {
                     inputValue = parseInt(inputValue);
-                } 
-                chewingConfig[inputItem.name] = inputValue;                                
+                }
+                chewingConfig[inputItem.name] = inputValue;
                 break;
         }
     });
 
     // spaceKeyAction
     var spaceKeyAction = parseInt($("#spaceKeyAction").find(":selected").val());
-    if(!isNaN(spaceKeyAction))
+    if (!isNaN(spaceKeyAction))
         chewingConfig.spaceKeyAction = spaceKeyAction;
 
     // selKey
     var selKey = parseInt($("#selKeyType").find(":selected").val());
-    if(!isNaN(selKey))
+    if (!isNaN(selKey))
         chewingConfig.selKeyType = selKey;
 
     // keyboardLayout
     var keyboardLayout = parseInt($("#keyboard_page").find("input:radio:checked").val());
-    if(!isNaN(keyboardLayout))
+    if (!isNaN(keyboardLayout))
         chewingConfig.keyboardLayout = keyboardLayout;
-}
+    }
 
 function initializeUI() {
     // Setup space key action
@@ -132,33 +132,39 @@ function initializeUI() {
         "台灣華語羅馬拼音",
         "注音二式"
         // wait for update libchewing 5.0
-        // "CARPALX", 
+        // "CARPALX",
     ];
 
     $.each(keyboardNames, function(key, keybordName) {
-        var item = '<input type="radio" id="kb' + key + '" name="keyboardLayout" value="' + key + '">' +
-                   '<label for="kb' + key + '">' + keybordName + '</label><br>';
+        var item = '<input type="radio" id="kb' + key + '" name="keyboardLayout" value="' + key + '">' + '<label for="kb' + key + '">' + keybordName + '</label><br>';
         $("#keyboard_page").append(item);
-    });       
+    });
     $("#kb" + chewingConfig.keyboardLayout).prop("checked", true);
 
     // set all initial values
     $("input").each(function(index, elem) {
         var item = $(this);
         var value = chewingConfig[item.attr("id")];
-        switch(item.attr("type")) {
-        case "checkbox":
-            item.prop("checked", value);
-            break;
-        case "text":
-            item.val(value);
-            break;
+        switch (item.attr("type")) {
+            case "checkbox":
+                item.prop("checked", value);
+                break;
+            case "text":
+                item.val(value);
+                break;
         }
     });
 
     // use for select example
     function updateSelExample() {
-        var example = ["選", "字", "大", "小", "範", "例"];
+        var example = [
+            "選",
+            "字",
+            "大",
+            "小",
+            "範",
+            "例"
+        ];
         var html = "";
 
         for (number = 1, i = 0, row = 0; number <= $("#candPerPage").val(); number++, i++, row++) {
@@ -192,7 +198,7 @@ function initializeUI() {
     });
 
     $("#ui_page input").on("keydown", function(e) {
-        if (e.keyCode == 38 || e.keyCode==40) {
+        if (e.keyCode == 38 || e.keyCode == 40) {
             $("#selExample").css("font-size", $("#fontSize").val() + "pt");
             updateSelExample();
         }
@@ -211,17 +217,17 @@ $(function() {
     // setup UI
     $(document).tooltip();
 
-    $("#tabs").tabs({heightStyle:"auto"});
+    $("#tabs").tabs({heightStyle: "auto"});
 
-    $("#candPerRow").spinner({min:1, max:10});
-    $("#candPerPage").spinner({min:1, max:10});
-    $("#fontSize").spinner({min:6, max:200});
+    $("#candPerRow").spinner({min: 1, max: 10});
+    $("#candPerPage").spinner({min: 1, max: 10});
+    $("#fontSize").spinner({min: 6, max: 200});
 
-    $("#symbols").change(function(){
+    $("#symbols").change(function() {
         symbolsChanged = true;
     });
 
-    $("#ez_symbols").change(function(){
+    $("#ez_symbols").change(function() {
         swkbChanged = true;
     });
 
@@ -242,8 +248,7 @@ $(function() {
     // keep the server alive every 20 second
     window.setInterval(function() {
         $.ajax({
-            url: "/keep_alive",
-            cache: false  // needs to turn off cache. otherwise the server will be requested only once.
+            url: "/keep_alive", cache: false // needs to turn off cache. otherwise the server will be requested only once.
         });
     }, 20 * 1000);
 });

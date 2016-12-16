@@ -192,7 +192,7 @@ class ConfigApp(tornado.web.Application):
         handlers = [
             (r"/(.*\.html)", tornado.web.StaticFileHandler, {"path": current_dir}),
             (r"/((css|images|js)/.*)", tornado.web.StaticFileHandler, {"path": current_dir}),
-            (r"/(version.txt)", tornado.web.StaticFileHandler, {"path": os.path.relpath("../../../", current_dir)}),
+            (r"/(version.txt)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "../../../")}),
             (r"/config", ConfigHandler),  # main configuration handler
             (r"/user_phrases", UserPhraseHandler),  # user phrase editor
             (r"/keep_alive", KeepAliveHandler),  # keep the api server alive

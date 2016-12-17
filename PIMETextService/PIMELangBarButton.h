@@ -46,8 +46,8 @@ public:
 	STDMETHODIMP OnClick(TfLBIClick click, POINT pt, const RECT *prcArea);
 	STDMETHODIMP InitMenu(ITfMenu *pMenu);
 
-private:
-	~LangBarButton(); // COM object should be deleted using Rlease()
+protected:
+	virtual ~LangBarButton(); // COM object should be deleted using Rlease()
 
 private:
 	std::string id_;

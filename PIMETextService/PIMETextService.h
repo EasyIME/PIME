@@ -172,7 +172,6 @@ private:
 	std::wstring candFontName_;
 	int candFontSize_;
 
-	std::unique_ptr<Ime::LangBarButton> imeModeIcon_; // IME mode icon, a special language button (Windows 8 only)
 	HMENU popupMenu_;
 
 	std::unique_ptr<Client> client_; // connection client

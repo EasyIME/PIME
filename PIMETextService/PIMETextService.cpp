@@ -45,8 +45,7 @@ TextService::TextService(ImeModule* module):
 	candPerRow_(10),
 	selKeys_(L"1234567890"),
 	candUseCursor_(false),
-	candFontSize_(12),
-	imeModeIcon_(nullptr) {
+	candFontSize_(12) {
 
 	// font for candidate and mesasge windows
 	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
@@ -74,9 +73,6 @@ TextService::~TextService(void) {
 
 	if(font_)
 		::DeleteObject(font_);
-
-	if(imeModeIcon_)
-		imeModeIcon_->Release();
 }
 
 // virtual
@@ -226,9 +222,6 @@ void TextService::onLangProfileActivated(REFIID lang) {
 	// create a new client connection to the input method server for the language profile
 	client_ = std::make_unique<Client>(this, lang);
 	client_->onActivate();
-
-	if (imeModeIcon_) // windows 8 IME mode icon
-		imeModeIcon_->setEnabled(isKeyboardOpened());
 }
 
 void TextService::onLangProfileDeactivated(REFIID lang) {

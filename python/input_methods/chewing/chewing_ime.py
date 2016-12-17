@@ -70,6 +70,7 @@ ID_SIMPDICT = 15
 ID_LITTLEDICT = 16
 ID_PROVERBDICT = 17
 ID_OUTPUT_SIMP_CHINESE = 18
+ID_USER_PHRASE_EDITOR = 19
 
 
 class ChewingTextService(TextService):
@@ -561,8 +562,12 @@ class ChewingTextService(TextService):
             self.toggleLanguageMode()
         elif commandId == ID_SWITCH_SHAPE and commandType == COMMAND_LEFT_CLICK:  # 切換全形/半形
             self.toggleShapeMode()
-        elif commandId == ID_SETTINGS:  # 開啟設定工具
-            config_tool = '"{0}"'.format(os.path.join(self.curdir, "config_tool.py"))
+        elif commandId == ID_SETTINGS or commandId == ID_USER_PHRASE_EDITOR:  # 開啟設定工具 or 編輯辭庫
+            if commandId == ID_USER_PHRASE_EDITOR:  # 編輯使用者辭庫
+                tool_name = "user_phrase_editor"
+            else:  # 輸入法設定
+                tool_name = "config_tool"
+            config_tool = '"{0}" {1}'.format(os.path.join(self.curdir, "config_tool.py"), tool_name)
             python_exe = sys.executable  # 找到 python 執行檔
             # 使用我們自帶的 python runtime exe 執行 config tool
             # 此處也可以用 subprocess，不過使用 windows API 比較方便
@@ -608,7 +613,7 @@ class ChewingTextService(TextService):
                 {"text": "注音及選字選詞錯誤回報 (&P)", "id": ID_DICT_BUGREPORT},
                 {},
                 # {"text": "新酷音使用說明 (&H)", "id": ID_CHEWING_HELP},
-                # {"text": "編輯使用者詞庫 (&E)", "id": ID_HASHED},
+                {"text": "編輯使用者詞庫 (&E)", "id": ID_USER_PHRASE_EDITOR},
                 {"text": "設定新酷音輸入法(&C)", "id": ID_SETTINGS},
                 {},
                 {"text": "網路辭典 (&D)", "submenu": [

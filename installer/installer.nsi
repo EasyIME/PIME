@@ -273,8 +273,8 @@ Function .onInit
 	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\en_US\ieprotectedpage.ini"
 	Goto +2
 	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\zh_TW\ieprotectedpage.ini"
-	File "/oname=$PLUGINSDIR\PIMETextService_x86.dll" "..\build\pime\Release\PIMETextService.dll"
-	File "/oname=$PLUGINSDIR\PIMETextService_x64.dll" "..\build64\pime\Release\PIMETextService.dll"
+	File "/oname=$PLUGINSDIR\PIMETextService_x86.dll" "..\build\PIMETextService\Release\PIMETextService.dll"
+	File "/oname=$PLUGINSDIR\PIMETextService_x64.dll" "..\build64\PIMETextService\Release\PIMETextService.dll"
 
 	StrCpy $UPDATEX86DLL "True"
 	StrCpy $UPDATEX64DLL "True"
@@ -486,14 +486,14 @@ Section "" Register
 	${If} ${RunningX64} ; This is a 64-bit Windows system
 		SetOutPath "$INSTDIR\x64"
 		${If} $UPDATEX64DLL == "True"
-			File "..\build64\pime\Release\PIMETextService.dll" ; put 64-bit PIMETextService.dll in x64 folder
+			File "..\build64\PIMETextService\Release\PIMETextService.dll" ; put 64-bit PIMETextService.dll in x64 folder
 		${EndIf}
 		; Register COM objects (NSIS RegDLL command is broken and cannot be used)
 		ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x64\PIMETextService.dll"'
 	${EndIf}
 	SetOutPath "$INSTDIR\x86"
 	${If} $UPDATEX86DLL == "True"
-		File "..\build\pime\Release\PIMETextService.dll" ; put 32-bit PIMETextService.dll in x86 folder
+		File "..\build\PIMETextService\Release\PIMETextService.dll" ; put 32-bit PIMETextService.dll in x86 folder
 	${EndIf}
 	; Register COM objects (NSIS RegDLL command is broken and cannot be used)
 	ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x86\PIMETextService.dll"'

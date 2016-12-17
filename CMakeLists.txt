@@ -22,7 +22,7 @@ set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF CACHE BOOL "")
 set(JSONCPP_WITH_PKGCONFIG_SUPPORT OFF CACHE BOOL "")
 add_subdirectory(${PROJECT_SOURCE_DIR}/jsoncpp)
 
-add_subdirectory(${PROJECT_SOURCE_DIR}/PIME)
+add_subdirectory(${PROJECT_SOURCE_DIR}/PIMETextService)
 
 # only build the following components for 32-bit x86 platform
 if("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")

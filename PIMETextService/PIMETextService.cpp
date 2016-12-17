@@ -67,7 +67,6 @@ TextService::~TextService(void) {
 
 	if (candidateWindow_) {
 		hideCandidates();
-		candidateWindow_->Release();
 	}
 
 	if(messageWindow_)
@@ -238,13 +237,15 @@ void TextService::onLangProfileDeactivated(REFIID lang) {
 
 void TextService::createCandidateWindow(Ime::EditSession* session) {
 	if (!candidateWindow_) {
-		candidateWindow_ = make_unique<Ime::CandidateWindow>(this, session);
+		candidateWindow_ = new Ime::CandidateWindow(this, session); // assigning to smart ptr also inrease ref count
+		candidateWindow_->Release();  // decrease ref count caused by new
+
 		candidateWindow_->setFont(font_);
 		Ime::ComQIPtr<ITfUIElementMgr> elementMgr = threadMgr();
 		if (elementMgr) {
 			BOOL pbShow = false;
 			if (validCandidateListElementId_ =
-				(elementMgr->BeginUIElement(candidateWindow_.get(), &pbShow, &candidateListElementId_) == S_OK)) {
+				(elementMgr->BeginUIElement(candidateWindow_, &pbShow, &candidateListElementId_) == S_OK)) {
 				candidateWindow_->Show(pbShow);
 			}
 		}
@@ -336,9 +337,8 @@ void TextService::hideCandidates() {
 			validCandidateListElementId_ = false;
 		}
 	}
-	if(candidateWindow_) {
-		candidateWindow_->Release();
-		candidateWindow_ = NULL;
+	if (candidateWindow_) {
+		candidateWindow_ = nullptr;
 	}
 	showingCandidates_ = false;
 }

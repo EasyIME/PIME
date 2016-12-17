@@ -37,7 +37,6 @@ class TextService: public Ime::TextService {
 	friend class Client;
 public:
 	TextService(ImeModule* module);
-	virtual ~TextService(void);
 
 	virtual void onActivate();
 	virtual void onDeactivate();
@@ -135,6 +134,8 @@ public:
 	void hideMessage();
 
 private:
+	virtual ~TextService(void);  // COM object should only be deleted using Release()
+
 	void onMessageTimeout();
 	static void CALLBACK onMessageTimeout(HWND hwnd, UINT msg, UINT_PTR id, DWORD time);
 
@@ -158,7 +159,7 @@ private:
 private:
 	bool validCandidateListElementId_;
 	DWORD candidateListElementId_;
-	std::unique_ptr<Ime::CandidateWindow> candidateWindow_;
+	Ime::ComPtr<Ime::CandidateWindow> candidateWindow_; // this is a ref-counted COM object and should not be managed with std::unique_ptr
 	bool showingCandidates_;
 	std::vector<std::wstring> candidates_; // current candidate list
 	std::unique_ptr<Ime::MessageWindow> messageWindow_;

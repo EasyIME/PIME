@@ -32,7 +32,6 @@ class TextService;
 class LangBarButton : public Ime::LangBarButton {
 public:
 	LangBarButton(TextService* service, const std::string& id, const GUID& guid, UINT commandId = 0, const wchar_t* text = NULL, DWORD style = TF_LBI_STYLE_BTN_BUTTON);
-	~LangBarButton();
 
 	static LangBarButton* fromJson(TextService* service, const Json::Value& info);
 	void update(const Json::Value& info);
@@ -46,6 +45,9 @@ public:
 	// ITfLangBarItemButton
 	STDMETHODIMP OnClick(TfLBIClick click, POINT pt, const RECT *prcArea);
 	STDMETHODIMP InitMenu(ITfMenu *pMenu);
+
+private:
+	~LangBarButton(); // COM object should be deleted using Rlease()
 
 private:
 	std::string id_;

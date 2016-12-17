@@ -3,8 +3,12 @@ project(PIMELauncher)
 # http://www.utf8everywhere.org/
 add_definitions(/D_UNICODE=1 /DUNICODE=1)
 
+# generate the resource file containing version info
+configure_file("PIMELauncher.rc.in" "PIMELauncher.rc" @ONLY)
+
 include_directories(
     ${CMAKE_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_executable(PIMELauncher WIN32
@@ -16,7 +20,7 @@ add_executable(PIMELauncher WIN32
     Utils.cpp
     Utils.h
     # resources
-    # PIMELauncher.rc
+    ${CMAKE_CURRENT_BINARY_DIR}/PIMELauncher.rc
 )
 
 target_link_libraries(PIMELauncher 

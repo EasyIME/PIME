@@ -5,9 +5,13 @@ project(PIMETextService)
 # http://www.utf8everywhere.org/
 add_definitions(/D_UNICODE=1 /DUNICODE=1)
 
+# generate the resource file containing version info
+configure_file("PIMETextService.rc.in" "PIMETextService.rc" @ONLY)
+
 include_directories(
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/jsoncpp/include
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_library(PIMETextService SHARED
@@ -23,7 +27,7 @@ add_library(PIMETextService SHARED
     PIMELangBarButton.h
     DllEntry.cpp
     # resources
-    PIMETextService.rc
+    ${CMAKE_CURRENT_BINARY_DIR}/PIMETextService.rc
 )
 
 target_link_libraries(PIMETextService

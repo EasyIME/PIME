@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 2.8.11)
+project(PIME)
+
+set(PIME_VERSION_MAJOR "0")
+set(PIME_VERSION_MINOR "16")
+set(PIME_VERSION_PATCH "1")
 
 # override default c/c++ flags, add /MT to link VC++ runtime statically.
 set(CMAKE_USER_MAKE_RULES_OVERRIDE	${CMAKE_CURRENT_SOURCE_DIR}/cmake/c_flag_overrides.cmake)
 set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX	${CMAKE_CURRENT_SOURCE_DIR}/cmake/cxx_flag_overrides.cmake)
-
-project(PIME)
 
 # http://www.utf8everywhere.org/
 add_definitions(

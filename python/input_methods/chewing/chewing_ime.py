@@ -84,6 +84,12 @@ class ChewingTextService(TextService):
         self.langMode = -1
         self.shapeMode = -1
         self.outputSimpChinese = False
+
+        # remember last state when the input method is temporarily closed
+        self.lastLangMode = None
+        self.lastShapeMode = None
+        self.lastOutputSimpChinese = None
+
         self.lastKeyDownCode = 0
         self.lastKeyDownTime = 0.0
         self.configVersion = chewingConfig.getVersion()
@@ -157,14 +163,24 @@ class ChewingTextService(TextService):
             chewingContext.set_maxChiSymbolLen(50) # 編輯區長度: 50 bytes
 
             # 預設英數 or 中文模式
-            self.langMode = ENGLISH_MODE if cfg.defaultEnglish else CHINESE_MODE
+            if self.lastLangMode is not None:
+                self.langMode = self.lastLangMode  # 恢復上次鍵盤暫時關閉時儲存的狀態
+            else:
+                self.langMode = ENGLISH_MODE if cfg.defaultEnglish else CHINESE_MODE
             chewingContext.set_ChiEngMode(self.langMode)
 
             # 預設全形 or 半形
-            self.shapeMode = FULLSHAPE_MODE if cfg.defaultFullSpace else HALFSHAPE_MODE
+            if self.lastShapeMode is not None:
+                self.shapeMode = self.lastShapeMode  # 恢復上次鍵盤暫時關閉時儲存的狀態
+            else:
+                self.shapeMode = FULLSHAPE_MODE if cfg.defaultFullSpace else HALFSHAPE_MODE
             chewingContext.set_ShapeMode(self.shapeMode)
 
         self.applyConfig() # 套用其餘的使用者設定
+
+        if self.lastOutputSimpChinese is not None:  # 恢復上次鍵盤暫時關閉時儲存的狀態
+            self.setOutputSimplifiedChinese(self.lastOutputSimpChinese)
+
 
     # 輸入法被使用者啟用
     def onActivate(self):
@@ -216,6 +232,12 @@ class ChewingTextService(TextService):
         self.chewingContext = None
         self.lastKeyDownCode = 0
 
+        # 丟棄輸入法狀態
+        self.lastLangMode = None
+        self.lastShapeMode = None
+        self.lastOutputSimpChinese = None
+
+        # 移除語言列按鈕
         self.removeButton("switch-lang")
         self.removeButton("switch-shape")
         self.removeButton("settings")
@@ -656,6 +678,12 @@ class ChewingTextService(TextService):
             # 若選字中，隱藏選字視窗
             if self.showCandidates:
                 self.setShowCandidates(False)
+
+            # 備份目前狀態 (下次重新開啟時套用)
+            self.lastLangMode = self.langMode
+            self.lastShapeMode = self.shapeMode
+            self.lastOutputSimpChinese = self.outputSimpChinese
+
             # self.hideMessage() # hide message window, if there's any
             self.chewingContext = None  # 釋放新酷音引擎資源
 

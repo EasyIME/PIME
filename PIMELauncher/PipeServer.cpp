@@ -299,8 +299,8 @@ int PipeServer::exec(LPSTR cmd) {
 				delete req;
 			}
 			break;
-		default:
-			return -1;  // some unknown errors hapened
+		default:	// some unknown errors hapened
+			break;
 		}
 	}
 	return 0;

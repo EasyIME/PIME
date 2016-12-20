@@ -139,7 +139,7 @@ class ChewingTextService(TextService):
         self.customizeUI(candFontName = 'MingLiu',
                         candFontSize = cfg.fontSize,
                         candPerRow = cfg.candPerRow,
-                        candUseCursor = cfg.cursorCandList)
+                        candUseCursor = not(cfg.leftRightAction and cfg.upDownAction))
 
         # 設定選字按鍵 (123456..., asdf.... 等)
         self.setSelKeys(cfg.getSelKeys())
@@ -414,26 +414,39 @@ class ChewingTextService(TextService):
                     chewingContext.handle_Default(charCode)
         else:  # 不可見字元 (方向鍵, Enter, Page Down...等等)
             # 如果有啟用在選字視窗內移動游標選字，而且目前正在選字
-            if cfg.cursorCandList and self.showCandidates:
+            if self.showCandidates:
                 candCursor = self.candidateCursor  # 目前的游標位置
                 candCount = len(self.candidateList)  # 目前選字清單項目數
-                if keyCode == VK_LEFT:  # 游標左移
-                    if candCursor > 0:
-                        candCursor -= 1
-                        ignoreKey = keyHandled = True
-                elif keyCode == VK_UP:  # 游標上移
-                    if candCursor >= cfg.candPerRow:
-                        candCursor -= cfg.candPerRow
-                        ignoreKey = keyHandled = True
-                elif keyCode == VK_RIGHT:  # 游標右移
-                    if (candCursor + 1) < candCount:
-                        candCursor += 1
-                        ignoreKey = keyHandled = True
-                elif keyCode == VK_DOWN:  # 游標下移
-                    if (candCursor + cfg.candPerRow) < candCount:
-                        candCursor += cfg.candPerRow
-                        ignoreKey = keyHandled = True
-                elif keyCode == VK_RETURN:  # 按下 Enter 鍵
+                if cfg.leftRightAction == 0:    # 使用左右鍵游標選字
+                    if keyCode == VK_LEFT:  # 游標左移
+                        if candCursor > 0:
+                            candCursor -= 1
+                            ignoreKey = keyHandled = True
+                    elif keyCode == VK_RIGHT:  # 游標右移
+                        if (candCursor + 1) < candCount:
+                            candCursor += 1
+                            ignoreKey = keyHandled = True
+
+                if cfg.upDownAction == 0:   # 使用上下鍵游標選字
+                    if keyCode == VK_UP:  # 游標上移
+                        if candCursor >= cfg.candPerRow:
+                            candCursor -= cfg.candPerRow
+                            ignoreKey = keyHandled = True
+                    elif keyCode == VK_DOWN:  # 游標下移
+                        if (candCursor + cfg.candPerRow) < candCount:
+                            candCursor += cfg.candPerRow
+                            ignoreKey = keyHandled = True
+
+                if cfg.upDownAction == 1:   # 使用上下鍵翻頁，左右鍵新酷音預設為翻頁動作
+                    if keyCode == VK_UP:    # 向上翻頁
+                        chewingContext.handle_PageUp()
+                        keyHandled = True
+                    elif keyCode == VK_DOWN:  # 如果還有字詞可以選擇，向下翻頁
+                        if chewingContext.cand_hasNext():
+                            chewingContext.handle_PageDown()
+                            keyHandled = True
+
+                if keyCode == VK_RETURN:  # 按下 Enter 鍵
                     # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                     selKey = cfg.getSelKeys()[self.candidateCursor]
                     # 代替使用者送出選字鍵給新酷音引擎，進行選字
@@ -475,7 +488,7 @@ class ChewingTextService(TextService):
                 if candidates != self.candidateList:
                     self.setCandidateList(candidates)  # 更新候選字清單
                     self.setShowCandidates(True)
-                    if cfg.cursorCandList:  # 如果啟用選字清單內使用游標選字
+                    if cfg.leftRightAction == 0 or cfg.upDownAction == 0:  # 如果啟用選字清單內使用游標選字
                         self.setCandidateCursor(0)  # 重設游標位置
 
                 if not self.showCandidates:  # 如果目前沒有顯示選字視窗
@@ -488,7 +501,7 @@ class ChewingTextService(TextService):
             # 有輸入完成的中文字串要送出(commit)到應用程式
             if chewingContext.commit_Check():
                 commitStr = chewingContext.commit_String().decode("UTF-8")
-                
+
                 # 如果使用打繁出簡，就轉成簡體中文
                 if self.outputSimpChinese:
                     commitStr = self.opencc.convert(commitStr)
@@ -641,7 +654,7 @@ class ChewingTextService(TextService):
             self.changeButton("switch-lang", icon=icon_path)
 
             if self.client.isWindows8Above: # windows 8 mode icon
-                # FIXME: we need a better set of icons to meet the 
+                # FIXME: we need a better set of icons to meet the
                 #        WIndows 8 IME guideline and UX guidelines.
                 self.changeButton("windows-mode-icon", icon=icon_path)
 

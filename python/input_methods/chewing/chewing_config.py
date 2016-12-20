@@ -50,7 +50,9 @@ class ChewingConfig:
         self.fontSize = DEF_FONT_SIZE
         self.selKeyType = 0
         self.candPerPage = 9
-        self.cursorCandList = True
+        self.upDownAction = 0
+        self.leftRightAction = 0
+        #self.cursorCandList = True        
         self.enableCapsLock = True
         self.fullShapeSymbols = True
         # self.phraseMark = True

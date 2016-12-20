@@ -3,7 +3,7 @@ var symbolsChanged = false;
 var swkbChanged = false;
 
 function loadConfig() {
-    $.get("/config", function(data, status) {
+    $.get("/config", function (data, status) {
         chewingConfig = data.config;
         $("#symbols").val(data.symbols);
         $("#ez_symbols").val(data.swkb);
@@ -56,66 +56,80 @@ function updateConfig() {
     // Reset chewingConfig, for change config_tool
     chewingConfig = {};
 
-    // get values from checkboxes ans text
-    $("input").each(function(index, inputItem) {
+    // Get values from checkboxes, text and radio
+    $("input").each(function (index, inputItem) {
         switch (inputItem.type) {
-            case "checkbox":
-                chewingConfig[inputItem.name] = inputItem.checked;
-                break;
-            case "text":
-                var inputValue = inputItem.value;
-                if ($.isNumeric(inputValue)) {
-                    inputValue = parseInt(inputValue);
-                }
-                chewingConfig[inputItem.name] = inputValue;
-                break;
+        case "checkbox":
+            chewingConfig[inputItem.name] = inputItem.checked;
+            break;
+        case "text":
+            var inputValue = inputItem.value;
+            if ($.isNumeric(inputValue)) {
+                inputValue = parseInt(inputValue);
+            }
+            chewingConfig[inputItem.name] = inputValue;
+            break;
+        case "radio":
+            if (inputItem.checked == true) {
+                chewingConfig[inputItem.name] = parseInt(inputItem.value);
+            }
+            break;
         }
     });
 
-    // spaceKeyAction
-    var spaceKeyAction = parseInt($("#spaceKeyAction").find(":selected").val());
-    if (!isNaN(spaceKeyAction))
-        chewingConfig.spaceKeyAction = spaceKeyAction;
-
-    // selKey
-    var selKey = parseInt($("#selKeyType").find(":selected").val());
-    if (!isNaN(selKey))
-        chewingConfig.selKeyType = selKey;
-
-    // keyboardLayout
-    var keyboardLayout = parseInt($("#keyboard_page").find("input:radio:checked").val());
-    if (!isNaN(keyboardLayout))
-        chewingConfig.keyboardLayout = keyboardLayout;
-    }
+    // Get values from select
+    $("select").each(function (index, selectItem) {
+        if (selectItem.value) {
+            chewingConfig[selectItem.name] = parseInt(selectItem.value);
+        }
+    });
+}
 
 function initializeUI() {
-    // Setup space key action
-    var spaceKeyAction = {
-        1: "叫出選字視窗",
-        0: "在選字時翻頁"
+    // Setup checkbox and text values
+    $("input").each(function () {
+        switch ($(this).attr("type")) {
+        case "checkbox":
+            $(this).prop("checked", chewingConfig[$(this).attr("id")]);
+            break;
+        case "text":
+            $(this).val(chewingConfig[$(this).attr("id")]);
+            break;
+        }
+    });
+
+    // Setup select options and values
+    var selectOptions = {
+        "upDownAction": [
+            "移動游標選字",
+            "在選字時翻頁"
+        ],
+        "leftRightAction": [
+            "移動游標選字",
+            "在選字時翻頁"
+        ],
+        "spaceKeyAction": {
+            1: "叫出選字視窗",
+            0: "在選字時翻頁"
+        },
+        "selKeyType": [
+            "1234567890",
+            "asdfghjkl;",
+            "asdfzxcv89",
+            "asdfjkl789",
+            "aoeuhtn789",
+            "1234qweras"
+        ]
     };
 
-    $.each(spaceKeyAction, function(key, value) {
-        var item = '<option value="' + key + '">' + value + '</option>';
-        $("#spaceKeyAction").append(item);
+    $.each(selectOptions, function (id, options) {
+        $.each(options, function (value, optionName) {
+            $("#" + id).append('<option value="' + value + '">' + optionName + '</option>');
+            if (value == chewingConfig[id]) {
+                $("#" + id + " option:last-child").prop("selected", true);
+            }
+        });
     });
-    $("#spaceKeyAction").children().eq(chewingConfig.spaceKeyAction).prop("selected", true);
-
-    // Setup select key option
-    var selKeys = [
-        "1234567890",
-        "asdfghjkl;",
-        "asdfzxcv89",
-        "asdfjkl789",
-        "aoeuhtn789",
-        "1234qweras"
-    ];
-
-    $.each(selKeys, function(key, value) {
-        var item = '<option value="' + key + '">' + value + '</option>';
-        $("#selKeyType").append(item);
-    });
-    $("#selKeyType").children().eq(chewingConfig.selKeyType).prop("selected", true);
 
     // Setup keybord page
     var keyboardNames = [
@@ -130,32 +144,17 @@ function initializeUI() {
         "大千 26 鍵",
         "漢語拼音",
         "台灣華語羅馬拼音",
-        "注音二式"
-        // wait for update libchewing 5.0
-        // "CARPALX",
+        "注音二式",
+        "CARPALX"
     ];
 
-    $.each(keyboardNames, function(key, keybordName) {
-        var item = '<input type="radio" id="kb' + key + '" name="keyboardLayout" value="' + key + '">' + '<label for="kb' + key + '">' + keybordName + '</label><br>';
+    $.each(keyboardNames, function (value, keybordName) {
+        var item = '<input type="radio" id="kb' + value + '" name="keyboardLayout" value="' + value + '">' + '<label for="kb' + value + '">' + keybordName + '</label><br>';
         $("#keyboard_page").append(item);
     });
     $("#kb" + chewingConfig.keyboardLayout).prop("checked", true);
 
-    // set all initial values
-    $("input").each(function(index, elem) {
-        var item = $(this);
-        var value = chewingConfig[item.attr("id")];
-        switch (item.attr("type")) {
-            case "checkbox":
-                item.prop("checked", value);
-                break;
-            case "text":
-                item.val(value);
-                break;
-        }
-    });
-
-    // use for select example
+    // Use for select phrase example
     function updateSelExample() {
         var example = [
             "選",
@@ -188,16 +187,16 @@ function initializeUI() {
     updateSelExample();
 
     // trigger event
-    $('.ui-spinner-button').click(function() {
+    $('.ui-spinner-button').click(function () {
         $(this).siblings('input').change();
     });
 
-    $("#ui_page input").on("change", function() {
+    $("#ui_page input").on("change", function () {
         $("#selExample").css("font-size", $("#fontSize").val() + "pt");
         updateSelExample();
     });
 
-    $("#ui_page input").on("keydown", function(e) {
+    $("#ui_page input").on("keydown", function () {
         if (e.keyCode == 38 || e.keyCode == 40) {
             $("#selExample").css("font-size", $("#fontSize").val() + "pt");
             updateSelExample();
@@ -206,7 +205,7 @@ function initializeUI() {
 }
 
 // jQuery ready
-$(function() {
+$(function () {
     // workaround the same origin policy of IE.
     // http://stackoverflow.com/questions/7852225/is-it-safe-to-use-support-cors-true-in-jquery
     $.support.cors = true;
@@ -217,26 +216,26 @@ $(function() {
     // setup UI
     $(document).tooltip();
 
-    $("#tabs").tabs({heightStyle: "auto"});
+    $("#tabs").tabs({ heightStyle: "auto" });
 
-    $("#candPerRow").spinner({min: 1, max: 10});
-    $("#candPerPage").spinner({min: 1, max: 10});
-    $("#fontSize").spinner({min: 6, max: 200});
+    $("#candPerRow").spinner({ min: 1, max: 10 });
+    $("#candPerPage").spinner({ min: 1, max: 10 });
+    $("#fontSize").spinner({ min: 6, max: 200 });
 
-    $("#symbols").change(function() {
+    $("#symbols").change(function () {
         symbolsChanged = true;
     });
 
-    $("#ez_symbols").change(function() {
+    $("#ez_symbols").change(function () {
         swkbChanged = true;
     });
 
     $("#buttons").buttonset();
 
     // OK button
-    $("#ok").click(function() {
+    $("#ok").click(function () {
         updateConfig(); // update the config based on the state of UI elements
-        saveConfig(function() {
+        saveConfig(function () {
             alert("設定已儲存!");
         });
         return false;
@@ -246,9 +245,12 @@ $(function() {
     loadConfig();
 
     // keep the server alive every 20 second
-    window.setInterval(function() {
+    window.setInterval(function () {
         $.ajax({
-            url: "/keep_alive", cache: false // needs to turn off cache. otherwise the server will be requested only once.
+            url: "/keep_alive",
+            cache: false // needs to turn off cache. otherwise the server will be requested only once.
         });
     }, 20 * 1000);
+
+    return false;
 });

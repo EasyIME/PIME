@@ -22,7 +22,6 @@
         <ul>
             <li>此處所做修改都是立即套用，無法取消，請謹慎使用。</li>
             <li>目前還在測試階段，缺少對無效輸入的錯誤檢查。若加入新詞失敗，通常是輸入錯誤，或內建辭庫已有此詞彙</li>
-            <li>本程式介面很醜，但是完全是 html5 + Javascript 寫成 (backend API 為 python)。如果您是懂 javascript 前端的 open source 開發者，歡迎貢獻 patch 改進</li>
             <li>大量匯入/匯出功能目前尚未實作，但後端 API 已經完成，只要有人協助接上前端就能用</li>
         </ul>
         <hr>
@@ -43,8 +42,8 @@
                     <th id="phrase_count"></th>
                 </tr>
             </thead>
-            <tbody id="table_content" />
             <!-- Phrase table content inserted by javascript -->
+            <tbody id="table_content"></tbody>
         </table>
 
         <!-- Add new phrase dialog -->

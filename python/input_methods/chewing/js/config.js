@@ -12,6 +12,26 @@ function loadConfig() {
 }
 
 function saveConfig(callbackFunc) {
+    // Check easy symbols format
+    var ez_symbols_array = $("#ez_symbols").val().split("\n");
+    for (var i = 0; i < ez_symbols_array.length; i++) {
+        if (ez_symbols_array[i].length < 3 || ez_symbols_array[i].search(" ") != 1 || ez_symbols_array[i].split(" ").length != 2) {
+            $("#tabs").tabs("option", "active", 4);
+            alert("簡易符號輸入設定第 " + (i + 1) + " 行格式錯誤\n請使用「英文 + 空格 + 符號」的格式");
+            $("#ez_symbols").blur();
+
+            // Count select range
+            var selectionStart = 0;
+            for (var j = 0; j < i; j++) {
+                selectionStart += ez_symbols_array[j].length + 1;
+            }
+
+            $("#ez_symbols").prop("selectionStart", selectionStart);
+            $("#ez_symbols").prop("selectionEnd", selectionStart + ez_symbols_array[i].length + 1);
+            return;
+        }
+    }
+
     // Check symbols format
     var symbols_array = $("#symbols").val().split("\n");
     for (var i = 0; i < symbols_array.length; i++) {
@@ -20,12 +40,12 @@ function saveConfig(callbackFunc) {
             $("#symbols").blur();
 
             // Count select range
-            var selectionStart = 1;
+            var selectionStart = 0;
             for (var j = 0; j < i; j++) {
-                selectionStart += symbols_array[j].length;
+                selectionStart += symbols_array[j].length + 1;
             }
             $("#symbols").prop("selectionStart", selectionStart);
-            $("#symbols").prop("selectionEnd", selectionStart + symbols_array[i].length);
+            $("#symbols").prop("selectionEnd", selectionStart + symbols_array[i].length + 1);
             alert("特殊符號設定第 " + (i + 1) + " 行格式錯誤\n單行不能超過一個字元，或是沒有'='符號區隔");
             return;
         }

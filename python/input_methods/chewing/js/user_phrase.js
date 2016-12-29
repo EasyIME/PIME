@@ -1,6 +1,7 @@
 // Load user phrases
 function loadUserPhrases() {
     // Reload effect
+    $("body").LoadingOverlay("show", { color: "rgba(80, 80, 80, 0.8)", fade: [0, 400] });
     $("#reload").html("載入中...");
     $("#reload").addClass("ui-state-hover");
 
@@ -16,6 +17,7 @@ function loadUserPhrases() {
         }
 
         // Reload complete effect
+        $.LoadingOverlay("hide", true);
         $("#reload").html("重新載入");
         $("#reload").removeClass("ui-state-hover");
 

@@ -1,8 +1,6 @@
 // Load user phrases
 function loadUserPhrases() {
     // Reload effect
-<<<<<<< master
-=======
     var loading_message = $("<div>", {
         id: "loading_message",
         css: {
@@ -14,7 +12,6 @@ function loadUserPhrases() {
         text: "載入詞彙中，請稍後..."
     });
     $("body").LoadingOverlay("show", { color: "rgba(80, 80, 80, 0.8)", fade: [0, 400], custom: loading_message });
->>>>>>> local
     $("#reload").html("載入中...");
     $("#reload").addClass("ui-state-hover");
 

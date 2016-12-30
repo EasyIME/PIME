@@ -11,7 +11,7 @@ function loadUserPhrases() {
         },
         text: "載入詞彙中，請稍後..."
     });
-    $("body").LoadingOverlay("show", { color: "rgba(80, 80, 80, 0.8)", fade: [0, 400], custom: loading_message });
+    $("body").LoadingOverlay("show", { color: "rgba(80, 80, 80, 0.8)", fade: [0, 400], custom: loading_message });  
     $("#reload").html("載入中...");
     $("#reload").addClass("ui-state-hover");
 
@@ -27,6 +27,7 @@ function loadUserPhrases() {
         }
 
         // Reload complete effect
+        $.LoadingOverlay("hide", true);
         $("#reload").html("重新載入");
         $("#reload").removeClass("ui-state-hover");
 

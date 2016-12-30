@@ -54,6 +54,10 @@ body {
     background-color: #dce0e8;
 }
 
-.phrase_selected {
+#table_content .phrase_selected {
     font-weight: bold;
+}
+
+#table_content small {
+    color: red;
 }

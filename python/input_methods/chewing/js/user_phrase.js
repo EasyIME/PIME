@@ -1,6 +1,20 @@
 // Load user phrases
 function loadUserPhrases() {
     // Reload effect
+<<<<<<< master
+=======
+    var loading_message = $("<div>", {
+        id: "loading_message",
+        css: {
+            "font-size": "20px",
+            "background-color": "grey",
+            "padding": "10px",
+            "border-radius": "15px"
+        },
+        text: "載入詞彙中，請稍後..."
+    });
+    $("body").LoadingOverlay("show", { color: "rgba(80, 80, 80, 0.8)", fade: [0, 400], custom: loading_message });
+>>>>>>> local
     $("#reload").html("載入中...");
     $("#reload").addClass("ui-state-hover");
 
@@ -39,6 +53,28 @@ function loadUserPhrases() {
 function onAddPhrase() {
     var phrase = $("#phrase_input").val();
     var bopomofo = $("#bopomofo_input").val();
+
+    // Check phrase has repeated
+    var phrase_repeated;
+    var phrase_repeated_index;
+    $("#table_content input[type=checkbox]").each(function (idx, item) {
+        if (phrase == $(item).data("phrase")) {
+            phrase_repeated = true;
+            phrase_repeated_index = idx;
+            return false;
+        }
+    });
+
+    if (phrase_repeated == true) {
+        var phrase_repeated_item = $("#table_content input[type=checkbox]:eq(" + phrase_repeated_index + ")");
+        $('html, body').animate({ scrollTop: phrase_repeated_item.offset().top - 200 }, 200);
+        $("#add_dialog").dialog("close");
+        phrase_repeated_item.parent().effect("highlight", { color: '#f2f207' }, 5000);
+        phrase_repeated_item.parent().append("<small>（已重複）</small>");
+        window.setInterval(function () { phrase_repeated_item.parent().children("small").remove(); }, 4000);
+        return;
+    }
+
     var data = {
         add: [
             {
@@ -47,6 +83,7 @@ function onAddPhrase() {
             }
         ]
     }
+
     $.ajax({
         url: "/user_phrases",
         method: "POST",

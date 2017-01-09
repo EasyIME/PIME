@@ -58,6 +58,6 @@ body {
     font-weight: bold;
 }
 
-#table_content small {
-    color: red;
+.fixed_dialog {
+    position: fixed;
 }

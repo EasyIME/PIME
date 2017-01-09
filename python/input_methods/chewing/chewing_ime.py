@@ -417,6 +417,13 @@ class ChewingTextService(TextService):
             if self.showCandidates:
                 candCursor = self.candidateCursor  # 目前的游標位置
                 candCount = len(self.candidateList)  # 目前選字清單項目數
+                if keyCode == VK_HOME:  # 處理Home、End鍵，移到選字視窗的第一和最後一個字
+                    candCursor = 0
+                    ignoreKey = keyHandled = True
+                elif keyCode == VK_END:
+                    candCursor = candCount - 1                    
+                    ignoreKey = keyHandled = True
+     
                 if cfg.leftRightAction == 0:    # 使用左右鍵游標選字
                     if keyCode == VK_LEFT:  # 游標左移
                         if candCursor > 0:

@@ -423,8 +423,7 @@ class ChewingTextService(TextService):
                 elif keyCode == VK_END:
                     candCursor = candCount - 1                    
                     ignoreKey = keyHandled = True
-                 
-                 if cfg.leftRightAction == 0:    # 使用左右鍵游標選字
+                if cfg.leftRightAction == 0:    # 使用左右鍵游標選字
                     if keyCode == VK_LEFT:  # 游標左移
                         if candCursor > 0:
                             candCursor -= 1

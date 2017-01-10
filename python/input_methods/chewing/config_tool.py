@@ -157,15 +157,14 @@ class UserPhraseHandler(BaseHandler):
         for item in added:  # add new phrases
             phrase = item["phrase"].encode("utf8")
             bopomofo = item["bopomofo"].encode("utf8")
-            ret = chewing_ctx.userphrase_add(phrase, bopomofo)
+            add_result = chewing_ctx.userphrase_add(phrase, bopomofo)
 
         for item in removed:  # remove existing phrases
             phrase = item["phrase"].encode("utf8")
             bopomofo = item["bopomofo"].encode("utf8")
             chewing_ctx.userphrase_remove(phrase, bopomofo)
-        # FIXME: correctly report errors!
-        self.write({})
 
+        self.write({"add_result": add_result})
 
 class LoginHandler(BaseHandler):
 

@@ -115,25 +115,21 @@ function onAddPhrase() {
         return;
     }
 
-    var data = {
-        add: [
-            {
-                phrase: phrase,
-                bopomofo: bopomofo
-            }
-        ]
-    }
-
+    // Add phrase
     $.ajax({
         url: "/user_phrases",
         method: "POST",
         contentType: "application/json",
-        data: JSON.stringify(data),
+        data: JSON.stringify({ add: [{ phrase: phrase, bopomofo: bopomofo }] }),
         dataType: "json",
-        success: function () {
-            // reload the user phrases
-            loadUserPhrases();
-            $("#add_dialog").dialog("close");
+        complete: function (response) {
+            if (response.responseJSON.add_result == 0) {
+                alert("新增失敗，請檢查詞彙跟注音格式是否正確");
+            } else {
+                alert("新增詞彙成功");
+                loadUserPhrases();
+                $("#add_dialog").dialog("close");
+            }
         }
     });
 }
@@ -159,8 +155,9 @@ function onRemovePhrase(delete_phrase) {
         phrases.push(delete_phrase);
     }
 
-    if (!confirm(confirm_text))
+    if (!confirm(confirm_text)) {
         return;
+    }
 
     $.ajax({
         url: "/user_phrases",
@@ -168,7 +165,7 @@ function onRemovePhrase(delete_phrase) {
         contentType: "application/json",
         data: JSON.stringify({ remove: phrases }),
         dataType: "json",
-        success: function () {
+        complete: function () {
             alert("刪除詞彙成功！");
             loadUserPhrases();
         }

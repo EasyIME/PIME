@@ -712,7 +712,7 @@ class CinBase:
                     itemName = cbTS.candidateList[candCursor]
                     cbTS.switchmenu = True
                 elif keyCode == VK_SPACE: # 按下空白鍵
-                    if cbTS.switchPageWithSpace and currentCandPageCount > 1:
+                    if cbTS.switchPageWithSpace:
                         if (currentCandPage + 1) < currentCandPageCount:
                             currentCandPage += 1
                             candCursor = 0
@@ -1789,7 +1789,7 @@ class CinBase:
                         if (currentCandPage + 1) < currentCandPageCount:
                             currentCandPage += 1
                             candCursor = 0
-                    elif (keyCode == VK_RETURN or (keyCode == VK_SPACE and (not cbTS.switchPageWithSpace or currentCandPageCount <= 1))) and cbTS.canSetCommitString:  # 按下 Enter 鍵或空白鍵
+                    elif (keyCode == VK_RETURN or (keyCode == VK_SPACE and not cbTS.switchPageWithSpace)) and cbTS.canSetCommitString:  # 按下 Enter 鍵或空白鍵
                         # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                         commitStr = cbTS.candidateList[candCursor]
                         cbTS.lastCommitString = commitStr
@@ -1964,7 +1964,7 @@ class CinBase:
                     if (currentCandPage + 1) < currentCandPageCount:
                         currentCandPage += 1
                         candCursor = 0
-                elif keyCode == VK_SPACE and (not cbTS.switchPageWithSpace or currentCandPageCount <= 1):  # 按下 Enter 鍵或空白鍵
+                elif keyCode == VK_SPACE and not cbTS.switchPageWithSpace:  # 按下 Enter 鍵或空白鍵
                     if cbTS.isShowPhraseCandidates:
                         # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                         commitStr = cbTS.candidateList[candCursor]

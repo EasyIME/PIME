@@ -2191,13 +2191,13 @@ class CinBase:
         elif commandId == ID_MOEDICT: # a very awesome online Chinese dictionary
             os.startfile("https://www.moedict.tw/")
         elif commandId == ID_DICT: # online Chinese dictonary
-            os.startfile("http://dict.revised.moe.edu.tw/")
+            os.startfile("http://dict.revised.moe.edu.tw/cbdic/")
         elif commandId == ID_SIMPDICT: # a simplified version of the online dictonary
-            os.startfile("http://dict.concised.moe.edu.tw/main/cover/main.htm")
+            os.startfile("http://dict.concised.moe.edu.tw/jbdic/")
         elif commandId == ID_LITTLEDICT: # a simplified dictionary for little children
             os.startfile("http://dict.mini.moe.edu.tw/cgi-bin/gdic/gsweb.cgi?o=ddictionary")
         elif commandId == ID_PROVERBDICT: # a dictionary for proverbs (seems to be broken at the moment?)
-            os.startfile("http://dict.idioms.moe.edu.tw/?")
+            os.startfile("http://dict.idioms.moe.edu.tw/cydic/")
         elif commandId == ID_OUTPUT_SIMP_CHINESE:  # 切換簡體中文輸出
             self.setOutputSimplifiedChinese(cbTS, not cbTS.outputSimpChinese)
 

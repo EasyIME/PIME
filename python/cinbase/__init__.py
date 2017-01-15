@@ -1872,6 +1872,9 @@ class CinBase:
                 cbTS.isShowCandidates = False
 
         # 聯想字模式
+        if not cbTS.phrase:
+            cbTS.phrasemode = False
+            
         if cbTS.showPhrase and cbTS.phrasemode:
             if self.isNumberChar(keyCode) and keyEvent.isKeyDown(VK_SHIFT) and not cbTS.imeDirName == "chedayi":
                 charCode = keyCode
@@ -2743,8 +2746,8 @@ class CinBase:
                 cbTS.dsymbols = dsymbols(fs)
 
         if not PhraseData.phrase:
-            PhraseData.loadPhraseFile(cbTS)
-            cbTS.phrase = PhraseData.phrase
+            loadPhraseData = LoadPhraseData(cbTS, PhraseData)
+            loadPhraseData.start()
         else:
             cbTS.phrase = PhraseData.phrase
 
@@ -2863,15 +2866,26 @@ CinBase = CinBase()
 class PhraseData:
     def __init__(self):
         self.phrase = None
-        
-    def loadPhraseFile(self, cbTS):
-        cfg = cbTS.cfg # 所有 TextService 共享一份設定物件
+PhraseData = PhraseData()
+
+
+class LoadPhraseData(threading.Thread):
+    def __init__(self, cbTS, PhraseData):
+        threading.Thread.__init__(self)
+        self.cbTS = cbTS
+        self.PhraseData = PhraseData
+
+    def run(self):
+        self.cbTS.phrase = None
+        self.PhraseData.phrase = None
+        cfg = self.cbTS.cfg
         datadirs = (cfg.getConfigDir(), cfg.getDataDir())
         
         phrasePath = cfg.findFile(datadirs, "phrase.dat")
         with io.open(phrasePath, encoding='utf-8') as fs:
-            self.phrase = phrase(fs)
-PhraseData = PhraseData()
+            self.cbTS.phrase = phrase(fs)
+        self.PhraseData.phrase = self.cbTS.phrase
+
 
 class LoadCinTable(threading.Thread):
     def __init__(self, cbTS, CinTable):

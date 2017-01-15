@@ -23,6 +23,8 @@ import math
 import copy
 import ctypes
 import winsound
+import threading
+from .cin import Cin
 from .swkb import swkb
 from .symbols import symbols
 from .dsymbols import dsymbols
@@ -239,6 +241,9 @@ class CinBase:
         cbTS.lastKeyDownCode = keyEvent.keyCode
         if cbTS.lastKeyDownTime == 0.0:
             cbTS.lastKeyDownTime = time.time()
+        
+        if not cbTS.cin:
+            return True
 
         # 使用者開始輸入，還沒送出前的編輯區內容稱 composition string
         # isComposing() 是 False，表示目前編輯區是空的
@@ -329,6 +334,12 @@ class CinBase:
         keyCode = keyEvent.keyCode
         charStr = chr(charCode)
         charStrLow = charStr.lower()
+        
+        if not cbTS.cin:
+            messagestr = '正在載入輸入法碼表，請稍後...'
+            cbTS.isShowMessage = True
+            cbTS.showMessage(messagestr, 5)
+            return True
 
         # NumPad 某些狀況允許輸入法處理
         if keyEvent.isKeyToggled(VK_NUMLOCK): # NumLock is on
@@ -2058,6 +2069,7 @@ class CinBase:
         if not cbTS.closemenu:
             cbTS.closemenu = True
 
+        #print('DurationTime: ' + str(time.time() - cbTS.lastKeyDownTime))
         #print('Cursor = ' + str(cbTS.compositionBufferCursor))
         #print('Type = ' + cbTS.compositionBufferType)
         #print(cbTS.compositionBufferChar)
@@ -2835,8 +2847,8 @@ class CinBase:
         # 如果有更換輸入法碼表，就重新載入碼表資料
         if not cbTS.selCinType == cfg.selCinType:
             cbTS.selCinType = cfg.selCinType
-            CinTable.loadCinFile(cbTS)
-            cbTS.cin = CinTable.cin
+            loadCinFile = LoadCinTable(cbTS, CinTable)
+            loadCinFile.start()
 
         # 比較我們先前存的版本號碼，和目前設定檔的版本號
         if cfg.isFullReloadNeeded(cbTS.configVersion):
@@ -2860,3 +2872,21 @@ class PhraseData:
         with io.open(phrasePath, encoding='utf-8') as fs:
             self.phrase = phrase(fs)
 PhraseData = PhraseData()
+
+class LoadCinTable(threading.Thread):
+    def __init__(self, cbTS, CinTable):
+        threading.Thread.__init__(self)
+        self.cbTS = cbTS
+        self.CinTable = CinTable
+
+    def run(self):
+        selCinFile = self.cbTS.cinFileList[self.cbTS.cfg.selCinType]
+        CinPath = os.path.join(self.cbTS.cindir, selCinFile)
+        
+        self.cbTS.cin = None
+        self.CinTable.cin = None
+        
+        with io.open(CinPath, encoding='utf-8') as fs:
+            self.cbTS.cin = Cin(fs, self.cbTS.imeDirName)
+        self.CinTable.cin = self.cbTS.cin
+        self.CinTable.curCinType = self.cbTS.cfg.selCinType

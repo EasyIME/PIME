@@ -20,8 +20,8 @@ import os.path
 import copy
 
 from cinbase import CinBase
+from cinbase import LoadCinTable
 from cinbase.config import CinBaseConfig
-from .cin import Cin
 
 
 class ChePhoneticTextService(TextService):
@@ -70,9 +70,9 @@ class ChePhoneticTextService(TextService):
         ]
 
         # 載入輸入法碼表
-        if not CinTable.cin:
-            CinTable.loadCinFile(self)
-            self.cin = CinTable.cin
+        if not CinTable.curCinType == self.cfg.selCinType or not CinTable.cin:
+            loadCinFile = LoadCinTable(self, CinTable)
+            loadCinFile.start()
         else:
             self.cin = CinTable.cin
 
@@ -212,12 +212,5 @@ class ChePhoneticTextService(TextService):
 class CinTable:
     def __init__(self):
         self.cin = None
-        
-    def loadCinFile(self, ImeTextService):
-        selCinFile = ImeTextService.cinFileList[ImeTextService.cfg.selCinType]
-        CinPath = os.path.join(ImeTextService.cindir, selCinFile)
-        
-        self.cin = None
-        with io.open(CinPath, encoding='utf-8') as fs:
-            self.cin = Cin(fs)
+        self.curCinType = None
 CinTable = CinTable()

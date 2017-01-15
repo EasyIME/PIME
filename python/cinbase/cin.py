@@ -32,10 +32,11 @@ class Cin(object):
     # TODO check the possiblility if the encoding is not utf-8
     encoding = 'utf-8'
 
-    def __init__(self, fs):
+    def __init__(self, fs, imeDirName):
 
         state = PARSING_HEAD_STATE
 
+        self.imeDirName = imeDirName
         self.keynames = {}
         self.chardefs = {}
         self.bopomofochardefs = {}
@@ -66,8 +67,12 @@ class Cin(object):
 
         for line in fs:
             line = re.sub('^ | $', '', line)
-            if not line or line[0] == '#':
-                continue
+            if self.imeDirName == "cheez":
+                if not line or (line[0] == '#' and state == PARSING_HEAD_STATE):
+                    continue
+            else:
+                if not line or line[0] == '#':
+                    continue
 
             if CIN_HEAD in line:
                 continue
@@ -99,7 +104,6 @@ class Cin(object):
                 continue
 
             if state is PARSE_KEYNAME_STATE:
-
                 key, root = safeSplit(line)
                 key = key.strip().lower()
                 
@@ -112,10 +116,10 @@ class Cin(object):
                 continue
 
             if state is PARSE_CHARDEF_STATE:
-                if '#' in line:
-                    line = re.sub('#.+', '', line)
+                if not self.imeDirName == "cheez":
+                    if '#' in line:
+                        line = re.sub('#.+', '', line)
                 key, root = safeSplit(line)
-                
                 key = key.strip().lower()
 
                 if '　' in root:
@@ -366,8 +370,7 @@ class Cin(object):
             pass # FIXME: handle I/O errors?
 
     def getCountDir(self):
-        dirname = os.path.basename(self.curdir)
-        count_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", dirname)
+        count_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", self.imeDirName)
         os.makedirs(count_dir, mode=0o700, exist_ok=True)
         return count_dir
 

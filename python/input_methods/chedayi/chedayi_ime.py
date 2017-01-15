@@ -20,8 +20,8 @@ import os.path
 import copy
 
 from cinbase import CinBase
+from cinbase import LoadCinTable
 from cinbase.config import CinBaseConfig
-from .cin import Cin
 
 
 class CheDayiTextService(TextService):
@@ -57,9 +57,9 @@ class CheDayiTextService(TextService):
         self.cfg.load()
 
         # 載入輸入法碼表
-        if not CinTable.cin:
-            CinTable.loadCinFile(self)
-            self.cin = CinTable.cin
+        if not CinTable.curCinType == self.cfg.selCinType or not CinTable.cin:
+            loadCinFile = LoadCinTable(self, CinTable)
+            loadCinFile.start()
         else:
             self.cin = CinTable.cin
 
@@ -175,26 +175,5 @@ class CheDayiTextService(TextService):
 class CinTable:
     def __init__(self):
         self.cin = None
-        
-    def loadCinFile(self, ImeTextService):
-        selCinFile = ImeTextService.cinFileList[ImeTextService.cfg.selCinType]
-        CinPath = os.path.join(ImeTextService.cindir, selCinFile)
-        
-        self.cin = None
-        with io.open(CinPath, encoding='utf-8') as fs:
-            self.cin = Cin(fs)
-        
-        dayiAddressCharList = "'[]-\\="
-        dayiAddressStringList = "號路街鄉鎮巷"
-        for addchar in dayiAddressCharList:
-            if not self.cin.isInKeyName(addchar):
-                self.cin.keynames[addchar] = dayiAddressStringList[dayiAddressCharList.index(addchar)]
-            
-            if self.cin.isInCharDef(addchar):
-                charDefs = self.cin.getCharDef(addchar)
-                if not dayiAddressStringList[dayiAddressCharList.index(addchar)] in charDefs:
-                    self.cin.chardefs[addchar].append(dayiAddressStringList[dayiAddressCharList.index(addchar)])
-            else:
-                self.cin.chardefs[addchar] = [dayiAddressStringList[dayiAddressCharList.index(addchar)]]
-
+        self.curCinType = None
 CinTable = CinTable()

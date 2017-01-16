@@ -250,7 +250,7 @@ $(function () {
         swkbChanged = true;
     });
 
-    $("#buttons").buttonset();
+    $("#config_buttons").controlgroup();
 
     // OK button
     $("#ok").click(function () {

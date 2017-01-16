@@ -1,6 +1,8 @@
 // Load user phrases
 function loadUserPhrases() {
     $("#add_dialog").dialog("close");
+    $("#delete_count").html("");
+
     // Reload effect
     var loading_message = $("<div>", {
         id: "loading_message",
@@ -13,8 +15,6 @@ function loadUserPhrases() {
         text: "載入詞彙中，請稍後..."
     });
     $("body").LoadingOverlay("show", { color: "rgba(80, 80, 80, 0.8)", fade: [0, 400], custom: loading_message });
-    $("#reload").html("載入中...");
-    $("#reload").addClass("ui-state-hover");
 
     // Get user_phrases
     $.get("/user_phrases", function (data, status) {
@@ -29,8 +29,6 @@ function loadUserPhrases() {
 
         // Reload complete effect
         $.LoadingOverlay("hide", true);
-        $("#reload").html("重新載入");
-        $("#reload").removeClass("ui-state-hover");
 
         // Register remove phrase button click event
         $("#table_content button").click(function () {
@@ -41,9 +39,20 @@ function loadUserPhrases() {
             onRemovePhrase(delete_phrase);
         });
 
-        // Register select phrase checked effect
-        $("#table_content input").click(function () {
-            $(this).parent().parent().toggleClass("phrase_selected");
+        // Register click table row to select phrase
+        $("#table_content tr").click(function () {
+            $(this).find("input[type=checkbox]").prop("checked", !$(this).find("input[type=checkbox]").prop("checked"));
+            $(this).toggleClass("phrase_selected");
+            if ($("#table_content input[type=checkbox]:checked").length != 0) {
+                $("#delete_count").html("（" + $("#table_content input[type=checkbox]:checked").length + "）");
+            } else {
+                $("#delete_count").html("");
+            }
+        });
+
+        // Make the "#table_content tr" click event correct check checkbox
+        $("#table_content input[type=checkbox]").click(function () {
+            $(this).prop("checked", !$(this).prop("checked"));
         });
     }, "json");
 }
@@ -115,7 +124,7 @@ function onAddPhrase() {
         return;
     }
 
-    // Add phrase
+    // Execite add phrase
     $.ajax({
         url: "/user_phrases",
         method: "POST",
@@ -179,7 +188,10 @@ $(function () {
     $.support.cors = true;
 
     // setup UI
-    $("#buttons").buttonset();
+    //$("#buttons").buttonset();
+    $("#user_phrase_buttons").controlgroup({
+        direction: "vertical"
+    });
 
     // add phrase dialog
     $("#add_dialog").dialog({
@@ -209,6 +221,60 @@ $(function () {
     $("#reload").click(loadUserPhrases);
     // $("#import").click(onImportPhrase);
     // $("#export").click(onExportPhrase);
+
+    // Change input to bopomofo
+    $("#bopomofo_input").on("keyup", function (event) {
+        var eng_to_bopomofo = {
+            "1": "ㄅ",
+            "q|Q": "ㄆ",
+            "a|A": "ㄇ",
+            "z|Z": "ㄈ",
+            "2": "ㄉ",
+            "w|W": "ㄊ",
+            "s|S": "ㄋ",
+            "x|X": "ㄌ",
+            "e|E": "ㄍ",
+            "d|D": "ㄎ",
+            "c|C": "ㄏ",
+            "r|R": "ㄐ",
+            "f|F": "ㄑ",
+            "v|V": "ㄒ",
+            "5": "ㄓ",
+            "t|T": "ㄔ",
+            "g|G": "ㄕ",
+            "b|B": "ㄖ",
+            "y|Y": "ㄗ",
+            "h|H": "ㄘ",
+            "n|N": "ㄙ",
+            "u|U": "ㄧ",
+            "j|J": "ㄨ",
+            "m|M": "ㄩ",
+            "8": "ㄚ",
+            "i|I": "ㄛ",
+            "k|K": "ㄜ",
+            ",": "ㄝ",
+            "9": "ㄞ",
+            "o|O": "ㄟ",
+            "l|L": "ㄠ",
+            "\\.": "ㄡ",
+            "0": "ㄢ",
+            "p|P": "ㄣ",
+            ";": "ㄤ",
+            "/": "ㄥ",
+            "-": "ㄦ",
+            "6": "ˊ",
+            "3": "ˇ",
+            "4": "ˋ",
+            "7": "˙"
+        };
+        $.each(eng_to_bopomofo, function (index, item) {
+            var reg = new RegExp(index);
+            if (reg.test($("#bopomofo_input").val())) {
+                $("#bopomofo_input").val($("#bopomofo_input").val().replace(reg, item));
+                return false;
+            }
+        });
+    });
 
     loadUserPhrases();
 

@@ -1,5 +1,6 @@
 body {
     line-height: 150%;
+    font-size: 100%;
 }
 
 #symbols, #ez_symbols, #ui_page {
@@ -7,7 +8,7 @@ body {
     min-height: 320px;
 }
 
-#buttons {
+#config_buttons {
     position: relative;
     float: right;
     margin: 4px;
@@ -40,6 +41,20 @@ body {
     margin: auto;
 }
 
+#user_phrase_buttons {
+    position: fixed;
+    margin: 4px;
+    padding: 1em 1em 0 0;
+    border-right: 2px solid grey;
+    height: 95%;
+    width: 12em;
+}
+
+#user_phrase_buttons #phrase_count {
+    padding: 1em;
+    position: absolute;
+}
+
 #phrase_table {
     width: 100%;
 }
@@ -50,8 +65,16 @@ body {
     border-bottom: 1px solid #dddddd;
 }
 
+#phrase_table #phrase, #phrase_table #delete_phrase {
+    width: 12em;
+}
+
+#phrase_table #bopomofo {
+    width: 25em;
+}
+
 #table_content tr:hover, .phrase_selected {
-    background-color: #dce0e8;
+    background-color: #eab342;
 }
 
 #table_content .phrase_selected {
@@ -60,4 +83,9 @@ body {
 
 .fixed_dialog {
     position: fixed;
+}
+
+#bopomofo_input {
+    /* for bopomofo display*/
+    font-family: sans-serif;
 }

@@ -1868,6 +1868,20 @@ class CinBase:
                                 self.resetComposition(cbTS)
                             if cbTS.playSoundWhenNonCand:
                                 winsound.PlaySound('alert', winsound.SND_ASYNC)
+                elif cbTS.useEndKey and charStr in cbTS.endKeyList:
+                    if len(candidates) == 0:
+                        cbTS.isShowMessage = True
+                        cbTS.showMessage("查無組字...", 3)
+                        if cbTS.autoClearCompositionChar:
+                            if cbTS.compositionBufferMode:
+                                RemoveStringLength = 0
+                                if not cbTS.compositionChar == '':
+                                    RemoveStringLength = self.calcRemoveStringLength(cbTS)
+                                self.removeCompositionBufferString(cbTS, RemoveStringLength, True)
+                            self.resetComposition(cbTS)
+                        if cbTS.playSoundWhenNonCand:
+                            winsound.PlaySound('alert', winsound.SND_ASYNC)
+                        
                 cbTS.setShowCandidates(False)
                 cbTS.isShowCandidates = False
 

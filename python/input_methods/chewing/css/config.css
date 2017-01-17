@@ -85,7 +85,7 @@ body {
     position: fixed;
 }
 
-#bopomofo_input {
+.bopomofo_display {
     /* for bopomofo display*/
-    font-family: sans-serif;
+    font-family: sans-serif !important;
 }

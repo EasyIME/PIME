@@ -19,10 +19,10 @@ function loadUserPhrases() {
     // Get user_phrases
     $.get("/user_phrases", function (data, status) {
         if (data.data != undefined) {
-            var table_content = "";
-            $.each(data.data, function (i, user_phrase) {
-                table_content += '<tr><td><input type="checkbox" data-phrase="' + user_phrase.phrase + '" data-bopomofo="' + user_phrase.bopomofo + '">' + user_phrase.phrase + '</td><td>' + user_phrase.bopomofo + '</td><td><button>刪除「' + user_phrase.phrase + '」</button></td></tr>';
-            });
+            var table_content = data.data.map(function (user_phrase) {
+                //console.log(user_phrase);
+                return '<tr><td><input type="checkbox" data-phrase="' + user_phrase.phrase + '" data-bopomofo="' + user_phrase.bopomofo + '">' + user_phrase.phrase + '</td><td>' + user_phrase.bopomofo + '</td><td><button>刪除「' + user_phrase.phrase + '」</button></td></tr>';
+            }).join("");
             $("#table_content").html(table_content);
             $("#phrase_count").html("共&nbsp;" + data.data.length + "&nbsp;個詞彙");
         }
@@ -124,7 +124,7 @@ function onAddPhrase() {
         return;
     }
 
-    // Execite add phrase
+    // Execute add phrase
     $.ajax({
         url: "/user_phrases",
         method: "POST",
@@ -223,57 +223,87 @@ $(function () {
     // $("#export").click(onExportPhrase);
 
     // Change input to bopomofo
-    $("#bopomofo_input").on("keyup", function (event) {
-        var eng_to_bopomofo = {
-            "1": "ㄅ",
-            "q|Q": "ㄆ",
-            "a|A": "ㄇ",
-            "z|Z": "ㄈ",
-            "2": "ㄉ",
-            "w|W": "ㄊ",
-            "s|S": "ㄋ",
-            "x|X": "ㄌ",
-            "e|E": "ㄍ",
-            "d|D": "ㄎ",
-            "c|C": "ㄏ",
-            "r|R": "ㄐ",
-            "f|F": "ㄑ",
-            "v|V": "ㄒ",
-            "5": "ㄓ",
-            "t|T": "ㄔ",
-            "g|G": "ㄕ",
-            "b|B": "ㄖ",
-            "y|Y": "ㄗ",
-            "h|H": "ㄘ",
-            "n|N": "ㄙ",
-            "u|U": "ㄧ",
-            "j|J": "ㄨ",
-            "m|M": "ㄩ",
-            "8": "ㄚ",
-            "i|I": "ㄛ",
-            "k|K": "ㄜ",
-            ",": "ㄝ",
-            "9": "ㄞ",
-            "o|O": "ㄟ",
-            "l|L": "ㄠ",
-            "\\.": "ㄡ",
-            "0": "ㄢ",
-            "p|P": "ㄣ",
-            ";": "ㄤ",
-            "/": "ㄥ",
-            "-": "ㄦ",
-            "6": "ˊ",
-            "3": "ˇ",
-            "4": "ˋ",
-            "7": "˙"
+    $("#bopomofo_input").on("input", function (event) {
+        var keycode_to_bopomofo = {
+            49: "ㄅ",
+            81: "ㄆ",
+            113: "ㄆ",
+            65: "ㄇ",
+            97: "ㄇ",
+            90: "ㄈ",
+            122: "ㄈ",
+            50: "ㄉ",
+            87: "ㄊ",
+            119: "ㄊ",
+            83: "ㄋ",
+            115: "ㄋ",
+            88: "ㄌ",
+            120: "ㄌ",
+            69: "ㄍ",
+            101: "ㄍ",
+            68: "ㄎ",
+            100: "ㄎ",
+            67: "ㄏ",
+            99: "ㄏ",
+            82: "ㄐ",
+            114: "ㄐ",
+            70: "ㄑ",
+            102: "ㄑ",
+            86: "ㄒ",
+            118: "ㄒ",
+            53: "ㄓ",
+            84: "ㄔ",
+            116: "ㄔ",
+            71: "ㄕ",
+            103: "ㄕ",
+            66: "ㄖ",
+            98: "ㄖ",
+            89: "ㄗ",
+            121: "ㄗ",
+            72: "ㄘ",
+            104: "ㄘ",
+            78: "ㄙ",
+            110: "ㄙ",
+            85: "ㄧ",
+            117: "ㄧ",
+            74: "ㄨ",
+            106: "ㄨ",
+            77: "ㄩ",
+            109: "ㄩ",
+            56: "ㄚ",
+            73: "ㄛ",
+            105: "ㄛ",
+            75: "ㄜ",
+            107: "ㄜ",
+            44: "ㄝ",
+            57: "ㄞ",
+            79: "ㄟ",
+            111: "ㄟ",
+            76: "ㄠ",
+            108: "ㄠ",
+            46: "ㄡ",
+            48: "ㄢ",
+            80: "ㄣ",
+            112: "ㄣ",
+            59: "ㄤ",
+            191: "ㄥ",
+            47: "ㄥ",
+            45: "ㄦ",
+            54: "ˊ",
+            51: "ˇ",
+            52: "ˋ",
+            55: "˙"
         };
-        $.each(eng_to_bopomofo, function (index, item) {
-            var reg = new RegExp(index);
-            if (reg.test($("#bopomofo_input").val())) {
-                $("#bopomofo_input").val($("#bopomofo_input").val().replace(reg, item));
-                return false;
+        var bopomofo_input = $("#bopomofo_input").val();
+        var bopomofo_string = "";
+        for (var i = 0; i < bopomofo_input.length; i++) {
+            if (keycode_to_bopomofo[bopomofo_input.charCodeAt(i)] != undefined) {
+                bopomofo_string += keycode_to_bopomofo[bopomofo_input.charCodeAt(i)];
+            } else {
+                bopomofo_string += bopomofo_input.substring(i, i + 1);
             }
-        });
+        }
+        $("#bopomofo_input").val(bopomofo_string);
     });
 
     loadUserPhrases();

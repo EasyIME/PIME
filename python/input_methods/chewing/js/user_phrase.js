@@ -19,8 +19,7 @@ function loadUserPhrases() {
     // Get user_phrases
     $.get("/user_phrases", function (data, status) {
         if (data.data != undefined) {
-            var table_content = data.data.map(function (user_phrase) {
-                //console.log(user_phrase);
+            var table_content = data.data.map(function (user_phrase) {                
                 return '<tr><td><input type="checkbox" data-phrase="' + user_phrase.phrase + '" data-bopomofo="' + user_phrase.bopomofo + '">' + user_phrase.phrase + '</td><td>' + user_phrase.bopomofo + '</td><td><button>刪除「' + user_phrase.phrase + '」</button></td></tr>';
             }).join("");
             $("#table_content").html(table_content);

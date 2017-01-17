@@ -1,8 +1,3 @@
-body {
-    line-height: 150%;
-    font-size: 100%;
-}
-
 #symbols, #ez_symbols, #ui_page {
     width: 100%;
     min-height: 320px;
@@ -30,6 +25,10 @@ body {
     border-bottom: 1px solid black;
     border-left: 1px solid grey;
     background-color: white;
+}
+
+textarea {
+    min-height: 300px;
 }
 
 #selExample span {

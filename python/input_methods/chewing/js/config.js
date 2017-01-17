@@ -25,6 +25,13 @@ function saveConfig(callbackFunc) {
             for (var j = 0; j < i; j++) {
                 selectionStart += ez_symbols_array[j].length + 1;
             }
+    var chewingConfig = {},
+        symbolsChanged = false,
+        swkbChanged = false,
+        DEBUG = false,
+        CONFIG_URL = '/config',
+        VERSION_URL = '/version.txt',
+        KEEP_ALIVE_URL = '/keep_alive';
 
             $("#ez_symbols").prop("selectionStart", selectionStart);
             $("#ez_symbols").prop("selectionEnd", selectionStart + ez_symbols_array[i].length + 1);
@@ -49,6 +56,11 @@ function saveConfig(callbackFunc) {
             alert("特殊符號設定第 " + (i + 1) + " 行格式錯誤\n單行不能超過一個字元，或是沒有'='符號區隔");
             return;
         }
+    if (DEBUG) {
+        // load data from text file for testing or developing
+        CONFIG_URL = 'debug' + CONFIG_URL;
+        VERSION_URL = 'debug' + VERSION_URL;
+        KEEP_ALIVE_URL = 'debug' + KEEP_ALIVE_URL;
     }
 
     var data = {

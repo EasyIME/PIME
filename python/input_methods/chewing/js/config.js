@@ -238,7 +238,7 @@ $(function() {
         $("#selExample").css("font-size", $("#fontSize").val() + "pt");
         updateSelExample();
 
-        $("#ui_tab input").on("change", function() {
+        $("#ui_tab input").on("change keyup", function() {
             $("#selExample").css("font-size", $("#fontSize").val() + "pt");
             updateSelExample();
         });

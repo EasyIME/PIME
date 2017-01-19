@@ -1,3 +1,10 @@
+a[target="_blank"]:hover:after {
+  font-family: "FontAwesome";
+  content: "\f08e";
+  vertical-align: super;
+  margin-left: 3px;
+}
+
 #symbols, #ez_symbols, #ui_page {
     width: 100%;
     min-height: 320px;

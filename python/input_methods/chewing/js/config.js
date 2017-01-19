@@ -175,6 +175,8 @@ $(function() {
 
         $("select").selectpicker();
 
+        $('[data-toggle="popover"]').popover();
+
         // Setup keybord page
         var keyboardNames = [
             "預設",

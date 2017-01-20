@@ -55,10 +55,12 @@ class CheArrayTextService(TextService):
         self.cfg.load()
 
         # 載入輸入法碼表
-        if not CinTable.curCinType == self.cfg.selCinType or not CinTable.cin:
+        if not CinTable.curCinType == self.cfg.selCinType and not CinTable.loading:
             loadCinFile = LoadCinTable(self, CinTable)
             loadCinFile.start()
         else:
+            while CinTable.loading:
+                continue
             self.cin = CinTable.cin
 
 
@@ -153,6 +155,7 @@ class CheArrayTextService(TextService):
 
 
 class CinTable:
+    loading = False
     def __init__(self):
         self.cin = None
         self.curCinType = None

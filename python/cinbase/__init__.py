@@ -2759,7 +2759,7 @@ class CinBase:
             with io.open(dsymbolsPath, encoding='utf-8') as fs:
                 cbTS.dsymbols = dsymbols(fs)
 
-        if not PhraseData.phrase:
+        if not PhraseData.phrase and not PhraseData.loading:
             loadPhraseData = LoadPhraseData(cbTS, PhraseData)
             loadPhraseData.start()
         else:
@@ -2862,7 +2862,7 @@ class CinBase:
         cfg.update() # 更新設定檔狀態
         
         # 如果有更換輸入法碼表，就重新載入碼表資料
-        if not cbTS.selCinType == cfg.selCinType:
+        if not cbTS.selCinType == cfg.selCinType and not CinTable.loading:
             cbTS.selCinType = cfg.selCinType
             loadCinFile = LoadCinTable(cbTS, CinTable)
             loadCinFile.start()
@@ -2878,6 +2878,7 @@ class CinBase:
 CinBase = CinBase()
 
 class PhraseData:
+    loading = False
     def __init__(self):
         self.phrase = None
 PhraseData = PhraseData()
@@ -2892,6 +2893,7 @@ class LoadPhraseData(threading.Thread):
     def run(self):
         self.cbTS.phrase = None
         self.PhraseData.phrase = None
+        self.PhraseData.loading = True
         cfg = self.cbTS.cfg
         datadirs = (cfg.getConfigDir(), cfg.getDataDir())
         
@@ -2899,6 +2901,7 @@ class LoadPhraseData(threading.Thread):
         with io.open(phrasePath, encoding='utf-8') as fs:
             self.cbTS.phrase = phrase(fs)
         self.PhraseData.phrase = self.cbTS.phrase
+        self.PhraseData.loading = False
 
 
 class LoadCinTable(threading.Thread):
@@ -2913,8 +2916,10 @@ class LoadCinTable(threading.Thread):
         
         self.cbTS.cin = None
         self.CinTable.cin = None
+        self.CinTable.loading = True
         
         with io.open(CinPath, encoding='utf-8') as fs:
             self.cbTS.cin = Cin(fs, self.cbTS.imeDirName)
         self.CinTable.cin = self.cbTS.cin
         self.CinTable.curCinType = self.cbTS.cfg.selCinType
+        self.CinTable.loading = False

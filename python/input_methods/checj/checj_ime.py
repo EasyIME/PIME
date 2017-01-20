@@ -34,7 +34,7 @@ class CheCJTextService(TextService):
         # 輸入法模組自訂區域
         self.imeDirName = "checj"
         self.maxCharLength = 5 # 輸入法最大編碼字元數量
-        self.cinFileList = ["checj.cin", "mscj3.cin", "cj-ext.cin", "cnscj.cin", "thcj.cin", "newcj3.cin", "cj5.cin", "newcj.cin", "scj6.cin"]
+        self.cinFileList = ["checj.cin", "mscj3.cin", "mscj3-ext.cin", "cj-ext.cin", "cnscj.cin", "thcj.cin", "newcj3.cin", "cj5.cin", "newcj.cin", "scj6.cin"]
 
         self.cinbase = CinBase
         self.curdir = os.path.abspath(os.path.dirname(__file__))

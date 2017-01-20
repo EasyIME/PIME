@@ -5,6 +5,7 @@ var imeFolderName = "checj"
 var selCins = [
     "酷倉",
     "倉頡",
+    "倉頡(大字集)",
     "雅虎倉頡",
     "中標倉頡",
     "泰瑞倉頡",

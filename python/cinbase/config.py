@@ -44,8 +44,6 @@ class CinBaseConfig:
         self.directShowCand = False
         self.directCommitString = False
         self.directCommitSymbol = False
-        self.colorCandWnd = True
-        self.advanceAfterSelection = True
         self.fontSize = DEF_FONT_SIZE
         self.selCinType = 0
         self.selCinFile = ""
@@ -54,25 +52,24 @@ class CinBaseConfig:
         self.selKeyType = 0
         self.candPerPage = 9
         self.cursorCandList = True
-        self.enableCapsLock = True
         self.fullShapeSymbols = False
         self.directOutFSymbols = False
         self.directOutMSymbols = True
-        # self.phraseMark = True
-        self.escCleanAllBuf = True
         self.easySymbolsWithShift = False
-        # self.easySymbolsWithCtrl = False
-        self.upperCaseWithShift = True
         self.showPhrase = False
         self.sortByPhrase = True
         self.supportWildcard = True
         self.compositionBufferMode = False
         self.autoMoveCursorInBrackets = False
         self.selWildcardType = 0
+        self.imeReverseLookup = False
+        self.selRCinType = 0
+        self.rcinFileList = []
         self.candMaxItems = 100
         self.keyboardType = 0
         self.selDayiSymbolCharType = 0
         self.curdir = os.path.abspath(os.path.dirname(__file__))
+        self.ignoreSaveList = ["_lastUpdateTime", "_version", "ignoreSaveList", "curdir", "cindir", "cinFileList", "selCinFile", "imeDirName"]
         
         # version: last modified time of (config.json, symbols.dat, swkb.dat)
         self._version = (0.0, 0.0, 0.0)
@@ -116,8 +113,8 @@ class CinBaseConfig:
         filename = self.getConfigFile()
         try:
             with open(filename, "w") as f:
-                json = {key: value for key, value in self.__dict__.items() if not key.startswith("_")}
-                js = json.dump(json, f, indent=4)
+                jsondata = {key: value for key, value in self.__dict__.items() if not key in self.ignoreSaveList}
+                js = json.dump(jsondata, f, indent=4)
             self.update()
         except Exception:
             pass # FIXME: handle I/O errors?

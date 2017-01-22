@@ -25,6 +25,7 @@ import ctypes
 import winsound
 import threading
 from .cin import Cin
+from .rcin import RCin
 from .swkb import swkb
 from .symbols import symbols
 from .dsymbols import dsymbols
@@ -67,7 +68,15 @@ class CinBase:
         self.candselKeys = "1234567890"
         self.emoji = emoji
         self.emojimenulist = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
-
+        self.imeNameList = ["checj", "chephonetic", "chearray", "chedayi", "cheez", "chepinyin", "chesimplex"]
+        self.ReverseCinDict = {}
+        self.ReverseCinDict["checj"] = ["checj.cin", "mscj3.cin", "mscj3-ext.cin", "cj-ext.cin", "cnscj.cin", "thcj.cin", "newcj3.cin", "cj5.cin", "newcj.cin", "scj6.cin"]
+        self.ReverseCinDict["chephonetic"] = ["thphonetic.cin", "CnsPhonetic.cin", "bpmf.cin"]
+        self.ReverseCinDict["chearray"] = ["tharray.cin", "array30.cin", "ar30-big.cin", "array40.cin"]
+        self.ReverseCinDict["chedayi"] = ["thdayi.cin", "dayi4.cin", "dayi3.cin"]
+        self.ReverseCinDict["cheez"] = ["ez.cin", "ezsmall.cin", "ezmid.cin", "ezbig.cin"]
+        self.ReverseCinDict["chepinyin"] = ["thpinyin.cin", "pinyin.cin", "roman.cin"]
+        self.ReverseCinDict["chesimplex"] = ["simplecj.cin", "simplex.cin", "simplex5.cin"]
 
     # 初始化輸入行為設定
     def initTextService(self, cbTS, TextService):
@@ -98,6 +107,8 @@ class CinBase:
         cbTS.sortByPhrase = False
         cbTS.compositionBufferMode = False
         cbTS.autoMoveCursorInBrackets = False
+        cbTS.imeReverseLookup = False
+        cbTS.rcinFileList = []
         
         cbTS.selDayiSymbolCharType = 0
         cbTS.lastKeyDownCode = 0
@@ -236,13 +247,13 @@ class CinBase:
     # 使用者按下按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
     # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
     # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
-    def filterKeyDown(self, cbTS, keyEvent):
+    def filterKeyDown(self, cbTS, keyEvent, CinTable, RCinTable):
         # 紀錄最後一次按下的鍵和按下的時間，在 filterKeyUp() 中要用
         cbTS.lastKeyDownCode = keyEvent.keyCode
         if cbTS.lastKeyDownTime == 0.0:
             cbTS.lastKeyDownTime = time.time()
         
-        if not cbTS.cin:
+        if CinTable.loading or RCinTable.loading:
             return True
 
         # 使用者開始輸入，還沒送出前的編輯區內容稱 composition string
@@ -329,14 +340,17 @@ class CinBase:
         # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
         return False
         
-    def onKeyDown(self, cbTS, keyEvent):
+    def onKeyDown(self, cbTS, keyEvent, CinTable, RCinTable):
         charCode = keyEvent.charCode
         keyCode = keyEvent.keyCode
         charStr = chr(charCode)
         charStrLow = charStr.lower()
         
-        if not cbTS.cin:
-            messagestr = '正在載入輸入法碼表，請稍後...'
+        if CinTable.loading or RCinTable.loading:
+            if CinTable.loading:
+                messagestr = '正在載入輸入法碼表，請稍後...'
+            else:
+                messagestr = '正在載入反查字根碼表，請稍後...'
             cbTS.isShowMessage = True
             cbTS.showMessage(messagestr, 5)
             return True
@@ -2605,6 +2619,11 @@ class CinBase:
             cbTS.wildcardpagecandidates = []
             cbTS.isWildcardChardefs = False
 
+        if cbTS.imeReverseLookup:
+            messagestr = cbTS.rcin.getCharEncode(commitStr)
+            cbTS.isShowMessage = True
+            cbTS.showMessage(messagestr, 5)
+
         # 如果使用打繁出簡，就轉成簡體中文
         if cbTS.outputSimpChinese:
             commitStr = cbTS.opencc.convert(commitStr)
@@ -2763,6 +2782,8 @@ class CinBase:
             loadPhraseData = LoadPhraseData(cbTS, PhraseData)
             loadPhraseData.start()
         else:
+            while PhraseData.loading:
+                continue
             cbTS.phrase = PhraseData.phrase
 
         self.applyConfig(cbTS) # 套用其餘的使用者設定
@@ -2851,13 +2872,21 @@ class CinBase:
 
         # 自動移動組字游標至括號中間?
         cbTS.autoMoveCursorInBrackets = cfg.autoMoveCursorInBrackets
-        
+
+        # 反查輸入法字根
+        cbTS.imeReverseLookup = cfg.imeReverseLookup
+        cbTS.rcinFileList = cfg.rcinFileList
+        cbTS.selRCinType = cfg.selRCinType
+            
+        if not cbTS.rcinFileList:
+            self.updateRcinFileList(cbTS)
+
         if cbTS.imeDirName == "chedayi":
             cbTS.selDayiSymbolCharType = cfg.selDayiSymbolCharType
 
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
-    def checkConfigChange(self, cbTS, CinTable):
+    def checkConfigChange(self, cbTS, CinTable, RCinTable):
         cfg = cbTS.cfg # 所有 TextService 共享一份設定物件
         cfg.update() # 更新設定檔狀態
         
@@ -2867,6 +2896,13 @@ class CinBase:
             loadCinFile = LoadCinTable(cbTS, CinTable)
             loadCinFile.start()
 
+        if cbTS.imeReverseLookup:
+            # 載入反查輸入法碼表
+            if (not cbTS.selRCinType == cfg.selRCinType and not RCinTable.loading) or (not RCinTable.loaded and not RCinTable.loading):
+                cbTS.selRCinType = cfg.selRCinType
+                loadRCinFile = LoadRCinTable(cbTS, RCinTable)
+                loadRCinFile.start()
+
         # 比較我們先前存的版本號碼，和目前設定檔的版本號
         if cfg.isFullReloadNeeded(cbTS.configVersion):
             # 資料改變需整個 reload，重建一個新的 checj context
@@ -2874,6 +2910,20 @@ class CinBase:
         elif cfg.isConfigChanged(cbTS.configVersion):
             # 只有偵測到設定檔變更，需要套用新設定
             self.applyConfig(cbTS)
+            
+
+    def updateRcinFileList(self, cbTS):
+        cfg = cbTS.cfg
+        for imeName in self.imeNameList:
+            if not cbTS.imeDirName == imeName:
+                filelist = self.ReverseCinDict[imeName]
+                for filename in filelist:
+                    filepath = os.path.abspath(os.path.join(cbTS.curdir, os.path.pardir, imeName, "cin", filename))
+                    if os.path.isfile(filepath):
+                        cbTS.rcinFileList.append(filename)
+        cfg.rcinFileList = cbTS.rcinFileList
+        cfg.save()
+
 
 CinBase = CinBase()
 
@@ -2923,3 +2973,28 @@ class LoadCinTable(threading.Thread):
         self.CinTable.cin = self.cbTS.cin
         self.CinTable.curCinType = self.cbTS.cfg.selCinType
         self.CinTable.loading = False
+
+
+class LoadRCinTable(threading.Thread):
+    def __init__(self, cbTS, RCinTable):
+        threading.Thread.__init__(self)
+        self.cbTS = cbTS
+        self.RCinTable = RCinTable
+
+    def run(self):
+        selCinFile = self.cbTS.rcinFileList[self.cbTS.cfg.selRCinType]
+        for imeName in CinBase.ReverseCinDict:
+            if selCinFile in CinBase.ReverseCinDict[imeName]:
+                CinPath = os.path.abspath(os.path.join(self.cbTS.curdir, os.path.pardir, imeName, "cin", selCinFile))
+        
+        self.cbTS.rcin = None
+        self.RCinTable.cin = None
+        self.RCinTable.loading = True
+        
+        with io.open(CinPath, encoding='utf-8') as fs:
+            self.cbTS.rcin = RCin(fs, imeName)
+        self.RCinTable.cin = self.cbTS.rcin
+        self.RCinTable.curCinType = self.cbTS.cfg.selRCinType
+        self.RCinTable.loading = False
+        self.RCinTable.loaded = True
+

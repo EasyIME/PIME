@@ -21,6 +21,7 @@ import copy
 
 from cinbase import CinBase
 from cinbase import LoadCinTable
+from cinbase import LoadRCinTable
 from cinbase.config import CinBaseConfig
 
 
@@ -65,10 +66,26 @@ class CheDayiTextService(TextService):
                 continue
             self.cin = CinTable.cin
 
+        # 反查輸入法字根
+        if self.cfg.imeReverseLookup:
+            self.imeReverseLookup = self.cfg.imeReverseLookup
+            self.rcinFileList = self.cfg.rcinFileList
+            self.selRCinType = self.cfg.selRCinType
+            if not self.rcinFileList:
+                self.cinbase.updateRcinFileList(self)
+            
+            if not RCinTable.curCinType == self.cfg.selRCinType and not RCinTable.loading:
+                loadRCinFile = LoadRCinTable(self, RCinTable)
+                loadRCinFile.start()
+            else:
+                while RCinTable.loading:
+                    continue
+                self.rcin = RCinTable.cin
+
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):
-        self.cinbase.checkConfigChange(self, CinTable)
+        self.cinbase.checkConfigChange(self, CinTable, RCinTable)
 
 
     # 輸入法被使用者啟用
@@ -88,7 +105,7 @@ class CheDayiTextService(TextService):
     # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
     # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
     def filterKeyDown(self, keyEvent):
-        KeyState = self.cinbase.filterKeyDown(self, keyEvent)
+        KeyState = self.cinbase.filterKeyDown(self, keyEvent, CinTable, RCinTable)
         return KeyState
 
 
@@ -124,7 +141,7 @@ class CheDayiTextService(TextService):
 
         if not self.directShowCand:
             self.autoShowCandWhenMaxChar = True
-        KeyState = self.cinbase.onKeyDown(self, keyEvent)
+        KeyState = self.cinbase.onKeyDown(self, keyEvent, CinTable, RCinTable)
         return KeyState
 
 
@@ -180,3 +197,12 @@ class CinTable:
         self.cin = None
         self.curCinType = None
 CinTable = CinTable()
+
+
+class RCinTable:
+    loading = False
+    loaded = False
+    def __init__(self):
+        self.cin = None
+        self.curCinType = None
+RCinTable = RCinTable()

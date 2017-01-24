@@ -2807,10 +2807,14 @@ class CinBase:
         self.resetCompositionBuffer(cbTS)
 
         # 每列顯示幾個候選字
-        cbTS.candPerRow = cfg.candPerRow;
+        cbTS.candPerRow = cfg.candPerRow
+
+        # 如果程式為 UiLess 模式就取代設定
+        if cbTS.client.isUiLess:
+            cbTS.candPerRow = 1
         
         # 每頁顯示幾個候選字
-        cbTS.candPerPage = cfg.candPerPage;
+        cbTS.candPerPage = cfg.candPerPage
 
         # 設定 UI 外觀
         cbTS.customizeUI(candFontSize = cfg.fontSize,

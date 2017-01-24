@@ -66,6 +66,7 @@ class CinBaseConfig:
         self.selRCinType = 0
         self.rcinFileList = []
         self.candMaxItems = 100
+        self.messageDurationTime = 3
         self.keyboardType = 0
         self.selDayiSymbolCharType = 0
         self.curdir = os.path.abspath(os.path.dirname(__file__))

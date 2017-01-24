@@ -167,6 +167,9 @@ class CinBase:
         cbTS.resetMenuCand = False
         cbTS.keepComposition = False
         cbTS.keepType = ""
+        cbTS.messageDurationTime = 3
+        cbTS.showMessageOnKeyUp = False
+        cbTS.onKeyUpMessage = ""
         cbTS.capsStates = True if self.getKeyState(VK_CAPITAL) else False
 
         cbTS.bopomofolist = []
@@ -352,7 +355,7 @@ class CinBase:
             else:
                 messagestr = '正在載入反查字根碼表，請稍後...'
             cbTS.isShowMessage = True
-            cbTS.showMessage(messagestr, 5)
+            cbTS.showMessage(messagestr, 3)
             return True
 
         # NumPad 某些狀況允許輸入法處理
@@ -426,9 +429,9 @@ class CinBase:
                 else:
                     cbTS.setCompositionString(cbTS.compositionChar)
                 if not cbTS.hidePromptMessages:
-                    messagestr = '多功能前導字元'
                     cbTS.isShowMessage = True
-                    cbTS.showMessage(messagestr, 5)
+                    cbTS.showMessageOnKeyUp = True
+                    cbTS.onKeyUpMessage = '多功能前導字元'
                 cbTS.multifunctionmode = True
             elif len(cbTS.compositionChar) == 1 and cbTS.multifunctionmode:
                 if charStrLow == 'm' or charStrLow == 'u' or charStrLow == 'e':
@@ -1611,9 +1614,9 @@ class CinBase:
                                     # 如果使用萬用字元解碼
                                     if cbTS.isWildcardChardefs:
                                         if not cbTS.hidePromptMessages:
-                                            messagestr = cbTS.cin.getCharEncode(commitStr)
                                             cbTS.isShowMessage = True
-                                            cbTS.showMessage(messagestr, 5)
+                                            cbTS.showMessageOnKeyUp = True
+                                            cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
                                         cbTS.wildcardcandidates = []
                                         cbTS.wildcardpagecandidates = []
                                         cbTS.isWildcardChardefs = False
@@ -1672,9 +1675,9 @@ class CinBase:
                                     # 如果使用萬用字元解碼
                                     if cbTS.isWildcardChardefs:
                                         if not cbTS.hidePromptMessages:
-                                            messagestr = cbTS.cin.getCharEncode(commitStr)
                                             cbTS.isShowMessage = True
-                                            cbTS.showMessage(messagestr, 5)
+                                            cbTS.showMessageOnKeyUp = True
+                                            cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
                                         cbTS.wildcardcandidates = []
                                         cbTS.wildcardpagecandidates = []
                                         cbTS.isWildcardChardefs = False
@@ -1853,10 +1856,10 @@ class CinBase:
                                         commitStr = chr(int(cbTS.compositionChar[2:], 16))
                                         cbTS.lastCommitString = commitStr
                                         if not cbTS.hidePromptMessages:
-                                            messagestr = cbTS.cin.getCharEncode(commitStr)
                                             cbTS.isShowMessage = True
-                                            cbTS.showMessage(messagestr, 5)
-                                        
+                                            cbTS.showMessageOnKeyUp = True
+                                            cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
+
                                         if cbTS.compositionBufferMode:
                                             cbTS.compositionBufferType = "menuunicode"
                                             self.setCompositionBufferString(cbTS, commitStr, len(cbTS.compositionChar))
@@ -2138,6 +2141,9 @@ class CinBase:
 
         if cbTS.showPhrase and cbTS.phrasemode and cbTS.isShowPhraseCandidates:
             return True
+
+        if cbTS.showMessageOnKeyUp:
+            return True
         
         return False
 
@@ -2189,6 +2195,12 @@ class CinBase:
 
         if cbTS.showPhrase and cbTS.phrasemode and cbTS.isShowPhraseCandidates:
             cbTS.setShowCandidates(True)
+
+        if cbTS.showMessageOnKeyUp:
+            cbTS.showMessage(cbTS.onKeyUpMessage, 3)
+            cbTS.showMessageOnKeyUp = False
+            cbTS.onKeyUpMessage = ""
+
 
     def onPreservedKey(self, cbTS, guid):
         cbTS.lastKeyDownCode = 0;
@@ -2612,17 +2624,17 @@ class CinBase:
         # 如果使用萬用字元解碼
         if cbTS.isWildcardChardefs:
             if not cbTS.hidePromptMessages:
-                messagestr = cbTS.cin.getCharEncode(commitStr)
                 cbTS.isShowMessage = True
-                cbTS.showMessage(messagestr, 5)
+                cbTS.showMessageOnKeyUp = True
+                cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
             cbTS.wildcardcandidates = []
             cbTS.wildcardpagecandidates = []
             cbTS.isWildcardChardefs = False
 
         if cbTS.imeReverseLookup:
-            messagestr = cbTS.rcin.getCharEncode(commitStr)
             cbTS.isShowMessage = True
-            cbTS.showMessage(messagestr, 5)
+            cbTS.showMessageOnKeyUp = True
+            cbTS.onKeyUpMessage = cbTS.rcin.getCharEncode(commitStr)
 
         # 如果使用打繁出簡，就轉成簡體中文
         if cbTS.outputSimpChinese:
@@ -2874,12 +2886,12 @@ class CinBase:
         cbTS.autoMoveCursorInBrackets = cfg.autoMoveCursorInBrackets
 
         # 反查輸入法字根
+        self.updateRcinFileList(cbTS)
         cbTS.imeReverseLookup = cfg.imeReverseLookup
-        cbTS.rcinFileList = cfg.rcinFileList
         cbTS.selRCinType = cfg.selRCinType
-            
-        if not cbTS.rcinFileList:
-            self.updateRcinFileList(cbTS)
+
+        # 訊息顯示時間?
+        cbTS.messageDurationTime = cfg.messageDurationTime
 
         if cbTS.imeDirName == "chedayi":
             cbTS.selDayiSymbolCharType = cfg.selDayiSymbolCharType
@@ -2914,6 +2926,7 @@ class CinBase:
 
     def updateRcinFileList(self, cbTS):
         cfg = cbTS.cfg
+        cbTS.rcinFileList = []
         for imeName in self.imeNameList:
             if not cbTS.imeDirName == imeName:
                 filelist = self.ReverseCinDict[imeName]
@@ -2921,8 +2934,9 @@ class CinBase:
                     filepath = os.path.abspath(os.path.join(cbTS.curdir, os.path.pardir, imeName, "cin", filename))
                     if os.path.isfile(filepath):
                         cbTS.rcinFileList.append(filename)
-        cfg.rcinFileList = cbTS.rcinFileList
-        cfg.save()
+        if not cfg.rcinFileList == cbTS.rcinFileList:
+            cfg.rcinFileList = cbTS.rcinFileList
+            cfg.save()
 
 
 CinBase = CinBase()

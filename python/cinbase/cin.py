@@ -384,11 +384,18 @@ class Cin(object):
 
     def saveCountFile(self):
         filename = self.getCountFile()
-        try:
-            with open(filename, "w") as f:
-                js = json.dump(self.cincount, f, indent=4)
-        except Exception:
-            pass # FIXME: handle I/O errors?
+        tempcincount = {}
+
+        if os.path.exists(filename) and not os.stat(filename).st_size == 0:
+            with open(filename, "r") as f:
+                tempcincount.update(json.load(f))
+        
+        if not tempcincount == self.cincount:
+            try:
+                with open(filename, "w") as f:
+                    js = json.dump(self.cincount, f, indent=4)
+            except Exception:
+                pass # FIXME: handle I/O errors?
 
     def getCountDir(self):
         count_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", self.imeDirName)

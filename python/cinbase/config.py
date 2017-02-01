@@ -48,7 +48,6 @@ class CinBaseConfig:
         self.selCinType = 0
         self.selCinFile = ""
         self.cinFileList = []
-        self.cindir = ""
         self.selKeyType = 0
         self.candPerPage = 9
         self.cursorCandList = True
@@ -70,7 +69,7 @@ class CinBaseConfig:
         self.keyboardType = 0
         self.selDayiSymbolCharType = 0
         self.curdir = os.path.abspath(os.path.dirname(__file__))
-        self.ignoreSaveList = ["_lastUpdateTime", "_version", "ignoreSaveList", "curdir", "cindir", "cinFileList", "selCinFile", "imeDirName"]
+        self.ignoreSaveList = ["_lastUpdateTime", "_version", "ignoreSaveList", "curdir", "cinFileList", "selCinFile", "imeDirName"]
         
         # version: last modified time of (config.json, symbols.dat, swkb.dat)
         self._version = (0.0, 0.0, 0.0)
@@ -122,7 +121,10 @@ class CinBaseConfig:
 
     def getDataDir(self):
         return os.path.join(os.path.dirname(__file__), "data")
-        
+
+    def getCinDir(self):
+        return os.path.join(os.path.dirname(__file__), "cin")
+
     def getDefaultConfigDir(self):
         return os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, "input_methods", self.imeDirName, "config"))
 

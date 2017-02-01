@@ -617,19 +617,20 @@ class CinBase:
             menu_playSoundWhenNonCand = "☑ 拆錯字碼時發出警告嗶聲提示" if cbTS.playSoundWhenNonCand else "☐ 拆錯字碼時發出警告嗶聲提示"
             menu_showPhrase = "☑ 輸出字串後顯示聯想字詞" if cbTS.showPhrase else "☐ 輸出字串後顯示聯想字詞"
             menu_sortByPhrase = "☑ 優先以聯想字詞排序候選清單" if cbTS.sortByPhrase else "☐ 優先以聯想字詞排序候選清單"
+            menu_imeReverseLookup = "☑ 反查輸入字根" if cbTS.imeReverseLookup else "☐ 反查輸入字根"
             
             if cbTS.imeDirName == "chephonetic":
-                cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase]
-                cbTS.smenuitems =  ["fullShapeSymbols", "easySymbolsWithShift", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase"]
+                cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase, menu_imeReverseLookup]
+                cbTS.smenuitems =  ["fullShapeSymbols", "easySymbolsWithShift", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "imeReverseLookup"]
             elif cbTS.imeDirName == "cheez":
-                cbTS.smenucandidates = [menu_supportWildcard, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase]
-                cbTS.smenuitems = ["supportWildcard", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase"]
+                cbTS.smenucandidates = [menu_supportWildcard, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase, menu_imeReverseLookup]
+                cbTS.smenuitems = ["supportWildcard", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "imeReverseLookup"]
             elif cbTS.imeDirName == "chearray" or cbTS.imeDirName == "chedayi":
-                cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportWildcard, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase]
-                cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "supportWildcard", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase"]
+                cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportWildcard, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase, menu_imeReverseLookup]
+                cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "supportWildcard", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "imeReverseLookup"]
             else:
-                cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportWildcard, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase]
-                cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "supportWildcard", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase"]
+                cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_supportWildcard, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase, menu_imeReverseLookup]
+                cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "supportWildcard", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "imeReverseLookup"]
 
             if not cbTS.closemenu:
                 cbTS.setCandidateCursor(0)
@@ -2406,6 +2407,8 @@ class CinBase:
                 cbTS.showPhrase = not cbTS.showPhrase
             elif commandItem == "sortByPhrase":
                 cbTS.sortByPhrase = not cbTS.sortByPhrase
+            elif commandItem == "imeReverseLookup":
+                cbTS.imeReverseLookup = not cbTS.imeReverseLookup
 
 
     def switchMenuType(self, cbTS, menutype, prevmenutypelist):
@@ -2935,7 +2938,7 @@ class CinBase:
             if not cbTS.imeDirName == imeName:
                 filelist = self.ReverseCinDict[imeName]
                 for filename in filelist:
-                    filepath = os.path.abspath(os.path.join(cbTS.curdir, os.path.pardir, imeName, "cin", filename))
+                    filepath = os.path.join(cbTS.cindir, filename)
                     if os.path.isfile(filepath):
                         cbTS.rcinFileList.append(filename)
         if not cfg.rcinFileList == cbTS.rcinFileList:
@@ -3001,16 +3004,14 @@ class LoadRCinTable(threading.Thread):
 
     def run(self):
         selCinFile = self.cbTS.rcinFileList[self.cbTS.cfg.selRCinType]
-        for imeName in CinBase.ReverseCinDict:
-            if selCinFile in CinBase.ReverseCinDict[imeName]:
-                CinPath = os.path.abspath(os.path.join(self.cbTS.curdir, os.path.pardir, imeName, "cin", selCinFile))
-        
+        CinPath = os.path.join(self.cbTS.cindir, selCinFile)
+
         self.cbTS.rcin = None
         self.RCinTable.cin = None
         self.RCinTable.loading = True
         
         with io.open(CinPath, encoding='utf-8') as fs:
-            self.cbTS.rcin = RCin(fs, imeName)
+            self.cbTS.rcin = RCin(fs, self.cbTS.imeDirName)
         self.RCinTable.cin = self.cbTS.rcin
         self.RCinTable.curCinType = self.cbTS.cfg.selRCinType
         self.RCinTable.loading = False

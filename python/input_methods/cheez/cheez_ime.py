@@ -39,9 +39,6 @@ class CheEZTextService(TextService):
 
         self.cinbase = CinBase
         self.curdir = os.path.abspath(os.path.dirname(__file__))
-        self.datadir = os.path.join(self.curdir, "data")
-        self.cindir = os.path.join(self.curdir, "cin")
-        self.icon_dir = self.curdir
 
         # 初始化輸入行為設定
         self.cinbase.initTextService(self, TextService)
@@ -52,10 +49,10 @@ class CheEZTextService(TextService):
         self.cfg = copy.deepcopy(CinBaseConfig)
         self.cfg.imeDirName = self.imeDirName
         self.cfg.cinFileList = self.cinFileList
-        self.cfg.cindir = self.cindir
         self.cfg.load()
 
         # 載入輸入法碼表
+        self.cindir = self.cfg.getCinDir()
         if not CinTable.curCinType == self.cfg.selCinType and not CinTable.loading:
             loadCinFile = LoadCinTable(self, CinTable)
             loadCinFile.start()

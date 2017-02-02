@@ -37,6 +37,9 @@ class Cin(object):
         state = PARSING_HEAD_STATE
 
         self.imeDirName = imeDirName
+        self.ename = ""
+        self.cname = ""
+        self.selkey = ""
         self.keynames = {}
         self.chardefs = {}
         self.bopomofochardefs = {}
@@ -186,34 +189,40 @@ class Cin(object):
                         except KeyError:
                             self.cjkExtAchardefs[key] = [root]
                     self.cincount['cjkExtAchardefs'] += 1
-                elif re.match('[𠀀-𪛖]', matchstr): # CJK Unified Ideographs Extension B 區域
+                elif ord(matchstr) in range(int('0x20000', 16), int('0x2A6DF', 16)): # CJK Unified Ideographs Extension B 區域
                     if not self.cname == "自由大新":
                         try:
                             self.cjkExtBchardefs[key].append(root) # CJK 擴展 B 區
                         except KeyError:
                             self.cjkExtBchardefs[key] = [root]
                     self.cincount['cjkExtBchardefs'] += 1
-                elif re.match('[𪜀-𫜴]', matchstr): # CJK Unified Ideographs Extension C 區域
+                elif ord(matchstr) in range(int('0x2A700', 16), int('0x2B73F', 16)): # CJK Unified Ideographs Extension C 區域
                     if not self.cname == "自由大新":
                         try:
                             self.cjkExtCchardefs[key].append(root) # CJK 擴展 C 區
                         except KeyError:
                             self.cjkExtCchardefs[key] = [root]
                     self.cincount['cjkExtCchardefs'] += 1
-                elif re.match('[𫝀-𫠝]', matchstr): # CJK Unified Ideographs Extension D 區域
+                elif ord(matchstr) in range(int('0x2B740', 16), int('0x2B81F', 16)): # CJK Unified Ideographs Extension D 區域
                     if not self.cname == "自由大新":
                         try:
                             self.cjkExtDchardefs[key].append(root) # CJK 擴展 D 區
                         except KeyError:
                             self.cjkExtDchardefs[key] = [root]
                     self.cincount['cjkExtDchardefs'] += 1
-                elif re.match('[𫠠-𬺡]', matchstr): # CJK Unified Ideographs Extension E 區域
+                elif ord(matchstr) in range(int('0x2B820', 16), int('0x2CEAF', 16)): # CJK Unified Ideographs Extension E 區域
                     if not self.cname == "自由大新":
                         try:
                             self.cjkExtEchardefs[key].append(root) # CJK 擴展 E 區
                         except KeyError:
                             self.cjkExtEchardefs[key] = [root]
                     self.cincount['cjkExtEchardefs'] += 1
+                elif (ord(matchstr) in range(int('0xE000', 16), int('0xF900', 16)) or # Private Use 區域
+                    ord(matchstr) in range(int('0xF0000', 16), int('0xFFFFE', 16)) or
+                    ord(matchstr) in range(int('0x100000', 16), int('0x10FFFE', 16))):
+                    continue
+                elif ord(matchstr) in range(int('0x2F800', 16), int('0x2FA20', 16)): # cjk compatibility ideographs supplement 區域
+                    continue
                 else: # 不在 CJK Unified Ideographs 區域
                     if not self.cname == "自由大新":
                         try:
@@ -284,12 +293,16 @@ class Cin(object):
                     matchstring = matchstring.replace(char, '\\' + char)
         
         matchstring = matchstring.replace(WildcardChar, '(.)')
-        matchchardefs = [self.chardefs[key] for key in self.chardefs if re.match('^' + matchstring + '$', key) and len(key) == keyLength]
+        matchchardefs = [self.chardefs[key] for key in sorted(self.chardefs.keys()) if re.match('^' + matchstring + '$', key) and len(key) == keyLength]
 
         if matchchardefs:
             for chardef in matchchardefs:
                 for matchstr in chardef:
-                    if re.match('[\u4E00-\u9FD5]', matchstr): # CJK Unified Ideographs 區域
+                    if re.match('[\u3100-\u312F]|[\u02D9]|[\u02CA]|[\u02C7]|[\u02CB]', matchstr): # Bopomofo 區域
+                        if not matchstr in cjkextchardefs[0]:
+                            cjkextchardefs[0].append(matchstr)
+                            highFrequencyWordCount += 1
+                    elif re.match('[\u4E00-\u9FD5]', matchstr): # CJK Unified Ideographs 區域
                         try:
                             big5code = matchstr.encode('big5')
 
@@ -309,27 +322,23 @@ class Cin(object):
                             if not matchstr in cjkextchardefs[4]:
                                 cjkextchardefs[4].append(matchstr)
                                 highFrequencyWordCount += 1
-                    elif re.match('[\u3100-\u312F]|[\u02D9]|[\u02CA]|[\u02C7]|[\u02CB]', matchstr): # Bopomofo 區域
-                        if not matchstr in cjkextchardefs[0]:
-                            cjkextchardefs[0].append(matchstr)
-                            highFrequencyWordCount += 1
                     elif re.match('[\u3400-\u4DB5]', matchstr): # CJK Unified Ideographs Extension A 區域
                         if not matchstr in cjkextchardefs[5]:
                             cjkextchardefs[5].append(matchstr)
                             lowFrequencyWordCount += 1
-                    elif re.match('[𠀀-𪛖]', matchstr): # CJK Unified Ideographs Extension B 區域
+                    elif ord(matchstr) in range(int('0x20000', 16), int('0x2A6DF', 16)): # CJK Unified Ideographs Extension B 區域
                         if not matchstr in cjkextchardefs[6]:
                             cjkextchardefs[6].append(matchstr)
                             lowFrequencyWordCount += 1
-                    elif re.match('[𪜀-𫜴]', matchstr): # CJK Unified Ideographs Extension C 區域
+                    elif ord(matchstr) in range(int('0x2A700', 16), int('0x2B73F', 16)): # CJK Unified Ideographs Extension C 區域
                         if not matchstr in cjkextchardefs[7]:
                             cjkextchardefs[7].append(matchstr)
                             lowFrequencyWordCount += 1
-                    elif re.match('[𫝀-𫠝]', matchstr): # CJK Unified Ideographs Extension D 區域
+                    elif ord(matchstr) in range(int('0x2B740', 16), int('0x2B81F', 16)): # CJK Unified Ideographs Extension D 區域
                         if not matchstr in cjkextchardefs[8]:
                             cjkextchardefs[8].append(matchstr)
                             lowFrequencyWordCount += 1
-                    elif re.match('[𫠠-𬺡]', matchstr): # CJK Unified Ideographs Extension E 區域
+                    elif ord(matchstr) in range(int('0x2B820', 16), int('0x2CEAF', 16)): # CJK Unified Ideographs Extension E 區域
                         if not matchstr in cjkextchardefs[9]:
                             cjkextchardefs[9].append(matchstr)
                             lowFrequencyWordCount += 1

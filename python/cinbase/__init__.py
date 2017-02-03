@@ -172,6 +172,7 @@ class CinBase:
         cbTS.keepType = ""
         cbTS.messageDurationTime = 3
         cbTS.showMessageOnKeyUp = False
+        cbTS.hideMessageOnKeyUp = False
         cbTS.onKeyUpMessage = ""
         cbTS.capsStates = True if self.getKeyState(VK_CAPITAL) else False
 
@@ -277,6 +278,8 @@ class CinBase:
 
         # 如果按下 Alt，可能是應用程式熱鍵，輸入法不做處理
         if keyEvent.isKeyDown(VK_MENU):
+            if cbTS.isShowMessage:
+                cbTS.hideMessageOnKeyUp = True
             return False
 
         # 如果按下 Ctrl 鍵
@@ -285,6 +288,8 @@ class CinBase:
             if self.isCtrlSymbolsChar(keyEvent.keyCode) and cbTS.langMode == CHINESE_MODE:
                 return True
             else:
+                if cbTS.isShowMessage:
+                    cbTS.hideMessageOnKeyUp = True
                 return False
 
         # 若按下 Shift 鍵
@@ -306,16 +311,25 @@ class CinBase:
         if keyEvent.isKeyToggled(VK_NUMLOCK): # NumLock is on
             # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
             if keyEvent.keyCode >= VK_NUMPAD0 and keyEvent.keyCode <= VK_DIVIDE:
+                if cbTS.isShowMessage:
+                    cbTS.hideMessageOnKeyUp = True
                 return False # bypass IME
 
         # 不管中英文模式，只要是全形可見字元或空白，輸入法都需要進一步處理(半形轉為全形)
         if cbTS.shapeMode == FULLSHAPE_MODE:
-            return (keyEvent.isPrintableChar() or keyEvent.keyCode == VK_SPACE)
+            if keyEvent.isPrintableChar() or keyEvent.keyCode == VK_SPACE:
+                return True
+            else:
+                if cbTS.isShowMessage and not keyEvent.isKeyDown(VK_SHIFT):
+                    cbTS.hideMessageOnKeyUp = True
+                return False
 
         # --------------   以下皆為半形模式   --------------
 
         # 如果是英文半形模式，輸入法不做任何處理
         if cbTS.langMode == ENGLISH_MODE:
+            if cbTS.isShowMessage and not keyEvent.isKeyDown(VK_SHIFT):
+                cbTS.hideMessageOnKeyUp = True
             return False
         # --------------   以下皆為中文模式   --------------
 
@@ -344,6 +358,8 @@ class CinBase:
                     return True
         
         # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
+        if cbTS.isShowMessage and not keyEvent.isKeyDown(VK_SHIFT):
+            cbTS.hideMessageOnKeyUp = True
         return False
         
     def onKeyDown(self, cbTS, keyEvent, CinTable, RCinTable):
@@ -2148,6 +2164,9 @@ class CinBase:
 
         if cbTS.showMessageOnKeyUp:
             return True
+
+        if cbTS.hideMessageOnKeyUp:
+            return True
         
         return False
 
@@ -2204,6 +2223,10 @@ class CinBase:
             cbTS.showMessage(cbTS.onKeyUpMessage, 3)
             cbTS.showMessageOnKeyUp = False
             cbTS.onKeyUpMessage = ""
+
+        if cbTS.hideMessageOnKeyUp:
+            cbTS.showMessage("", 0)
+            cbTS.hideMessageOnKeyUp = False
 
 
     def onPreservedKey(self, cbTS, guid):

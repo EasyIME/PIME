@@ -11,9 +11,13 @@ td {
     text-align: left;
 }
 
-#symbols, #ez_symbols, #fs_symbols, #phrase, #flangs {
+#symbols, #ez_symbols, #fs_symbols, #phrase, #flangs, #extendtable {
     width: 100%;
     min-height: 320px;
+}
+
+#reLoadTable {
+    display: none;
 }
 
 #help {

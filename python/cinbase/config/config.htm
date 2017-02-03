@@ -105,7 +105,20 @@
                 <label id="cjkTotalchardefs" name="cjkTotalchardefs" /></font></td>
             </tr>
         </table>
-        
+
+        <div id="extendtable_page">
+            <input type="checkbox" id="userExtendTable" name="userExtendTable" />
+            <label for="userExtendTable">自訂擴展碼表</label><br>
+            <input type="checkbox" id="reLoadTable" name="reLoadTable" />
+            <p>
+            以下是使用自訂擴展碼表的設定，每一行表示一個編碼所對應的字串，
+            例如在酷倉模組中可自訂「mwhgr 酷」或是「yta 音」等。<br>
+            每一行的格式必須符合：「Ta Tb」。其中 Ta 與 Tb 間必須有一個半形空白字元；<br>
+            Ta 請符合該模組碼表的格式及最大編碼字元數；Tb 可以是單個中文字串、符號或詞彙。
+            </p>
+            <textarea id="extendtable"></textarea>
+        </div>
+
         <div id="ui_page">
             <label for="candPerRow">每列顯示候選字個數: </label>
             <input type="text" id="candPerRow" name="candPerRow" /><br>

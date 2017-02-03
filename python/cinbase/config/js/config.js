@@ -129,6 +129,8 @@ var userPhraseFile = configDir + "\\userphrase.dat";
 var phraseChanged = false;
 var userFlangsFile = configDir + "\\flangs.dat";
 var flangsChanged = false;
+var userExtendtableFile = configDir + "\\extendtable.dat";
+var extendtableChanged = false;
 
 function loadConfig() {
     var str = readFile(configFile);
@@ -203,6 +205,12 @@ function loadConfig() {
     if(str == "")
         str = readFile(dataDir + "\\flangs.dat");
     $("#flangs").val(str);
+    
+    // load extendtable.dat
+    str = readFile(userExtendtableFile);
+    if(str == "")
+        str = readFile(dataDir + "\\extendtable.dat");
+    $("#extendtable").val(str);
 }
 
 function saveConfig() {
@@ -228,6 +236,10 @@ function saveConfig() {
     if(flangsChanged) {
         str = $("#flangs").val();
         writeFile(userFlangsFile, str);
+    }
+    if(extendtableChanged) {
+        str = $("#extendtable").val();
+        writeFile(userExtendtableFile, str);
     }
 }
 
@@ -287,6 +299,7 @@ $(function() {
     $("#version").load("../../../../version.txt");
     $("#typing_page").load("../../../cinbase/config/config.htm #typing_page")
     $("#cin_count").load("../../../cinbase/config/config.htm #cin_count")
+    $("#extendtable_page").load("../../../cinbase/config/config.htm #extendtable_page")
     $("#ui_page").load("../../../cinbase/config/config.htm #ui_page")
     $("#symbols_page").load("../../../cinbase/config/config.htm #symbols_page")
     $("#fs_symbols_page").load("../../../cinbase/config/config.htm #fs_symbols_page")
@@ -394,6 +407,11 @@ function pageReady() {
     
     $("#flangs").change(function(){
         flangsChanged = true;
+    });
+    
+    $("#extendtable").change(function(){
+        extendtableChanged = true;
+        $("#reLoadTable")[0].checked = true;
     });
     
     $("#buttons").buttonset();

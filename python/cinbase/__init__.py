@@ -35,6 +35,7 @@ from .flangs import flangs
 from .phrase import phrase
 from .userphrase import userphrase
 from .emoji import emoji
+from .extendtable import extendtable
 
 CHINESE_MODE = 1
 ENGLISH_MODE = 0
@@ -108,6 +109,8 @@ class CinBase:
         cbTS.compositionBufferMode = False
         cbTS.autoMoveCursorInBrackets = False
         cbTS.imeReverseLookup = False
+        cbTS.userExtendTable = False
+        cbTS.reLoadTable = False
         cbTS.rcinFileList = []
         
         cbTS.selDayiSymbolCharType = 0
@@ -2788,6 +2791,10 @@ class CinBase:
         with io.open(msymbolsPath, encoding='utf-8') as fs:
             cbTS.msymbols = msymbols(fs)
 
+        extendtablePath = cfg.findFile(datadirs, "extendtable.dat")
+        with io.open(extendtablePath, encoding='utf-8') as fs:
+            cbTS.extendtable = extendtable(fs)
+
         if cbTS.useDayiSymbols:
             dsymbolsPath = cfg.findFile(datadirs, "dsymbols.dat")
             with io.open(dsymbolsPath, encoding='utf-8') as fs:
@@ -2897,6 +2904,10 @@ class CinBase:
         cbTS.imeReverseLookup = cfg.imeReverseLookup
         cbTS.selRCinType = cfg.selRCinType
 
+        # 擴充碼表?
+        cbTS.userExtendTable = cfg.userExtendTable
+        cbTS.reLoadTable = cfg.reLoadTable
+
         # 訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime
 
@@ -2908,12 +2919,14 @@ class CinBase:
     def checkConfigChange(self, cbTS, CinTable, RCinTable):
         cfg = cbTS.cfg # 所有 TextService 共享一份設定物件
         cfg.update() # 更新設定檔狀態
+        reLoadTable = False
         
         # 如果有更換輸入法碼表，就重新載入碼表資料
-        if not cbTS.selCinType == cfg.selCinType and not CinTable.loading:
-            cbTS.selCinType = cfg.selCinType
-            loadCinFile = LoadCinTable(cbTS, CinTable)
-            loadCinFile.start()
+        if (not cbTS.selCinType == cfg.selCinType and not CinTable.loading) or (cfg.reLoadTable and not CinTable.loading) or (not cfg.userExtendTable == cbTS.userExtendTable and not CinTable.loading):
+            reLoadTable = True
+            if cfg.reLoadTable:
+                cfg.reLoadTable = False
+                cfg.save()
 
         if cbTS.imeReverseLookup:
             # 載入反查輸入法碼表
@@ -2929,7 +2942,12 @@ class CinBase:
         elif cfg.isConfigChanged(cbTS.configVersion):
             # 只有偵測到設定檔變更，需要套用新設定
             self.applyConfig(cbTS)
-            
+
+        if reLoadTable:
+            cbTS.selCinType = cfg.selCinType
+            loadCinFile = LoadCinTable(cbTS, CinTable)
+            loadCinFile.start()
+
 
     def updateRcinFileList(self, cbTS):
         cfg = cbTS.cfg
@@ -2993,6 +3011,14 @@ class LoadCinTable(threading.Thread):
             self.cbTS.cin = Cin(fs, self.cbTS.imeDirName)
         self.CinTable.cin = self.cbTS.cin
         self.CinTable.curCinType = self.cbTS.cfg.selCinType
+
+        for key in self.cbTS.extendtable.chardefs:
+            for chardef in self.cbTS.extendtable.chardefs[key]:
+                try:
+                    self.cbTS.cin.chardefs[key.lower()].append(chardef)
+                except KeyError:
+                    self.cbTS.cin.chardefs[key.lower()] = [chardef]
+
         self.CinTable.loading = False
 
 

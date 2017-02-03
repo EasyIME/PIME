@@ -62,6 +62,8 @@ class CinBaseConfig:
         self.autoMoveCursorInBrackets = False
         self.selWildcardType = 0
         self.imeReverseLookup = False
+        self.userExtendTable = False
+        self.reLoadTable = False
         self.selRCinType = 0
         self.rcinFileList = []
         self.candMaxItems = 100
@@ -71,8 +73,8 @@ class CinBaseConfig:
         self.curdir = os.path.abspath(os.path.dirname(__file__))
         self.ignoreSaveList = ["_lastUpdateTime", "_version", "ignoreSaveList", "curdir", "cinFileList", "selCinFile", "imeDirName"]
         
-        # version: last modified time of (config.json, symbols.dat, swkb.dat)
-        self._version = (0.0, 0.0, 0.0)
+        # version: last modified time of (config.json, symbols.dat, swkb.dat, fsymbols.dat, flangs.dat, userphrase.dat, extendtable.dat)
+        self._version = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self._lastUpdateTime = 0.0
 
     def getConfigDir(self):
@@ -196,8 +198,16 @@ class CinBaseConfig:
             except Exception:
                 pass
 
+        extendtableTime = 0.0
+        extendtableFile = self.findFile(datadirs, "extendtable.dat")
+        if extendtableFile:
+            try:
+                extendtableTime = os.path.getmtime(extendtableFile)
+            except Exception:
+                pass
+
         lastConfigTime = self._version[0]
-        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime, flangsTime, userphraseTime)
+        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime, flangsTime, userphraseTime, extendtableTime)
 
         # the main config file is changed, reload it
         if lastConfigTime != configTime:

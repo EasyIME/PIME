@@ -73,8 +73,8 @@ class CinBaseConfig:
         self.curdir = os.path.abspath(os.path.dirname(__file__))
         self.ignoreSaveList = ["_lastUpdateTime", "_version", "ignoreSaveList", "curdir", "cinFileList", "selCinFile", "imeDirName"]
         
-        # version: last modified time of (config.json, symbols.dat, swkb.dat, fsymbols.dat, flangs.dat, userphrase.dat, extendtable.dat)
-        self._version = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        # version: last modified time of (config.json, symbols.dat, swkb.dat, fsymbols.dat, flangs.dat, userphrase.dat)
+        self._version = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self._lastUpdateTime = 0.0
 
     def getConfigDir(self):
@@ -207,7 +207,7 @@ class CinBaseConfig:
                 pass
 
         lastConfigTime = self._version[0]
-        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime, flangsTime, userphraseTime, extendtableTime)
+        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime, flangsTime, userphraseTime)
 
         # the main config file is changed, reload it
         if lastConfigTime != configTime:

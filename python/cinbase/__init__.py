@@ -367,7 +367,7 @@ class CinBase:
         keyCode = keyEvent.keyCode
         charStr = chr(charCode)
         charStrLow = charStr.lower()
-        
+
         if CinTable.loading or RCinTable.loading:
             if CinTable.loading:
                 messagestr = '正在載入輸入法碼表，請稍後...'
@@ -714,9 +714,17 @@ class CinBase:
                 elif keyCode == VK_LEFT:  # 游標左移
                     if candCursor > 0:
                         candCursor -= 1
+                    else:
+                        if currentCandPage > 0:
+                            currentCandPage -= 1
+                            candCursor = 0
                 elif keyCode == VK_RIGHT:  # 游標右移
                     if (candCursor + 1) < candCount:
                         candCursor += 1
+                    else:
+                        if (currentCandPage + 1) < currentCandPageCount:
+                            currentCandPage += 1
+                            candCursor = 0
                 elif keyCode == VK_HOME:  # Home 鍵
                     candCursor = 0
                 elif keyCode == VK_END:  # End 鍵
@@ -1811,9 +1819,17 @@ class CinBase:
                     elif keyCode == VK_LEFT:  # 游標左移
                         if candCursor > 0:
                             candCursor -= 1
+                        else:
+                            if currentCandPage > 0:
+                                currentCandPage -= 1
+                                candCursor = 0
                     elif keyCode == VK_RIGHT:  # 游標右移
                         if (candCursor + 1) < candCount:
                             candCursor += 1
+                        else:
+                            if (currentCandPage + 1) < currentCandPageCount:
+                                currentCandPage += 1
+                                candCursor = 0
                     elif keyCode == VK_HOME:  # Home 鍵
                         candCursor = 0
                     elif keyCode == VK_END:  # End 鍵
@@ -1907,17 +1923,18 @@ class CinBase:
                                 winsound.PlaySound('alert', winsound.SND_ASYNC)
                 elif cbTS.useEndKey and charStr in cbTS.endKeyList:
                     if len(candidates) == 0:
-                        cbTS.isShowMessage = True
-                        cbTS.showMessage("查無組字...", 3)
-                        if cbTS.autoClearCompositionChar:
-                            if cbTS.compositionBufferMode:
-                                RemoveStringLength = 0
-                                if not cbTS.compositionChar == '':
-                                    RemoveStringLength = self.calcRemoveStringLength(cbTS)
-                                self.removeCompositionBufferString(cbTS, RemoveStringLength, True)
-                            self.resetComposition(cbTS)
-                        if cbTS.playSoundWhenNonCand:
-                            winsound.PlaySound('alert', winsound.SND_ASYNC)
+                        if not len(cbTS.compositionChar) == 1 and not cbTS.compositionChar == charStrLow:
+                            cbTS.isShowMessage = True
+                            cbTS.showMessage("查無組字...", 3)
+                            if cbTS.autoClearCompositionChar:
+                                if cbTS.compositionBufferMode:
+                                    RemoveStringLength = 0
+                                    if not cbTS.compositionChar == '':
+                                        RemoveStringLength = self.calcRemoveStringLength(cbTS)
+                                    self.removeCompositionBufferString(cbTS, RemoveStringLength, True)
+                                self.resetComposition(cbTS)
+                            if cbTS.playSoundWhenNonCand:
+                                winsound.PlaySound('alert', winsound.SND_ASYNC)
                         
                 cbTS.setShowCandidates(False)
                 cbTS.isShowCandidates = False
@@ -2000,9 +2017,17 @@ class CinBase:
                 elif keyCode == VK_LEFT:  # 游標左移
                     if candCursor > 0:
                         candCursor -= 1
+                    else:
+                        if currentCandPage > 0:
+                            currentCandPage -= 1
+                            candCursor = 0
                 elif keyCode == VK_RIGHT:  # 游標右移
                     if (candCursor + 1) < candCount:
                         candCursor += 1
+                    else:
+                        if (currentCandPage + 1) < currentCandPageCount:
+                            currentCandPage += 1
+                            candCursor = 0
                 elif keyCode == VK_HOME:  # Home 鍵
                     candCursor = 0
                 elif keyCode == VK_END:  # End 鍵
@@ -2220,7 +2245,8 @@ class CinBase:
             cbTS.setShowCandidates(True)
 
         if cbTS.showMessageOnKeyUp:
-            cbTS.showMessage(cbTS.onKeyUpMessage, 3)
+            if not cbTS.onKeyUpMessage == "":
+                cbTS.showMessage(cbTS.onKeyUpMessage, 3)
             cbTS.showMessageOnKeyUp = False
             cbTS.onKeyUpMessage = ""
 
@@ -2943,20 +2969,35 @@ class CinBase:
         cfg = cbTS.cfg # 所有 TextService 共享一份設定物件
         cfg.update() # 更新設定檔狀態
         reLoadTable = False
-        
+
         # 如果有更換輸入法碼表，就重新載入碼表資料
-        if (not cbTS.selCinType == cfg.selCinType and not CinTable.loading) or (cfg.reLoadTable and not CinTable.loading) or (not cfg.userExtendTable == cbTS.userExtendTable and not CinTable.loading):
-            reLoadTable = True
+        if (not cbTS.selCinType == cfg.selCinType and not CinTable.loading) or (cfg.reLoadTable and not CinTable.loading) or (not cbTS.userExtendTable == cfg.userExtendTable and not CinTable.loading):
+            if not CinTable.curCinType == cfg.selCinType:
+                reLoadTable = True
+            else:
+                cbTS.selCinType = cfg.selCinType
+                cbTS.cin = CinTable.cin
+            
             if cfg.reLoadTable:
+                reLoadTable = True
                 cfg.reLoadTable = False
                 cfg.save()
+
+            if not CinTable.userExtendTable == cfg.userExtendTable:
+                reLoadTable = True
+            else:
+                cbTS.userExtendTable = cfg.userExtendTable
+                cbTS.cin = CinTable.cin
 
         if cbTS.imeReverseLookup:
             # 載入反查輸入法碼表
             if (not cbTS.selRCinType == cfg.selRCinType and not RCinTable.loading) or (not RCinTable.loaded and not RCinTable.loading):
-                cbTS.selRCinType = cfg.selRCinType
-                loadRCinFile = LoadRCinTable(cbTS, RCinTable)
-                loadRCinFile.start()
+                if not RCinTable.curCinType == cfg.selRCinType:
+                    loadRCinFile = LoadRCinTable(cbTS, RCinTable)
+                    loadRCinFile.start()
+                else:
+                    cbTS.selRCinType = cfg.selRCinType
+                    cbTS.rcin = RCinTable.cin
 
         # 比較我們先前存的版本號碼，和目前設定檔的版本號
         if cfg.isFullReloadNeeded(cbTS.configVersion):
@@ -2967,9 +3008,16 @@ class CinBase:
             self.applyConfig(cbTS)
 
         if reLoadTable:
+            datadirs = (cfg.getConfigDir(), cfg.getDataDir())
+            extendtablePath = cfg.findFile(datadirs, "extendtable.dat")
+            with io.open(extendtablePath, encoding='utf-8') as fs:
+                cbTS.extendtable = extendtable(fs)
             cbTS.selCinType = cfg.selCinType
             loadCinFile = LoadCinTable(cbTS, CinTable)
             loadCinFile.start()
+        else:
+            if not cbTS.cin == CinTable.cin:
+                cbTS.cin = CinTable.cin
 
 
     def updateRcinFileList(self, cbTS):
@@ -3003,9 +3051,9 @@ class LoadPhraseData(threading.Thread):
         self.PhraseData = PhraseData
 
     def run(self):
+        self.PhraseData.loading = True
         self.cbTS.phrase = None
         self.PhraseData.phrase = None
-        self.PhraseData.loading = True
         cfg = self.cbTS.cfg
         datadirs = (cfg.getConfigDir(), cfg.getDataDir())
         
@@ -3023,24 +3071,26 @@ class LoadCinTable(threading.Thread):
         self.CinTable = CinTable
 
     def run(self):
+        self.CinTable.loading = True
         selCinFile = self.cbTS.cinFileList[self.cbTS.cfg.selCinType]
         CinPath = os.path.join(self.cbTS.cindir, selCinFile)
-        
+
         self.cbTS.cin = None
         self.CinTable.cin = None
-        self.CinTable.loading = True
-        
+
         with io.open(CinPath, encoding='utf-8') as fs:
             self.cbTS.cin = Cin(fs, self.cbTS.imeDirName)
         self.CinTable.cin = self.cbTS.cin
         self.CinTable.curCinType = self.cbTS.cfg.selCinType
+        self.CinTable.userExtendTable = self.cbTS.cfg.userExtendTable
 
-        for key in self.cbTS.extendtable.chardefs:
-            for chardef in self.cbTS.extendtable.chardefs[key]:
-                try:
-                    self.cbTS.cin.chardefs[key.lower()].append(chardef)
-                except KeyError:
-                    self.cbTS.cin.chardefs[key.lower()] = [chardef]
+        if self.cbTS.cfg.userExtendTable:
+            for key in self.cbTS.extendtable.chardefs:
+                for chardef in self.cbTS.extendtable.chardefs[key]:
+                    try:
+                        self.cbTS.cin.chardefs[key.lower()].append(chardef)
+                    except KeyError:
+                        self.cbTS.cin.chardefs[key.lower()] = [chardef]
 
         self.CinTable.loading = False
 
@@ -3052,12 +3102,12 @@ class LoadRCinTable(threading.Thread):
         self.RCinTable = RCinTable
 
     def run(self):
+        self.RCinTable.loading = True
         selCinFile = self.cbTS.rcinFileList[self.cbTS.cfg.selRCinType]
         CinPath = os.path.join(self.cbTS.cindir, selCinFile)
 
         self.cbTS.rcin = None
         self.RCinTable.cin = None
-        self.RCinTable.loading = True
         
         with io.open(CinPath, encoding='utf-8') as fs:
             self.cbTS.rcin = RCin(fs, self.cbTS.imeDirName)

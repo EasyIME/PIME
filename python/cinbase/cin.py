@@ -119,7 +119,7 @@ class Cin(object):
                 continue
 
             if state is PARSE_CHARDEF_STATE:
-                if not self.imeDirName == "cheez":
+                if self.cname == "中標倉頡":
                     if '#' in line:
                         line = re.sub('#.+', '', line)
                 key, root = safeSplit(line)
@@ -135,7 +135,7 @@ class Cin(object):
                     matchstr = root[0]
                 else:
                     matchstr = root
-                
+
                 if self.cname == "自由大新":
                     try:
                         self.chardefs[key].append(root)

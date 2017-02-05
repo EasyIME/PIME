@@ -160,7 +160,9 @@ class CinTable:
     def __init__(self):
         self.cin = None
         self.curCinType = None
+        self.userExtendTable = None
 CinTable = CinTable()
+
 
 class RCinTable:
     loading = False

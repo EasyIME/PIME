@@ -161,7 +161,7 @@ class RCin(object):
                         result += self.getKeyName(str)
         
         if result == root + ':':
-            result = '查無字根...'
+            result = ''
         return result
 
     def saveCountFile(self):

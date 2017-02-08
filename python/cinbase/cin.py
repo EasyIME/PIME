@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import os
 import re
 import json
+import copy
 
 CIN_HEAD = "%gen_inp"
 ENAME_HEAD = "%ename"
@@ -42,6 +43,7 @@ class Cin(object):
         self.selkey = ""
         self.keynames = {}
         self.chardefs = {}
+        self.newcjchardefs = {}
         self.bopomofochardefs = {}
         self.big5Fchardefs = {}
         self.big5LFchardefs = {}
@@ -140,9 +142,9 @@ class Cin(object):
 
                 if self.cname == "自由大新":
                     try:
-                        self.chardefs[key].append(root)
+                        self.newcjchardefs[key].append(root)
                     except KeyError:
-                        self.chardefs[key] = [root]
+                        self.newcjchardefs[key] = [root]
                     self.cincount['cjkTotalchardefs'] += 1
                     
                 if re.match('[\u3100-\u312F]|[\u02D9]|[\u02CA]|[\u02C7]|[\u02CB]', matchstr): # Bopomofo 區域
@@ -245,6 +247,7 @@ class Cin(object):
         if not self.cname == "自由大新":
             self.mergeDicts(self.big5Fchardefs, self.big5LFchardefs, self.big5Otherchardefs, self.bopomofochardefs, self.cjkchardefs, self.cjkExtAchardefs, self.cjkExtBchardefs, self.cjkExtCchardefs, self.cjkExtDchardefs, self.cjkExtEchardefs, self.cjkOtherchardefs)
         else:
+            self.chardefs = copy.deepcopy(self.newcjchardefs)
             self.saveCountFile()
 
     def getEname(self):
@@ -410,13 +413,16 @@ class Cin(object):
         del self.chardefs
         self.chardefs = {}
 
-        for chardefsdict in chardefsdicts:
-            for key in chardefsdict:
-                for root in chardefsdict[key]:
-                    try:
-                        self.chardefs[key].append(root)
-                    except KeyError:
-                        self.chardefs[key] = [root]
+        if not self.cname == "自由大新":
+            for chardefsdict in chardefsdicts:
+                for key in chardefsdict:
+                    for root in chardefsdict[key]:
+                        try:
+                            self.chardefs[key].append(root)
+                        except KeyError:
+                            self.chardefs[key] = [root]
+        else:
+            self.chardefs = copy.deepcopy(self.newcjchardefs)
 
         if userExtendTable:
             for key in extendtable.chardefs:

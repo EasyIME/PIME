@@ -1,3 +1,4 @@
+
 var defaultcinCount = {
     "cjkExtEchardefs": 0,
     "cjkchardefs": 0,
@@ -43,269 +44,231 @@ var defaultcinName = {
     "roman.cin": "羅馬拼音",
     "simplecj.cin": "正體簡易",
     "simplex.cin": "速成",
-    "simplex5.cin": "簡易五代"
+    "simplex5.cin": "簡易五代",
+    "liu.cin": "嘸蝦米"
 }
 
 var debugMode = false;
+var checjConfig = {};
+var cinCount = {};
+var CONFIG_URL = '/config';
+var VERSION_URL = '/version.txt';
+var KEEP_ALIVE_URL = '/keep_alive';
 
-// unfortunately, here we use Windows-only features - ActiveX
-// However, it's really stupid that Scripting.FileSystemObject does not support UTF-8.
-// Luckily, there's an alternative, ADODB.Stream.
-// Reference: http://stackoverflow.com/questions/2524703/save-text-file-utf-8-encoded-with-vba
-// http://wiki.mcneel.com/developer/scriptsamples/readutf8
-function readFile(path) {
-    try {
-        var stream = new ActiveXObject("ADODB.Stream");
-        stream.Charset = "utf-8";
-        stream.Open();
-        stream.LoadFromFile(path);
-        var data = stream.ReadText();
-        stream.Close();
-        return data;
-    }
-    catch(err) {
-        return ""
-    }
-}
-
-function writeFile(path, data) {
-    try {
-        var stream = new ActiveXObject("ADODB.Stream");
-        stream.Charset = "utf-8";
-        stream.Open();
-        stream.WriteText(data);
-
-        // this trick is used to strip unicode BOM
-        // Reference: http://stackoverflow.com/questions/31435662/vba-save-a-file-with-utf-8-without-bom
-        var binaryStream = new ActiveXObject("ADODB.Stream");
-        binaryStream.Type = 1; // adTypeBinary: this is used to strip unicode BOM
-        binaryStream.Open();
-        stream.Position = 3; // skip unicode BOM
-        stream.CopyTo(binaryStream); // convert the UTF8 data to binary
-        binaryStream.SaveToFile(path, 2);
-        binaryStream.Close();
-        stream.Close();
-    }
-    catch(err) {
-        alert(err);
-    }
-}
-
-// This is Windows-only :-(
-function getConfigDir() {
-    var shell = new ActiveXObject("WScript.Shell");
-    var dirPath = shell.ExpandEnvironmentStrings("%APPDATA%\\PIME");
-    // ensure that the folder exists
-    var fso = new ActiveXObject("Scripting.FileSystemObject");
-    if(!fso.FolderExists(dirPath)) {
-        fso.CreateFolder(dirPath);
-    }
-    dirPath += "\\" + imeFolderName;
-    if(!fso.FolderExists(dirPath)) {
-        fso.CreateFolder(dirPath);
-    }
-    return dirPath;
-}
-
-// This is Windows-only :-(
-function getDataDir() {
-    progDir = location.pathname.replace( "input_methods\\" + imeFolderName + "\\config\\config.hta","cinbase\\data")
-    return progDir;
-}
-
-var checjConfig = null;
-var configDir = getConfigDir();
-var configFile = configDir + "\\config.json";
-var cinCount = null;
-var cinCountFile = configDir + "\\cincount.json";
-var dataDir = getDataDir();
-var userSymbolsFile = configDir + "\\symbols.dat";
 var symbolsChanged = false;
-var userSwkbFile = configDir + "\\swkb.dat";
 var swkbChanged = false;
-var userFsymbolsFile = configDir + "\\fsymbols.dat";
 var fsymbolsChanged = false;
-var userPhraseFile = configDir + "\\userphrase.dat";
 var phraseChanged = false;
-var userFlangsFile = configDir + "\\flangs.dat";
 var flangsChanged = false;
-var userExtendtableFile = configDir + "\\extendtable.dat";
 var extendtableChanged = false;
 
+var symbolsData = "";
+var swkbData = "";
+var fsymbolsData = "";
+var phraseData = "";
+var flangsData = "";
+var extendtableData = "";
+
+loadConfig();
+
 function loadConfig() {
-    var str = readFile(configFile);
-    try {
-        checjConfig = JSON.parse(str);
-    }
-    catch(err) {
-        checjConfig = {};
-    }
-
-    // add missing values
-    for(key in defaultConfig) {
-        if(!checjConfig.hasOwnProperty(key)) {
-            checjConfig[key] = defaultConfig[key];
-        }
-    }
-
-    str = readFile(cinCountFile);
-    try {
-        cinCount = JSON.parse(str);
-    }
-    catch(err) {
-        cinCount = {};
-    }
-
-    // add missing values
-    for(key in defaultcinCount) {
-        if(!cinCount.hasOwnProperty(key)) {
-            cinCount[key] = defaultcinCount[key];
-        }
-    }
-
-    document.getElementById('bopomofochardefs').innerText = cinCount['bopomofochardefs']
-    document.getElementById('big5Fchardefs').innerText = cinCount['big5Fchardefs']
-    document.getElementById('big5LFchardefs').innerText = cinCount['big5LFchardefs']
-    document.getElementById('big5Otherchardefs').innerText = cinCount['big5Otherchardefs']
-    document.getElementById('cjkchardefs').innerText = cinCount['cjkchardefs']
-    document.getElementById('cjkExtAchardefs').innerText = cinCount['cjkExtAchardefs']
-    document.getElementById('cjkExtBchardefs').innerText = cinCount['cjkExtBchardefs']
-    document.getElementById('cjkExtCchardefs').innerText = cinCount['cjkExtCchardefs']
-    document.getElementById('cjkExtDchardefs').innerText = cinCount['cjkExtDchardefs']
-    document.getElementById('cjkExtEchardefs').innerText = cinCount['cjkExtEchardefs']
-    document.getElementById('cjkOtherchardefs').innerText = cinCount['cjkOtherchardefs']
-    document.getElementById('cjkTotalchardefs').innerText = cinCount['cjkTotalchardefs']
-
-    // load symbols.dat
-    str = readFile(userSymbolsFile);
-    if(str == "")
-        str = readFile(dataDir + "\\symbols.dat");
-    $("#symbols").val(str);
-
-    // load swkb.dat
-    str = readFile(userSwkbFile);
-    if(str == "")
-        str = readFile(dataDir + "\\swkb.dat");
-    $("#ez_symbols").val(str);
-    
-    // load fsymbols.dat
-    str = readFile(userFsymbolsFile);
-    if(str == "")
-        str = readFile(dataDir + "\\fsymbols.dat");
-    $("#fs_symbols").val(str);
-    
-    // load phrase.dat
-    str = readFile(userPhraseFile);
-    if(str == "")
-        str = readFile(dataDir + "\\userphrase.dat");
-    $("#phrase").val(str);
-    
-    // load flangs.dat
-    str = readFile(userFlangsFile);
-    if(str == "")
-        str = readFile(dataDir + "\\flangs.dat");
-    $("#flangs").val(str);
-    
-    // load extendtable.dat
-    str = readFile(userExtendtableFile);
-    if(str == "")
-        str = readFile(dataDir + "\\extendtable.dat");
-    $("#extendtable").val(str);
+    $.get(CONFIG_URL, function(data, status) {
+        checjConfig = data.config;
+        cinCount = data.cincount;
+        symbolsData = data.symbols;
+        swkbData = data.swkb;
+        fsymbolsData = data.fsymbols;
+        phraseData = data.phrase;
+        flangsData = data.flangs;
+        extendtableData = data.extendtable;
+    }, "json");
 }
 
-function saveConfig() {
-    str = JSON.stringify(checjConfig, null, 4);
-    writeFile(configFile, str);
+
+function saveConfig(callbackFunc) {
+    var checkState = true
+    // Check symbols format
+    checkState = checkDataFormat($("#symbols").val(), "2", "#symbols", "特殊符號");
+    if (!checkState) {
+        return false;
+    }
+
+    // Check easy symbols format
+    checkState = checkDataFormat($("#ez_symbols").val(), "1", "#ez_symbols", "簡易符號");
+    if (!checkState) {
+        return false;
+    }
+
+    // Check fullshape symbols format
+    checkState = checkDataFormat($("#fs_symbols").val(), "2", "#fs_symbols", "全形標點符號");
+    if (!checkState) {
+        return false;
+    }
+
+    // Check user phrase format
+    checkState = checkDataFormat($("#phrase").val(), "2", "#phrase", "聯想字詞");
+    if (!checkState) {
+        return false;
+    }
+    
+    // Check foreign language format
+    checkState = checkDataFormat($("#flangs").val(), "2", "#flangs", "外語文字");
+    if (!checkState) {
+        return false;
+    }
+    
+    // Check extendtable format
+    checkState = checkDataFormat($("#extendtable").val(), "3", "#extendtable", "擴展碼表");
+    if (!checkState) {
+        return false;
+    }
+
+    var data = {
+        "config": checjConfig
+    }
 
     if(symbolsChanged) {
-        str = $("#symbols").val();
-        writeFile(userSymbolsFile, str);
+        data.symbols = $("#symbols").val();
     }
     if(swkbChanged) {
-        str = $("#ez_symbols").val();
-        writeFile(userSwkbFile, str);
+        data.swkb = $("#ez_symbols").val();
     }
     if(fsymbolsChanged) {
-        str = $("#fs_symbols").val();
-        writeFile(userFsymbolsFile, str);
+        data.fsymbols = $("#fs_symbols").val();
     }
     if(phraseChanged) {
-        str = $("#phrase").val();
-        writeFile(userPhraseFile, str);
+        data.phrase = $("#phrase").val();
     }
     if(flangsChanged) {
-        str = $("#flangs").val();
-        writeFile(userFlangsFile, str);
+        data.flangs = $("#flangs").val();
     }
     if(extendtableChanged) {
-        str = $("#extendtable").val();
-        writeFile(userExtendtableFile, str);
+        data.extendtable = $("#extendtable").val();
     }
+
+    $.ajax({
+        url: CONFIG_URL,
+        method: "POST",
+        success: callbackFunc(),
+        contentType: "application/json",
+        data: JSON.stringify(data),
+        dataType:"json"
+    });
 }
+
 
 // update checjConfig object with the value set by the user
 function updateConfig() {
-    // get values from checkboxes
-    $("input").each(function(index, elem) {
-        var item = $(this);
-        var id = item.attr("id");
-        switch(item.attr("type")) {
+    // Reset checjConfig, for change config_tool
+    rcinFileList = checjConfig.rcinFileList
+    checjConfig = {};
+    checjConfig['rcinFileList'] = rcinFileList
+
+    // Get values from checkboxes, text and radio
+    $("input").each(function (index, inputItem) {
+        if (inputItem.name == "") {
+            return;
+        }
+        switch (inputItem.type) {
         case "checkbox":
-            checjConfig[id] = item.prop("checked");
+            checjConfig[inputItem.name] = inputItem.checked;
             break;
         case "text":
-            var val = item.val();
-            if(typeof checjConfig[id] == "number") {
-                var intVal = parseInt(val);
-                if(!isNaN(intVal))
-                    val = intVal;
+        case "number":
+            var inputValue = inputItem.value;
+            if ($.isNumeric(inputValue)) {
+                inputValue = parseInt(inputValue);
             }
-            checjConfig[id] = val;
+            checjConfig[inputItem.name] = inputValue;
+            break;
+        case "radio":
+            if (inputItem.checked === true) {
+                checjConfig[inputItem.name] = parseInt(inputItem.value);
+            }
             break;
         }
     });
-    // selCin
-    var selCin = parseInt($("#selCinType").find(":selected").val());
-    if(!isNaN(selCin))
-        checjConfig.selCinType = selCin;
 
-    // selRCin
-    var selRCin = parseInt($("#selRCinType").find(":selected").val());
-    if(!isNaN(selRCin))
-        checjConfig.selRCinType = selRCin;
-
-    // selWildcard
-    var selWildcard = parseInt($("#selWildcardType").find(":selected").val());
-    if(!isNaN(selWildcard))
-        checjConfig.selWildcardType = selWildcard;
-
-    // keyboardLayout
-    var keyboardLayout = parseInt($("#keyboard_page").find("input:radio:checked").val());
-    if(!isNaN(keyboardLayout))
-        checjConfig.keyboardLayout = keyboardLayout;
-
-    // selDayiSymbolChar
-    if(imeFolderName == "chedayi") {
-        var selDayiSymbolChar = parseInt($("#selDayiSymbolCharType").find(":selected").val());
-        if(!isNaN(selDayiSymbolChar))
-            checjConfig.selDayiSymbolCharType = selDayiSymbolChar;
-    }
+    // Get values from select
+    $("select").each(function (index, selectItem) {
+        if (selectItem.value) {
+            checjConfig[selectItem.name] = parseInt(selectItem.value);
+        }
+    });
 }
+
+
+function checkDataFormat(checkData, checkType, elementId, dataDesc) {
+    var data_array = checkData.split("\n");
+    var errorState = false;
+    for (var i = 0; i < data_array.length; i++) {
+        switch (checkType) {
+            case "1":
+                if (! /^[A-Za-z] .{1,10}$/.test(data_array[i])) {
+                    errorState = true;
+                    swal(
+                        '糟糕',
+                        dataDesc + '設定第 ' + (i + 1) + ' 行 ('+ data_array[i] +')格式錯誤\n請使用「英文 + 空格 + 符號」的格式',
+                        'error'
+                    );
+                }
+                break;
+            case "2":
+                if (data_array[i].length > 1 && data_array[i].search("=") == -1) {
+                    errorState = true;
+                    swal(
+                        '糟糕',
+                        dataDesc + '設定第 ' + (i + 1) + ' 行格式錯誤\n單行不能超過一個字元，或是沒有 = 符號區隔',
+                        'error'
+                    );
+                }
+                break;
+            case "3":
+                if (! /^[A-Za-z\d]+ .{1,40}$/.test(data_array[i])) {
+                    if (!data_array[i].length == 0 && i == 0)
+                    {
+                        errorState = true;
+                        swal(
+                            '糟糕',
+                            dataDesc + '設定第 ' + (i + 1) + ' 行 ('+ data_array[i] +')格式錯誤\n請使用「英數 + 空格 + 字詞」的格式',
+                            'error'
+                        );
+                    }
+                }
+                break;
+        }
+        if (errorState) {
+            $(elementId).blur();
+            // Count select range
+            var selectionStart = 0;
+            for (var j = 0; j < i; j++) {
+                selectionStart += data_array[j].length + 1;
+            }
+    
+            $(elementId).prop("selectionStart", selectionStart);
+            $(elementId).prop("selectionEnd", selectionStart + data_array[i].length + 1);
+            return false;
+        }
+    }
+    return true;
+}
+
 
 // jQuery ready
 $(function() {
     // show PIME version number
     $("#tabs").hide();
-    $("#version").load("../../../../version.txt");
-    $("#typing_page").load("../../../cinbase/config/config.htm #typing_page")
-    $("#cin_count").load("../../../cinbase/config/config.htm #cin_count")
-    $("#extendtable_page").load("../../../cinbase/config/config.htm #extendtable_page")
-    $("#ui_page").load("../../../cinbase/config/config.htm #ui_page")
-    $("#symbols_page").load("../../../cinbase/config/config.htm #symbols_page")
-    $("#fs_symbols_page").load("../../../cinbase/config/config.htm #fs_symbols_page")
-    $("#ez_symbols_page").load("../../../cinbase/config/config.htm #ez_symbols_page")
-    $("#phrase_page").load("../../../cinbase/config/config.htm #phrase_page")
-    $("#flangs_page").load("../../../cinbase/config/config.htm #flangs_page")
+    $("#version").load(VERSION_URL);
+    $("#typing_page").load("config.htm #typing_page")
+    $("#cin_count").load("config.htm #cin_count")
+    $("#cin_options").load("config.htm #cin_options")
+    $("#extendtable_page").load("config.htm #extendtable_page")
+    $("#ui_page").load("config.htm #ui_page")
+    $("#symbols_page").load("config.htm #symbols_page")
+    $("#fs_symbols_page").load("config.htm #fs_symbols_page")
+    $("#ez_symbols_page").load("config.htm #ez_symbols_page")
+    $("#phrase_page").load("config.htm #phrase_page")
+    $("#flangs_page").load("config.htm #flangs_page")
     pageWait();
 });
 
@@ -321,9 +284,28 @@ function pageWait() {
 
 function pageReady() {
     $("#tabs").show();
-    loadConfig();
     $(document).tooltip();
     $("#tabs").tabs({heightStyle:"auto"});
+
+    document.getElementById('bopomofochardefs').innerText = cinCount['bopomofochardefs']
+    document.getElementById('big5Fchardefs').innerText = cinCount['big5Fchardefs']
+    document.getElementById('big5LFchardefs').innerText = cinCount['big5LFchardefs']
+    document.getElementById('big5Otherchardefs').innerText = cinCount['big5Otherchardefs']
+    document.getElementById('cjkchardefs').innerText = cinCount['cjkchardefs']
+    document.getElementById('cjkExtAchardefs').innerText = cinCount['cjkExtAchardefs']
+    document.getElementById('cjkExtBchardefs').innerText = cinCount['cjkExtBchardefs']
+    document.getElementById('cjkExtCchardefs').innerText = cinCount['cjkExtCchardefs']
+    document.getElementById('cjkExtDchardefs').innerText = cinCount['cjkExtDchardefs']
+    document.getElementById('cjkExtEchardefs').innerText = cinCount['cjkExtEchardefs']
+    document.getElementById('cjkOtherchardefs').innerText = cinCount['cjkOtherchardefs']
+    document.getElementById('cjkTotalchardefs').innerText = cinCount['cjkTotalchardefs']
+
+    $("#symbols").val(symbolsData);
+    $("#ez_symbols").val(swkbData);
+    $("#fs_symbols").val(fsymbolsData);
+    $("#phrase").val(phraseData);
+    $("#flangs").val(flangsData);
+    $("#extendtable").val(extendtableData);
 
     if (imeFolderName == "chedayi") {
         $("#candPerRow").spinner({min:1, max:6});
@@ -344,7 +326,7 @@ function pageReady() {
     }
     selCinType.children().eq(checjConfig.selCinType).prop("selected", true);
 
-    var selRCins = checjConfig.rcinFileList;
+    var selRCins = checjConfig["rcinFileList"];
     var selRCinType = $("#selRCinType");
     for(var i = 0; i < selRCins.length; ++i) {
         var selRCin = defaultcinName[selRCins[i]];
@@ -413,17 +395,17 @@ function pageReady() {
         extendtableChanged = true;
         $("#reLoadTable")[0].checked = true;
     });
-    
-    $("#buttons").buttonset();
-    $("#ok").click(function() {
-        updateConfig();
-        saveConfig();
-        window.close();
-        return false;
-    });
 
-    $("#cancel").click(function() {
-        window.close();
+    // OK button
+    $("#ok").on('click', function () {
+        updateConfig(); // update the config based on the state of UI elements
+        saveConfig(function() {
+            swal(
+              '好耶！',
+              '設定成功儲存！',
+              'success'
+            );
+        });
         return false;
     });
 
@@ -440,48 +422,48 @@ function pageReady() {
             break;
         }
     });
-	
-		// use for select example
-	function updateSelExample() {
-		var example = ["選", "字", "大", "小", "範", "例"];		
-		var html="";
-		
-		for (number = 1, i = 0, row = 0; number <= $("#candPerPage").val(); number++, i++, row++) {
-			if (example[i] == null) {
-				i = 0;
-			}
-				
-			if (row == $("#candPerRow").val()) {
-				row = 0;
-				html += "<br>";
-			}				
-			
-			html += "<span>" + number.toString().slice(-1) + ".</span> " + example[i] + "&nbsp;&nbsp;";
-		}			
-				
-		$("#selExample").html(html);
-	}
-	
-	// setup selExample default style
-	$("#selExample").css("font-size", $("#fontSize").val() + "pt");
-	updateSelExample();
+    
+        // use for select example
+    function updateSelExample() {
+        var example = ["選", "字", "大", "小", "範", "例"];		
+        var html="";
+        
+        for (number = 1, i = 0, row = 0; number <= $("#candPerPage").val(); number++, i++, row++) {
+            if (example[i] == null) {
+                i = 0;
+            }
+                
+            if (row == $("#candPerRow").val()) {
+                row = 0;
+                html += "<br>";
+            }				
+            
+            html += "<span>" + number.toString().slice(-1) + ".</span> " + example[i] + "&nbsp;&nbsp;";
+        }			
+                
+        $("#selExample").html(html);
+    }
+    
+    // setup selExample default style
+    $("#selExample").css("font-size", $("#fontSize").val() + "pt");
+    updateSelExample();
 
-	// trigger event
-	$('.ui-spinner-button').click(function() {
-		$(this).siblings('input').change();		
-	});	
-	
-	$("#ui_page input").on("change", function() {
-		$("#selExample").css("font-size", $("#fontSize").val() + "pt");
-		updateSelExample();
-	});
-	
-	$("#ui_page input").on("keydown", function(e) {
-		if (e.keyCode == 38 || e.keyCode==40) {
-			$("#selExample").css("font-size", $("#fontSize").val() + "pt");
-			updateSelExample();
-		}
-	});
+    // trigger event
+    $('.ui-spinner-button').click(function() {
+        $(this).siblings('input').change();		
+    });	
+    
+    $("#ui_page input").on("change", function() {
+        $("#selExample").css("font-size", $("#fontSize").val() + "pt");
+        updateSelExample();
+    });
+    
+    $("#ui_page input").on("keydown", function(e) {
+        if (e.keyCode == 38 || e.keyCode==40) {
+            $("#selExample").css("font-size", $("#fontSize").val() + "pt");
+            updateSelExample();
+        }
+    });
     
     function disableControlItem() {
         var disabled = []
@@ -574,5 +556,11 @@ function pageReady() {
         $("#compositionBufferMode")[0].checked = false;
         $("#autoMoveCursorInBrackets")[0].checked = false;
     }
-
+    
+    // keep the server alive every 20 second
+    setInterval(function () {
+        $.ajax({
+            url: KEEP_ALIVE_URL + '?' + Date.now()
+        });
+    }, 20 * 1000);
 }

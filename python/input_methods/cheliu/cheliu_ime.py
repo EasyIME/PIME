@@ -35,7 +35,7 @@ class CheLiuTextService(TextService):
         # 輸入法模組自訂區域
         self.imeDirName = "cheliu"
         self.maxCharLength = 5 # 輸入法最大編碼字元數量
-        self.cinFileList = ["boshiamy.cin", "uniliu.cin"]
+        self.cinFileList = ["liu.cin"]
 
         self.cinbase = CinBase
         self.curdir = os.path.abspath(os.path.dirname(__file__))
@@ -161,6 +161,7 @@ class CinTable:
         self.cin = None
         self.curCinType = None
         self.userExtendTable = None
+        self.ignorePrivateUseArea = None
 CinTable = CinTable()
 
 

@@ -25,10 +25,10 @@
                 <label for="defaultEnglish">預設以英文模式啟動</label><br>
 
                 <input type="checkbox" id="outputSimpChinese" name="outputSimpChinese" />
-                <label for="outputSimpChinese">預設輸出簡體中文</label><br>
+                <label for="outputSimpChinese">輸出時轉換為簡體中文</label><br>
 
                 <input type="checkbox" id="hidePromptMessages" name="hidePromptMessages" />
-                <label for="hidePromptMessages">預設隱藏提示訊息</label><br>
+                <label for="hidePromptMessages">隱藏不必要的提示訊息</label><br>
 
                 <input type="checkbox" id="autoClearCompositionChar" name="autoClearCompositionChar" />
                 <label for="autoClearCompositionChar">拆錯字碼時自動清除輸入字串</label><br>
@@ -72,7 +72,12 @@
                 </fieldset>
             </div>
         </div>
-        
+
+        <div id="cin_options">
+            <input type="checkbox" id="ignorePrivateUseArea" name="ignorePrivateUseArea" />
+            <label for="ignorePrivateUseArea">載入碼表時忽略 Unicode 私用區</label><br>
+        </div>
+
         <table id="cin_count">
             <tr>
                 <td><label for="bopomofochardefs">注音符號: </label><font color="Blue">

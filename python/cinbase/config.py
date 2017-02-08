@@ -48,6 +48,7 @@ class CinBaseConfig:
         self.selCinType = 0
         self.selCinFile = ""
         self.cinFileList = []
+        self.ignorePrivateUseArea = True
         self.selKeyType = 0
         self.candPerPage = 9
         self.cursorCandList = True
@@ -110,6 +111,9 @@ class CinBaseConfig:
         except Exception:
             self.save()
         self.update()
+
+    def toJson(self):
+        return {key: value for key, value in self.__dict__.items() if not key.startswith("_") and not key in self.ignoreSaveList}
 
     def save(self):
         filename = self.getConfigFile()

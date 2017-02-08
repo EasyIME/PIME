@@ -281,7 +281,7 @@ Function .onInit
 
 	; check if old version is installed and uninstall it first
 	Call uninstallOldVersion
-	Call hideCheEngSection
+	Call hideSection
 FunctionEnd
 
 ; called to show an error message when errors happen
@@ -402,13 +402,17 @@ SectionGroup /e $(SECTION_GROUP)
 		SetOutPath "$INSTDIR\python\input_methods"
 		File /r "..\python\input_methods\checj"
 	SectionEnd
-/*
+
 	Section $(CHELIU) cheliu
-		SectionIn 2
-		SetOutPath "$INSTDIR\python\input_methods"
-		File /r "..\python\input_methods\cheliu"
+		${If} ${FileExists} "$EXEDIR\liu.cin"
+			SectionIn 2
+			SetOutPath "$INSTDIR\python\input_methods"
+			File /r "..\python\input_methods\cheliu"
+			SetOutPath "$INSTDIR\python\cinbase\cin"
+			Rename "$EXEDIR\liu.cin" "$INSTDIR\python\cinbase\cin\liu.cin"
+		${EndIf}
 	SectionEnd
-*/
+
 	Section $(CHEARRAY) chearray
 		SectionIn 2
 		SetOutPath "$INSTDIR\python\input_methods"
@@ -474,7 +478,10 @@ SectionGroup /e $(SECTION_GROUP)
 	SectionEnd
 SectionGroupEnd
 
-Function hideCheEngSection
+Function hideSection
+	${IfNot} ${FileExists} "$EXEDIR\liu.cin"
+		SectionSetText ${cheliu} ""
+	${EndIf}
 	${IfNot} ${AtLeastWin8}
 		SectionSetText ${cheeng} ""
 	${EndIf}
@@ -534,38 +541,38 @@ Section "" Register
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${checj}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHECJ).lnk" "$INSTDIR\python\input_methods\checj\config\config.hta" "" "$INSTDIR\python\input_methods\checj\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHECJ).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config checj' "$INSTDIR\python\input_methods\checj\icon.ico" 0
 	${EndIf}
-/*
+
 	${If} ${SectionIsSelected} ${cheliu}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHELIU).lnk" "$INSTDIR\python\input_methods\cheliu\config\config.hta" "" "$INSTDIR\python\input_methods\cheliu\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHELIU).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config cheliu' "$INSTDIR\python\input_methods\cheliu\icon.ico" 0
 	${EndIf}
-*/
+
 	${If} ${SectionIsSelected} ${chearray}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEARRAY).lnk" "$INSTDIR\python\input_methods\chearray\config\config.hta" "" "$INSTDIR\python\input_methods\chearray\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEARRAY).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config chearray' "$INSTDIR\python\input_methods\chearray\icon.ico" 0
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${chedayi}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEDAYI).lnk" "$INSTDIR\python\input_methods\chedayi\config\config.hta" "" "$INSTDIR\python\input_methods\chedayi\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEDAYI).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config chedayi' "$INSTDIR\python\input_methods\chedayi\icon.ico" 0
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${chepinyin}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPINYIN).lnk" "$INSTDIR\python\input_methods\chepinyin\config\config.hta" "" "$INSTDIR\python\input_methods\chepinyin\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPINYIN).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config chepinyin' "$INSTDIR\python\input_methods\chepinyin\icon.ico" 0
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${chesimplex}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk" "$INSTDIR\python\input_methods\chesimplex\config\config.hta" "" "$INSTDIR\python\input_methods\chesimplex\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config chesimplex' "$INSTDIR\python\input_methods\chesimplex\icon.ico" 0
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${chephonetic}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk" "$INSTDIR\python\input_methods\chephonetic\config\config.hta" "" "$INSTDIR\python\input_methods\chephonetic\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config chephonetic' "$INSTDIR\python\input_methods\chephonetic\icon.ico" 0
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${cheez}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk" "$INSTDIR\python\input_methods\cheez\config\config.hta" "" "$INSTDIR\python\input_methods\cheez\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config cheez' "$INSTDIR\python\input_methods\cheez\icon.ico" 0
 	${EndIf}
 
-	CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)$(UNINSTALL_PIME)\.lnk" "$INSTDIR\Uninstall.exe"
+	CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
 
 ;Assign language strings to sections
@@ -573,7 +580,7 @@ SectionEnd
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} $(SecMain_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${chewing} $(chewing_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${checj} $(checj_DESC)
-	; !insertmacro MUI_DESCRIPTION_TEXT ${cheliu} $(cheliu_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${cheliu} $(cheliu_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${chearray} $(chearray_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${chedayi} $(chedayi_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${chepinyin} $(chepinyin_DESC)

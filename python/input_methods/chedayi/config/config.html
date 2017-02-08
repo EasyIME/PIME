@@ -4,27 +4,19 @@
     <head>
         <meta http-equiv="x-ua-compatible" content="ie=9">
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>設定大易輸入法</title>
-        <link rel="stylesheet" type="text/css" href="../../../cinbase/config/js/jquery-ui-1.11.4/jquery-ui.min.css">
-        <link rel="stylesheet" type="text/css" href="../../../cinbase/config/js/jquery-ui-1.11.4/jquery-ui.theme.min.css">
-        <link rel="stylesheet" type="text/css" href="../../../cinbase/config/css/config.css">
+        <link rel="shortcut icon" href="icon.ico" type="image/vnd.microsoft.icon">
+        <link rel="stylesheet" type="text/css" href="js/jquery-ui-1.11.4/jquery-ui.min.css">
+        <link rel="stylesheet" type="text/css" href="js/jquery-ui-1.11.4/jquery-ui.theme.min.css">
+        <link rel="stylesheet" href="css/sweetalert2.min.css">
+        <link rel="stylesheet" type="text/css" href="css/config.css">
 
-        <script type="text/javascript" src="../../../cinbase/config/js/jquery-1.12.0.min.js"></script>
-        <script type="text/javascript" src="../../../cinbase/config/js/jquery-ui-1.11.4/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+        <script type="text/javascript" src="js/jquery-ui-1.11.4/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="js/sweetalert2.min.js"></script>
         <script type="text/javascript" src="config.js"></script>
 
-        <!-- We use Microsoft HTML application (Windows-only) -->
-        <hta:application
-            id="CheCJConfig"
-            border="thick"
-            borderstyle="normal"
-            contextmenu="no"
-            icon="..\icon.ico"
-            innerborder="no"
-            scroll="yes"
-            singleinstance="yes"
-            windowState="maximize"
-        />
     </head>
     <body>
     <div id="tabs">
@@ -61,7 +53,9 @@
             <br><p>
             <table id="cin_count">
             </table>
-
+            <br>
+            <div id="cin_options">
+            </div>
             <br>
             <label>泰瑞大易四碼: 洪泰瑞所整理的大易四碼碼表,由 <a href="http://terryhung.pixnet.net/blog">泰瑞的世界</a> 整理提供。</label><br>
             <label>大易四碼: 王贊傑發明的大易輸入法四碼版,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
@@ -94,7 +88,7 @@
         </div>
         
         <div id="help_page">
-            <iframe id="help" src="../../../cinbase/config/help.htm"></iframe>
+            <iframe id="help" src="help.htm"></iframe>
         </div>
 
         <div id="about_page">
@@ -105,9 +99,8 @@
         </div>
     </div>
 
-    <div id="buttons">
-        <button id="ok">確定</button>
-        <button id="cancel">取消</button>
+    <div id="buttons" style="text-align:center">
+        <button id="ok">套用設定</button>
     </div>
     </body>
 </html>

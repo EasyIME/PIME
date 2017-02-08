@@ -1,30 +1,22 @@
 <!DOCTYPE html>
-<!-- 此文件要取代所有「拼音」、「拼音」為新輸入法名稱, 以及 Cin 碼表內容 -->
+<!-- 此文件要取代所有「行列」、「倉頡」為新輸入法名稱, 以及 Cin 碼表內容 -->
 <html>
     <head>
         <meta http-equiv="x-ua-compatible" content="ie=9">
         <meta charset="utf-8">
-        <title>設定拼音輸入法</title>
-        <link rel="stylesheet" type="text/css" href="../../../cinbase/config/js/jquery-ui-1.11.4/jquery-ui.min.css">
-        <link rel="stylesheet" type="text/css" href="../../../cinbase/config/js/jquery-ui-1.11.4/jquery-ui.theme.min.css">
-        <link rel="stylesheet" type="text/css" href="../../../cinbase/config/css/config.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>設定行列輸入法</title>
+        <link rel="shortcut icon" href="icon.ico" type="image/vnd.microsoft.icon">
+        <link rel="stylesheet" type="text/css" href="js/jquery-ui-1.11.4/jquery-ui.min.css">
+        <link rel="stylesheet" type="text/css" href="js/jquery-ui-1.11.4/jquery-ui.theme.min.css">
+        <link rel="stylesheet" href="css/sweetalert2.min.css">
+        <link rel="stylesheet" type="text/css" href="css/config.css">
 
-        <script type="text/javascript" src="../../../cinbase/config/js/jquery-1.12.0.min.js"></script>
-        <script type="text/javascript" src="../../../cinbase/config/js/jquery-ui-1.11.4/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+        <script type="text/javascript" src="js/jquery-ui-1.11.4/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="js/sweetalert2.min.js"></script>
         <script type="text/javascript" src="config.js"></script>
 
-        <!-- We use Microsoft HTML application (Windows-only) -->
-        <hta:application
-            id="CheCJConfig"
-            border="thick"
-            borderstyle="normal"
-            contextmenu="no"
-            icon="..\icon.ico"
-            innerborder="no"
-            scroll="yes"
-            singleinstance="yes"
-            windowState="maximize"
-        />
     </head>
     <body>
     <div id="tabs">
@@ -53,11 +45,14 @@
             <p>
             <table id="cin_count">
             </table>
-
             <br>
-            <label>泰瑞拼音: 洪泰瑞所整理的漢語拼音輸入法碼表,由 <a href="http://terryhung.pixnet.net/blog">泰瑞的世界</a> 整理提供。</label><br>
-            <label>正體拼音: 依據全字庫文字屬性規範的漢語拼音輸入法碼表,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
-            <label>羅馬拼音: 依據全字庫文字屬性規範的羅馬拼音輸入法碼表,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
+            <div id="cin_options">
+            </div>
+            <br>
+            <label>泰瑞行列30: 洪泰瑞所整理的行列輸入法三十鍵版輸入法碼表,由 <a href="http://terryhung.pixnet.net/blog">泰瑞的世界</a> 整理提供。</label><br>
+            <label>行列30: 廖明德發明的行列輸入法三十鍵版,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
+            <label>行列30大字集: 廖明德發明的行列輸入法三十鍵大字集版,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
+            <label>行列40: 廖明德發明的行列輸入法四十鍵版,由 <a href="https://github.com/chinese-opendesktop">Chinese Open Desktop</a> 整理提供。</label><br>
         </div>
 
         <div id="extendtable_page">
@@ -86,20 +81,19 @@
         </div>
         
         <div id="help_page">
-            <iframe id="help" src="../../../cinbase/config/help.htm"></iframe>
+            <iframe id="help" src="help.htm"></iframe>
         </div>
 
         <div id="about_page">
             PIME 輸入法平台網站：<a href="https://github.com/EasyIME/PIME">PIME 輸入法平台</a><br>
             PIME 輸入法平台版本：<span id="version"></span>
             <p>PIME 是在 Windows上使用 Python 3 開發 TSF 中文輸入法的平台，由作者 <a href="https://github.com/PCMan">洪任諭(PCMan)</a> 所開發，目前支援到 Windows 10，並且能支援 Windows app container (Metro mode)。可以讓開發者在不了解系統細節的情況下，單純使用 Python 就能實作支援 Windows 的輸入法模組。</p>
-            <p>拼音是在 PIME 輸入法平台下，基於 CIN 碼表所實現的拼音輸入法模組。本身移植了 PIME 平台下新酷音大部份的功能，並參考了微軟輸入法的一些操作方式，讓使用者轉移過來使用時，能夠馬上就上手，而不須要重新去適應。</p>
+            <p>行列是在 PIME 輸入法平台下，基於 CIN 碼表所實現的行列輸入法模組。本身移植了 PIME 平台下新酷音大部份的功能，並參考了微軟輸入法的一些操作方式，讓使用者轉移過來使用時，能夠馬上就上手，而不須要重新去適應。</p>
         </div>
     </div>
 
-    <div id="buttons">
-        <button id="ok">確定</button>
-        <button id="cancel">取消</button>
+    <div id="buttons" style="text-align:center">
+        <button id="ok">套用設定</button>
     </div>
     </body>
 </html>

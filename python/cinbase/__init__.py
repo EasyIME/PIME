@@ -19,11 +19,13 @@ import time
 import opencc  # OpenCC 繁體簡體中文轉換
 
 import io
+import sys
 import math
 import copy
 import ctypes
 import winsound
 import threading
+from ctypes import windll
 from .cin import Cin
 from .rcin import RCin
 from .swkb import swkb
@@ -69,7 +71,7 @@ class CinBase:
         self.candselKeys = "1234567890"
         self.emoji = emoji
         self.emojimenulist = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
-        self.imeNameList = ["checj", "chephonetic", "chearray", "chedayi", "cheez", "chepinyin", "chesimplex"]
+        self.imeNameList = ["checj", "chephonetic", "chearray", "chedayi", "cheez", "chepinyin", "chesimplex", "cheliu"]
         self.ReverseCinDict = {}
         self.ReverseCinDict["checj"] = ["checj.cin", "mscj3.cin", "mscj3-ext.cin", "cj-ext.cin", "cnscj.cin", "thcj.cin", "newcj3.cin", "cj5.cin", "newcj.cin", "scj6.cin"]
         self.ReverseCinDict["chephonetic"] = ["thphonetic.cin", "CnsPhonetic.cin", "bpmf.cin"]
@@ -78,6 +80,7 @@ class CinBase:
         self.ReverseCinDict["cheez"] = ["ez.cin", "ezsmall.cin", "ezmid.cin", "ezbig.cin"]
         self.ReverseCinDict["chepinyin"] = ["thpinyin.cin", "pinyin.cin", "roman.cin"]
         self.ReverseCinDict["chesimplex"] = ["simplecj.cin", "simplex.cin", "simplex5.cin"]
+        self.ReverseCinDict["cheliu"] = ["liu.cin"]
 
     # 初始化輸入行為設定
     def initTextService(self, cbTS, TextService):
@@ -100,6 +103,7 @@ class CinBase:
         cbTS.directCommitSymbol = False
         cbTS.directCommitSymbolList = ["，", "。", "、", "；", "？", "！"]
         cbTS.bracketSymbolList = ["「」", "『』", "［］", "【】", "〖〗", "〔〕", "﹝﹞", "（）", "﹙﹚", "〈〉", "《》", "＜＞", "﹤﹥", "｛｝", "﹛﹜"]
+        cbTS.ignorePrivateUseArea = True
         cbTS.directOutMSymbols = True
         cbTS.fullShapeSymbols = False
         cbTS.directOutFSymbols = False
@@ -137,6 +141,7 @@ class CinBase:
         cbTS.keyUsedState = False
         cbTS.selcandmode = False
 
+        cbTS.initCinBaseState = False
         cbTS.showmenu = False
         cbTS.switchmenu = False
         cbTS.closemenu = True
@@ -174,6 +179,7 @@ class CinBase:
         cbTS.showMessageOnKeyUp = False
         cbTS.hideMessageOnKeyUp = False
         cbTS.onKeyUpMessage = ""
+        cbTS.reLoadCinTable = False
         cbTS.capsStates = True if self.getKeyState(VK_CAPITAL) else False
 
         cbTS.bopomofolist = []
@@ -413,6 +419,7 @@ class CinBase:
             if not keyEvent.isKeyDown(VK_SHIFT) and not keyEvent.isKeyDown(VK_CONTROL):
                 charIndex = cbTS.kbtypelist[cbTS.keyboardLayout].index(charStr.lower())
                 charStr = cbTS.kbtypelist[0][charIndex]
+                charStrLow = charStr.lower()
 
         # 檢查選字鍵
         if not cbTS.imeDirName == "chedayi":
@@ -2271,8 +2278,12 @@ class CinBase:
         elif commandId == ID_SWITCH_SHAPE and commandType == 0:  # 切換全形/半形
             self.toggleShapeMode(cbTS)
         elif commandId == ID_SETTINGS:  # 開啟設定工具
-            config_tool = os.path.join(cbTS.curdir, "config", "config.hta")
-            os.startfile(config_tool)
+            tool_name = "config"
+            config_tool = '"{0}" {1} {2}'.format(os.path.join(self.cinbasecurdir, "configtool.py"), tool_name, cbTS.imeDirName)
+            python_exe = sys.executable  # 找到 python 執行檔
+            # 使用我們自帶的 python runtime exe 執行 config tool
+            # 此處也可以用 subprocess，不過使用 windows API 比較方便
+            r = windll.shell32.ShellExecuteW(None, "open", python_exe, config_tool, self.cinbasecurdir, 0)  # SW_HIDE = 0 (hide the window)
         elif commandId == ID_MODE_ICON: # windows 8 mode icon
             self.toggleLanguageMode(cbTS)  # 切換中英文模式
         elif commandId == ID_WEBSITE: # visit chewing website
@@ -2439,8 +2450,12 @@ class CinBase:
     def onMenuCommand(self, cbTS, commandId, commandType):
         if commandType == 0:
             if commandId == 0:
-                config_tool = os.path.join(cbTS.curdir, "config", "config.hta")
-                os.startfile(config_tool)
+                tool_name = "config"
+                config_tool = '"{0}" {1} {2}'.format(os.path.join(self.cinbasecurdir, "configtool.py"), tool_name, cbTS.imeDirName)
+                python_exe = sys.executable  # 找到 python 執行檔
+                # 使用我們自帶的 python runtime exe 執行 config tool
+                # 此處也可以用 subprocess，不過使用 windows API 比較方便
+                r = windll.shell32.ShellExecuteW(None, "open", python_exe, config_tool, self.cinbasecurdir, 0)  # SW_HIDE = 0 (hide the window)
             elif commandId == 1:
                 self.setOutputSimplifiedChinese(cbTS, not cbTS.outputSimpChinese)
         elif commandType == 1: # 功能開關
@@ -2803,14 +2818,15 @@ class CinBase:
     # 初始化 CinBase 輸入法引擎
     def initCinBaseContext(self, cbTS):
         cfg = cbTS.cfg # 所有 TextService 共享一份設定物件
-        
-        # 預設英數 or 中文模式
-        cbTS.langMode = ENGLISH_MODE if cfg.defaultEnglish else CHINESE_MODE
 
-        # 預設全形 or 半形
-        cbTS.shapeMode = FULLSHAPE_MODE if cfg.defaultFullSpace else HALFSHAPE_MODE
+        if not cbTS.initCinBaseState:
+            # 預設英數 or 中文模式
+            cbTS.langMode = ENGLISH_MODE if cfg.defaultEnglish else CHINESE_MODE
 
-        self.updateLangButtons(cbTS)
+            # 預設全形 or 半形
+            cbTS.shapeMode = FULLSHAPE_MODE if cfg.defaultFullSpace else HALFSHAPE_MODE
+
+            self.updateLangButtons(cbTS)
         
         # 所有 CheCJTextService 共享一份輸入法碼表
         cbTS.selCinType = cfg.selCinType
@@ -2857,13 +2873,12 @@ class CinBase:
                 continue
             cbTS.phrase = PhraseData.phrase
 
+        cbTS.initCinBaseState = True
         self.applyConfig(cbTS) # 套用其餘的使用者設定
 
     def applyConfig(self, cbTS):
         cfg = cbTS.cfg # 所有 TextService 共享一份設定物件
         cbTS.configVersion = cfg.getVersion()
-        self.resetComposition(cbTS)
-        self.resetCompositionBuffer(cbTS)
 
         # 每列顯示幾個候選字
         cbTS.candPerRow = cfg.candPerRow
@@ -2968,30 +2983,45 @@ class CinBase:
     def checkConfigChange(self, cbTS, CinTable, RCinTable):
         cfg = cbTS.cfg # 所有 TextService 共享一份設定物件
         cfg.update() # 更新設定檔狀態
-        reLoadTable = False
+        reLoadCinTable = False
+        updateExtendTable = False
+        updatePrivateUseArea = False
+        
+        if hasattr(cbTS, 'cin'):
+            if hasattr(cbTS.cin, 'cincount'):
+                if not os.path.exists(cbTS.cin.getCountFile()):
+                    cbTS.cin.saveCountFile()
 
         # 如果有更換輸入法碼表，就重新載入碼表資料
-        if (not cbTS.selCinType == cfg.selCinType and not CinTable.loading) or (cfg.reLoadTable and not CinTable.loading) or (not cbTS.userExtendTable == cfg.userExtendTable and not CinTable.loading):
-            if not CinTable.curCinType == cfg.selCinType:
-                reLoadTable = True
-            else:
-                cbTS.selCinType = cfg.selCinType
-                cbTS.cin = CinTable.cin
-            
-            if cfg.reLoadTable:
-                reLoadTable = True
-                cfg.reLoadTable = False
-                cfg.save()
+        if not CinTable.loading:
+            if not cbTS.selCinType == cfg.selCinType or cfg.reLoadTable or not cbTS.userExtendTable == cfg.userExtendTable or not cbTS.ignorePrivateUseArea == cfg.ignorePrivateUseArea:
+                if not CinTable.curCinType == cfg.selCinType:
+                    reLoadCinTable = True
+                else:
+                    cbTS.selCinType = cfg.selCinType
+                    cbTS.cin = CinTable.cin
 
-            if not CinTable.userExtendTable == cfg.userExtendTable:
-                reLoadTable = True
-            else:
-                cbTS.userExtendTable = cfg.userExtendTable
-                cbTS.cin = CinTable.cin
+                if cfg.reLoadTable:
+                    updateExtendTable = True
+                    cfg.reLoadTable = False
+                    cfg.save()
+
+                if not CinTable.userExtendTable == cfg.userExtendTable:
+                    updateExtendTable = True
+                else:
+                    cbTS.userExtendTable = cfg.userExtendTable
+                    cbTS.cin = CinTable.cin
+
+                if not CinTable.ignorePrivateUseArea == cfg.ignorePrivateUseArea:
+                    updatePrivateUseArea = True
+                else:
+                    cbTS.ignorePrivateUseArea = cfg.ignorePrivateUseArea
+                    cbTS.cin = CinTable.cin
+                    
 
         if cbTS.imeReverseLookup:
             # 載入反查輸入法碼表
-            if (not cbTS.selRCinType == cfg.selRCinType and not RCinTable.loading) or (not RCinTable.loaded and not RCinTable.loading):
+            if (not cbTS.selRCinType == cfg.selRCinType and not RCinTable.loading) or (not RCinTable.loaded and not RCinTable.loading) or (not hasattr(cbTS, 'rcin') and not RCinTable.loading):
                 if not RCinTable.curCinType == cfg.selRCinType:
                     loadRCinFile = LoadRCinTable(cbTS, RCinTable)
                     loadRCinFile.start()
@@ -3007,11 +3037,14 @@ class CinBase:
             # 只有偵測到設定檔變更，需要套用新設定
             self.applyConfig(cbTS)
 
-        if reLoadTable:
+        if reLoadCinTable or updateExtendTable or updatePrivateUseArea:
             datadirs = (cfg.getConfigDir(), cfg.getDataDir())
-            extendtablePath = cfg.findFile(datadirs, "extendtable.dat")
-            with io.open(extendtablePath, encoding='utf-8') as fs:
-                cbTS.extendtable = extendtable(fs)
+            if updateExtendTable:
+                extendtablePath = cfg.findFile(datadirs, "extendtable.dat")
+                with io.open(extendtablePath, encoding='utf-8') as fs:
+                    cbTS.extendtable = extendtable(fs)
+            if reLoadCinTable:
+                cbTS.reLoadCinTable = True
             cbTS.selCinType = cfg.selCinType
             loadCinFile = LoadCinTable(cbTS, CinTable)
             loadCinFile.start()
@@ -3072,26 +3105,22 @@ class LoadCinTable(threading.Thread):
 
     def run(self):
         self.CinTable.loading = True
-        selCinFile = self.cbTS.cinFileList[self.cbTS.cfg.selCinType]
-        CinPath = os.path.join(self.cbTS.cindir, selCinFile)
+        if self.cbTS.reLoadCinTable or not hasattr(self.cbTS, 'cin'):
+            self.cbTS.reLoadCinTable = False
+            selCinFile = self.cbTS.cinFileList[self.cbTS.cfg.selCinType]
+            CinPath = os.path.join(self.cbTS.cindir, selCinFile)
 
-        self.cbTS.cin = None
-        self.CinTable.cin = None
+            self.cbTS.cin = None
+            self.CinTable.cin = None
 
-        with io.open(CinPath, encoding='utf-8') as fs:
-            self.cbTS.cin = Cin(fs, self.cbTS.imeDirName)
-        self.CinTable.cin = self.cbTS.cin
-        self.CinTable.curCinType = self.cbTS.cfg.selCinType
+            with io.open(CinPath, encoding='utf-8') as fs:
+                self.cbTS.cin = Cin(fs, self.cbTS.imeDirName)
+            self.CinTable.cin = self.cbTS.cin
+            self.CinTable.curCinType = self.cbTS.cfg.selCinType
+            
+        self.cbTS.cin.updateCinTable(self.cbTS.cfg.userExtendTable, self.cbTS.extendtable, self.cbTS.cfg.ignorePrivateUseArea)
         self.CinTable.userExtendTable = self.cbTS.cfg.userExtendTable
-
-        if self.cbTS.cfg.userExtendTable:
-            for key in self.cbTS.extendtable.chardefs:
-                for chardef in self.cbTS.extendtable.chardefs[key]:
-                    try:
-                        self.cbTS.cin.chardefs[key.lower()].append(chardef)
-                    except KeyError:
-                        self.cbTS.cin.chardefs[key.lower()] = [chardef]
-
+        self.CinTable.ignorePrivateUseArea = self.cbTS.cfg.ignorePrivateUseArea
         self.CinTable.loading = False
 
 

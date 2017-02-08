@@ -53,6 +53,7 @@ class Cin(object):
         self.cjkExtDchardefs = {}
         self.cjkExtEchardefs = {}
         self.cjkOtherchardefs = {}
+        self.privateusechardefs = {}
         self.cincount = {}
         self.cincount['bopomofochardefs'] = 0
         self.cincount['big5Fchardefs'] = 0
@@ -66,6 +67,7 @@ class Cin(object):
         self.cincount['cjkExtEchardefs'] = 0
         self.cincount['cjkOtherchardefs'] = 0
         self.cincount['cjkTotalchardefs'] = 0
+        self.cincount['privateusechardefs'] = 0
         self.curdir = os.path.abspath(os.path.dirname(__file__))
 
         for line in fs:
@@ -217,12 +219,22 @@ class Cin(object):
                         except KeyError:
                             self.cjkExtEchardefs[key] = [root]
                     self.cincount['cjkExtEchardefs'] += 1
-                elif (ord(matchstr) in range(int('0xE000', 16), int('0xF900', 16)) or # Private Use 區域
+                elif (ord(matchstr) in range(int('0xE000', 16), int('0xF900', 16)) or # Unicode Private Use 區域
                     ord(matchstr) in range(int('0xF0000', 16), int('0xFFFFE', 16)) or
                     ord(matchstr) in range(int('0x100000', 16), int('0x10FFFE', 16))):
-                    continue
+                    if not self.cname == "自由大新":
+                        try:
+                            self.privateusechardefs[key].append(root) # Unicode 私用區
+                        except KeyError:
+                            self.privateusechardefs[key] = [root]
+                    self.cincount['privateusechardefs'] += 1
                 elif ord(matchstr) in range(int('0x2F800', 16), int('0x2FA20', 16)): # cjk compatibility ideographs supplement 區域
-                    continue
+                    if not self.cname == "自由大新":
+                        try:
+                            self.privateusechardefs[key].append(root) # CJK 相容字集補充區
+                        except KeyError:
+                            self.privateusechardefs[key] = [root]
+                    self.cincount['privateusechardefs'] += 1
                 else: # 不在 CJK Unified Ideographs 區域
                     if not self.cname == "自由大新":
                         try:
@@ -390,6 +402,29 @@ class Cin(object):
                         self.chardefs[key] = [root]
                     self.cincount['cjkTotalchardefs'] += 1
         self.saveCountFile()
+
+    def updateCinTable(self, userExtendTable, extendtable, ignorePrivateUseArea):
+        chardefsdicts = [self.big5Fchardefs, self.big5LFchardefs, self.big5Otherchardefs, self.bopomofochardefs, self.cjkchardefs, self.cjkExtAchardefs, self.cjkExtBchardefs, self.cjkExtCchardefs, self.cjkExtDchardefs, self.cjkExtEchardefs, self.cjkOtherchardefs]
+        if not ignorePrivateUseArea:
+            chardefsdicts.append(self.privateusechardefs)
+        del self.chardefs
+        self.chardefs = {}
+
+        for chardefsdict in chardefsdicts:
+            for key in chardefsdict:
+                for root in chardefsdict[key]:
+                    try:
+                        self.chardefs[key].append(root)
+                    except KeyError:
+                        self.chardefs[key] = [root]
+
+        if userExtendTable:
+            for key in extendtable.chardefs:
+                for root in extendtable.chardefs[key]:
+                    try:
+                        self.chardefs[key.lower()].append(root)
+                    except KeyError:
+                        self.chardefs[key.lower()] = [root]
 
     def saveCountFile(self):
         filename = self.getCountFile()

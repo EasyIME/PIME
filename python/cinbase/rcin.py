@@ -108,6 +108,12 @@ class RCin(object):
                 except KeyError:
                     self.chardefs[key] = [root]
 
+    def __del__(self):
+        del self.keynames
+        del self.chardefs
+        self.keynames = {}
+        self.chardefs = {}
+
     def getEname(self):
         return self.ename
 

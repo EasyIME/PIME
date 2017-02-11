@@ -250,6 +250,41 @@ class Cin(object):
             self.chardefs = copy.deepcopy(self.newcjchardefs)
             self.saveCountFile()
 
+    def __del__(self):
+        del self.keynames
+        del self.chardefs
+        del self.newcjchardefs
+        del self.bopomofochardefs
+        del self.big5Fchardefs
+        del self.big5LFchardefs
+        del self.big5Otherchardefs
+        del self.cjkchardefs
+        del self.cjkExtAchardefs
+        del self.cjkExtBchardefs
+        del self.cjkExtCchardefs
+        del self.cjkExtDchardefs
+        del self.cjkExtEchardefs
+        del self.cjkOtherchardefs
+        del self.privateusechardefs
+        del self.cincount
+
+        self.keynames = {}
+        self.chardefs = {}
+        self.newcjchardefs = {}
+        self.bopomofochardefs = {}
+        self.big5Fchardefs = {}
+        self.big5LFchardefs = {}
+        self.big5Otherchardefs = {}
+        self.cjkchardefs = {}
+        self.cjkExtAchardefs = {}
+        self.cjkExtBchardefs = {}
+        self.cjkExtCchardefs = {}
+        self.cjkExtDchardefs = {}
+        self.cjkExtEchardefs = {}
+        self.cjkOtherchardefs = {}
+        self.privateusechardefs = {}
+        self.cincount = {}
+
     def getEname(self):
         return self.ename
 

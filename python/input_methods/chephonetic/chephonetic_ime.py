@@ -90,7 +90,6 @@ class ChePhoneticTextService(TextService):
             else:
                 while RCinTable.loading:
                     continue
-                self.rcin = RCinTable.cin
 
         self.useEndKey = True
         self.autoShowCandWhenMaxChar = True
@@ -237,7 +236,6 @@ CinTable = CinTable()
 
 class RCinTable:
     loading = False
-    loaded = False
     def __init__(self):
         self.cin = None
         self.curCinType = None

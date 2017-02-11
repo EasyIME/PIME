@@ -34,6 +34,12 @@ class msymbols(object):
             if key not in self.keynames:
                 self.keynames.append(key)
 
+    def __del__(self):
+        del self.keynames
+        del self.chardefs
+        self.keynames = []
+        self.chardefs = {}
+
     def isInCharDef(self, key):
         return key in self.chardefs
 

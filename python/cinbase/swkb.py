@@ -23,6 +23,10 @@ class swkb(object):
             except KeyError:
                 self.chardefs[key] = [root]
 
+    def __del__(self):
+        del self.chardefs
+        self.chardefs = {}
+
     def isInCharDef(self, key):
         return key in self.chardefs
 

@@ -75,7 +75,6 @@ class CheSimplexTextService(TextService):
             else:
                 while RCinTable.loading:
                     continue
-                self.rcin = RCinTable.cin
 
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
@@ -167,7 +166,6 @@ CinTable = CinTable()
 
 class RCinTable:
     loading = False
-    loaded = False
     def __init__(self):
         self.cin = None
         self.curCinType = None

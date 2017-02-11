@@ -256,6 +256,25 @@ class CinBase:
         if cbTS.client.isWindows8Above:
             cbTS.removeButton("windows-mode-icon")
 
+        if hasattr(cbTS, 'cfg'):
+            del cbTS.cfg
+        if hasattr(cbTS, 'swkb'):
+            del cbTS.swkb
+        if hasattr(cbTS, 'symbols'):
+            del cbTS.symbols
+        if hasattr(cbTS, 'fsymbols'):
+            del cbTS.fsymbols
+        if hasattr(cbTS, 'flangs'):
+            del cbTS.flangs
+        if hasattr(cbTS, 'userphrase'):
+            del cbTS.userphrase
+        if hasattr(cbTS, 'msymbols'):
+            del cbTS.msymbols
+        if hasattr(cbTS, 'extendtable'):
+            del cbTS.extendtable
+        if hasattr(cbTS, 'dsymbols'):
+            del cbTS.dsymbols
+
 
     # 使用者按下按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
     # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
@@ -1622,7 +1641,7 @@ class CinBase:
                                     if cbTS.compositionBufferMode:
                                         commitStr = candidates[0]
                                         cbTS.lastCommitString = commitStr
-                                        self.setOutputString(cbTS, commitStr)
+                                        self.setOutputString(cbTS, RCinTable, commitStr)
                                         if cbTS.showPhrase and not cbTS.selcandmode:
                                             cbTS.phrasemode = True
                                         self.resetComposition(cbTS)
@@ -1680,7 +1699,7 @@ class CinBase:
                                                 commitStr = candidates[0]
                                                 cbTS.lastCommitString = commitStr
 
-                                                self.setOutputString(cbTS, commitStr)
+                                                self.setOutputString(cbTS, RCinTable, commitStr)
                                                 if cbTS.showPhrase and not cbTS.selcandmode:
                                                     cbTS.phrasemode = True
                                                 self.resetComposition(cbTS)
@@ -1797,7 +1816,7 @@ class CinBase:
                         if i < cbTS.candPerPage and i < len(cbTS.candidateList):
                             commitStr = cbTS.candidateList[i]
                             cbTS.lastCommitString = commitStr
-                            self.setOutputString(cbTS, commitStr)
+                            self.setOutputString(cbTS, RCinTable, commitStr)
                             if cbTS.showPhrase and not cbTS.selcandmode:
                                 cbTS.phrasemode = True
                             self.resetComposition(cbTS)
@@ -1853,7 +1872,7 @@ class CinBase:
                         # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                         commitStr = cbTS.candidateList[candCursor]
                         cbTS.lastCommitString = commitStr
-                        self.setOutputString(cbTS, commitStr)
+                        self.setOutputString(cbTS, RCinTable, commitStr)
                         if cbTS.showPhrase and not cbTS.selcandmode:
                             cbTS.phrasemode = True
                             if keyCode == VK_SPACE:
@@ -1947,7 +1966,7 @@ class CinBase:
                 cbTS.isShowCandidates = False
 
         # 聯想字模式
-        if not cbTS.phrase:
+        if PhraseData.phrase is None:
             cbTS.phrasemode = False
             
         if cbTS.showPhrase and cbTS.phrasemode:
@@ -1957,12 +1976,12 @@ class CinBase:
             phrasecandidates = []
             if cbTS.userphrase.isInCharDef(cbTS.lastCommitString):
                 phrasecandidates = cbTS.userphrase.getCharDef(cbTS.lastCommitString)
-            if cbTS.phrase.isInCharDef(cbTS.lastCommitString):
+            if PhraseData.phrase.isInCharDef(cbTS.lastCommitString):
                 if len(phrasecandidates) == 0:
-                    phrasecandidates = cbTS.phrase.getCharDef(cbTS.lastCommitString)
+                    phrasecandidates = PhraseData.phrase.getCharDef(cbTS.lastCommitString)
                 else:
                     if not cbTS.isShowPhraseCandidates:
-                        phrasecandidates.extend(cbTS.phrase.getCharDef(cbTS.lastCommitString))
+                        phrasecandidates.extend(PhraseData.phrase.getCharDef(cbTS.lastCommitString))
                 
             if phrasecandidates:
                 candCursor = cbTS.candidateCursor  # 目前的游標位置
@@ -1990,7 +2009,7 @@ class CinBase:
                         if i < cbTS.candPerPage and i < len(cbTS.candidateList):
                             commitStr = cbTS.candidateList[i]
                             cbTS.compositionBufferType = "phrase"
-                            self.setOutputString(cbTS, commitStr)
+                            self.setOutputString(cbTS, RCinTable, commitStr)
 
                             cbTS.phrasemode = False
                             cbTS.isShowPhraseCandidates = False
@@ -2052,7 +2071,7 @@ class CinBase:
                         # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                         commitStr = cbTS.candidateList[candCursor]
                         cbTS.compositionBufferType = "phrase"
-                        self.setOutputString(cbTS, commitStr)
+                        self.setOutputString(cbTS, RCinTable, commitStr)
                         
                         cbTS.phrasemode = False
                         cbTS.isShowPhraseCandidates = False
@@ -2627,11 +2646,11 @@ class CinBase:
         sortbyphraselist = []
         if cbTS.userphrase.isInCharDef(cbTS.lastCommitString):
             sortbyphraselist = cbTS.userphrase.getCharDef(cbTS.lastCommitString)
-        if cbTS.phrase.isInCharDef(cbTS.lastCommitString):
+        if PhraseData.phrase.isInCharDef(cbTS.lastCommitString):
             if len(sortbyphraselist) == 0:
-                sortbyphraselist = cbTS.phrase.getCharDef(cbTS.lastCommitString)
+                sortbyphraselist = PhraseData.phrase.getCharDef(cbTS.lastCommitString)
             else:
-                sortbyphraselist.extend(cbTS.phrase.getCharDef(cbTS.lastCommitString))
+                sortbyphraselist.extend(PhraseData.phrase.getCharDef(cbTS.lastCommitString))
         
         i = 0
         if len(sortbyphraselist) > 0:
@@ -2690,7 +2709,7 @@ class CinBase:
         cbTS.setCompositionString(cbTS.compositionBufferString)
         cbTS.setCompositionCursor(cbTS.compositionBufferCursor)
 
-    def setOutputString(self, cbTS, commitStr):
+    def setOutputString(self, cbTS, RCinTable, commitStr):
         # 如果使用萬用字元解碼
         if cbTS.isWildcardChardefs:
             if not cbTS.hidePromptMessages:
@@ -2704,7 +2723,7 @@ class CinBase:
         if cbTS.imeReverseLookup:
             cbTS.isShowMessage = True
             cbTS.showMessageOnKeyUp = True
-            cbTS.onKeyUpMessage = cbTS.rcin.getCharEncode(commitStr)
+            cbTS.onKeyUpMessage = RCinTable.cin.getCharEncode(commitStr)
 
         # 如果使用打繁出簡，就轉成簡體中文
         if cbTS.outputSimpChinese:
@@ -2831,6 +2850,23 @@ class CinBase:
         # 所有 CheCJTextService 共享一份輸入法碼表
         cbTS.selCinType = cfg.selCinType
 
+        if hasattr(cbTS, 'swkb'):
+            del cbTS.swkb
+        if hasattr(cbTS, 'symbols'):
+            del cbTS.symbols
+        if hasattr(cbTS, 'fsymbols'):
+            del cbTS.fsymbols
+        if hasattr(cbTS, 'flangs'):
+            del cbTS.flangs
+        if hasattr(cbTS, 'userphrase'):
+            del cbTS.userphrase
+        if hasattr(cbTS, 'msymbols'):
+            del cbTS.msymbols
+        if hasattr(cbTS, 'extendtable'):
+            del cbTS.extendtable
+        if hasattr(cbTS, 'dsymbols'):
+            del cbTS.dsymbols
+        
         datadirs = (cfg.getConfigDir(), cfg.getDataDir())
         swkbPath = cfg.findFile(datadirs, "swkb.dat")
         with io.open(swkbPath, encoding='utf-8') as fs:
@@ -2868,10 +2904,6 @@ class CinBase:
         if not PhraseData.phrase and not PhraseData.loading:
             loadPhraseData = LoadPhraseData(cbTS, PhraseData)
             loadPhraseData.start()
-        else:
-            while PhraseData.loading:
-                continue
-            cbTS.phrase = PhraseData.phrase
 
         cbTS.initCinBaseState = True
         self.applyConfig(cbTS) # 套用其餘的使用者設定
@@ -3019,15 +3051,18 @@ class CinBase:
                     cbTS.cin = CinTable.cin
                     
 
-        if cbTS.imeReverseLookup:
+        if cfg.imeReverseLookup:
             # 載入反查輸入法碼表
-            if (not cbTS.selRCinType == cfg.selRCinType and not RCinTable.loading) or (not RCinTable.loaded and not RCinTable.loading) or (not hasattr(cbTS, 'rcin') and not RCinTable.loading):
-                if not RCinTable.curCinType == cfg.selRCinType:
+            if (not cbTS.selRCinType == cfg.selRCinType and not RCinTable.loading) or (RCinTable.cin is None and not RCinTable.loading):
+                if not RCinTable.curCinType == cfg.selRCinType or RCinTable.cin is None:
                     loadRCinFile = LoadRCinTable(cbTS, RCinTable)
                     loadRCinFile.start()
                 else:
                     cbTS.selRCinType = cfg.selRCinType
-                    cbTS.rcin = RCinTable.cin
+        else:
+            if RCinTable.cin is not None and hasattr(RCinTable.cin, '__del__'):
+                RCinTable.cin.__del__()
+            RCinTable.cin = None
 
         # 比較我們先前存的版本號碼，和目前設定檔的版本號
         if cfg.isFullReloadNeeded(cbTS.configVersion):
@@ -3085,15 +3120,17 @@ class LoadPhraseData(threading.Thread):
 
     def run(self):
         self.PhraseData.loading = True
-        self.cbTS.phrase = None
-        self.PhraseData.phrase = None
         cfg = self.cbTS.cfg
         datadirs = (cfg.getConfigDir(), cfg.getDataDir())
         
+        if hasattr(self.PhraseData.phrase, '__del__'):
+            self.PhraseData.phrase.__del__()
+        
+        self.PhraseData.phrase = None
+        
         phrasePath = cfg.findFile(datadirs, "phrase.dat")
         with io.open(phrasePath, encoding='utf-8') as fs:
-            self.cbTS.phrase = phrase(fs)
-        self.PhraseData.phrase = self.cbTS.phrase
+            self.PhraseData.phrase = phrase(fs)
         self.PhraseData.loading = False
 
 
@@ -3110,6 +3147,11 @@ class LoadCinTable(threading.Thread):
             selCinFile = self.cbTS.cinFileList[self.cbTS.cfg.selCinType]
             CinPath = os.path.join(self.cbTS.cindir, selCinFile)
 
+            if hasattr(self.cbTS, 'cin'):
+                self.cbTS.cin.__del__()
+            if hasattr(self.CinTable.cin, '__del__'):
+                self.CinTable.cin.__del__()
+
             self.cbTS.cin = None
             self.CinTable.cin = None
 
@@ -3117,7 +3159,9 @@ class LoadCinTable(threading.Thread):
                 self.cbTS.cin = Cin(fs, self.cbTS.imeDirName)
             self.CinTable.cin = self.cbTS.cin
             self.CinTable.curCinType = self.cbTS.cfg.selCinType
-            
+
+        if not hasattr(self.cbTS, 'extendtable'):
+            self.cbTS.extendtable = {}
         self.cbTS.cin.updateCinTable(self.cbTS.cfg.userExtendTable, self.cbTS.extendtable, self.cbTS.cfg.ignorePrivateUseArea)
         self.CinTable.userExtendTable = self.cbTS.cfg.userExtendTable
         self.CinTable.ignorePrivateUseArea = self.cbTS.cfg.ignorePrivateUseArea
@@ -3135,13 +3179,13 @@ class LoadRCinTable(threading.Thread):
         selCinFile = self.cbTS.rcinFileList[self.cbTS.cfg.selRCinType]
         CinPath = os.path.join(self.cbTS.cindir, selCinFile)
 
-        self.cbTS.rcin = None
+        if self.RCinTable.cin is not None and hasattr(self.RCinTable.cin, '__del__'):
+            self.RCinTable.cin.__del__()
+            
         self.RCinTable.cin = None
         
         with io.open(CinPath, encoding='utf-8') as fs:
-            self.cbTS.rcin = RCin(fs, self.cbTS.imeDirName)
-        self.RCinTable.cin = self.cbTS.rcin
+            self.RCinTable.cin = RCin(fs, self.cbTS.imeDirName)
         self.RCinTable.curCinType = self.cbTS.cfg.selRCinType
         self.RCinTable.loading = False
-        self.RCinTable.loaded = True
 

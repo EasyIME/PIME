@@ -46,6 +46,7 @@ class RimeTextService(TextService):
     session_id = None
     icon_dir = os.path.join(curdir, "icons")
     style = None
+    select_keys = ""
     lastKeyDownCode = None
     lastKeySkip = 0
     lastKeyDownRet = True
@@ -93,6 +94,21 @@ class RimeTextService(TextService):
             type = "menu"
         )
         self.updateLangStatus()
+
+    def updateSelKeys(self, context):
+        n = context.menu.page_size
+        if not n: return
+        select_keys = b''
+        if context.select_labels:
+            for i in range(n):
+                select_keys += context.select_labels[i]
+        elif context.menu.select_keys:
+            select_keys = context.menu.select_keys
+        else:
+            select_keys = bytes(((i + 1) % 10 + 48 for i in range(n)))
+        if self.select_keys != select_keys:
+            self.setSelKeys(select_keys.decode("UTF-8"))
+            self.select_keys = select_keys
 
     def createSession(self):
         if not (self.session_id and rime.find_session(self.session_id)):
@@ -207,6 +223,8 @@ class RimeTextService(TextService):
             self.clear()
             return True
 
+        self.updateSelKeys(context)
+
         if self.style.inline_preedit in ("composition", "true"):
             composition = context.composition.preedit
             preedit = composition.decode("UTF-8") if composition else ""
@@ -220,16 +238,6 @@ class RimeTextService(TextService):
             preedit = rime.get_input(self.session_id).decode("UTF-8")
             self.setCompositionString(preedit)
             self.setCompositionCursor(len(preedit))
-
-        if context.menu.page_size:
-            select_keys = b''
-            if context.select_labels:
-                for i in range(context.menu.page_size):
-                    select_keys += context.select_labels[i]
-            elif context.menu.select_keys:
-                select_keys = context.menu.select_keys
-            if select_keys:
-                self.setSelKeys(select_keys.decode("UTF-8"))
 
         hide_candidate = rime.get_option(self.session_id, b'_hide_candidate')
         if context.menu.num_candidates and not hide_candidate:

@@ -30,7 +30,6 @@ selKeys=(
 class CinBaseConfig:
     
     def __init__(self):
-        self.imeDirName = ""
         self.candPerRow = 3
         self.defaultEnglish = False
         self.defaultFullSpace = False
@@ -46,8 +45,7 @@ class CinBaseConfig:
         self.directCommitSymbol = False
         self.fontSize = DEF_FONT_SIZE
         self.selCinType = 0
-        self.selCinFile = ""
-        self.cinFileList = []
+        self.sortByCharset = True
         self.ignorePrivateUseArea = True
         self.selKeyType = 0
         self.candPerPage = 9
@@ -71,9 +69,13 @@ class CinBaseConfig:
         self.messageDurationTime = 3
         self.keyboardType = 0
         self.selDayiSymbolCharType = 0
+
+        self.ignoreSaveList = ["ignoreSaveList", "curdir", "cinFileList", "selCinFile", "imeDirName", "_version", "_lastUpdateTime"]
         self.curdir = os.path.abspath(os.path.dirname(__file__))
-        self.ignoreSaveList = ["_lastUpdateTime", "_version", "ignoreSaveList", "curdir", "cinFileList", "selCinFile", "imeDirName"]
-        
+        self.cinFileList = []
+        self.selCinFile = ""
+        self.imeDirName = ""
+
         # version: last modified time of (config.json, symbols.dat, swkb.dat, fsymbols.dat, flangs.dat, userphrase.dat)
         self._version = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self._lastUpdateTime = 0.0

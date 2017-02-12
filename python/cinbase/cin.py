@@ -33,17 +33,19 @@ class Cin(object):
     # TODO check the possiblility if the encoding is not utf-8
     encoding = 'utf-8'
 
-    def __init__(self, fs, imeDirName):
+    def __init__(self, fs, imeDirName, sortByCharset, ignorePrivateUseArea):
 
         state = PARSING_HEAD_STATE
 
         self.imeDirName = imeDirName
+        self.sortByCharset = sortByCharset
+        self.ignorePrivateUseArea = ignorePrivateUseArea
         self.ename = ""
         self.cname = ""
         self.selkey = ""
         self.keynames = {}
         self.chardefs = {}
-        self.newcjchardefs = {}
+        self.srcchardefs = {}
         self.bopomofochardefs = {}
         self.big5Fchardefs = {}
         self.big5LFchardefs = {}
@@ -123,6 +125,7 @@ class Cin(object):
                 continue
 
             if state is PARSE_CHARDEF_STATE:
+                isPrivateUseAreaChar = False
                 if self.cname == "中標倉頡":
                     if '#' in line:
                         line = re.sub('#.+', '', line)
@@ -140,15 +143,8 @@ class Cin(object):
                 else:
                     matchstr = root
 
-                if self.cname == "自由大新":
-                    try:
-                        self.newcjchardefs[key].append(root)
-                    except KeyError:
-                        self.newcjchardefs[key] = [root]
-                    self.cincount['cjkTotalchardefs'] += 1
-                    
                 if re.match('[\u3100-\u312F]|[\u02D9]|[\u02CA]|[\u02C7]|[\u02CB]', matchstr): # Bopomofo 區域
-                    if not self.cname == "自由大新":
+                    if self.sortByCharset:
                         try:
                             self.bopomofochardefs[key].append(root) # 注音符號
                         except KeyError:
@@ -159,63 +155,63 @@ class Cin(object):
                         big5code = matchstr.encode('big5')
 
                         if int(big5code.hex(), 16) in range(int('0xA440', 16), int('0xC67F', 16)): # Big5 常用字
-                            if not self.cname == "自由大新":
+                            if self.sortByCharset:
                                 try:
                                     self.big5Fchardefs[key].append(root)
                                 except KeyError:
                                     self.big5Fchardefs[key] = [root]
                             self.cincount['big5Fchardefs'] += 1
                         elif int(big5code.hex(), 16) in range(int('0xC940', 16), int('0xF9D6', 16)): # Big5 次常用字
-                            if not self.cname == "自由大新":
+                            if self.sortByCharset:
                                 try:
                                     self.big5LFchardefs[key].append(root)
                                 except KeyError:
                                     self.big5LFchardefs[key] = [root]
                             self.cincount['big5LFchardefs'] += 1
                         else: # Big5 其它漢字
-                            if not self.cname == "自由大新":
+                            if self.sortByCharset:
                                 try:
                                     self.big5Otherchardefs[key].append(root)
                                 except KeyError:
                                     self.big5Otherchardefs[key] = [root]
                             self.cincount['big5Otherchardefs'] += 1
                     except: # CJK Unified Ideographs 漢字
-                        if not self.cname == "自由大新":
+                        if self.sortByCharset:
                             try:
                                 self.cjkchardefs[key].append(root)
                             except KeyError:
                                 self.cjkchardefs[key] = [root]
                         self.cincount['cjkchardefs'] += 1
                 elif re.match('[\u3400-\u4DB5]', matchstr): # CJK Unified Ideographs Extension A 區域
-                    if not self.cname == "自由大新":
+                    if self.sortByCharset:
                         try:
                             self.cjkExtAchardefs[key].append(root) # CJK 擴展 A 區
                         except KeyError:
                             self.cjkExtAchardefs[key] = [root]
                     self.cincount['cjkExtAchardefs'] += 1
                 elif ord(matchstr) in range(int('0x20000', 16), int('0x2A6DF', 16)): # CJK Unified Ideographs Extension B 區域
-                    if not self.cname == "自由大新":
+                    if self.sortByCharset:
                         try:
                             self.cjkExtBchardefs[key].append(root) # CJK 擴展 B 區
                         except KeyError:
                             self.cjkExtBchardefs[key] = [root]
                     self.cincount['cjkExtBchardefs'] += 1
                 elif ord(matchstr) in range(int('0x2A700', 16), int('0x2B73F', 16)): # CJK Unified Ideographs Extension C 區域
-                    if not self.cname == "自由大新":
+                    if self.sortByCharset:
                         try:
                             self.cjkExtCchardefs[key].append(root) # CJK 擴展 C 區
                         except KeyError:
                             self.cjkExtCchardefs[key] = [root]
                     self.cincount['cjkExtCchardefs'] += 1
                 elif ord(matchstr) in range(int('0x2B740', 16), int('0x2B81F', 16)): # CJK Unified Ideographs Extension D 區域
-                    if not self.cname == "自由大新":
+                    if self.sortByCharset:
                         try:
                             self.cjkExtDchardefs[key].append(root) # CJK 擴展 D 區
                         except KeyError:
                             self.cjkExtDchardefs[key] = [root]
                     self.cincount['cjkExtDchardefs'] += 1
                 elif ord(matchstr) in range(int('0x2B820', 16), int('0x2CEAF', 16)): # CJK Unified Ideographs Extension E 區域
-                    if not self.cname == "自由大新":
+                    if self.sortByCharset:
                         try:
                             self.cjkExtEchardefs[key].append(root) # CJK 擴展 E 區
                         except KeyError:
@@ -224,36 +220,48 @@ class Cin(object):
                 elif (ord(matchstr) in range(int('0xE000', 16), int('0xF900', 16)) or # Unicode Private Use 區域
                     ord(matchstr) in range(int('0xF0000', 16), int('0xFFFFE', 16)) or
                     ord(matchstr) in range(int('0x100000', 16), int('0x10FFFE', 16))):
-                    if not self.cname == "自由大新":
+                    if self.sortByCharset:
                         try:
                             self.privateusechardefs[key].append(root) # Unicode 私用區
                         except KeyError:
                             self.privateusechardefs[key] = [root]
+                    isPrivateUseAreaChar = True
                     self.cincount['privateusechardefs'] += 1
                 elif ord(matchstr) in range(int('0x2F800', 16), int('0x2FA20', 16)): # cjk compatibility ideographs supplement 區域
-                    if not self.cname == "自由大新":
+                    if self.sortByCharset:
                         try:
                             self.privateusechardefs[key].append(root) # CJK 相容字集補充區
                         except KeyError:
                             self.privateusechardefs[key] = [root]
+                    isPrivateUseAreaChar = True
                     self.cincount['privateusechardefs'] += 1
                 else: # 不在 CJK Unified Ideographs 區域
-                    if not self.cname == "自由大新":
+                    if self.sortByCharset:
                         try:
                             self.cjkOtherchardefs[key].append(root) # CJK 其它漢字或其它字集字元
                         except KeyError:
                             self.cjkOtherchardefs[key] = [root]
                     self.cincount['cjkOtherchardefs'] += 1
-        if not self.cname == "自由大新":
+
+                if not self.sortByCharset:
+                    if self.ignorePrivateUseArea and isPrivateUseAreaChar:
+                        continue
+                    try:
+                        self.srcchardefs[key].append(root)
+                    except KeyError:
+                        self.srcchardefs[key] = [root]
+                    self.cincount['cjkTotalchardefs'] += 1
+
+        if self.sortByCharset:
             self.mergeDicts(self.big5Fchardefs, self.big5LFchardefs, self.big5Otherchardefs, self.bopomofochardefs, self.cjkchardefs, self.cjkExtAchardefs, self.cjkExtBchardefs, self.cjkExtCchardefs, self.cjkExtDchardefs, self.cjkExtEchardefs, self.cjkOtherchardefs)
         else:
-            self.chardefs = copy.deepcopy(self.newcjchardefs)
+            self.chardefs = copy.deepcopy(self.srcchardefs)
             self.saveCountFile()
 
     def __del__(self):
         del self.keynames
         del self.chardefs
-        del self.newcjchardefs
+        del self.srcchardefs
         del self.bopomofochardefs
         del self.big5Fchardefs
         del self.big5LFchardefs
@@ -270,7 +278,7 @@ class Cin(object):
 
         self.keynames = {}
         self.chardefs = {}
-        self.newcjchardefs = {}
+        self.srcchardefs = {}
         self.bopomofochardefs = {}
         self.big5Fchardefs = {}
         self.big5LFchardefs = {}
@@ -448,7 +456,7 @@ class Cin(object):
         del self.chardefs
         self.chardefs = {}
 
-        if not self.cname == "自由大新":
+        if self.sortByCharset:
             for chardefsdict in chardefsdicts:
                 for key in chardefsdict:
                     for root in chardefsdict[key]:
@@ -457,7 +465,7 @@ class Cin(object):
                         except KeyError:
                             self.chardefs[key] = [root]
         else:
-            self.chardefs = copy.deepcopy(self.newcjchardefs)
+            self.chardefs = copy.deepcopy(self.srcchardefs)
 
         if userExtendTable:
             for key in extendtable.chardefs:

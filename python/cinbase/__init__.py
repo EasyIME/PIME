@@ -103,6 +103,7 @@ class CinBase:
         cbTS.directCommitSymbol = False
         cbTS.directCommitSymbolList = ["，", "。", "、", "；", "？", "！"]
         cbTS.bracketSymbolList = ["「」", "『』", "［］", "【】", "〖〗", "〔〕", "﹝﹞", "（）", "﹙﹚", "〈〉", "《》", "＜＞", "﹤﹥", "｛｝", "﹛﹜"]
+        cbTS.sortByCharset = True
         cbTS.ignorePrivateUseArea = True
         cbTS.directOutMSymbols = True
         cbTS.fullShapeSymbols = False
@@ -256,8 +257,6 @@ class CinBase:
         if cbTS.client.isWindows8Above:
             cbTS.removeButton("windows-mode-icon")
 
-        if hasattr(cbTS, 'cfg'):
-            del cbTS.cfg
         if hasattr(cbTS, 'swkb'):
             del cbTS.swkb
         if hasattr(cbTS, 'symbols'):
@@ -3000,6 +2999,12 @@ class CinBase:
         cbTS.imeReverseLookup = cfg.imeReverseLookup
         cbTS.selRCinType = cfg.selRCinType
 
+        # 載入碼表時依字元集排序?
+        cbTS.sortByCharset = cfg.sortByCharset
+
+        # 載入碼表時忽略 Unicode 私用區?
+        cbTS.ignorePrivateUseArea = cfg.ignorePrivateUseArea
+
         # 擴充碼表?
         cbTS.userExtendTable = cfg.userExtendTable
         cbTS.reLoadTable = cfg.reLoadTable
@@ -3026,43 +3031,32 @@ class CinBase:
 
         # 如果有更換輸入法碼表，就重新載入碼表資料
         if not CinTable.loading:
-            if not cbTS.selCinType == cfg.selCinType or cfg.reLoadTable or not cbTS.userExtendTable == cfg.userExtendTable or not cbTS.ignorePrivateUseArea == cfg.ignorePrivateUseArea:
-                if not CinTable.curCinType == cfg.selCinType:
+            if not CinTable.curCinType == cfg.selCinType:
+                reLoadCinTable = True
+
+            if not CinTable.sortByCharset == cfg.sortByCharset:
+                reLoadCinTable = True
+
+            if not CinTable.ignorePrivateUseArea == cfg.ignorePrivateUseArea:
+                if not CinTable.sortByCharset:
                     reLoadCinTable = True
                 else:
-                    cbTS.selCinType = cfg.selCinType
-                    cbTS.cin = CinTable.cin
-
-                if cfg.reLoadTable:
-                    updateExtendTable = True
-                    cfg.reLoadTable = False
-                    cfg.save()
-
-                if not CinTable.userExtendTable == cfg.userExtendTable:
-                    updateExtendTable = True
-                else:
-                    cbTS.userExtendTable = cfg.userExtendTable
-                    cbTS.cin = CinTable.cin
-
-                if not CinTable.ignorePrivateUseArea == cfg.ignorePrivateUseArea:
                     updatePrivateUseArea = True
-                else:
-                    cbTS.ignorePrivateUseArea = cfg.ignorePrivateUseArea
-                    cbTS.cin = CinTable.cin
-                    
 
-        if cfg.imeReverseLookup:
+            if cfg.reLoadTable:
+                updateExtendTable = True
+                cfg.reLoadTable = False
+                cfg.save()
+
+            if not CinTable.userExtendTable == cfg.userExtendTable:
+                updateExtendTable = True
+
+        if cfg.imeReverseLookup or cbTS.imeReverseLookup:
             # 載入反查輸入法碼表
-            if (not cbTS.selRCinType == cfg.selRCinType and not RCinTable.loading) or (RCinTable.cin is None and not RCinTable.loading):
+            if not RCinTable.loading:
                 if not RCinTable.curCinType == cfg.selRCinType or RCinTable.cin is None:
                     loadRCinFile = LoadRCinTable(cbTS, RCinTable)
                     loadRCinFile.start()
-                else:
-                    cbTS.selRCinType = cfg.selRCinType
-        else:
-            if RCinTable.cin is not None and hasattr(RCinTable.cin, '__del__'):
-                RCinTable.cin.__del__()
-            RCinTable.cin = None
 
         # 比較我們先前存的版本號碼，和目前設定檔的版本號
         if cfg.isFullReloadNeeded(cbTS.configVersion):
@@ -3075,12 +3069,14 @@ class CinBase:
         if reLoadCinTable or updateExtendTable or updatePrivateUseArea:
             datadirs = (cfg.getConfigDir(), cfg.getDataDir())
             if updateExtendTable:
+                if hasattr(cbTS, 'extendtable'):
+                    del cbTS.extendtable
                 extendtablePath = cfg.findFile(datadirs, "extendtable.dat")
                 with io.open(extendtablePath, encoding='utf-8') as fs:
                     cbTS.extendtable = extendtable(fs)
             if reLoadCinTable:
+                print('reLoadCinTable = True')
                 cbTS.reLoadCinTable = True
-            cbTS.selCinType = cfg.selCinType
             loadCinFile = LoadCinTable(cbTS, CinTable)
             loadCinFile.start()
         else:
@@ -3156,14 +3152,21 @@ class LoadCinTable(threading.Thread):
             self.CinTable.cin = None
 
             with io.open(CinPath, encoding='utf-8') as fs:
-                self.cbTS.cin = Cin(fs, self.cbTS.imeDirName)
+                self.cbTS.cin = Cin(fs, self.cbTS.imeDirName, self.cbTS.sortByCharset, self.cbTS.ignorePrivateUseArea)
             self.CinTable.cin = self.cbTS.cin
             self.CinTable.curCinType = self.cbTS.cfg.selCinType
 
         if not hasattr(self.cbTS, 'extendtable'):
-            self.cbTS.extendtable = {}
+            if self.cbTS.cfg.userExtendTable:
+                datadirs = (self.cbTS.cfg.getConfigDir(), self.cbTS.cfg.getDataDir())
+                extendtablePath = self.cbTS.cfg.findFile(datadirs, "extendtable.dat")
+                with io.open(extendtablePath, encoding='utf-8') as fs:
+                    self.cbTS.extendtable = extendtable(fs)
+            else:
+                self.cbTS.extendtable = {}
         self.cbTS.cin.updateCinTable(self.cbTS.cfg.userExtendTable, self.cbTS.extendtable, self.cbTS.cfg.ignorePrivateUseArea)
         self.CinTable.userExtendTable = self.cbTS.cfg.userExtendTable
+        self.CinTable.sortByCharset = self.cbTS.cfg.sortByCharset
         self.CinTable.ignorePrivateUseArea = self.cbTS.cfg.ignorePrivateUseArea
         self.CinTable.loading = False
 
@@ -3181,9 +3184,9 @@ class LoadRCinTable(threading.Thread):
 
         if self.RCinTable.cin is not None and hasattr(self.RCinTable.cin, '__del__'):
             self.RCinTable.cin.__del__()
-            
+
         self.RCinTable.cin = None
-        
+
         with io.open(CinPath, encoding='utf-8') as fs:
             self.RCinTable.cin = RCin(fs, self.cbTS.imeDirName)
         self.RCinTable.curCinType = self.cbTS.cfg.selRCinType

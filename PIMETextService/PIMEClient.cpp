@@ -109,6 +109,15 @@ void Client::updateUI(const Json::Value& data) {
 void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 	// We need to handle ordering of some types of the requests.
 	// For example, setCompositionCursor() should happen after setCompositionCursor().
+
+	// set sel keys before update candidates
+	const auto& setSelKeysVal = msg["setSelKeys"];
+	if (setSelKeysVal.isString()) {
+		// keys used to select candidates
+		std::wstring selKeys = utf8ToUtf16(setSelKeysVal.asCString());
+		textService_->setSelKeys(selKeys);
+	}
+
 	if (session != nullptr) { // if an edit session is available
 		// handle candidate list
 		const auto& showCandidatesVal = msg["showCandidates"];
@@ -300,13 +309,6 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 	}
 
 	// other configurations
-	const auto& setSelKeysVal = msg["setSelKeys"];
-	if (setSelKeysVal.isString()) {
-		// keys used to select candidates
-		std::wstring selKeys = utf8ToUtf16(setSelKeysVal.asCString());
-		textService_->setSelKeys(selKeys);
-	}
-	
 	const auto& customizeUIVal = msg["customizeUI"];
 	if (customizeUIVal.isObject()) {
 		// customize the UI

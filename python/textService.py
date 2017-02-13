@@ -53,6 +53,9 @@ class KeyEvent:
 
     def isPrintableChar(self):
         return self.charCode > 0x1f and self.charCode != 0x7f
+        
+    def isSymbols(self):
+        return self.charCode in [0x3d, 0x5b, 0x5c, 0x5d, 0x27]
 
 
 class TextService:

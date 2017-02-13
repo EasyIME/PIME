@@ -27,7 +27,6 @@ from chewing_config import chewingConfig
 from libchewing import ChewingContext
 from ctypes import c_uint, byref, create_string_buffer
 
-
 config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", "chewing")
 current_dir = os.path.dirname(__file__)
 data_dir = os.path.join(current_dir, "data")
@@ -36,7 +35,6 @@ localdata_dir = os.path.join(os.path.expandvars("%LOCALAPPDATA%"), "PIME", "chew
 COOKIE_ID = "chewing_config_token"
 
 SERVER_TIMEOUT = 120
-
 
 # syspath 參數可包含多個路徑，用 ; 分隔
 # 此處把 user 設定檔目錄插入到 system-wide 資料檔路徑前
@@ -166,6 +164,7 @@ class UserPhraseHandler(BaseHandler):
 
         self.write({"add_result": add_result})
 
+
 class LoginHandler(BaseHandler):
 
     def post(self, page_name):
@@ -175,7 +174,6 @@ class LoginHandler(BaseHandler):
             if page_name != "user_phrase_editor":
                 page_name = "config_tool"
             self.redirect("/{}.html".format(page_name))
-
 
 
 class ConfigApp(tornado.web.Application):
@@ -190,7 +188,7 @@ class ConfigApp(tornado.web.Application):
         }
         handlers = [
             (r"/(.*\.html)", tornado.web.StaticFileHandler, {"path": current_dir}),
-            (r"/((css|images|js)/.*)", tornado.web.StaticFileHandler, {"path": current_dir}),
+            (r"/((css|images|js|fonts)/.*)", tornado.web.StaticFileHandler, {"path": current_dir}),
             (r"/(version.txt)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "../../../")}),
             (r"/config", ConfigHandler),  # main configuration handler
             (r"/user_phrases", UserPhraseHandler),  # user phrase editor

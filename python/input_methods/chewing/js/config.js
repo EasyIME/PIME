@@ -1,5 +1,4 @@
-$(function() {
-
+$(function () {
     var chewingConfig = {},
         symbolsChanged = false,
         swkbChanged = false,
@@ -16,7 +15,7 @@ $(function() {
     }
 
     function loadConfig() {
-        $.get(CONFIG_URL, function(data, status) {
+        $.get(CONFIG_URL, function (data, status) {
             chewingConfig = data.config;
             $("#symbols").val(data.symbols);
             $("#ez_symbols").val(data.swkb);
@@ -28,22 +27,20 @@ $(function() {
         // Check easy symbols format
         var ez_symbols_array = $("#ez_symbols").val().split("\n");
         for (var i = 0; i < ez_symbols_array.length; i++) {
-            if (! /^[A-Za-z] .{1,10}$/.test(ez_symbols_array[i])) {
-                swal(
-                    '糟糕',
-                    '簡易符號輸入設定第 ' + (i + 1) + ' 行 ('+ ez_symbols_array[i] +')格式錯誤\n請使用「英文 + 空格 + 符號」的格式',
-                    'error'
-                );
-                $("#ez_symbols").blur();
-
-                // Count select range
+            if (!/^[A-Za-z] .{1,10}$/.test(ez_symbols_array[i])) {
+                // Select error range
+                $("#ez_symbols").select();
                 var selectionStart = 0;
                 for (var j = 0; j < i; j++) {
                     selectionStart += ez_symbols_array[j].length + 1;
                 }
-
                 $("#ez_symbols").prop("selectionStart", selectionStart);
                 $("#ez_symbols").prop("selectionEnd", selectionStart + ez_symbols_array[i].length + 1);
+                swal(
+                    '糟糕',
+                    '簡易符號輸入設定第 ' + (i + 1) + ' 行 (' + ez_symbols_array[i] + ')格式錯誤\n請使用「英文 + 空格 + 符號」的格式，符號最多10個字元',
+                    'error'
+                );
                 return false;
             }
         }
@@ -52,31 +49,30 @@ $(function() {
         var symbols_array = $("#symbols").val().split("\n");
         for (var i = 0; i < symbols_array.length; i++) {
             if (symbols_array[i].length > 1 && symbols_array[i].search("=") == -1) {
-                $("#symbols").blur();
-
-                // Count select range
+                // Select error range
+                $("#symbols").select();
                 var selectionStart = 1;
                 for (var j = 0; j < i; j++) {
                     selectionStart += symbols_array[j].length;
                 }
                 $("#symbols").prop("selectionStart", selectionStart);
-                $("#symbols").prop("selectionEnd",  selectionStart + symbols_array[i].length);
+                $("#symbols").prop("selectionEnd", selectionStart + symbols_array[i].length);
                 swal(
                     '糟糕',
                     '特殊符號設定第 ' + (i + 1) + ' 行格式錯誤\n單行不能超過一個字元，或是沒有 = 符號區隔',
                     'error'
                 );
-                return;
+                return false;
             }
         }
 
         var data = {
             "config": chewingConfig
         }
-        if(symbolsChanged) {
+        if (symbolsChanged) {
             data.symbols = $("#symbols").val();
         }
-        if(swkbChanged) {
+        if (swkbChanged) {
             data.swkb = $("#ez_symbols").val();
         }
 
@@ -86,7 +82,7 @@ $(function() {
             success: callbackFunc,
             contentType: "application/json",
             data: JSON.stringify(data),
-            dataType:"json"
+            dataType: "json"
         });
     }
 
@@ -126,7 +122,6 @@ $(function() {
     }
 
     function initializeUI() {
-
         // Setup checkbox and text values
         $("input").each(function () {
             switch ($(this).attr("type")) {
@@ -174,7 +169,6 @@ $(function() {
         });
 
         $("select").selectpicker();
-
         $('[data-toggle="popover"]').popover();
 
         // Setup keybord page
@@ -197,13 +191,13 @@ $(function() {
         var keyboard_page = $("#keyboard_tab"),
             item = '';
 
-        for(var i = 0; i < keyboardNames.length; ++i) {
+        for (var i = 0; i < keyboardNames.length; ++i) {
             var id = "kb" + i;
             var name = keyboardNames[i];
-            item += '<div class="radio radio-info">'+
-                        '<input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '">'+
-                        '<label for="' + id + '">' + name + '</label><br>'+
-                    '</div>';
+            item += '<div class="radio radio-info">' +
+                '<input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '">' +
+                '<label for="' + id + '">' + name + '</label><br>' +
+                '</div>';
         }
         keyboard_page.html(item);
 
@@ -216,9 +210,10 @@ $(function() {
         // Use for select phrase example
         function updateSelExample() {
             var example = ["選", "字", "大", "小", "範", "例"];
+            var selectItems = $("#selKeyType option").eq($("#selKeyType").val()).html();
             var html = "";
 
-            for (number = 1, i = 0, row = 0; number <= $("#candPerPage").val(); number++, i++, row++) {
+            for (number = 0, i = 0, row = 0; number < $("#candPerPage").val(); number++, i++, row++) {
                 if (example[i] == null) {
                     i = 0;
                 }
@@ -228,20 +223,17 @@ $(function() {
                     html += "<br>";
                 }
 
-                html += "<span>" + number.toString().slice(-1) + ".</span> " + example[i] + "&nbsp;&nbsp;";
+                html += "<span>" + selectItems.substr(number, 1) + ".</span> " + example[i] + "";
             }
 
             $("#selExample").html(html);
+            $("#selExample").css("font-size", $("#fontSize").val() + "pt");
         }
 
-        // setup selExample default style
-        $("#selExample").css("font-size", $("#fontSize").val() + "pt");
         updateSelExample();
 
-        $("#ui_tab input").on("change keyup", function() {
-            $("#selExample").css("font-size", $("#fontSize").val() + "pt");
-            updateSelExample();
-        });
+        // Register updateSelExample event
+        $("#ui_tab input, #ui_tab select").on("change keyup", updateSelExample);
     }
 
     // workaround the same origin policy of IE.
@@ -252,8 +244,6 @@ $(function() {
     $("#version").load(VERSION_URL);
 
     // setup UI
-    // $(document).tooltip();
-
     $("#symbols").on('change', function () {
         symbolsChanged = true;
     });
@@ -265,11 +255,11 @@ $(function() {
     // OK button
     $("#ok").on('click', function () {
         updateConfig(); // update the config based on the state of UI elements
-        saveConfig(function() {
+        saveConfig(function () {
             swal(
-              '好耶！',
-              '設定成功儲存！',
-              'success'
+                '好耶！',
+                '設定成功儲存！',
+                'success'
             );
         });
         return false;

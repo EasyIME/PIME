@@ -37,28 +37,26 @@ selKeys=(
 class ChewingConfig:
 
     def __init__(self):
-        self.keyboardLayout = 0
+        self.addPhraseForward = True
+        self.advanceAfterSelection = True
+        self.candPerPage = 9
         self.candPerRow = 3
         self.defaultEnglish = False
         self.defaultFullSpace = False
+        self.easySymbolsWithCtrl = False
+        self.easySymbolsWithShift = True
+        self.enableCapsLock = True
+        self.escCleanAllBuf = True
+        self.fontSize = DEF_FONT_SIZE
+        self.fullShapeSymbols = True
+        self.fullShapeSymbolsWithShift = True
+        self.keyboardLayout = 0
+        self.leftRightAction = 0
+        self.outputSimpChinese = False
+        self.selKeyType = 0
         self.spaceKeyAction = 1
         self.switchLangWithShift = True
-        self.outputSimpChinese = False
-        self.addPhraseForward = True
-        self.colorCandWnd = True
-        self.advanceAfterSelection = True
-        self.fontSize = DEF_FONT_SIZE
-        self.selKeyType = 0
-        self.candPerPage = 9
         self.upDownAction = 0
-        self.leftRightAction = 0
-        #self.cursorCandList = True        
-        self.enableCapsLock = True
-        self.fullShapeSymbols = True
-        # self.phraseMark = True
-        self.escCleanAllBuf = True
-        self.easySymbolsWithShift = True
-        self.easySymbolsWithCtrl = False
         self.upperCaseWithShift = True
 
         # version: last modified time of (config.json, symbols.dat, swkb.dat)
@@ -187,7 +185,6 @@ class ChewingConfig:
     # symbols.dat and swkb.dat files.
     def isFullReloadNeeded(self, currentVersion):
         return currentVersion[1:] != self._version[1:]
-
 
 # globally shared config object
 # load configurations from a user-specific config file

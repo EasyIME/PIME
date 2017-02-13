@@ -368,6 +368,10 @@ class ChewingTextService(TextService):
                     temporaryEnglishMode = True
                     invertCase = True  # 大寫字母轉成小寫
 
+                # 如果啟動半形符號模式，且輸入符號，則暫時切換為英文模式
+                if not cfg.fullShapeSymbols and keyEvent.isSymbols():
+                    temporaryEnglishMode = True
+
                 # 若按下 Shift 鍵
                 if keyEvent.isKeyDown(VK_SHIFT):
                     if charStr.isalpha():  # 如果是英文字母
@@ -378,7 +382,7 @@ class ChewingTextService(TextService):
                                 invertCase = True # 大寫字母轉成小寫
                     else: # 如果不是英文字母
                         # 如果不使用 Shift 輸入全形標點，則暫時切成英文模式
-                        if not cfg.fullShapeSymbols:
+                        if not cfg.fullShapeSymbolsWithShift:
                             temporaryEnglishMode = True
 
             if self.langMode == ENGLISH_MODE: # 英文模式
@@ -421,9 +425,9 @@ class ChewingTextService(TextService):
                     candCursor = 0
                     ignoreKey = keyHandled = True
                 elif keyCode == VK_END:
-                    candCursor = candCount - 1                    
+                    candCursor = candCount - 1
                     ignoreKey = keyHandled = True
-     
+
                 if cfg.leftRightAction == 0:    # 使用左右鍵游標選字
                     if keyCode == VK_LEFT:  # 游標左移
                         if candCursor > 0:

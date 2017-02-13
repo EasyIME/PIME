@@ -18,13 +18,12 @@
     <div class="container">
         <div class="row">
             <div class="col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
-                <p>&nbsp;</p>
                 <ul class="nav nav-tabs" role="tablist">
                     <li role="presentation" class="active">
                         <a href="#typing_tab" aria-controls="typing_tab" role="tab" data-toggle="tab">打字行為</a>
                     </li>
                     <li role="presentation">
-                        <a href="#ui_tab" aria-controls="ui_tab" role="tab" data-toggle="tab">介面外觀</a>
+                        <a href="#ui_tab" aria-controls="ui_tab" role="tab" data-toggle="tab">選字視窗外觀</a>
                     </li>
                     <li role="presentation">
                         <a href="#keyboard_tab" aria-controls="keyboard_tab" role="tab" data-toggle="tab">鍵盤設定</a>
@@ -41,80 +40,80 @@
                 </ul>
 
                 <div class="tab-content">
-                <div role="tabpanel" class="tab-pane fade in active form" id="typing_tab">
-                        <div class="checkbox checkbox-info">
-                            <input type="checkbox" id="switchLangWithShift" name="switchLangWithShift">
-                            <label for="switchLangWithShift">使用 Shift 快速切換中英文</label><br>
+                    <div role="tabpanel" class="tab-pane fade in active form" id="typing_tab">
+                        <div class="config_section">
+                            <h1>中英文切換</h1>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="switchLangWithShift" name="switchLangWithShift">
+                                <label for="switchLangWithShift">使用<kbd>Shift</kbd>切換中英文模式</label>
+                            </div>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="enableCapsLock" name="enableCapsLock">
+                                <label for="enableCapsLock">使用<kbd>CapsLock</kbd>切換中英文模式</label>
+                            </div>
                         </div>
-                        <div class="checkbox checkbox-info">
-                            <input type="checkbox" id="enableCapsLock" name="enableCapsLock">
-                            <label for="enableCapsLock">使用 CapsLock 切換中英文</label><br>
+                        <div class="config_section">
+                            <h1>中文模式輸入</h1>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="escCleanAllBuf" name="escCleanAllBuf">
+                                <label for="escCleanAllBuf">使用<kbd>Esc</kbd>清空輸入區字串</label>
+                            </div>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="fullShapeSymbols" name="fullShapeSymbols">
+                                <label for="fullShapeSymbols">中文模式下輸入全形標點符號（僅限非注音符號對應鍵＝「」＼、）</label>
+                            </div>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="fullShapeSymbolsWithShift" name="fullShapeSymbolsWithShift">
+                                <label for="fullShapeSymbolsWithShift">中文模式下按住<kbd>Shift</kbd>輸入全形標點符號</label>
+                            </div>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="upperCaseWithShift" name="upperCaseWithShift">
+                                <label for="upperCaseWithShift">中文模式下按住<kbd>Shift</kbd>輸入大寫英文字母</label>
+                            </div>                                                        
                         </div>
-                        <div class="checkbox checkbox-info">
-                            <input type="checkbox" id="escCleanAllBuf" name="escCleanAllBuf">
-                            <label for="escCleanAllBuf">使用 Esc 清空編輯區字串</label><br>
+                        <div class="config_section">
+                            <h1>選字視窗動作</h1>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="advanceAfterSelection" name="advanceAfterSelection">
+                                <label for="advanceAfterSelection">選字完畢自動跳到下一個字</label>
+                            </div>
+                            <label for="upDownAction">使用<kbd>↑</kbd><kbd>↓</kbd>鍵：</label>
+                            <select name="upDownAction" id="upDownAction"></select><br>
+                            <label for="leftRightAction">使用<kbd>←</kbd><kbd>→</kbd>鍵：</label>
+                            <select name="leftRightAction" id="leftRightAction"></select><br>
+                            <label for="spaceKeyAction">使用<kbd>空白鍵</kbd>：</label>
+                            <select name="spaceKeyAction" id="spaceKeyAction"></select><br>
                         </div>
-                        <div class="checkbox checkbox-info">
-                            <input type="checkbox" id="fullShapeSymbols" name="fullShapeSymbols">
-                            <label for="fullShapeSymbols">按住 Shift 輸入全形標點符號</label><br>
-                        </div>
-                        <div class="checkbox checkbox-info">
-                            <input type="checkbox" id="upperCaseWithShift" name="upperCaseWithShift">
-                            <label for="upperCaseWithShift">按住 Shift 輸入大寫英文字母</label><br>
-                        </div>
-                        <div class="checkbox checkbox-info">
-                            <input type="checkbox" id="cursorCandList" name="cursorCandList">
-                            <label for="cursorCandList">使用方向鍵移動游標選字</label><br>
-                        </div>
-                        <div class="checkbox checkbox-info">
-                            <input type="checkbox" id="showCandWithSpaceKey" name="showCandWithSpaceKey">
-                            <label for="showCandWithSpaceKey">按空白鍵叫出選字視窗</label><br>
-                        </div>
-                        <div class="checkbox checkbox-info">
-                            <input type="checkbox" id="advanceAfterSelection" name="advanceAfterSelection">
-                            <label for="advanceAfterSelection">選字完畢自動跳到下一個字</label><br>
-                        </div>
-
-                        <label for="upDownAction">↑↓ 使用上下鍵：</label>
-                        <select name="upDownAction" id="upDownAction"></select><br>
-
-                        <label for="leftRightAction"> ⇄ 使用左右鍵：</label>
-                        <select name="leftRightAction" id="leftRightAction"></select><br>
-
-                        <label for="spaceKeyAction">▬ 使用空白鍵：</label>
-                        <select name="spaceKeyAction" id="spaceKeyAction"></select><br>
-
-                        <label for="selKeyType">選字鍵：</label>
-                        <select name="selKeyType" id="selKeyType"></select><br>
-
-                        <div class="checkbox checkbox-info">
-                            <input type="checkbox" id="defaultFullSpace" name="defaultFullSpace">
-                            <label for="defaultFullSpace">預設以全形模式啟動</label><br>
-                        </div>
-                        <div class="checkbox checkbox-info">
-                            <input type="checkbox" id="defaultEnglish" name="defaultEnglish">
-                            <label for="defaultEnglish">預設以英文模式啟動</label><br>
-                        </div>
-                        <div class="checkbox checkbox-info">
-                            <input type="checkbox" id="outputSimpChinese" name="outputSimpChinese">
-                            <label for="outputSimpChinese">預設輸出簡體中文</label><br>
-                        </div>
-                        <div class="checkbox checkbox-info">
-                            <input type="checkbox" id="addPhraseForward" name="addPhraseForward">
-                            <label for="addPhraseForward">Ctrl + 數字加入游標前方的詞</label><br>
+                        <div class="config_section">
+                            <h1>其他</h1>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="defaultFullSpace" name="defaultFullSpace">
+                                <label for="defaultFullSpace">預設以全形模式啟動</label>
+                            </div>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="defaultEnglish" name="defaultEnglish">
+                                <label for="defaultEnglish">預設以英文模式啟動</label>
+                            </div>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="outputSimpChinese" name="outputSimpChinese">
+                                <label for="outputSimpChinese">預設輸出簡體中文</label><br>
+                            </div>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="addPhraseForward" name="addPhraseForward">
+                                <label for="addPhraseForward"><kbd>Ctrl</kbd> + 數字加入游標前方的詞</label><br>
+                            </div>
                         </div>
                     </div>
                     <div role="tabpanel" class="tab-pane fade" id="ui_tab">
                         <div class="form-inline">
-                            <label for="candPerRow">每列顯示候選字個數：</label>
+                            <label for="candPerRow">每列顯示候選字個數（1-10）：</label>
                             <input type="number" class="form-control" id="candPerRow" name="candPerRow" min="1" max="10"><br>
-
-                            <label for="candPerPage">每頁顯示候選字個數：</label>
+                            <label for="candPerPage">每頁顯示候選字總數（1-10）：</label>
                             <input type="number" class="form-control" id="candPerPage" name="candPerPage" min="1" max="10"><br>
-
                             <label for="fontSize">選字及訊息視窗文字大小：</label>
                             <input type="number" class="form-control" id="fontSize" name="fontSize" min="6" max="200"><br>
-                            <p>&nbsp;</p>
+                            <label for="selKeyType">選字視窗選字鍵：</label>
+                            <select name="selKeyType" id="selKeyType"></select><br>
                             <div id="selExample"></div>
                         </div>
                     </div>
@@ -122,52 +121,48 @@
                         <!-- keyboard layouts inserted here by javascript -->
                     </div>
                     <div role="tabpanel" class="tab-pane fade" id="symbols_tab">
-                        <p>&nbsp;</p>
-                        <p class="well">新酷音輸入法提供的符號表可以自訂。<br>
-                        以下是符號表的設定檔，語法相當簡單。<br><br>
-                        每一行的內容都是： <strong>「分類名稱」=「此分類下的所有符號」</strong>。
-                        您也可以一行只放一個符號，則該符號會被放在最上層選單。</p>
+                        <p class="well">
+                            新酷音輸入法提供的符號表可以自訂，中文模式按下<kbd>`</kbd>可以呼叫出符號表。<br> 每一行的內容都是：
+                            <strong>「分類名稱」=「此分類下的所有符號」</strong>。您也可以一行只放一個符號，則該符號會被放在最上層選單。
+                        </p>
                         <textarea id="symbols" class="form-control" rows="13"></textarea>
                     </div>
                     <div role="tabpanel" class="tab-pane fade" id="ez_symbols_tab">
                         <div class="checkbox checkbox-info">
                             <input type="checkbox" id="easySymbolsWithShift" name="easySymbolsWithShift">
-                            <label for="easySymbolsWithShift">中文模式下按住 Shift 快速輸入符號</label><br>
+                            <label for="easySymbolsWithShift">中文模式下按住<kbd>Shift</kbd>快速輸入符號</label><br>
                         </div>
 
                         <div class="checkbox checkbox-info">
                             <input type="checkbox" id="easySymbolsWithCtrl" name="easySymbolsWithCtrl">
-                            <label for="easySymbolsWithCtrl" data-html="true" data-title="容易產生熱鍵衝突，不建議使用" data-content="例如常用的複製貼上熱鍵 Ctrl+C, Ctrl+V，就會和這個功能衝突，需要切回英文模式才能使用" data-toggle="popover" data-placement="bottom" data-trigger="hover">中文模式下按住 Ctrl 快速輸入符號 <i class="glyphicon glyphicon-exclamation-sign text-warning"></i></label>
+                            <label for="easySymbolsWithCtrl" data-html="true" data-title="容易產生熱鍵衝突，不建議使用" data-content="例如常用的複製貼上熱鍵<kbd>Ctrl</kbd> + C, <kbd>Ctrl</kbd> + V，就會和這個功能衝突，需要切回英文模式才能使用" data-toggle="popover" data-placement="bottom" data-trigger="hover">中文模式下按住<kbd>Ctrl</kbd> 快速輸入符號 <i class="glyphicon glyphicon-exclamation-sign text-warning"></i></label>
                         </div>
                         <p class="well">
-                            以下是使用 Ctrl 或 Shift 快速輸入符號的設定，每一行表示一個鍵所對應的字串，
-                            例如「m 新酷音」或是「L orz」等。<br>
-                            每一行的格式必須符合：<strong>「Ta Tb」</strong>。其中 Ta 與 Tb 間必須有一個半形空白字元；
-                            Ta 可以是 a-z 等字母；Tb 可以是長度 1 到 10 的任意中英文字串。
+                            以下是使用<kbd>Ctrl</kbd>或<kbd>Shift</kbd>快速輸入符號的設定，每一行表示一個鍵所對應的字串，格式為<strong>「英文」+「半形空白」+「字串」</strong><br> 例如「m 新酷音」或是「L orz」，字串的長度為1-10個字元。
                         </p>
                         <textarea id="ez_symbols" class="form-control"></textarea>
                     </div>
                     <div role="tabpanel" class="tab-pane fade" id="about_tab">
-                        <p class="text-center"><img src="images/logo.png" alt="新酷音輸入法Logo"/><br></p>
+                        <p class="text-center"><img src="images/logo.png" alt="新酷音輸入法Logo" /></p>
                         <p>PIME 輸入法平台版本：<strong id="version"></strong></p>
-                        <p>最早的「酷音輸入法」是<a href="http://www.csie.ntu.edu.tw/~b6506053/" target="_blank">龔律全</a>與<a href="https://plus.google.com/u/0/106631098488727416298/posts" target="_blank">陳康本</a>兩人的資訊專題 (分別在兩人就讀台大資工系與台大電機系的時期)，由中央研究院資訊研究所的<a href="http://www.iis.sinica.edu.tw/~tshsu" target="_blank">徐讚昇</a>博士提供技術指導與超過兩年的經濟及設備支援，最終的成果選擇以 GPL 授權釋出，可說是 XIM (X Input Method) 中最接近新注音或是自然輸入法的實作，詳情可參閱龔律全所撰寫的<a href="http://chewing.im/doc/chewing-report.pdf" target="_blank">技術報告</a> (PDF)。</p>
-                        <p>但是酷音輸入法的兩位原創者已不再維護，後續的發展由許多熱心的朋友移植到不同的平台上，諸如 TimHsu (crazykid) 與 jserv 維護的 JMCCE 1.4.x 中文終端機內建酷音輸入法、clkao 移植酷音到 MacOS X 與 IIIMF 架構，以及 gugod 接手 clkao 的 ChewingOSX 後，大幅改善實作的 SpaceChewing 計畫等。而新酷音就是扮演整合這些分支的角色，並且更廣泛移植與改良酷音輸入法的適用性，並且於 2004 年 12 月有獨立的專案資源，到目前為止，已有許多熱心的貢獻者加入開發行列，期待更多的朋友參與。</p>
-                        <p>關於本計畫概況，可參閱新酷音計畫在 2004 國際開放源碼研討會 (ICOS 2004)上的<a href="http://chewing.im/doc/chewing-intro.html" target="_blank">簡報</a> (Adobe Flash 格式)。</p>
-                        <p>本 Windows 版本是由<a href="https://github.com/PCMan" target="_blank">洪任諭(PCMan)</a>移植到 <a href="https://github.com/EasyIME/PIME" target="_blank">PIME 輸入法平台</a>上 Copyright &copy; 2015 - 2016</p>
+                        <p>最早的「酷音輸入法」是<a href="http://www.csie.ntu.edu.tw/~b6506053/" target="_blank">龔律全</a>與<a href="https://plus.google.com/u/0/106631098488727416298/posts" target="_blank">陳康本</a>兩人的資訊專題 (分別在兩人就讀台大資工系與台大電機系的時期)，由中央研究院資訊研究所的
+                            <a href="http://www.iis.sinica.edu.tw/~tshsu" target="_blank">徐讚昇</a>博士提供技術指導與超過兩年的經濟及設備支援，最終的成果選擇以 GPL 授權釋出，可說是 XIM (X Input Method) 中最接近新注音或是自然輸入法的實作，詳情可參閱龔律全所撰寫的<a href="http://chewing.im/doc/chewing-report.pdf" target="_blank">技術報告（PDF）</a>。</p>
+                        <p>但是酷音輸入法的兩位原創者已不再維護，後續的發展由許多熱心的朋友移植到不同的平台上，諸如 TimHsu (crazykid) 與 jserv 維護的 JMCCE 1.4.x 中文終端機內建酷音輸入法、clkao 移植酷音到 MacOS X 與 IIIMF 架構，以及 gugod 接手 clkao 的 ChewingOSX 後，大幅改善實作的 SpaceChewing 計畫等。而新酷音就是扮演整合這些分支的角色，並且更廣泛移植與改良酷音輸入法的適用性，並且於
+                            2004 年 12 月有獨立的專案資源，到目前為止，已有許多熱心的貢獻者加入開發行列，期待更多的朋友參與。</p>
+                        <p>關於本計畫概況，可參閱新酷音計畫在 2004 國際開放源碼研討會（ICOS 2004）上的<a href="http://chewing.im/doc/chewing-intro.html" target="_blank">簡報（Adobe Flash）</a>。</p>
+                        <p>本 Windows 版本是由<a href="https://github.com/PCMan" target="_blank">洪任諭（PCMan）</a>移植到 <a href="https://github.com/EasyIME/PIME" target="_blank">PIME 輸入法平台</a>上 Copyright &copy; 2015 - 2016</p>
                     </div>
                 </div>
             </div>
         </div>
-
         <div class="row">
-            <p>&nbsp;</p>
             <button class="col-md-4 col-md-offset-4 btn btn-primary" id="ok">套用設定</button>
-            <p>&nbsp;</p>
         </div>
     </div>
     <script src="js/jquery-3.1.1.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/bootstrap-select.min.js"></script>
+    <script src="js/es6-promise.auto.min.js"></script>
     <script src="js/sweetalert2.min.js"></script>
     <script src="js/config.js"></script>
 </body>

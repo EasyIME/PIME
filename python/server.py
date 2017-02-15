@@ -22,6 +22,8 @@ import random
 import uuid
 from base64 import b64encode
 
+if __name__ == "__main__":
+    sys.path.append('python3')
 import tornado.ioloop
 import tornado.web
 

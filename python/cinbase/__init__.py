@@ -39,10 +39,13 @@ from .userphrase import userphrase
 from .emoji import emoji
 from .extendtable import extendtable
 
+from .debug import Debug
+
 CHINESE_MODE = 1
 ENGLISH_MODE = 0
 FULLSHAPE_MODE = 1
 HALFSHAPE_MODE = 0
+DEBUG_MODE = True
 
 # shift + space 熱鍵的 GUID
 SHIFT_SPACE_GUID = "{f1dae0fb-8091-44a7-8a0c-3082a1515447}"
@@ -194,6 +197,9 @@ class CinBase:
         cbTS.bopomofolist.append(chr(0x02CA))
         cbTS.bopomofolist.append(chr(0x02C7))
         cbTS.bopomofolist.append(chr(0x02CB))
+
+        if DEBUG_MODE:
+            cbTS.debug = Debug
 
 
     # 輸入法被使用者啟用
@@ -1666,13 +1672,18 @@ class CinBase:
 
                                     # 如果使用萬用字元解碼
                                     if cbTS.isWildcardChardefs:
-                                        if not cbTS.hidePromptMessages:
-                                            cbTS.isShowMessage = True
-                                            cbTS.showMessageOnKeyUp = True
-                                            cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
+                                        cbTS.isShowMessage = True
+                                        cbTS.showMessageOnKeyUp = True
+                                        cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
                                         cbTS.wildcardcandidates = []
                                         cbTS.wildcardpagecandidates = []
                                         cbTS.isWildcardChardefs = False
+                                        
+                                    if cbTS.imeReverseLookup:
+                                        if not RCinTable.cin.getCharEncode(commitStr) == "":
+                                            cbTS.isShowMessage = True
+                                            cbTS.showMessageOnKeyUp = True
+                                            cbTS.onKeyUpMessage = RCinTable.cin.getCharEncode(commitStr)
 
                                     # 如果使用打繁出簡，就轉成簡體中文
                                     if cbTS.outputSimpChinese:
@@ -1727,13 +1738,18 @@ class CinBase:
 
                                     # 如果使用萬用字元解碼
                                     if cbTS.isWildcardChardefs:
-                                        if not cbTS.hidePromptMessages:
-                                            cbTS.isShowMessage = True
-                                            cbTS.showMessageOnKeyUp = True
-                                            cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
+                                        cbTS.isShowMessage = True
+                                        cbTS.showMessageOnKeyUp = True
+                                        cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
                                         cbTS.wildcardcandidates = []
                                         cbTS.wildcardpagecandidates = []
                                         cbTS.isWildcardChardefs = False
+
+                                    if cbTS.imeReverseLookup:
+                                        if not RCinTable.cin.getCharEncode(commitStr) == "":
+                                            cbTS.isShowMessage = True
+                                            cbTS.showMessageOnKeyUp = True
+                                            cbTS.onKeyUpMessage = RCinTable.cin.getCharEncode(commitStr)
 
                                     # 如果使用打繁出簡，就轉成簡體中文
                                     if cbTS.outputSimpChinese:
@@ -2711,18 +2727,18 @@ class CinBase:
     def setOutputString(self, cbTS, RCinTable, commitStr):
         # 如果使用萬用字元解碼
         if cbTS.isWildcardChardefs:
-            if not cbTS.hidePromptMessages:
-                cbTS.isShowMessage = True
-                cbTS.showMessageOnKeyUp = True
-                cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
+            cbTS.isShowMessage = True
+            cbTS.showMessageOnKeyUp = True
+            cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
             cbTS.wildcardcandidates = []
             cbTS.wildcardpagecandidates = []
             cbTS.isWildcardChardefs = False
 
         if cbTS.imeReverseLookup:
-            cbTS.isShowMessage = True
-            cbTS.showMessageOnKeyUp = True
-            cbTS.onKeyUpMessage = RCinTable.cin.getCharEncode(commitStr)
+            if not RCinTable.cin.getCharEncode(commitStr) == "":
+                cbTS.isShowMessage = True
+                cbTS.showMessageOnKeyUp = True
+                cbTS.onKeyUpMessage = RCinTable.cin.getCharEncode(commitStr)
 
         # 如果使用打繁出簡，就轉成簡體中文
         if cbTS.outputSimpChinese:
@@ -3137,6 +3153,9 @@ class LoadCinTable(threading.Thread):
         self.CinTable = CinTable
 
     def run(self):
+        if DEBUG_MODE:
+            self.cbTS.debug.setStartTimer("LoadCinTable")
+        
         self.CinTable.loading = True
         if self.cbTS.reLoadCinTable or not hasattr(self.cbTS, 'cin'):
             self.cbTS.reLoadCinTable = False
@@ -3170,6 +3189,10 @@ class LoadCinTable(threading.Thread):
         self.CinTable.ignorePrivateUseArea = self.cbTS.cfg.ignorePrivateUseArea
         self.CinTable.loading = False
 
+        if DEBUG_MODE:
+            self.cbTS.debug.setEndTimer("LoadCinTable")
+            self.cbTS.debug.logTimerInfo("LoadCinTable", self.cbTS.imeDirName, selCinFile, "碼表載入")
+
 
 class LoadRCinTable(threading.Thread):
     def __init__(self, cbTS, RCinTable):
@@ -3178,6 +3201,9 @@ class LoadRCinTable(threading.Thread):
         self.RCinTable = RCinTable
 
     def run(self):
+        if DEBUG_MODE:
+            self.cbTS.debug.setStartTimer("LoadRCinTable")
+
         self.RCinTable.loading = True
         selCinFile = self.cbTS.rcinFileList[self.cbTS.cfg.selRCinType]
         CinPath = os.path.join(self.cbTS.cindir, selCinFile)
@@ -3191,4 +3217,8 @@ class LoadRCinTable(threading.Thread):
             self.RCinTable.cin = RCin(fs, self.cbTS.imeDirName)
         self.RCinTable.curCinType = self.cbTS.cfg.selRCinType
         self.RCinTable.loading = False
+
+        if DEBUG_MODE:
+            self.cbTS.debug.setEndTimer("LoadRCinTable")
+            self.cbTS.debug.logTimerInfo("LoadRCinTable", self.cbTS.imeDirName, selCinFile, "反查碼表載入")
 

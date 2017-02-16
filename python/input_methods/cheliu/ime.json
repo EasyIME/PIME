@@ -10,5 +10,5 @@
     "serviceName": "CheLiuTextService",
     "configTool": "..\\..\\python3\\pythonw.exe",
     "configToolParams": "configtool.py config cheliu",
-    "configToolDir": "."
+    "configToolDir": "..\\..\\cinbase"
 }

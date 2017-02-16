@@ -10,5 +10,5 @@
     "serviceName": "CheDayiTextService",
     "configTool": "..\\..\\python3\\pythonw.exe",
     "configToolParams": "configtool.py config chedayi",
-    "configToolDir": "."
+    "configToolDir": "..\\..\\cinbase"
 }

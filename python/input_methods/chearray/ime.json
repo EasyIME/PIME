@@ -10,5 +10,5 @@
     "serviceName": "CheArrayTextService",
     "configTool": "..\\..\\python3\\pythonw.exe",
     "configToolParams": "configtool.py config chearray",
-    "configToolDir": "."
+    "configToolDir": "..\\..\\cinbase"
 }

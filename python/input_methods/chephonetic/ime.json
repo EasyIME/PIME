@@ -10,5 +10,5 @@
     "serviceName": "ChePhoneticTextService",
     "configTool": "..\\..\\python3\\pythonw.exe",
     "configToolParams": "configtool.py config chephonetic",
-    "configToolDir": "."
+    "configToolDir": "..\\..\\cinbase"
 }

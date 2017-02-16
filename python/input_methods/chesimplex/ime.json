@@ -10,5 +10,5 @@
     "serviceName": "CheSimplexTextService",
     "configTool": "..\\..\\python3\\pythonw.exe",
     "configToolParams": "configtool.py config chesimplex",
-    "configToolDir": "."
+    "configToolDir": "..\\..\\cinbase"
 }

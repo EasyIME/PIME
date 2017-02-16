@@ -10,5 +10,5 @@
     "serviceName": "CheCJTextService",
     "configTool": "..\\..\\python3\\pythonw.exe",
     "configToolParams": "configtool.py config checj",
-    "configToolDir": "."
+    "configToolDir": "..\\..\\cinbase"
 }

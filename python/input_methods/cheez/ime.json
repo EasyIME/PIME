@@ -10,5 +10,5 @@
     "serviceName": "CheEZTextService",
     "configTool": "..\\..\\python3\\pythonw.exe",
     "configToolParams": "configtool.py config cheez",
-    "configToolDir": "."
+    "configToolDir": "..\\..\\cinbase"
 }

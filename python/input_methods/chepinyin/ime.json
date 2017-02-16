@@ -10,5 +10,5 @@
     "serviceName": "ChePinyinTextService",
     "configTool": "..\\..\\python3\\pythonw.exe",
     "configToolParams": "configtool.py config chepinyin",
-    "configToolDir": "."
+    "configToolDir": "..\\..\\cinbase"
 }

@@ -48,6 +48,12 @@ var defaultcinName = {
     "liu.cin": "嘸蝦米"
 }
 
+var selHCins = [
+    "泰瑞注音",
+    "中標注音",
+    "傳統注音"
+];
+
 var debugMode = false;
 var checjConfig = {};
 var cinCount = {};
@@ -334,6 +340,14 @@ function pageReady() {
         selRCinType.append(item);
     }
     selRCinType.children().eq(checjConfig.selRCinType).prop("selected", true);
+
+    var selHCinType = $("#selHCinType");
+    for(var i = 0; i < selHCins.length; ++i) {
+        var selHCin = selHCins[i];
+        var item = '<option value="' + i + '">' + selHCin + '</option>';
+        selHCinType.append(item);
+    }
+    selHCinType.children().eq(checjConfig.selHCinType).prop("selected", true);
 
     var selWildcards=[
         "Ｚ　",

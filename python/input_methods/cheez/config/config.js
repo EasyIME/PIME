@@ -17,7 +17,9 @@ var disableConfigItem = {
     101: ["directShowCand", false],
     102: ["fullShapeSymbols", false],
     103: ["directOutFSymbols", false],
-    104: ["easySymbolsWithShift", false]
+    104: ["easySymbolsWithShift", false],
+    105: ["homophoneQuery", false],
+    106: ["selHCinType", false]
 };
 
 

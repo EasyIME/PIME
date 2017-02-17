@@ -61,6 +61,8 @@ class CinBaseConfig:
         self.autoMoveCursorInBrackets = False
         self.selWildcardType = 0
         self.imeReverseLookup = False
+        self.homophoneQuery = False
+        self.selHCinType = 0
         self.userExtendTable = False
         self.reLoadTable = False
         self.selRCinType = 0

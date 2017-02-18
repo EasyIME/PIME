@@ -184,7 +184,9 @@ class CinBase:
         cbTS.keepType = ""
 
         cbTS.homophonemode = False
+        cbTS.homophoneselpinyinmode = False
         cbTS.homophoneChar = ""
+        cbTS.homophoneStr = ""
         cbTS.isHomophoneChardefs = False
         cbTS.homophonecandidates = []
 
@@ -1844,23 +1846,35 @@ class CinBase:
                 if cbTS.isShowCandidates:
                     # 使用選字鍵執行項目或輸出候選字
                     if self.isInSelKeys(cbTS, charCode) and not keyEvent.isKeyDown(VK_SHIFT) and cbTS.canUseSelKey:
-                        if cbTS.imeDirName == "chedayi":
-                            i = cbTS.selKeys.index(charStr) + 1
+                        if not cbTS.homophoneselpinyinmode:
+                            if cbTS.imeDirName == "chedayi":
+                                i = cbTS.selKeys.index(charStr) + 1
+                            else:
+                                i = cbTS.selKeys.index(charStr)
+                            if i < cbTS.candPerPage and i < len(cbTS.candidateList):
+                                commitStr = cbTS.candidateList[i]
+                                cbTS.lastCommitString = commitStr
+                                self.setOutputString(cbTS, RCinTable, commitStr)
+                                if cbTS.showPhrase and not cbTS.selcandmode:
+                                    cbTS.phrasemode = True
+                                self.resetComposition(cbTS)
+                                candCursor = 0
+                                currentCandPage = 0
+    
+                                if not cbTS.directShowCand:
+                                    cbTS.canSetCommitString = True
+                                    cbTS.isShowCandidates = False
                         else:
-                            i = cbTS.selKeys.index(charStr)
-                        if i < cbTS.candPerPage and i < len(cbTS.candidateList):
-                            commitStr = cbTS.candidateList[i]
-                            cbTS.lastCommitString = commitStr
-                            self.setOutputString(cbTS, RCinTable, commitStr)
-                            if cbTS.showPhrase and not cbTS.selcandmode:
-                                cbTS.phrasemode = True
-                            self.resetComposition(cbTS)
                             candCursor = 0
                             currentCandPage = 0
-
-                            if not cbTS.directShowCand:
-                                cbTS.canSetCommitString = True
-                                cbTS.isShowCandidates = False
+                            i = cbTS.selKeys.index(charStr)
+                            cbTS.homophoneselpinyinmode = False
+                            cbTS.homophonemode = True
+                            cbTS.homophoneChar = cbTS.compositionChar
+                            cbTS.isHomophoneChardefs = True
+                            cbTS.homophonecandidates = HCinTable.cin.getCharDef(HCinTable.cin.getKeyList(cbTS.homophoneStr)[i])
+                            pagecandidates = list(self.chunks(cbTS.homophonecandidates, cbTS.candPerPage))
+                            cbTS.setCandidateList(pagecandidates[currentCandPage])
                     elif keyCode == VK_UP:  # 游標上移
                         if (candCursor - cbTS.candPerRow) < 0:
                             if currentCandPage > 0:
@@ -1906,7 +1920,17 @@ class CinBase:
                     elif cbTS.homophoneQuery and not cbTS.homophonemode and not cbTS.multifunctionmode and not cbTS.fullsymbolsmode and keyCode == VK_OEM_3: # 同音字查詢啟用下按下`鍵
                         commitStr = cbTS.candidateList[candCursor]
                         if HCinTable.cin.isHaveKey(commitStr):
-                            if HCinTable.cin.isInCharDef(HCinTable.cin.getKey(commitStr)):
+                            candCursor = 0
+                            currentCandPage = 0
+                            if len(HCinTable.cin.getKeyList(commitStr)) > 1:
+                                cbTS.homophonemode = True
+                                cbTS.homophoneselpinyinmode = True
+                                cbTS.homophoneChar = cbTS.compositionChar
+                                cbTS.homophoneStr = commitStr
+                                cbTS.homophonecandidates = HCinTable.cin.getKeyNameList(HCinTable.cin.getKeyList(commitStr))
+                                pagecandidates = list(self.chunks(cbTS.homophonecandidates, cbTS.candPerPage))
+                                cbTS.setCandidateList(pagecandidates[currentCandPage])
+                            else:
                                 cbTS.homophonemode = True
                                 cbTS.homophoneChar = cbTS.compositionChar
                                 cbTS.isHomophoneChardefs = True
@@ -1914,20 +1938,31 @@ class CinBase:
                                 pagecandidates = list(self.chunks(cbTS.homophonecandidates, cbTS.candPerPage))
                                 cbTS.setCandidateList(pagecandidates[currentCandPage])
                     elif (keyCode == VK_RETURN or (keyCode == VK_SPACE and not cbTS.switchPageWithSpace)) and cbTS.canSetCommitString:  # 按下 Enter 鍵或空白鍵
-                        # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
-                        commitStr = cbTS.candidateList[candCursor]
-                        cbTS.lastCommitString = commitStr
-                        self.setOutputString(cbTS, RCinTable, commitStr)
-                        if cbTS.showPhrase and not cbTS.selcandmode:
-                            cbTS.phrasemode = True
-                            if keyCode == VK_SPACE:
-                                cbTS.canUseSpaceAsPageKey = False
-                        self.resetComposition(cbTS)
-                        candCursor = 0
-                        currentCandPage = 0
-
-                        if not cbTS.directShowCand:
-                            cbTS.isShowCandidates = False
+                        if not cbTS.homophoneselpinyinmode:
+                            # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
+                            commitStr = cbTS.candidateList[candCursor]
+                            cbTS.lastCommitString = commitStr
+                            self.setOutputString(cbTS, RCinTable, commitStr)
+                            if cbTS.showPhrase and not cbTS.selcandmode:
+                                cbTS.phrasemode = True
+                                if keyCode == VK_SPACE:
+                                    cbTS.canUseSpaceAsPageKey = False
+                            self.resetComposition(cbTS)
+                            candCursor = 0
+                            currentCandPage = 0
+    
+                            if not cbTS.directShowCand:
+                                cbTS.isShowCandidates = False
+                        else:
+                            cbTS.homophoneselpinyinmode = False
+                            cbTS.homophonemode = True
+                            cbTS.homophoneChar = cbTS.compositionChar
+                            cbTS.isHomophoneChardefs = True
+                            cbTS.homophonecandidates = HCinTable.cin.getCharDef(HCinTable.cin.getKeyList(cbTS.homophoneStr)[candCursor])
+                            candCursor = 0
+                            currentCandPage = 0
+                            pagecandidates = list(self.chunks(cbTS.homophonecandidates, cbTS.candPerPage))
+                            cbTS.setCandidateList(pagecandidates[currentCandPage])
                     elif keyCode == VK_SPACE and cbTS.switchPageWithSpace: # 按下空白鍵
                         if cbTS.canUseSpaceAsPageKey:
                             if (currentCandPage + 1) < currentCandPageCount:
@@ -2611,7 +2646,9 @@ class CinBase:
         cbTS.dayisymbolsmode = False
         cbTS.keepComposition = False
         cbTS.homophonemode = False
+        cbTS.homophoneselpinyinmode = False
         cbTS.homophoneChar = ''
+        cbTS.homophoneStr = ''
         cbTS.isHomophoneChardefs = False
         cbTS.homophonecandidates = []
         cbTS.selcandmode = False
@@ -2627,7 +2664,9 @@ class CinBase:
     # 重置同音字模式
     def resetHomophoneMode(self, cbTS):
         cbTS.homophonemode = False
+        cbTS.homophoneselpinyinmode = False
         cbTS.homophoneChar = ''
+        cbTS.homophoneStr = ''
         cbTS.isHomophoneChardefs = False
         cbTS.homophonecandidates = []
 

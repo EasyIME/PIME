@@ -135,6 +135,18 @@ class HCin(object):
     def getKey(self, val):
         return [key for key, value in self.chardefs.items() if val in value][0]
 
+    def getKeyList(self, val):
+        return [key for key, value in self.chardefs.items() if val in value]
+
+    def getKeyNameList(self, keyList):
+        result = []
+        for key in keyList:
+            keyname = ''
+            for char in key:
+                keyname += self.getKeyName(char)
+            result.append(keyname)
+        return result
+
     def isInCharDef(self, key):
         return key in self.chardefs
 

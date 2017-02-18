@@ -20,7 +20,9 @@ var keyboardNames = [
 var disableConfigItem = {
     101: ["directShowCand", false],
     102: ["supportWildcard", false],
-    103: ["selWildcardType", null]
+    103: ["selWildcardType", null],
+    104: ["homophoneQuery", false],
+    105: ["selHCinType", false]
 };
 
 

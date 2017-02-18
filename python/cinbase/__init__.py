@@ -294,7 +294,7 @@ class CinBase:
     # 使用者按下按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
     # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
     # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
-    def filterKeyDown(self, cbTS, keyEvent, CinTable, RCinTable):
+    def filterKeyDown(self, cbTS, keyEvent, CinTable, RCinTable, HCinTable):
         # 紀錄最後一次按下的鍵和按下的時間，在 filterKeyUp() 中要用
         cbTS.lastKeyDownCode = keyEvent.keyCode
         if cbTS.lastKeyDownTime == 0.0:
@@ -402,7 +402,7 @@ class CinBase:
             cbTS.hideMessageOnKeyUp = True
         return False
         
-    def onKeyDown(self, cbTS, keyEvent, CinTable, RCinTable):
+    def onKeyDown(self, cbTS, keyEvent, CinTable, RCinTable, HCinTable):
         charCode = keyEvent.charCode
         keyCode = keyEvent.keyCode
         charStr = chr(charCode)
@@ -2322,6 +2322,7 @@ class CinBase:
 
         if cbTS.hideMessageOnKeyUp:
             cbTS.showMessage("", 0)
+            cbTS.isShowMessage = False
             cbTS.hideMessageOnKeyUp = False
 
 
@@ -3086,7 +3087,7 @@ class CinBase:
 
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
-    def checkConfigChange(self, cbTS, CinTable, RCinTable):
+    def checkConfigChange(self, cbTS, CinTable, RCinTable, HCinTable):
         cfg = cbTS.cfg # 所有 TextService 共享一份設定物件
         cfg.update() # 更新設定檔狀態
         reLoadCinTable = False
@@ -3151,7 +3152,6 @@ class CinBase:
                 with io.open(extendtablePath, encoding='utf-8') as fs:
                     cbTS.extendtable = extendtable(fs)
             if reLoadCinTable:
-                print('reLoadCinTable = True')
                 cbTS.reLoadCinTable = True
             loadCinFile = LoadCinTable(cbTS, CinTable)
             loadCinFile.start()
@@ -3161,7 +3161,7 @@ class CinBase:
 
         if DEBUG_MODE:
             if not cbTS.debugLog == cbTS.debug.debugLog:
-                if not CinTable.loading and not RCinTable.loading and not HCinTable.loading:
+                if not CinTable.loading and (not cbTS.imeReverseLookup or not RCinTable.loading) and (not cbTS.homophoneQuery or not HCinTable.loading):
                     cbTS.debug.saveDebugLog(cbTS.debugLog)
 
 
@@ -3286,14 +3286,6 @@ class LoadRCinTable(threading.Thread):
         if DEBUG_MODE:
             self.cbTS.debug.setEndTimer("LoadRCinTable")
             self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.cinNameDict[selCinFile] + "」反查碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadRCinTable") + " 秒"
-
-
-class HCinTable:
-    loading = False
-    def __init__(self):
-        self.cin = None
-        self.curCinType = None
-HCinTable = HCinTable()
 
 
 class LoadHCinTable(threading.Thread):

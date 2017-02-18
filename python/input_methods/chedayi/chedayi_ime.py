@@ -22,6 +22,7 @@ import copy
 from cinbase import CinBase
 from cinbase import LoadCinTable
 from cinbase import LoadRCinTable
+from cinbase import LoadHCinTable
 from cinbase.config import CinBaseConfig
 
 
@@ -78,10 +79,22 @@ class CheDayiTextService(TextService):
                 while RCinTable.loading:
                     continue
 
+        # 同音字查詢
+        if self.cfg.homophoneQuery:
+            self.homophoneQuery = self.cfg.homophoneQuery
+            self.selHCinType = self.cfg.selHCinType
+
+            if not HCinTable.curCinType == self.cfg.selHCinType and not HCinTable.loading:
+                loadHCinFile = LoadHCinTable(self, HCinTable)
+                loadHCinFile.start()
+            else:
+                while HCinTable.loading:
+                    continue
+
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):
-        self.cinbase.checkConfigChange(self, CinTable, RCinTable)
+        self.cinbase.checkConfigChange(self, CinTable, RCinTable, HCinTable)
 
 
     # 輸入法被使用者啟用
@@ -101,7 +114,7 @@ class CheDayiTextService(TextService):
     # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
     # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
     def filterKeyDown(self, keyEvent):
-        KeyState = self.cinbase.filterKeyDown(self, keyEvent, CinTable, RCinTable)
+        KeyState = self.cinbase.filterKeyDown(self, keyEvent, CinTable, RCinTable, HCinTable)
         return KeyState
 
 
@@ -137,7 +150,7 @@ class CheDayiTextService(TextService):
 
         if not self.directShowCand:
             self.autoShowCandWhenMaxChar = True
-        KeyState = self.cinbase.onKeyDown(self, keyEvent, CinTable, RCinTable)
+        KeyState = self.cinbase.onKeyDown(self, keyEvent, CinTable, RCinTable, HCinTable)
         return KeyState
 
 
@@ -204,3 +217,11 @@ class RCinTable:
         self.cin = None
         self.curCinType = None
 RCinTable = RCinTable()
+
+
+class HCinTable:
+    loading = False
+    def __init__(self):
+        self.cin = None
+        self.curCinType = None
+HCinTable = HCinTable()

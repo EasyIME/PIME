@@ -46,7 +46,7 @@ CHINESE_MODE = 1
 ENGLISH_MODE = 0
 FULLSHAPE_MODE = 1
 HALFSHAPE_MODE = 0
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 # shift + space 熱鍵的 GUID
 SHIFT_SPACE_GUID = "{f1dae0fb-8091-44a7-8a0c-3082a1515447}"
@@ -3295,7 +3295,7 @@ class LoadCinTable(threading.Thread):
 
         if DEBUG_MODE:
             self.cbTS.debug.setEndTimer("LoadCinTable")
-            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.cinNameDict[selCinFile] + "」碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadCinTable") + " 秒"
+            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [C]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.cinNameDict[selCinFile] + "」碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadCinTable") + " 秒"
 
 
 class LoadRCinTable(threading.Thread):
@@ -3324,7 +3324,7 @@ class LoadRCinTable(threading.Thread):
 
         if DEBUG_MODE:
             self.cbTS.debug.setEndTimer("LoadRCinTable")
-            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.cinNameDict[selCinFile] + "」反查碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadRCinTable") + " 秒"
+            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [R]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.cinNameDict[selCinFile] + "」反查碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadRCinTable") + " 秒"
 
 
 class LoadHCinTable(threading.Thread):
@@ -3353,4 +3353,4 @@ class LoadHCinTable(threading.Thread):
 
         if DEBUG_MODE:
             self.cbTS.debug.setEndTimer("LoadHCinTable")
-            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.cinNameDict[selCinFile] + "」同音字碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadHCinTable") + " 秒"
+            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [H]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.cinNameDict[selCinFile] + "」同音字碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadHCinTable") + " 秒"

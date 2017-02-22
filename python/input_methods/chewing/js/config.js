@@ -27,7 +27,7 @@ $(function () {
         // Check easy symbols format
         var ez_symbols_array = $("#ez_symbols").val().split("\n");
         for (var i = 0; i < ez_symbols_array.length; i++) {
-            if (!/^[A-Za-z] .{1,10}$/.test(ez_symbols_array[i])) {
+            if (!/^[A-Z] .{1,10}$/.test(ez_symbols_array[i])) {
                 // Select error range
                 $("#ez_symbols").select();
                 var selectionStart = 0;
@@ -38,7 +38,7 @@ $(function () {
                 $("#ez_symbols").prop("selectionEnd", selectionStart + ez_symbols_array[i].length + 1);
                 swal(
                     '糟糕',
-                    '簡易符號輸入設定第 ' + (i + 1) + ' 行 (' + ez_symbols_array[i] + ')格式錯誤\n請使用「英文 + 空格 + 符號」的格式，符號最多10個字元',
+                    '簡易符號輸入設定第 ' + (i + 1) + ' 行 (' + ez_symbols_array[i] + ')格式錯誤\n請使用「英文大寫 + 空格 + 符號」的格式，符號最多10個字元',
                     'error'
                 );
                 return false;

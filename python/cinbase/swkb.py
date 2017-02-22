@@ -15,7 +15,7 @@ class swkb(object):
             line = line.strip()
 
             key, root = safeSplit(line)
-            key = key.strip()
+            key = key.upper().strip()
             root = root.strip()
 
             try:

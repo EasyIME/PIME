@@ -26,7 +26,6 @@ import json
 from config import CinBaseConfig
 from ctypes import c_uint, byref, create_string_buffer
 
-print(sys.argv[2])
 cfg = CinBaseConfig
 cfg.imeDirName = sys.argv[2]
 config_dir = os.path.join(cfg.getConfigDir())
@@ -86,7 +85,7 @@ class ConfigHandler(BaseHandler):
     @tornado.web.authenticated
     def post(self):  # save config
         data = tornado.escape.json_decode(self.request.body)
-        print(data)
+        # print(data)
         # ensure the config dir exists
         os.makedirs(config_dir, exist_ok=True)
         # write the config to files

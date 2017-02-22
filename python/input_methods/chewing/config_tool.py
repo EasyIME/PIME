@@ -79,7 +79,7 @@ class ConfigHandler(BaseHandler):
     @tornado.web.authenticated
     def post(self):  # save config
         data = tornado.escape.json_decode(self.request.body)
-        print(data)
+        #print(data)
         # ensure the config dir exists
         os.makedirs(config_dir, exist_ok=True)
         # write the config to files

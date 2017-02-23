@@ -69,7 +69,7 @@ class CheCJTextService(TextService):
             self.selRCinType = self.cfg.selRCinType
             if not self.rcinFileList:
                 self.cinbase.updateRcinFileList(self)
-            
+
             if not RCinTable.curCinType == self.cfg.selRCinType and not RCinTable.loading:
                 loadRCinFile = LoadRCinTable(self, RCinTable)
                 loadRCinFile.start()
@@ -88,7 +88,7 @@ class CheCJTextService(TextService):
             else:
                 while HCinTable.loading:
                     continue
-            
+
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):
@@ -173,6 +173,7 @@ class CinTable:
         self.cin = None
         self.curCinType = None
         self.userExtendTable = None
+        self.priorityExtendTable = None
         self.sortByCharset = None
         self.ignorePrivateUseArea = None
 CinTable = CinTable()

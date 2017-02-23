@@ -115,7 +115,7 @@ class Cin(object):
             if state is PARSE_KEYNAME_STATE:
                 key, root = safeSplit(line)
                 key = key.strip().lower()
-                
+
                 if '　' in root:
                     root = '\u3000'
                 else:
@@ -338,18 +338,18 @@ class Cin(object):
         matchchardefs = {}
         highFrequencyWordCount = 0
         lowFrequencyWordCount = 0
-        
+
         for i in range(11):
             cjkextchardefs[i] = []
 
         keyLength = len(CompositionChar)
-        
+
         matchstring = CompositionChar
         for char in ['\\', '.', '*', '?', '+', '[', '{', '|', '(', ')', '^', '$']:
             if char in matchstring:
                 if not char == WildcardChar:
                     matchstring = matchstring.replace(char, '\\' + char)
-        
+
         matchstring = matchstring.replace(WildcardChar, '(.)')
         matchchardefs = [self.chardefs[key] for key in sorted(self.chardefs.keys()) if re.match('^' + matchstring + '$', key) and len(key) == keyLength]
 
@@ -412,7 +412,7 @@ class Cin(object):
                                     wildcardchardefs.append(char)
                                 if len(wildcardchardefs) >= candMaxItems:
                                     return wildcardchardefs
-            
+
             for key in cjkextchardefs:
                 for char in cjkextchardefs[key]:
                     if not char in wildcardchardefs:
@@ -433,7 +433,7 @@ class Cin(object):
                         i = i + 1
                     for str in chardef:
                         result += self.getKeyName(str)
-        
+
         if result == root + ':':
             result = '查無字根...'
         return result
@@ -449,7 +449,7 @@ class Cin(object):
                     self.cincount['cjkTotalchardefs'] += 1
         self.saveCountFile()
 
-    def updateCinTable(self, userExtendTable, extendtable, ignorePrivateUseArea):
+    def updateCinTable(self, userExtendTable, priorityExtendTable, extendtable, ignorePrivateUseArea):
         chardefsdicts = [self.big5Fchardefs, self.big5LFchardefs, self.big5Otherchardefs, self.bopomofochardefs, self.cjkchardefs, self.cjkExtAchardefs, self.cjkExtBchardefs, self.cjkExtCchardefs, self.cjkExtDchardefs, self.cjkExtEchardefs, self.cjkOtherchardefs]
         if not ignorePrivateUseArea:
             chardefsdicts.append(self.privateusechardefs)
@@ -470,10 +470,17 @@ class Cin(object):
         if userExtendTable:
             for key in extendtable.chardefs:
                 for root in extendtable.chardefs[key]:
-                    try:
-                        self.chardefs[key.lower()].append(root)
-                    except KeyError:
-                        self.chardefs[key.lower()] = [root]
+                    if priorityExtendTable:
+                        i = extendtable.chardefs[key].index(root)
+                        try:
+                            self.chardefs[key.lower()].insert(i, root)
+                        except KeyError:
+                            self.chardefs[key.lower()] = [root]
+                    else:
+                        try:
+                            self.chardefs[key.lower()].append(root)
+                        except KeyError:
+                            self.chardefs[key.lower()] = [root]
 
     def saveCountFile(self):
         filename = self.getCountFile()
@@ -482,7 +489,7 @@ class Cin(object):
         if os.path.exists(filename) and not os.stat(filename).st_size == 0:
             with open(filename, "r") as f:
                 tempcincount.update(json.load(f))
-        
+
         if not tempcincount == self.cincount:
             try:
                 with open(filename, "w") as f:

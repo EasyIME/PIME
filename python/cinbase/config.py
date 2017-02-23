@@ -28,7 +28,7 @@ selKeys=(
 )
 
 class CinBaseConfig:
-    
+
     def __init__(self):
         self.candPerRow = 3
         self.defaultEnglish = False
@@ -65,6 +65,7 @@ class CinBaseConfig:
         self.selHCinType = 0
         self.userExtendTable = False
         self.reLoadTable = False
+        self.priorityExtendTable = False
         self.selRCinType = 0
         self.rcinFileList = []
         self.candMaxItems = 100

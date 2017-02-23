@@ -174,6 +174,7 @@ class CinTable:
         self.cin = None
         self.curCinType = None
         self.userExtendTable = None
+        self.priorityExtendTable = None
         self.sortByCharset = None
         self.ignorePrivateUseArea = None
 CinTable = CinTable()

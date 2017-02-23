@@ -60,6 +60,7 @@ var cinCount = {};
 var CONFIG_URL = '/config';
 var VERSION_URL = '/version.txt';
 var KEEP_ALIVE_URL = '/keep_alive';
+var GETCINCOUNT_URL = '/getcincount';
 
 var symbolsChanged = false;
 var swkbChanged = false;
@@ -75,11 +76,14 @@ var phraseData = "";
 var flangsData = "";
 var extendtableData = "";
 
+var oldselCinType;
+
 loadConfig();
 
 function loadConfig() {
     $.get(CONFIG_URL, function(data, status) {
         checjConfig = data.config;
+        oldselCinType = checjConfig.selCinType;
         cinCount = data.cincount;
         symbolsData = data.symbols;
         swkbData = data.swkb;
@@ -116,13 +120,13 @@ function saveConfig(callbackFunc) {
     if (!checkState) {
         return false;
     }
-    
+
     // Check foreign language format
     checkState = checkDataFormat($("#flangs").val(), "2", "#flangs", "外語文字");
     if (!checkState) {
         return false;
     }
-    
+
     // Check extendtable format
     checkState = checkDataFormat($("#extendtable").val(), "3", "#extendtable", "擴展碼表");
     if (!checkState) {
@@ -152,6 +156,30 @@ function saveConfig(callbackFunc) {
         data.extendtable = $("#extendtable").val();
     }
 
+    if(oldselCinType != data.config['selCinType']) {
+
+        $.ajax({
+            url: GETCINCOUNT_URL,
+            method: "POST",
+            async: false,
+            success: function() {
+                updateCinCountElements();
+                oldselCinType = data.config.selCinType;
+            },
+            beforeSend: function() {
+                swal({
+                    title: '請稍後!',
+                    text: '正在解析碼表...',
+                    type: 'info',
+                    showConfirmButton: false
+                });
+            },
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            dataType:"json"
+        });
+    }
+
     $.ajax({
         url: CONFIG_URL,
         method: "POST",
@@ -160,6 +188,25 @@ function saveConfig(callbackFunc) {
         data: JSON.stringify(data),
         dataType:"json"
     });
+}
+
+
+function updateCinCountElements() {
+    $.get(CONFIG_URL, function(data, status) {
+        cinCountList = data.cincount;
+        document.getElementById('bopomofochardefs').innerText = cinCountList['bopomofochardefs'];
+        document.getElementById('big5Fchardefs').innerText = cinCountList['big5Fchardefs'];
+        document.getElementById('big5LFchardefs').innerText = cinCountList['big5LFchardefs'];
+        document.getElementById('big5Otherchardefs').innerText = cinCountList['big5Otherchardefs'];
+        document.getElementById('cjkchardefs').innerText = cinCountList['cjkchardefs'];
+        document.getElementById('cjkExtAchardefs').innerText = cinCountList['cjkExtAchardefs'];
+        document.getElementById('cjkExtBchardefs').innerText = cinCountList['cjkExtBchardefs'];
+        document.getElementById('cjkExtCchardefs').innerText = cinCountList['cjkExtCchardefs'];
+        document.getElementById('cjkExtDchardefs').innerText = cinCountList['cjkExtDchardefs'];
+        document.getElementById('cjkExtEchardefs').innerText = cinCountList['cjkExtEchardefs'];
+        document.getElementById('cjkOtherchardefs').innerText = cinCountList['cjkOtherchardefs'];
+        document.getElementById('cjkTotalchardefs').innerText = cinCountList['cjkTotalchardefs'];
+    }, "json");
 }
 
 
@@ -250,7 +297,7 @@ function checkDataFormat(checkData, checkType, elementId, dataDesc) {
             for (var j = 0; j < i; j++) {
                 selectionStart += data_array[j].length + 1;
             }
-    
+
             $(elementId).prop("selectionStart", selectionStart);
             $(elementId).prop("selectionEnd", selectionStart + data_array[i].length + 1);
             return false;
@@ -293,18 +340,7 @@ function pageReady() {
     $(document).tooltip();
     $("#tabs").tabs({heightStyle:"auto"});
 
-    document.getElementById('bopomofochardefs').innerText = cinCount['bopomofochardefs']
-    document.getElementById('big5Fchardefs').innerText = cinCount['big5Fchardefs']
-    document.getElementById('big5LFchardefs').innerText = cinCount['big5LFchardefs']
-    document.getElementById('big5Otherchardefs').innerText = cinCount['big5Otherchardefs']
-    document.getElementById('cjkchardefs').innerText = cinCount['cjkchardefs']
-    document.getElementById('cjkExtAchardefs').innerText = cinCount['cjkExtAchardefs']
-    document.getElementById('cjkExtBchardefs').innerText = cinCount['cjkExtBchardefs']
-    document.getElementById('cjkExtCchardefs').innerText = cinCount['cjkExtCchardefs']
-    document.getElementById('cjkExtDchardefs').innerText = cinCount['cjkExtDchardefs']
-    document.getElementById('cjkExtEchardefs').innerText = cinCount['cjkExtEchardefs']
-    document.getElementById('cjkOtherchardefs').innerText = cinCount['cjkOtherchardefs']
-    document.getElementById('cjkTotalchardefs').innerText = cinCount['cjkTotalchardefs']
+    updateCinCountElements();
 
     $("#symbols").val(symbolsData);
     $("#ez_symbols").val(swkbData);
@@ -392,19 +428,19 @@ function pageReady() {
     $("#ez_symbols").change(function(){
         swkbChanged = true;
     });
-    
+
     $("#fs_symbols").change(function(){
         fsymbolsChanged = true;
     });
-    
+
     $("#phrase").change(function(){
         phraseChanged = true;
     });
-    
+
     $("#flangs").change(function(){
         flangsChanged = true;
     });
-    
+
     $("#extendtable").change(function(){
         extendtableChanged = true;
         $("#reLoadTable")[0].checked = true;
@@ -436,49 +472,49 @@ function pageReady() {
             break;
         }
     });
-    
+
         // use for select example
     function updateSelExample() {
-        var example = ["選", "字", "大", "小", "範", "例"];		
+        var example = ["選", "字", "大", "小", "範", "例"];
         var html="";
-        
+
         for (number = 1, i = 0, row = 0; number <= $("#candPerPage").val(); number++, i++, row++) {
             if (example[i] == null) {
                 i = 0;
             }
-                
+
             if (row == $("#candPerRow").val()) {
                 row = 0;
                 html += "<br>";
-            }				
-            
+            }
+
             html += "<span>" + number.toString().slice(-1) + ".</span> " + example[i] + "&nbsp;&nbsp;";
-        }			
-                
+        }
+
         $("#selExample").html(html);
     }
-    
+
     // setup selExample default style
     $("#selExample").css("font-size", $("#fontSize").val() + "pt");
     updateSelExample();
 
     // trigger event
     $('.ui-spinner-button').click(function() {
-        $(this).siblings('input').change();		
-    });	
-    
+        $(this).siblings('input').change();
+    });
+
     $("#ui_page input").on("change", function() {
         $("#selExample").css("font-size", $("#fontSize").val() + "pt");
         updateSelExample();
     });
-    
+
     $("#ui_page input").on("keydown", function(e) {
         if (e.keyCode == 38 || e.keyCode==40) {
             $("#selExample").css("font-size", $("#fontSize").val() + "pt");
             updateSelExample();
         }
     });
-    
+
     function disableControlItem() {
         var disabled = []
         for(key in disableConfigItem) {
@@ -501,27 +537,27 @@ function pageReady() {
                 }
             }
         }
-        
+
         if ($('#directShowCand')[0].checked == false && $('#compositionBufferMode')[0].checked == false) {
             $("#directCommitString")[0].disabled = false;
         } else {
             $("#directCommitString")[0].checked = false;
             $("#directCommitString")[0].disabled = true;
         }
-        
+
         if ($('#compositionBufferMode')[0].checked == false) {
             $("#autoMoveCursorInBrackets")[0].disabled = true;
         } else {
             $("#autoMoveCursorInBrackets")[0].disabled = false;
         }
-        
+
         if ($('#fullShapeSymbols')[0].checked == false) {
             $("#directOutFSymbols")[0].disabled = true;
         } else {
             $("#directOutFSymbols")[0].disabled = false;
         }
     }
-    
+
     disableControlItem();
 
     // trigger event
@@ -533,7 +569,7 @@ function pageReady() {
             $("#directCommitString")[0].disabled = true;
         }
     });
-    
+
     $('#compositionBufferMode').click(function() {
         if ($('#compositionBufferMode')[0].checked == false && $('#directShowCand')[0].checked == false) {
             $("#directCommitString")[0].disabled = false;
@@ -541,14 +577,14 @@ function pageReady() {
             $("#directCommitString")[0].checked = false;
             $("#directCommitString")[0].disabled = true;
         }
-        
+
         if ($('#compositionBufferMode')[0].checked == false) {
             $("#autoMoveCursorInBrackets")[0].disabled = true;
         } else {
             $("#autoMoveCursorInBrackets")[0].disabled = false;
         }
     });
-    
+
     $('#fullShapeSymbols').click(function() {
         if ($('#fullShapeSymbols')[0].checked == false) {
             $("#directOutFSymbols")[0].disabled = true;
@@ -556,21 +592,21 @@ function pageReady() {
             $("#directOutFSymbols")[0].disabled = false;
         }
     });
-    
+
     $("#selCinType").click(function() {
         var selCin = parseInt($("#selCinType").find(":selected").val());
         if(!isNaN(selCin))
             checjConfig.selCinType = selCin;
         disableControlItem();
     });
-    
+
     if(!debugMode) {
         $("#compositionBufferMode")[0].disabled = true;
         $("#autoMoveCursorInBrackets")[0].disabled = true;
         $("#compositionBufferMode")[0].checked = false;
         $("#autoMoveCursorInBrackets")[0].checked = false;
     }
-    
+
     // keep the server alive every 20 second
     setInterval(function () {
         $.ajax({

@@ -53,9 +53,10 @@ class CheDayiTextService(TextService):
         self.cfg.imeDirName = self.imeDirName
         self.cfg.cinFileList = self.cinFileList
         self.cfg.load()
+        self.cindir = self.cfg.getCinDir()
+        self.cinbase.applyConfig(self)
 
         # 載入輸入法碼表
-        self.cindir = self.cfg.getCinDir()
         if not CinTable.curCinType == self.cfg.selCinType and not CinTable.loading:
             loadCinFile = LoadCinTable(self, CinTable)
             loadCinFile.start()
@@ -71,7 +72,7 @@ class CheDayiTextService(TextService):
             self.selRCinType = self.cfg.selRCinType
             if not self.rcinFileList:
                 self.cinbase.updateRcinFileList(self)
-            
+
             if not RCinTable.curCinType == self.cfg.selRCinType and not RCinTable.loading:
                 loadRCinFile = LoadRCinTable(self, RCinTable)
                 loadRCinFile.start()
@@ -131,7 +132,7 @@ class CheDayiTextService(TextService):
         # 大易符號 ---------------------------------------------------------
         self.DayiSymbolChar = "=" if self.selDayiSymbolCharType == 0 else "'"
         self.DayiSymbolString = "巷" if self.selDayiSymbolCharType == 0 else "號"
-        
+
         if self.langMode == 1 and not self.showmenu:
             if len(self.compositionChar) == 0 and not self.phrasemode and charStr == self.DayiSymbolChar and not keyEvent.isKeyDown(VK_CONTROL):
                 self.compositionChar += charStr

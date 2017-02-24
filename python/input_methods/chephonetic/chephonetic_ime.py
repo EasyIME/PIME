@@ -51,7 +51,9 @@ class ChePhoneticTextService(TextService):
         self.cfg.imeDirName = self.imeDirName
         self.cfg.cinFileList = self.cinFileList
         self.cfg.load()
-        
+        self.cindir = self.cfg.getCinDir()
+        self.cinbase.applyConfig(self)
+
         self.keyboardLayout = self.cfg.keyboardLayout
         self.kbtypelist = [
             "1qaz2wsxedcrfv5tgbyhnujm8ik,9ol.0p;/-7634",        # standard kb
@@ -59,7 +61,7 @@ class ChePhoneticTextService(TextService):
             "1234567890-qwertyuiopasdfghjkl;zxcvbn/m,.",        # IBM
             "2wsx3edcrfvtgb6yhnujm8ik,9ol.0p;/-['=1qaz"         # Gin-yieh
         ]
-        
+
         self.zhuintab = [
             "1qaz2wsxedcrfv5tgbyhn",    # ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙ
             "ujm",                      # ㄧㄨㄩ
@@ -68,7 +70,6 @@ class ChePhoneticTextService(TextService):
         ]
 
         # 載入輸入法碼表
-        self.cindir = self.cfg.getCinDir()
         if not CinTable.curCinType == self.cfg.selCinType and not CinTable.loading:
             loadCinFile = LoadCinTable(self, CinTable)
             loadCinFile.start()
@@ -84,7 +85,7 @@ class ChePhoneticTextService(TextService):
             self.selRCinType = self.cfg.selRCinType
             if not self.rcinFileList:
                 self.cinbase.updateRcinFileList(self)
-            
+
             if not RCinTable.curCinType == self.cfg.selRCinType and not RCinTable.loading:
                 loadRCinFile = LoadRCinTable(self, RCinTable)
                 loadRCinFile.start()
@@ -117,7 +118,7 @@ class ChePhoneticTextService(TextService):
     # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):
         self.cinbase.checkConfigChange(self, CinTable, RCinTable, HCinTable)
-        
+
         if not self.keyboardLayout == self.cfg.keyboardLayout:
             self.keyboardLayout = self.cfg.keyboardLayout
 

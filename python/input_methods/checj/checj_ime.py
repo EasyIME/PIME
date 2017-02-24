@@ -51,9 +51,10 @@ class CheCJTextService(TextService):
         self.cfg.imeDirName = self.imeDirName
         self.cfg.cinFileList = self.cinFileList
         self.cfg.load()
+        self.cindir = self.cfg.getCinDir()
+        self.cinbase.applyConfig(self)
 
         # 載入輸入法碼表
-        self.cindir = self.cfg.getCinDir()
         if not CinTable.curCinType == self.cfg.selCinType and not CinTable.loading:
             loadCinFile = LoadCinTable(self, CinTable)
             loadCinFile.start()

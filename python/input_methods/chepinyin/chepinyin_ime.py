@@ -51,9 +51,10 @@ class ChePinyinTextService(TextService):
         self.cfg.imeDirName = self.imeDirName
         self.cfg.cinFileList = self.cinFileList
         self.cfg.load()
+        self.cindir = self.cfg.getCinDir()
+        self.cinbase.applyConfig(self)
 
         # 載入輸入法碼表
-        self.cindir = self.cfg.getCinDir()
         if not CinTable.curCinType == self.cfg.selCinType and not CinTable.loading:
             loadCinFile = LoadCinTable(self, CinTable)
             loadCinFile.start()
@@ -69,7 +70,7 @@ class ChePinyinTextService(TextService):
             self.selRCinType = self.cfg.selRCinType
             if not self.rcinFileList:
                 self.cinbase.updateRcinFileList(self)
-            
+
             if not RCinTable.curCinType == self.cfg.selRCinType and not RCinTable.loading:
                 loadRCinFile = LoadRCinTable(self, RCinTable)
                 loadRCinFile.start()
@@ -120,7 +121,7 @@ class ChePinyinTextService(TextService):
         if self.cfg.selCinType == 0 or self.cfg.selCinType == 1 or self.cfg.selCinType == 2:
             self.endKeyList = ["1", "2", "3", "4", "5"]
             self.useEndKey = True
-    
+
         KeyState = self.cinbase.onKeyDown(self, keyEvent, CinTable, RCinTable, HCinTable)
         return KeyState
 

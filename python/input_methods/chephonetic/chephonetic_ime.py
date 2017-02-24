@@ -52,7 +52,8 @@ class ChePhoneticTextService(TextService):
         self.cfg.cinFileList = self.cinFileList
         self.cfg.load()
         self.cindir = self.cfg.getCinDir()
-        self.cinbase.applyConfig(self)
+        self.sortByCharset = self.cfg.sortByCharset
+        self.ignorePrivateUseArea = self.cfg.ignorePrivateUseArea
 
         self.keyboardLayout = self.cfg.keyboardLayout
         self.kbtypelist = [

@@ -64,33 +64,6 @@ class CheArrayTextService(TextService):
                 continue
             self.cin = CinTable.cin
 
-        # 反查輸入法字根
-        if self.cfg.imeReverseLookup:
-            self.imeReverseLookup = self.cfg.imeReverseLookup
-            self.rcinFileList = self.cfg.rcinFileList
-            self.selRCinType = self.cfg.selRCinType
-            if not self.rcinFileList:
-                self.cinbase.updateRcinFileList(self)
-
-            if not RCinTable.curCinType == self.cfg.selRCinType and not RCinTable.loading:
-                loadRCinFile = LoadRCinTable(self, RCinTable)
-                loadRCinFile.start()
-            else:
-                while RCinTable.loading:
-                    continue
-
-        # 同音字查詢
-        if self.cfg.homophoneQuery:
-            self.homophoneQuery = self.cfg.homophoneQuery
-            self.selHCinType = self.cfg.selHCinType
-
-            if not HCinTable.curCinType == self.cfg.selHCinType and not HCinTable.loading:
-                loadHCinFile = LoadHCinTable(self, HCinTable)
-                loadHCinFile.start()
-            else:
-                while HCinTable.loading:
-                    continue
-
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):

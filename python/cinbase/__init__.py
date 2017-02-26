@@ -303,7 +303,7 @@ class CinBase:
         if cbTS.lastKeyDownTime == 0.0:
             cbTS.lastKeyDownTime = time.time()
 
-        if CinTable.loading or RCinTable.loading or HCinTable.loading:
+        if CinTable.loading:
             return True
 
         # 使用者開始輸入，還沒送出前的編輯區內容稱 composition string
@@ -411,13 +411,8 @@ class CinBase:
         charStr = chr(charCode)
         charStrLow = charStr.lower()
 
-        if CinTable.loading or RCinTable.loading or HCinTable.loading:
-            if CinTable.loading:
-                messagestr = '正在載入輸入法碼表，請稍後...'
-            elif RCinTable.loading:
-                messagestr = '正在載入反查字根碼表，請稍後...'
-            elif HCinTable.loading:
-                messagestr = '正在載入同音字查詢碼表，請稍後...'
+        if CinTable.loading:
+            messagestr = '正在載入輸入法碼表，請稍後...'
             cbTS.isShowMessage = True
             cbTS.showMessage(messagestr, cbTS.messageDurationTime)
             return True
@@ -1704,10 +1699,15 @@ class CinBase:
                                         cbTS.isWildcardChardefs = False
 
                                     if cbTS.imeReverseLookup:
-                                        if not RCinTable.cin.getCharEncode(commitStr) == "":
+                                        if RCinTable.cin is not None:
+                                            if not RCinTable.cin.getCharEncode(commitStr) == "":
+                                                cbTS.isShowMessage = True
+                                                cbTS.showMessageOnKeyUp = True
+                                                cbTS.onKeyUpMessage = RCinTable.cin.getCharEncode(commitStr)
+                                        else:
                                             cbTS.isShowMessage = True
                                             cbTS.showMessageOnKeyUp = True
-                                            cbTS.onKeyUpMessage = RCinTable.cin.getCharEncode(commitStr)
+                                            cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
 
                                     # 如果使用打繁出簡，就轉成簡體中文
                                     if cbTS.outputSimpChinese:
@@ -1770,10 +1770,15 @@ class CinBase:
                                         cbTS.isWildcardChardefs = False
 
                                     if cbTS.imeReverseLookup:
-                                        if not RCinTable.cin.getCharEncode(commitStr) == "":
+                                        if RCinTable.cin is not None:
+                                            if not RCinTable.cin.getCharEncode(commitStr) == "":
+                                                cbTS.isShowMessage = True
+                                                cbTS.showMessageOnKeyUp = True
+                                                cbTS.onKeyUpMessage = RCinTable.cin.getCharEncode(commitStr)
+                                        else:
                                             cbTS.isShowMessage = True
                                             cbTS.showMessageOnKeyUp = True
-                                            cbTS.onKeyUpMessage = RCinTable.cin.getCharEncode(commitStr)
+                                            cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
 
                                     # 如果使用打繁出簡，就轉成簡體中文
                                     if cbTS.outputSimpChinese:
@@ -1920,25 +1925,26 @@ class CinBase:
                             currentCandPage += 1
                             candCursor = 0
                     elif cbTS.homophoneQuery and not cbTS.homophonemode and not cbTS.multifunctionmode and not cbTS.fullsymbolsmode and keyCode == VK_OEM_3: # 同音字查詢啟用下按下`鍵
-                        commitStr = cbTS.candidateList[candCursor]
-                        if HCinTable.cin.isHaveKey(commitStr):
-                            candCursor = 0
-                            currentCandPage = 0
-                            if len(HCinTable.cin.getKeyList(commitStr)) > 1:
-                                cbTS.homophonemode = True
-                                cbTS.homophoneselpinyinmode = True
-                                cbTS.homophoneChar = cbTS.compositionChar
-                                cbTS.homophoneStr = commitStr
-                                cbTS.homophonecandidates = HCinTable.cin.getKeyNameList(HCinTable.cin.getKeyList(commitStr))
-                                pagecandidates = list(self.chunks(cbTS.homophonecandidates, cbTS.candPerPage))
-                                cbTS.setCandidateList(pagecandidates[currentCandPage])
-                            else:
-                                cbTS.homophonemode = True
-                                cbTS.homophoneChar = cbTS.compositionChar
-                                cbTS.isHomophoneChardefs = True
-                                cbTS.homophonecandidates = HCinTable.cin.getCharDef(HCinTable.cin.getKey(commitStr))
-                                pagecandidates = list(self.chunks(cbTS.homophonecandidates, cbTS.candPerPage))
-                                cbTS.setCandidateList(pagecandidates[currentCandPage])
+                        if HCinTable.cin is not None:
+                            commitStr = cbTS.candidateList[candCursor]
+                            if HCinTable.cin.isHaveKey(commitStr):
+                                candCursor = 0
+                                currentCandPage = 0
+                                if len(HCinTable.cin.getKeyList(commitStr)) > 1:
+                                    cbTS.homophonemode = True
+                                    cbTS.homophoneselpinyinmode = True
+                                    cbTS.homophoneChar = cbTS.compositionChar
+                                    cbTS.homophoneStr = commitStr
+                                    cbTS.homophonecandidates = HCinTable.cin.getKeyNameList(HCinTable.cin.getKeyList(commitStr))
+                                    pagecandidates = list(self.chunks(cbTS.homophonecandidates, cbTS.candPerPage))
+                                    cbTS.setCandidateList(pagecandidates[currentCandPage])
+                                else:
+                                    cbTS.homophonemode = True
+                                    cbTS.homophoneChar = cbTS.compositionChar
+                                    cbTS.isHomophoneChardefs = True
+                                    cbTS.homophonecandidates = HCinTable.cin.getCharDef(HCinTable.cin.getKey(commitStr))
+                                    pagecandidates = list(self.chunks(cbTS.homophonecandidates, cbTS.candPerPage))
+                                    cbTS.setCandidateList(pagecandidates[currentCandPage])
                     elif (keyCode == VK_RETURN or (keyCode == VK_SPACE and not cbTS.switchPageWithSpace)) and cbTS.canSetCommitString:  # 按下 Enter 鍵或空白鍵
                         if not cbTS.homophoneselpinyinmode:
                             # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
@@ -2819,10 +2825,15 @@ class CinBase:
             cbTS.isWildcardChardefs = False
 
         if cbTS.imeReverseLookup:
-            if not RCinTable.cin.getCharEncode(commitStr) == "":
+            if RCinTable.cin is not None:
+                if not RCinTable.cin.getCharEncode(commitStr) == "":
+                    cbTS.isShowMessage = True
+                    cbTS.showMessageOnKeyUp = True
+                    cbTS.onKeyUpMessage = RCinTable.cin.getCharEncode(commitStr)
+            else:
                 cbTS.isShowMessage = True
                 cbTS.showMessageOnKeyUp = True
-                cbTS.onKeyUpMessage = RCinTable.cin.getCharEncode(commitStr)
+                cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
 
         if cbTS.homophoneQuery and cbTS.isHomophoneChardefs:
             cbTS.isHomophoneChardefs = False
@@ -3170,14 +3181,14 @@ class CinBase:
 
         if cfg.imeReverseLookup or cbTS.imeReverseLookup:
             # 載入反查輸入法碼表
-            if not RCinTable.loading:
+            if not RCinTable.loading and not CinTable.loading:
                 if not RCinTable.curCinType == cfg.selRCinType or RCinTable.cin is None:
                     loadRCinFile = LoadRCinTable(cbTS, RCinTable)
                     loadRCinFile.start()
 
         if cfg.homophoneQuery or cbTS.homophoneQuery:
             # 載入同音字碼表
-            if not HCinTable.loading:
+            if not HCinTable.loading and not CinTable.loading:
                 if not HCinTable.curCinType == cfg.selHCinType or HCinTable.cin is None:
                     loadHCinFile = LoadHCinTable(cbTS, HCinTable)
                     loadHCinFile.start()

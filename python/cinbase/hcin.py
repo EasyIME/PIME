@@ -37,6 +37,9 @@ class HCin(object):
         state = PARSING_HEAD_STATE
 
         self.imeDirName = imeDirName
+        self.ename = ""
+        self.cname = ""
+        self.selkey = ""
         self.keynames = {}
         self.chardefs = {}
         self.curdir = os.path.abspath(os.path.dirname(__file__))
@@ -50,51 +53,55 @@ class HCin(object):
                 if not line or line[0] == '#':
                     continue
 
-            if CIN_HEAD in line:
-                continue
+            if state is not PARSE_CHARDEF_STATE:
+                if CIN_HEAD in line:
+                    continue
 
-            if ENAME_HEAD in line:
-                self.ename = head_rest(ENAME_HEAD, line)
+                if ENAME_HEAD in line:
+                    self.ename = head_rest(ENAME_HEAD, line)
 
-            if CNAME_HEAD in line:
-                self.cname = head_rest(CNAME_HEAD, line)
+                if CNAME_HEAD in line:
+                    self.cname = head_rest(CNAME_HEAD, line)
 
-            if ENCODING_HEAD in line:
-                continue
+                if ENCODING_HEAD in line:
+                    continue
 
-            if SELKEY_HEAD in line:
-                self.selkey = head_rest(SELKEY_HEAD, line)
+                if SELKEY_HEAD in line:
+                    self.selkey = head_rest(SELKEY_HEAD, line)
 
-            if CHARDEF_HEAD in line:
-                if 'begin' in line:
-                    state = PARSE_CHARDEF_STATE
-                else:
-                    state = PARSING_HEAD_STATE
-                continue
+                if CHARDEF_HEAD in line:
+                    if 'begin' in line:
+                        state = PARSE_CHARDEF_STATE
+                    else:
+                        state = PARSING_HEAD_STATE
+                    continue
 
-            if KEYNAME_HEAD in line:
-                if 'begin' in line:
-                    state = PARSE_KEYNAME_STATE
-                else:
-                    state = PARSING_HEAD_STATE
-                continue
+                if KEYNAME_HEAD in line:
+                    if 'begin' in line:
+                        state = PARSE_KEYNAME_STATE
+                    else:
+                        state = PARSING_HEAD_STATE
+                    continue
 
-            if state is PARSE_KEYNAME_STATE:
-                key, root = safeSplit(line)
-                key = key.strip().lower()
-                
-                if '　' in root:
-                    root = '\u3000'
-                else:
-                    root = root.strip()
+                if state is PARSE_KEYNAME_STATE:
+                    key, root = safeSplit(line)
+                    key = key.strip().lower()
 
-                self.keynames[key] = root
-                continue
+                    if '　' in root:
+                        root = '\u3000'
+                    else:
+                        root = root.strip()
 
-            if state is PARSE_CHARDEF_STATE:
-                if not self.imeDirName == "cheez":
+                    self.keynames[key] = root
+                    continue
+            else:
+                if CHARDEF_HEAD in line:
+                    continue
+
+                if self.cname == "中標倉頡":
                     if '#' in line:
                         line = re.sub('#.+', '', line)
+
                 key, root = safeSplit(line)
                 key = key.strip().lower()
 
@@ -177,7 +184,7 @@ class HCin(object):
                         i = i + 1
                     for str in chardef:
                         result += self.getKeyName(str)
-        
+
         if result == root + ':':
             result = ''
         return result

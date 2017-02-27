@@ -3169,15 +3169,22 @@ class CinBase:
                     updatePrivateUseArea = True
 
             if cfg.reLoadTable:
+                if not CinTable.sortByCharset:
+                    reLoadCinTable = True
                 updateExtendTable = True
                 cfg.reLoadTable = False
                 cfg.save()
 
             if not CinTable.userExtendTable == cfg.userExtendTable:
+                if not CinTable.sortByCharset:
+                    reLoadCinTable = True
                 updateExtendTable = True
 
             if not CinTable.priorityExtendTable == cfg.priorityExtendTable:
-                updateExtendTable = True
+                if cfg.userExtendTable:
+                    if not CinTable.sortByCharset:
+                        reLoadCinTable = True
+                    updateExtendTable = True
 
         if cfg.imeReverseLookup or cbTS.imeReverseLookup:
             # 載入反查輸入法碼表

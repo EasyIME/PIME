@@ -99,51 +99,55 @@ class Cin(object):
                 if not line or line[0] == '#':
                     continue
 
-            if CIN_HEAD in line:
-                continue
+            if state is not PARSE_CHARDEF_STATE:
+                if CIN_HEAD in line:
+                    continue
 
-            if ENAME_HEAD in line:
-                self.ename = head_rest(ENAME_HEAD, line)
+                if ENAME_HEAD in line:
+                    self.ename = head_rest(ENAME_HEAD, line)
 
-            if CNAME_HEAD in line:
-                self.cname = head_rest(CNAME_HEAD, line)
+                if CNAME_HEAD in line:
+                    self.cname = head_rest(CNAME_HEAD, line)
 
-            if ENCODING_HEAD in line:
-                continue
+                if ENCODING_HEAD in line:
+                    continue
 
-            if SELKEY_HEAD in line:
-                self.selkey = head_rest(SELKEY_HEAD, line)
+                if SELKEY_HEAD in line:
+                    self.selkey = head_rest(SELKEY_HEAD, line)
 
-            if CHARDEF_HEAD in line:
-                if 'begin' in line:
-                    state = PARSE_CHARDEF_STATE
-                else:
-                    state = PARSING_HEAD_STATE
-                continue
+                if CHARDEF_HEAD in line:
+                    if 'begin' in line:
+                        state = PARSE_CHARDEF_STATE
+                    else:
+                        state = PARSING_HEAD_STATE
+                    continue
 
-            if KEYNAME_HEAD in line:
-                if 'begin' in line:
-                    state = PARSE_KEYNAME_STATE
-                else:
-                    state = PARSING_HEAD_STATE
-                continue
+                if KEYNAME_HEAD in line:
+                    if 'begin' in line:
+                        state = PARSE_KEYNAME_STATE
+                    else:
+                        state = PARSING_HEAD_STATE
+                    continue
 
-            if state is PARSE_KEYNAME_STATE:
-                key, root = safeSplit(line)
-                key = key.strip().lower()
+                if state is PARSE_KEYNAME_STATE:
+                    key, root = safeSplit(line)
+                    key = key.strip().lower()
 
-                if '　' in root:
-                    root = '\u3000'
-                else:
-                    root = root.strip()
+                    if '　' in root:
+                        root = '\u3000'
+                    else:
+                        root = root.strip()
 
-                self.keynames[key] = root
-                continue
+                    self.keynames[key] = root
+                    continue
+            else:
+                if CHARDEF_HEAD in line:
+                    continue
 
-            if state is PARSE_CHARDEF_STATE:
                 if self.cname == "中標倉頡":
                     if '#' in line:
                         line = re.sub('#.+', '', line)
+
                 key, root = safeSplit(line)
                 key = key.strip().lower()
 
@@ -165,15 +169,13 @@ class Cin(object):
                     if self.ignorePrivateUseArea and charset == "pua":
                         continue
                     try:
-                        self.srcchardefs[key].append(root)
+                        self.chardefs[key].append(root)
                     except KeyError:
-                        self.srcchardefs[key] = [root]
+                        self.chardefs[key] = [root]
                     self.cincount['cjkTotalchardefs'] += 1
 
         if self.sortByCharset:
             self.mergeDicts(self.big5Fchardefs, self.big5LFchardefs, self.big5Otherchardefs, self.bopomofochardefs, self.cjkchardefs, self.cjkExtAchardefs, self.cjkExtBchardefs, self.cjkExtCchardefs, self.cjkExtDchardefs, self.cjkExtEchardefs, self.cjkOtherchardefs)
-        else:
-            self.chardefs = copy.deepcopy(self.srcchardefs)
         self.saveCountFile()
 
     def __del__(self):
@@ -370,10 +372,10 @@ class Cin(object):
         chardefsdicts = [self.big5Fchardefs, self.big5LFchardefs, self.big5Otherchardefs, self.bopomofochardefs, self.cjkchardefs, self.cjkExtAchardefs, self.cjkExtBchardefs, self.cjkExtCchardefs, self.cjkExtDchardefs, self.cjkExtEchardefs, self.cjkOtherchardefs]
         if not ignorePrivateUseArea:
             chardefsdicts.append(self.privateusechardefs)
-        del self.chardefs
-        self.chardefs = {}
 
         if self.sortByCharset:
+            del self.chardefs
+            self.chardefs = {}
             for chardefsdict in chardefsdicts:
                 for key in chardefsdict:
                     for root in chardefsdict[key]:
@@ -381,8 +383,6 @@ class Cin(object):
                             self.chardefs[key].append(root)
                         except KeyError:
                             self.chardefs[key] = [root]
-        else:
-            self.chardefs = copy.deepcopy(self.srcchardefs)
 
         if userExtendTable:
             for key in extendtable.chardefs:
@@ -438,7 +438,7 @@ class Cin(object):
                 try:
                     big5code = matchstr.encode('big5')
                     big5codeint = int(big5code.hex(), 16)
-    
+
                     if big5codeint in range(self.charsetRange['big5F'][0], self.charsetRange['big5F'][1]): # Big5 常用字
                         if addchardefs:
                             try:

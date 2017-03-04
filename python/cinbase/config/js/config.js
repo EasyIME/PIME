@@ -1,51 +1,55 @@
 
 var defaultcinCount = {
-    "cjkExtEchardefs": 0,
-    "cjkchardefs": 0,
-    "big5LFchardefs": 0,
-    "cjkExtCchardefs": 0,
-    "cjkOtherchardefs": 0,
-    "cjkExtDchardefs": 0,
-    "cjkTotalchardefs": 0,
-    "big5Fchardefs": 0,
-    "big5Otherchardefs": 0,
-    "cjkExtAchardefs": 0,
-    "bopomofochardefs": 0,
-    "cjkExtBchardefs": 0
+    "big5F": 0,
+    "big5LF": 0,
+    "big5Other": 0,
+    "big5S": 0,
+    "bopomofo": 0,
+    "cjk": 0,
+    "cjkCIS": 0,
+    "cjkExtA": 0,
+    "cjkExtB": 0,
+    "cjkExtC": 0,
+    "cjkExtD": 0,
+    "cjkExtE": 0,
+    "cjkOther": 0,
+    "phrases": 0,
+    "privateuse": 0,
+    "totalchardefs": 0
 }
 
 var defaultcinName = {
-    "checj.cin": "酷倉",
-    "mscj3.cin": "倉頡",
-    "mscj3-ext.cin": "倉頡(大字集)",
-    "cj-ext.cin": "雅虎倉頡",
-    "cnscj.cin": "中標倉頡",
-    "thcj.cin": "泰瑞倉頡",
-    "newcj3.cin": "亂倉打鳥",
-    "cj5.cin": "倉頡五代",
-    "newcj.cin": "自由大新倉頡",
-    "scj6.cin": "快倉六代",
-    "thphonetic.cin": "泰瑞注音",
-    "CnsPhonetic.cin": "中標注音",
-    "bpmf.cin": "傳統注音",
-    "tharray.cin": "泰瑞行列30",
-    "array30.cin": "行列30",
-    "ar30-big.cin": "行列30大字集",
-    "array40.cin": "行列40",
-    "thdayi.cin": "泰瑞大易四碼",
-    "dayi4.cin": "大易四碼",
-    "dayi3.cin": "大易三碼",
-    "ez.cin": "輕鬆",
-    "ezsmall.cin": "輕鬆小詞庫",
-    "ezmid.cin": "輕鬆中詞庫",
-    "ezbig.cin": "輕鬆大詞庫",
-    "thpinyin.cin": "泰瑞拼音",
-    "pinyin.cin": "正體拼音",
-    "roman.cin": "羅馬拼音",
-    "simplecj.cin": "正體簡易",
-    "simplex.cin": "速成",
-    "simplex5.cin": "簡易五代",
-    "liu.cin": "嘸蝦米"
+    "checj.json": "酷倉",
+    "mscj3.json": "倉頡",
+    "mscj3-ext.json": "倉頡(大字集)",
+    "cj-ext.json": "雅虎倉頡",
+    "cnscj.json": "中標倉頡",
+    "thcj.json": "泰瑞倉頡",
+    "newcj3.json": "亂倉打鳥",
+    "cj5.json": "倉頡五代",
+    "newcj.json": "自由大新倉頡",
+    "scj6.json": "快倉六代",
+    "thphonetic.json": "泰瑞注音",
+    "CnsPhonetic.json": "中標注音",
+    "bpmf.json": "傳統注音",
+    "tharray.json": "泰瑞行列30",
+    "array30.json": "行列30",
+    "ar30-big.json": "行列30大字集",
+    "array40.json": "行列40",
+    "thdayi.json": "泰瑞大易四碼",
+    "dayi4.json": "大易四碼",
+    "dayi3.json": "大易三碼",
+    "ez.json": "輕鬆",
+    "ezsmall.json": "輕鬆小詞庫",
+    "ezmid.json": "輕鬆中詞庫",
+    "ezbig.json": "輕鬆大詞庫",
+    "thpinyin.json": "泰瑞拼音",
+    "pinyin.json": "正體拼音",
+    "roman.json": "羅馬拼音",
+    "simplecj.json": "正體簡易",
+    "simplex.json": "速成",
+    "simplex5.json": "簡易五代",
+    "liu.json": "嘸蝦米"
 }
 
 var selHCins = [
@@ -60,7 +64,6 @@ var cinCount = {};
 var CONFIG_URL = '/config';
 var VERSION_URL = '/version.txt';
 var KEEP_ALIVE_URL = '/keep_alive';
-var GETCINCOUNT_URL = '/getcincount';
 
 var symbolsChanged = false;
 var swkbChanged = false;
@@ -76,14 +79,11 @@ var phraseData = "";
 var flangsData = "";
 var extendtableData = "";
 
-var oldselCinType;
-
 loadConfig();
 
 function loadConfig() {
     $.get(CONFIG_URL, function(data, status) {
         checjConfig = data.config;
-        oldselCinType = checjConfig.selCinType;
         cinCount = data.cincount;
         symbolsData = data.symbols;
         swkbData = data.swkb;
@@ -156,33 +156,10 @@ function saveConfig(callbackFunc) {
         data.extendtable = $("#extendtable").val();
     }
 
-    if(oldselCinType != data.config['selCinType']) {
-
-        $.ajax({
-            url: GETCINCOUNT_URL,
-            method: "POST",
-            async: false,
-            success: function() {
-                updateCinCountElements();
-                oldselCinType = data.config.selCinType;
-            },
-            beforeSend: function() {
-                swal({
-                    title: '請稍後!',
-                    text: '正在解析碼表...',
-                    type: 'info',
-                    showConfirmButton: false
-                });
-            },
-            contentType: "application/json",
-            data: JSON.stringify(data),
-            dataType:"json"
-        });
-    }
-
     $.ajax({
         url: CONFIG_URL,
         method: "POST",
+        async: false,
         success: callbackFunc(),
         contentType: "application/json",
         data: JSON.stringify(data),
@@ -192,20 +169,25 @@ function saveConfig(callbackFunc) {
 
 
 function updateCinCountElements() {
-    $.get(CONFIG_URL, function(data, status) {
+    $.get(CONFIG_URL + '?' + Date.now(), function(data, status) {
         cinCountList = data.cincount;
-        document.getElementById('bopomofochardefs').innerText = cinCountList['bopomofochardefs'];
-        document.getElementById('big5Fchardefs').innerText = cinCountList['big5Fchardefs'];
-        document.getElementById('big5LFchardefs').innerText = cinCountList['big5LFchardefs'];
-        document.getElementById('big5Otherchardefs').innerText = cinCountList['big5Otherchardefs'];
-        document.getElementById('cjkchardefs').innerText = cinCountList['cjkchardefs'];
-        document.getElementById('cjkExtAchardefs').innerText = cinCountList['cjkExtAchardefs'];
-        document.getElementById('cjkExtBchardefs').innerText = cinCountList['cjkExtBchardefs'];
-        document.getElementById('cjkExtCchardefs').innerText = cinCountList['cjkExtCchardefs'];
-        document.getElementById('cjkExtDchardefs').innerText = cinCountList['cjkExtDchardefs'];
-        document.getElementById('cjkExtEchardefs').innerText = cinCountList['cjkExtEchardefs'];
-        document.getElementById('cjkOtherchardefs').innerText = cinCountList['cjkOtherchardefs'];
-        document.getElementById('cjkTotalchardefs').innerText = cinCountList['cjkTotalchardefs'];
+        document.getElementById('big5F').innerText = cinCountList['big5F'];
+        document.getElementById('big5LF').innerText = cinCountList['big5LF'];
+        document.getElementById('big5S').innerText = cinCountList['big5S'];
+        document.getElementById('big5Other').innerText = cinCountList['big5Other'];
+        document.getElementById('bopomofo').innerText = cinCountList['bopomofo'];
+        document.getElementById('cjk').innerText = cinCountList['cjk'];
+        document.getElementById('cjkExtA').innerText = cinCountList['cjkExtA'];
+        document.getElementById('cjkExtB').innerText = cinCountList['cjkExtB'];
+        document.getElementById('cjkExtC').innerText = cinCountList['cjkExtC'];
+        document.getElementById('cjkExtD').innerText = cinCountList['cjkExtD'];
+        document.getElementById('cjkExtE').innerText = cinCountList['cjkExtE'];
+        document.getElementById('cjkCIS').innerText = cinCountList['cjkCIS'];
+        document.getElementById('cjkOther').innerText = cinCountList['cjkOther'];
+        document.getElementById('cjkExtE').innerText = cinCountList['cjkExtE'];
+        document.getElementById('phrases').innerText = cinCountList['phrases'];
+        document.getElementById('privateuse').innerText = cinCountList['privateuse'];
+        document.getElementById('totalchardefs').innerText = cinCountList['totalchardefs'];
     }, "json");
 }
 
@@ -456,6 +438,7 @@ function pageReady() {
               'success'
             );
         });
+        updateCinCountElements();
         return false;
     });
 
@@ -593,7 +576,7 @@ function pageReady() {
         }
     });
 
-    $("#selCinType").click(function() {
+    $("#selCinType").change(function() {
         var selCin = parseInt($("#selCinType").find(":selected").val());
         if(!isNaN(selCin))
             checjConfig.selCinType = selCin;

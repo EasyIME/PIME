@@ -45,7 +45,6 @@ class CinBaseConfig:
         self.directCommitSymbol = False
         self.fontSize = DEF_FONT_SIZE
         self.selCinType = 0
-        self.sortByCharset = True
         self.ignorePrivateUseArea = True
         self.selKeyType = 0
         self.candPerPage = 9
@@ -135,6 +134,9 @@ class CinBaseConfig:
 
     def getCinDir(self):
         return os.path.join(os.path.dirname(__file__), "cin")
+
+    def getJsonDir(self):
+        return os.path.join(os.path.dirname(__file__), "json")
 
     def getDefaultConfigDir(self):
         return os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, "input_methods", self.imeDirName, "config"))

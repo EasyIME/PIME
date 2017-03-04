@@ -36,7 +36,7 @@ current_dir = os.path.abspath(os.path.dirname(__file__))
 current_ime_dir = os.path.join(cfg.getDefaultConfigDir(), os.path.pardir)
 current_ime_config_dir = os.path.join(cfg.getDefaultConfigDir())
 data_dir = os.path.join(current_dir, "data")
-cin_dir = os.path.join(current_dir, "cin")
+json_dir = os.path.join(current_dir, "json")
 localdata_dir = os.path.join(cfg.getConfigDir())
 
 COOKIE_ID = "cinbase_config_token"
@@ -76,7 +76,7 @@ class ConfigHandler(BaseHandler):
         data = {
             "imename": cfg.imeDirName,
             "config": self.load_config(),
-            "cincount": self.load_jsondata("cincount.json"),
+            "cincount": self.load_cindata(),
             "symbols": self.load_data("symbols.dat"),
             "swkb": self.load_data("swkb.dat"),
             "fsymbols": self.load_data("fsymbols.dat"),
@@ -95,7 +95,7 @@ class ConfigHandler(BaseHandler):
         # write the config to files
         config = data.get("config", None)
         if config:
-            self.save_file("config.json", json.dumps(config, indent=2))
+            self.save_file("config.json", json.dumps(config, indent=4))
 
         symbols = data.get("symbols", None)
         if symbols:
@@ -131,12 +131,25 @@ class ConfigHandler(BaseHandler):
         config = cfg.toJson()  # the current settings
         return config
 
-    def load_jsondata(self, name):
-        datafile = os.path.join(config_dir, name)
+    def load_cindata(self):
+        cfg.load()
+        CinDict ={}
+        CinDict["checj"] = ["checj.json", "mscj3.json", "mscj3-ext.json", "cj-ext.json", "cnscj.json", "thcj.json", "newcj3.json", "cj5.json", "newcj.json", "scj6.json"]
+        CinDict["chephonetic"] = ["thphonetic.json", "CnsPhonetic.json", "bpmf.json"]
+        CinDict["chearray"] = ["tharray.json", "array30.json", "ar30-big.json", "array40.json"]
+        CinDict["chedayi"] = ["thdayi.json", "dayi4.json", "dayi3.json"]
+        CinDict["cheez"] = ["ez.json", "ezsmall.json", "ezmid.json", "ezbig.json"]
+        CinDict["chepinyin"] = ["thpinyin.json", "pinyin.json", "roman.json"]
+        CinDict["chesimplex"] = ["simplecj.json", "simplex.json", "simplex5.json"]
+        CinDict["cheliu"] = ["liu.json"]
+        jsonFile = CinDict[cfg.imeDirName][cfg.selCinType]
+
+        datafile = os.path.join(json_dir, jsonFile)
         if os.path.exists(datafile):
             try:
                 with open(datafile, "r", encoding="UTF-8") as f:
-                    return json.load(f)
+                    jsondata = json.load(f)
+                    return jsondata['cincount']
             except Exception as e:
                 print(e)
 
@@ -172,65 +185,6 @@ class LoginHandler(BaseHandler):
 
 
 
-class CinCountHandler(BaseHandler):
-
-    @tornado.web.authenticated
-    def post(self):  # save config
-        data = tornado.escape.json_decode(self.request.body)
-        loadCinFile = LoadCinTable(data)
-        loadCinFile.loading = True
-        loadCinFile.start()
-        while loadCinFile.loading:
-            continue
-        self.write('{"return":true}')
-
-
-
-class LoadCinTable(threading.Thread):
-    def __init__(self, data):
-        threading.Thread.__init__(self)
-        config = data.get("config", None)
-        self.cinFileDict = {}
-        self.cinFileDict["checj"] = ["checj.cin", "mscj3.cin", "mscj3-ext.cin", "cj-ext.cin", "cnscj.cin", "thcj.cin", "newcj3.cin", "cj5.cin", "newcj.cin", "scj6.cin"]
-        self.cinFileDict["chephonetic"] = ["thphonetic.cin", "CnsPhonetic.cin", "bpmf.cin"]
-        self.cinFileDict["chearray"] = ["tharray.cin", "array30.cin", "ar30-big.cin", "array40.cin"]
-        self.cinFileDict["chedayi"] = ["thdayi.cin", "dayi4.cin", "dayi3.cin"]
-        self.cinFileDict["cheez"] = ["ez.cin", "ezsmall.cin", "ezmid.cin", "ezbig.cin"]
-        self.cinFileDict["chepinyin"] = ["thpinyin.cin", "pinyin.cin", "roman.cin"]
-        self.cinFileDict["chesimplex"] = ["simplecj.cin", "simplex.cin", "simplex5.cin"]
-        self.cinFileDict["cheliu"] = ["liu.cin"]
-
-        self.loading = True
-        self.imeDirName = cfg.imeDirName
-        self.sortByCharset = config["sortByCharset"]
-        self.ignorePrivateUseArea = config["ignorePrivateUseArea"]
-        self.cinFileList = self.cinFileDict[cfg.imeDirName]
-        self.selCinType = config["selCinType"]
-        self.selCinFile = self.cinFileList[self.selCinType]
-        self.CinPath = os.path.join(cin_dir, self.selCinFile)
-
-    def run(self):
-        cinCountFile = self.getCountFile()
-        cinCountTime = os.path.getmtime(cinCountFile)
-
-        with io.open(self.CinPath, encoding='utf-8') as fs:
-            Cin(fs, self.imeDirName, self.sortByCharset, self.ignorePrivateUseArea)
-
-        while True:
-            if not cinCountTime == os.path.getmtime(cinCountFile):
-                self.loading = False
-                break
-
-    def getCountDir(self):
-        count_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", self.imeDirName)
-        os.makedirs(count_dir, mode=0o700, exist_ok=True)
-        return count_dir
-
-    def getCountFile(self, name="cincount.json"):
-        return os.path.join(self.getCountDir(), name)
-
-
-
 class ConfigApp(tornado.web.Application):
 
     def __init__(self):
@@ -249,8 +203,7 @@ class ConfigApp(tornado.web.Application):
             (r"/(version.txt)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "../../")}),
             (r"/config", ConfigHandler),  # main configuration handler
             (r"/keep_alive", KeepAliveHandler),  # keep the api server alive
-            (r"/login/(.*)", LoginHandler),  # authentication
-            (r"/getcincount", CinCountHandler)
+            (r"/login/(.*)", LoginHandler)  # authentication
         ]
         super().__init__(handlers, **settings)
         self.timeout_handler = None

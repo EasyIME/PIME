@@ -36,7 +36,7 @@ class CheDayiTextService(TextService):
         # 輸入法模組自訂區域
         self.imeDirName = "chedayi"
         self.maxCharLength = 4 # 輸入法最大編碼字元數量
-        self.cinFileList = ["thdayi.cin", "dayi4.cin", "dayi3.cin"]
+        self.cinFileList = ["thdayi.json", "dayi4.json", "dayi3.json"]
 
         self.cinbase = CinBase
         self.curdir = os.path.abspath(os.path.dirname(__file__))
@@ -53,8 +53,8 @@ class CheDayiTextService(TextService):
         self.cfg.imeDirName = self.imeDirName
         self.cfg.cinFileList = self.cinFileList
         self.cfg.load()
+        self.jsondir = self.cfg.getJsonDir()
         self.cindir = self.cfg.getCinDir()
-        self.sortByCharset = self.cfg.sortByCharset
         self.ignorePrivateUseArea = self.cfg.ignorePrivateUseArea
 
         # 載入輸入法碼表
@@ -182,7 +182,6 @@ class CinTable:
         self.curCinType = None
         self.userExtendTable = None
         self.priorityExtendTable = None
-        self.sortByCharset = None
         self.ignorePrivateUseArea = None
 CinTable = CinTable()
 

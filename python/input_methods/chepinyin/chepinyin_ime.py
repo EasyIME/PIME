@@ -36,7 +36,7 @@ class ChePinyinTextService(TextService):
         # 輸入法模組自訂區域
         self.imeDirName = "chepinyin"
         self.maxCharLength = 7 # 輸入法最大編碼字元數量
-        self.cinFileList = ["thpinyin.cin", "pinyin.cin", "roman.cin"]
+        self.cinFileList = ["thpinyin.json", "pinyin.json", "roman.json"]
 
         self.cinbase = CinBase
         self.curdir = os.path.abspath(os.path.dirname(__file__))
@@ -51,8 +51,8 @@ class ChePinyinTextService(TextService):
         self.cfg.imeDirName = self.imeDirName
         self.cfg.cinFileList = self.cinFileList
         self.cfg.load()
+        self.jsondir = self.cfg.getJsonDir()
         self.cindir = self.cfg.getCinDir()
-        self.sortByCharset = self.cfg.sortByCharset
         self.ignorePrivateUseArea = self.cfg.ignorePrivateUseArea
 
         # 載入輸入法碼表
@@ -153,7 +153,6 @@ class CinTable:
         self.curCinType = None
         self.userExtendTable = None
         self.priorityExtendTable = None
-        self.sortByCharset = None
         self.ignorePrivateUseArea = None
 CinTable = CinTable()
 

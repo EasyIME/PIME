@@ -79,42 +79,55 @@
         </div>
 
         <div id="cin_options">
-            <input type="checkbox" id="sortByCharset" name="sortByCharset" />
-            <label for="sortByCharset">載入碼表時依字元集排序</label><br>
             <input type="checkbox" id="ignorePrivateUseArea" name="ignorePrivateUseArea" />
-            <label for="ignorePrivateUseArea">載入碼表時忽略 Unicode 私用區</label><br>
+            <label for="ignorePrivateUseArea">載入碼表時忽略 Unicode 私用區及 CJK 相容補充區</label><br>
         </div>
 
         <table id="cin_count">
             <tr>
-                <td><label for="bopomofochardefs">注音符號: </label><font color="Blue">
-                <label id="bopomofochardefs" name="bopomofochardefs" /></font></td>
-                <td><label for="big5Fchardefs">Big5 常用字: </label><font color="Blue">
-                <label id="big5Fchardefs" name="big5Fchardefs" /></font></td>
-                <td><label for="big5LFchardefs">Big5 次常用字: </label><font color="Blue">
-                <label id="big5LFchardefs" name="big5LFchardefs" /></font></td>
-                <td><label for="big5Otherchardefs">Big5 其它漢字: </label><font color="Blue">
-                <label id="big5Otherchardefs" name="big5Otherchardefs" /></font></td>
+                <td><label for="totalchardefs">總計: </label><font color="Blue">
+                <label id="totalchardefs" name="totalchardefs" /></font></td>
+                <td></td>
+                <td></td>
+                <td></td>
             </tr>
             <tr>
-                <td><label for="cjkchardefs">CJK 漢字: </label><font color="Blue">
-                <label id="cjkchardefs" name="cjkchardefs" /></font></td>
-                <td><label for="cjkExtAchardefs">CJK 擴展 A 區: </label><font color="Blue">
-                <label id="cjkExtAchardefs" name="cjkExtAchardefs" /></font></td>
-                <td><label for="cjkExtBchardefs">CJK 擴展 B 區: </label><font color="Blue">
-                <label id="cjkExtBchardefs" name="cjkExtBchardefs" /></font></td>
-                <td><label for="cjkExtCchardefs">CJK 擴展 C 區: </label><font color="Blue">
-                <label id="cjkExtCchardefs" name="cjkExtCchardefs" /></font></td>
+                <td><label for="big5F">Big5 常用字: </label><font color="Blue">
+                <label id="big5F" name="big5F" /></font></td>
+                <td><label for="big5LF">Big5 次常用字: </label><font color="Blue">
+                <label id="big5LF" name="big5LF" /></font></td>
+                <td><label for="big5S">Big5 符號: </label><font color="Blue">
+                <label id="big5S" name="big5S" /></font></td>
+                <td><label for="big5Other">Big5 其它漢字: </label><font color="Blue">
+                <label id="big5Other" name="big5Other" /></font></td>
             </tr>
             <tr>
-                <td><label for="cjkExtDchardefs">CJK 擴展 D 區: </label><font color="Blue">
-                <label id="cjkExtDchardefs" name="cjkExtDchardefs" /></font></td>
-                <td><label for="cjkExtEchardefs">CJK 擴展 E 區: </label><font color="Blue">
-                <label id="cjkExtEchardefs" name="cjkExtEchardefs" /></font></td>
-                <td><label for="cjkOtherchardefs">CJK 其它漢字: </label><font color="Blue">
-                <label id="cjkOtherchardefs" name="cjkOtherchardefs" /></font></td>
-                <td><label for="cjkTotalchardefs">總計: </label><font color="Blue">
-                <label id="cjkTotalchardefs" name="cjkTotalchardefs" /></font></td>
+                <td><label for="cjk">CJK 統一漢字: </label><font color="Blue">
+                <label id="cjk" name="cjk" /></font></td>
+                <td><label for="cjkExtA">CJK 擴展 A 區: </label><font color="Blue">
+                <label id="cjkExtA" name="cjkExtA" /></font></td>
+                <td><label for="cjkExtB">CJK 擴展 B 區: </label><font color="Blue">
+                <label id="cjkExtB" name="cjkExtB" /></font></td>
+                <td><label for="cjkExtC">CJK 擴展 C 區: </label><font color="Blue">
+                <label id="cjkExtC" name="cjkExtC" /></font></td>
+            </tr>
+            <tr>
+                <td><label for="cjkExtD">CJK 擴展 D 區: </label><font color="Blue">
+                <label id="cjkExtD" name="cjkExtD" /></font></td>
+                <td><label for="cjkExtE">CJK 擴展 E 區: </label><font color="Blue">
+                <label id="cjkExtE" name="cjkExtE" /></font></td>
+                <td><label for="bopomofo">注音符號: </label><font color="Blue">
+                <label id="bopomofo" name="bopomofo" /></font></td>
+                <td><label for="cjkOther">其它字集: </label><font color="Blue">
+                <label id="cjkOther" name="cjkOther" /></font></td>
+            </tr>
+            <tr>
+                <td><label for="phrases">詞庫: </label><font color="Blue">
+                <label id="phrases" name="phrases" /></font></td>
+                <td><label for="cjkCIS">CJK 相容補充區: </label><font color="Blue">
+                <label id="cjkCIS" name="cjkCIS" /></font></td>
+                <td><label for="privateuse">Unicode 私用區: </label><font color="Blue">
+                <label id="privateuse" name="privateuse" /></font></td>
             </tr>
         </table>
 

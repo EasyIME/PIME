@@ -46,7 +46,7 @@ CHINESE_MODE = 1
 ENGLISH_MODE = 0
 FULLSHAPE_MODE = 1
 HALFSHAPE_MODE = 0
-DEBUG_MODE = False
+DEBUG_MODE = True
 
 # shift + space 熱鍵的 GUID
 SHIFT_SPACE_GUID = "{f1dae0fb-8091-44a7-8a0c-3082a1515447}"
@@ -77,15 +77,15 @@ class CinBase:
         self.emojimenulist = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
         self.imeNameList = ["checj", "chephonetic", "chearray", "chedayi", "cheez", "chepinyin", "chesimplex", "cheliu"]
         self.ReverseCinDict = {}
-        self.ReverseCinDict["checj"] = ["checj.cin", "mscj3.cin", "mscj3-ext.cin", "cj-ext.cin", "cnscj.cin", "thcj.cin", "newcj3.cin", "cj5.cin", "newcj.cin", "scj6.cin"]
-        self.ReverseCinDict["chephonetic"] = ["thphonetic.cin", "CnsPhonetic.cin", "bpmf.cin"]
-        self.ReverseCinDict["chearray"] = ["tharray.cin", "array30.cin", "ar30-big.cin", "array40.cin"]
-        self.ReverseCinDict["chedayi"] = ["thdayi.cin", "dayi4.cin", "dayi3.cin"]
-        self.ReverseCinDict["cheez"] = ["ez.cin", "ezsmall.cin", "ezmid.cin", "ezbig.cin"]
-        self.ReverseCinDict["chepinyin"] = ["thpinyin.cin", "pinyin.cin", "roman.cin"]
-        self.ReverseCinDict["chesimplex"] = ["simplecj.cin", "simplex.cin", "simplex5.cin"]
-        self.ReverseCinDict["cheliu"] = ["liu.cin"]
-        self.hcinFileList = ["thphonetic.cin", "CnsPhonetic.cin", "bpmf.cin"]
+        self.ReverseCinDict["checj"] = ["checj.json", "mscj3.json", "mscj3-ext.json", "cj-ext.json", "cnscj.json", "thcj.json", "newcj3.json", "cj5.json", "newcj.json", "scj6.json"]
+        self.ReverseCinDict["chephonetic"] = ["thphonetic.json", "CnsPhonetic.json", "bpmf.json"]
+        self.ReverseCinDict["chearray"] = ["tharray.json", "array30.json", "ar30-big.json", "array40.json"]
+        self.ReverseCinDict["chedayi"] = ["thdayi.json", "dayi4.json", "dayi3.json"]
+        self.ReverseCinDict["cheez"] = ["ez.json", "ezsmall.json", "ezmid.json", "ezbig.json"]
+        self.ReverseCinDict["chepinyin"] = ["thpinyin.json", "pinyin.json", "roman.json"]
+        self.ReverseCinDict["chesimplex"] = ["simplecj.json", "simplex.json", "simplex5.json"]
+        self.ReverseCinDict["cheliu"] = ["liu.json"]
+        self.hcinFileList = ["thphonetic.json", "CnsPhonetic.json", "bpmf.json"]
 
     # 初始化輸入行為設定
     def initTextService(self, cbTS, TextService):
@@ -108,7 +108,6 @@ class CinBase:
         cbTS.directCommitSymbol = False
         cbTS.directCommitSymbolList = ["，", "。", "、", "；", "？", "！"]
         cbTS.bracketSymbolList = ["「」", "『』", "［］", "【】", "〖〗", "〔〕", "﹝﹞", "（）", "﹙﹚", "〈〉", "《》", "＜＞", "﹤﹥", "｛｝", "﹛﹜"]
-        cbTS.sortByCharset = True
         cbTS.ignorePrivateUseArea = True
         cbTS.directOutMSymbols = True
         cbTS.fullShapeSymbols = False
@@ -3123,9 +3122,6 @@ class CinBase:
         cbTS.homophoneQuery = cfg.homophoneQuery
         cbTS.selHCinType = cfg.selHCinType
 
-        # 載入碼表時依字元集排序?
-        cbTS.sortByCharset = cfg.sortByCharset
-
         # 載入碼表時忽略 Unicode 私用區?
         cbTS.ignorePrivateUseArea = cfg.ignorePrivateUseArea
 
@@ -3147,7 +3143,6 @@ class CinBase:
         cfg.update() # 更新設定檔狀態
         reLoadCinTable = False
         updateExtendTable = False
-        updatePrivateUseArea = False
 
         if hasattr(cbTS, 'cin'):
             if hasattr(cbTS.cin, 'cincount'):
@@ -3159,32 +3154,22 @@ class CinBase:
             if not CinTable.curCinType == cfg.selCinType:
                 reLoadCinTable = True
 
-            if not CinTable.sortByCharset == cfg.sortByCharset:
+            if not CinTable.ignorePrivateUseArea == cfg.ignorePrivateUseArea:
                 reLoadCinTable = True
 
-            if not CinTable.ignorePrivateUseArea == cfg.ignorePrivateUseArea:
-                if not CinTable.sortByCharset:
-                    reLoadCinTable = True
-                else:
-                    updatePrivateUseArea = True
-
             if cfg.reLoadTable:
-                if not CinTable.sortByCharset:
-                    reLoadCinTable = True
                 updateExtendTable = True
+                reLoadCinTable = True
                 cfg.reLoadTable = False
                 cfg.save()
 
             if not CinTable.userExtendTable == cfg.userExtendTable:
-                if not CinTable.sortByCharset:
-                    reLoadCinTable = True
                 updateExtendTable = True
+                reLoadCinTable = True
 
             if not CinTable.priorityExtendTable == cfg.priorityExtendTable:
                 if cfg.userExtendTable:
-                    if not CinTable.sortByCharset:
-                        reLoadCinTable = True
-                    updateExtendTable = True
+                    reLoadCinTable = True
 
         if cfg.imeReverseLookup or cbTS.imeReverseLookup:
             # 載入反查輸入法碼表
@@ -3208,7 +3193,7 @@ class CinBase:
             # 只有偵測到設定檔變更，需要套用新設定
             self.applyConfig(cbTS)
 
-        if reLoadCinTable or updateExtendTable or updatePrivateUseArea:
+        if reLoadCinTable or updateExtendTable:
             datadirs = (cfg.getConfigDir(), cfg.getDataDir())
             if updateExtendTable:
                 if hasattr(cbTS, 'extendtable'):
@@ -3237,7 +3222,7 @@ class CinBase:
             if not cbTS.imeDirName == imeName:
                 filelist = self.ReverseCinDict[imeName]
                 for filename in filelist:
-                    filepath = os.path.join(cbTS.cindir, filename)
+                    filepath = os.path.join(cbTS.jsondir, filename)
                     if os.path.isfile(filepath):
                         cbTS.rcinFileList.append(filename)
         if not cfg.rcinFileList == cbTS.rcinFileList:
@@ -3290,7 +3275,7 @@ class LoadCinTable(threading.Thread):
         if self.cbTS.cfg.selCinType >= len(self.cbTS.cinFileList):
             self.cbTS.cfg.selCinType = 0
         selCinFile = self.cbTS.cinFileList[self.cbTS.cfg.selCinType]
-        CinPath = os.path.join(self.cbTS.cindir, selCinFile)
+        jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
 
         if self.cbTS.reLoadCinTable or not hasattr(self.cbTS, 'cin'):
             self.cbTS.reLoadCinTable = False
@@ -3303,8 +3288,8 @@ class LoadCinTable(threading.Thread):
             self.cbTS.cin = None
             self.CinTable.cin = None
 
-            with io.open(CinPath, encoding='utf-8') as fs:
-                self.cbTS.cin = Cin(fs, self.cbTS.imeDirName, self.cbTS.sortByCharset, self.cbTS.ignorePrivateUseArea)
+            with io.open(jsonPath, 'r', encoding='utf8') as fs:
+                self.cbTS.cin = Cin(fs, self.cbTS.imeDirName, self.cbTS.ignorePrivateUseArea)
             self.CinTable.cin = self.cbTS.cin
             self.CinTable.curCinType = self.cbTS.cfg.selCinType
 
@@ -3319,13 +3304,12 @@ class LoadCinTable(threading.Thread):
         self.cbTS.cin.updateCinTable(self.cbTS.cfg.userExtendTable, self.cbTS.cfg.priorityExtendTable, self.cbTS.extendtable, self.cbTS.cfg.ignorePrivateUseArea)
         self.CinTable.userExtendTable = self.cbTS.cfg.userExtendTable
         self.CinTable.priorityExtendTable = self.cbTS.cfg.priorityExtendTable
-        self.CinTable.sortByCharset = self.cbTS.cfg.sortByCharset
         self.CinTable.ignorePrivateUseArea = self.cbTS.cfg.ignorePrivateUseArea
         self.CinTable.loading = False
 
         if DEBUG_MODE:
             self.cbTS.debug.setEndTimer("LoadCinTable")
-            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [C]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.cinNameDict[selCinFile] + "」碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadCinTable") + " 秒"
+            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [C]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.jsonNameDict[selCinFile] + "」碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadCinTable") + " 秒"
 
 
 class LoadRCinTable(threading.Thread):
@@ -3340,21 +3324,21 @@ class LoadRCinTable(threading.Thread):
 
         self.RCinTable.loading = True
         selCinFile = self.cbTS.rcinFileList[self.cbTS.cfg.selRCinType]
-        CinPath = os.path.join(self.cbTS.cindir, selCinFile)
+        jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
 
         if self.RCinTable.cin is not None and hasattr(self.RCinTable.cin, '__del__'):
             self.RCinTable.cin.__del__()
 
         self.RCinTable.cin = None
 
-        with io.open(CinPath, encoding='utf-8') as fs:
+        with io.open(jsonPath, 'r', encoding='utf8') as fs:
             self.RCinTable.cin = RCin(fs, self.cbTS.imeDirName)
         self.RCinTable.curCinType = self.cbTS.cfg.selRCinType
         self.RCinTable.loading = False
 
         if DEBUG_MODE:
             self.cbTS.debug.setEndTimer("LoadRCinTable")
-            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [R]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.cinNameDict[selCinFile] + "」反查碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadRCinTable") + " 秒"
+            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [R]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.jsonNameDict[selCinFile] + "」反查碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadRCinTable") + " 秒"
 
 
 class LoadHCinTable(threading.Thread):
@@ -3369,18 +3353,18 @@ class LoadHCinTable(threading.Thread):
 
         self.HCinTable.loading = True
         selCinFile = CinBase.hcinFileList[self.cbTS.cfg.selHCinType]
-        CinPath = os.path.join(self.cbTS.cfg.getCinDir(), selCinFile)
+        jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
 
         if self.HCinTable.cin is not None and hasattr(self.HCinTable.cin, '__del__'):
             self.HCinTable.cin.__del__()
 
         self.HCinTable.cin = None
 
-        with io.open(CinPath, encoding='utf-8') as fs:
+        with io.open(jsonPath, 'r', encoding='utf8') as fs:
             self.HCinTable.cin = HCin(fs, self.cbTS.imeDirName)
         self.HCinTable.curCinType = self.cbTS.cfg.selHCinType
         self.HCinTable.loading = False
 
         if DEBUG_MODE:
             self.cbTS.debug.setEndTimer("LoadHCinTable")
-            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [H]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.cinNameDict[selCinFile] + "」同音字碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadHCinTable") + " 秒"
+            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [H]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.jsonNameDict[selCinFile] + "」同音字碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadHCinTable") + " 秒"

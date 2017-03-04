@@ -36,7 +36,7 @@ class CheLiuTextService(TextService):
         # 輸入法模組自訂區域
         self.imeDirName = "cheliu"
         self.maxCharLength = 5 # 輸入法最大編碼字元數量
-        self.cinFileList = ["liu.cin"]
+        self.cinFileList = ["liu.json"]
 
         self.cinbase = CinBase
         self.curdir = os.path.abspath(os.path.dirname(__file__))
@@ -51,8 +51,8 @@ class CheLiuTextService(TextService):
         self.cfg.imeDirName = self.imeDirName
         self.cfg.cinFileList = self.cinFileList
         self.cfg.load()
+        self.jsondir = self.cfg.getJsonDir()
         self.cindir = self.cfg.getCinDir()
-        self.sortByCharset = self.cfg.sortByCharset
         self.ignorePrivateUseArea = self.cfg.ignorePrivateUseArea
 
         # 載入輸入法碼表
@@ -149,7 +149,6 @@ class CinTable:
         self.curCinType = None
         self.userExtendTable = None
         self.priorityExtendTable = None
-        self.sortByCharset = None
         self.ignorePrivateUseArea = None
 CinTable = CinTable()
 

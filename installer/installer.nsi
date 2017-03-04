@@ -62,6 +62,7 @@ RequestExecutionLevel admin
 !insertmacro MUI_PAGE_LICENSE "..\PSF.txt" ; for python
 
 ; !insertmacro MUI_PAGE_COMPONENTS
+!define MUI_COMPONENTSPAGE_SMALLDESC
 !insertmacro MUI_PAGE_COMPONENTS
 
 ; Custom IE Protected Mode
@@ -105,6 +106,10 @@ Page custom setIEProtectedPage leaveIEProtectedPage
 
 var UPDATEX86DLL
 var UPDATEX64DLL
+
+var INST_PYTHON
+var INST_CINBASE
+var INST_NODE
 
 ; Uninstall old versions
 Function uninstallOldVersion
@@ -279,6 +284,10 @@ Function .onInit
 	StrCpy $UPDATEX86DLL "True"
 	StrCpy $UPDATEX64DLL "True"
 
+	StrCpy $INST_PYTHON "False"
+	StrCpy $INST_CINBASE "False"
+	StrCpy $INST_NODE "False"
+
 	; check if old version is installed and uninstall it first
 	Call uninstallOldVersion
 	Call hideSection
@@ -377,105 +386,124 @@ Section $(SECTION_MAIN) SecMain
     ; Install backend informations
     File "..\backends.json"
 
-	; Install the python backend and input method modules along with an embedable version of python 3.
-	File /r /x "__pycache__" /x "input_methods" /x ".git" /x ".idea" "..\python"
-	SetOutPath "$INSTDIR\python\input_methods"
-	File "..\python\input_methods\__init__.py"
-
-	SetOutPath "$INSTDIR"
-	; Install the node.js backend and input method modules along with an embedable version of node v6.
-	File /r /x "input_methods" "..\node"
-
 	; Install the launcher responsible to launch the backends
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
 SectionEnd
 
-SectionGroup /e $(SECTION_GROUP)
-	Section $(CHEWING) chewing
-		SectionIn 1 2
-		SetOutPath "$INSTDIR\python\input_methods"
-		File /r "..\python\input_methods\chewing"
-	SectionEnd
+SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
+	SectionGroup /e $(PYTHON_CHT_SECTION_GROUP) python_cht_section_group
+		Section $(CHEWING) chewing
+			SectionIn 1 2
+			SetOutPath "$INSTDIR\python\input_methods"
+			File /r "..\python\input_methods\chewing"
+			StrCpy $INST_PYTHON "True"
+		SectionEnd
 
-	Section $(CHECJ) checj
-		SectionIn 2
-		SetOutPath "$INSTDIR\python\input_methods"
-		File /r "..\python\input_methods\checj"
-	SectionEnd
-
-	Section $(CHELIU) cheliu
-		${If} ${FileExists} "$EXEDIR\liu.cin"
+		Section $(CHECJ) checj
 			SectionIn 2
 			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\cheliu"
-			SetOutPath "$INSTDIR\python\cinbase\cin"
-			Rename "$EXEDIR\liu.cin" "$INSTDIR\python\cinbase\cin\liu.cin"
-		${EndIf}
-	SectionEnd
+			File /r "..\python\input_methods\checj"
+			StrCpy $INST_PYTHON "True"
+			StrCpy $INST_CINBASE "True"
+		SectionEnd
 
-	Section $(CHEARRAY) chearray
-		SectionIn 2
-		SetOutPath "$INSTDIR\python\input_methods"
-		File /r "..\python\input_methods\chearray"
-	SectionEnd
+		Section $(CHELIU) cheliu
+			${If} ${FileExists} "$EXEDIR\liu.cin"
+				SectionIn 2
+				SetOutPath "$INSTDIR\python\input_methods"
+				File /r "..\python\input_methods\cheliu"
+				SetOutPath "$INSTDIR\python\cinbase\cin"
+				Rename "$EXEDIR\liu.cin" "$INSTDIR\python\cinbase\cin\liu.cin"
+				StrCpy $INST_PYTHON "True"
+				StrCpy $INST_CINBASE "True"
+			${EndIf}
+		SectionEnd
 
-	Section $(CHEDAYI) chedayi
-		SectionIn 2
-		SetOutPath "$INSTDIR\python\input_methods"
-		File /r "..\python\input_methods\chedayi"
-	SectionEnd
-
-	Section $(CHEPINYIN) chepinyin
-		SectionIn 2
-		SetOutPath "$INSTDIR\python\input_methods"
-		File /r "..\python\input_methods\chepinyin"
-	SectionEnd
-
-	Section $(CHESIMPLEX) chesimplex
-		SectionIn 2
-		SetOutPath "$INSTDIR\python\input_methods"
-		File /r "..\python\input_methods\chesimplex"
-	SectionEnd
-
-	Section $(CHEPHONETIC) chephonetic
-		SectionIn 2
-		SetOutPath "$INSTDIR\python\input_methods"
-		File /r "..\python\input_methods\chephonetic"
-	SectionEnd
-
-	Section $(CHEEZ) cheez
-		SectionIn 2
-		SetOutPath "$INSTDIR\python\input_methods"
-		File /r "..\python\input_methods\cheez"
-	SectionEnd
-
-	Section $(RIME) rime
-		SectionIn 2
-		SetOutPath "$INSTDIR\python\input_methods"
-		File /r /x "brise" "..\python\input_methods\rime"
-		SetOutPath "$INSTDIR\python\input_methods\rime\data"
-		File "..\python\input_methods\rime\brise\*.txt"
-		File "..\python\input_methods\rime\brise\*.yaml"
-		File "..\python\input_methods\rime\brise\preset\*.yaml"
-		File "..\python\input_methods\rime\brise\supplement\*.yaml"
-		File "..\python\input_methods\rime\brise\extra\*.yaml"
-		SetOutPath "$INSTDIR\python\input_methods\rime\data\opencc"
-		File "..\python\opencc\*.json" "..\python\opencc\*.ocd"
-	SectionEnd
-
-	Section $(EMOJIME) emojime
-			SectionIn 2
-			SetOutPath "$INSTDIR\node\input_methods"
-			File /r "..\node\input_methods\emojime"
-	SectionEnd
-
-	Section $(CHEENG) cheeng
-		${If} ${AtLeastWin8}
+		Section $(CHEARRAY) chearray
 			SectionIn 2
 			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\cheeng"
-		${EndIf}
-	SectionEnd
+			File /r "..\python\input_methods\chearray"
+			StrCpy $INST_PYTHON "True"
+			StrCpy $INST_CINBASE "True"
+		SectionEnd
+
+		Section $(CHEDAYI) chedayi
+			SectionIn 2
+			SetOutPath "$INSTDIR\python\input_methods"
+			File /r "..\python\input_methods\chedayi"
+			StrCpy $INST_PYTHON "True"
+			StrCpy $INST_CINBASE "True"
+		SectionEnd
+
+		Section $(CHEPINYIN) chepinyin
+			SectionIn 2
+			SetOutPath "$INSTDIR\python\input_methods"
+			File /r "..\python\input_methods\chepinyin"
+			StrCpy $INST_PYTHON "True"
+			StrCpy $INST_CINBASE "True"
+		SectionEnd
+
+		Section $(CHESIMPLEX) chesimplex
+			SectionIn 2
+			SetOutPath "$INSTDIR\python\input_methods"
+			File /r "..\python\input_methods\chesimplex"
+			StrCpy $INST_PYTHON "True"
+			StrCpy $INST_CINBASE "True"
+		SectionEnd
+
+		Section $(CHEPHONETIC) chephonetic
+			SectionIn 2
+			SetOutPath "$INSTDIR\python\input_methods"
+			File /r "..\python\input_methods\chephonetic"
+			StrCpy $INST_PYTHON "True"
+			StrCpy $INST_CINBASE "True"
+		SectionEnd
+
+		Section $(CHEEZ) cheez
+			SectionIn 2
+			SetOutPath "$INSTDIR\python\input_methods"
+			File /r "..\python\input_methods\cheez"
+			StrCpy $INST_PYTHON "True"
+			StrCpy $INST_CINBASE "True"
+		SectionEnd
+
+		Section $(CHEENG) cheeng
+			${If} ${AtLeastWin8}
+				SectionIn 2
+				SetOutPath "$INSTDIR\python\input_methods"
+				File /r "..\python\input_methods\cheeng"
+				StrCpy $INST_PYTHON "True"
+			${EndIf}
+		SectionEnd
+	SectionGroupEnd
+
+	SectionGroup /e $(PYTHON_CHS_SECTION_GROUP) python_chs_section_group
+		Section $(RIME) rime
+			SectionIn 2
+			SetOutPath "$INSTDIR\python\input_methods"
+			File /r /x "brise" "..\python\input_methods\rime"
+			SetOutPath "$INSTDIR\python\input_methods\rime\data"
+			File "..\python\input_methods\rime\brise\*.txt"
+			File "..\python\input_methods\rime\brise\*.yaml"
+			File "..\python\input_methods\rime\brise\preset\*.yaml"
+			File "..\python\input_methods\rime\brise\supplement\*.yaml"
+			File "..\python\input_methods\rime\brise\extra\*.yaml"
+			SetOutPath "$INSTDIR\python\input_methods\rime\data\opencc"
+			File "..\python\opencc\*.json" "..\python\opencc\*.ocd"
+			StrCpy $INST_PYTHON "True"
+		SectionEnd
+	SectionGroupEnd
+SectionGroupEnd
+
+SectionGroup /e $(NODE_SECTION_GROUP) node_section_group
+	SectionGroup /e $(NODE_CHT_SECTION_GROUP) node_cht_section_group
+		Section $(EMOJIME) emojime
+				SectionIn 2
+				SetOutPath "$INSTDIR\node\input_methods"
+				File /r "..\node\input_methods\emojime"
+				StrCpy $INST_NODE "True"
+		SectionEnd
+	SectionGroupEnd
 SectionGroupEnd
 
 Function hideSection
@@ -489,6 +517,29 @@ FunctionEnd
 
 Section "" Register
 	SectionIn 1 2
+	; Install the python backend and input method modules along with an embedable version of python 3.
+	${If} $INST_PYTHON == "True"
+		SetOutPath "$INSTDIR"
+		File /r /x "__pycache__" /x "input_methods" /x "cinbase" /x ".git" /x ".idea" "..\python"
+		SetOutPath "$INSTDIR\python\input_methods"
+		File "..\python\input_methods\__init__.py"
+	${EndIf}
+
+	; Install the CinBase Class for all cin-based input method modules.
+	${If} $INST_CINBASE == "True"
+		SetOutPath "$INSTDIR\python"
+		File /r /x "__pycache__" /x "cin" "..\python\cinbase"
+        ${If} ${SectionIsSelected} ${cheliu}
+            nsExec::ExecToLog '"$INSTDIR\python\python3\pythonw.exe" "$INSTDIR\python\cinbase\tools\cintojson.py" "liu.cin"'
+        ${EndIf}
+	${EndIf}
+
+	; Install the node.js backend and input method modules along with an embedable version of node v6.
+	${If} $INST_NODE == "True"
+		SetOutPath "$INSTDIR"
+		File /r /x "input_methods" "..\node"
+	${EndIf}
+
 	; Install the text service dlls
 	${If} ${RunningX64} ; This is a 64-bit Windows system
 		SetOutPath "$INSTDIR\x64"
@@ -578,6 +629,12 @@ SectionEnd
 ;Assign language strings to sections
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} $(SecMain_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${python_section_group} $(PYTHON_SECTION_GROUP_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${python_cht_section_group} $(PYTHON_CHT_SECTION_GROUP_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${python_chs_section_group} $(PYTHON_CHS_SECTION_GROUP_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${node_section_group} $(NODE_SECTION_GROUP_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${node_cht_section_group} $(NODE_CHT_SECTION_GROUP_DESC)
+	;!insertmacro MUI_DESCRIPTION_TEXT ${node_chs_section_group} $(NODE_CHS_SECTION_GROUP_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${chewing} $(chewing_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${checj} $(checj_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${cheliu} $(cheliu_DESC)

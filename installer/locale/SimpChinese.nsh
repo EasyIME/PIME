@@ -23,7 +23,12 @@
 !insertmacro LANG_STRING IEProtectedPage_MESSAGE "PIME 输入法须要变更 IE 设置，才能在 IE 里使用。"
 
 !insertmacro LANG_STRING SECTION_MAIN "PIME 输入法平台"
-!insertmacro LANG_STRING SECTION_GROUP "输入法模块"
+!insertmacro LANG_STRING PYTHON_SECTION_GROUP "Python 输入法模组"
+!insertmacro LANG_STRING PYTHON_CHT_SECTION_GROUP "中文繁体"
+!insertmacro LANG_STRING PYTHON_CHS_SECTION_GROUP "中文简体"
+!insertmacro LANG_STRING NODE_SECTION_GROUP "Node 输入法模组"
+!insertmacro LANG_STRING NODE_CHT_SECTION_GROUP "中文繁体"
+!insertmacro LANG_STRING NODE_CHS_SECTION_GROUP "中文简体"
 
 !insertmacro LANG_STRING CHEWING 新酷音
 !insertmacro LANG_STRING CHECJ 酷仓
@@ -39,6 +44,12 @@
 !insertmacro LANG_STRING CHEENG 英数
 
 !insertmacro LANG_STRING SecMain_DESC "安装 $(PRODUCT_NAME) 主程序到你的电脑里。"
+!insertmacro LANG_STRING PYTHON_SECTION_GROUP_DESC "Python 输入法模组"
+!insertmacro LANG_STRING PYTHON_CHT_SECTION_GROUP_DESC "中文繁体"
+!insertmacro LANG_STRING PYTHON_CHS_SECTION_GROUP_DESC "中文简体"
+!insertmacro LANG_STRING NODE_SECTION_GROUP_DESC "NODE 输入法模组"
+!insertmacro LANG_STRING NODE_CHT_SECTION_GROUP_DESC "中文繁体"
+!insertmacro LANG_STRING NODE_CHS_SECTION_GROUP_DESC "中文简体"
 !insertmacro LANG_STRING chewing_DESC "安装新酷音输入法模块。"
 !insertmacro LANG_STRING checj_DESC "安装酷仓输入法模块。"
 !insertmacro LANG_STRING cheliu_DESC "安装虾米输入法模块。"

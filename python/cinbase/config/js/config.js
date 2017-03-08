@@ -64,6 +64,7 @@ var cinCount = {};
 var CONFIG_URL = '/config';
 var VERSION_URL = '/version.txt';
 var KEEP_ALIVE_URL = '/keep_alive';
+var hasInnerText = (document.getElementsByTagName("body")[0].innerText !== undefined) ? true : false;
 
 var symbolsChanged = false;
 var swkbChanged = false;
@@ -79,6 +80,48 @@ var phraseData = "";
 var flangsData = "";
 var extendtableData = "";
 
+var isIE = (function() {
+    var browser = {};
+    return function(ver,c) {
+        var key = ver ?  ( c ? "is"+c+"IE"+ver : "isIE"+ver ) : "isIE";
+        var v = browser[key];
+        if (typeof(v) != "undefined") {
+            return v;
+        }
+        if (!ver) {
+            v = (navigator.userAgent.indexOf('MSIE') !== -1 || navigator.appVersion.indexOf('Trident/') > 0);
+        } else {
+            var match = navigator.userAgent.match(/(?:MSIE |Trident\/.*; rv:|Edge\/)(\d+)/);
+                if (match) {
+                    var v1 = parseInt(match[1]);
+                    v = c ?  ( c == 'lt' ?  v1 < ver  :  ( c == 'gt' ?  v1 >  ver : undefined ) ) : v1 == ver;
+                } else if (ver <= 9) {
+                    var b = document.createElement('b')
+                    var s = '<!--[if '+(c ? c : '')+' IE '  + ver + ']><i></i><![endif]-->';
+                    b.innerHTML = s;
+                    v =  b.getElementsByTagName('i').length == 1;
+                } else {
+                    v = undefined;
+                }
+        }
+        browser[key] = v;
+        return v;
+    };
+}());
+
+var isOldIE = (isIE() && isIE(9, 'lt'))
+
+if (!isOldIE) {
+    includeScriptFile("js/jAlert/jAlert.min.js")
+} else {
+    includeScriptFile("js/jAlert/jAlert-ie8.min.js")
+}
+
+if (!Date.now) {
+    Date.now = function() {
+        return new Date().valueOf();
+    }
+}
 loadConfig();
 
 function loadConfig() {
@@ -168,26 +211,35 @@ function saveConfig(callbackFunc) {
 }
 
 
+function setElementText(elemId, elemText) {
+    var elem = document.getElementById(elemId);
+    if (!hasInnerText) {
+        elem.textContent = elemText;
+    } else {
+        elem.innerText = elemText;
+    }
+}
+
+
 function updateCinCountElements() {
     $.get(CONFIG_URL + '?' + Date.now(), function(data, status) {
         cinCountList = data.cincount;
-        document.getElementById('big5F').innerText = cinCountList['big5F'];
-        document.getElementById('big5LF').innerText = cinCountList['big5LF'];
-        document.getElementById('big5S').innerText = cinCountList['big5S'];
-        document.getElementById('big5Other').innerText = cinCountList['big5Other'];
-        document.getElementById('bopomofo').innerText = cinCountList['bopomofo'];
-        document.getElementById('cjk').innerText = cinCountList['cjk'];
-        document.getElementById('cjkExtA').innerText = cinCountList['cjkExtA'];
-        document.getElementById('cjkExtB').innerText = cinCountList['cjkExtB'];
-        document.getElementById('cjkExtC').innerText = cinCountList['cjkExtC'];
-        document.getElementById('cjkExtD').innerText = cinCountList['cjkExtD'];
-        document.getElementById('cjkExtE').innerText = cinCountList['cjkExtE'];
-        document.getElementById('cjkCIS').innerText = cinCountList['cjkCIS'];
-        document.getElementById('cjkOther').innerText = cinCountList['cjkOther'];
-        document.getElementById('cjkExtE').innerText = cinCountList['cjkExtE'];
-        document.getElementById('phrases').innerText = cinCountList['phrases'];
-        document.getElementById('privateuse').innerText = cinCountList['privateuse'];
-        document.getElementById('totalchardefs').innerText = cinCountList['totalchardefs'];
+        setElementText('big5F', cinCountList['big5F']);
+        setElementText('big5LF', cinCountList['big5LF']);
+        setElementText('big5S', cinCountList['big5S']);
+        setElementText('big5Other', cinCountList['big5Other']);
+        setElementText('bopomofo', cinCountList['bopomofo']);
+        setElementText('cjk', cinCountList['cjk']);
+        setElementText('cjkExtA', cinCountList['cjkExtA']);
+        setElementText('cjkExtB', cinCountList['cjkExtB']);
+        setElementText('cjkExtC', cinCountList['cjkExtC']);
+        setElementText('cjkExtD', cinCountList['cjkExtD']);
+        setElementText('cjkExtE', cinCountList['cjkExtE']);
+        setElementText('cjkCIS', cinCountList['cjkCIS']);
+        setElementText('cjkOther', cinCountList['cjkOther']);
+        setElementText('phrases', cinCountList['phrases']);
+        setElementText('privateuse', cinCountList['privateuse']);
+        setElementText('totalchardefs', cinCountList['totalchardefs']);
     }, "json");
 }
 
@@ -241,33 +293,58 @@ function checkDataFormat(checkData, checkType, elementId, dataDesc) {
             case "1":
                 if (! /^[A-Za-z] .{1,10}$/.test(data_array[i])) {
                     errorState = true;
-                    swal(
-                        '糟糕',
-                        dataDesc + '設定第 ' + (i + 1) + ' 行 ('+ data_array[i] +')格式錯誤\n請使用「英文 + 空格 + 符號」的格式',
-                        'error'
-                    );
+                    $.jAlert({
+                        'title': '糟糕！',
+                        'content': dataDesc + '設定第 ' + (i + 1) + ' 行「'+ data_array[i] +'」格式錯誤！<br>請使用「英文 + 空格 + 符號」的格式。',
+                        'theme': 'dark_red',
+                        'size': 'md',
+                        'blurBackground': true,
+                        'closeOnClick': true,
+                        'showAnimation': 'zoomIn',
+                        'hideAnimation': 'zoomOutDown',
+                        'btns': {'text': '關閉', 'theme': 'blue'}
+                    });
                 }
                 break;
             case "2":
                 if (data_array[i].length > 1 && data_array[i].search("=") == -1) {
                     errorState = true;
-                    swal(
-                        '糟糕',
-                        dataDesc + '設定第 ' + (i + 1) + ' 行格式錯誤\n單行不能超過一個字元，或是沒有 = 符號區隔',
-                        'error'
-                    );
+                    $.jAlert({
+                        'title': '糟糕！',
+                        'content': dataDesc + '設定第 ' + (i + 1) + ' 行格式錯誤！<br>單行不能超過一個字元，或是沒有 = 符號區隔。',
+                        'theme': 'dark_red',
+                        'size': 'md',
+                        'blurBackground': true,
+                        'closeOnClick': true,
+                        'showAnimation': 'zoomIn',
+                        'hideAnimation': 'zoomOutDown',
+                        'btns': {'text': '關閉', 'theme': 'blue'}
+                    });
                 }
                 break;
             case "3":
                 if (! /^[A-Za-z\d]+ .{1,40}$/.test(data_array[i])) {
-                    if (!data_array[i].length == 0 && i == 0)
+                    if (!(data_array.length == 1 && data_array[0].length == 0))
                     {
                         errorState = true;
-                        swal(
-                            '糟糕',
-                            dataDesc + '設定第 ' + (i + 1) + ' 行 ('+ data_array[i] +')格式錯誤\n請使用「英數 + 空格 + 字詞」的格式',
-                            'error'
-                        );
+                        if (data_array[i].length == 0) {
+                            alertContent = dataDesc + '設定第 ' + (i + 1) + ' 行為空行！<br>請去除該空行或使用「英數 + 空格 + 字詞」的格式。'
+                        }
+                        else {
+                            alertContent = dataDesc + '設定第 ' + (i + 1) + ' 行「'+ data_array[i] +'」格式錯誤！<br>請使用「英數 + 空格 + 字詞」的格式。'
+                        }
+
+                        $.jAlert({
+                            'title': '糟糕！',
+                            'content': alertContent,
+                            'theme': 'dark_red',
+                            'size': 'md',
+                            'blurBackground': true,
+                            'closeOnClick': true,
+                            'showAnimation': 'zoomIn',
+                            'hideAnimation': 'zoomOutDown',
+                            'btns': {'text': '關閉', 'theme': 'blue'}
+                        });
                     }
                 }
                 break;
@@ -318,10 +395,6 @@ function pageWait() {
 }
 
 function pageReady() {
-    $("#tabs").show();
-    $(document).tooltip();
-    $("#tabs").tabs({heightStyle:"auto"});
-
     updateCinCountElements();
 
     $("#symbols").val(symbolsData);
@@ -332,15 +405,16 @@ function pageReady() {
     $("#extendtable").val(extendtableData);
 
     if (imeFolderName == "chedayi") {
-        $("#candPerRow").spinner({min:1, max:6});
-        $("#candPerPage").spinner({min:1, max:6});
+        $("#candPerRow").TouchSpin({min:1, max:6});
+        $("#candPerPage").TouchSpin({min:1, max:6});
     }
     else {
-        $("#candPerRow").spinner({min:1, max:10});
-        $("#candPerPage").spinner({min:1, max:10});
+        $("#candPerRow").TouchSpin({min:1, max:10});
+        $("#candPerPage").TouchSpin({min:1, max:10});
     }
-    $("#candMaxItems").spinner({min:100, max:10000});
-    $("#fontSize").spinner({min:6, max:200});
+    $("#candMaxItems").TouchSpin({min:100, max:10000});
+    $("#fontSize").TouchSpin({min:6, max:200});
+
 
     var selCinType = $("#selCinType");
     for(var i = 0; i < selCins.length; ++i) {
@@ -432,11 +506,17 @@ function pageReady() {
     $("#ok").on('click', function () {
         updateConfig(); // update the config based on the state of UI elements
         saveConfig(function() {
-            swal(
-              '好耶！',
-              '設定成功儲存！',
-              'success'
-            );
+            $.jAlert({
+            'title': '好耶！',
+            'content': '設定成功儲存！',
+            'theme': 'blue',
+            'size': 'md',
+            'blurBackground': true,
+            'closeOnClick': true,
+            'showAnimation': 'zoomIn',
+            'hideAnimation': 'zoomOutDown',
+            'btns': {'text': '關閉', 'theme': 'blue'}
+            });
         });
         updateCinCountElements();
         return false;
@@ -456,7 +536,7 @@ function pageReady() {
         }
     });
 
-        // use for select example
+    // use for select example
     function updateSelExample() {
         var example = ["選", "字", "大", "小", "範", "例"];
         var html="";
@@ -544,6 +624,12 @@ function pageReady() {
     disableControlItem();
 
     // trigger event
+    $('#navbars ul li a').click(function(){ 
+        if($('.navbar-toggle').css('display') !='none') {
+            $('.navbar-toggle').click();
+        }
+    });
+
     $('#directShowCand').click(function() {
         if ($('#directShowCand')[0].checked == false && $('#compositionBufferMode')[0].checked == false) {
             $("#directCommitString")[0].disabled = false;

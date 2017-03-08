@@ -198,7 +198,7 @@ class ConfigApp(tornado.web.Application):
         handlers = [
             (r"/(.*\.html|config.js)", tornado.web.StaticFileHandler, {"path": current_ime_config_dir}),
             (r"/(.*\.htm)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "config")}),
-            (r"/((css|images|js)/.*)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "config")}),
+            (r"/((css|fonts|images|js)/.*)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "config")}),
             (r"/(icon.ico)", tornado.web.StaticFileHandler, {"path": current_ime_dir}),
             (r"/(version.txt)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "../../")}),
             (r"/config", ConfigHandler),  # main configuration handler

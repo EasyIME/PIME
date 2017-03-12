@@ -366,27 +366,57 @@ function checkDataFormat(checkData, checkType, elementId, dataDesc) {
 }
 
 
+function updateKeyboardLayout() {
+    var radios = $('input[type=radio][name=keyboardLayout]');
+    var radioval = 0;
+    for (var i=0, len=radios.length; i<len; i++) {
+        if (radios[i].checked) {
+            radioval = radios[i].value;
+            break;
+        }
+    }
+
+    if(imeFolderName == "chephonetic") {
+        switch (radioval) {
+            case "0":
+                $("#keyboard_preview").load("kblayout.htm #keyboard_chephonetic_layout0");
+                break;
+            case "1":
+                $("#keyboard_preview").load("kblayout.htm #keyboard_chephonetic_layout1");
+                break;
+            case "2":
+                $("#keyboard_preview").load("kblayout.htm #keyboard_chephonetic_layout2");
+                break;
+            case "3":
+                $("#keyboard_preview").load("kblayout.htm #keyboard_chephonetic_layout3");
+                break;
+        }
+    }
+}
+
+
 // jQuery ready
 $(function() {
     // show PIME version number
     $("#tabs").hide();
     $("#version").load(VERSION_URL);
-    $("#typing_page").load("config.htm #typing_page")
-    $("#cin_count").load("config.htm #cin_count")
-    $("#cin_options").load("config.htm #cin_options")
-    $("#extendtable_page").load("config.htm #extendtable_page")
-    $("#ui_page").load("config.htm #ui_page")
-    $("#symbols_page").load("config.htm #symbols_page")
-    $("#fs_symbols_page").load("config.htm #fs_symbols_page")
-    $("#ez_symbols_page").load("config.htm #ez_symbols_page")
-    $("#phrase_page").load("config.htm #phrase_page")
-    $("#flangs_page").load("config.htm #flangs_page")
+    $("#typing_page").load("config.htm #typing_page");
+    $("#cin_count").load("config.htm #cin_count");
+    $("#cin_options").load("config.htm #cin_options");
+    $("#extendtable_page").load("config.htm #extendtable_page");
+    $("#ui_page").load("config.htm #ui_page");
+    $("#keyboard_page").load("config.htm #keyboard_page");
+    $("#symbols_page").load("config.htm #symbols_page");
+    $("#fs_symbols_page").load("config.htm #fs_symbols_page");
+    $("#ez_symbols_page").load("config.htm #ez_symbols_page");
+    $("#phrase_page").load("config.htm #phrase_page");
+    $("#flangs_page").load("config.htm #flangs_page");
     pageWait();
 });
 
 function pageWait() {
     if (document.getElementById("flangs")) {
-        pageReady()
+        pageReady();
     }
     else
     {
@@ -453,15 +483,16 @@ function pageReady() {
     }
     selWildcardType.children().eq(checjConfig.selWildcardType).prop("selected", true);
 
-    var keyboard_page = $("#keyboard_page");
+    var keyboard_page = $("#keyboard_layout");
     for(var i = 0; i < keyboardNames.length; ++i) {
         var id = "kb" + i;
         var name = keyboardNames[i];
-        var item = '<input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '">' +
-            '<label for="' + id + '">' + name + '</label><br />';
+        var item = '<div class="col-xs-6 col-sm-6 col-md-3 col-lg-3"><input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '">' +
+            '<label for="' + id + '">' + name + '</label></div>';
         keyboard_page.append(item);
     }
     $("#kb" + checjConfig.keyboardLayout).prop("checked", true);
+    updateKeyboardLayout();
 
     if(imeFolderName == "chedayi") {
         var selDayiSymbolChars=[
@@ -667,6 +698,11 @@ function pageReady() {
         if(!isNaN(selCin))
             checjConfig.selCinType = selCin;
         disableControlItem();
+    });
+
+
+    $('input[type=radio][name=keyboardLayout]').change(function() {
+        updateKeyboardLayout();
     });
 
     if(!debugMode) {

@@ -33,8 +33,82 @@
 }
 
 
-/* input-spinner */
+/* Virtual Keyboard */
 /* ================================================================== */
-.spinner-input {
-    width: 200px;
+.vkeyboard {
+    width:800px;
+    height: 330px;
+    color: #e6e6e6;
+    background-color: #0d0d0d;
+    margin: 0px auto;
+    border-radius: 9px;
+    padding: 30px;
 }
+
+.vklogo {
+    width: 320px;
+    height: 40px;
+    font-weight: 400;
+    font-size: 30px;
+    text-align: center;
+    color: #e6e6e6;
+    background-color: #333333;
+    margin: -10px 300px 0px auto;
+    padding-top: 1px;
+    border-radius: 10px;
+}
+.vklogo:hover {box-shadow:0px 0px 10px #ffffff; z-index:1000;}
+
+.vklights {
+    float: right;
+    position: relative;
+    top: -36px;
+    right: 6px;
+}
+.vklights span {margin:0 20px 0 20px; padding:0; text-align: center;}
+.vklights span:after {
+    content:"";
+    width:10px;
+    height:10px;
+    top: 22px;
+    margin-left:-9px;
+    background-color:#99ff99;
+    position:absolute;
+    border-radius: 5px;
+}
+
+.vkey {
+    width: 36px;
+    height:36px;
+    display:block;
+    background-color:#333333;
+    line-height: 29px;
+    border-radius:2px;
+    float:left;
+    margin: 2px 2px 2px 2px;
+    padding-top:4px;
+    font-size: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: box-shadow 0.7s ease;
+}
+.vkey:hover {box-shadow:0px 0px 10px #ffffff; z-index:1000;}
+.vkeycolor {color: #ffff99 !important;}
+.vkspace1 {margin-right: 28px !important;}
+.vkspace2 {margin-right: 18px !important;}
+.vkspace3 {margin-right: 62px !important;}
+.vkwidth40 {width:40px !important;}
+.vksmallfont {font-size: 10px; line-height: 18px; padding-top:0px !important;}
+.vkdual {line-height: 18px; padding-top:0px !important;}
+.vkbackspace {width:84px;}
+.vktab {width: 56px;}
+.vkslash {width:64px;}
+.vkcaps {width:70px; font-size:10px; line-height:18px;}
+.vkenter {width:90px;}
+.vkshiftleft {width: 96px;}
+.vkshiftright {width: 104px}
+.vkctrl {width: 50px}
+.vkspace {width:226px;}
+
+
+

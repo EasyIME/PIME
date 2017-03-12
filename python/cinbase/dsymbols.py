@@ -1,5 +1,9 @@
 from __future__ import print_function
 from __future__ import unicode_literals
+import os
+import re
+import json
+
 
 class dsymbols(object):
 
@@ -7,32 +11,10 @@ class dsymbols(object):
     encoding = 'utf-8'
 
     def __init__(self, fs):
-
         self.keynames = []
         self.chardefs = {}
+        self.__dict__.update(json.load(fs))
 
-        for line in fs:
-
-            line = line.strip()
-
-            key, root = safeSplit(line)
-            key = key.strip()
-            root = root.strip()
-            
-            if len(key) <= 1:
-                for rootstr in root:
-                    try:
-                        self.chardefs[key].append(rootstr)
-                    except KeyError:
-                        self.chardefs[key] = [rootstr]
-            else:
-                try:
-                    self.chardefs[key].append(root)
-                except KeyError:
-                    self.chardefs[key] = [root]
-
-            if key not in self.keynames:
-                self.keynames.append(key)
 
     def __del__(self):
         del self.keynames
@@ -40,8 +22,10 @@ class dsymbols(object):
         self.keynames = []
         self.chardefs = {}
 
+
     def isInCharDef(self, key):
         return key in self.chardefs
+
 
     def getCharDef(self, key):
         """ 
@@ -49,27 +33,17 @@ class dsymbols(object):
         """
         return self.chardefs[key]
 
+
     def getKeyNames(self):
         return self.keynames
+
 
     def isHaveKey(self, val):
         return True if [key for key, value in self.chardefs.items() if val in value] else False
 
+
     def getKey(self, val):
         return [key for key, value in self.chardefs.items() if val in value][0]
 
-
-def safeSplit(line):
-    if '=' in line:
-        if line[:2] == '==':
-            return line[:1], line[2:]
-        else:
-            return line.split('=', 1)
-    elif ' ' in line:
-        return line.split(' ', 1)
-    elif '\t' in line:
-        return line.split('\t', 1)
-    else:
-        return line, line
 
 __all__ = ["dsymbols"]

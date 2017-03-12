@@ -46,7 +46,7 @@ CHINESE_MODE = 1
 ENGLISH_MODE = 0
 FULLSHAPE_MODE = 1
 HALFSHAPE_MODE = 0
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 # shift + space 熱鍵的 GUID
 SHIFT_SPACE_GUID = "{f1dae0fb-8091-44a7-8a0c-3082a1515447}"
@@ -73,7 +73,10 @@ class CinBase:
         self.cinbasecurdir = os.path.abspath(os.path.dirname(__file__))
         self.icondir = os.path.join(os.path.dirname(__file__), "icons")
         self.candselKeys = "1234567890"
-        self.emoji = emoji
+        
+        with io.open(os.path.join(os.path.dirname(__file__), "data", "emoji.json"), 'r', encoding='utf8') as fs:
+            self.emoji = emoji(fs)
+        
         self.emojimenulist = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
         self.imeNameList = ["checj", "chephonetic", "chearray", "chedayi", "cheez", "chepinyin", "chesimplex", "cheliu"]
         self.ReverseCinDict = {}
@@ -2987,36 +2990,36 @@ class CinBase:
 
         datadirs = (cfg.getConfigDir(), cfg.getDataDir())
         swkbPath = cfg.findFile(datadirs, "swkb.dat")
-        with io.open(swkbPath, encoding='utf-8') as fs:
+        with io.open(swkbPath, 'r', encoding='utf-8') as fs:
             cbTS.swkb = swkb(fs)
 
         symbolsPath = cfg.findFile(datadirs, "symbols.dat")
-        with io.open(symbolsPath, encoding='utf-8') as fs:
+        with io.open(symbolsPath, 'r', encoding='utf-8') as fs:
             cbTS.symbols = symbols(fs)
 
         fsymbolsPath = cfg.findFile(datadirs, "fsymbols.dat")
-        with io.open(fsymbolsPath, encoding='utf-8') as fs:
+        with io.open(fsymbolsPath, 'r', encoding='utf-8') as fs:
             cbTS.fsymbols = fsymbols(fs)
 
         flangsPath = cfg.findFile(datadirs, "flangs.dat")
-        with io.open(flangsPath, encoding='utf-8') as fs:
+        with io.open(flangsPath, 'r', encoding='utf-8') as fs:
             cbTS.flangs = flangs(fs)
 
         userphrasePath = cfg.findFile(datadirs, "userphrase.dat")
-        with io.open(userphrasePath, encoding='utf-8') as fs:
+        with io.open(userphrasePath, 'r', encoding='utf-8') as fs:
             cbTS.userphrase = userphrase(fs)
 
-        msymbolsPath = cfg.findFile(datadirs, "msymbols.dat")
-        with io.open(msymbolsPath, encoding='utf-8') as fs:
+        msymbolsPath = cfg.findFile(datadirs, "msymbols.json")
+        with io.open(msymbolsPath, 'r', encoding='utf-8') as fs:
             cbTS.msymbols = msymbols(fs)
 
         extendtablePath = cfg.findFile(datadirs, "extendtable.dat")
-        with io.open(extendtablePath, encoding='utf-8') as fs:
+        with io.open(extendtablePath, 'r', encoding='utf8') as fs:
             cbTS.extendtable = extendtable(fs)
 
         if cbTS.useDayiSymbols:
-            dsymbolsPath = cfg.findFile(datadirs, "dsymbols.dat")
-            with io.open(dsymbolsPath, encoding='utf-8') as fs:
+            dsymbolsPath = cfg.findFile(datadirs, "dsymbols.json")
+            with io.open(dsymbolsPath, 'r', encoding='utf8') as fs:
                 cbTS.dsymbols = dsymbols(fs)
 
         if not PhraseData.phrase and not PhraseData.loading:
@@ -3255,8 +3258,8 @@ class LoadPhraseData(threading.Thread):
 
         self.PhraseData.phrase = None
 
-        phrasePath = cfg.findFile(datadirs, "phrase.dat")
-        with io.open(phrasePath, encoding='utf-8') as fs:
+        phrasePath = cfg.findFile(datadirs, "phrase.json")
+        with io.open(phrasePath, 'r', encoding='utf8') as fs:
             self.PhraseData.phrase = phrase(fs)
         self.PhraseData.loading = False
 

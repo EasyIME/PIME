@@ -39,8 +39,12 @@ data_dir = os.path.join(current_dir, "data")
 json_dir = os.path.join(current_dir, "json")
 localdata_dir = os.path.join(cfg.getConfigDir())
 
-COOKIE_ID = "cinbase_config_token"
+if len(sys.argv) >= 2 and sys.argv[1] == "user_phrase_editor":
+    tool_name = "user_phrase_editor"
+else:
+    tool_name = "config"
 
+COOKIE_ID = "cinbase_config_token"
 SERVER_TIMEOUT = 120
 
 
@@ -221,6 +225,7 @@ class ConfigApp(tornado.web.Application):
         # use a local html file to send access token to our service via http POST for authentication.
         os.makedirs(localdata_dir, exist_ok=True)
         filename = os.path.join(localdata_dir, "launch_{}.html".format(tool_name))
+
         with open(filename, "w") as f:
             f.write(user_html)
             os.startfile(filename)
@@ -253,15 +258,13 @@ class ConfigApp(tornado.web.Application):
     def quit(self):
         # terminate the server process
         tornado.ioloop.IOLoop.current().close()
+        filename = os.path.join(localdata_dir, "launch_{}.html".format(tool_name))
+        os.remove(filename)
         sys.exit(0)
 
 
 def main():
     app = ConfigApp()
-    if len(sys.argv) >= 2 and sys.argv[1] == "user_phrase_editor":
-        tool_name = "user_phrase_editor"
-    else:
-        tool_name = "config"
     app.run(tool_name)
 
 

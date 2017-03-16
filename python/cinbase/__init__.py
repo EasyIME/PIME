@@ -248,10 +248,10 @@ class CinBase:
                 icon=os.path.join(self.icondir, icon_name),
                 tooltip="中英文切換",
                 commandId=ID_MODE_ICON
-
+            )
+            
             if not cbTS.KeyboardOpen:
                 cbTS.changeButton("windows-mode-icon", enable=cbTS.KeyboardOpen)
-            )
 
         # 切換全半形
         icon_name = "full.ico" if cbTS.shapeMode == FULLSHAPE_MODE else "half.ico"
@@ -2073,7 +2073,10 @@ class CinBase:
                     phrasecandidates = PhraseData.phrase.getCharDef(cbTS.lastCommitString)
                 else:
                     if not cbTS.isShowPhraseCandidates:
-                        phrasecandidates.extend(PhraseData.phrase.getCharDef(cbTS.lastCommitString))
+                        plist = PhraseData.phrase.getCharDef(cbTS.lastCommitString)
+                        for pstr in plist:
+                            if not pstr in phrasecandidates:
+                                phrasecandidates.append(pstr)
 
             if phrasecandidates:
                 candCursor = cbTS.candidateCursor  # 目前的游標位置
@@ -2760,7 +2763,10 @@ class CinBase:
             if len(sortbyphraselist) == 0:
                 sortbyphraselist = PhraseData.phrase.getCharDef(cbTS.lastCommitString)
             else:
-                sortbyphraselist.extend(PhraseData.phrase.getCharDef(cbTS.lastCommitString))
+                plist = PhraseData.phrase.getCharDef(cbTS.lastCommitString)
+                for pstr in plist:
+                    if not pstr in sortbyphraselist:
+                        sortbyphraselist.append(pstr)
 
         i = 0
         if len(sortbyphraselist) > 0:

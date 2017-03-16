@@ -23,6 +23,24 @@ class Cin(object):
         self.cincount = {}
         self.chardefs = {}
         self.privateuse = {}
+        self.dupchardefs = {}
+
+        self.charsetRange = {}
+        self.charsetRange['bopomofo'] = [int('0x3100', 16), int('0x3130', 16)]
+        self.charsetRange['bopomofoTone'] = [int('0x02D9', 16), int('0x02CA', 16), int('0x02C7', 16), int('0x02CB', 16)]
+        self.charsetRange['cjk'] = [int('0x4E00', 16), int('0x9FD6', 16)]
+        self.charsetRange['big5F'] = [int('0xA440', 16), int('0xC67F', 16)]
+        self.charsetRange['big5LF'] = [int('0xC940', 16), int('0xF9D6', 16)]
+        self.charsetRange['big5S'] = [int('0xA140', 16), int('0xA3C0', 16)]
+        self.charsetRange['cjkExtA'] = [int('0x3400', 16), int('0x4DB6', 16)]
+        self.charsetRange['cjkExtB'] = [int('0x20000', 16), int('0x2A6DF', 16)]
+        self.charsetRange['cjkExtC'] = [int('0x2A700', 16), int('0x2B73F', 16)]
+        self.charsetRange['cjkExtD'] = [int('0x2B740', 16), int('0x2B81F', 16)]
+        self.charsetRange['cjkExtE'] = [int('0x2B820', 16), int('0x2CEAF', 16)]
+        self.charsetRange['pua'] = [int('0xE000', 16), int('0xF900', 16)]
+        self.charsetRange['puaA'] = [int('0xF0000', 16), int('0xFFFFE', 16)]
+        self.charsetRange['puaB'] = [int('0x100000', 16), int('0x10FFFE', 16)]
+        self.charsetRange['cjkCIS'] = [int('0x2F800', 16), int('0x2FA20', 16)]
 
         self.__dict__.update(json.load(fs))
 
@@ -41,11 +59,13 @@ class Cin(object):
         del self.cincount
         del self.chardefs
         del self.privateuse
+        del self.dupchardefs
 
         self.keynames = {}
         self.cincount = {}
         self.chardefs = {}
         self.privateuse = {}
+        self.dupchardefs = {}
 
 
     def getEname(self):
@@ -99,13 +119,16 @@ class Cin(object):
 
     def getWildcardCharDefs(self, CompositionChar, WildcardChar, candMaxItems):
         wildcardchardefs = []
-        cjkextchardefs = {}
         matchchardefs = {}
+        lowFrequencyChardefs = {}
+        highFrequencyCharSetList = ["bopomofo", "bopomofoTone", "cjk", "big5F", "big5LF", "big5S"]
+        lowFrequencyCharSetList = ["cjkExtA", "cjkExtB", "cjkExtC", "cjkExtD", "cjkExtE", "pua", "cjkOther"]
+
         highFrequencyWordCount = 0
         lowFrequencyWordCount = 0
 
-        for i in range(11):
-            cjkextchardefs[i] = []
+        for i in range(7):
+            lowFrequencyChardefs[i] = []
 
         keyLength = len(CompositionChar)
 
@@ -116,70 +139,24 @@ class Cin(object):
                     matchstring = matchstring.replace(char, '\\' + char)
 
         matchstring = matchstring.replace(WildcardChar, '(.)')
-        matchchardefs = [self.chardefs[key] for key in sorted(self.chardefs.keys()) if re.match('^' + matchstring + '$', key) and len(key) == keyLength]
+        sortedchardefs = sorted(self.chardefs.keys())
+        matchchardefs = [self.chardefs[key] for key in sortedchardefs if re.match('^' + matchstring + '$', key) and len(key) == keyLength]
 
         if matchchardefs:
             for chardef in matchchardefs:
                 for matchstr in chardef:
-                    if re.match('[\u3100-\u312F]|[\u02D9]|[\u02CA]|[\u02C7]|[\u02CB]', matchstr): # Bopomofo 區域
-                        if not matchstr in cjkextchardefs[0]:
-                            cjkextchardefs[0].append(matchstr)
-                            highFrequencyWordCount += 1
-                    elif re.match('[\u4E00-\u9FD5]', matchstr): # CJK Unified Ideographs 區域
-                        try:
-                            big5code = matchstr.encode('big5')
-
-                            if int(big5code.hex(), 16) in range(int('0xA440', 16), int('0xC67F', 16)): # Big5 常用字
-                                if not matchstr in cjkextchardefs[1]:
-                                    cjkextchardefs[1].append(matchstr)
-                                    highFrequencyWordCount += 1
-                            elif int(big5code.hex(), 16) in range(int('0xC940', 16), int('0xF9D6', 16)): # Big5 次常用字
-                                if not matchstr in cjkextchardefs[2]:
-                                    cjkextchardefs[2].append(matchstr)
-                                    highFrequencyWordCount += 1
-                            else: # Big5 其它漢字
-                                if not matchstr in cjkextchardefs[3]:
-                                    cjkextchardefs[3].append(matchstr)
-                                    highFrequencyWordCount += 1
-                        except: # CJK Unified Ideographs 漢字
-                            if not matchstr in cjkextchardefs[4]:
-                                cjkextchardefs[4].append(matchstr)
-                                highFrequencyWordCount += 1
-                    elif re.match('[\u3400-\u4DB5]', matchstr): # CJK Unified Ideographs Extension A 區域
-                        if not matchstr in cjkextchardefs[5]:
-                            cjkextchardefs[5].append(matchstr)
-                            lowFrequencyWordCount += 1
-                    elif ord(matchstr) in range(int('0x20000', 16), int('0x2A6DF', 16)): # CJK Unified Ideographs Extension B 區域
-                        if not matchstr in cjkextchardefs[6]:
-                            cjkextchardefs[6].append(matchstr)
-                            lowFrequencyWordCount += 1
-                    elif ord(matchstr) in range(int('0x2A700', 16), int('0x2B73F', 16)): # CJK Unified Ideographs Extension C 區域
-                        if not matchstr in cjkextchardefs[7]:
-                            cjkextchardefs[7].append(matchstr)
-                            lowFrequencyWordCount += 1
-                    elif ord(matchstr) in range(int('0x2B740', 16), int('0x2B81F', 16)): # CJK Unified Ideographs Extension D 區域
-                        if not matchstr in cjkextchardefs[8]:
-                            cjkextchardefs[8].append(matchstr)
-                            lowFrequencyWordCount += 1
-                    elif ord(matchstr) in range(int('0x2B820', 16), int('0x2CEAF', 16)): # CJK Unified Ideographs Extension E 區域
-                        if not matchstr in cjkextchardefs[9]:
-                            cjkextchardefs[9].append(matchstr)
-                            lowFrequencyWordCount += 1
-                    else: # 不在 CJK Unified Ideographs 區域
-                        if not matchstr in cjkextchardefs[10]:
-                            cjkextchardefs[10].append(matchstr)
+                    charSet = self.getCharSet(matchstr)
+                    if charSet in highFrequencyCharSetList:
+                        wildcardchardefs.append(matchstr)
+                        highFrequencyWordCount += 1
+                    else:
+                        i = lowFrequencyCharSetList.index(charSet)
+                        if not matchstr in lowFrequencyChardefs[i]:
+                            lowFrequencyChardefs[i].append(matchstr)
                             lowFrequencyWordCount += 1
 
-                    if highFrequencyWordCount + lowFrequencyWordCount >= candMaxItems:
-                        for key in cjkextchardefs:
-                            for char in cjkextchardefs[key]:
-                                if not char in wildcardchardefs:
-                                    wildcardchardefs.append(char)
-                                if len(wildcardchardefs) >= candMaxItems:
-                                    return wildcardchardefs
-
-            for key in cjkextchardefs:
-                for char in cjkextchardefs[key]:
+            for key in lowFrequencyChardefs:
+                for char in lowFrequencyChardefs[key]:
                     if not char in wildcardchardefs:
                         wildcardchardefs.append(char)
                     if len(wildcardchardefs) >= candMaxItems:
@@ -246,6 +223,50 @@ class Cin(object):
 
     def getCountFile(self, name="cincount.json"):
         return os.path.join(self.getCountDir(), name)
+
+
+    def getCharSet(self, root):
+        matchstr = root
+        matchint = ord(matchstr)
+
+        if matchint <= self.charsetRange['cjk'][1]:
+            if (matchint in range(self.charsetRange['bopomofo'][0], self.charsetRange['bopomofo'][1]) or # Bopomofo 區域
+                matchint in self.charsetRange['bopomofoTone']): 
+                return "bopomofo"
+            elif matchint in range(self.charsetRange['cjk'][0], self.charsetRange['cjk'][1]): # CJK Unified Ideographs 區域
+                try:
+                    big5code = matchstr.encode('big5')
+                    big5codeint = int(big5code.hex(), 16)
+
+                    if big5codeint in range(self.charsetRange['big5F'][0], self.charsetRange['big5F'][1]): # Big5 常用字
+                        return "big5F"
+                    elif big5codeint in range(self.charsetRange['big5LF'][0], self.charsetRange['big5LF'][1]): # Big5 次常用字
+                        return "big5LF"
+                    elif big5codeint in range(self.charsetRange['big5S'][0], self.charsetRange['big5S'][1]): # Big5 符號
+                        return "big5LF"
+                    else: # Big5 其它漢字
+                        return "big5Other"
+                except: # CJK Unified Ideographs 漢字
+                    return "cjk"
+            elif matchint in range(self.charsetRange['cjkExtA'][0], self.charsetRange['cjkExtA'][1]): # CJK Unified Ideographs Extension A 區域
+                return "cjkExtA"
+        else:
+            if matchint in range(self.charsetRange['cjkExtB'][0], self.charsetRange['cjkExtB'][1]): # CJK Unified Ideographs Extension B 區域
+                return "cjkExtB"
+            elif matchint in range(self.charsetRange['cjkExtC'][0], self.charsetRange['cjkExtC'][1]): # CJK Unified Ideographs Extension C 區域
+                return "cjkExtC"
+            elif matchint in range(self.charsetRange['cjkExtD'][0], self.charsetRange['cjkExtD'][1]): # CJK Unified Ideographs Extension D 區域
+                return "cjkExtD"
+            elif matchint in range(self.charsetRange['cjkExtE'][0], self.charsetRange['cjkExtE'][1]): # CJK Unified Ideographs Extension E 區域
+                return "cjkExtE"
+            elif (matchint in range(self.charsetRange['pua'][0], self.charsetRange['pua'][1]) or # Unicode Private Use 區域
+                matchint in range(self.charsetRange['puaA'][0], self.charsetRange['puaA'][1]) or
+                matchint in range(self.charsetRange['puaB'][0], self.charsetRange['puaB'][1])):
+                return "pua"
+            elif matchint in range(self.charsetRange['cjkCIS'][0], self.charsetRange['cjkCIS'][1]): # cjk compatibility ideographs supplement 區域
+                return "pua"
+        # 不在 CJK Unified Ideographs 區域
+        return "cjkOther"
 
 
 __all__ = ["Cin"]

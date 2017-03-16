@@ -43,6 +43,7 @@ class CinToJson(object):
         self.selkey = ""
         self.keynames = {}
         self.chardefs = {}
+        self.dupchardefs = {}
 
         self.bopomofo = {}
         self.big5F = {}
@@ -95,13 +96,14 @@ class CinToJson(object):
         self.charsetRange['cjkCIS'] = [int('0x2F800', 16), int('0x2FA20', 16)]
 
         self.haveHashtagInKeynames = ["ez.cin", "ezsmall.cin", "ezmid.cin", "ezbig.cin"]
-        self.saveList = ["ename", "cname", "selkey", "keynames", "cincount", "chardefs", "privateuse"]
+        self.saveList = ["ename", "cname", "selkey", "keynames", "cincount", "chardefs", "dupchardefs", "privateuse"]
         self.curdir = os.path.abspath(os.path.dirname(__file__))
 
 
     def __del__(self):
         del self.keynames
         del self.chardefs
+        del self.dupchardefs
         del self.bopomofo
         del self.big5F
         del self.big5LF
@@ -120,6 +122,7 @@ class CinToJson(object):
 
         self.keynames = {}
         self.chardefs = {}
+        self.dupchardefs = {}
         self.bopomofo = {}
         self.big5F = {}
         self.big5LF = {}
@@ -219,11 +222,25 @@ class CinToJson(object):
                     charset = self.getCharSet(key, root)
 
                     if not self.sortByCharset:
-                        try:
-                            self.chardefs[key].append(root)
-                        except KeyError:
-                            self.chardefs[key] = [root]
-                        self.cincount['totalchardefs'] += 1
+                        if key in  self.chardefs:
+                            if root in self.chardefs[key]:
+                                print("含有重複資料: " + key + " = " + root)
+                                try:
+                                    self.dupchardefs[key].append(root)
+                                except KeyError:
+                                    self.dupchardefs[key] = [root]
+                            else:
+                                try:
+                                    self.chardefs[key].append(root)
+                                except KeyError:
+                                    self.chardefs[key] = [root]
+                                self.cincount['totalchardefs'] += 1
+                        else:
+                            try:
+                                self.chardefs[key].append(root)
+                            except KeyError:
+                                self.chardefs[key] = [root]
+                            self.cincount['totalchardefs'] += 1
 
         if self.sortByCharset:
             print("排序字元集!")
@@ -235,11 +252,25 @@ class CinToJson(object):
         for chardefsdict in chardefsdicts:
             for key in chardefsdict:
                 for root in chardefsdict[key]:
-                    try:
-                        self.chardefs[key].append(root)
-                    except KeyError:
-                        self.chardefs[key] = [root]
-                    self.cincount['totalchardefs'] += 1
+                    if key in  self.chardefs:
+                        if root in self.chardefs[key]:
+                            print("含有重複資料: " + key + " = " + root)
+                            try:
+                                self.dupchardefs[key].append(root)
+                            except KeyError:
+                                self.dupchardefs[key] = [root]
+                        else:
+                            try:
+                                self.chardefs[key].append(root)
+                            except KeyError:
+                                self.chardefs[key] = [root]
+                            self.cincount['totalchardefs'] += 1
+                    else:
+                        try:
+                            self.chardefs[key].append(root)
+                        except KeyError:
+                            self.chardefs[key] = [root]
+                        self.cincount['totalchardefs'] += 1
 
 
     def toJson(self):

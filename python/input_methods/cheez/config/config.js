@@ -19,7 +19,8 @@ var disableConfigItem = {
     103: ["directOutFSymbols", false],
     104: ["easySymbolsWithShift", false],
     105: ["homophoneQuery", false],
-    106: ["selHCinType", false]
+    106: ["selHCinType", false],
+    107: ["selWildcardType", null]
 };
 
 

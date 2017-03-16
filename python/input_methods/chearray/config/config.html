@@ -25,40 +25,22 @@
         <script type="text/javascript" src="config.js"></script>
     </head>
     <body>
-    <nav class="nav navbar-inverse">
-        <div class="container">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbars">
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span> 
-                </button>
-                <a class="navbar-brand">
-                <img style="max-width:40px; margin-top: -10px;" src="icon.ico">
-                </a>
-            </div>
-            <div id="navbars" class="collapse navbar-collapse">
-                <ul class="nav navbar-nav">
-                    <li class="active"><a data-toggle="tab" href="#typing_page">打字行為</a></li>
-                    <li><a data-toggle="tab" href="#cin_page">輸入法碼表</a></li>
-                    <li><a data-toggle="tab" href="#extendtable_page">擴展碼表</a></li>
-                    <li><a data-toggle="tab" href="#ui_page">介面外觀</a></li>
-                    <!-- <li><a href="#keyboard_page">鍵盤設定</a></li> -->
-                    <li><a data-toggle="tab" href="#symbols_page">特殊符號</a></li>
-                    <li><a data-toggle="tab" href="#fs_symbols_page">全形標點</a></li>
-                    <li><a data-toggle="tab" href="#ez_symbols_page">簡易符號</a></li>
-                    <li><a data-toggle="tab" href="#phrase_page">聯想字詞</a></li>
-                    <li><a data-toggle="tab" href="#flangs_page">外語文字</a></li>
-                    <li><a data-toggle="tab" href="#help_page">說明</a></li>
-                    <li><a data-toggle="tab" href="#about_page">關於</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+
+    <div id="navbar_top">
+    </div>
 
     <div class="container">
         <div class="tab-content" style="margin-top: 20px;">
             <div id="typing_page" class="tab-pane fade in active">
+            </div>
+
+            <div id="intelligent_page" class="tab-pane fade">
+            </div>
+
+            <div id="ui_page" class="tab-pane fade">
+            </div>
+
+            <div id="keyboard_page" class="tab-pane fade">
             </div>
 
             <div id="cin_page" class="tab-pane fade">
@@ -92,13 +74,6 @@
             </div>
 
             <div id="extendtable_page" class="tab-pane fade">
-            </div>
-
-            <div id="ui_page" class="tab-pane fade">
-            </div>
-
-            <div id="keyboard_page" class="tab-pane fade">
-            <!-- keyboard layouts inserted here by javascript -->
             </div>
 
             <div id="symbols_page" class="tab-pane fade">
@@ -145,21 +120,8 @@
         </div>
     </div>
 
-    <nav class="nav navbar-inverse navbar-fixed-bottom">
-        <div class="container">
-            <div class="nav navbar-nav navbar-center">
-                <button id="ok" type="button" class="btn btn-default btn-lg navbar-btn"><span class="glyphicon glyphicon-floppy-saved"></span> 套用設定</button>
-            </div>
-        </div>
-    </nav>
-
-    <nav class="nav navbar-inverse spacerToFooter">
-        <div class="container">
-            <div class="nav navbar-nav navbar-center">
-                <button type="button" class="btn btn-default btn-lg navbar-btn"><span class="glyphicon glyphicon-floppy-saved"></span> 套用設定</button>
-            </div>
-        </div>
-    </nav>
+    <div id="navbar_bottom">
+    </div>
 
     </body>
 </html>

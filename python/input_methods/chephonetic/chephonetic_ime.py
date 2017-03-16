@@ -54,6 +54,7 @@ class ChePhoneticTextService(TextService):
         self.jsondir = self.cfg.getJsonDir()
         self.cindir = self.cfg.getCinDir()
         self.ignorePrivateUseArea = self.cfg.ignorePrivateUseArea
+        self.cinbase.initCinBaseContext(self)
 
         self.keyboardLayout = self.cfg.keyboardLayout
         self.kbtypelist = [
@@ -105,7 +106,6 @@ class ChePhoneticTextService(TextService):
     # 輸入法被使用者啟用
     def onActivate(self):
         TextService.onActivate(self)
-        self.cinbase.initCinBaseContext(self)
         self.cinbase.onActivate(self)
 
 

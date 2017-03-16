@@ -259,7 +259,8 @@ class ConfigApp(tornado.web.Application):
         # terminate the server process
         tornado.ioloop.IOLoop.current().close()
         filename = os.path.join(localdata_dir, "launch_{}.html".format(tool_name))
-        os.remove(filename)
+        if os.path.exists(filename):
+            os.remove(filename)
         sys.exit(0)
 
 

@@ -122,7 +122,6 @@ if (!Date.now) {
         return new Date().valueOf();
     }
 }
-loadConfig();
 
 function loadConfig() {
     $.get(CONFIG_URL, function(data, status) {
@@ -136,7 +135,7 @@ function loadConfig() {
         extendtableData = data.extendtable;
     }, "json");
 }
-
+loadConfig();
 
 function saveConfig(callbackFunc) {
     var checkState = true
@@ -400,22 +399,25 @@ $(function() {
     // show PIME version number
     $("#tabs").hide();
     $("#version").load(VERSION_URL);
+    $("#navbar_top").load("config.htm #navbar_top");
     $("#typing_page").load("config.htm #typing_page");
+    $("#intelligent_page").load("config.htm #intelligent_page");
+    $("#ui_page").load("config.htm #ui_page");
+    $("#keyboard_page").load("config.htm #keyboard_page");
     $("#cin_count").load("config.htm #cin_count");
     $("#cin_options").load("config.htm #cin_options");
     $("#extendtable_page").load("config.htm #extendtable_page");
-    $("#ui_page").load("config.htm #ui_page");
-    $("#keyboard_page").load("config.htm #keyboard_page");
     $("#symbols_page").load("config.htm #symbols_page");
     $("#fs_symbols_page").load("config.htm #fs_symbols_page");
     $("#ez_symbols_page").load("config.htm #ez_symbols_page");
     $("#phrase_page").load("config.htm #phrase_page");
     $("#flangs_page").load("config.htm #flangs_page");
+    $("#navbar_bottom").load("config.htm #navbar_bottom");
     pageWait();
 });
 
 function pageWait() {
-    if (document.getElementById("flangs")) {
+    if (document.getElementById("ok")) {
         pageReady();
     }
     else
@@ -426,6 +428,7 @@ function pageWait() {
 
 function pageReady() {
     updateCinCountElements();
+    $('[data-toggle="popover"]').popover()
 
     $("#symbols").val(symbolsData);
     $("#ez_symbols").val(swkbData);
@@ -482,6 +485,11 @@ function pageReady() {
         selWildcardType.append(item);
     }
     selWildcardType.children().eq(checjConfig.selWildcardType).prop("selected", true);
+
+    var keyboard_ddmenu = $("#keyboard_ddmenu");
+    if(imeFolderName == "chephonetic") {
+        keyboard_ddmenu.show();
+    }
 
     var keyboard_page = $("#keyboard_layout");
     for(var i = 0; i < keyboardNames.length; ++i) {
@@ -650,13 +658,17 @@ function pageReady() {
         } else {
             $("#directOutFSymbols")[0].disabled = false;
         }
+
+        if ($('#supportWildcard')[0].disabled == true) {
+            $("#selWildcardType").val(1);
+        }
     }
 
     disableControlItem();
 
     // trigger event
-    $('#navbars ul li a').click(function(){ 
-        if($('.navbar-toggle').css('display') !='none') {
+    $('#navbars ul li a').click(function(){
+        if($('.navbar-toggle').css('display') != 'none' && $(this).attr('href') != '#') {
             $('.navbar-toggle').click();
         }
     });
@@ -710,7 +722,10 @@ function pageReady() {
         $("#autoMoveCursorInBrackets")[0].disabled = true;
         $("#compositionBufferMode")[0].checked = false;
         $("#autoMoveCursorInBrackets")[0].checked = false;
+    } else {
+        $('#intelligent_ddmenu').show();
     }
+
 
     // keep the server alive every 20 second
     setInterval(function () {

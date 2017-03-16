@@ -21,6 +21,29 @@
     color: blue;
 }
 
+.subOption {
+    list-style: none;
+    margin-left: -24px;
+}
+
+.pointerCursor  {
+    cursor: pointer;
+}
+
+
+/* Bootstrap */
+/* ================================================================== */
+.navbar-brand {
+    padding: 8px;
+}
+.navbar-brand>img {
+    height: 100%;
+    width: auto;
+    -webkit-box-shadow: 0 3px 5px 3px rgba(0,0,0,0.75);
+    -moz-box-shadow: 0 3px 5px 3px rgba(0,0,0,0.75);
+    box-shadow: 0 3px 5px 3px rgba(0,0,0,0.75);
+}
+
 .navbar-center {
     width: 100%;
     text-align: center;
@@ -28,8 +51,18 @@
     display: inline-block;
 }
 
-.spacerToFooter {
+.navbar-hidden {
     visibility: hidden;
+}
+
+.glyphicon-size18 {
+    top: 4px; 
+    font-size: 18px;
+}
+
+.popover {
+    width:auto!important;
+    max-width: none
 }
 
 
@@ -93,6 +126,7 @@
     transition: box-shadow 0.7s ease;
 }
 .vkey:hover {box-shadow:0px 0px 10px #ffffff; z-index:1000;}
+
 .vkeycolor {color: #ffff99 !important;}
 .vkspace1 {margin-right: 28px !important;}
 .vkspace2 {margin-right: 18px !important;}
@@ -109,6 +143,3 @@
 .vkshiftright {width: 104px}
 .vkctrl {width: 50px}
 .vkspace {width:226px;}
-
-
-

@@ -13,7 +13,8 @@ var keyboardNames = [];
 
 // 此輸入法模組在特定碼表須停用的設定項目 (從 0 開始, 100 之後代表全部碼表)
 var disableConfigItem = {
-    101: ["directShowCand", false]
+    101: ["directShowCand", false],
+    102: ["selWildcardType", null]
 };
 
 

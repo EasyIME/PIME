@@ -56,6 +56,7 @@ class CheDayiTextService(TextService):
         self.jsondir = self.cfg.getJsonDir()
         self.cindir = self.cfg.getCinDir()
         self.ignorePrivateUseArea = self.cfg.ignorePrivateUseArea
+        self.cinbase.initCinBaseContext(self)
 
         # 載入輸入法碼表
         if not CinTable.curCinType == self.cfg.selCinType and not CinTable.loading:
@@ -75,7 +76,6 @@ class CheDayiTextService(TextService):
     # 輸入法被使用者啟用
     def onActivate(self):
         TextService.onActivate(self)
-        self.cinbase.initCinBaseContext(self)
         self.cinbase.onActivate(self)
 
 

@@ -248,6 +248,9 @@ class CinBase:
                 icon=os.path.join(self.icondir, icon_name),
                 tooltip="中英文切換",
                 commandId=ID_MODE_ICON
+
+            if not cbTS.KeyboardOpen:
+                cbTS.changeButton("windows-mode-icon", enable=cbTS.KeyboardOpen)
             )
 
         # 切換全半形

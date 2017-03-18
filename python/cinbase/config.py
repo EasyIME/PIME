@@ -37,6 +37,7 @@ class CinBaseConfig:
         self.outputSmallLetterWithShift = False
         self.switchPageWithSpace = False
         self.outputSimpChinese = False
+        self.messageDurationTime = 3
         self.hidePromptMessages = True
         self.autoClearCompositionChar = False
         self.playSoundWhenNonCand = False
@@ -124,7 +125,7 @@ class CinBaseConfig:
         try:
             with open(filename, "w") as f:
                 jsondata = {key: value for key, value in self.__dict__.items() if not key in self.ignoreSaveList}
-                js = json.dump(jsondata, f, indent=4)
+                js = json.dump(jsondata, f, sort_keys=True, indent=4)
             self.update()
         except Exception:
             pass # FIXME: handle I/O errors?

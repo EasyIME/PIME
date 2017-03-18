@@ -448,6 +448,20 @@ function pageReady() {
     $("#candMaxItems").TouchSpin({min:100, max:10000});
     $("#fontSize").TouchSpin({min:6, max:200});
 
+    var selMessageTimes=[
+        "２　",
+        "３　",
+        "４　",
+        "５　",
+        "６　"
+    ];
+    var messageDurationTime = $("#messageDurationTime");
+    for(var i = 0; i < selMessageTimes.length; ++i) {
+        var selMessageTime = selMessageTimes[i];
+        var item = '<option value="' + i + '">' + selMessageTime + '</option>';
+        messageDurationTime.append(item);
+    }
+    messageDurationTime.children().eq(checjConfig.messageDurationTime).prop("selected", true);
 
     var selCinType = $("#selCinType");
     for(var i = 0; i < selCins.length; ++i) {
@@ -659,7 +673,7 @@ function pageReady() {
             $("#directOutFSymbols")[0].disabled = false;
         }
 
-        if ($('#supportWildcard')[0].disabled == true) {
+        if ($('#selWildcardType')[0].disabled == true) {
             $("#selWildcardType").val(1);
         }
     }

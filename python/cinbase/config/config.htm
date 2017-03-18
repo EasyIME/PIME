@@ -107,9 +107,6 @@
                             <input type="checkbox" id="switchLangWithShift" name="switchLangWithShift" />
                             <label for="switchLangWithShift">使用 Shift 快速切換中英文</label><br />
 
-                            <input type="checkbox" id="hidePromptMessages" name="hidePromptMessages" />
-                            <label for="hidePromptMessages">隱藏不必要的提示訊息</label><br />
-
                             <input type="checkbox" id="autoClearCompositionChar" name="autoClearCompositionChar" />
                             <label for="autoClearCompositionChar">拆錯字碼時自動清除輸入字串</label><br />
 
@@ -174,6 +171,12 @@
                             <h3 class="panel-title">其它設定</h3>
                         </div>
                         <div class="panel-body">
+                            <label>提示訊息顯示時間: </label>
+                            <select name="messageDurationTime" id="messageDurationTime"></select><br />
+
+                            <input type="checkbox" id="hidePromptMessages" name="hidePromptMessages" />
+                            <label for="hidePromptMessages">隱藏不必要的提示訊息</label><br />
+
                             <input type="checkbox" id="supportWildcard" name="supportWildcard" />
                             <label for="supportWildcard">萬用字元查詢, 按鍵: </label>
                             <select name="selWildcardType" id="selWildcardType"></select>

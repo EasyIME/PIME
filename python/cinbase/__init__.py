@@ -126,6 +126,7 @@ class CinBase:
         cbTS.reLoadTable = False
         cbTS.priorityExtendTable = False
         cbTS.rcinFileList = []
+        cbTS.messageDurationTime = 3
 
         cbTS.selDayiSymbolCharType = 0
         cbTS.lastKeyDownCode = 0
@@ -193,7 +194,6 @@ class CinBase:
         cbTS.isHomophoneChardefs = False
         cbTS.homophonecandidates = []
 
-        cbTS.messageDurationTime = 3
         cbTS.showMessageOnKeyUp = False
         cbTS.hideMessageOnKeyUp = False
         cbTS.onKeyUpMessage = ""
@@ -2026,10 +2026,10 @@ class CinBase:
                                         self.resetComposition(cbTS)
                                     else:
                                         cbTS.isShowMessage = True
-                                        cbTS.showMessage("請輸入 Unicode 編碼...", 3)
+                                        cbTS.showMessage("請輸入 Unicode 編碼...", cbTS.messageDurationTime)
                         else:
                             cbTS.isShowMessage = True
-                            cbTS.showMessage("查無組字...", 3)
+                            cbTS.showMessage("查無組字...", cbTS.messageDurationTime)
                             if cbTS.autoClearCompositionChar:
                                 if cbTS.compositionBufferMode:
                                     RemoveStringLength = 0
@@ -3080,6 +3080,9 @@ class CinBase:
         # Shift 快速輸入符號?
         cbTS.easySymbolsWithShift = cfg.easySymbolsWithShift
 
+        # 提示訊息顯示時間?
+        cbTS.messageDurationTime = cfg.messageDurationTime + 2
+
         # 隱藏提示訊息?
         cbTS.hidePromptMessages = cfg.hidePromptMessages
 
@@ -3231,12 +3234,11 @@ class CinBase:
         cfg = cbTS.cfg
         cbTS.rcinFileList = []
         for imeName in self.imeNameList:
-            if not cbTS.imeDirName == imeName:
-                filelist = self.ReverseCinDict[imeName]
-                for filename in filelist:
-                    filepath = os.path.join(cbTS.jsondir, filename)
-                    if os.path.isfile(filepath):
-                        cbTS.rcinFileList.append(filename)
+            filelist = self.ReverseCinDict[imeName]
+            for filename in filelist:
+                filepath = os.path.join(cbTS.jsondir, filename)
+                if os.path.exists(filepath):
+                    cbTS.rcinFileList.append(filename)
         if not cfg.rcinFileList == cbTS.rcinFileList:
             cfg.rcinFileList = cbTS.rcinFileList
             cfg.save()

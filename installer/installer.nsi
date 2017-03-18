@@ -571,7 +571,9 @@ Section "" Register
 	WriteUninstaller "$INSTDIR\Uninstall.exe" ;Create uninstaller
 
 	; Compile all installed python modules to *.pyc files
-	nsExec::ExecToLog  '"$INSTDIR\python\python3\python.exe" -m compileall "$INSTDIR\python"'
+	${If} $INST_PYTHON == "True"
+		nsExec::ExecToLog  '"$INSTDIR\python\python3\python.exe" -m compileall "$INSTDIR\python"'
+	${EndIf}
 
 	; Launch the python server as current user (non-elevated process)
 	${StdUtils.ExecShellAsUser} $0 "$INSTDIR\PIMELauncher.exe" "open" ""

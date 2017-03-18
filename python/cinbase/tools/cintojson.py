@@ -224,7 +224,7 @@ class CinToJson(object):
                     if not self.sortByCharset:
                         if key in  self.chardefs:
                             if root in self.chardefs[key]:
-                                print("含有重複資料: " + key + " = " + root)
+                                print("含有重複資料: " + key)
                                 try:
                                     self.dupchardefs[key].append(root)
                                 except KeyError:

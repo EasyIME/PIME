@@ -661,6 +661,13 @@ function pageReady() {
             $("#directCommitString")[0].checked = false;
             $("#directCommitString")[0].disabled = true;
         }
+        
+        if ($('#directCommitString')[0].checked == false) {
+            $("#showPhrase")[0].disabled = false;
+        } else {
+            $("#showPhrase")[0].checked = false;
+            $("#showPhrase")[0].disabled = true;
+        }
 
         if ($('#compositionBufferMode')[0].checked == false) {
             $("#autoMoveCursorInBrackets")[0].disabled = true;
@@ -694,6 +701,16 @@ function pageReady() {
         } else {
             $("#directCommitString")[0].checked = false;
             $("#directCommitString")[0].disabled = true;
+            $("#showPhrase")[0].disabled = false;
+        }
+    });
+
+    $('#directCommitString').click(function() {
+        if ($('#directCommitString')[0].checked == false) {
+            $("#showPhrase")[0].disabled = false;
+        } else {
+            $("#showPhrase")[0].checked = false;
+            $("#showPhrase")[0].disabled = true;
         }
     });
 

@@ -449,11 +449,12 @@ function pageReady() {
     $("#fontSize").TouchSpin({min:6, max:200});
 
     var selMessageTimes=[
+        "０　",
+        "１　",
         "２　",
         "３　",
         "４　",
-        "５　",
-        "６　"
+        "５　"
     ];
     var messageDurationTime = $("#messageDurationTime");
     for(var i = 0; i < selMessageTimes.length; ++i) {

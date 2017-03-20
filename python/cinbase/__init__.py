@@ -3081,7 +3081,7 @@ class CinBase:
         cbTS.easySymbolsWithShift = cfg.easySymbolsWithShift
 
         # 提示訊息顯示時間?
-        cbTS.messageDurationTime = cfg.messageDurationTime + 2
+        cbTS.messageDurationTime = cfg.messageDurationTime
 
         # 隱藏提示訊息?
         cbTS.hidePromptMessages = cfg.hidePromptMessages

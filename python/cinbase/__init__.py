@@ -107,7 +107,6 @@ class CinBase:
         cbTS.autoClearCompositionChar = False
         cbTS.playSoundWhenNonCand = False
         cbTS.directShowCand = False
-        cbTS.directCommitString = False
         cbTS.directCommitSymbol = False
         cbTS.directCommitSymbolList = ["，", "。", "、", "；", "？", "！"]
         cbTS.bracketSymbolList = ["「」", "『』", "［］", "【】", "〖〗", "〔〕", "﹝﹞", "（）", "﹙﹚", "〈〉", "《》", "＜＞", "﹤﹥", "｛｝", "﹛﹜"]
@@ -134,7 +133,6 @@ class CinBase:
 
         cbTS.menucandidates = []
         cbTS.smenucandidates = []
-        cbTS.directcommitcandidates = []
         cbTS.wildcardcandidates = []
         cbTS.wildcardpagecandidates = []
         cbTS.wildcardcompositionChar = ""
@@ -1247,36 +1245,17 @@ class CinBase:
                                         cbTS.setCompositionCursor(len(cbTS.compositionString))
                         else:
                             if not cbTS.menusymbolsmode:
-                                if cbTS.directCommitString and cbTS.isShowCandidates and cbTS.directcommitcandidates:
-                                    commitStr = cbTS.directcommitcandidates[0]
-                                    cbTS.lastCommitString = commitStr
-                                    if cbTS.supportWildcard and cbTS.selWildcardChar in cbTS.compositionChar:
-                                        cbTS.isWildcardChardefs = True
-                                    self.setOutputString(cbTS, RCinTable, commitStr)
-                                    cbTS.directcommitcandidates = []
-                                    self.resetComposition(cbTS)
+                                cbTS.compositionChar += charStrLow
+                                keyname = cbTS.cin.getKeyName(charStrLow)
 
-                                    cbTS.compositionChar = charStrLow
-                                    keyname = cbTS.cin.getKeyName(charStrLow)
-
-                                    if cbTS.compositionBufferMode:
+                                if cbTS.compositionBufferMode:
+                                    if (len(cbTS.compositionChar) <= cbTS.maxCharLength):
                                         self.setCompositionBufferString(cbTS, keyname, 0)
                                     else:
-                                        cbTS.keepComposition = True
-                                        cbTS.setCompositionString(cbTS.compositionString + keyname)
-                                        cbTS.setCompositionCursor(len(cbTS.compositionString))
+                                        cbTS.compositionChar = cbTS.compositionChar[:-1]
                                 else:
-                                    cbTS.compositionChar += charStrLow
-                                    keyname = cbTS.cin.getKeyName(charStrLow)
-
-                                    if cbTS.compositionBufferMode:
-                                        if (len(cbTS.compositionChar) <= cbTS.maxCharLength):
-                                            self.setCompositionBufferString(cbTS, keyname, 0)
-                                        else:
-                                            cbTS.compositionChar = cbTS.compositionChar[:-1]
-                                    else:
-                                        cbTS.setCompositionString(cbTS.compositionString + keyname)
-                                        cbTS.setCompositionCursor(len(cbTS.compositionString))
+                                    cbTS.setCompositionString(cbTS.compositionString + keyname)
+                                    cbTS.setCompositionCursor(len(cbTS.compositionString))
                             else:
                                 cbTS.menusymbolsmode = False
         # 按下的鍵不存在於 CIN 所定義的字根
@@ -1819,9 +1798,6 @@ class CinBase:
                     else:
                         pagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
                     cbTS.setCandidateList(pagecandidates[currentCandPage])
-
-                    if cbTS.directCommitString:
-                        cbTS.directcommitcandidates = pagecandidates[currentCandPage]
 
                     if not cbTS.isSelKeysChanged:
                         cbTS.setShowCandidates(True)
@@ -3081,9 +3057,6 @@ class CinBase:
 
         # 直接顯示候選字清單 (不須按空白鍵)?
         cbTS.directShowCand = cfg.directShowCand
-
-        # 直接輸出候選字 (當候選字僅有一個)?
-        cbTS.directCommitString = cfg.directCommitString
 
         # 標點符號自動確認輸入?
         cbTS.directCommitSymbol = cfg.directCommitSymbol

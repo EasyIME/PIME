@@ -302,6 +302,10 @@ class CinBase:
     # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
     # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
     def filterKeyDown(self, cbTS, keyEvent, CinTable, RCinTable, HCinTable):
+        charCode = keyEvent.charCode
+        charStr = chr(charCode)
+        charStrLow = charStr.lower()
+        
         # 紀錄最後一次按下的鍵和按下的時間，在 filterKeyUp() 中要用
         cbTS.lastKeyDownCode = keyEvent.keyCode
         if cbTS.lastKeyDownTime == 0.0:
@@ -371,6 +375,7 @@ class CinBase:
                     cbTS.hideMessageOnKeyUp = True
                 return False
 
+        
         # --------------   以下皆為半形模式   --------------
 
         # 如果是英文半形模式，輸入法不做任何處理
@@ -378,7 +383,12 @@ class CinBase:
             if cbTS.isShowMessage and not keyEvent.isKeyDown(VK_SHIFT):
                 cbTS.hideMessageOnKeyUp = True
             return False
+        
+        
         # --------------   以下皆為中文模式   --------------
+        if cbTS.imeDirName == "chepinyin":
+            if len(cbTS.compositionChar) == 0 and charStr in cbTS.endKeyList:
+                return False
 
         # 中文模式下，當中文編輯區是空的，輸入法只需處理倉頡字根
         # 檢查按下的鍵是否為倉頡字根
@@ -1436,7 +1446,7 @@ class CinBase:
                     candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
                 if cbTS.compositionBufferMode and not cbTS.selcandmode:
                     cbTS.compositionBufferType = "default"
-            elif cbTS.imeDirName == "chepinyin" and cbTS.cinFileList[cbTS.cfg.selCinType] == "thpinyin.cin" and not cbTS.ctrlsymbolsmode:
+            elif cbTS.imeDirName == "chepinyin" and cbTS.cinFileList[cbTS.cfg.selCinType] == "thpinyin.json" and not cbTS.ctrlsymbolsmode:
                 if cbTS.cin.isInCharDef(cbTS.compositionChar + "1") and cbTS.closemenu and not cbTS.ctrlsymbolsmode:
                     candidates = cbTS.cin.getCharDef(cbTS.compositionChar + '1')
                     if cbTS.sortByPhrase and candidates:
@@ -1466,7 +1476,7 @@ class CinBase:
                     cbTS.setCandidateCursor(0)
                     cbTS.setCandidatePage(0)
                     cbTS.wildcardcandidates = cbTS.cin.getWildcardCharDefs(cbTS.compositionChar, cbTS.selWildcardChar, cbTS.candMaxItems)
-                    if cbTS.imeDirName == "chepinyin" and cbTS.cinFileList[cbTS.cfg.selCinType] == "thpinyin.cin":
+                    if cbTS.imeDirName == "chepinyin" and cbTS.cinFileList[cbTS.cfg.selCinType] == "thpinyin.json":
                         if not cbTS.wildcardcandidates:
                             cbTS.wildcardcandidates = cbTS.cin.getWildcardCharDefs(cbTS.compositionChar + "1", cbTS.selWildcardChar, cbTS.candMaxItems)
                     cbTS.wildcardpagecandidates = []
@@ -1665,7 +1675,7 @@ class CinBase:
                     if not cbTS.directShowCand:
                         # EndKey 處理 (拼音、注音)
                         if cbTS.useEndKey:
-                            if charStr in cbTS.endKeyList:
+                            if charStr in cbTS.endKeyList and len(cbTS.compositionChar) > 1:
                                 if not cbTS.isShowCandidates:
                                     if cbTS.compositionBufferMode:
                                         commitStr = candidates[0]

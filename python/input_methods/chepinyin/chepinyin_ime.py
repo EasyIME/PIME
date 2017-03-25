@@ -69,6 +69,13 @@ class ChePinyinTextService(TextService):
     # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):
         self.cinbase.checkConfigChange(self, CinTable, RCinTable, HCinTable)
+        
+        if self.cfg.selCinType == 0 or self.cfg.selCinType == 1 or self.cfg.selCinType == 2:
+            if not self.useEndKey or not self.endKeyList:
+                self.endKeyList = ["1", "2", "3", "4", "5"]
+                self.useEndKey = True
+        else:
+            self.useEndKey = False
 
 
     # 輸入法被使用者啟用
@@ -92,10 +99,6 @@ class ChePinyinTextService(TextService):
 
 
     def onKeyDown(self, keyEvent):
-        if self.cfg.selCinType == 0 or self.cfg.selCinType == 1 or self.cfg.selCinType == 2:
-            self.endKeyList = ["1", "2", "3", "4", "5"]
-            self.useEndKey = True
-
         KeyState = self.cinbase.onKeyDown(self, keyEvent, CinTable, RCinTable, HCinTable)
         return KeyState
 

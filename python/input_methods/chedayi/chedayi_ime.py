@@ -105,7 +105,7 @@ class CheDayiTextService(TextService):
 
         # 大易符號 ---------------------------------------------------------
         self.DayiSymbolChar = "=" if self.selDayiSymbolCharType == 0 else "'"
-        self.DayiSymbolString = "巷" if self.selDayiSymbolCharType == 0 else "號"
+        self.DayiSymbolString = "＝" if self.selDayiSymbolCharType == 0 else "號"
 
         if self.langMode == 1 and not self.showmenu:
             if len(self.compositionChar) == 0 and not self.phrasemode and charStr == self.DayiSymbolChar and not keyEvent.isKeyDown(VK_CONTROL):

@@ -48,7 +48,8 @@ class Cin(object):
             for key in self.privateuse:
                 newvalue = list(self.chardefs[key])
                 for value in self.privateuse[key]:
-                   newvalue.remove(value) 
+                    if value in newvalue:
+                        newvalue.remove(value)
                 self.chardefs[key] = newvalue
 
         self.saveCountFile()

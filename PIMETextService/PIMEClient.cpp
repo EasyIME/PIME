@@ -118,6 +118,21 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 		textService_->setSelKeys(selKeys);
 	}
 
+	// show message
+    bool endComposition = false;
+	const auto& showMessageVal = msg["showMessage"];
+	if (showMessageVal.isObject()) {
+		const Json::Value& message = showMessageVal["message"];
+		const Json::Value& duration = showMessageVal["duration"];
+		if (message.isString() && duration.isInt()) {
+			if (!textService_->isComposing()) {
+				textService_->startComposition(session->context());
+                endComposition = true;
+			}
+			textService_->showMessage(session, utf8ToUtf16(message.asCString()), duration.asInt());
+		}
+	}
+
 	if (session != nullptr) { // if an edit session is available
 		// handle candidate list
 		const auto& showCandidatesVal = msg["showCandidates"];
@@ -160,7 +175,6 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 		}
 
 		// handle comosition and commit strings
-		bool endComposition = false;
 		const auto& commitStringVal = msg["commitString"];
 		if (commitStringVal.isString()) {
 			std::wstring commitString = utf8ToUtf16(commitStringVal.asCString());
@@ -315,22 +329,10 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 		updateUI(customizeUIVal);
 	}
 
-	// show message
-	const auto& showMessageVal = msg["showMessage"];
-	bool endComposition = false;
-	if (showMessageVal.isObject()) {
-		const Json::Value& message = showMessageVal["message"];
-		const Json::Value& duration = showMessageVal["duration"];
-		if (message.isString() && duration.isInt()) {
-			if (!textService_->isComposing()) {
-				textService_->startComposition(session->context());
-				endComposition = true;
-			}
-			textService_->showMessage(session, utf8ToUtf16(message.asCString()), duration.asInt());
-			if (endComposition) {
-				textService_->endComposition(session->context());
-			}
-		}
+	// hide message
+    const auto& hideMessageVal = msg["hideMessage"];
+	if (hideMessageVal.isBool()) {
+        textService_->hideMessage();
 	}
 }
 

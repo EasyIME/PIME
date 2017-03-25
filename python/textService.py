@@ -277,3 +277,6 @@ class TextService:
             "message": message,
             "duration": duration
         }
+
+    def hideMessage(self):
+        self.currentReply["hideMessage"] = True

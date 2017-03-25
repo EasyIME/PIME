@@ -7,6 +7,7 @@ import sys
 import json
 import copy
 
+DEBUG_MODE = False
 CIN_HEAD = "%gen_inp"
 ENAME_HEAD = "%ename"
 CNAME_HEAD = "%cname"
@@ -146,7 +147,8 @@ class CinToJson(object):
         state = PARSING_HEAD_STATE
 
         if file in self.haveHashtagInKeynames:
-            print("字根含有 # 符號!")
+            if DEBUG_MODE:
+                print("字根含有 # 符號!")
 
         with io.open(filePath, encoding='utf-8') as fs:
             for line in fs:
@@ -209,9 +211,10 @@ class CinToJson(object):
 
                     key, root = safeSplit(line)
                     key = key.strip().lower()
-                    # print(line)
+
                     if root == "Error":
-                        print("發生錯誤!")
+                        if DEBUG_MODE:
+                            print("發生錯誤!")
                         break
 
                     if '　' in root:
@@ -224,7 +227,8 @@ class CinToJson(object):
                     if not self.sortByCharset:
                         if key in  self.chardefs:
                             if root in self.chardefs[key]:
-                                print("含有重複資料: " + key)
+                                if DEBUG_MODE:
+                                    print("含有重複資料: " + key)
                                 try:
                                     self.dupchardefs[key].append(root)
                                 except KeyError:
@@ -243,7 +247,8 @@ class CinToJson(object):
                             self.cincount['totalchardefs'] += 1
 
         if self.sortByCharset:
-            print("排序字元集!")
+            if DEBUG_MODE:
+                print("排序字元集!")
             self.mergeDicts(self.big5F, self.big5LF, self.big5S, self.big5Other, self.bopomofo, self.cjk, self.cjkExtA, self.cjkExtB, self.cjkExtC, self.cjkExtD, self.cjkExtE, self.cjkOther, self.phrases, self.privateuse)
         self.saveJsonFile(self.jsonFile)
 
@@ -254,7 +259,8 @@ class CinToJson(object):
                 for root in chardefsdict[key]:
                     if key in  self.chardefs:
                         if root in self.chardefs[key]:
-                            print("含有重複資料: " + key + " = " + root)
+                            if DEBUG_MODE:
+                                print("含有重複資料: " + key)
                             try:
                                 self.dupchardefs[key].append(root)
                             except KeyError:
@@ -445,7 +451,8 @@ def main():
             sortList = ['cnscj.cin', 'CnsPhonetic.cin']
             for file in os.listdir(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, "cin")):
                 if file.endswith(".cin"):
-                    print('轉換 ' + file + ' 中...')
+                    if DEBUG_MODE:
+                        print('轉換 ' + file + ' 中...')
                     app.__init__()
                     cinFile = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, "cin", file)
                     if file in sortList:
@@ -454,7 +461,8 @@ def main():
                         app.run(file, cinFile, False)
                 app.__del__()
         else:
-            print('檔案不存在!')
+            if DEBUG_MODE:
+                print('檔案不存在!')
 
 
 if __name__ == "__main__":

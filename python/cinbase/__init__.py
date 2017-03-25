@@ -305,7 +305,7 @@ class CinBase:
         charCode = keyEvent.charCode
         charStr = chr(charCode)
         charStrLow = charStr.lower()
-        
+
         # 紀錄最後一次按下的鍵和按下的時間，在 filterKeyUp() 中要用
         cbTS.lastKeyDownCode = keyEvent.keyCode
         if cbTS.lastKeyDownTime == 0.0:
@@ -375,7 +375,7 @@ class CinBase:
                     cbTS.hideMessageOnKeyUp = True
                 return False
 
-        
+
         # --------------   以下皆為半形模式   --------------
 
         # 如果是英文半形模式，輸入法不做任何處理
@@ -383,8 +383,8 @@ class CinBase:
             if cbTS.isShowMessage and not keyEvent.isKeyDown(VK_SHIFT):
                 cbTS.hideMessageOnKeyUp = True
             return False
-        
-        
+
+
         # --------------   以下皆為中文模式   --------------
         if cbTS.imeDirName == "chepinyin":
             if len(cbTS.compositionChar) == 0 and charStr in cbTS.endKeyList:
@@ -489,7 +489,7 @@ class CinBase:
 
         if cbTS.isShowMessage:
             cbTS.isShowMessage = False
-            cbTS.showMessage("", 0)
+            cbTS.hideMessage()
 
         # 多功能前導字元 ---------------------------------------------------------
         if cbTS.multifunctionmode:
@@ -2339,7 +2339,7 @@ class CinBase:
             cbTS.onKeyUpMessage = ""
 
         if cbTS.hideMessageOnKeyUp:
-            cbTS.showMessage("", 0)
+            cbTS.hideMessage()
             cbTS.isShowMessage = False
             cbTS.hideMessageOnKeyUp = False
 

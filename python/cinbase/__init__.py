@@ -2964,6 +2964,8 @@ class CinBase:
         if hasattr(cbTS, 'dsymbols'):
             del cbTS.dsymbols
 
+        self.applyConfig(cbTS) # 套用其餘的使用者設定
+        
         datadirs = (cfg.getConfigDir(), cfg.getDataDir())
         swkbPath = cfg.findFile(datadirs, "swkb.dat")
         with io.open(swkbPath, 'r', encoding='utf-8') as fs:
@@ -3003,7 +3005,7 @@ class CinBase:
             loadPhraseData.start()
 
         cbTS.initCinBaseState = True
-        self.applyConfig(cbTS) # 套用其餘的使用者設定
+
 
     def applyConfig(self, cbTS):
         cfg = cbTS.cfg # 所有 TextService 共享一份設定物件

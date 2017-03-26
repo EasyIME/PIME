@@ -1089,8 +1089,8 @@ class CinBase:
         if not cbTS.showmenu:
             if cbTS.imeDirName == "chedayi":
                 cbTS.selKeys = "'[]-\\"
-                if not self.candselKeys == "0123456789":
-                    self.candselKeys = "0123456789"
+                if not self.candselKeys == "0'[]-\\":
+                    self.candselKeys = "0'[]-\\"
                     cbTS.TextService.setSelKeys(cbTS, self.candselKeys)
                     cbTS.isSelKeysChanged = True
 
@@ -2142,6 +2142,22 @@ class CinBase:
                     if (currentCandPage + 1) < currentCandPageCount:
                         currentCandPage += 1
                         candCursor = 0
+                elif keyCode == VK_SPACE and not cbTS.switchPageWithSpace:  # 按下空白鍵
+                    if cbTS.isShowPhraseCandidates:
+                        # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
+                        commitStr = cbTS.candidateList[candCursor]
+                        cbTS.compositionBufferType = "phrase"
+                        self.setOutputString(cbTS, RCinTable, commitStr)
+
+                        cbTS.phrasemode = False
+                        cbTS.isShowPhraseCandidates = False
+
+                        self.resetComposition(cbTS)
+                        candCursor = 0
+                        currentCandPage = 0
+
+                        if not cbTS.directShowCand:
+                            cbTS.isShowCandidates = False
                 elif keyCode == VK_SPACE and cbTS.switchPageWithSpace: # 按下空白鍵(換頁)
                     if cbTS.canUseSpaceAsPageKey:
                         if (currentCandPage + 1) < currentCandPageCount:

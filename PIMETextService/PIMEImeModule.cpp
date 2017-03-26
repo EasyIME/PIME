@@ -23,6 +23,7 @@
 #include <fstream>
 #include <cstring>
 #include <ShlObj.h>
+#include <Shellapi.h>
 #include <Shlwapi.h>
 #include <json/json.h>
 #include "../libIME/Utils.h"

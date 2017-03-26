@@ -96,7 +96,7 @@ public:
 	PipeServer();
 	~PipeServer();
 
-	int exec(LPSTR cmd);
+	int exec();
 	static PipeServer* get() { // get the singleton object
 		return singleton_;
 	}
@@ -114,7 +114,6 @@ private:
 	HANDLE createPipe(const wchar_t * app_name);
 	void closePipe(HANDLE pipe);
 	void terminateExistingLauncher();
-	void parseCommandLine(LPSTR cmd);
 	// bool launchBackendByName(const char* name);
 
 	static void CALLBACK _onFinishedCallback(DWORD err, DWORD numBytes, OVERLAPPED* overlapped);

@@ -11,7 +11,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_executable(PIMELauncher WIN32
+add_executable(PIMELauncher
     PIMELauncher.cpp
     PipeServer.cpp
     PipeServer.h

@@ -77,18 +77,6 @@ string PipeServer::getPipeName(const char* base_name) {
 	return pipe_name;
 }
 
-void PipeServer::parseCommandLine(LPSTR cmd) {
-	int argc;
-	wchar_t** argv = CommandLineToArgvW(GetCommandLine(), &argc);
-	// parse command line options
-	for (int i = 1; i < argc; ++i) {
-		const wchar_t* arg = argv[i];
-		if (wcscmp(arg, L"/quit") == 0)
-			quitExistingLauncher_ = true;
-	}
-	LocalFree(argv);
-}
-
 // send IPC message "quit" to the existing PIME Launcher process.
 void PipeServer::terminateExistingLauncher() {
 	string pipe_name = getPipeName("Launcher");
@@ -222,13 +210,7 @@ HANDLE PipeServer::acceptClientPipe() {
 }
 
 
-int PipeServer::exec(LPSTR cmd) {
-	parseCommandLine(cmd);
-	if (quitExistingLauncher_) { // terminate existing launcher process
-		terminateExistingLauncher();
-		return 0;
-	}
-
+int PipeServer::exec() {
 	// get the PIME directory
 	wchar_t exeFilePathBuf[MAX_PATH];
 	DWORD len = GetModuleFileNameW(NULL, exeFilePathBuf, MAX_PATH);

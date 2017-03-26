@@ -1757,7 +1757,7 @@ class CinBase:
                                                     else:
                                                         cbTS.showMessage(message, cbTS.messageDurationTime)
                                         else:
-                                            if not cbTS.client.isUiLess
+                                            if not cbTS.client.isUiLess:
                                                 cbTS.isShowMessage = True
                                                 cbTS.showMessageOnKeyUp = True
                                                 cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
@@ -2142,23 +2142,7 @@ class CinBase:
                     if (currentCandPage + 1) < currentCandPageCount:
                         currentCandPage += 1
                         candCursor = 0
-                elif keyCode == VK_RETURN or (keyCode == VK_SPACE and not cbTS.switchPageWithSpace):  # 按下 Enter 鍵或空白鍵
-                    if cbTS.isShowPhraseCandidates:
-                        # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
-                        commitStr = cbTS.candidateList[candCursor]
-                        cbTS.compositionBufferType = "phrase"
-                        self.setOutputString(cbTS, RCinTable, commitStr)
-
-                        cbTS.phrasemode = False
-                        cbTS.isShowPhraseCandidates = False
-
-                        self.resetComposition(cbTS)
-                        candCursor = 0
-                        currentCandPage = 0
-
-                        if not cbTS.directShowCand:
-                            cbTS.isShowCandidates = False
-                elif keyCode == VK_SPACE and cbTS.switchPageWithSpace: # 按下空白鍵
+                elif keyCode == VK_SPACE and cbTS.switchPageWithSpace: # 按下空白鍵(換頁)
                     if cbTS.canUseSpaceAsPageKey:
                         if (currentCandPage + 1) < currentCandPageCount:
                             currentCandPage += 1

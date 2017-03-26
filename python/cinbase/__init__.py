@@ -426,9 +426,10 @@ class CinBase:
         charStrLow = charStr.lower()
 
         if CinTable.loading:
-            messagestr = '正在載入輸入法碼表，請稍後...'
-            cbTS.isShowMessage = True
-            cbTS.showMessage(messagestr, cbTS.messageDurationTime)
+            if not cbTS.client.isUiLess:
+                messagestr = '正在載入輸入法碼表，請稍後...'
+                cbTS.isShowMessage = True
+                cbTS.showMessage(messagestr, cbTS.messageDurationTime)
             return True
 
         # NumPad 某些狀況允許輸入法處理
@@ -502,7 +503,7 @@ class CinBase:
                     self.setCompositionBufferString(cbTS, cbTS.compositionChar, 0)
                 else:
                     cbTS.setCompositionString(cbTS.compositionChar)
-                if not cbTS.hidePromptMessages:
+                if not cbTS.hidePromptMessages and not cbTS.client.isUiLess:
                     cbTS.isShowMessage = True
                     cbTS.showMessageOnKeyUp = True
                     cbTS.onKeyUpMessage = '多功能前導字元'
@@ -1599,8 +1600,9 @@ class CinBase:
                             cbTS.selcandmode = True
                         else:
                             cbTS.selcandmode = False
-                            cbTS.isShowMessage = True
-                            cbTS.showMessage("沒有候選字...", cbTS.messageDurationTime)
+                            if not cbTS.client.isUiLess:
+                                cbTS.isShowMessage = True
+                                cbTS.showMessage("沒有候選字...", cbTS.messageDurationTime)
 
                     if cbTS.selcandmode:
                         cbTS.isShowCandidates = True
@@ -1735,9 +1737,10 @@ class CinBase:
 
                                     # 如果使用萬用字元解碼
                                     if cbTS.isWildcardChardefs:
-                                        cbTS.isShowMessage = True
-                                        cbTS.showMessageOnKeyUp = True
-                                        cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
+                                        if not cbTS.client.isUiLess:
+                                            cbTS.isShowMessage = True
+                                            cbTS.showMessageOnKeyUp = True
+                                            cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
                                         cbTS.wildcardcandidates = []
                                         cbTS.wildcardpagecandidates = []
                                         cbTS.isWildcardChardefs = False
@@ -1745,13 +1748,19 @@ class CinBase:
                                     if cbTS.imeReverseLookup:
                                         if RCinTable.cin is not None:
                                             if not RCinTable.cin.getCharEncode(commitStr) == "":
+                                                if not cbTS.client.isUiLess:
+                                                    cbTS.isShowMessage = True
+                                                    message = RCinTable.cin.getCharEncode(commitStr)
+                                                    if not cbTS.client.isMetroApp:
+                                                        cbTS.showMessageOnKeyUp = True
+                                                        cbTS.onKeyUpMessage = message
+                                                    else:
+                                                        cbTS.showMessage(message, cbTS.messageDurationTime)
+                                        else:
+                                            if not cbTS.client.isUiLess
                                                 cbTS.isShowMessage = True
                                                 cbTS.showMessageOnKeyUp = True
-                                                cbTS.onKeyUpMessage = RCinTable.cin.getCharEncode(commitStr)
-                                        else:
-                                            cbTS.isShowMessage = True
-                                            cbTS.showMessageOnKeyUp = True
-                                            cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
+                                                cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
 
                                     # 如果使用打繁出簡，就轉成簡體中文
                                     if cbTS.outputSimpChinese:
@@ -1979,9 +1988,10 @@ class CinBase:
                                     if len(cbTS.compositionChar) > 2:
                                         commitStr = chr(int(cbTS.compositionChar[2:], 16))
                                         cbTS.lastCommitString = commitStr
-                                        cbTS.isShowMessage = True
-                                        cbTS.showMessageOnKeyUp = True
-                                        cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
+                                        if not cbTS.client.isUiLess:
+                                            cbTS.isShowMessage = True
+                                            cbTS.showMessageOnKeyUp = True
+                                            cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
 
                                         if cbTS.compositionBufferMode:
                                             cbTS.compositionBufferType = "menuunicode"
@@ -1994,11 +2004,13 @@ class CinBase:
                                             cbTS.phrasemode = True
                                         self.resetComposition(cbTS)
                                     else:
-                                        cbTS.isShowMessage = True
-                                        cbTS.showMessage("請輸入 Unicode 編碼...", cbTS.messageDurationTime)
+                                        if not cbTS.client.isUiLess:
+                                            cbTS.isShowMessage = True
+                                            cbTS.showMessage("請輸入 Unicode 編碼...", cbTS.messageDurationTime)
                         else:
-                            cbTS.isShowMessage = True
-                            cbTS.showMessage("查無組字...", cbTS.messageDurationTime)
+                            if not cbTS.client.isUiLess:
+                                cbTS.isShowMessage = True
+                                cbTS.showMessage("查無組字...", cbTS.messageDurationTime)
                             if cbTS.autoClearCompositionChar:
                                 if cbTS.compositionBufferMode:
                                     RemoveStringLength = 0
@@ -2011,8 +2023,9 @@ class CinBase:
                 elif cbTS.useEndKey and charStr in cbTS.endKeyList:
                     if len(candidates) == 0:
                         if not len(cbTS.compositionChar) == 1 and not cbTS.compositionChar == charStrLow:
-                            cbTS.isShowMessage = True
-                            cbTS.showMessage("查無組字...", cbTS.messageDurationTime)
+                            if not cbTS.client.isUiLess:
+                                cbTS.isShowMessage = True
+                                cbTS.showMessage("查無組字...", cbTS.messageDurationTime)
                             if cbTS.autoClearCompositionChar:
                                 if cbTS.compositionBufferMode:
                                     RemoveStringLength = 0
@@ -2053,7 +2066,7 @@ class CinBase:
                 currentCandPageCount = math.ceil(len(phrasecandidates) / cbTS.candPerPage) # 目前的選字清單總頁數
                 currentCandPage = cbTS.currentCandPage # 目前的選字清單頁數
 
-                if cbTS.showCandidates:
+                if cbTS.isShowPhraseCandidates:
                     cbTS.canSetPhraseCommitString = True
                 else:
                     cbTS.canSetPhraseCommitString = False
@@ -2086,7 +2099,6 @@ class CinBase:
                                 cbTS.canSetCommitString = True
                                 cbTS.isShowCandidates = False
                     else:
-                        cbTS.isShowPhraseCandidates = True
                         cbTS.isShowPhraseCandidates = True
                 elif keyCode == VK_UP:  # 游標上移
                     if (candCursor - cbTS.candPerRow) < 0:
@@ -2180,10 +2192,15 @@ class CinBase:
                                 cbTS.setCompositionString(keyname)
                                 cbTS.setCompositionCursor(len(cbTS.compositionString))
 
-                            if cbTS.directShowCand and candidates and not cbTS.dayisymbolsmode:
-                                pagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
-                                cbTS.setCandidateList(pagecandidates[currentCandPage])
-                                cbTS.setShowCandidates(True)
+                            if cbTS.directShowCand and not cbTS.dayisymbolsmode:
+                                if cbTS.cin.isInCharDef(cbTS.compositionChar):
+                                    candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
+                                    if cbTS.sortByPhrase and candidates:
+                                        candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
+                                if candidates:
+                                    pagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
+                                    cbTS.setCandidateList(pagecandidates[currentCandPage])
+                                    cbTS.setShowCandidates(True)
                         elif len(cbTS.compositionChar) == 0 and charStr == '`':
                             cbTS.compositionChar += charStr
                             cbTS.multifunctionmode = True
@@ -2297,7 +2314,7 @@ class CinBase:
             cbTS.isLangModeChanged = False
             cbTS.showmenu = False
             cbTS.multifunctionmode = False
-            if not cbTS.hidePromptMessages:
+            if not cbTS.hidePromptMessages and not cbTS.client.isUiLess:
                 message = '中文模式' if cbTS.langMode == CHINESE_MODE else '英數模式'
                 cbTS.isShowMessage = True
                 cbTS.showMessage(message, cbTS.messageDurationTime)
@@ -2313,7 +2330,7 @@ class CinBase:
 
         if cbTS.isShapeModeChanged:
             cbTS.isShapeModeChanged = False
-            if not cbTS.hidePromptMessages:
+            if not cbTS.hidePromptMessages and not cbTS.client.isUiLess:
                 message = '半形模式' if cbTS.shapeMode == HALFSHAPE_MODE else '全形模式'
                 cbTS.isShowMessage = True
                 cbTS.showMessage(message, cbTS.messageDurationTime)
@@ -2333,7 +2350,7 @@ class CinBase:
             cbTS.setShowCandidates(True)
 
         if cbTS.showMessageOnKeyUp:
-            if not cbTS.onKeyUpMessage == "":
+            if not cbTS.onKeyUpMessage == "" and not cbTS.client.isUiLess:
                 cbTS.showMessage(cbTS.onKeyUpMessage, cbTS.messageDurationTime)
             cbTS.showMessageOnKeyUp = False
             cbTS.onKeyUpMessage = ""
@@ -2795,9 +2812,10 @@ class CinBase:
     def setOutputString(self, cbTS, RCinTable, commitStr):
         # 如果使用萬用字元解碼
         if cbTS.isWildcardChardefs:
-            cbTS.isShowMessage = True
-            cbTS.showMessageOnKeyUp = True
-            cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
+            if not cbTS.client.isUiLess:
+                cbTS.isShowMessage = True
+                cbTS.showMessageOnKeyUp = True
+                cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
             cbTS.wildcardcandidates = []
             cbTS.wildcardpagecandidates = []
             cbTS.isWildcardChardefs = False
@@ -2805,19 +2823,26 @@ class CinBase:
         if cbTS.imeReverseLookup:
             if RCinTable.cin is not None:
                 if not RCinTable.cin.getCharEncode(commitStr) == "":
+                    if not cbTS.client.isUiLess:
+                        cbTS.isShowMessage = True
+                        message = RCinTable.cin.getCharEncode(commitStr)
+                        if not cbTS.client.isMetroApp:
+                            cbTS.showMessageOnKeyUp = True
+                            cbTS.onKeyUpMessage = message
+                        else:
+                            cbTS.showMessage(message, cbTS.messageDurationTime)
+            else:
+                if not cbTS.client.isUiLess:
                     cbTS.isShowMessage = True
                     cbTS.showMessageOnKeyUp = True
-                    cbTS.onKeyUpMessage = RCinTable.cin.getCharEncode(commitStr)
-            else:
-                cbTS.isShowMessage = True
-                cbTS.showMessageOnKeyUp = True
-                cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
+                    cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
 
         if cbTS.homophoneQuery and cbTS.isHomophoneChardefs:
             cbTS.isHomophoneChardefs = False
-            cbTS.isShowMessage = True
-            cbTS.showMessageOnKeyUp = True
-            cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
+            if not cbTS.client.isUiLess:
+                cbTS.isShowMessage = True
+                cbTS.showMessageOnKeyUp = True
+                cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
 
         # 如果使用打繁出簡，就轉成簡體中文
         if cbTS.outputSimpChinese:

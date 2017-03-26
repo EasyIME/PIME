@@ -183,6 +183,13 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 					textService_->startComposition(session->context());
 				}
 				textService_->setCompositionString(session, commitString.c_str(), commitString.length());
+                // FIXME: update the position of candidate and message window when the composition string is changed.
+                if (textService_->candidateWindow_ != nullptr) {
+                    textService_->updateCandidatesWindow(session);
+                }
+                if (textService_->messageWindow_ != nullptr) {
+                    textService_->updateMessageWindow(session);
+                }
 				textService_->endComposition(session->context());
 			}
 		}
@@ -209,6 +216,13 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 				}
 				textService_->setCompositionString(session, compositionString.c_str(), compositionString.length());
 			}
+            // FIXME: update the position of candidate and message window when the composition string is changed.
+            if (textService_->candidateWindow_ != nullptr) {
+                textService_->updateCandidatesWindow(session);
+            }
+            if (textService_->messageWindow_ != nullptr) {
+                textService_->updateMessageWindow(session);
+            }
 		}
 
 		const auto& compositionCursorVal = msg["compositionCursor"];

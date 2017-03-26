@@ -294,6 +294,17 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 	}
 }
 
+void TextService::updateCandidatesWindow(Ime::EditSession* session) {
+    if (candidateWindow_) {
+        RECT textRect;
+        // get the position of composition area from TSF
+        if (selectionRect(session, &textRect)) {
+            // FIXME: where should we put the candidate window?
+            candidateWindow_->move(textRect.left, textRect.bottom);
+        }
+    }
+}
+
 void TextService::refreshCandidates() {
 	if (validCandidateListElementId_) {
 		Ime::ComQIPtr<ITfUIElementMgr> elementMgr = threadMgr();
@@ -357,6 +368,17 @@ void TextService::showMessage(Ime::EditSession* session, std::wstring message, i
 	messageWindow_->show();
 
 	messageTimerId_ = ::SetTimer(messageWindow_->hwnd(), 1, duration * 1000, (TIMERPROC)TextService::onMessageTimeout);
+}
+
+void TextService::updateMessageWindow(Ime::EditSession* session) {
+    if (messageWindow_) {
+        RECT textRect;
+        // get the position of composition area from TSF
+        if (selectionRect(session, &textRect)) {
+            // FIXME: where should we put the message window?
+            messageWindow_->move(textRect.left, textRect.bottom);
+        }
+    }
 }
 
 void TextService::hideMessage() {

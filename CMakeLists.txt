@@ -16,6 +16,14 @@ add_definitions(
 	/GR- # turn off C++ RTTI
 )
 
+# These definitions are required for using libuv
+# Reference: https://github.com/dacap/libuv-cmake/blob/master/CMakeLists.txt
+# Windows version: https://msdn.microsoft.com/zh-tw/library/windows/desktop/aa383745(v=vs.85).aspx
+add_definitions(
+    -DWIN32_LEAN_AND_MEAN  # Avoid including unnecessary Windows header files
+    -D_WIN32_WINNT=0x0600  # 0x0600 is Windows Vista
+)
+
 add_subdirectory(${PROJECT_SOURCE_DIR}/libIME)
 
 # turn of some unnecessary build options for jsoncpp
@@ -29,5 +37,9 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/PIMETextService)
 
 # only build the following components for 32-bit x86 platform
 if("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")
+
+    # build our own forked version of libuv (used by PIMELauncher)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/libuv)
+
     add_subdirectory(${PROJECT_SOURCE_DIR}/PIMELauncher)
 endif("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")

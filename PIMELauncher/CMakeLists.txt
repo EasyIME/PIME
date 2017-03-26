@@ -1,15 +1,18 @@
 project(PIMELauncher)
 
-# http://www.utf8everywhere.org/
-add_definitions(/D_UNICODE=1 /DUNICODE=1)
-
 # generate the resource file containing version info
 configure_file("version.rc.in" "version.rc" @ONLY)
+
+set(LIBUV_INCLUDE_DIRS
+    ${CMAKE_SOURCE_DIR}/libuv/include
+    ${CMAKE_SOURCE_DIR}/libuv/src
+)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
+    ${LIBUV_INCLUDE_DIRS}
 )
 
 add_executable(PIMELauncher WIN32
@@ -28,4 +31,5 @@ target_link_libraries(PIMELauncher
     jsoncpp_lib_static
     Wininet  # for http connections
     Crypt32  # for base64 encode
+    libuv
 )

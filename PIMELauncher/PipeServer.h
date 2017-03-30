@@ -26,6 +26,7 @@
 #include <Lmcons.h> // for UNLEN
 #include <Winnt.h> // for security attributes constants
 #include <aclapi.h> // for ACL
+#include <rpc.h> // for UuidCreate
 #include <cstring>
 #include <string>
 #include <vector>
@@ -34,59 +35,36 @@
 #include <memory>
 #include "BackendServer.h"
 
+#include <uv.h>
+
 
 namespace PIME {
 
+class PipeServer;
+class BackendServer;
+
 struct ClientInfo {
-	HANDLE pipe_;
 	BackendServer* backend_;
 	std::string textServiceGuid_;
 	std::string clientId_;
-
-	std::string readBuf_;
-
-	ClientInfo(HANDLE pipe) :
-		pipe_(pipe),
-		backend_(nullptr) {
-	}
-};
-
-
-class PipeServer;
-
-struct AsyncRequest {
-	enum Type {
-		ASYNC_READ,
-		ASYNC_WRITE
-	};
-
-	OVERLAPPED overlapped_;
+	uv_pipe_t pipe_;
 	PipeServer* server_;
-	std::weak_ptr<ClientInfo>  client_;
-	Type type_;
-	std::unique_ptr<char[]> buf_;
-	int bufSize_;
-	DWORD errCode_;
-	DWORD numBytes_;
-	bool success_;
 
-	AsyncRequest(PipeServer* server, const std::shared_ptr<ClientInfo>& client, Type type, int bufSize, const char* bufContent = nullptr) :
-		server_(server),
-		client_(client),
-		type_(type),
-		buf_(new char[bufSize]),
-		bufSize_(bufSize),
-		errCode_(0),
-		numBytes_(0),
-		success_(false) {
-		memset(&overlapped_, 0, sizeof(OVERLAPPED));
-		if (bufContent != nullptr) {
-			memcpy(buf_.get(), bufContent, bufSize);
-		}
+	ClientInfo(PipeServer* server) :
+		backend_(nullptr), server_{server} {
+		// generate a new uuid for client ID
+		UUID uuid;
+		UuidCreate(&uuid);
+		RPC_CSTR uuid_str = nullptr;
+		UuidToStringA(&uuid, &uuid_str);
+		clientId_ = (char*)uuid_str;
+		RpcStringFreeA(&uuid_str);
 	}
 
-	~AsyncRequest() {
+	uv_stream_t* stream() {
+		return reinterpret_cast<uv_stream_t*>(&pipe_);
 	}
+
 };
 
 
@@ -103,27 +81,27 @@ public:
 
 	void quit();
 
-	void readClient(const std::shared_ptr<ClientInfo>& client);
-	void writeClient(const std::shared_ptr<ClientInfo>& client, const char* data, int len);
-	void closeClient(const std::shared_ptr<ClientInfo>& client);
+	void handleBackendReply(const std::string clientId, const char* readBuf, size_t len);
 
 private:
+	// backend server
+	void initBackendServers(const std::wstring& topDirPath);
+	void finalizeBackendServers();
+	void initInputMethods(const std::wstring& topDirPath);
+	BackendServer* backendFromLangProfileGuid(const char* guid);
+	BackendServer* backendFromName(const char* name);
+
 	static std::string getPipeName(const char* base_name);
 	void initSecurityAttributes();
-	HANDLE acceptClientPipe();
-	HANDLE createPipe(const wchar_t * app_name);
-	void closePipe(HANDLE pipe);
+	void initPipe(const char * app_name);
 	void terminateExistingLauncher();
 	void parseCommandLine(LPSTR cmd);
 	// bool launchBackendByName(const char* name);
 
-	static void CALLBACK _onFinishedCallback(DWORD err, DWORD numBytes, OVERLAPPED* overlapped);
-
-	void onReadFinished(AsyncRequest* req);
-
-	void onWriteFinished(AsyncRequest* req);
-
-	void handleClientMessage(const std::shared_ptr<ClientInfo>& client);
+	void onNewClientConnected(uv_stream_t* server, int status);
+	void onClientDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
+	void handleClientMessage(ClientInfo* client, const char* readBuf, size_t len);
+	void closeClient(ClientInfo* client);
 
 private:
 	// security attribute stuff for creating the server pipe
@@ -140,8 +118,11 @@ private:
 	std::wstring topDirPath_;
 	bool quitExistingLauncher_;
 	static PipeServer* singleton_;
-	std::unordered_map<HANDLE, std::shared_ptr<ClientInfo>> clients_;
-	std::queue<AsyncRequest*> finishedRequests_;
+	std::vector<ClientInfo*> clients_;
+	uv_pipe_t serverPipe_;
+
+	std::vector<BackendServer*> backends_;
+	std::unordered_map<std::string, BackendServer*> backendMap_;
 };
 
 } // namespace PIME

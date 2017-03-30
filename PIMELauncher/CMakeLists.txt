@@ -31,5 +31,6 @@ target_link_libraries(PIMELauncher
     jsoncpp_lib_static
     Wininet  # for http connections
     Crypt32  # for base64 encode
+    Rpcrt4 # for uuid stuff
     libuv
 )

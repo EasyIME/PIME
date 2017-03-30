@@ -28,63 +28,53 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <WinInet.h>
+
+#include <uv.h>
 #include <json/json.h>
 
 namespace PIME {
 
+class PipeServer;
+struct ClientInfo;
+
 class BackendServer {
 public:
+	friend class PipeServer;
 
-	BackendServer();
-	BackendServer(const Json::Value& info);
+	BackendServer(PipeServer* pipeServer, const Json::Value& info);
 	~BackendServer();
-
-	static void init(const std::wstring& topDirPath);
-	static void finalize();
-
-	static BackendServer* fromLangProfileGuid(const char* guid);
-	static BackendServer* fromName(const char* name);
 
 	void startProcess();
 	void terminateProcess();
 	bool isProcessRunning();
 
-	std::string addNewClient();
-	void removeClient(const std::string& clientId);
+	uv_stream_t* stdinStream() {
+		return reinterpret_cast<uv_stream_t*>(stdinPipe_);
+	}
 
-	std::string handleClientMessage(const std::string& clientId, const std::string& message);
+	uv_stream_t* stdoutStream() {
+		return reinterpret_cast<uv_stream_t*>(stdoutPipe_);
+	}
 
-private:
-	static void initInputMethods(const std::wstring& topDirPath);
-	bool ensureProcessRunning();
-	bool ensureHttpConnection();
-	bool readHttpServerStatus(double timeoutSeconds = 0.0);
-	std::string sendHttpRequest(const char* method, const char* path, const char* data = nullptr, int len = 0, const char* header = nullptr);
+	void handleClientMessage(ClientInfo* client, const char* readBuf, size_t len);
 
 private:
+	static void allocReadBuf(uv_handle_t*, size_t suggested_size, uv_buf_t* buf);
+	void onProcessDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
+	void onProcessTerminated(int64_t exit_status, int term_signal);
+
+private:
+	PipeServer* pipeServer_;
 	std::string name_;
-
-	// the web API endpoint of the backend
-	std::string protocol_;  // should be http or https
-	std::string apiHost_;
-	int apiPort_;
-	std::string accessToken_;
-	std::string httpBasicAuth_;
-	bool httpServerReady_;
-	HINTERNET httpConnection_; // http connection
+	uv_process_t* process_;
+	uv_pipe_t* stdinPipe_;
+	uv_pipe_t* stdoutPipe_;
+	bool ready_;
 
 	// command to launch the server process
-	std::wstring command_;
-	std::wstring params_;
-	std::wstring workingDir_;
-	HANDLE processHandle_;
-	DWORD processId_;
-	FILETIME processStartTime_;
-
-	static HINTERNET internet_;
-	static std::vector<BackendServer*> backends_;
-	static std::unordered_map<std::string, BackendServer*> backendMap_;
+	std::string command_;
+	std::string params_;
+	std::string workingDir_;
 };
 
 } // namespace PIME

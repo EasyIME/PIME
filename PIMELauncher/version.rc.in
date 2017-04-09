@@ -1,0 +1,37 @@
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION @PIME_VERSION_MAJOR@,@PIME_VERSION_MINOR@,@PIME_VERSION_PATCH@
+ PRODUCTVERSION @PIME_VERSION_MAJOR@,@PIME_VERSION_MINOR@,@PIME_VERSION_PATCH@
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x0L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040404b0"
+        BEGIN
+            VALUE "CompanyName", "PIME"
+            VALUE "FileDescription", "PIME Launcher"
+            VALUE "FileVersion", "@PIME_VERSION_MAJOR@.@PIME_VERSION_MINOR@.@PIME_VERSION_PATCH@"
+            VALUE "InternalName", "PIMELauncher.exe"
+            VALUE "LegalCopyright", "Copyright (C) 2013-2016 PIME developers"
+            VALUE "OriginalFilename", "PIMELauncher.exe"
+            VALUE "ProductName", "PIME"
+            VALUE "ProductVersion", "@PIME_VERSION_MAJOR@.@PIME_VERSION_MINOR@.@PIME_VERSION_PATCH@"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x404, 1200
+    END
+END

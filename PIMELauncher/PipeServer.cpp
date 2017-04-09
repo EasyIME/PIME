@@ -51,16 +51,15 @@ PipeServer::PipeServer() :
 	acl_(nullptr),
 	everyoneSID_(nullptr),
 	allAppsSID_(nullptr),
-	pendingPipeConnection_(false),
-	quitExistingLauncher_(false) {
+	quitExistingLauncher_(false),
+	debugClientPipe_{ nullptr } {
 	// this can only be assigned once
 	assert(singleton_ == nullptr);
 	singleton_ = this;
 }
 
 PipeServer::~PipeServer() {
-	if (connectPipeOverlapped_.hEvent != INVALID_HANDLE_VALUE)
-		CloseHandle(connectPipeOverlapped_.hEvent);
+	closeDebugClient();
 
 	if (everyoneSID_ != nullptr)
 		FreeSid(everyoneSID_);
@@ -263,7 +262,7 @@ void PipeServer::initSecurityAttributes() {
 
 // References:
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365588(v=vs.85).aspx
-void PipeServer::initPipe(const char* app_name) {
+void PipeServer::initPipe(uv_pipe_t* pipe, const char* app_name, SECURITY_ATTRIBUTES* sa) {
 	char username[UNLEN + 1];
 	DWORD unlen = UNLEN + 1;
 	if (GetUserNameA(username, &unlen)) {
@@ -271,16 +270,17 @@ void PipeServer::initPipe(const char* app_name) {
 		char pipe_name[MAX_PATH];
 		sprintf(pipe_name, "\\\\.\\pipe\\%s\\PIME\\%s", username, app_name);
 		// create the pipe
-		uv_pipe_init_windows_named_pipe(uv_default_loop(), &serverPipe_, 0, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, &securityAttributes_);
-		serverPipe_.data = this;
-		uv_pipe_bind(&serverPipe_, pipe_name);
+		uv_pipe_init_windows_named_pipe(uv_default_loop(), pipe, 0, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, sa);
+		pipe->data = this;
+		uv_pipe_bind(pipe, pipe_name);
 	}
 }
 
 
 void PipeServer::onNewClientConnected(uv_stream_t* server, int status) {
+	auto server_pipe = reinterpret_cast<uv_pipe_t*>(server);
 	auto client = new ClientInfo{this};
-	uv_pipe_init_windows_named_pipe(uv_default_loop(), &client->pipe_, 0, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, &securityAttributes_);
+	uv_pipe_init_windows_named_pipe(uv_default_loop(), &client->pipe_, 0, server_pipe->pipe_mode, server_pipe->security_attributes);
 	client->pipe_.data = client;
 	uv_stream_set_blocking((uv_stream_t*)&client->pipe_, 0);
 	uv_accept(server, (uv_stream_t*)&client->pipe_);
@@ -343,13 +343,23 @@ int PipeServer::exec(LPSTR cmd) {
 	initSecurityAttributes();
 
 	// initialize the server pipe
-	initPipe("Launcher");
+	initPipe(&serverPipe_, "Launcher", &securityAttributes_);
 
-	// listen to events
+	// listen to events from clients
 	uv_listen(reinterpret_cast<uv_stream_t*>(&serverPipe_), 32, [](uv_stream_t* server, int status) {
 		PipeServer* _this = (PipeServer*)server->data;
 		_this->onNewClientConnected(server, status);
 	});
+
+	// initialize the debug pipe connected by debug console
+	initPipe(&debugServerPipe_, "Debug", nullptr);
+
+	// listen to events from the debug console
+	uv_listen(reinterpret_cast<uv_stream_t*>(&debugServerPipe_), 1, [](uv_stream_t* server, int status) {
+		PipeServer* _this = (PipeServer*)server->data;
+		_this->onNewDebugClientConnected(server, status);
+	});
+
 	// run the main loop
 	uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 }
@@ -361,6 +371,9 @@ void PipeServer::handleClientMessage(ClientInfo* client, const char* readBuf, si
 		return;
 	}
 
+	// print to debug console if there is any
+	outputDebugMessage(DebugMessageType::Input, readBuf, len);
+
 	// call the backend to handle this message
 	if (client->backend_ == nullptr) {
 		// backend is unknown, parse the json to look it up.
@@ -369,7 +382,6 @@ void PipeServer::handleClientMessage(ClientInfo* client, const char* readBuf, si
 		if (reader.parse(readBuf, msg)) {
 			const char* method = msg["method"].asCString();
 			if (method != nullptr) {
-				OutputDebugStringA(method);
 				if (strcmp(method, "init") == 0) {  // the client connects to us the first time
 					const char* guid = msg["id"].asCString();
 					client->backend_ = backendFromLangProfileGuid(guid);
@@ -404,6 +416,62 @@ void PipeServer::closeClient(ClientInfo* client) {
 		auto client = (ClientInfo*)handle->data;
 		delete client;
 	});
+}
+
+void PipeServer::onNewDebugClientConnected(uv_stream_t* server, int status) {
+	auto server_pipe = reinterpret_cast<uv_pipe_t*>(server);
+	uv_pipe_t* client_pipe = new uv_pipe_t{};
+	uv_pipe_init_windows_named_pipe(uv_default_loop(), client_pipe, 0, server_pipe->pipe_mode, server_pipe->security_attributes);
+	client_pipe->data = this;
+	uv_stream_set_blocking((uv_stream_t*)client_pipe, 0);
+	uv_accept(server, (uv_stream_t*)client_pipe);
+
+	// kill existing debug console client since we only allow one connection
+	if (debugClientPipe_) {
+		closeDebugClient();
+	}
+	debugClientPipe_ = client_pipe;
+}
+
+void PipeServer::closeDebugClient() {
+	uv_close((uv_handle_t*)debugClientPipe_, [](uv_handle_t* handle) {
+		delete (uv_pipe_t*)handle;
+	});
+	debugClientPipe_ = nullptr;
+}
+
+struct DebugMessageReq {
+	uv_write_t req;
+	string msg;
+	PipeServer* pipeServer;
+};
+
+void PipeServer::outputDebugMessage(DebugMessageType type, const char * msg, size_t len) {
+	if (debugClientPipe_ != nullptr) {
+		string output;
+		switch (type) {
+		case DebugMessageType::Input:
+			output = "INPUT: ";
+			break;
+		case DebugMessageType::Output:
+			output = "OUTPUT: ";
+			break;
+		}
+		output.append(msg, len);
+		output += "\n";
+
+		auto req_data = new DebugMessageReq{ {}, std::move(output), this };
+		req_data->req.data = req_data;
+		uv_buf_t buf = {req_data->msg.length(), (char*)req_data->msg.c_str()};
+
+		uv_write(&req_data->req, reinterpret_cast<uv_stream_t*>(debugClientPipe_), &buf, 1, [](uv_write_t* req, int status) {
+			DebugMessageReq* req_data = reinterpret_cast<DebugMessageReq*>(req->data);
+			if (status < 0 || status == UV_EOF) {
+				req_data->pipeServer->closeDebugClient();
+			}
+			delete req_data;
+		});
+	}
 }
 
 } // namespace PIME

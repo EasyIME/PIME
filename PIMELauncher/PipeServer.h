@@ -83,6 +83,13 @@ public:
 
 	void handleBackendReply(const std::string clientId, const char* readBuf, size_t len);
 
+	enum class DebugMessageType {
+		Input,
+		Output,
+		Error
+	};
+	void outputDebugMessage(DebugMessageType type, const char* msg, size_t len);
+
 private:
 	// backend server
 	void initBackendServers(const std::wstring& topDirPath);
@@ -93,7 +100,7 @@ private:
 
 	static std::string getPipeName(const char* base_name);
 	void initSecurityAttributes();
-	void initPipe(const char * app_name);
+	void initPipe(uv_pipe_t* pipe, const char * app_name, SECURITY_ATTRIBUTES* sa = nullptr);
 	void terminateExistingLauncher();
 	void parseCommandLine(LPSTR cmd);
 	// bool launchBackendByName(const char* name);
@@ -103,6 +110,9 @@ private:
 	void handleClientMessage(ClientInfo* client, const char* readBuf, size_t len);
 	void closeClient(ClientInfo* client);
 
+	void onNewDebugClientConnected(uv_stream_t* server, int status);
+	void closeDebugClient();
+
 private:
 	// security attribute stuff for creating the server pipe
 	PSECURITY_DESCRIPTOR securittyDescriptor_;
@@ -111,15 +121,14 @@ private:
 	EXPLICIT_ACCESS explicitAccesses_[2];
 	PSID everyoneSID_;
 	PSID allAppsSID_;
-
-	OVERLAPPED connectPipeOverlapped_;
-	bool pendingPipeConnection_;
-
+	
 	std::wstring topDirPath_;
 	bool quitExistingLauncher_;
 	static PipeServer* singleton_;
 	std::vector<ClientInfo*> clients_;
-	uv_pipe_t serverPipe_;
+	uv_pipe_t serverPipe_; // main server pipe accepting connections from the clients
+	uv_pipe_t debugServerPipe_; // pipe used for communicate with the debug console
+	uv_pipe_t* debugClientPipe_; // connected client pipe of the debug console
 
 	std::vector<BackendServer*> backends_;
 	std::unordered_map<std::string, BackendServer*> backendMap_;

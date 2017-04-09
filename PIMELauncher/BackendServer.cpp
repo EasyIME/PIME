@@ -163,6 +163,10 @@ void BackendServer::onProcessDataReceived(uv_stream_t * stream, ssize_t nread, c
 		return;
 	}
 	if (buf->base) {
+
+		// print to debug console if there is any
+		pipeServer_->outputDebugMessage(PipeServer::DebugMessageType::Output, buf->base, nread);
+
 		// initial ready message from the backend server
 		if (buf->base[0] == '\0') {
 			ready_ = true;

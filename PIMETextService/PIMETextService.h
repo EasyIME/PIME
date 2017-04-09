@@ -125,12 +125,14 @@ public:
 	// candidate window
 	void showCandidates(Ime::EditSession* session);
 	void updateCandidates(Ime::EditSession* session);
+    void updateCandidatesWindow(Ime::EditSession* session);
 	void hideCandidates();
 
 	void refreshCandidates();
 
 	// message window
 	void showMessage(Ime::EditSession* session, std::wstring message, int duration = 3);
+    void updateMessageWindow(Ime::EditSession* session);
 	void hideMessage();
 
 private:

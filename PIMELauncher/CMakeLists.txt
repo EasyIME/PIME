@@ -33,8 +33,9 @@ target_link_libraries(PIMELauncher
     libuv
 )
 
-add_executable(PIMEDebugConsole
+add_executable(PIMEDebugConsole WIN32
     PIMEDebugConsole.cpp
+    PIMEDebugConsole.rc
 )
 
 target_link_libraries(PIMEDebugConsole

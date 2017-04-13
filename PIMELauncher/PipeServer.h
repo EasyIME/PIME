@@ -81,7 +81,7 @@ public:
 
 	void quit();
 
-	void handleBackendReply(const std::string clientId, const char* readBuf, size_t len);
+	void handleBackendReply(const char* readBuf, size_t len);
 
 	enum class DebugMessageType {
 		Input,
@@ -112,6 +112,8 @@ private:
 
 	void onNewDebugClientConnected(uv_stream_t* server, int status);
 	void closeDebugClient();
+
+	void sendReplyToClient(const std::string clientId, const char* msg, size_t len);
 
 private:
 	// security attribute stuff for creating the server pipe

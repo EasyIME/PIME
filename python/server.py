@@ -70,11 +70,11 @@ class Server(object):
         # self.status_dir = os.path.join(os.path.expandvars("%LOCALAPPDATA%"), "PIME", "status")  # local app data dir
 
     def run(self):
-        print("running:", file=sys.stderr)
+        print("running:")
         while True:
             try:
                 line = input().strip()
-                print("RECV:", line, file=sys.stderr)
+                print("RECV:", line)
                 client_id, msg_text = line.split('\t', maxsplit=1)
                 msg = json.loads(msg_text)
                 client = self.clients.get(client_id)
@@ -82,17 +82,19 @@ class Server(object):
                     # create a Client instance for the client
                     client = Client(self)
                     self.clients[client_id] = client
-                    print("new client:", client_id, file=sys.stderr)
+                    print("new client:", client_id)
                 if msg.get("method") == "close":  # special handling for closing a client
                     self.remove_client(client_id)
                 else:
                     ret = client.handleRequest(msg)
-                    print("{}\t{}".format(client_id, json.dumps(ret)))
+                    # Send the response to the client via stdout
+                    # one response per line, prefixed with PIME_MSG:
+                    print("PIME_MSG:{}\t{}".format(client_id, json.dumps(ret)))
             except Exception as e:
-                print("ERROR:", e, file=sys.stderr)
+                print("ERROR:", e)
 
     def remove_client(self, client_id):
-        print("client disconnected:", client_id, file=sys.stderr)
+        print("client disconnected:", client_id)
         try:
             del self.clients[client_id]
         except KeyError:

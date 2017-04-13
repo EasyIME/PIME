@@ -186,14 +186,47 @@ void PipeServer::quit() {
 	ExitProcess(0); // quit PipeServer
 }
 
-void PipeServer::handleBackendReply(const std::string clientId, const char* readBuf, size_t len) {
+void PipeServer::handleBackendReply(const char * readBuf, size_t len) {
+	// print to debug console if there is any
+	outputDebugMessage(PipeServer::DebugMessageType::Output, readBuf, len);
+
+	// pass the response back to the clients
+	auto line = readBuf;
+	auto buf_end = readBuf + len;
+	while (line < buf_end) {
+		// Format of each line:
+		// PIMG_MSG:<client_id>\t<json reply>
+		if (auto line_end = strchr(line, '\n')) {
+			// only handle lines prefixed with "PIME_MSG:" since other lines
+			// might be debug messages printed by the backend.
+			if (strncmp(line, "PIME_MSG:", 9) == 0) {
+				line += 9; // Skip the prefix
+				if (auto sep = strchr(line, '\t')) {
+					// split the client_id from the remaining json reply
+					string clientId(line, sep - line);
+					auto msg = sep + 1;
+					auto msg_len = line_end - msg;
+
+					// send the reply message back to the client
+					sendReplyToClient(clientId, msg, msg_len);
+				}
+			}
+			line = line_end + 1;
+		}
+		else {
+			break;
+		}
+	}
+}
+
+void PipeServer::sendReplyToClient(const std::string clientId, const char* msg, size_t len) {
 	// find the client with this ID
 	auto it = std::find_if(clients_.cbegin(), clients_.cend(), [clientId](const ClientInfo* client) {
 		return client->clientId_ == clientId;
 	});
 	if (it != clients_.cend()) {
 		auto client = *it;
-		uv_buf_t buf = {len, (char*)readBuf};
+		uv_buf_t buf = {len, (char*)msg};
 		uv_write_t* req = new uv_write_t{};
 		uv_write(req, client->stream(), &buf, 1, [](uv_write_t* req, int status) {
 			delete req;
@@ -458,7 +491,6 @@ void PipeServer::outputDebugMessage(DebugMessageType type, const char * msg, siz
 			break;
 		}
 		output.append(msg, len);
-		output += "\n";
 
 		auto req_data = new DebugMessageReq{ {}, std::move(output), this };
 		req_data->req.data = req_data;

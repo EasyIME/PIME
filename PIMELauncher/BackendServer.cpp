@@ -108,7 +108,7 @@ void BackendServer::startProcess() {
 	options.exit_cb = [](uv_process_t* process, int64_t exit_status, int term_signal) {
 		reinterpret_cast<BackendServer*>(process->data)->onProcessTerminated(exit_status, term_signal);
 	};
-	options.flags = 0; //  UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS;
+	options.flags = UV_PROCESS_WINDOWS_HIDE; //  UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS;
 	options.file = argv[0];
 	options.args = const_cast<char**>(argv);
 	char full_working_dir[MAX_PATH];
@@ -158,37 +158,21 @@ void BackendServer::allocReadBuf(uv_handle_t *, size_t suggested_size, uv_buf_t 
 
 void BackendServer::onProcessDataReceived(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf) {
 	if (nread < 0 || nread == UV_EOF) {
-		if (buf->base)
-			delete []buf->base;
+		if (buf->base) {
+			delete[]buf->base;
+		}
 		return;
 	}
 	if (buf->base) {
-
-		// print to debug console if there is any
-		pipeServer_->outputDebugMessage(PipeServer::DebugMessageType::Output, buf->base, nread);
-
 		// initial ready message from the backend server
 		if (buf->base[0] == '\0') {
 			ready_ = true;
 		}
-		else {  // pass the response back to the clients
-			auto line = buf->base;
-			auto buf_end = buf->base + nread;
-			while (line < buf_end) {
-				if(auto line_end = strchr(line, '\n')) {
-					if (auto sep = strchr(line, '\t')) {
-						string clientId(line, sep - line);
-						auto msg = sep + 1;
-						auto msg_len = line_end - msg;
-						pipeServer_->handleBackendReply(clientId, msg, msg_len);
-					}
-					line = line_end + 1;
-				}
-				else {
-					break;
-				}
-			}
+		else {
+			// pass the reply to the main server for further handling and sending back to the client
+			pipeServer_->handleBackendReply(buf->base, nread);
 		}
+		delete[]buf->base;
 	}
 }
 

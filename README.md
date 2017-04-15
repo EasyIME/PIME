@@ -1,6 +1,6 @@
 # PIME
 
-[![Build status](https://ci.appveyor.com/api/projects/status/github/EasyIME/PIME?svg=true)](https://ci.appveyor.com/project/EasyIME/PIME)
+[![Build status](https://ci.appveyor.com/api/projects/status/ju8c225nt9qgxeee?svg=true)](https://ci.appveyor.com/project/EasyIME/PIME)
 
 Implement input methods easily for Windows via Text Services Framework:
 *   LibIME contains a library which aims to be a simple wrapper for Windows Text Service Framework (TSF).

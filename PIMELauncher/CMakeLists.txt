@@ -39,6 +39,5 @@ add_executable(PIMEDebugConsole WIN32
 )
 
 target_link_libraries(PIMEDebugConsole
-    jsoncpp_lib_static
     libuv
 )

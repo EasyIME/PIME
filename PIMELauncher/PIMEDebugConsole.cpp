@@ -4,14 +4,13 @@
 #include <mutex>
 #include <codecvt>  // for utf8 conversion
 #include <locale>  // for wstring_convert
+#include <sstream>
 
 #include <uv.h>
 
 #include <Windows.h>
 #include <Lmcons.h> // for UNLEN
 #include <Richedit.h>
-
-#include <json/json.h>
 
 #include "DebugConsoleResource.h"
 
@@ -37,13 +36,13 @@ private:
 	void onConnected(int status);
 	void onDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
 	BOOL dialogWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
+	void setTextColor(COLORREF clr);
 
 private:
 	uv_pipe_t* pipe_;
 	bool isConnected_;
 	HWND hwnd_;
 	HWND richEdit_;
-	HWND jsonEdit_;
 	mutex outputTextLock_;
 	string pendingTextOutput_;
 	static constexpr UINT WM_DATA_RECEIVED = WM_APP + 1;
@@ -75,9 +74,16 @@ void DebugConsole::connectPipe() {
 
 // this is called from the worker thread
 void DebugConsole::onConnected(int status) {
+	std::istringstream st("test\ntest2\ntest3");
+	string str;
+	while (getline(st, str)) {
+		auto s = st.rdstate();
+		cout << s << endl;
+	}
+
 	lock_guard<mutex> lock{ outputTextLock_ };
 	if (status == 0) {
-		pendingTextOutput_ += "Debug console connected\n";
+		pendingTextOutput_ += "Debug console connected\r\n";
 		isConnected_ = true;
 		auto stream = reinterpret_cast<uv_stream_t*>(pipe_);
 		uv_read_start(stream,
@@ -91,7 +97,7 @@ void DebugConsole::onConnected(int status) {
 		);
 	}
 	else {
-		pendingTextOutput_ += "Fail to connect to the debug console\n";
+		pendingTextOutput_ += "Fail to connect to the debug console\r\n";
 		delete pipe_;
 		pipe_ = nullptr;
 	}
@@ -119,26 +125,21 @@ void DebugConsole::onDataReceived(uv_stream_t * stream, ssize_t nread, const uv_
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 }
 
-static wstring formatJson(const wchar_t* text, size_t len) {
-	string utf8_text = utf8Codec.to_bytes(text, text + len);
-	Json::Reader reader;
-	Json::Value root;
-	if (reader.parse(utf8_text, root)) {
-		auto formatted = root.toStyledString();
-		return utf8Codec.from_bytes(formatted);
-	}
-	return wstring(text, len);
-}
-
 BOOL DebugConsole::dialogWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 	switch (msg) {
 	case WM_INITDIALOG: {
 		hwnd_ = hwnd;
 
 		richEdit_ = GetDlgItem(hwnd, IDC_RICHEDIT);
+
+		// we want to receive selection change notification
 		SendMessage(richEdit_, EM_SETEVENTMASK, 0, ENM_SELCHANGE);
 
-		jsonEdit_ = GetDlgItem(hwnd, IDC_JSON_EDIT);
+		// set background color
+		SendMessage(richEdit_, EM_SETBKGNDCOLOR, 0, RGB(0, 0, 0));
+
+		// set text color
+		setTextColor(RGB(192, 192, 192));
 
 		// execute the libuv event loop in its own worker thread
 		auto uvloop_thread = new thread{ [this]() {
@@ -152,11 +153,12 @@ BOOL DebugConsole::dialogWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 		stringstream lines(pendingTextOutput_);
 		string line;
 		while (getline(lines, line)) {
-			if (line.compare(0, 6, "INPUT:") == 0) {
+			if (line.compare(0, 9, "PIME_MSG:") == 0) {
+				setTextColor(RGB(255, 255, 0));
 			}
-			else if (line.compare(0, 7, "OUTPUT:") == 0) {
+			else {
+				setTextColor(RGB(192, 192, 192));
 			}
-			line += "\r";
 			// convert to unicode
 			auto utext = utf8Codec.from_bytes(line);
 
@@ -174,49 +176,10 @@ BOOL DebugConsole::dialogWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 		pendingTextOutput_.clear();
 		break;
 	}
-	case WM_NOTIFY: {
-		LPNMHDR notifyHeader = LPNMHDR(lp);
-		if (notifyHeader->hwndFrom == richEdit_) {
-			if (notifyHeader->code == EN_SELCHANGE) {  // cursor/caret is moved in the richedit control
-				SELCHANGE* selChange = reinterpret_cast<SELCHANGE*>(lp);
-				// get line number from current caret position
-				DWORD lineIndex = SendMessage(richEdit_, EM_EXLINEFROMCHAR, 0, LPARAM(selChange->chrg.cpMax));
-
-				wchar_t lineBuf[4096];
-				WORD bufSize = sizeof(lineBuf) / sizeof(wchar_t);
-				// the first WORD of the buffer should contain its size
-				memcpy(lineBuf, &bufSize, sizeof(WORD));
-				// get the text of the currently selected line in the rich edit
-				DWORD lineLen = SendMessage(richEdit_, EM_GETLINE, lineIndex, LPARAM(&lineBuf));
-				lineBuf[lineLen] = '\0';
-
-				// format the json content and show in the json edit control
-				size_t skip = 0;
-				if (wcsncmp(lineBuf, L"INPUT:", 6) == 0) {
-					skip = 6;
-				}
-				else if (wcsncmp(lineBuf, L"OUTPUT:", 7) == 0) {
-					skip = 7;
-				}
-
-				wstring formattedJson = formatJson(lineBuf + skip, lineLen - skip);
-				SetWindowText(jsonEdit_, formattedJson.c_str());
-			}
-		}
-		break;
-	}
 	case WM_SIZE: {
 		WORD w = LOWORD(lp);
 		WORD h = HIWORD(lp);
-
-		RECT jsonEditRect;
-		::GetWindowRect(jsonEdit_, &jsonEditRect);
-		int jsonEditWidth = jsonEditRect.right - jsonEditRect.left;
-		int richEditWidth = w - jsonEditWidth - 4;
-		MoveWindow(richEdit_, 0, 0, richEditWidth, h, TRUE);
-
-		int jsonEditLeft = richEditWidth + 4;
-		MoveWindow(jsonEdit_, jsonEditLeft, 0, jsonEditWidth, h, TRUE);
+		MoveWindow(richEdit_, 0, 0, w, h, TRUE);
 		break;
 	}
 	case WM_CLOSE:
@@ -229,6 +192,16 @@ BOOL DebugConsole::dialogWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 		return FALSE;
 	}
 	return TRUE;
+}
+
+void DebugConsole::setTextColor(COLORREF clr) {
+	// change the color of current selection & insertion point
+	CHARFORMAT format;
+	format.cbSize = sizeof(format);
+	format.dwMask = CFM_COLOR;
+	format.crTextColor = clr;
+	format.dwEffects = 0;
+	SendMessage(richEdit_, EM_SETCHARFORMAT, SCF_SELECTION, LPARAM(&format));
 }
 
 INT_PTR  CALLBACK DebugConsole::_dialogWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {

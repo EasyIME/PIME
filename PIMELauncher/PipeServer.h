@@ -50,31 +50,26 @@ struct ClientInfo {
 	uv_pipe_t pipe_;
 	PipeServer* server_;
 
-	ClientInfo(PipeServer* server) :
-		backend_(nullptr), server_{server} {
-		// generate a new uuid for client ID
-		UUID uuid;
-		UuidCreate(&uuid);
-		RPC_CSTR uuid_str = nullptr;
-		UuidToStringA(&uuid, &uuid_str);
-		clientId_ = (char*)uuid_str;
-		RpcStringFreeA(&uuid_str);
-	}
+	ClientInfo(PipeServer* server);
 
 	uv_stream_t* stream() {
 		return reinterpret_cast<uv_stream_t*>(&pipe_);
 	}
 
+	bool isInitialized() const;
+
+	bool init(const Json::Value& params);
 };
 
 
 class PipeServer {
 public:
-
 	PipeServer();
+
 	~PipeServer();
 
 	int exec(LPSTR cmd);
+
 	static PipeServer* get() { // get the singleton object
 		return singleton_;
 	}
@@ -83,20 +78,19 @@ public:
 
 	void handleBackendReply(const char* readBuf, size_t len);
 
-	enum class DebugMessageType {
-		Input,
-		Output,
-		Error
-	};
-	void outputDebugMessage(DebugMessageType type, const char* msg, size_t len);
+	void outputDebugMessage(const char* msg, size_t len);
+
+	BackendServer* backendFromLangProfileGuid(const char* guid);
+
+	BackendServer* backendFromName(const char* name);
+
+	void onBackendClosed(BackendServer* backend);
 
 private:
 	// backend server
 	void initBackendServers(const std::wstring& topDirPath);
 	void finalizeBackendServers();
 	void initInputMethods(const std::wstring& topDirPath);
-	BackendServer* backendFromLangProfileGuid(const char* guid);
-	BackendServer* backendFromName(const char* name);
 
 	static std::string getPipeName(const char* base_name);
 	void initSecurityAttributes();

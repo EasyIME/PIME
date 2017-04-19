@@ -161,6 +161,8 @@ void BackendServer::onProcessDataReceived(uv_stream_t * stream, ssize_t nread, c
 		if (buf->base) {
 			delete[]buf->base;
 		}
+		// the backend server is broken, stop it
+		terminateProcess();
 		return;
 	}
 	if (buf->base) {
@@ -187,6 +189,8 @@ void BackendServer::onProcessTerminated(int64_t exit_status, int term_signal) {
 	uv_close(reinterpret_cast<uv_handle_t*>(stdoutPipe_), [](uv_handle_t* handle) {
 		delete reinterpret_cast<uv_pipe_t*>(handle);
 	});
+
+	pipeServer_->onBackendClosed(this);
 }
 
 } // namespace PIME

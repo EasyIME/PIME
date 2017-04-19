@@ -63,18 +63,14 @@ class Client(object):
 class Server(object):
     def __init__(self):
         self.clients = {}
-        # FIXME: this uses the AppData/Roaming dir, but we want the local one.
-        #        alternatively, use the AppData/Temp dir.
-        self.config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME")
-        os.makedirs(self.config_dir, mode=0o700, exist_ok=True)
-        # self.status_dir = os.path.join(os.path.expandvars("%LOCALAPPDATA%"), "PIME", "status")  # local app data dir
 
     def run(self):
         print("running:")
         while True:
             try:
                 line = input().strip()
-                print("RECV:", line)
+                if not line:
+                    continue
                 client_id, msg_text = line.split('\t', maxsplit=1)
                 msg = json.loads(msg_text)
                 client = self.clients.get(client_id)
@@ -90,7 +86,12 @@ class Server(object):
                     # Send the response to the client via stdout
                     # one response per line, prefixed with PIME_MSG:
                     print("PIME_MSG:{}\t{}".format(client_id, json.dumps(ret)))
+            except EOFError:
+                # stop the server
+                break
             except Exception as e:
+                # import traceback
+                # traceback.print_tb(sys.last_traceback, file=sys.stdout)
                 print("ERROR:", e)
 
     def remove_client(self, client_id):

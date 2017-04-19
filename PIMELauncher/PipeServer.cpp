@@ -46,6 +46,40 @@ namespace PIME {
 
 PipeServer* PipeServer::singleton_ = nullptr;
 
+
+ClientInfo::ClientInfo(PipeServer* server) :
+	backend_(nullptr), server_{ server } {
+}
+
+bool ClientInfo::isInitialized() const {
+	return (!clientId_.empty() && backend_ != nullptr);
+}
+
+bool ClientInfo::init(const Json::Value & params) {
+	const char* method = params["method"].asCString();
+	if (method != nullptr) {
+		if (strcmp(method, "init") == 0) {  // the client connects to us the first time
+			// generate a new uuid for client ID
+			UUID uuid;
+			UuidCreate(&uuid);
+			RPC_CSTR uuid_str = nullptr;
+			UuidToStringA(&uuid, &uuid_str);
+			clientId_ = (char*)uuid_str;
+			RpcStringFreeA(&uuid_str);
+
+			// find a backend for the client text service
+			const char* guid = params["id"].asCString();
+			backend_ = server_->backendFromLangProfileGuid(guid);
+			if (backend_ == nullptr) {
+				// FIXME: write some response to indicate the failure
+				return false;
+			}
+		}
+	}
+	return false;
+}
+
+
 PipeServer::PipeServer() :
 	securittyDescriptor_(nullptr),
 	acl_(nullptr),
@@ -140,6 +174,23 @@ BackendServer* PipeServer::backendFromName(const char* name) {
 	return nullptr;
 }
 
+void PipeServer::onBackendClosed(BackendServer * backend) {
+	// the backend server is terminated, disconnect all clients using this backend
+	auto removed_it = std::remove_if(clients_.begin(), clients_.end(),
+		[backend](ClientInfo* client) {
+		if (client->backend_ == backend) {
+			// if the client is using this broken backend, disconnect it
+			uv_close((uv_handle_t*)&client->pipe_, [](uv_handle_t* handle) {
+				auto client = (ClientInfo*)handle->data;
+				delete client;
+			});
+			return true;
+		}
+		return false;
+	});
+	clients_.erase(removed_it, clients_.cend());
+}
+
 BackendServer* PipeServer::backendFromLangProfileGuid(const char* guid) {
 	auto it = backendMap_.find(guid);
 	if (it != backendMap_.end())  // found the backend for the text service
@@ -188,7 +239,7 @@ void PipeServer::quit() {
 
 void PipeServer::handleBackendReply(const char * readBuf, size_t len) {
 	// print to debug console if there is any
-	outputDebugMessage(PipeServer::DebugMessageType::Output, readBuf, len);
+	outputDebugMessage(readBuf, len);
 
 	// pass the response back to the clients
 	auto line = readBuf;
@@ -337,6 +388,8 @@ void PipeServer::onClientDataReceived(uv_stream_t* stream, ssize_t nread, const 
 		if (buf->base) {
 			delete []buf->base;
 		}
+		// the client connection seems to be broken. close it.
+		closeClient(client);
 		return;
 	}
 	if (buf->base) {
@@ -395,6 +448,7 @@ int PipeServer::exec(LPSTR cmd) {
 
 	// run the main loop
 	uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+	return 0;
 }
 
 void PipeServer::handleClientMessage(ClientInfo* client, const char* readBuf, size_t len) {
@@ -403,32 +457,11 @@ void PipeServer::handleClientMessage(ClientInfo* client, const char* readBuf, si
 		quit();
 		return;
 	}
-
-	// print to debug console if there is any
-	outputDebugMessage(DebugMessageType::Input, readBuf, len);
-
-	// call the backend to handle this message
-	if (client->backend_ == nullptr) {
-		// backend is unknown, parse the json to look it up.
+	if (!client->isInitialized()) {
 		Json::Value msg;
 		Json::Reader reader;
 		if (reader.parse(readBuf, msg)) {
-			const char* method = msg["method"].asCString();
-			if (method != nullptr) {
-				if (strcmp(method, "init") == 0) {  // the client connects to us the first time
-					const char* guid = msg["id"].asCString();
-					client->backend_ = backendFromLangProfileGuid(guid);
-					if (client->backend_ == nullptr) {
-						// FIXME: write some response to indicate the failure
-						return;
-					}
-				}
-			}
-		}
-		if (client->backend_ == nullptr) {
-			// fail to find a usable backend
-			// FIXME: write some response to indicate the failure
-			return;
+			client->init(msg);
 		}
 	}
 	// pass the incoming message to the backend
@@ -479,20 +512,9 @@ struct DebugMessageReq {
 	PipeServer* pipeServer;
 };
 
-void PipeServer::outputDebugMessage(DebugMessageType type, const char * msg, size_t len) {
+void PipeServer::outputDebugMessage(const char * msg, size_t len) {
 	if (debugClientPipe_ != nullptr) {
-		string output;
-		switch (type) {
-		case DebugMessageType::Input:
-			output = "INPUT: ";
-			break;
-		case DebugMessageType::Output:
-			output = "OUTPUT: ";
-			break;
-		}
-		output.append(msg, len);
-
-		auto req_data = new DebugMessageReq{ {}, std::move(output), this };
+		auto req_data = new DebugMessageReq{ {}, string{msg, len }, this};
 		req_data->req.data = req_data;
 		uv_buf_t buf = {req_data->msg.length(), (char*)req_data->msg.c_str()};
 

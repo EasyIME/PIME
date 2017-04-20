@@ -159,6 +159,15 @@ BOOL DebugConsole::dialogWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 			else {
 				setTextColor(RGB(192, 192, 192));
 			}
+
+			// getline() removes the \n, so add it back
+			if (!line.empty() && line[line.length() - 1] == '\r') {
+				line += "\n";
+			}
+			else {
+				line += "\r\n";
+			}
+
 			// convert to unicode
 			auto utext = utf8Codec.from_bytes(line);
 

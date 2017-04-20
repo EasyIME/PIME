@@ -246,7 +246,7 @@ void PipeServer::handleBackendReply(const char * readBuf, size_t len) {
 	auto buf_end = readBuf + len;
 	while (line < buf_end) {
 		// Format of each line:
-		// PIMG_MSG|<client_id>|<json reply>
+		// PIMG_MSG|<client_id>|<json reply>\n
 		if (auto line_end = strchr(line, '\n')) {
 			// only handle lines prefixed with "PIME_MSG|" since other lines
 			// might be debug messages printed by the backend.
@@ -257,7 +257,11 @@ void PipeServer::handleBackendReply(const char * readBuf, size_t len) {
 					string clientId(line, sep - line);
 					auto msg = sep + 1;
 					auto msg_len = line_end - msg;
-
+					// because Windows uses CRLF "\r\n" for new lines, python and node.js
+					// try to convert "\n" to "\r\n" sometimes. Let's remove the additional '\r'
+					if (msg_len > 0 && msg[msg_len - 1] == '\r') {
+						--msg_len;
+					}
 					// send the reply message back to the client
 					sendReplyToClient(clientId, msg, msg_len);
 				}

@@ -71,7 +71,7 @@ class Server(object):
                 line = input().strip()
                 if not line:
                     continue
-                client_id, msg_text = line.split('\t', maxsplit=1)
+                client_id, msg_text = line.split('|', maxsplit=1)
                 msg = json.loads(msg_text)
                 client = self.clients.get(client_id)
                 if not client:
@@ -84,15 +84,16 @@ class Server(object):
                 else:
                     ret = client.handleRequest(msg)
                     # Send the response to the client via stdout
-                    # one response per line, prefixed with PIME_MSG:
-                    print("PIME_MSG:{}\t{}".format(client_id, json.dumps(ret)))
+                    # one response per line in the format "PIME_MSG|<client_id>|<json reply>"
+                    reply_line = '|'.join(["PIME_MSG", client_id, json.dumps(ret)])
+                    print(reply_line)
             except EOFError:
                 # stop the server
                 break
             except Exception as e:
                 # import traceback
                 # traceback.print_tb(sys.last_traceback, file=sys.stdout)
-                print("ERROR:", e)
+                print("ERROR:", e, line)
 
     def remove_client(self, client_id):
         print("client disconnected:", client_id)

@@ -153,7 +153,7 @@ BOOL DebugConsole::dialogWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 		stringstream lines(pendingTextOutput_);
 		string line;
 		while (getline(lines, line)) {
-			if (line.compare(0, 9, "PIME_MSG:") == 0) {
+			if (line.compare(0, 9, "PIME_MSG|") == 0) {
 				setTextColor(RGB(255, 255, 0));
 			}
 			else {

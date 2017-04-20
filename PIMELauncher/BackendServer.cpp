@@ -60,9 +60,9 @@ void BackendServer::handleClientMessage(ClientInfo * client, const char * readBu
 		startProcess();
 	}
 
-	// message format: <client_id>\t<json string>\n
+	// message format: <client_id>|<json string>\n
 	string msg = string{ client->clientId_ };
-	msg += "\t";
+	msg += "|";
 	msg.append(readBuf, len);
 	msg += "\n";
 

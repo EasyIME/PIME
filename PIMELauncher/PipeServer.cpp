@@ -70,9 +70,9 @@ bool ClientInfo::init(const Json::Value & params) {
 			// find a backend for the client text service
 			const char* guid = params["id"].asCString();
 			backend_ = server_->backendFromLangProfileGuid(guid);
-			if (backend_ == nullptr) {
+			if (backend_ != nullptr) {
 				// FIXME: write some response to indicate the failure
-				return false;
+				return true;
 			}
 		}
 	}
@@ -246,13 +246,13 @@ void PipeServer::handleBackendReply(const char * readBuf, size_t len) {
 	auto buf_end = readBuf + len;
 	while (line < buf_end) {
 		// Format of each line:
-		// PIMG_MSG:<client_id>\t<json reply>
+		// PIMG_MSG|<client_id>|<json reply>
 		if (auto line_end = strchr(line, '\n')) {
-			// only handle lines prefixed with "PIME_MSG:" since other lines
+			// only handle lines prefixed with "PIME_MSG|" since other lines
 			// might be debug messages printed by the backend.
-			if (strncmp(line, "PIME_MSG:", 9) == 0) {
+			if (strncmp(line, "PIME_MSG|", 9) == 0) {
 				line += 9; // Skip the prefix
-				if (auto sep = strchr(line, '\t')) {
+				if (auto sep = strchr(line, '|')) {
 					// split the client_id from the remaining json reply
 					string clientId(line, sep - line);
 					auto msg = sep + 1;
@@ -466,7 +466,9 @@ void PipeServer::handleClientMessage(ClientInfo* client, const char* readBuf, si
 	}
 	// pass the incoming message to the backend
 	auto backend = client->backend_;
-	backend->handleClientMessage(client, readBuf, len);
+	if (backend) {
+		backend->handleClientMessage(client, readBuf, len);
+	}
 }
 
 void PipeServer::closeClient(ClientInfo* client) {
@@ -474,7 +476,7 @@ void PipeServer::closeClient(ClientInfo* client) {
 		// FIXME: client->backend_->removeClient(client->clientId_);
 		// notify the backend server to remove the client
 		const char msg[] = "{\"method\":\"close\"}";
-		client->backend_->handleClientMessage(client, msg, sizeof(msg));
+		client->backend_->handleClientMessage(client, msg, strlen(msg));
 	}
 
 	clients_.erase(find(clients_.begin(), clients_.end(), client));

@@ -75,9 +75,8 @@ public:
 	void onCompositionTerminated(bool forced);
 
 private:
-	HANDLE connectPipe(const wchar_t* pipeName);
+	static HANDLE connectPipe(const wchar_t* pipeName);
 	bool connectServerPipe();
-	bool launchServer();
 	bool sendRequestText(HANDLE pipe, const char* data, int len, std::string& reply);
 	bool sendRequest(Json::Value& req, Json::Value& result);
 	void closePipe();
@@ -98,6 +97,7 @@ private:
 	unsigned int newSeqNum_;
 	bool isActivated_;
 	bool connectingServerPipe_;
+	HANDLE connectingThread_;
 };
 
 }

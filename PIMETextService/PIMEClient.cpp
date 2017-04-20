@@ -683,6 +683,7 @@ bool Client::sendRequest(Json::Value& req, Json::Value & result) {
 }
 
 // establish a connection to the specified pipe and returns its handle
+// static
 HANDLE Client::connectPipe(const wchar_t* pipeName) {
 	bool hasErrors = false;
 	HANDLE pipe = INVALID_HANDLE_VALUE;

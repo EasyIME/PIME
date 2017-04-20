@@ -1,0 +1,20 @@
+/**
+ * JSHint Mediasmart Configuration File
+ * See http://jshint.com/docs/ for more details 
+ * Examples at : https://github.com/jshint/jshint/blob/master/examples/.jshintrc
+ **/
+
+{
+	"node": true,       // NodeJS JavaScript files
+	"strict": true,     // Require "use strict" statement
+	"white": false,     // Check whitespaces between operators
+	"camelcase": false, // Force camelcase for vars
+	"curly": true,      // Require curly braces in every scope
+	"unused": true,     // Do not allow unused vars
+	"funcscope": false, // Do not allow using a var out of its virtual scope
+	"loopfunc": true,   // Allow functions to be declared in loops
+	"quotmark": false,	// Do not warn about mixing ' and "
+	"trailing": true,	// Warn about trailing spaces
+	"evil": true,      // Allow eval() usage. Be careful, programmer
+	"undef": true       // Force vars declaration before using them
+}

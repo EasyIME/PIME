@@ -1,0 +1,10 @@
+# Dependences
+node_modules
+
+# Temporal files
+*~
+.tern-port
+
+# Other files
+manual_tests.js
+prueba.js

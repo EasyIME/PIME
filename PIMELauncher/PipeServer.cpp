@@ -457,7 +457,7 @@ int PipeServer::exec(LPSTR cmd) {
 
 void PipeServer::handleClientMessage(ClientInfo* client, const char* readBuf, size_t len) {
 	// special handling, asked for quitting PIMELauncher.
-	if (strcmp("quit", readBuf) == 0) {
+	if (len >= 4 && strncmp("quit", readBuf, 4) == 0) {
 		quit();
 		return;
 	}

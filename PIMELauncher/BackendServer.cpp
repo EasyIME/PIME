@@ -142,6 +142,7 @@ void BackendServer::startProcess() {
 
 void BackendServer::terminateProcess() {
 	if (process_) {
+		closeStdioPipes();
 		uv_process_kill(process_, SIGTERM);
 	}
 }
@@ -181,16 +182,27 @@ void BackendServer::onProcessDataReceived(uv_stream_t * stream, ssize_t nread, c
 void BackendServer::onProcessTerminated(int64_t exit_status, int term_signal) {
 	delete process_;
 	process_ = nullptr;
-	ready_ = false;
-	uv_close(reinterpret_cast<uv_handle_t*>(stdinPipe_), [](uv_handle_t* handle) {
-		delete reinterpret_cast<uv_pipe_t*>(handle);
-	});
-	stdinPipe_ = nullptr;
-	uv_close(reinterpret_cast<uv_handle_t*>(stdoutPipe_), [](uv_handle_t* handle) {
-		delete reinterpret_cast<uv_pipe_t*>(handle);
-	});
+
+	closeStdioPipes();
 
 	pipeServer_->onBackendClosed(this);
+}
+
+void BackendServer::closeStdioPipes() {
+	ready_ = false;
+	if (stdinPipe_ != nullptr) {
+		uv_close(reinterpret_cast<uv_handle_t*>(stdinPipe_), [](uv_handle_t* handle) {
+			delete reinterpret_cast<uv_pipe_t*>(handle);
+		});
+		stdinPipe_ = nullptr;
+	}
+
+	if (stdoutPipe_ != nullptr) {
+		uv_close(reinterpret_cast<uv_handle_t*>(stdoutPipe_), [](uv_handle_t* handle) {
+			delete reinterpret_cast<uv_pipe_t*>(handle);
+		});
+		stdoutPipe_ = nullptr;
+	}
 }
 
 } // namespace PIME

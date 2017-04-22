@@ -62,6 +62,7 @@ private:
 	static void allocReadBuf(uv_handle_t*, size_t suggested_size, uv_buf_t* buf);
 	void onProcessDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
 	void onProcessTerminated(int64_t exit_status, int term_signal);
+	void closeStdioPipes();
 
 private:
 	PipeServer* pipeServer_;

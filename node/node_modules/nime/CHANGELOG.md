@@ -1,3 +1,13 @@
+<a name="0.5.0"></a>
+# [0.5.0](https://github.com/jessy1092/NIME/compare/v0.4.1...v0.5.0) (2017-04-22)
+
+
+### Features
+
+* Use stdio redirect to fit the new IPC architecture ([8c3608c](https://github.com/jessy1092/NIME/commit/8c3608c))
+
+
+
 <a name="0.4.1"></a>
 ## [0.4.1](https://github.com/jessy1092/NIME/compare/v0.4.0...v0.4.1) (2016-11-21)
 

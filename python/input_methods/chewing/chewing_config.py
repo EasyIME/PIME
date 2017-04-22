@@ -58,6 +58,7 @@ class ChewingConfig:
         self.switchLangWithShift = True
         self.upDownAction = 0
         self.upperCaseWithShift = True
+        self.disableOnStartup = False
 
         # version: last modified time of (config.json, symbols.dat, swkb.dat)
         self._version = (0.0, 0.0, 0.0)

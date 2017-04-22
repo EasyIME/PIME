@@ -147,6 +147,7 @@ class ChewingTextService(TextService):
         # 轉換輸出成簡體中文?
         self.setOutputSimplifiedChinese(cfg.outputSimpChinese)
 
+
     # 初始化新酷音輸入法引擎
     def initChewingContext(self):
         # load libchewing context
@@ -225,6 +226,9 @@ class ChewingTextService(TextService):
             tooltip = "設定",
             type = "menu"
         )
+
+        # 啟動時預設停用中文輸入
+        self.setKeyboardOpen(not cfg.disableOnStartup)
 
     # 使用者離開輸入法
     def onDeactivate(self):

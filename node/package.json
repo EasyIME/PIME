@@ -17,7 +17,7 @@
     "url": "https://github.com/EasyIME/NIME/issues"
   },
   "engines": {
-    "node": "6.9.1"
+    "node": "6.10.2"
   },
   "dependencies": {
     "debug": "^2.2.0",

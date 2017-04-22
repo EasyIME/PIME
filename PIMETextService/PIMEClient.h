@@ -97,7 +97,9 @@ private:
 	unsigned int newSeqNum_;
 	bool isActivated_;
 	bool connectingServerPipe_;
-	HANDLE connectingThread_;
+	UINT connectServerTimerId_;
+
+	static std::unordered_map<UINT_PTR, Client*> timerIdToClients_;
 };
 
 }

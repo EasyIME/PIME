@@ -143,16 +143,6 @@ private:
 
 	void updateLangButtons(); // update status of language bar buttons
 
-	// reload configurations if changes are detected
-	void reloadConfigIfNeeded();
-
-	// apply current configurations to chewing context
-	void applyConfig();
-
-	void toggleLanguageMode(); // toggle between English and Chinese
-	void toggleShapeMode(); // toggle between full shape and half shape
-	void toggleSimplifiedChinese(); // toggle output traditional or simplified Chinese
-
 	void createCandidateWindow(Ime::EditSession* session);
 	int candFontHeight();
 

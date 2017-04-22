@@ -35,6 +35,8 @@ using namespace std;
 
 namespace PIME {
 
+unordered_map<UINT_PTR, Client*> Client::timerIdToClients_;
+
 Client::Client(TextService* service, REFIID langProfileGuid):
 	textService_(service),
 	pipe_(INVALID_HANDLE_VALUE),
@@ -651,34 +653,42 @@ bool Client::sendRequest(Json::Value& req, Json::Value & result) {
 	Json::FastWriter writer;
 	std::string reqStr = writer.write(req); // convert the json object to string
 
-	for (int retry_connect = 1; retry_connect >= 0; --retry_connect) {
-		if (!connectingServerPipe_) {  // if we're not in the middle of initializing the pipe connection
-			if (!connectServerPipe()) {  // ensure that we're connected
-				continue;
+	if (!connectingServerPipe_) {  // if we're not in the middle of initializing the pipe connection
+		// ensure that we're connected
+		if (!connectServerPipe()) {
+			// connection failed, schedule a timer to try again every 0.5 seconds
+			if (connectServerTimerId_ != 0) { // do not create a new timer if there is an existing one.
+				connectServerTimerId_ = SetTimer(NULL, 0, 500, [](HWND hwnd, UINT msg, UINT_PTR timerId, DWORD time) {
+					auto client = timerIdToClients_[timerId];
+					if (client->connectServerPipe()) {
+						// successfully connected, cancel the timer
+						KillTimer(NULL, timerId);
+						timerIdToClients_.erase(timerId);
+						client->connectServerTimerId_ = 0;
+					}
+				});
+				timerIdToClients_[connectServerTimerId_] = this;
 			}
+			return false;
 		}
-		// now we should be connected. if not, it's an error.
-		if (pipe_ == INVALID_HANDLE_VALUE)
-			break;
+	}
 
-		if (sendRequestText(pipe_, reqStr.c_str(), reqStr.length(), ret)) {
-			Json::Reader reader;
-			success = reader.parse(ret, result);
-			if (success) {
-				if (result["seqNum"].asUInt() != seqNum) // sequence number mismatch
-					success = false;
-			}
-			break; // send request succeeded, no more retries
+	if (sendRequestText(pipe_, reqStr.c_str(), reqStr.length(), ret)) {
+		Json::Reader reader;
+		success = reader.parse(ret, result);
+		if (success) {
+			if (result["seqNum"].asUInt() != seqNum) // sequence number mismatch
+				success = false;
 		}
-		else { // fail to send the request to the server
-			if (connectingServerPipe_) { // we're in the middle of initializing the pipe connection
-				break; // fail directly
-			}
-			else {
-				closePipe(); // close the pipe connection and try again
-			}
+	}
+	else { // fail to send the request to the server
+		if (connectingServerPipe_) { // we're in the middle of initializing the pipe connection
+			return false;
 		}
-	};
+		else {
+			closePipe(); // close the pipe connection since it's broken
+		}
+	}
 	return success;
 }
 
@@ -766,6 +776,12 @@ bool Client::connectServerPipe() {
 }
 
 void Client::closePipe() {
+	if (connectServerTimerId_) {
+		KillTimer(NULL, connectServerTimerId_);
+		timerIdToClients_.erase(connectServerTimerId_);
+		connectServerTimerId_ = 0;
+	}
+
 	if (pipe_ != INVALID_HANDLE_VALUE) {
 		DisconnectNamedPipe(pipe_);
 		CloseHandle(pipe_);

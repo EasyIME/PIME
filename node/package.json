@@ -1,6 +1,6 @@
 {
   "name": "nime-server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Implement input methods easily for Windows with nodejs",
   "main": "server.js",
   "scripts": {
@@ -21,6 +21,6 @@
   },
   "dependencies": {
     "debug": "^2.2.0",
-    "nime": "0.4.1"
+    "nime": "0.5.0"
   }
 }

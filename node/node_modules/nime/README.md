@@ -10,19 +10,19 @@ Implement input methods easily for Windows with nodejs. It is another [PIME](htt
 
 Install PIME first. There are two ways to install.
 
-1. Install via [installer](https://github.com/EasyIME/PIME/releases)
-2. Build the PIME source code and register `PIMETextService.dll`. Please see [this](https://github.com/EasyIME/PIME#install) for more detail
+- Install via [installer](https://github.com/EasyIME/PIME/releases)
+- Build the PIME source code and register `PIMETextService.dll`. Please see [this](https://github.com/EasyIME/PIME#install) for more detail
 
-Please install PIME >= 0.14.* version
+|         | PIME >= 0.14 && PIME <= 0.15 | PIME >= 0.16 |
+| ------- | ---------------------------- | ------------ |
+| Version | <= 0.3                       | >= 0.4       |
 
 There are `emojime` in PIME now. You can copy [emojime](https://github.com/EasyIME/emojime) into `example` folder for testing.
 
 
 #### Node
 
-- Node v6.x 32 bit (Must be 32 bit.)
-- Install [node-gyp](https://github.com/nodejs/node-gyp) dependecise for c binding through [node-ffi](https://github.com/node-ffi/node-ffi). Please see [node-gyp document](https://github.com/nodejs/node-gyp#installation) to setup your environment.
-
+- Node v6.x
 
 ## Development
 
@@ -46,12 +46,6 @@ npm install nime
 
 Example for implementing IME.
 - [reduce-based](/example/meow/README.md): It uses the `textReducer` and `response` function to handle text and request.
-
-
-> Because of PIME architecture, every client would use one thread for service.
-> So you can change the `UV_THREADPOOL_SIZE` number to decide how many client want to connect.
-> Nodejs default is `4`. I change to `32`. `31` for client. `1` for server. see [issue #7](https://github.com/EasyIME/NIME/issues/7)
-
 
 ## Reference
 

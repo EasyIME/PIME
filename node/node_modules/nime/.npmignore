@@ -8,6 +8,7 @@ specs/
 # else
 .editorconfig
 .travis.yml
+chewing/
 
 # nime
 tests/

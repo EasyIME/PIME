@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(PIME)
 
-set(PIME_VERSION_MAJOR "0")
-set(PIME_VERSION_MINOR "16")
-set(PIME_VERSION_PATCH "1")
+# load current number from file
+file(READ "version.txt" PIME_VERSION)
+# we use semantic versioning: <major>.<minor>.<patch>[-<some suffix>]
+# convert the version string into a list (separated by ;)
+string(REGEX MATCHALL "[0-9]+" PIME_VERSION_PARTS "${PIME_VERSION}")
+list(GET PIME_VERSION_PARTS 0 PIME_VERSION_MAJOR)
+list(GET PIME_VERSION_PARTS 1 PIME_VERSION_MINOR)
+list(GET PIME_VERSION_PARTS 2 PIME_VERSION_PATCH)
 
 # override default c/c++ flags, add /MT to link VC++ runtime statically.
 set(CMAKE_USER_MAKE_RULES_OVERRIDE	${CMAKE_CURRENT_SOURCE_DIR}/cmake/c_flag_overrides.cmake)

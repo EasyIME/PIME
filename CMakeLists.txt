@@ -1,4 +1,11 @@
 cmake_minimum_required(VERSION 2.8.11)
+
+# override default c/c++ flags, add /MT to link VC++ runtime statically.
+# NOTE: these two lines should go before the project() command according to CMake FAQ:
+# https://cmake.org/Wiki/CMake_FAQ#Make_Override_Files
+set(CMAKE_USER_MAKE_RULES_OVERRIDE	${CMAKE_CURRENT_SOURCE_DIR}/cmake/c_flag_overrides.cmake)
+set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX	${CMAKE_CURRENT_SOURCE_DIR}/cmake/cxx_flag_overrides.cmake)
+
 project(PIME)
 
 # load current number from file
@@ -9,10 +16,6 @@ string(REGEX MATCHALL "[0-9]+" PIME_VERSION_PARTS "${PIME_VERSION}")
 list(GET PIME_VERSION_PARTS 0 PIME_VERSION_MAJOR)
 list(GET PIME_VERSION_PARTS 1 PIME_VERSION_MINOR)
 list(GET PIME_VERSION_PARTS 2 PIME_VERSION_PATCH)
-
-# override default c/c++ flags, add /MT to link VC++ runtime statically.
-set(CMAKE_USER_MAKE_RULES_OVERRIDE	${CMAKE_CURRENT_SOURCE_DIR}/cmake/c_flag_overrides.cmake)
-set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX	${CMAKE_CURRENT_SOURCE_DIR}/cmake/cxx_flag_overrides.cmake)
 
 # http://www.utf8everywhere.org/
 add_definitions(

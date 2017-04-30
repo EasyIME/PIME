@@ -37,6 +37,7 @@
 
 #include "BackendServer.h"
 #include "Utils.h"
+#include "../libIME/WindowsVersion.h"
 
 using namespace std;
 
@@ -430,10 +431,16 @@ int PipeServer::exec(LPSTR cmd) {
 	initBackendServers(topDirPath_);
 
 	// preparing for the server pipe
-	initSecurityAttributes();
-
+	SECURITY_ATTRIBUTES* sa = nullptr;
+	if (Ime::WindowsVersion().isWindows8Above()) {
+		// Setting special security attributes to the named pipe is only needed 
+		// for Windows >= 8 since older versions do not have app containers (metro apps) 
+		// in which connecting to pipes are blocked by default permission settings.
+		initSecurityAttributes();
+		sa = &securityAttributes_;
+	}
 	// initialize the server pipe
-	initPipe(&serverPipe_, "Launcher", &securityAttributes_);
+	initPipe(&serverPipe_, "Launcher", sa);
 
 	// listen to events from clients
 	uv_listen(reinterpret_cast<uv_stream_t*>(&serverPipe_), 32, [](uv_stream_t* server, int status) {

@@ -352,12 +352,13 @@ void PipeServer::initSecurityAttributes() {
 // References:
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365588(v=vs.85).aspx
 void PipeServer::initPipe(uv_pipe_t* pipe, const char* app_name, SECURITY_ATTRIBUTES* sa) {
-	char username[UNLEN + 1];
+	wchar_t username[UNLEN + 1];
 	DWORD unlen = UNLEN + 1;
-	if (GetUserNameA(username, &unlen)) {
+	if (GetUserNameW(username, &unlen)) {
 		// add username to the pipe path so it will not clash with other users' pipes.
 		char pipe_name[MAX_PATH];
-		sprintf(pipe_name, "\\\\.\\pipe\\%s\\PIME\\%s", username, app_name);
+		std::string utf8_username = utf8Codec.to_bytes(username, username + unlen);
+		sprintf(pipe_name, "\\\\.\\pipe\\%s\\PIME\\%s", utf8_username.c_str(), app_name);
 		// create the pipe
 		uv_pipe_init_windows_named_pipe(uv_default_loop(), pipe, 0, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, sa);
 		pipe->data = this;

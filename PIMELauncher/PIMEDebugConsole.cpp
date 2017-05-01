@@ -55,11 +55,12 @@ void DebugConsole::connectPipe() {
 	pipe_->data = this;
 
 	char pipe_name[MAX_PATH];
-	char username[UNLEN + 1];
+	wchar_t username[UNLEN + 1];
 	DWORD unlen = UNLEN + 1;
-	if (GetUserNameA(username, &unlen)) {
+	if (GetUserNameW(username, &unlen)) {
+		std::string utf8_username = utf8Codec.to_bytes(username, username + unlen);
 		// add username to the pipe path so it will not clash with other users' pipes.
-		sprintf(pipe_name, "\\\\.\\pipe\\%s\\PIME\\%s", username, "Debug");
+		sprintf(pipe_name, "\\\\.\\pipe\\%s\\PIME\\%s", utf8_username.c_str(), "Debug");
 	}
 
 	uv_connect_t* req = new uv_connect_t{};

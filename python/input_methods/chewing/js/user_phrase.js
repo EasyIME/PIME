@@ -19,7 +19,7 @@ function loadUserPhrases() {
     // Get user_phrases
     $.get("/user_phrases", function (data, status) {
         if (data.data != undefined) {
-            var table_content = data.data.map(function (user_phrase) {                
+            var table_content = data.data.map(function (user_phrase) {
                 return '<tr><td><input type="checkbox" data-phrase="' + user_phrase.phrase + '" data-bopomofo="' + user_phrase.bopomofo + '">' + user_phrase.phrase + '</td><td>' + user_phrase.bopomofo + '</td><td><button>刪除「' + user_phrase.phrase + '」</button></td></tr>';
             }).join("");
             $("#table_content").html(table_content);
@@ -52,6 +52,19 @@ function loadUserPhrases() {
         // Make the "#table_content tr" click event correct check checkbox
         $("#table_content input[type=checkbox]").click(function () {
             $(this).prop("checked", !$(this).prop("checked"));
+        });
+
+        // Register click to select all phrases 
+        $("input[type=checkbox][name='select_all']").click(function () {
+            if ($(this).prop("checked")) {
+                $("#table_content input[type=checkbox]").prop("checked", true);
+                $("#table_content input[type=checkbox]").parent().parent().addClass("phrase_selected");
+                $("#delete_count").html("（" + $("#table_content input[type=checkbox]:checked").length + "）");
+            } else {
+                $("#table_content input[type=checkbox]").prop("checked", false);
+                $("#table_content input[type=checkbox]").parent().parent().removeClass("phrase_selected");
+                $("#delete_count").html("");
+            }
         });
     }, "json");
 }

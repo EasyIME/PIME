@@ -98,6 +98,9 @@ class ChewingTextService(TextService):
         # 使用 OpenCC 繁體中文轉簡體
         self.opencc = None
 
+        # has language buttons
+        self.hasLangButtons = False
+
     # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):
         cfg = chewingConfig
@@ -194,8 +197,26 @@ class ChewingTextService(TextService):
         # 當 Shift + Space 被按下的時候，onPreservedKey() 會被呼叫
         self.addPreservedKey(VK_SPACE, TF_MOD_SHIFT, SHIFT_SPACE_GUID); # shift + space
 
-        # 新增語言列按鈕 (Windows 8 之後已取消語言列)
+        # 啟動時預設停用中文輸入 (限 Windows 8 以上適用)
+        if self.client.isWindows8Above:
+            self.setKeyboardOpen(not cfg.disableOnStartup)
 
+        # 新增語言列按鈕 (Windows 8 之後 default 已取消語言列)
+        if self.keyboardOpen:
+            self.addLangButtons()
+
+        # Windows 8 以上已取消語言列功能，改用 systray IME mode icon
+        if self.client.isWindows8Above:
+            icon_name = "chi.ico" if self.langMode == CHINESE_MODE else "eng.ico"  # 切換中英文
+            self.addButton("windows-mode-icon",
+                icon = os.path.join(self.icon_dir, icon_name),
+                tooltip = "中英文切換",
+                commandId = ID_MODE_ICON
+            )
+
+    def addLangButtons(self):
+        if self.hasLangButtons:
+            return
         # 切換中英文
         icon_name = "chi.ico" if self.langMode == CHINESE_MODE else "eng.ico"
         self.addButton("switch-lang",
@@ -203,14 +224,6 @@ class ChewingTextService(TextService):
             tooltip = "中英文切換",
             commandId = ID_SWITCH_LANG
         )
-
-        # Windows 8 以上已取消語言列功能，改用 systray IME mode icon
-        if self.client.isWindows8Above:
-            self.addButton("windows-mode-icon",
-                icon = os.path.join(self.icon_dir, icon_name),
-                tooltip = "中英文切換",
-                commandId = ID_MODE_ICON
-            )
 
         # 切換全半形
         icon_name = "full.ico" if self.shapeMode == FULLSHAPE_MODE else "half.ico"
@@ -226,10 +239,14 @@ class ChewingTextService(TextService):
             tooltip = "設定",
             type = "menu"
         )
+        self.hasLangButtons = True
 
-        # 啟動時預設停用中文輸入 (限 Windows 8 以上適用)
-        if self.client.isWindows8Above:
-            self.setKeyboardOpen(not cfg.disableOnStartup)
+    def removeLangButtons(self):
+        if self.hasLangButtons:
+            self.removeButton("switch-lang")
+            self.removeButton("switch-shape")
+            self.removeButton("settings")
+        self.hasLangButtons = False
 
     # 使用者離開輸入法
     def onDeactivate(self):
@@ -244,9 +261,8 @@ class ChewingTextService(TextService):
         self.lastOutputSimpChinese = None
 
         # 移除語言列按鈕
-        self.removeButton("switch-lang")
-        self.removeButton("switch-shape")
-        self.removeButton("settings")
+        self.removeLangButtons()
+
         if self.client.isWindows8Above:
             self.removeButton("windows-mode-icon")
 
@@ -667,7 +683,8 @@ class ChewingTextService(TextService):
             self.langMode = langMode
             icon_name = "chi.ico" if langMode == CHINESE_MODE else "eng.ico"
             icon_path = os.path.join(self.icon_dir, icon_name)
-            self.changeButton("switch-lang", icon=icon_path)
+            if self.hasLangButtons:
+                self.changeButton("switch-lang", icon=icon_path)
 
             if self.client.isWindows8Above: # windows 8 mode icon
                 # FIXME: we need a better set of icons to meet the
@@ -677,9 +694,10 @@ class ChewingTextService(TextService):
         shapeMode = chewingContext.get_ShapeMode()
         if shapeMode != self.shapeMode:  # 如果全形半形模式改變
             self.shapeMode = shapeMode
-            icon_name = "full.ico" if shapeMode == FULLSHAPE_MODE else "half.ico"
-            icon_path = os.path.join(self.icon_dir, icon_name)
-            self.changeButton("switch-shape", icon=icon_path)
+            if self.hasLangButtons:
+                icon_name = "full.ico" if shapeMode == FULLSHAPE_MODE else "half.ico"
+                icon_path = os.path.join(self.icon_dir, icon_name)
+                self.changeButton("switch-shape", icon=icon_path)
 
     # 切換中英文模式
     def toggleLanguageMode(self):
@@ -708,6 +726,7 @@ class ChewingTextService(TextService):
         TextService.onKeyboardStatusChanged(self, opened)
         if opened: # 鍵盤開啟
             self.initChewingContext() # 確保新酷音引擎啟動
+            self.addLangButtons()
         else: # 鍵盤關閉，輸入法停用
             # 若選字中，隱藏選字視窗
             if self.showCandidates:
@@ -720,6 +739,7 @@ class ChewingTextService(TextService):
 
             # self.hideMessage() # hide message window, if there's any
             self.chewingContext = None  # 釋放新酷音引擎資源
+            self.removeLangButtons()
 
         # Windows 8 systray IME mode icon
         if self.client.isWindows8Above:

@@ -676,6 +676,8 @@ Section "Uninstall"
 	ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
 	Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
 
+    Delete /REBOOTOK "$INSTDIR\PIMEDebugConsole.exe"
+
 	RMDir /REBOOTOK /r "$INSTDIR\x86"
 	RMDir /REBOOTOK /r "$INSTDIR\python"
 	RMDir /REBOOTOK /r "$INSTDIR\node"

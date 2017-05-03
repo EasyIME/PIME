@@ -21,8 +21,7 @@ textarea {
 }
 
 #top_box {
-    width: 60%;
-    margin: auto;
+    margin-left: 17em;
 }
 
 .tab-content {
@@ -79,7 +78,7 @@ textarea {
     padding: 1em 1em 0 0;
     border-right: 2px solid grey;
     height: 95%;
-    width: 12em;
+    width: 15em;
 }
 
 #user_phrase_buttons #phrase_count {

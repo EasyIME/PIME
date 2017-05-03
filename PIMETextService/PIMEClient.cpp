@@ -57,8 +57,8 @@ Client::~Client(void) {
 
 	// some language bar buttons are not unregistered properly
 	if (!buttons_.empty()) {
-		for (auto it = buttons_.begin(); it != buttons_.end(); ++it) {
-			textService_->removeButton(it->second);
+		for (auto& item: buttons_) {
+			textService_->removeButton(item.second);
 		}
 	}
 	LangBarButton::clearIconCache();
@@ -264,15 +264,14 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 		for (auto btn_it = addButtonVal.begin(); btn_it != addButtonVal.end(); ++btn_it) {
 			const Json::Value& btn = *btn_it;
 			// FIXME: when to clear the id <=> button map??
-			PIME::LangBarButton* langBtn = PIME::LangBarButton::fromJson(textService_, btn);
+			Ime::ComPtr<PIME::LangBarButton> langBtn{ PIME::LangBarButton::fromJson(textService_, btn), false };
 			if (langBtn != nullptr) {
-				buttons_[langBtn->id()] = langBtn; // insert into the map
+				buttons_.emplace(langBtn->id(), langBtn); // insert into the map
 				textService_->addButton(langBtn);
-				langBtn->Release();
 			}
 		}
 	}
-	
+
 	const auto& removeButtonVal = msg["removeButton"];
 	if (removeButtonVal.isArray()) {
 		// FIXME: handle windows-mode-icon
@@ -758,8 +757,8 @@ bool Client::connectServerPipe() {
 
 				// cleanup for the previous instance.
 				// remove all buttons
-				for (auto it = buttons_.begin(); it != buttons_.end(); ++it) {
-					textService_->removeButton(it->second);
+				for (auto& item: buttons_) {
+					textService_->removeButton(item.second);
 				}
 				buttons_.clear();
 

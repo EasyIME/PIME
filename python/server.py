@@ -94,6 +94,9 @@ class Server(object):
                 # import traceback
                 # traceback.print_tb(sys.last_traceback, file=sys.stdout)
                 print("ERROR:", e, line)
+                # generate an empty output containing {success: False} to prevent the client from being blocked
+                reply_line = '|'.join(["PIME_MSG", client_id, '{"success":false}'])
+                print(reply_line)
 
     def remove_client(self, client_id):
         print("client disconnected:", client_id)

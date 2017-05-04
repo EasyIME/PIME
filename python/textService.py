@@ -123,7 +123,7 @@ class TextService:
             self.onCompositionTerminated(forced)
         elif method == "onActivate":
             self.isActivated = True
-            self.KeyboardOpen = msg["isKeyboardOpen"]
+            self.keyboardOpen = msg["isKeyboardOpen"]
             self.onActivate()
         elif method == "onDeactivate":
             self.onDeactivate()

@@ -296,7 +296,7 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 				string id = btn["id"].asString();
 				auto map_it = buttons_.find(id);
 				if (map_it != buttons_.end()) {
-					map_it->second->update(btn);
+					map_it->second->updateFromJson(btn);
 				}
 			}
 		}

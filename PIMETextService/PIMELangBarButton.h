@@ -34,7 +34,7 @@ public:
 	LangBarButton(TextService* service, const std::string& id, const GUID& guid, UINT commandId = 0, const wchar_t* text = NULL, DWORD style = TF_LBI_STYLE_BTN_BUTTON);
 
 	static LangBarButton* fromJson(TextService* service, const Json::Value& info);
-	void update(const Json::Value& info);
+	void updateFromJson(const Json::Value& info);
 
 	const std::string& id() const {
 		return id_;

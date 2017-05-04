@@ -62,14 +62,14 @@ LangBarButton* LangBarButton::fromJson(TextService* service, const Json::Value& 
 
 		LangBarButton* langBtn = new LangBarButton(service, id, guid, 0, NULL, style);
 		if (langBtn != nullptr) {
-			langBtn->update(info);
+			langBtn->updateFromJson(info);
 			return langBtn;
 		}
 	}
 	return nullptr;
 }
 
-void LangBarButton::update(const Json::Value& info) {
+void LangBarButton::updateFromJson(const Json::Value& info) {
 	const Json::Value& iconValue = info["icon"];
 	if (iconValue.isString()) {
 		std::wstring iconPath = utf8ToUtf16(iconValue.asCString());
@@ -126,6 +126,8 @@ void LangBarButton::update(const Json::Value& info) {
 	if (toggledValue.isBool()) {
 		setToggled(toggledValue.asBool());
 	}
+
+	update();
 }
 
 

@@ -286,7 +286,6 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 			}
 		}
 	}
-
 	const auto& changeButtonVal = msg["changeButton"];
 	if (changeButtonVal.isArray()) {
 		// FIXME: handle windows-mode-icon

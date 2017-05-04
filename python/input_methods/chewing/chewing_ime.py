@@ -739,13 +739,13 @@ class ChewingTextService(TextService):
 
             # self.hideMessage() # hide message window, if there's any
             self.chewingContext = None  # 釋放新酷音引擎資源
+            # disable 其他語言列按鈕
             self.removeLangButtons()
 
         # Windows 8 systray IME mode icon
         if self.client.isWindows8Above:
             # 若鍵盤關閉，我們需要把 widnows 8 mode icon 設定為 disabled
             self.changeButton("windows-mode-icon", enable=opened)
-        # FIXME: 是否需要同時 disable 其他語言列按鈕？
         self.updateLangButtons()
 
     # 當中文編輯結束時會被呼叫。若中文編輯不是正常結束，而是因為使用者

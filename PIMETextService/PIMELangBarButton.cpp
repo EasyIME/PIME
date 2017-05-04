@@ -126,8 +126,6 @@ void LangBarButton::updateFromJson(const Json::Value& info) {
 	if (toggledValue.isBool()) {
 		setToggled(toggledValue.asBool());
 	}
-
-	update();
 }
 
 

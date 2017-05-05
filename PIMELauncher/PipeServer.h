@@ -32,6 +32,7 @@
 #include <vector>
 #include <unordered_map>
 #include <queue>
+#include <deque>
 #include <memory>
 #include "BackendServer.h"
 
@@ -125,6 +126,7 @@ private:
 	uv_pipe_t serverPipe_; // main server pipe accepting connections from the clients
 	uv_pipe_t debugServerPipe_; // pipe used for communicate with the debug console
 	uv_pipe_t* debugClientPipe_; // connected client pipe of the debug console
+	std::deque<std::string> recentDebugMessages_; // buffer storing recent debug messages
 
 	std::vector<BackendServer*> backends_;
 	std::unordered_map<std::string, BackendServer*> backendMap_;

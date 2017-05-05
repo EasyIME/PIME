@@ -239,6 +239,11 @@ void PipeServer::quit() {
 }
 
 void PipeServer::handleBackendReply(const char * readBuf, size_t len) {
+	recentDebugMessages_.emplace_back(readBuf, len);
+	// only keep recent 100 messages
+	if (recentDebugMessages_.size() >= 100) {
+		recentDebugMessages_.pop_front();
+	}
 	// print to debug console if there is any
 	outputDebugMessage(readBuf, len);
 
@@ -511,6 +516,11 @@ void PipeServer::onNewDebugClientConnected(uv_stream_t* server, int status) {
 		closeDebugClient();
 	}
 	debugClientPipe_ = client_pipe;
+
+	// if there are recent debug messages, output them to the debug console
+	for (auto& msg : recentDebugMessages_) {
+		outputDebugMessage(msg.c_str(), msg.length());
+	}
 }
 
 void PipeServer::closeDebugClient() {

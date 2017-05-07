@@ -185,6 +185,7 @@ Function uninstallOldVersion
 			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk"
 			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk"
 			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk"
+            ; Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_SIX_POINT).lnk"
 			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
 			RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
 
@@ -480,7 +481,15 @@ SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
 				StrCpy $INST_PYTHON "True"
 			${EndIf}
 		SectionEnd
-	SectionGroupEnd
+
+		Section $(SIX_POINT) six_point
+            SectionIn 2
+            SetOutPath "$INSTDIR\python\input_methods"
+            File /r "..\python\input_methods\six_point"
+            StrCpy $INST_PYTHON "True"
+		SectionEnd
+
+    SectionGroupEnd
 
 	SectionGroup /e $(PYTHON_CHS_SECTION_GROUP) python_chs_section_group
 		Section $(RIME) rime
@@ -654,6 +663,7 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${rime} $(rime_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${emojime} $(emojime_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${cheeng} $(cheeng_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${six_point} $(six_point_DESC)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;Uninstaller Section
@@ -696,6 +706,7 @@ Section "Uninstall"
 	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk"
 	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk"
     Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk"
+	; Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_SIX_POINT).lnk"
 	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
 	RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
 

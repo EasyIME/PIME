@@ -1,0 +1,14 @@
+{
+	"name":"六點輸入法 (PIME)",
+	"version": "0.1",
+	"guid": "{263DC448-FD3B-497C-AAC3-E915DC280D92}",
+    "locale": "zh-Hant-TW",
+    "fallbackLocale": "zh-TW",
+	"icon": "icon.ico",
+	"win8_icon": "",
+	"moduleName": "six_point_ime",
+	"serviceName": "SixPointTextService",
+    "configTool": "..\\..\\python3\\pythonw.exe",
+    "configToolParams": "..\\chewing\\config_tool.py config",
+    "configToolDir": "..\\chewing"
+}

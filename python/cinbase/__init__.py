@@ -218,6 +218,7 @@ class CinBase:
 
     # 輸入法被使用者啟用
     def onActivate(self, cbTS):
+        cfg = cbTS.cfg
         # 向系統宣告 Shift + Space 這個組合為特殊用途 (全半形切換)
         # 當 Shift + Space 被按下的時候，onPreservedKey() 會被呼叫
         cbTS.addPreservedKey(VK_SPACE, TF_MOD_SHIFT, SHIFT_SPACE_GUID); # shift + space
@@ -249,8 +250,8 @@ class CinBase:
                 commandId=ID_MODE_ICON
             )
 
-            if not cbTS.KeyboardOpen:
-                cbTS.changeButton("windows-mode-icon", enable=cbTS.KeyboardOpen)
+            # 啟動時預設停用中文輸入
+            cbTS.setKeyboardOpen(not cfg.disableOnStartup)
 
         # 切換全半形
         icon_name = "full.ico" if cbTS.shapeMode == FULLSHAPE_MODE else "half.ico"

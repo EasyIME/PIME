@@ -1,5 +1,7 @@
 python36.zip
 .
+# PIME: also add our own directory to default python path
+..
 
 # Uncomment to run site.main() automatically
 #import site

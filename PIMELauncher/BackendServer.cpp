@@ -30,12 +30,17 @@
 #include <map>
 #include <fstream>
 #include <algorithm>
+#include <codecvt>  // for utf8 conversion
+#include <locale>  // for wstring_convert
+
 #include <json/json.h>
 
 #include "BackendServer.h"
 #include "PipeServer.h"
 
 using namespace std;
+
+static wstring_convert<codecvt_utf8<wchar_t>> utf8Codec;
 
 namespace PIME {
 
@@ -114,7 +119,27 @@ void BackendServer::startProcess() {
 	char full_working_dir[MAX_PATH];
 	::GetFullPathNameA(workingDir_.c_str(), MAX_PATH, full_working_dir, nullptr);
 	options.cwd = full_working_dir;
-	options.env = nullptr;
+
+	// build our own new environments
+	auto env_strs = GetEnvironmentStringsW();
+	vector<string> utf8_environ;
+	for (auto penv = env_strs; *penv; penv += wcslen(penv) + 1) {
+		utf8_environ.emplace_back(utf8Codec.to_bytes(penv));
+	}
+	FreeEnvironmentStringsW(env_strs);
+	// add our own environment variables
+	// NOTE: Force python to output UTF-8 encoded strings
+	// Reference: https://docs.python.org/3/using/cmdline.html#envvar-PYTHONIOENCODING
+	// By default, python uses ANSI encoding in Windows and this breaks our unicode support.
+	// FIXME: makes this configurable from backend.json.
+	utf8_environ.emplace_back("PYTHONIOENCODING=utf-8:ignore");
+	vector<const char*> env;
+	for (auto& v : utf8_environ) {
+		env.emplace_back(v.c_str());
+	}
+	env.emplace_back(nullptr);
+	options.env = const_cast<char**>(env.data());
+
 	options.stdio_count = 3;
 	options.stdio = stdio_containers;
 	int ret = uv_spawn(uv_default_loop(), process_, &options);

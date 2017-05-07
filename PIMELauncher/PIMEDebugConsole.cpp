@@ -170,18 +170,22 @@ BOOL DebugConsole::dialogWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 			}
 
 			// convert to unicode
-			auto utext = utf8Codec.from_bytes(line);
+			try {
+				auto utext = utf8Codec.from_bytes(line);
 
-			// move the caret to the end
-			auto textLen = GetWindowTextLength(richEdit_);
-			SendMessage(richEdit_, EM_SETSEL, textLen, textLen);
+				// move the caret to the end
+				auto textLen = GetWindowTextLength(richEdit_);
+				SendMessage(richEdit_, EM_SETSEL, textLen, textLen);
 
-			// write to the richedit control
-			SendMessageW(richEdit_, EM_REPLACESEL, 0, LPARAM(utext.c_str()));
+				// write to the richedit control
+				SendMessageW(richEdit_, EM_REPLACESEL, 0, LPARAM(utext.c_str()));
 
-			// scroll to bottom
-			SendMessage(richEdit_, EM_SCROLLCARET, 0, 0);
-
+				// scroll to bottom
+				SendMessage(richEdit_, EM_SCROLLCARET, 0, 0);
+			}
+			catch (std::exception& e) {
+				// utf-8 conversion failed.
+			}
 		}
 		pendingTextOutput_.clear();
 		break;

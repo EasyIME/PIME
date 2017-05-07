@@ -146,10 +146,16 @@ class Cin(object):
         if matchchardefs:
             for chardef in matchchardefs:
                 for matchstr in chardef:
-                    charSet = self.getCharSet(matchstr)
+                    if len(matchstr) > 1:
+                        charSet = self.getCharSet(matchstr[0])
+                    else:
+                        charSet = self.getCharSet(matchstr)
+
                     if charSet in highFrequencyCharSetList:
                         wildcardchardefs.append(matchstr)
                         highFrequencyWordCount += 1
+                        if len(wildcardchardefs) >= candMaxItems:
+                            return wildcardchardefs
                     else:
                         i = lowFrequencyCharSetList.index(charSet)
                         if not matchstr in lowFrequencyChardefs[i]:

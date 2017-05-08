@@ -18,7 +18,7 @@
 from keycodes import * # for VK_XXX constants
 from textService import *
 from ..chewing.chewing_ime import ChewingTextService, ENGLISH_MODE, CHINESE_MODE
-from .brl_tables import brl_phonic_dic, phonetic_categories
+from .brl_tables import brl_ascii_dic, brl_phonic_dic, phonetic_categories
 
 
 # 注音符號對實體鍵盤英數按鍵
@@ -134,7 +134,6 @@ class SixPointTextService(ChewingTextService):
         for key in get_keys_for_bopomofo(bopomofo_seq):
             keyEvent.keyCode = ord(key.upper())  # 英文數字的 virtual keyCode 正好 = 大寫 ASCII code
             keyEvent.charCode = ord(key)  # charCode 為字元內碼
-            print("WRITE:", keyEvent.charCode)
             # 讓新酷音引擎處理按鍵，模擬按下再放開
             super().filterKeyDown(keyEvent)
             super().onKeyDown(keyEvent)
@@ -155,7 +154,14 @@ class SixPointTextService(ChewingTextService):
         # FIXME: 區分英數和注音模式
         # 6 點轉注音
         clear_pending = True
-        bopomofo_seq = brl_phonic_dic.get(current_braille)
+        if self.langMode == ENGLISH_MODE:
+            bopomofo_seq = brl_ascii_dic.get(current_braille)
+            self.last_braille = ""
+            if keyEvent.isKeyToggled(VK_CAPITAL):  # capslock
+                bopomofo_seq = bopomofo_seq.upper()  # convert to upper case
+        else:
+            bopomofo_seq = brl_phonic_dic.get(current_braille)
+
         if bopomofo_seq == "CHECK_NEXT":  # 須等待下一個輸入才能判斷
             self.last_braille = current_braille
             clear_pending=False

@@ -17,7 +17,7 @@
 
 from keycodes import * # for VK_XXX constants
 from textService import *
-from ..chewing.chewing_ime import ChewingTextService
+from ..chewing.chewing_ime import ChewingTextService, ENGLISH_MODE, CHINESE_MODE
 from .brl_tables import brl_phonic_dic, phonetic_categories
 
 
@@ -53,22 +53,6 @@ def get_keys_for_bopomofo(bopomofo_seq, keyboard_type=0):
     return keys
 
 
-# 點字六點對注音符號
-points_to_bopomofo = {
-    "135": "ㄅ",
-    "145": "ㄉ",
-    "345": "ㄚ",
-    "2345": "ㄧㄢ",
-    "12456": "ㄨㄢ",
-    "2": "ˊ",
-    "5": "ˋ ",
-    "23": "， ",
-    "13": "?",  # 可能是 "ㄍ" or "ㄐ" 無法馬上判定
-    "13-2345": "ㄐㄧㄢ",
-    "13-12456": "ㄍㄨㄢ"
-}
-
-
 class SixPointTextService(ChewingTextService):
 
     # 鍵盤按鍵轉成點字 1 - 6 點
@@ -85,13 +69,18 @@ class SixPointTextService(ChewingTextService):
     def __init__(self, client):
         super().__init__(client)
         self.braille_keys_pressed = False
-        self.point_pressed_states = [False] * 6
+        self.dots_pressed_states = [False] * 6
         self.last_braille = ""
+
+    def applyConfig(self):
+        # 攔截 ChewingTextService 的 applyConfig，以便強制關閉某些設定選項
+        super().applyConfig()
+        # TODO: 強制關閉新酷音某些和點字輸入相衝的功能
 
     def reset_braille_mode(self, clear_pending=True):
         # 清除點字 buffer，準備打下一個字
         for i in range(6):
-            self.point_pressed_states[i] = False
+            self.dots_pressed_states[i] = False
         if clear_pending:
             self.last_braille = ""
         self.braille_keys_pressed = False
@@ -118,7 +107,7 @@ class SixPointTextService(ChewingTextService):
             # 點字模式，檢查 6 個點字鍵是否被按下，忽略其餘按鍵
             for i, key in enumerate(self.braille_keys):
                 if keyEvent.isKeyDown(key):
-                    self.point_pressed_states[i] = 1
+                    self.dots_pressed_states[i] = 1
                     self.braille_keys_pressed = True
             return True
         return super().onKeyDown(keyEvent)
@@ -161,7 +150,7 @@ class SixPointTextService(ChewingTextService):
     # 將點字 6 點轉換成注音按鍵，送給新酷音處理
     def handle_braille_keys(self, keyEvent):
         # 將 6 點狀態轉成用數字表示，例如 [False, True, True, True, True, False] 轉成 "2345"
-        current_braille = "".join([str(i + 1) for i, pressed in enumerate(self.point_pressed_states) if pressed])
+        current_braille = "".join([str(i + 1) for i, pressed in enumerate(self.dots_pressed_states) if pressed])
 
         # FIXME: 區分英數和注音模式
         # 6 點轉注音
@@ -180,11 +169,14 @@ class SixPointTextService(ChewingTextService):
                 else:
                     bopomofo_seq = 'ㄟ'
             elif current_braille == '1':  # ['ㄓ', '˙']
-                # FIXME: 規則待研究
-                pass
+                # 沒有前一個注音，或前一個不是韻母 => ㄓ
+                if not last_bopomofo or phonetic_categories.get(last_bopomofo[-1]) != "韻母":
+                    bopomofo_seq = 'ㄓ'
+                else:
+                    bopomofo_seq = '˙'
             elif current_braille == '125':  # ['ㄗ', 'ㄛ']
-                # FIXME: 規則待研究
-                pass
+                # 沒有前一個注音 'ㄗ', 否則 'ㄛ'
+                bopomofo_seq = 'ㄗ' if not last_bopomofo else 'ㄛ'
             elif current_braille == '156':  # 'ㄦ'
                 # FIXME: 也當作捲舌與不捲舌聲母單獨出現時所加的韻母
                 bopomofo_seq = 'ㄦ'

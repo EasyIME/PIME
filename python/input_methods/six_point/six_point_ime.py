@@ -23,30 +23,15 @@ from .brl_tables import brl_ascii_dic, brl_phonic_dic, phonetic_categories
 
 # 注音符號對實體鍵盤英數按鍵
 bopomofo_chars = "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ˙ˊˇˋ"
-bopomofo_to_keys = [
-    "1qaz2wsxedcrfv5tgbyhnujm8ik,9ol.0p;/-7634",        # standard kb
-    "bpmfdtnlgkhjvcjvcrzasexuyhgeiawomnkllsdfj",        # hsu
-    "1234567890-qwertyuiopasdfghjkl;zxcvbn/m,.",        # IBM
-    "2wsx3edcrfvtgb6yhnujm8ik,9ol.0p;/-['=1qaz",        # Gin-yieh
-    "bpmfdtnlvkhg7c,./j;'sexuaorwiqzy890-=1234",        # ET
-    "bpmfdtnlvkhgvcgycjqwsexuaorwiqzpmntlhdfjk",        # ET26
-    "1'a;2,oq.ejpuk5yixfdbghm8ctw9rnv0lsz[7634",        # Dvorak
-    "bpmfdtnlgkhjvcjvcrzasexuyhgeiawomnkllsdfj",        # Dvorak Hsu
-    "qqazwwsxedcrfvttgbyhnujmuikbiolmoplnpyerd",        # DACHEN-CP26
-    "1qaz2wsxedcrfv5tgbyhnujm8ik,9ol.0p;/-7634",        # Hanyu Pinyin
-    "1qaz2wsxedcrfv5tgbyhnujm8ik,9ol.0p;/-7634",        # Luoma Pinyin
-    "1qaz2wsxedcrfv5tgbyhnujm8ik,9ol.0p;/-7634",        # secondary Bopomofo Pinyin
-    "1qdz2gsxmtclnv5wrjyikfap8ue,9bo.0;h/-7634",        # Carpalx
-]
+bopomofo_to_keys = "1qaz2wsxedcrfv5tgbyhnujm8ik,9ol.0p;/-7634",        # standard kb
 
 # 將注音符號轉換成實體鍵盤的英數按鍵
-def get_keys_for_bopomofo(bopomofo_seq, keyboard_type=0):
+def get_keys_for_bopomofo(bopomofo_seq):
     keys = []
-    kb = bopomofo_to_keys[keyboard_type]
     for bopomofo in bopomofo_seq:
         idx = bopomofo_chars.find(bopomofo)
         if idx >= 0:
-            key = kb[idx]
+            key = bopomofo_to_keys[idx]
         else:
             key = bopomofo
         keys.append(key)
@@ -75,6 +60,10 @@ class SixPointTextService(ChewingTextService):
     def applyConfig(self):
         # 攔截 ChewingTextService 的 applyConfig，以便強制關閉某些設定選項
         super().applyConfig()
+
+        # 強制使用預設 keyboard layout
+        chewingContext.set_KBType(0);
+
         # TODO: 強制關閉新酷音某些和點字輸入相衝的功能
 
     def reset_braille_mode(self, clear_pending=True):

@@ -18,6 +18,7 @@
 from keycodes import * # for VK_XXX constants
 from textService import *
 from ..chewing.chewing_ime import ChewingTextService
+from .brl_tables import brl_phonic_dic, phonetic_categories
 
 
 # 注音符號對實體鍵盤英數按鍵
@@ -44,7 +45,10 @@ def get_keys_for_bopomofo(bopomofo_seq, keyboard_type=0):
     kb = bopomofo_to_keys[keyboard_type]
     for bopomofo in bopomofo_seq:
         idx = bopomofo_chars.find(bopomofo)
-        key = kb[idx]
+        if idx >= 0:
+            key = kb[idx]
+        else:
+            key = bopomofo
         keys.append(key)
     return keys
 
@@ -82,14 +86,14 @@ class SixPointTextService(ChewingTextService):
         super().__init__(client)
         self.braille_keys_pressed = False
         self.point_pressed_states = [False] * 6
-        self.pending_points = ""
+        self.last_braille = ""
 
     def reset_braille_mode(self, clear_pending=True):
         # 清除點字 buffer，準備打下一個字
         for i in range(6):
             self.point_pressed_states[i] = False
         if clear_pending:
-            self.pending_points = ""
+            self.last_braille = ""
         self.braille_keys_pressed = False
 
     def has_modifiers(self, keyEvent):
@@ -136,38 +140,75 @@ class SixPointTextService(ChewingTextService):
             return True
         return super().onKeyUp(keyEvent)
 
+    def send_bopomofo_to_chewing(self, bopomofo_seq, keyEvent):
+        # 依目前鍵盤對應，把注音符號轉回英數鍵盤按鍵，並且逐一送給新酷音
+        for key in get_keys_for_bopomofo(bopomofo_seq):
+            keyEvent.keyCode = ord(key.upper())  # 英文數字的 virtual keyCode 正好 = 大寫 ASCII code
+            keyEvent.charCode = ord(key)  # charCode 為字元內碼
+            print("WRITE:", keyEvent.charCode)
+            # 讓新酷音引擎處理按鍵，模擬按下再放開
+            super().filterKeyDown(keyEvent)
+            super().onKeyDown(keyEvent)
+            super().filterKeyUp(keyEvent)
+            super().onKeyUp(keyEvent)
+
+    def get_chewing_bopomofo_buffer(self):
+        # access the chewingContext created by ChewingTextService
+        if self.chewingContext and self.chewingContext.bopomofo_Check():
+            return self.chewingContext.bopomofo_String(None).decode("UTF-8")
+        return ""
 
     # 將點字 6 點轉換成注音按鍵，送給新酷音處理
     def handle_braille_keys(self, keyEvent):
         # 將 6 點狀態轉成用數字表示，例如 [False, True, True, True, True, False] 轉成 "2345"
-        points_str = "".join([str(i + 1) for i, pressed in enumerate(self.point_pressed_states) if pressed])
+        current_braille = "".join([str(i + 1) for i, pressed in enumerate(self.point_pressed_states) if pressed])
 
-        # 如果有剛剛無法判斷注音的六點輸入，和現在的輸入接在一起判斷
-        if self.pending_points:
-            points_str = self.pending_points + "-" + points_str
-
+        # FIXME: 區分英數和注音模式
+        # 6 點轉注音
         clear_pending = True
-        # 將 6 點轉成注音符號
-        bopomofo_seq = points_to_bopomofo.get(points_str)
-        print(points_str, "=>", bopomofo_seq)
-        if bopomofo_seq:
-            # 如果目前 6 點有對應到注音
-            if bopomofo_seq == "?":  # 無法馬上判斷，加入 pending points，和下次的輸入一起判斷
-                if self.pending_points:
-                    self.pending_points = self.pending_points + "-" + points_str
+        bopomofo_seq = brl_phonic_dic.get(current_braille)
+        if bopomofo_seq == "CHECK_NEXT":  # 須等待下一個輸入才能判斷
+            self.last_braille = current_braille
+            clear_pending=False
+            bopomofo_seq = None
+        elif bopomofo_seq == "CHECK_PREVIOUS":  # 須檢查上一個注音輸入狀態
+            last_bopomofo = self.get_chewing_bopomofo_buffer()
+            if current_braille == '356': # ['ㄧㄛ', 'ㄟ']
+                # 上一個注音不是聲母 => ㄧㄛ, 否則 'ㄟ'
+                if not last_bopomofo or phonetic_categories.get(last_bopomofo[-1]) != "聲母":
+                    bopomofo_seq = 'ㄧㄛ'
                 else:
-                    self.pending_points = points_str
-                clear_pending = False  # reset 時不要清除 pending_points
+                    bopomofo_seq = 'ㄟ'
+            elif current_braille == '1':  # ['ㄓ', '˙']
+                # FIXME: 規則待研究
+                pass
+            elif current_braille == '125':  # ['ㄗ', 'ㄛ']
+                # FIXME: 規則待研究
+                pass
+            elif current_braille == '156':  # 'ㄦ'
+                # FIXME: 也當作捲舌與不捲舌聲母單獨出現時所加的韻母
+                bopomofo_seq = 'ㄦ'
             else:
-                # 依目前鍵盤對應，把注音符號轉回英數鍵盤按鍵，並且逐一送給新酷音
-                for key in get_keys_for_bopomofo(bopomofo_seq):
-                    keyEvent.keyCode = ord(key.upper())  # 英文數字的 virtual keyCode 正好 = 大寫 ASCII code
-                    keyEvent.charCode = ord(key)  # charCode 為字元內碼
-                    # 讓新酷音引擎處理按鍵，模擬按下再放開
-                    super().filterKeyDown(keyEvent)
-                    super().onKeyDown(keyEvent)
-                    super().filterKeyUp(keyEvent)
-                    super().onKeyUp(keyEvent)
+                bopomofo_seq = None
+
+        if self.last_braille and bopomofo_seq:  # 如果有剛剛無法判斷注音的六點輸入，和現在的輸入接在一起判斷
+            if len(bopomofo_seq) == 2 and bopomofo_seq[0] in ('ㄧ', 'ㄩ'):
+                # ㄧ,ㄩ疊韻
+                last_bopomofo = {'13': 'ㄐ', '15': 'ㄒ', '245': 'ㄑ'}.get(self.last_braille)
+                bopomofo_seq = last_bopomofo + bopomofo_seq
+            elif phonetic_categories.get(bopomofo_seq) == "韻母" or (len(bopomofo_seq) == 2 and bopomofo_seq[0] == 'ㄨ'):
+                # 韻母 或 ㄨ疊韻
+                last_bopomofo = {'13': 'ㄍ', '15': 'ㄙ', '245': 'ㄘ'}.get(self.last_braille)
+                bopomofo_seq = last_bopomofo + bopomofo_seq
+            else:
+                bopomofo_seq = None
+
+        # FIXME: 處理 space key
+
+        print(current_braille, "=>", bopomofo_seq)
+        if bopomofo_seq:
+            # 把注音送給新酷音
+            self.send_bopomofo_to_chewing(bopomofo_seq, keyEvent)
 
         # 清除點字 buffer，準備打下一個字
         self.reset_braille_mode(clear_pending=clear_pending)

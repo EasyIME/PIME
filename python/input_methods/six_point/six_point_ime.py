@@ -21,23 +21,6 @@ from ..chewing.chewing_ime import ChewingTextService, ENGLISH_MODE, CHINESE_MODE
 from .brl_tables import brl_ascii_dic, brl_phonic_dic, phonetic_categories
 
 
-# 注音符號對實體鍵盤英數按鍵
-bopomofo_chars = "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ˙ˊˇˋ"
-bopomofo_to_keys = "1qaz2wsxedcrfv5tgbyhnujm8ik,9ol.0p;/-7634",        # standard kb
-
-# 將注音符號轉換成實體鍵盤的英數按鍵
-def get_keys_for_bopomofo(bopomofo_seq):
-    keys = []
-    for bopomofo in bopomofo_seq:
-        idx = bopomofo_chars.find(bopomofo)
-        if idx >= 0:
-            key = bopomofo_to_keys[idx]
-        else:
-            key = bopomofo
-        keys.append(key)
-    return keys
-
-
 class SixPointTextService(ChewingTextService):
 
     # 鍵盤按鍵轉成點字 1 - 6 點
@@ -51,6 +34,10 @@ class SixPointTextService(ChewingTextService):
         ord('L'),  # 6
     ]
 
+    # 注音符號對實體鍵盤英數按鍵
+    bopomofo_chars = "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ˙ˊˇˋ"
+    bopomofo_to_keys = "1qaz2wsxedcrfv5tgbyhnujm8ik,9ol.0p;/-7634"        # standard kb
+
     def __init__(self, client):
         super().__init__(client)
         self.braille_keys_pressed = False
@@ -62,7 +49,7 @@ class SixPointTextService(ChewingTextService):
         super().applyConfig()
 
         # 強制使用預設 keyboard layout
-        chewingContext.set_KBType(0);
+        self.chewingContext.set_KBType(0);
 
         # TODO: 強制關閉新酷音某些和點字輸入相衝的功能
 
@@ -118,9 +105,21 @@ class SixPointTextService(ChewingTextService):
             return True
         return super().onKeyUp(keyEvent)
 
+    # 將注音符號轉換成實體鍵盤的英數按鍵
+    def get_keys_for_bopomofo(self, bopomofo_seq):
+        keys = []
+        for bopomofo in bopomofo_seq:
+            idx = self.bopomofo_chars.find(bopomofo)
+            if idx >= 0:
+                key = self.bopomofo_to_keys[idx]
+            else:
+                key = bopomofo
+            keys.append(key)
+        return keys
+
     def send_bopomofo_to_chewing(self, bopomofo_seq, keyEvent):
         # 依目前鍵盤對應，把注音符號轉回英數鍵盤按鍵，並且逐一送給新酷音
-        for key in get_keys_for_bopomofo(bopomofo_seq):
+        for key in self.get_keys_for_bopomofo(bopomofo_seq):
             keyEvent.keyCode = ord(key.upper())  # 英文數字的 virtual keyCode 正好 = 大寫 ASCII code
             keyEvent.charCode = ord(key)  # charCode 為字元內碼
             # 讓新酷音引擎處理按鍵，模擬按下再放開

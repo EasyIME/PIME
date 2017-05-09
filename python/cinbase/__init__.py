@@ -80,7 +80,7 @@ class CinBase:
         self.emojimenulist = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
         self.imeNameList = ["checj", "chephonetic", "chearray", "chedayi", "cheez", "chepinyin", "chesimplex", "cheliu"]
         self.ReverseCinDict = {}
-        self.ReverseCinDict["checj"] = ["checj.json", "mscj3.json", "mscj3-ext.json", "cj-ext.json", "cnscj.json", "thcj.json", "newcj3.json", "cj5.json", "newcj.json", "scj6.json"]
+        self.ReverseCinDict["checj"] = ["checj.json", "mscj3.json", "mscj3-ext.json", "cj-ext.json", "cnscj.json", "thcj.json", "newcj3.json", "cj5.json", "newcj.json", "scj6.json", "cj-fast.json"]
         self.ReverseCinDict["chephonetic"] = ["thphonetic.json", "CnsPhonetic.json", "bpmf.json"]
         self.ReverseCinDict["chearray"] = ["tharray.json", "array30.json", "ar30-big.json", "array40.json"]
         self.ReverseCinDict["chedayi"] = ["thdayi.json", "dayi4.json", "dayi3.json"]

@@ -32,6 +32,8 @@ class SixPointTextService(ChewingTextService):
         ord('J'),  # 4
         ord('K'),  # 5
         ord('L'),  # 6
+        ord('A'),  # 7
+        ord(';'),  # 8
     ]
 
     # 注音符號對實體鍵盤英數按鍵
@@ -41,7 +43,7 @@ class SixPointTextService(ChewingTextService):
     def __init__(self, client):
         super().__init__(client)
         self.braille_keys_pressed = False
-        self.dots_pressed_states = [False] * 6
+        self.dots_pressed_states = [False] * 8
         self.last_braille = ""
 
     def applyConfig(self):
@@ -55,7 +57,7 @@ class SixPointTextService(ChewingTextService):
 
     def reset_braille_mode(self, clear_pending=True):
         # 清除點字 buffer，準備打下一個字
-        for i in range(6):
+        for i in range(8):
             self.dots_pressed_states[i] = False
         if clear_pending:
             self.last_braille = ""
@@ -80,7 +82,7 @@ class SixPointTextService(ChewingTextService):
 
     def onKeyDown(self, keyEvent):
         if self.needs_braille_handling(keyEvent):
-            # 點字模式，檢查 6 個點字鍵是否被按下，忽略其餘按鍵
+            # 點字模式，檢查 8 個點字鍵是否被按下，忽略其餘按鍵
             for i, key in enumerate(self.braille_keys):
                 if keyEvent.isKeyDown(key):
                     self.dots_pressed_states[i] = 1
@@ -134,13 +136,13 @@ class SixPointTextService(ChewingTextService):
             return self.chewingContext.bopomofo_String(None).decode("UTF-8")
         return ""
 
-    # 將點字 6 點轉換成注音按鍵，送給新酷音處理
+    # 將點字 8 點轉換成注音按鍵，送給新酷音處理
     def handle_braille_keys(self, keyEvent):
-        # 將 6 點狀態轉成用數字表示，例如 [False, True, True, True, True, False] 轉成 "2345"
+        # 將 8 點狀態轉成用數字表示，例如 [False, True, True, True, True, False, True, False] 轉成 "23457"
         current_braille = "".join([str(i + 1) for i, pressed in enumerate(self.dots_pressed_states) if pressed])
 
         # FIXME: 區分英數和注音模式
-        # 6 點轉注音
+        # 8 點轉注音
         clear_pending = True
         if self.langMode == ENGLISH_MODE:
             bopomofo_seq = brl_ascii_dic.get(current_braille)
@@ -168,9 +170,6 @@ class SixPointTextService(ChewingTextService):
                     bopomofo_seq = 'ㄓ'
                 else:
                     bopomofo_seq = '˙'
-            elif current_braille == '125':  # ['ㄗ', 'ㄛ']
-                # 沒有前一個注音 'ㄗ', 否則 'ㄛ'
-                bopomofo_seq = 'ㄗ' if not last_bopomofo else 'ㄛ'
             elif current_braille == '156':  # 'ㄦ'
                 # FIXME: 也當作捲舌與不捲舌聲母單獨出現時所加的韻母
                 bopomofo_seq = 'ㄦ'

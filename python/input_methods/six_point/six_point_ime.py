@@ -1,5 +1,6 @@
 #! python3
 # Copyright (C) 2017 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+# Copyright (C) 2017 Logo-Kuo <logo@forblind.org.tw>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public

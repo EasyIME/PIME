@@ -29,6 +29,7 @@ var defaultcinName = {
     "cj5.json": "倉頡五代",
     "newcj.json": "自由大新倉頡",
     "scj6.json": "快倉六代",
+    "cj-fast.json": "倉捷",
     "thphonetic.json": "泰瑞注音",
     "CnsPhonetic.json": "中標注音",
     "bpmf.json": "傳統注音",

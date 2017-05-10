@@ -19,7 +19,7 @@
 from keycodes import * # for VK_XXX constants
 from textService import *
 from ..chewing.chewing_ime import ChewingTextService, ENGLISH_MODE, CHINESE_MODE
-from .brl_tables import brl_ascii_dic, brl_phonic_dic, phonetic_categories
+from .brl_tables import brl_ascii_dic, brl_phonic_dic, bopomofo_is_category
 
 
 class SixPointTextService(ChewingTextService):
@@ -161,31 +161,31 @@ class SixPointTextService(ChewingTextService):
             last_bopomofo = self.get_chewing_bopomofo_buffer()
             if current_braille == '356': # ['ㄧㄛ', 'ㄟ']
                 # 上一個注音不是聲母 => ㄧㄛ, 否則 'ㄟ'
-                if not last_bopomofo or phonetic_categories.get(last_bopomofo[-1]) != "聲母":
+                if not last_bopomofo or not bopomofo_is_category(last_bopomofo[-1], "聲母"):
                     bopomofo_seq = 'ㄧㄛ'
                 else:
                     bopomofo_seq = 'ㄟ'
             elif current_braille == '1':  # ['ㄓ', '˙']
                 # 沒有前一個注音，或前一個不是韻母 => ㄓ
-                if not last_bopomofo or phonetic_categories.get(last_bopomofo[-1]) != "韻母":
+                if not last_bopomofo or not bopomofo_is_category(last_bopomofo[-1], "韻母"):
                     bopomofo_seq = 'ㄓ'
                 else:
                     bopomofo_seq = '˙'
-			elif current_braille == '156':  # 'ㄦ'
-				# 如果 ㄦ 前面是舌尖音則呼略 ㄦ
-				if phonetic_categories.get(last_bopomofo[-1]) == "舌尖音":
-					bopomofo_seq = ''
-				else:
-					bopomofo_seq = 'ㄦ'
-			else:
+            elif current_braille == '156':  # 'ㄦ'
+                # 如果 ㄦ 前面是舌尖音則呼略 ㄦ
+                if bopomofo_is_category(last_bopomofo[-1], "舌尖音"):
+                    bopomofo_seq = ''
+                else:
+                    bopomofo_seq = 'ㄦ'
+            else:
                 bopomofo_seq = None
 
         if self.last_braille and bopomofo_seq:  # 如果有剛剛無法判斷注音的六點輸入，和現在的輸入接在一起判斷
-            if len(bopomofo_seq) == 2 and bopomofo_seq[0] in ('ㄧ', 'ㄩ'):
+            if bopomofo_is_category(bopomofo_seq, "疊韻") and bopomofo_seq[0] in ('ㄧ', 'ㄩ'):
                 # ㄧ,ㄩ疊韻
                 last_bopomofo = {'13': 'ㄐ', '15': 'ㄒ', '245': 'ㄑ'}.get(self.last_braille)
                 bopomofo_seq = last_bopomofo + bopomofo_seq
-            elif phonetic_categories.get(bopomofo_seq) == "韻母" or (len(bopomofo_seq) == 2 and bopomofo_seq[0] == 'ㄨ'):
+            elif bopomofo_is_category(bopomofo_seq, "韻母") or (bopomofo_is_category(bopomofo_seq, "疊韻") and bopomofo_seq[0] == 'ㄨ'):
                 # 韻母 或 ㄨ疊韻
                 last_bopomofo = {'13': 'ㄍ', '15': 'ㄙ', '245': 'ㄘ'}.get(self.last_braille)
                 bopomofo_seq = last_bopomofo + bopomofo_seq

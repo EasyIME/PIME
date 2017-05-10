@@ -119,15 +119,20 @@ brl_ascii_dic = {  # 共計 26 個 目前只有字母
 }
 
 # 注音符號分類查表
-phonetic_categories = {}
-for ph in "ㄍㄎㄫㄐㄑㄬㄉㄊㄋㄅㄆㄇㄈㄪㄗㄘㄙㄓㄔㄕㄏㄒㄌㄖ":
-    phonetic_categories[ph] = "聲母"
-for ph in "ㄧㄨㄩ":
-    phonetic_categories[ph] = "介音"
-for ph in "ㄚㄛㄜㄝㄟㄞㄠㄡㄢㄤㄣㄥㄦ":
-    phonetic_categories[ph] = "韻母"
-for ph in "ㄓㄔㄕㄖㄗㄘㄙ":
-    phonetic_categories[ph] = "舌尖音"
+_bopomofo_categories = {
+	"聲母": set("ㄍㄎㄫㄐㄑㄬㄉㄊㄋㄅㄆㄇㄈㄪㄗㄘㄙㄓㄔㄕㄏㄒㄌㄖ"),
+	"介音": set("ㄧㄨㄩ"),
+	"韻母": set("ㄚㄛㄜㄝㄟㄞㄠㄡㄢㄤㄣㄥㄦ"),
+	"舌尖音": set("ㄓㄔㄕㄖㄗㄘㄙ")
+}
+
+
+# 檢查注音符號是否屬於某分類
+def bopomofo_is_category(bopomofo, category):
+	if category.endswith("疊韻"): # 檢查是否為疊韻 (不完全精確，沒有檢查是否為正確注音)
+		return len(bopomofo) == 2 and bopomofo_is_category(bopomofo[1], "介音") and bopomofo_is_category(bopomofo[1], "韻母")
+	return (bopomofo in _bopomofo_categories[category])
+
 
 brl_phonic_dic = { # 共計 59 個 不函標點
     # 聲母

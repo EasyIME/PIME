@@ -22,7 +22,7 @@ from ..chewing.chewing_ime import ChewingTextService, ENGLISH_MODE, CHINESE_MODE
 from .brl_tables import brl_ascii_dic, brl_phonic_dic, brl_space_dic, bopomofo_is_category
 
 
-class SixPointTextService(ChewingTextService):
+class BrailleChewingTextService(ChewingTextService):
 
     # 鍵盤按鍵轉成點字 1 - 6 點
     # A-Z 的 Windows virtual key codes = 大寫的 ASCII code

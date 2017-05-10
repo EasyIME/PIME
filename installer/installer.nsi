@@ -185,7 +185,7 @@ Function uninstallOldVersion
 			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk"
 			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk"
 			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk"
-            ; Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_SIX_POINT).lnk"
+            ; Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_BRAILLE_CHEWING).lnk"
 			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
 			RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
 
@@ -482,10 +482,10 @@ SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
 			${EndIf}
 		SectionEnd
 
-		Section $(SIX_POINT) six_point
+		Section $(BRAILLE_CHEWING) braille_chewing
             SectionIn 2
             SetOutPath "$INSTDIR\python\input_methods"
-            File /r "..\python\input_methods\six_point"
+            File /r "..\python\input_methods\braille_chewing"
             StrCpy $INST_PYTHON "True"
 		SectionEnd
 
@@ -663,7 +663,7 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${rime} $(rime_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${emojime} $(emojime_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${cheeng} $(cheeng_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${six_point} $(six_point_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${braille_chewing} $(braille_chewing_DESC)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;Uninstaller Section
@@ -706,7 +706,7 @@ Section "Uninstall"
 	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk"
 	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk"
     Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk"
-	; Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_SIX_POINT).lnk"
+	; Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_BRAILLE_CHEWING).lnk"
 	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
 	RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
 

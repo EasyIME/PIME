@@ -42,7 +42,7 @@
 !insertmacro LANG_STRING RIME "Rime"
 !insertmacro LANG_STRING EMOJIME "emojime"
 !insertmacro LANG_STRING CHEENG "英数"
-!insertmacro LANG_STRING SIX_POINT 六點
+!insertmacro LANG_STRING BRAILLE_CHEWING "點字酷音"
 
 !insertmacro LANG_STRING SecMain_DESC "Install the $(PRODUCT_NAME) main program to your computer."
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP_DESC "Input method modules with Python"
@@ -63,7 +63,7 @@
 !insertmacro LANG_STRING rime_DESC "安装中州韵输入法引擎，内含拼音、注音、仓颉、五笔、粤拼、吴语等数种输入方案。"
 !insertmacro LANG_STRING emojime_DESC "安装 emojime 输入法模块。"
 !insertmacro LANG_STRING cheeng_DESC "安装英数输入法模块。"
-!insertmacro LANG_STRING six_point_DESC "Install 六點 input method。"
+!insertmacro LANG_STRING braille_chewing_DESC "Install 六點 input method。"
 
 !insertmacro LANG_STRING SET_CHEWING "设置新酷音输入法"
 !insertmacro LANG_STRING SET_CHEWING_PHRASES "编辑新酷音使用者辞库"
@@ -76,6 +76,6 @@
 !insertmacro LANG_STRING SET_CHESIMPLEX "设置速成输入法"
 !insertmacro LANG_STRING SET_CHEPHONETIC "设置注音输入法"
 !insertmacro LANG_STRING SET_CHEEZ "设置轻松输入法"
-!insertmacro LANG_STRING SET_SIX_POINT "Setup Six Point Input Method"
+!insertmacro LANG_STRING SET_BRAILLE_CHEWING "Setup Six Point Input Method"
 
 !insertmacro LANG_STRING UNINSTALL_PIME "Uninstall PIME"

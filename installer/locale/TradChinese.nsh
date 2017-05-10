@@ -42,7 +42,7 @@
 !insertmacro LANG_STRING RIME 中州韻
 !insertmacro LANG_STRING EMOJIME emojime
 !insertmacro LANG_STRING CHEENG 英數
-!insertmacro LANG_STRING SIX_POINT 六點
+!insertmacro LANG_STRING BRAILLE_CHEWING "點字酷音"
 
 !insertmacro LANG_STRING SecMain_DESC "安裝 $(PRODUCT_NAME) 主程式到你的電腦裏。"
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP_DESC "Python 輸入法模組"
@@ -63,7 +63,7 @@
 !insertmacro LANG_STRING rime_DESC "安裝中州韻輸入法引擎，內含拼音、注音、倉頡、五筆、粵拼、吳語等數種輸入方案。"
 !insertmacro LANG_STRING emojime_DESC "安裝 emojime 輸入法模組。"
 !insertmacro LANG_STRING cheeng_DESC "安裝英數輸入法模組。"
-!insertmacro LANG_STRING six_point_DESC "安裝六點輸入法模組。"
+!insertmacro LANG_STRING braille_chewing_DESC "安裝點字酷音輸入法模組。"
 
 !insertmacro LANG_STRING SET_CHEWING "設定新酷音輸入法"
 !insertmacro LANG_STRING SET_CHEWING_PHRASES "編輯新酷音使用者辭庫"
@@ -76,6 +76,6 @@
 !insertmacro LANG_STRING SET_CHESIMPLEX "設定速成輸入法"
 !insertmacro LANG_STRING SET_CHEPHONETIC "設定注音輸入法"
 !insertmacro LANG_STRING SET_CHEEZ "設定輕鬆輸入法"
-!insertmacro LANG_STRING SET_SIX_POINT "設定六點輸入法"
+!insertmacro LANG_STRING SET_BRAILLE_CHEWING "設定點字酷音輸入法"
 
 !insertmacro LANG_STRING UNINSTALL_PIME "解除安裝 PIME"

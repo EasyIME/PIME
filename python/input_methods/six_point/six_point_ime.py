@@ -19,7 +19,7 @@
 from keycodes import * # for VK_XXX constants
 from textService import *
 from ..chewing.chewing_ime import ChewingTextService, ENGLISH_MODE, CHINESE_MODE
-from .brl_tables import brl_ascii_dic, brl_phonic_dic, bopomofo_is_category
+from .brl_tables import brl_ascii_dic, brl_phonic_dic, brl_space_dic, bopomofo_is_category
 
 
 class SixPointTextService(ChewingTextService):
@@ -89,6 +89,17 @@ class SixPointTextService(ChewingTextService):
                     self.dots_pressed_states[i] = 1
                     self.braille_keys_pressed = True
             return True
+        elif keyEvent.charCode == ord(' '):  # space key
+            # 須檢查上一個注音輸入狀態
+            last_bopomofo = self.get_chewing_bopomofo_buffer()
+            if last_bopomofo:  # 剛輸入過注音符號，檢查是否代換成標點符號
+                for n in range(len(last_bopomofo), 0, -1):
+                    # 取得目前注音的最後 n 個字，檢查是否能對到標點
+                    symbol_keys = brl_space_dic.get(last_bopomofo[-n:])
+                    if symbol_keys:
+						# 新酷音在注音打到一半的時候，改輸入標點，注音會自動消去換成標點
+                        self.send_keys_to_chewing(symbol_keys, keyEvent)
+                return True
         return super().onKeyDown(keyEvent)
 
     def filterKeyUp(self, keyEvent):
@@ -120,9 +131,8 @@ class SixPointTextService(ChewingTextService):
             keys.append(key)
         return keys
 
-    def send_bopomofo_to_chewing(self, bopomofo_seq, keyEvent):
-        # 依目前鍵盤對應，把注音符號轉回英數鍵盤按鍵，並且逐一送給新酷音
-        for key in self.get_keys_for_bopomofo(bopomofo_seq):
+    def send_keys_to_chewing(self, keys, keyEvent):
+        for key in keys:
             keyEvent.keyCode = ord(key.upper())  # 英文數字的 virtual keyCode 正好 = 大寫 ASCII code
             keyEvent.charCode = ord(key)  # charCode 為字元內碼
             # 讓新酷音引擎處理按鍵，模擬按下再放開
@@ -130,6 +140,11 @@ class SixPointTextService(ChewingTextService):
             super().onKeyDown(keyEvent)
             super().filterKeyUp(keyEvent)
             super().onKeyUp(keyEvent)
+
+    def send_bopomofo_to_chewing(self, bopomofo_seq, keyEvent):
+        # 依目前鍵盤對應，把注音符號轉回英數鍵盤按鍵，並且逐一送給新酷音
+        keys = self.get_keys_for_bopomofo(bopomofo_seq)
+        self.send_keys_to_chewing(keys, keyEvent)
 
     def get_chewing_bopomofo_buffer(self):
         # access the chewingContext created by ChewingTextService

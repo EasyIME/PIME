@@ -171,10 +171,13 @@ class SixPointTextService(ChewingTextService):
                     bopomofo_seq = 'ㄓ'
                 else:
                     bopomofo_seq = '˙'
-            elif current_braille == '156':  # 'ㄦ'
-                # FIXME: 也當作捲舌與不捲舌聲母單獨出現時所加的韻母
-                bopomofo_seq = 'ㄦ'
-            else:
+			elif current_braille == '156':  # 'ㄦ'
+				# 如果 ㄦ 前面是舌尖音則呼略 ㄦ
+				if phonetic_categories.get(last_bopomofo[-1]) == "舌尖音":
+					bopomofo_seq = ''
+				else:
+					bopomofo_seq = 'ㄦ'
+			else:
                 bopomofo_seq = None
 
         if self.last_braille and bopomofo_seq:  # 如果有剛剛無法判斷注音的六點輸入，和現在的輸入接在一起判斷

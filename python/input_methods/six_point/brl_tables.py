@@ -126,6 +126,8 @@ for ph in "ㄧㄨㄩ":
     phonetic_categories[ph] = "介音"
 for ph in "ㄚㄛㄜㄝㄟㄞㄠㄡㄢㄤㄣㄥㄦ":
     phonetic_categories[ph] = "韻母"
+for ph in "ㄓㄔㄕㄖㄗㄘㄙ":
+    phonetic_categories[ph] = "舌尖音"
 
 brl_phonic_dic = { # 共計 59 個 不函標點
     # 聲母

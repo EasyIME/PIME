@@ -16,9 +16,12 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+import winsound  # for PlaySound
+import os
+
 from keycodes import * # for VK_XXX constants
 from textService import *
-from ..chewing.chewing_ime import ChewingTextService, ENGLISH_MODE, CHINESE_MODE
+from ..chewing.chewing_ime import ChewingTextService, ENGLISH_MODE, CHINESE_MODE, FULLSHAPE_MODE
 from .brl_tables import brl_ascii_dic, brl_phonic_dic, brl_space_dic, bopomofo_is_category
 
 
@@ -40,6 +43,9 @@ class BrailleChewingTextService(ChewingTextService):
     # 注音符號對實體鍵盤英數按鍵
     bopomofo_chars = "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ˙ˊˇˋ"
     bopomofo_to_keys = "1qaz2wsxedcrfv5tgbyhnujm8ik,9ol.0p;/-7634"        # standard kb
+
+    current_dir = os.path.dirname(__file__)
+    sounds_dir = os.path.join(current_dir, "sounds")
 
     def __init__(self, client):
         super().__init__(client)
@@ -97,7 +103,7 @@ class BrailleChewingTextService(ChewingTextService):
                     # 取得目前注音的最後 n 個字，檢查是否能對到標點
                     symbol_keys = brl_space_dic.get(last_bopomofo[-n:])
                     if symbol_keys:
-						# 新酷音在注音打到一半的時候，改輸入標點，注音會自動消去換成標點
+                        # 新酷音在注音打到一半的時候，改輸入標點，注音會自動消去換成標點
                         self.send_keys_to_chewing(symbol_keys, keyEvent)
                 return True
         return super().onKeyDown(keyEvent)
@@ -207,8 +213,6 @@ class BrailleChewingTextService(ChewingTextService):
             else:
                 bopomofo_seq = None
 
-        # FIXME: 處理 space key
-
         print(current_braille, "=>", bopomofo_seq)
         if bopomofo_seq:
             # 把注音送給新酷音
@@ -216,3 +220,21 @@ class BrailleChewingTextService(ChewingTextService):
 
         # 清除點字 buffer，準備打下一個字
         self.reset_braille_mode(clear_pending=clear_pending)
+
+    # 切換中英文模式
+    def toggleLanguageMode(self):
+        super().toggleLanguageMode()
+        if self.chewingContext:
+			# 播放語音檔，說明目前是中文/英文
+            mode = self.chewingContext.get_ChiEngMode()
+            snd_file = os.path.join(self.sounds_dir, "chi.wav" if mode == CHINESE_MODE else "eng.wav")
+            winsound.PlaySound(snd_file, winsound.SND_FILENAME|winsound.SND_ASYNC)
+
+	# 切換全形/半形
+    def toggleShapeMode(self):
+        super().toggleShapeMode()
+        if self.chewingContext:
+			# 播放語音檔，說明目前是全形/半形
+            mode = self.chewingContext.get_ShapeMode()
+            snd_file = os.path.join(self.sounds_dir, "full.wav" if mode == FULLSHAPE_MODE else "half.wav")
+            winsound.PlaySound(snd_file, winsound.SND_FILENAME|winsound.SND_ASYNC)

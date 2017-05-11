@@ -54,7 +54,8 @@ function loadUserPhrases() {
             $(this).prop("checked", !$(this).prop("checked"));
         });
 
-        // Register click to select all phrases 
+        // Register click to select all phrases
+        $("input[type=checkbox][name='select_all']").prop("checked", false);
         $("input[type=checkbox][name='select_all']").click(function () {
             if ($(this).prop("checked")) {
                 $("#table_content input[type=checkbox]").prop("checked", true);
@@ -164,8 +165,13 @@ function onRemovePhrase(delete_phrase) {
             return;
 
         var confirm_text = "確定刪除以下" + $("#table_content input[type=checkbox]:checked").length + "個詞彙？（此動作無法復原）";
-        $("#table_content input[type=checkbox]:checked").each(function (idx, item) {
-            confirm_text += "\n- " + $(item).data("phrase");
+        $("#table_content input[type=checkbox]:checked").each(function (phrase_index, item) {
+            if (phrase_index < 25) {
+                confirm_text += "\n- " + $(item).data("phrase");
+            } else if (phrase_index == 25) {
+                confirm_text += "\n- ………（以下省略）";
+            }
+
             phrases.push({
                 phrase: $(item).data("phrase"), // 詞彙
                 bopomofo: $(item).data("bopomofo") // 注音

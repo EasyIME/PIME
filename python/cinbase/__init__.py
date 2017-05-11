@@ -79,15 +79,6 @@ class CinBase:
 
         self.emojimenulist = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
         self.imeNameList = ["checj", "chephonetic", "chearray", "chedayi", "cheez", "chepinyin", "chesimplex", "cheliu"]
-        self.ReverseCinDict = {}
-        self.ReverseCinDict["checj"] = ["checj.json", "mscj3.json", "mscj3-ext.json", "cj-ext.json", "cnscj.json", "thcj.json", "newcj3.json", "cj5.json", "newcj.json", "scj6.json", "cj-fast.json"]
-        self.ReverseCinDict["chephonetic"] = ["thphonetic.json", "CnsPhonetic.json", "bpmf.json"]
-        self.ReverseCinDict["chearray"] = ["tharray.json", "array30.json", "ar30-big.json", "array40.json"]
-        self.ReverseCinDict["chedayi"] = ["thdayi.json", "dayi4.json", "dayi3.json"]
-        self.ReverseCinDict["cheez"] = ["ez.json", "ezsmall.json", "ezmid.json", "ezbig.json"]
-        self.ReverseCinDict["chepinyin"] = ["thpinyin.json", "pinyin.json", "roman.json"]
-        self.ReverseCinDict["chesimplex"] = ["simplecj.json", "simplex.json", "simplex5.json"]
-        self.ReverseCinDict["cheliu"] = ["liu.json"]
         self.hcinFileList = ["thphonetic.json", "CnsPhonetic.json", "bpmf.json"]
 
     # 初始化輸入行為設定
@@ -124,7 +115,6 @@ class CinBase:
         cbTS.userExtendTable = False
         cbTS.reLoadTable = False
         cbTS.priorityExtendTable = False
-        cbTS.rcinFileList = []
         cbTS.messageDurationTime = 3
 
         cbTS.selDayiSymbolCharType = 0
@@ -197,6 +187,7 @@ class CinBase:
         cbTS.hideMessageOnKeyUp = False
         cbTS.onKeyUpMessage = ""
         cbTS.reLoadCinTable = False
+        cbTS.RCinFileNotExist = False
         cbTS.capsStates = True if self.getKeyState(VK_CAPITAL) else False
 
         cbTS.bopomofolist = []
@@ -1761,7 +1752,10 @@ class CinBase:
                                             if not cbTS.client.isUiLess:
                                                 cbTS.isShowMessage = True
                                                 cbTS.showMessageOnKeyUp = True
-                                                cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
+                                                if cbTS.RCinFileNotExist:
+                                                    cbTS.onKeyUpMessage = "反查字根碼表檔案不存在！"
+                                                else:
+                                                    cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
 
                                     # 如果使用打繁出簡，就轉成簡體中文
                                     if cbTS.outputSimpChinese:
@@ -2836,7 +2830,10 @@ class CinBase:
                 if not cbTS.client.isUiLess:
                     cbTS.isShowMessage = True
                     cbTS.showMessageOnKeyUp = True
-                    cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
+                    if cbTS.RCinFileNotExist:
+                        cbTS.onKeyUpMessage = "反查字根碼表檔案不存在！"
+                    else:
+                        cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
 
         if cbTS.homophoneQuery and cbTS.isHomophoneChardefs:
             cbTS.isHomophoneChardefs = False
@@ -3121,7 +3118,6 @@ class CinBase:
         cbTS.autoMoveCursorInBrackets = cfg.autoMoveCursorInBrackets
 
         # 反查輸入法字根
-        self.updateRcinFileList(cbTS)
         cbTS.imeReverseLookup = cfg.imeReverseLookup
         cbTS.selRCinType = cfg.selRCinType
 
@@ -3222,20 +3218,6 @@ class CinBase:
                     cbTS.debug.saveDebugLog(cbTS.debugLog)
 
 
-    def updateRcinFileList(self, cbTS):
-        cfg = cbTS.cfg
-        cbTS.rcinFileList = []
-        for imeName in self.imeNameList:
-            filelist = self.ReverseCinDict[imeName]
-            for filename in filelist:
-                filepath = os.path.join(cbTS.jsondir, filename)
-                if os.path.exists(filepath):
-                    cbTS.rcinFileList.append(filename)
-        if not cfg.rcinFileList == cbTS.rcinFileList:
-            cfg.rcinFileList = cbTS.rcinFileList
-            cfg.save()
-
-
 CinBase = CinBase()
 
 class PhraseData:
@@ -3323,13 +3305,23 @@ class LoadRCinTable(threading.Thread):
         threading.Thread.__init__(self)
         self.cbTS = cbTS
         self.RCinTable = RCinTable
+        self.rcinFileList = ([
+                                "checj.json", "mscj3.json", "mscj3-ext.json", "cj-ext.json", "cnscj.json", "thcj.json", "newcj3.json", "cj5.json", "newcj.json", "scj6.json", "cj-fast.json",
+                                "thphonetic.json", "CnsPhonetic.json", "bpmf.json",
+                                "tharray.json", "array30.json", "ar30-big.json", "array40.json",
+                                "thdayi.json", "dayi4.json", "dayi3.json",
+                                "ez.json", "ezsmall.json", "ezmid.json", "ezbig.json",
+                                "thpinyin.json", "pinyin.json", "roman.json",
+                                "simplecj.json", "simplex.json", "simplex5.json",
+                                "liu.json"
+                            ])
 
     def run(self):
         if DEBUG_MODE:
             self.cbTS.debug.setStartTimer("LoadRCinTable")
 
         self.RCinTable.loading = True
-        selCinFile = self.cbTS.rcinFileList[self.cbTS.cfg.selRCinType]
+        selCinFile = self.rcinFileList[self.cbTS.cfg.selRCinType]
         jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
 
         if self.RCinTable.cin is not None and hasattr(self.RCinTable.cin, '__del__'):
@@ -3337,8 +3329,13 @@ class LoadRCinTable(threading.Thread):
 
         self.RCinTable.cin = None
 
-        with io.open(jsonPath, 'r', encoding='utf8') as fs:
-            self.RCinTable.cin = RCin(fs, self.cbTS.imeDirName)
+        if os.path.exists(jsonPath):
+            self.cbTS.RCinFileNotExist = False
+            with io.open(jsonPath, 'r', encoding='utf8') as fs:
+                self.RCinTable.cin = RCin(fs, self.cbTS.imeDirName)
+        else:
+            self.cbTS.RCinFileNotExist = True
+            
         self.RCinTable.curCinType = self.cbTS.cfg.selRCinType
         self.RCinTable.loading = False
 

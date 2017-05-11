@@ -18,40 +18,40 @@ var defaultcinCount = {
     "totalchardefs": 0
 }
 
-var defaultcinName = {
-    "checj.json": "酷倉",
-    "mscj3.json": "倉頡",
-    "mscj3-ext.json": "倉頡(大字集)",
-    "cj-ext.json": "雅虎倉頡",
-    "cnscj.json": "中標倉頡",
-    "thcj.json": "泰瑞倉頡",
-    "newcj3.json": "亂倉打鳥",
-    "cj5.json": "倉頡五代",
-    "newcj.json": "自由大新倉頡",
-    "scj6.json": "快倉六代",
-    "cj-fast.json": "倉捷",
-    "thphonetic.json": "泰瑞注音",
-    "CnsPhonetic.json": "中標注音",
-    "bpmf.json": "傳統注音",
-    "tharray.json": "泰瑞行列30",
-    "array30.json": "行列30",
-    "ar30-big.json": "行列30大字集",
-    "array40.json": "行列40",
-    "thdayi.json": "泰瑞大易四碼",
-    "dayi4.json": "大易四碼",
-    "dayi3.json": "大易三碼",
-    "ez.json": "輕鬆",
-    "ezsmall.json": "輕鬆小詞庫",
-    "ezmid.json": "輕鬆中詞庫",
-    "ezbig.json": "輕鬆大詞庫",
-    "thpinyin.json": "泰瑞拼音",
-    "pinyin.json": "正體拼音",
-    "roman.json": "羅馬拼音",
-    "simplecj.json": "正體簡易",
-    "simplex.json": "速成",
-    "simplex5.json": "簡易五代",
-    "liu.json": "嘸蝦米"
-}
+var selRCins = [
+    "酷倉",
+    "倉頡",
+    "倉頡(大字集)",
+    "雅虎倉頡",
+    "中標倉頡",
+    "泰瑞倉頡",
+    "亂倉打鳥",
+    "倉頡五代",
+    "自由大新倉頡",
+    "快倉六代",
+    "倉捷",
+    "泰瑞注音",
+    "中標注音",
+    "傳統注音",
+    "泰瑞行列30",
+    "行列30",
+    "行列30大字集",
+    "行列40",
+    "泰瑞大易四碼",
+    "大易四碼",
+    "大易三碼",
+    "輕鬆",
+    "輕鬆小詞庫",
+    "輕鬆中詞庫",
+    "輕鬆大詞庫",
+    "泰瑞拼音",
+    "正體拼音",
+    "羅馬拼音",
+    "正體簡易",
+    "速成",
+    "簡易五代",
+    "嘸蝦米"
+];
 
 var selHCins = [
     "泰瑞注音",
@@ -247,9 +247,7 @@ function updateCinCountElements() {
 // update checjConfig object with the value set by the user
 function updateConfig() {
     // Reset checjConfig, for change config_tool
-    rcinFileList = checjConfig.rcinFileList
     checjConfig = {};
-    checjConfig['rcinFileList'] = rcinFileList
 
     // Get values from checkboxes, text and radio
     $("input").each(function (index, inputItem) {
@@ -473,10 +471,9 @@ function pageReady() {
     }
     selCinType.children().eq(checjConfig.selCinType).prop("selected", true);
 
-    var selRCins = checjConfig["rcinFileList"];
     var selRCinType = $("#selRCinType");
     for(var i = 0; i < selRCins.length; ++i) {
-        var selRCin = defaultcinName[selRCins[i]];
+        var selRCin = selRCins[i];
         var item = '<option value="' + i + '">' + selRCin + '</option>';
         selRCinType.append(item);
     }

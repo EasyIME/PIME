@@ -67,7 +67,6 @@ class CinBaseConfig:
         self.reLoadTable = False
         self.priorityExtendTable = False
         self.selRCinType = 0
-        self.rcinFileList = []
         self.candMaxItems = 100
         self.messageDurationTime = 3
         self.keyboardType = 0

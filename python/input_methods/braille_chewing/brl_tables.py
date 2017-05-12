@@ -120,18 +120,18 @@ brl_ascii_dic = { # 包函英數模式下的字母、數字及鍵盤上的符號
 
 # 注音符號分類查表
 _bopomofo_categories = {
-	"聲母": set("ㄍㄎㄐㄑㄉㄊㄋㄅㄆㄇㄈㄗㄘㄙㄓㄔㄕㄏㄒㄌㄖ"),
-	"介音": set("ㄧㄨㄩ"),
-	"韻母": set("ㄚㄛㄜㄝㄟㄞㄠㄡㄢㄤㄣㄥㄦ"),
-	"舌尖音": set("ㄓㄔㄕㄖㄗㄘㄙ")
+    "聲母": set("ㄍㄎㄐㄑㄉㄊㄋㄅㄆㄇㄈㄗㄘㄙㄓㄔㄕㄏㄒㄌㄖ"),
+    "介音": set("ㄧㄨㄩ"),
+    "韻母": set("ㄚㄛㄜㄝㄟㄞㄠㄡㄢㄤㄣㄥㄦ"),
+    "舌尖音": set("ㄓㄔㄕㄖㄗㄘㄙ")
 }
 
 
 # 檢查注音符號是否屬於某分類
 def bopomofo_is_category(bopomofo, category):
-	if category.endswith("疊韻"): # 檢查是否為疊韻 (不完全精確，沒有檢查是否為正確注音)
-		return len(bopomofo) == 2 and bopomofo_is_category(bopomofo[0], "介音") and bopomofo_is_category(bopomofo[1], "韻母")
-	return (bopomofo in _bopomofo_categories[category])
+    if category.endswith("疊韻"): # 檢查是否為疊韻 (不完全精確，沒有檢查是否為正確注音)
+        return len(bopomofo) == 2 and bopomofo_is_category(bopomofo[0], "介音") and bopomofo_is_category(bopomofo[1], "韻母")
+    return (bopomofo in _bopomofo_categories[category])
 
 
 brl_phonic_dic = { # 共計 59 個 不函標點
@@ -215,16 +215,16 @@ brl_phonic_dic = { # 共計 59 個 不函標點
     '245': 'CHECK_NEXT', # ['ㄑ', 'ㄘ'],
     # 其他特例
     '156': 'CHECK_PREVIOUS', #'ㄦ'
-	
-	# 標點符號
-	'23': '<',  # ，: shift + ,
-	'36': '>',  # 。: shift + .
+    
+    # 標點符號
+    '23': '<',  # ，: shift + ,
+    '36': '>',  # 。: shift + .
 }
 
 # 注音後再按下 space key 可轉變為標點
 brl_space_dic = {
-	"ㄅ": ")", # "）",
-	"ㄋ": "?", # "？",
-	"ㄎ": "!", # "！",
-	"ㄧㄠ": "(" # "（",
+    "ㄅ": ")", # "）",
+    "ㄋ": "?", # "？",
+    "ㄎ": "!", # "！",
+    "ㄧㄠ": "(" # "（",
 }

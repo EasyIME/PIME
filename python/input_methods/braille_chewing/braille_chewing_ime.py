@@ -182,11 +182,12 @@ class BrailleChewingTextService(ChewingTextService):
             last_bopomofo = self.get_chewing_bopomofo_buffer()
             if current_braille == '356': # ['ㄧㄛ', 'ㄟ']
                 # 上一個注音不是聲母 => ㄧㄛ, 否則 'ㄟ'
-                #if not last_bopomofo or not bopomofo_is_category(last_bopomofo[-1], "聲母"):
-                if not last_bopomofo:
-                    bopomofo_seq = 'ㄧㄛ'
-                else:
+                # 還需要檢查特例，上一個點字是 13 時，注音尚未確定，此時 last_bopomofo = None
+                # 但有可能是ㄍ，可以接ㄟ，所以檢查上一個點字是否為 "13"
+                if (last_bopomofo and bopomofo_is_category(last_bopomofo[-1], "聲母")) or self.last_braille == "13":
                     bopomofo_seq = 'ㄟ'
+                else:
+                    bopomofo_seq = 'ㄧㄛ'
             elif current_braille == '1':  # ['ㄓ', '˙']
                 # 沒有前一個注音，或前一個不是韻母 => ㄓ
                 if not last_bopomofo or not bopomofo_is_category(last_bopomofo[-1], "韻母"):
@@ -208,7 +209,7 @@ class BrailleChewingTextService(ChewingTextService):
                 last_bopomofo = {'13': 'ㄍ', '15': 'ㄙ', '245': 'ㄘ'}.get(self.last_braille)
                 bopomofo_seq = last_bopomofo + bopomofo_seq
             elif bopomofo_seq in ('ㄧ', 'ㄩ') or (bopomofo_is_category(bopomofo_seq, "疊韻") and bopomofo_seq[0] in ('ㄧ', 'ㄩ')):
-                # ㄧ,ㄩ疊韻 或 ㄧ、、ㄩ直接當韻母
+                # ㄧ,ㄩ疊韻 或 ㄧ、ㄩ直接當韻母
                 last_bopomofo = {'13': 'ㄐ', '15': 'ㄒ', '245': 'ㄑ'}.get(self.last_braille)
                 bopomofo_seq = last_bopomofo + bopomofo_seq
             else:
@@ -226,16 +227,16 @@ class BrailleChewingTextService(ChewingTextService):
     def toggleLanguageMode(self):
         super().toggleLanguageMode()
         if self.chewingContext:
-			# 播放語音檔，說明目前是中文/英文
+            # 播放語音檔，說明目前是中文/英文
             mode = self.chewingContext.get_ChiEngMode()
             snd_file = os.path.join(self.sounds_dir, "chi.wav" if mode == CHINESE_MODE else "eng.wav")
             winsound.PlaySound(snd_file, winsound.SND_FILENAME|winsound.SND_ASYNC)
 
-	# 切換全形/半形
+    # 切換全形/半形
     def toggleShapeMode(self):
         super().toggleShapeMode()
         if self.chewingContext:
-			# 播放語音檔，說明目前是全形/半形
+            # 播放語音檔，說明目前是全形/半形
             mode = self.chewingContext.get_ShapeMode()
             snd_file = os.path.join(self.sounds_dir, "full.wav" if mode == FULLSHAPE_MODE else "half.wav")
             winsound.PlaySound(snd_file, winsound.SND_FILENAME|winsound.SND_ASYNC)

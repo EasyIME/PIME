@@ -182,7 +182,8 @@ class BrailleChewingTextService(ChewingTextService):
             last_bopomofo = self.get_chewing_bopomofo_buffer()
             if current_braille == '356': # ['ㄧㄛ', 'ㄟ']
                 # 上一個注音不是聲母 => ㄧㄛ, 否則 'ㄟ'
-                if not last_bopomofo or not bopomofo_is_category(last_bopomofo[-1], "聲母"):
+                #if not last_bopomofo or not bopomofo_is_category(last_bopomofo[-1], "聲母"):
+                if not last_bopomofo:
                     bopomofo_seq = 'ㄧㄛ'
                 else:
                     bopomofo_seq = 'ㄟ'
@@ -197,23 +198,23 @@ class BrailleChewingTextService(ChewingTextService):
                 if bopomofo_is_category(last_bopomofo[-1], "舌尖音"):
                     bopomofo_seq = ''
                 else:
-                    bopomofo_seq = 'ㄦ'
+                    import winsound
             else:
                 bopomofo_seq = None
 
         if self.last_braille and bopomofo_seq:  # 如果有剛剛無法判斷注音的六點輸入，和現在的輸入接在一起判斷
-            if bopomofo_is_category(bopomofo_seq, "疊韻") and bopomofo_seq[0] in ('ㄧ', 'ㄩ'):
-                # ㄧ,ㄩ疊韻
-                last_bopomofo = {'13': 'ㄐ', '15': 'ㄒ', '245': 'ㄑ'}.get(self.last_braille)
-                bopomofo_seq = last_bopomofo + bopomofo_seq
-            elif bopomofo_is_category(bopomofo_seq, "韻母") or (bopomofo_is_category(bopomofo_seq, "疊韻") and bopomofo_seq[0] == 'ㄨ'):
-                # 韻母 或 ㄨ疊韻
+            if bopomofo_is_category(bopomofo_seq, "韻母") or (bopomofo_is_category(bopomofo_seq, "疊韻") and bopomofo_seq[0] == 'ㄨ') or bopomofo_seq == 'ㄨ':
+                # 韻母 或 ㄨ疊韻 或ㄨ直接當韻母
                 last_bopomofo = {'13': 'ㄍ', '15': 'ㄙ', '245': 'ㄘ'}.get(self.last_braille)
+                bopomofo_seq = last_bopomofo + bopomofo_seq        
+            elif bopomofo_seq in ('ㄧ', 'ㄩ') or (bopomofo_is_category(bopomofo_seq, "疊韻") and bopomofo_seq[0] in ('ㄧ', 'ㄩ')):
+                # ㄧ,ㄩ疊韻 或 ㄧ、、ㄩ直接當韻母
+                last_bopomofo = {'13': 'ㄐ', '15': 'ㄒ', '245': 'ㄑ'}.get(self.last_braille)
                 bopomofo_seq = last_bopomofo + bopomofo_seq
             else:
                 bopomofo_seq = None
 
-        print(current_braille, "=>", bopomofo_seq)
+        #print(current_braille, "=>", bopomofo_seq)
         if bopomofo_seq:
             # 把注音送給新酷音
             self.send_bopomofo_to_chewing(bopomofo_seq, keyEvent)

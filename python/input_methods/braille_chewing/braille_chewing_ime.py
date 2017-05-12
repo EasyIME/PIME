@@ -195,10 +195,10 @@ class BrailleChewingTextService(ChewingTextService):
                     bopomofo_seq = '˙'
             elif current_braille == '156':  # 'ㄦ'
                 # 如果 ㄦ 前面是舌尖音則呼略 ㄦ
-                if bopomofo_is_category(last_bopomofo[-1], "舌尖音"):
-                    bopomofo_seq = ''
+                if last_bopomofo and bopomofo_is_category(last_bopomofo[-1], "舌尖音"):
+                    bopomofo_seq = last_bopomofo
                 else:
-                    import winsound
+                    bopomofo_seq = 'ㄦ'
             else:
                 bopomofo_seq = None
 
@@ -206,7 +206,7 @@ class BrailleChewingTextService(ChewingTextService):
             if bopomofo_is_category(bopomofo_seq, "韻母") or (bopomofo_is_category(bopomofo_seq, "疊韻") and bopomofo_seq[0] == 'ㄨ') or bopomofo_seq == 'ㄨ':
                 # 韻母 或 ㄨ疊韻 或ㄨ直接當韻母
                 last_bopomofo = {'13': 'ㄍ', '15': 'ㄙ', '245': 'ㄘ'}.get(self.last_braille)
-                bopomofo_seq = last_bopomofo + bopomofo_seq        
+                bopomofo_seq = last_bopomofo + bopomofo_seq
             elif bopomofo_seq in ('ㄧ', 'ㄩ') or (bopomofo_is_category(bopomofo_seq, "疊韻") and bopomofo_seq[0] in ('ㄧ', 'ㄩ')):
                 # ㄧ,ㄩ疊韻 或 ㄧ、、ㄩ直接當韻母
                 last_bopomofo = {'13': 'ㄐ', '15': 'ㄒ', '245': 'ㄑ'}.get(self.last_braille)
@@ -214,7 +214,7 @@ class BrailleChewingTextService(ChewingTextService):
             else:
                 bopomofo_seq = None
 
-        #print(current_braille, "=>", bopomofo_seq)
+        print(current_braille, "=>", bopomofo_seq)
         if bopomofo_seq:
             # 把注音送給新酷音
             self.send_bopomofo_to_chewing(bopomofo_seq, keyEvent)

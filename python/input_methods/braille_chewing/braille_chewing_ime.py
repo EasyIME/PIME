@@ -27,7 +27,7 @@ from .brl_tables import brl_ascii_dic, brl_phonic_dic, brl_space_dic, bopomofo_i
 
 class BrailleChewingTextService(ChewingTextService):
 
-    # 鍵盤按鍵轉成點字 1 - 6 點
+    # 鍵盤按鍵轉成點字 1 - 8 點
     # A-Z 的 Windows virtual key codes = 大寫的 ASCII code
     braille_keys = [
         ord('F'),  # 1
@@ -187,18 +187,20 @@ class BrailleChewingTextService(ChewingTextService):
                 if (last_bopomofo and bopomofo_is_category(last_bopomofo[-1], "聲母")) or self.last_braille == "13":
                     bopomofo_seq = 'ㄟ'
                 else:
+                    # 實際上也有可能是要打 ㄟ 接注聲 目前還沒有處理這個部分
                     bopomofo_seq = 'ㄧㄛ'
             elif current_braille == '1':  # ['ㄓ', '˙']
-                # 沒有前一個注音，或前一個不是韻母 => ㄓ
-                if not last_bopomofo or not bopomofo_is_category(last_bopomofo[-1], "韻母"):
-                    bopomofo_seq = 'ㄓ'
-                else:
+                # 前一個注音是韻母，或前一個是舌尖音加 156 點 => ˙
+                if (last_bopomofo and bopomofo_is_category(last_bopomofo[-1], "韻母")) or (last_bopomofo and bopomofo_is_category(last_bopomofo[-1], "舌尖音")):
                     bopomofo_seq = '˙'
+                else:
+                    bopomofo_seq = 'ㄓ'
             elif current_braille == '156':  # 'ㄦ'
                 # 如果 ㄦ 前面是舌尖音則呼略 ㄦ
-                if last_bopomofo and bopomofo_is_category(last_bopomofo[-1], "舌尖音"):
+                if last_bopomofo and bopomofo_is_category(last_bopomofo[-1], "舌尖音"): 
                     bopomofo_seq = last_bopomofo
                 else:
+                    # 此時若聲母為 ㄘ 或 ㄙ 先暫時讓 156 變成 ㄦ 
                     bopomofo_seq = 'ㄦ'
             else:
                 bopomofo_seq = None
@@ -207,7 +209,13 @@ class BrailleChewingTextService(ChewingTextService):
             if bopomofo_is_category(bopomofo_seq, "韻母") or (bopomofo_is_category(bopomofo_seq, "疊韻") and bopomofo_seq[0] == 'ㄨ') or bopomofo_seq == 'ㄨ':
                 # 韻母 或 ㄨ疊韻 或ㄨ直接當韻母
                 last_bopomofo = {'13': 'ㄍ', '15': 'ㄙ', '245': 'ㄘ'}.get(self.last_braille)
-                bopomofo_seq = last_bopomofo + bopomofo_seq
+                # 因為 ㄦ 也是韻母 所以在這邊還必須處理 ㄘ 或 ㄙ + 156 接注聲的狀況                
+                if current_braille == "156":
+                    # 需把 ㄦ 去除 實際上沒有 ㄍㄦ 可以不用手動排除
+                    bopomofo_seq = last_bopomofo
+                else:
+                    # 一般情況需要把聲母跟韻母或疊韻全部加起來
+                    bopomofo_seq = last_bopomofo + bopomofo_seq
             elif bopomofo_seq in ('ㄧ', 'ㄩ') or (bopomofo_is_category(bopomofo_seq, "疊韻") and bopomofo_seq[0] in ('ㄧ', 'ㄩ')):
                 # ㄧ,ㄩ疊韻 或 ㄧ、ㄩ直接當韻母
                 last_bopomofo = {'13': 'ㄐ', '15': 'ㄒ', '245': 'ㄑ'}.get(self.last_braille)

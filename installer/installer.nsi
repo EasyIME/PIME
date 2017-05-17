@@ -111,6 +111,9 @@ var INST_PYTHON
 var INST_CINBASE
 var INST_NODE
 
+; The table file of Liu input method
+var LIU_UNI_TAB_FILE
+
 ; Uninstall old versions
 Function uninstallOldVersion
 	ClearErrors
@@ -414,14 +417,20 @@ SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
 		SectionEnd
 
 		Section $(CHELIU) cheliu
-			${If} ${FileExists} "$EXEDIR\liu.cin"
-				SectionIn 2
+            SectionIn 2
+            ; Ask the user to provide "liu-uni.tab" file
+            MessageBox MB_OK|MB_ICONQUESTION "$(SELECT_LIU_FILE)"
+            nsDialogs::SelectFileDialog open "" "liu-uni.tab file|liu-uni.tab"
+            Pop $LIU_UNI_TAB_FILE
+			${If} ${FileExists} "$LIU_UNI_TAB_FILE"
 				SetOutPath "$INSTDIR\python\input_methods"
 				File /r "..\python\input_methods\cheliu"
 				SetOutPath "$INSTDIR\python\cinbase\cin"
-				Rename "$EXEDIR\liu.cin" "$INSTDIR\python\cinbase\cin\liu.cin"
 				StrCpy $INST_PYTHON "True"
 				StrCpy $INST_CINBASE "True"
+            ${Else}
+                MessageBox MB_OK|MB_ICONSTOP "$(CANNOT_INSTALL_LIU)"
+                StrCpy $LIU_UNI_TAB_FILE ""
 			${EndIf}
 		SectionEnd
 
@@ -521,9 +530,6 @@ SectionGroup /e $(NODE_SECTION_GROUP) node_section_group
 SectionGroupEnd
 
 Function hideSection
-	${IfNot} ${FileExists} "$EXEDIR\liu.cin"
-		SectionSetText ${cheliu} ""
-	${EndIf}
 	${IfNot} ${AtLeastWin8}
 		SectionSetText ${cheeng} ""
 	${EndIf}
@@ -544,7 +550,10 @@ Section "" Register
 		SetOutPath "$INSTDIR\python"
 		File /r /x "__pycache__" /x "cin" "..\python\cinbase"
         ${If} ${SectionIsSelected} ${cheliu}
-            nsExec::ExecToLog '"$INSTDIR\python\python3\pythonw.exe" "$INSTDIR\python\cinbase\tools\cintojson.py" "liu.cin"'
+            ; Convert the tab file to *.cin format first.
+            nsExec::ExecToLog '"$INSTDIR\python\python3\python.exe" "$INSTDIR\python\cinbase\tools\liu_unitab2cin.py" "$LIU_UNI_TAB_FILE" "$INSTDIR\python\cinbase\cin\liu.cin"'
+            ; Convert the liu.cin file to json format used by cinbase.
+            nsExec::ExecToLog '"$INSTDIR\python\python3\python.exe" "$INSTDIR\python\cinbase\tools\cintojson.py" "liu.cin"'
         ${EndIf}
 	${EndIf}
 

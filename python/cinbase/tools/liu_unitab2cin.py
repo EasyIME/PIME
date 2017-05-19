@@ -112,6 +112,15 @@ def convert_liu_unitab(tab_filename, out_filename):
             words.append((key3, key4, word))
         words.append((0, 0, None))  # add a mark for end of list
 
+    # According to some users, there might be some variations in the format of liu tabs among versions.
+	# We do some simple checks to ensure that we correctly read from the head of the table
+    for n_skip in range(0, 32):
+        word = words[n_skip][2]
+        if word in "對夺对対": # the first word in liu should be one of these four characters
+            break
+    if n_skip:
+        words = words[n_skip:]
+
     # generate output
     with open(out_filename, "w", encoding="utf-8") as out:
         out.write(cin_head)
@@ -123,8 +132,7 @@ def convert_liu_unitab(tab_filename, out_filename):
             i_next_word = key_table[i_key + 1]
             # print(i_start_word, i_next_word)
             for i in range(i_start_word, i_next_word):
-                # don't know why but we need to increase the index here by 1.
-                (key3, key4, word) = words[i + 1]
+                (key3, key4, word) = words[i]
                 if not word:
                     continue
                 # convert keys from indices to ASCII codes (skip 0:space).

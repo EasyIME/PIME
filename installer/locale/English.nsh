@@ -32,7 +32,7 @@
 
 !insertmacro LANG_STRING CHEWING "新酷音"
 !insertmacro LANG_STRING CHECJ "酷仓"
-!insertmacro LANG_STRING CHELIU "虾米"
+!insertmacro LANG_STRING CHELIU "蝦米 (須自備正版表格檔)"
 !insertmacro LANG_STRING CHEARRAY "行列"
 !insertmacro LANG_STRING CHEDAYI "Da Yi"
 !insertmacro LANG_STRING CHEPINYIN "Pinyin"
@@ -43,6 +43,9 @@
 !insertmacro LANG_STRING EMOJIME "emojime"
 !insertmacro LANG_STRING CHEENG "英数"
 !insertmacro LANG_STRING BRAILLE_CHEWING "點字酷音"
+
+!insertmacro LANG_STRING SELECT_LIU_FILE "Installation of 蝦米 module requires that you have a legal copy of the table file of 嘸蝦米 input method (liu-uni.tab).$\r$\nPlease provide the location of the liu-uni.tab file."
+!insertmacro LANG_STRING CANNOT_INSTALL_LIU "Without liu-uni.tab file, 蝦米 input method cannot be installed."
 
 !insertmacro LANG_STRING SecMain_DESC "Install the $(PRODUCT_NAME) main program to your computer."
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP_DESC "Input method modules with Python"

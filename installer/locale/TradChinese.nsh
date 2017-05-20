@@ -32,7 +32,7 @@
 
 !insertmacro LANG_STRING CHEWING 新酷音
 !insertmacro LANG_STRING CHECJ 酷倉
-!insertmacro LANG_STRING CHELIU 蝦米
+!insertmacro LANG_STRING CHELIU "蝦米 (須自備正版表格檔)"
 !insertmacro LANG_STRING CHEARRAY 行列
 !insertmacro LANG_STRING CHEDAYI 大易
 !insertmacro LANG_STRING CHEPINYIN 拼音
@@ -43,6 +43,9 @@
 !insertmacro LANG_STRING EMOJIME emojime
 !insertmacro LANG_STRING CHEENG 英數
 !insertmacro LANG_STRING BRAILLE_CHEWING "點字酷音"
+
+!insertmacro LANG_STRING SELECT_LIU_FILE "蝦米模組需要「正版」嘸蝦米輸入法的表格檔 (liu-uni.tab) 才能安裝。$\r$\n請選取 liu-uni.tab 檔案所在位置。"
+!insertmacro LANG_STRING CANNOT_INSTALL_LIU "缺少 liu-uni.tab 表格檔，無法安裝蝦米輸入法。"
 
 !insertmacro LANG_STRING SecMain_DESC "安裝 $(PRODUCT_NAME) 主程式到你的電腦裏。"
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP_DESC "Python 輸入法模組"

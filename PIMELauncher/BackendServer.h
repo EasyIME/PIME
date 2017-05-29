@@ -47,6 +47,10 @@ public:
 	void startProcess();
 	void terminateProcess();
 	bool isProcessRunning();
+	void restartProcess() {
+		needRestart_ = true;
+		terminateProcess();
+	}
 
 	uv_stream_t* stdinStream() {
 		return reinterpret_cast<uv_stream_t*>(stdinPipe_);
@@ -72,6 +76,7 @@ private:
 	uv_pipe_t* stdoutPipe_;
 	bool ready_;
 
+	bool needRestart_;
 	// command to launch the server process
 	std::string command_;
 	std::string params_;

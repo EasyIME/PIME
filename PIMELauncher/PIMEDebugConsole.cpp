@@ -5,6 +5,7 @@
 #include <codecvt>  // for utf8 conversion
 #include <locale>  // for wstring_convert
 #include <sstream>
+#include <cstring>
 
 #include <uv.h>
 
@@ -37,6 +38,7 @@ private:
 	void onDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
 	BOOL dialogWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 	void setTextColor(COLORREF clr);
+	void sendCommand(const char* command);
 
 private:
 	uv_pipe_t* pipe_;
@@ -75,13 +77,6 @@ void DebugConsole::connectPipe() {
 
 // this is called from the worker thread
 void DebugConsole::onConnected(int status) {
-	std::istringstream st("test\ntest2\ntest3");
-	string str;
-	while (getline(st, str)) {
-		auto s = st.rdstate();
-		cout << s << endl;
-	}
-
 	lock_guard<mutex> lock{ outputTextLock_ };
 	if (status == 0) {
 		pendingTextOutput_ += "Debug console connected\r\n";
@@ -191,11 +186,21 @@ BOOL DebugConsole::dialogWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 		break;
 	}
 	case WM_SIZE: {
-		WORD w = LOWORD(lp);
-		WORD h = HIWORD(lp);
-		MoveWindow(richEdit_, 0, 0, w, h, TRUE);
+		RECT rc;
+		::GetWindowRect(richEdit_, &rc);
+		::MapWindowPoints(HWND_DESKTOP, hwnd, LPPOINT(&rc), 2);
+		WORD clientWidth = LOWORD(lp);
+		WORD clientHeight = HIWORD(lp);
+		MoveWindow(richEdit_, rc.left, rc.top, clientWidth, clientHeight - rc.top, TRUE);
 		break;
 	}
+	case WM_COMMAND:
+		switch (LOWORD(wp)) {
+		case IDC_RESTART_BACKENDS:
+			sendCommand("DEBUG_CMD:RESTART_BACKENDS\n");
+			break;
+		}
+		break;
 	case WM_CLOSE:
 		DestroyWindow(hwnd);
 		break;
@@ -216,6 +221,23 @@ void DebugConsole::setTextColor(COLORREF clr) {
 	format.crTextColor = clr;
 	format.dwEffects = 0;
 	SendMessage(richEdit_, EM_SETCHARFORMAT, SCF_SELECTION, LPARAM(&format));
+}
+
+void DebugConsole::sendCommand(const char * command) {
+	if (pipe_ && isConnected_) {
+		auto stream = reinterpret_cast<uv_stream_t*>(pipe_);
+
+		uv_write_t* req = new uv_write_t{};
+		req->data = strdup(command);
+		uv_buf_t buf = { strlen(command), reinterpret_cast<char*>(req->data) };
+		uv_write(req, stream, &buf, 1, [](uv_write_t* req, int status) {
+			auto* buf = reinterpret_cast<char*>(req->data);
+			if (status < 0 || status == UV_EOF) {
+				// FIXME:
+			}
+			free(buf);
+		});
+	}
 }
 
 INT_PTR  CALLBACK DebugConsole::_dialogWndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {

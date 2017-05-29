@@ -51,6 +51,7 @@ BackendServer::BackendServer(PipeServer* pipeServer, const Json::Value& info) :
 	stdoutPipe_{nullptr},
 	ready_{false},
 	name_(info["name"].asString()),
+	needRestart_{false},
 	command_(info["command"].asString()),
 	workingDir_(info["workingDir"].asString()),
 	params_(info["params"].asString()) {
@@ -211,6 +212,11 @@ void BackendServer::onProcessTerminated(int64_t exit_status, int term_signal) {
 	closeStdioPipes();
 
 	pipeServer_->onBackendClosed(this);
+
+	if (needRestart_) {
+		startProcess();
+		needRestart_ = false;
+	}
 }
 
 void BackendServer::closeStdioPipes() {

@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <codecvt>  // for utf8 conversion
 #include <locale>  // for wstring_convert
+#include <sstream>
 
 #include <json/json.h>
 
@@ -517,9 +518,49 @@ void PipeServer::onNewDebugClientConnected(uv_stream_t* server, int status) {
 	}
 	debugClientPipe_ = client_pipe;
 
+	// read debugging commands from the debug console
+	uv_read_start((uv_stream_t*)debugClientPipe_,
+		[](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
+			buf->base = new char[suggested_size];
+			buf->len = suggested_size;
+		},
+		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
+			auto server = (PipeServer*)stream->data;
+			server->onDebugClientDataReceived(stream, nread, buf);
+		}
+	);
+
 	// if there are recent debug messages, output them to the debug console
 	for (auto& msg : recentDebugMessages_) {
 		outputDebugMessage(msg.c_str(), msg.length());
+	}
+}
+
+void PipeServer::onDebugClientDataReceived(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf) {
+	// receive debug commands from the debug console
+	// debug commands are issued line by line and starts with "DEBUG_CMD:" prefix.
+	if (nread <= 0 || nread == UV_EOF || buf->base == nullptr) {
+		if (buf->base) {
+			delete[]buf->base;
+		}
+		// the client connection seems to be broken. close it.
+		closeDebugClient();
+		return;
+	}
+	if (buf->base) {
+		stringstream lines{ string(buf->base, nread) };
+		for (string line; getline(lines, line);) {
+			if (line == "DEBUG_CMD:RESTART_BACKENDS") {
+				for (auto& backend : backends_) {
+					if (backend->isProcessRunning()) {
+						string msg = "\nRestart backend:" + backend->name_ + "\n";
+						outputDebugMessage(msg.c_str(), msg.length());
+						backend->restartProcess();
+					}
+				}
+			}
+		}
+		delete[]buf->base;
 	}
 }
 

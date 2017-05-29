@@ -106,6 +106,7 @@ private:
 	void closeClient(ClientInfo* client);
 
 	void onNewDebugClientConnected(uv_stream_t* server, int status);
+	void onDebugClientDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
 	void closeDebugClient();
 
 	void sendReplyToClient(const std::string clientId, const char* msg, size_t len);

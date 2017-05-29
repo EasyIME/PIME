@@ -19,18 +19,15 @@ from keycodes import * # for VK_XXX constants
 from textService import *
 import os.path
 import time
-from .libchewing import ChewingContext
-from .chewing_config import chewingConfig
+from libchewing import ChewingContext, CHEWING_DATA_DIR, CHINESE_MODE, \
+    ENGLISH_MODE, FULLSHAPE_MODE, HALFSHAPE_MODE
+
 import opencc  # OpenCC 繁體簡體中文轉換
 import sys
 from ctypes import windll  # for ShellExecuteW()
 
+from .chewing_config import chewingConfig
 
-# from libchewing/include/global.h
-CHINESE_MODE = 1
-ENGLISH_MODE = 0
-FULLSHAPE_MODE = 1
-HALFSHAPE_MODE = 0
 
 # 按鍵內碼和名稱的對應
 keyNames = {
@@ -77,8 +74,6 @@ class ChewingTextService(TextService):
     def __init__(self, client):
         TextService.__init__(self, client)
         self.curdir = os.path.abspath(os.path.dirname(__file__))
-        self.datadir = os.path.join(self.curdir, "data")
-        # print(self.datadir)
         self.icon_dir = self.curdir
         self.chewingContext = None # libchewing context
 
@@ -159,7 +154,7 @@ class ChewingTextService(TextService):
             # syspath 參數可包含多個路徑，用 ; 分隔
             # 此處把 user 設定檔目錄插入到 system-wide 資料檔路徑前
             # 如此使用者變更設定後，可以比系統預設值有優先權
-            search_paths = ";".join((cfg.getConfigDir(), self.datadir)).encode("UTF-8")
+            search_paths = ";".join((cfg.getConfigDir(), CHEWING_DATA_DIR)).encode("UTF-8")
             user_phrase = cfg.getUserPhrase().encode("UTF-8")
 
             # 建立 ChewingContext，此處路徑需要 UTF-8 編碼

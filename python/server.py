@@ -17,12 +17,14 @@
 
 import json
 import sys
-import os
-import random
-import uuid
+import traceback
 
 if __name__ == "__main__":
     sys.path.append('python3')
+
+# redirect stdout to stderr so we can see all of the error messages in
+# PIMEDebugConsole since it only reads stdout.
+sys.stderr = sys.stdout
 
 from serviceManager import textServiceMgr
 
@@ -65,8 +67,9 @@ class Server(object):
         self.clients = {}
 
     def run(self):
-        print("running:")
         while True:
+            line = ""
+            client_id = ""
             try:
                 line = input().strip()
                 if not line:
@@ -85,18 +88,21 @@ class Server(object):
                     ret = client.handleRequest(msg)
                     # Send the response to the client via stdout
                     # one response per line in the format "PIME_MSG|<client_id>|<json reply>"
-                    reply_line = '|'.join(["PIME_MSG", client_id, json.dumps(ret)])
+                    reply_line = '|'.join(["PIME_MSG", client_id, json.dumps(ret, ensure_ascii=False)])
                     print(reply_line)
             except EOFError:
                 # stop the server
                 break
             except Exception as e:
-                # import traceback
-                # traceback.print_tb(sys.last_traceback, file=sys.stdout)
                 print("ERROR:", e, line)
+                # print the exception traceback for ease of debugging
+                traceback.print_exc()
                 # generate an empty output containing {success: False} to prevent the client from being blocked
                 reply_line = '|'.join(["PIME_MSG", client_id, '{"success":false}'])
                 print(reply_line)
+                # Just terminate the python server process if any unknown error happens.
+                # The python server will be restarted later by PIMELauncher.
+                sys.exit(1)
 
     def remove_client(self, client_id):
         print("client disconnected:", client_id)

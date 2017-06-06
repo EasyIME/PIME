@@ -188,6 +188,8 @@ class BrailleChewingTextService(ChewingTextService):
                 key = self.state.append_brl(current_braille)
                 if key:
                     bopomofo_seq = "\b" * key["VK_BACK"] + key["bopomofo"]
+                else:
+                    winsound.MessageBeep()
 
         print(current_braille, "=>", bopomofo_seq.replace("\b", r"\b"))
         if bopomofo_seq:

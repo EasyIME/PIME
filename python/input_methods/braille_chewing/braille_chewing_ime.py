@@ -238,7 +238,7 @@ class BrailleChewingTextService(ChewingTextService):
             # 播放語音檔，說明目前是中文/英文
             mode = self.chewingContext.get_ChiEngMode()
             snd_file = os.path.join(self.sounds_dir, "chi.wav" if mode == CHINESE_MODE else "eng.wav")
-            winsound.PlaySound(snd_file, winsound.SND_FILENAME|winsound.SND_ASYNC)
+            winsound.PlaySound(snd_file, winsound.SND_FILENAME|winsound.SND_ASYNC|winsound.SND_NODEFAULT)
 
     # 切換全形/半形
     def toggleShapeMode(self):
@@ -247,4 +247,4 @@ class BrailleChewingTextService(ChewingTextService):
             # 播放語音檔，說明目前是全形/半形
             mode = self.chewingContext.get_ShapeMode()
             snd_file = os.path.join(self.sounds_dir, "full.wav" if mode == FULLSHAPE_MODE else "half.wav")
-            winsound.PlaySound(snd_file, winsound.SND_FILENAME|winsound.SND_ASYNC)
+            winsound.PlaySound(snd_file, winsound.SND_FILENAME|winsound.SND_ASYNC|winsound.SND_NODEFAULT)

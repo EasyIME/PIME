@@ -151,6 +151,22 @@ class BrailleChewingTextService(ChewingTextService):
 
     # 模擬實體鍵盤的英數按鍵送到新酷音
     def send_keys_to_chewing(self, keys, keyEvent):
+        if not self.chewingContext:
+            print("send_keys_to_chewing:", "chewingContext not initialized")
+            return
+        # 輸入標點符號，不使用模擬按鍵的方法，因為涉及較多 GUI 反應
+        if keys.startswith("`") and len(keys) > 1:
+            # 直接將按鍵送給 libchewing, 此時與 GUI 顯示非同步
+            for key in keys:
+                self.chewingContext.handle_Default(ord(key))
+            compStr = ""
+            if self.chewingContext.buffer_Check():
+                compStr = self.chewingContext.buffer_String().decode("UTF-8")
+            # 根據 libchewing 緩衝區的狀態，更新組字區內容與游標位置
+            self.setCompositionString(compStr)
+            self.setCompositionCursor(self.chewingContext.cursor_Current())
+            return
+        # 其餘的按鍵，使用模擬的方式，會跟 GUI 顯示同步
         for key in keys:
             keyEvent.keyCode = ord(key.upper())  # 英文數字的 virtual keyCode 正好 = 大寫 ASCII code
             keyEvent.charCode = ord(key)  # charCode 為字元內碼

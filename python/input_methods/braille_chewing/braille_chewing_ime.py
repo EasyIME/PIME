@@ -219,6 +219,7 @@ class BrailleChewingTextService(ChewingTextService):
 
         # 清除點字 buffer，準備打下一個字
         self.reset_braille_mode(False)
+        return True # braille input processed
 
     # 切換中英文模式
     def toggleLanguageMode(self):

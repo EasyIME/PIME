@@ -141,12 +141,16 @@ the_first.__category__ = "CHECK_PREVIOUS"
 # 把 dict 與一個 tuple 榜在一起
 # 其中 next_state 表示下一個可接受的內部狀態
 class Braille_Bopomofo_Dict(dict):
-    def __init__(self, mapping, next_state):
+    def __init__(self, name, mapping, next_state):
         super().__init__(mapping)
+        self.name = name
         self.next_state = next_state
 
+    def __repr__(self):
+        return self.name
+
 # 點字與聲調對應，沒有下一個可接受狀態
-TONAL_MARK_DICT = Braille_Bopomofo_Dict({
+TONAL_MARK_DICT = Braille_Bopomofo_Dict("TONAL_MARK", {
     "1": u"˙",
     "2": u"ˊ",
     "3": u" ",
@@ -155,7 +159,7 @@ TONAL_MARK_DICT = Braille_Bopomofo_Dict({
 }, tuple())
 
 # 點字與介母、韻母對應，下一個可接受聲調輸入
-RHYME_DICT = Braille_Bopomofo_Dict({
+RHYME_DICT = Braille_Bopomofo_Dict("RHYME", {
     # 介母、韻母
     "16"    : (u"ㄧ",),
     "34"    : (u"ㄨ",),
@@ -211,7 +215,7 @@ def yi_yu(current_state, new_char, replacement):
 yi_yu.__category__ = "CHECK_NEXT"
 
 # 點字與聲母對應，下一個可接受介、韻母輸入
-CONSONANT_DICT = Braille_Bopomofo_Dict({
+CONSONANT_DICT = Braille_Bopomofo_Dict("CONSONANT", {
     # 聲母
     "135"  : (u"ㄅ",),
     "1234" : (u"ㄆ",),
@@ -235,7 +239,7 @@ CONSONANT_DICT = Braille_Bopomofo_Dict({
 
 # 點字與服泡對應，可以在此隨意新增符號定義
 # 注意︰點字序列之間不可以有 prefix 的關係
-SYMBOL_DICT = Braille_Bopomofo_Dict({
+SYMBOL_DICT = Braille_Bopomofo_Dict("SYMBOL", {
     "0": " ",
     "23-0": u"，",
     "6-0": u"、",

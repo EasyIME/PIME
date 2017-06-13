@@ -199,6 +199,7 @@ class BrailleChewingTextService(ChewingTextService):
                 bopomofo_seq = brl_ascii_dic.get(current_braille)
                 if bopomofo_seq not in "0123456789":
                     bopomofo_seq = ""
+                    winsound.MessageBeep()
             # 否則，將點字送給內部進行組字
             else:
                 key = self.state.append_brl(current_braille)

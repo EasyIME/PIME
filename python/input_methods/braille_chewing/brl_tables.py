@@ -283,6 +283,30 @@ class brl_buf_state:
     # 取得下一個點字輸入，產生狀態變化與輸出回饋
     # 輸出 dict 包含二個 keys: VK_BACK 為 backspace 的數量；bopomofo 為注音或符號序列
     def append_brl(self, brl_char):
+        if brl_char == "\b":
+            if not self._brl_buf: # no previous state
+                return {}
+            import os
+            # 刪除目前「下一個可接受狀態」資訊
+            del self._stack[-1]
+            # 取出目前與狀態回復後的注音序列，以求出 difference
+            current_bopomofo = "".join(self._bop_buf)
+            self._bop_buf = self._stack[-1]["bopomofo"]
+            past_bopomofo = "".join(self._bop_buf)
+            p = os.path.commonprefix([current_bopomofo, past_bopomofo])
+            # 回復之前的 next_state
+            self._stack[-1] = self._stack[-1]["next_state"]
+            # 刪除點字緩衝區一個字元
+            del self._brl_buf[-1]
+            # 用鋼材的 difference 寫成指令，使 libchewing 狀態同步
+            return {"VK_BACK": len(current_bopomofo) - len(p), "bopomofo": past_bopomofo[len(p):]}
+        from copy import copy
+        # 即將被推入堆疊的舊狀態，包含三個 keys:
+        # - class_info 為點字緩衝區對應 index 地方的點字內容屬於哪個分類 (CONSONANT, RHYME, TONAL_MARK, SYMBOL)
+        # - bopomofo 為目前注音緩衝區的狀態，因為是 list 所以需要 copy 備份
+        # - next_state 為當時打字之前堆疊頂端的值，列出接下來可接受點字組合
+        # class_info 供 CHECK_NEXT 檢查用，其他資料做為 \b 的狀態回復用
+        old_state = {"class_info": SYMBOL_DICT, "bopomofo": copy(self._bop_buf), "next_state": self._stack[-1]}
         try:
             # 找找看，這個輸入是否在允許的下一個類別裡
             ph_tabs = [d for d in self._stack[-1] if brl_char in d]
@@ -292,7 +316,7 @@ class brl_buf_state:
             res = {"VK_BACK": 0, "bopomofo": ""}
             # 考慮先前的注音輸入可能被現在的輸入影響
             if self._brl_buf:
-                for t in self._stack[-2][self._brl_buf[-1]][1:]:
+                for t in self._stack[-2]["class_info"][self._brl_buf[-1]][1:]:
                     if t[0].__category__ != "CHECK_NEXT": continue
                     res["VK_BACK"] = len(self._bop_buf[-1])
                     if t[0](*((self, brl_char) + t[1:])):
@@ -316,7 +340,8 @@ class brl_buf_state:
             else:
                 # 否，內部狀態進行轉換，並以注音做為回傳
                 res["bopomofo"] += self._bop_buf[-1]
-                self._stack[-1] = ph_tabs[0]
+                old_state["class_info"] = ph_tabs[0]
+                self._stack[-1] = old_state
                 self._stack.append(ph_tabs[0].next_state)
             # 如果沒有下一個可接受輸入表示輸入完成一個中文字了，立即回到初始狀態
             if not self._stack[-1]:
@@ -330,7 +355,7 @@ class brl_buf_state:
         key = "-".join(self._brl_buf)
         cands = [k for k in SYMBOL_DICT.keys() if k.startswith(key)]
         if cands:
-            self._stack[-1] = SYMBOL_DICT
+            self._stack[-1] = old_state
             self._stack.append(SYMBOL_DICT.next_state)
             if key == cands[0]:
                 # Exact match, 符號輸入完畢

@@ -189,6 +189,9 @@ class BrailleChewingTextService(ChewingTextService):
         if current_braille == "0456":
             # 熱鍵 456+space 與 Shift 一樣能切換中打、英打模式
             self.toggleLanguageMode()
+        elif current_braille.startswith("0") and len(current_braille) > 1:
+            # 未定義的熱鍵，發出警告聲，空白 "0" 不屬此類
+            winsound.MessageBeep()
         elif self.langMode == ENGLISH_MODE:
             bopomofo_seq = brl_ascii_dic.get(current_braille)
             if keyEvent.isKeyToggled(VK_CAPITAL):  # capslock

@@ -112,7 +112,11 @@ class BrailleChewingTextService(ChewingTextService):
         # 若修飾鍵 (Ctrl, Shift, Alt) 都沒有被按下，且按鍵是「可打印」（空白、英數、標點符號等），當成點字鍵處理
         if not self.has_modifiers(keyEvent) and (keyEvent.isPrintableChar()):
             return True
-        self.reset_braille_mode()
+        # 非點字鍵當中，只有倒退鍵不必被重設內部點字狀態
+        if keyEvent.keyCode == VK_BACK:
+            self.reset_braille_mode(False)
+        else:
+            self.reset_braille_mode()
         return False
 
     def filterKeyDown(self, keyEvent):
@@ -123,6 +127,10 @@ class BrailleChewingTextService(ChewingTextService):
     def onKeyDown(self, keyEvent):
         if keyEvent.charCode in range(ord('0'), ord('9') + 1) and self.get_chewing_cand_totalPage() > 0: # selection keys
             pass
+        elif keyEvent.keyCode == VK_BACK:
+            # 將倒退鍵經過內部狀態處理，取得鍵入序列轉送新酷音
+            if self.handle_braille_keys(keyEvent):
+                return True
         elif self.needs_braille_handling(keyEvent):
             # 點字模式，檢查 8 個點字鍵是否被按下，忽略其餘按鍵
             for i, key in enumerate(self.braille_keys):
@@ -182,11 +190,20 @@ class BrailleChewingTextService(ChewingTextService):
 
     # 將點字 8 點轉換成注音按鍵，送給新酷音處理
     def handle_braille_keys(self, keyEvent):
-        # 將點字鍵盤狀態轉成用數字表示，例如 [False, True, True, True, True, False, True, False] 轉成 "23457"
-        current_braille = "".join([str(i) for i, pressed in enumerate(self.dots_pressed_states) if pressed])
+        if keyEvent.keyCode == VK_BACK:
+            current_braille = "\b"
+        else:
+            # 將點字鍵盤狀態轉成用數字表示，例如 [False, True, True, True, True, False, True, False] 轉成 "23457"
+            current_braille = "".join([str(i) for i, pressed in enumerate(self.dots_pressed_states) if pressed])
         bopomofo_seq = ""
         # 點字鍵入轉換成 ASCII 字元、熱鍵或者注音
-        if current_braille == "0456":
+        if current_braille == "\b":
+            key = self.state.append_brl("\b")
+            if key:
+                bopomofo_seq = "\b" * key["VK_BACK"] + key["bopomofo"]
+            else:
+                return False
+        elif current_braille == "0456":
             # 熱鍵 456+space 與 Shift 一樣能切換中打、英打模式
             self.toggleLanguageMode()
         elif current_braille.startswith("0") and len(current_braille) > 1:
@@ -211,7 +228,7 @@ class BrailleChewingTextService(ChewingTextService):
                 else:
                     winsound.MessageBeep()
 
-        print(current_braille, "=>", bopomofo_seq.replace("\b", r"\b"))
+        print(current_braille.replace("\b", r"\b"), "=>", bopomofo_seq.replace("\b", r"\b"))
         if bopomofo_seq:
             bopomofo_seq = "".join(self.bopomofo_to_keys[c] if c in self.bopomofo_to_keys else c for c in bopomofo_seq)
             # 把注音送給新酷音

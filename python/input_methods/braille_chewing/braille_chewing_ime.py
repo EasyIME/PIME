@@ -109,11 +109,11 @@ class BrailleChewingTextService(ChewingTextService):
 
     def needs_braille_handling(self, keyEvent):
         # 檢查是否需要處理點字
-        # 若 Ctrl, Shift, Alt 任一個被按下，或按鍵不是 printable (方向鍵, page up, backspace 等等)，不使用點字
-        if self.has_modifiers(keyEvent) or not keyEvent.isPrintableChar():
-            self.reset_braille_mode()
-            return False
-        return True
+        # 若修飾鍵 (Ctrl, Shift, Alt) 都沒有被按下，且按鍵是「可打印」（空白、英數、標點符號等），當成點字鍵處理
+        if not self.has_modifiers(keyEvent) and (keyEvent.isPrintableChar()):
+            return True
+        self.reset_braille_mode()
+        return False
 
     def filterKeyDown(self, keyEvent):
         if self.needs_braille_handling(keyEvent):

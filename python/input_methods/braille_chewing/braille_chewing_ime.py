@@ -205,6 +205,19 @@ class BrailleChewingTextService(ChewingTextService):
                 bopomofo_seq = "\b" * key["VK_BACK"] + key["bopomofo"]
             else:
                 return False
+        elif current_braille == "0245":
+            # 熱鍵 245+space 能夠在點字狀態失去控制時將它重設，不遺失已經存在組字區的中文
+            # 正在輸入注音，就把注音去掉
+            if self.chewingContext and self.chewingContext.bopomofo_Check():
+                # libchewing 正在打注音時，送 Esc 會把注音去掉
+                self.chewingContext.handle_Esc()
+                compStr = ""
+                if self.chewingContext.buffer_Check():
+                    compStr = self.chewingContext.buffer_String().decode("UTF-8")
+                # 恢復原本組字區內蟲跟游標位置
+                self.setCompositionString(compStr)
+                self.setCompositionCursor(self.chewingContext.cursor_Current())
+            self.state.__init__()
         elif current_braille == "0456":
             # 熱鍵 456+space 與 Shift 一樣能切換中打、英打模式
             self.toggleLanguageMode()

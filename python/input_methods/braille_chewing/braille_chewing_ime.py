@@ -110,13 +110,15 @@ class BrailleChewingTextService(ChewingTextService):
     def needs_braille_handling(self, keyEvent):
         # 檢查是否需要處理點字
         # 若修飾鍵 (Ctrl, Shift, Alt) 都沒有被按下，且按鍵是「可打印」（空白、英數、標點符號等），當成點字鍵處理
-        if not self.has_modifiers(keyEvent) and (keyEvent.isPrintableChar()):
+        has_modifiers = self.has_modifiers(keyEvent)
+        if not has_modifiers and keyEvent.isPrintableChar():
             return True
-        # 非點字鍵當中，只有倒退鍵不必被重設內部點字狀態
-        if keyEvent.keyCode == VK_BACK:
-            self.reset_braille_mode(False)
-        else:
+        # 若按壓修飾鍵，會清除所有內部點字狀態
+        if has_modifiers or keyEvent.keyCode == VK_ESCAPE:
             self.reset_braille_mode()
+        # 其他的不可打印按鍵不引起內部點字狀態重設
+        else:
+            self.reset_braille_mode(False)
         return False
 
     def filterKeyDown(self, keyEvent):

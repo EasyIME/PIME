@@ -64,7 +64,6 @@ class BrailleChewingTextService(ChewingTextService):
             u"×": "`73",
             u"÷": "`74",
             u"±": "`79",
-            u"＝": "`75",
             u"≠": "`76",
             u"∞": "`78",
             u"←": "`83",

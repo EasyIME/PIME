@@ -353,14 +353,15 @@ class brl_buf_state:
         # 先把新輸入放進 buffer, 看看現有點字序列是否為某些符號的 prefix
         self._brl_buf.append(brl_char)
         key = "-".join(self._brl_buf)
-        cands = [k for k in SYMBOL_DICT.keys() if k.startswith(key)]
+        cands = [k for k in SYMBOL_DICT.keys() if k.startswith(key + "-") or k == key]
         if cands:
             self._stack[-1] = old_state
             self._stack.append(SYMBOL_DICT.next_state)
-            if key == cands[0]:
+            symbol = SYMBOL_DICT.get(key, "")
+            if symbol:
                 # Exact match, 符號輸入完畢
                 self.__init__()
-            return {"VK_BACK": 0, "bopomofo": SYMBOL_DICT[key] if key == cands[0] else ""}
+            return {"VK_BACK": 0, "bopomofo": symbol}
         # 也不是 prefix, 這次輸入屬於錯誤，應被拒絕
         del self._brl_buf[-1]
         return {} # input rejected

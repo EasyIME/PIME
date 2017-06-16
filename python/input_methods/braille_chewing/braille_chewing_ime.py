@@ -113,13 +113,16 @@ class BrailleChewingTextService(ChewingTextService):
         has_modifiers = self.has_modifiers(keyEvent)
         if not has_modifiers and keyEvent.isPrintableChar():
             return True
-        # 若按壓修飾鍵，會清除所有內部點字狀態
+        # 其他按鍵會打斷正在記錄的點字輸入
         if has_modifiers or keyEvent.keyCode == VK_ESCAPE:
+            # 若按壓修飾鍵，會清除所有內部點字狀態
             self.reset_braille_mode()
-        # 其他的不可打印按鍵不引起內部點字狀態重設
         else:
+            # 其他的不可打印按鍵僅重設八點的輸入狀態，不影響點字組字的部份
             self.reset_braille_mode(False)
-        return False
+        # 未按下修飾鍵，且點字正在組字，仍然當點字鍵處理
+        # 許多不可打印按鍵如 Delete 及方向鍵，會於處理點字時忽略，不讓它有異常行為
+        return not has_modifiers and self.state.brl_check()
 
     def filterKeyDown(self, keyEvent):
         if self.needs_braille_handling(keyEvent):

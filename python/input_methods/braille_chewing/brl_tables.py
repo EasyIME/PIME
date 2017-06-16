@@ -366,6 +366,9 @@ class brl_buf_state:
         del self._brl_buf[-1]
         return {} # input rejected
 
+    def brl_check(self):
+        return bool(self._brl_buf)
+
 # Testcases here.
 if __name__ == "__main__":
     key_seq = "356-356".split("-")

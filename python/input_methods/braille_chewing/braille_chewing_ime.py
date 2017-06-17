@@ -142,7 +142,6 @@ class BrailleChewingTextService(ChewingTextService):
             u"χ": "`6  4",
             u"ψ": "`6  5",
             u"ω": "`6  6",
-            u"": "" # default key
         },
     }
     current_dir = os.path.dirname(__file__)
@@ -319,7 +318,7 @@ class BrailleChewingTextService(ChewingTextService):
 
         print(current_braille.replace("\b", r"\b"), "=>", bopomofo_seq.replace("\b", r"\b"))
         if bopomofo_seq:
-            bopomofo_seq = "".join(self.bopomofo_to_keys[c] if c in self.bopomofo_to_keys else c for c in bopomofo_seq)
+            bopomofo_seq = "".join(self.bopomofo_to_keys.get(c, c) for c in bopomofo_seq)
             # 把注音送給新酷音
             self.send_keys_to_chewing(bopomofo_seq, keyEvent)
 

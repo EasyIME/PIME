@@ -298,15 +298,14 @@ class BrailleChewingTextService(ChewingTextService):
             # 未定義的熱鍵，發出警告聲，空白 "0" 不屬此類
             winsound.MessageBeep()
         elif self.langMode == ENGLISH_MODE:
-            bopomofo_seq = brl_ascii_dic.get(current_braille)
+            bopomofo_seq = brl_ascii_dic.get(current_braille, "")
             if keyEvent.isKeyToggled(VK_CAPITAL):  # capslock
                 bopomofo_seq = bopomofo_seq.upper()  # convert to upper case
         else:
             # 如果正在選字，允許使用點字數字
             if self.get_chewing_cand_totalPage():
-                bopomofo_seq = brl_ascii_dic.get(current_braille)
+                bopomofo_seq = brl_ascii_dic.get(current_braille, "")
                 if bopomofo_seq not in "0123456789":
-                    bopomofo_seq = ""
                     winsound.MessageBeep()
             # 否則，將點字送給內部進行組字
             else:

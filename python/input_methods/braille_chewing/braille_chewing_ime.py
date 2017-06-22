@@ -282,8 +282,8 @@ class BrailleChewingTextService(ChewingTextService):
             # 熱鍵 245+space 能夠在點字狀態失去控制時將它重設，不遺失已經存在組字區的中文
             # 正在輸入注音，就把注音去掉
             if self.chewingContext and self.chewingContext.bopomofo_Check():
-                # libchewing 正在打注音時，送 Esc 會把注音去掉
-                self.chewingContext.handle_Esc()
+                # 清除打到一半的注音狀態
+                self.chewingContext.clean_bopomofo_buf()
                 compStr = ""
                 if self.chewingContext.buffer_Check():
                     compStr = self.chewingContext.buffer_String().decode("UTF-8")

@@ -170,7 +170,7 @@ class BrailleChewingTextService(ChewingTextService):
         for i in range(len(self.dots_pressed_states)):
             self.dots_pressed_states[i] = False
         if clear_pending:
-            self.state.__init__()
+            self.state.reset()
         self.braille_keys_pressed = False
 
     def has_modifiers(self, keyEvent):
@@ -290,7 +290,7 @@ class BrailleChewingTextService(ChewingTextService):
                 # 恢復原本組字區內蟲跟游標位置
                 self.setCompositionString(compStr)
                 self.setCompositionCursor(self.chewingContext.cursor_Current())
-            self.state.__init__()
+            self.state.reset()
         elif current_braille == "0456":
             # 熱鍵 456+space 與 Shift 一樣能切換中打、英打模式
             self.toggleLanguageMode()
@@ -334,7 +334,7 @@ class BrailleChewingTextService(ChewingTextService):
             snd_file = os.path.join(self.sounds_dir, "chi.wav" if mode == CHINESE_MODE else "eng.wav")
             winsound.PlaySound(snd_file, winsound.SND_FILENAME|winsound.SND_ASYNC|winsound.SND_NODEFAULT)
             if mode == ENGLISH_MODE:
-                self.state.__init__()
+                self.state.reset()
 
     # 切換全形/半形
     def toggleShapeMode(self):

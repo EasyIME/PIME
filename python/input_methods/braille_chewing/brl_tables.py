@@ -346,10 +346,7 @@ SYMBOL_DICT = Braille_Bopomofo_Dict("SYMBOL", {
 class brl_buf_state:
 
     def __init__(self):
-        self._brl_buf = []
-        self._bop_buf = []
-        # 初始狀態，下一個可接受聲母或介、韻母輸入
-        self._stack = [(CONSONANT_DICT, RHYME_DICT)]
+        self.reset()
 
     # 取得下一個點字輸入，產生狀態變化與輸出回饋
     # 輸出 dict 包含二個 keys: VK_BACK 為 backspace 的數量；bopomofo 為注音或符號序列
@@ -439,6 +436,12 @@ class brl_buf_state:
 
     def brl_check(self):
         return bool(self._brl_buf)
+
+    def reset(self):
+        self._brl_buf = []
+        self._bop_buf = []
+        # 初始狀態，下一個可接受聲母或介、韻母輸入
+        self._stack = [(CONSONANT_DICT, RHYME_DICT)]
 
 # Testcases here.
 if __name__ == "__main__":

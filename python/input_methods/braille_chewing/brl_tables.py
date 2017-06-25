@@ -413,7 +413,7 @@ class brl_buf_state:
                 self._stack.append(ph_tabs[0].next_state)
             # 如果沒有下一個可接受輸入表示輸入完成一個中文字了，立即回到初始狀態
             if not self._stack[-1]:
-                self.__init__()
+                self.reset()
             return res
         except KeyError:
             pass
@@ -428,7 +428,7 @@ class brl_buf_state:
             symbol = SYMBOL_DICT.get(key, "")
             if symbol:
                 # Exact match, 符號輸入完畢
-                self.__init__()
+                self.reset()
             return {"VK_BACK": 0, "bopomofo": symbol}
         # 也不是 prefix, 這次輸入屬於錯誤，應被拒絕
         del self._brl_buf[-1]

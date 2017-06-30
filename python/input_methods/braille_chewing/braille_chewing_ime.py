@@ -22,7 +22,7 @@ import os
 from keycodes import * # for VK_XXX constants
 from textService import *
 from ..chewing.chewing_ime import ChewingTextService, ENGLISH_MODE, CHINESE_MODE, FULLSHAPE_MODE
-from .brl_tables import brl_ascii_dic, brl_phonic_dic, brl_space_dic, bopomofo_is_category
+from .brl_tables import brl_ascii_dic, brl_buf_state
 
 
 class BrailleChewingTextService(ChewingTextService):
@@ -30,6 +30,7 @@ class BrailleChewingTextService(ChewingTextService):
     # 鍵盤按鍵轉成點字 1 - 8 點
     # A-Z 的 Windows virtual key codes = 大寫的 ASCII code
     braille_keys = [
+        ord(' '),  # Space
         ord('F'),  # 1
         ord('D'),  # 2
         ord('S'),  # 3
@@ -41,17 +42,154 @@ class BrailleChewingTextService(ChewingTextService):
     ]
 
     # 注音符號對實體鍵盤英數按鍵
-    bopomofo_chars = "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ˙ˊˇˋ"
-    bopomofo_to_keys = "1qaz2wsxedcrfv5tgbyhnujm8ik,9ol.0p;/-7634"        # standard kb
-
+    bopomofo_to_keys = {
+        # 標準注音鍵盤
+        "ㄅ": "1",
+        "ㄆ": "q",
+        "ㄇ": "a",
+        "ㄈ": "z",
+        "ㄉ": "2",
+        "ㄊ": "w",
+        "ㄋ": "s",
+        "ㄌ": "x",
+        "ㄍ": "e",
+        "ㄎ": "d",
+        "ㄏ": "c",
+        "ㄐ": "r",
+        "ㄑ": "f",
+        "ㄒ": "v",
+        "ㄓ": "5",
+        "ㄔ": "t",
+        "ㄕ": "g",
+        "ㄖ": "b",
+        "ㄗ": "y",
+        "ㄘ": "h",
+        "ㄙ": "n",
+        "ㄧ": "u",
+        "ㄨ": "j",
+        "ㄩ": "m",
+        "ㄚ": "8",
+        "ㄛ": "i",
+        "ㄜ": "k",
+        "ㄝ": ",",
+        "ㄞ": "9",
+        "ㄟ": "o",
+        "ㄠ": "l",
+        "ㄡ": ".",
+        "ㄢ": "0",
+        "ㄣ": "p",
+        "ㄤ": ";",
+        "ㄥ": "/",
+        "ㄦ": "-",
+        "˙": "7",
+        "ˊ": "6",
+        "ˇ": "3",
+        "ˋ": "4",
+        # 標點、特殊符號鍵盤序列
+        "，": "`31",
+        "、": "`32",
+        "。": "`33",
+        "；": "`37",
+        "：": "`38",
+        "？": "`35",
+        "！": "`36",
+        "…": "`1",
+        "—": "` 49",
+        "（": "`41",
+        "）": "`42",
+        "《": "`4 4",
+        "》": "`4 5",
+        "〔": "`45",
+        "〕": "`46",
+        "〈": "`49",
+        "〉": "`4 1",
+        "「": "`43",
+        "」": "`44",
+        "『": "`4 2",
+        "』": "`4 3",
+        "＆": "`3   1",
+        "＊": "`3   3",
+        "×": "`73",
+        "÷": "`74",
+        "±": "`79",
+        "≠": "`76",
+        "∞": "`78",
+        "≒": "`77",
+        "≦": "`7 6",
+        "≧": "`7 7",
+        "∩": "`7 8",
+        "∪": "`7 9",
+        "⊥": "`7  2",
+        "∠": "`7  3",
+        "∵": "`7   1",
+        "∴": "`7   2",
+        "≡": "` 43",
+        "∥": "` 46",
+        "↑": "`81",
+        "↓": "`82",
+        "←": "`83",
+        "→": "`84",
+        "△": "`8 8",
+        "□": "`8  5",
+            # 希臘字母大寫 24 個
+        "Α": "`6  7",
+        "Β": "`6  8",
+        "Γ": "`6  9",
+        "Δ": "`6   1",
+        "Ε": "`6   2",
+        "Ζ": "`6   3",
+        "Η": "`6   4",
+        "Θ": "`6   5",
+        "Ι": "`6   6",
+        "Κ": "`6   7",
+        "Λ": "`6   8",
+        "Μ": "`6   9",
+        "Ν": "`6    1",
+        "Ξ": "`6    2",
+        "Ο": "`6    3",
+        "Π": "`6    4",
+        "Ρ": "`6    5",
+        "Σ": "`6    6",
+        "Τ": "`6    7",
+        "Υ": "`6    8",
+        "Φ": "`6    9",
+        "Χ": "`6     1",
+        "Ψ": "`6     2",
+        "Ω": "`6     3",
+            # 希臘字母小寫 24 個
+        "α": "`61",
+        "β": "`62",
+        "γ": "`63",
+        "δ": "`64",
+        "ε": "`65",
+        "ζ": "`66",
+        "η": "`67",
+        "θ": "`68",
+        "ι": "`69",
+        "κ": "`6 1",
+        "λ": "`6 2",
+        "μ": "`6 3",
+        "ν": "`6 4",
+        "ξ": "`6 5",
+        "ο": "`6 6",
+        "π": "`6 7",
+        "ρ": "`6 8",
+        "σ": "`6 9",
+        "τ": "`6  1",
+        "υ": "`6  2",
+        "φ": "`6  3",
+        "χ": "`6  4",
+        "ψ": "`6  5",
+        "ω": "`6  6",
+    }
     current_dir = os.path.dirname(__file__)
     sounds_dir = os.path.join(current_dir, "sounds")
 
     def __init__(self, client):
         super().__init__(client)
         self.braille_keys_pressed = False
-        self.dots_pressed_states = [False] * 8
-        self.last_braille = ""
+        self.dots_pressed_states = [False] * 9
+        self.state = brl_buf_state()
 
     def applyConfig(self):
         # 攔截 ChewingTextService 的 applyConfig，以便強制關閉某些設定選項
@@ -60,14 +198,17 @@ class BrailleChewingTextService(ChewingTextService):
         # 強制使用預設 keyboard layout
         self.chewingContext.set_KBType(0);
 
+        # 強制按下空白鍵時不當做選字指令
+        self.chewingContext.set_spaceAsSelection(0)
+
         # TODO: 強制關閉新酷音某些和點字輸入相衝的功能
 
     def reset_braille_mode(self, clear_pending=True):
         # 清除點字 buffer，準備打下一個字
-        for i in range(8):
+        for i in range(len(self.dots_pressed_states)):
             self.dots_pressed_states[i] = False
         if clear_pending:
-            self.last_braille = ""
+            self.state.reset()
         self.braille_keys_pressed = False
 
     def has_modifiers(self, keyEvent):
@@ -76,11 +217,20 @@ class BrailleChewingTextService(ChewingTextService):
 
     def needs_braille_handling(self, keyEvent):
         # 檢查是否需要處理點字
-        # 若 Ctrl, Shift, Alt 任一個被按下，或按鍵不是 printable (方向鍵, page up, backspace 等等)，不使用點字
-        if self.has_modifiers(keyEvent) or not keyEvent.isPrintableChar() or keyEvent.charCode == ord(' '):
+        # 若修飾鍵 (Ctrl, Shift, Alt) 都沒有被按下，且按鍵是「可打印」（空白、英數、標點符號等），當成點字鍵處理
+        has_modifiers = self.has_modifiers(keyEvent)
+        if not has_modifiers and keyEvent.isPrintableChar():
+            return True
+        # 其他按鍵會打斷正在記錄的點字輸入
+        if has_modifiers or keyEvent.keyCode == VK_ESCAPE:
+            # 若按壓修飾鍵，會清除所有內部點字狀態
             self.reset_braille_mode()
-            return False
-        return True
+        else:
+            # 其他的不可打印按鍵僅重設八點的輸入狀態，不影響點字組字的部份
+            self.reset_braille_mode(False)
+        # 未按下修飾鍵，且點字正在組字，仍然當點字鍵處理
+        # 許多不可打印按鍵如 Delete 及方向鍵，會於處理點字時忽略，不讓它有異常行為
+        return not has_modifiers and self.state.brl_check()
 
     def filterKeyDown(self, keyEvent):
         if self.needs_braille_handling(keyEvent):
@@ -88,24 +238,19 @@ class BrailleChewingTextService(ChewingTextService):
         return super().filterKeyDown(keyEvent)
 
     def onKeyDown(self, keyEvent):
-        if self.needs_braille_handling(keyEvent):
+        if keyEvent.charCode in range(ord('0'), ord('9') + 1) and self.get_chewing_cand_totalPage() > 0: # selection keys
+            pass
+        elif keyEvent.keyCode == VK_BACK:
+            # 將倒退鍵經過內部狀態處理，取得鍵入序列轉送新酷音
+            if self.handle_braille_keys(keyEvent):
+                return True
+        elif self.needs_braille_handling(keyEvent):
             # 點字模式，檢查 8 個點字鍵是否被按下，忽略其餘按鍵
             for i, key in enumerate(self.braille_keys):
                 if keyEvent.isKeyDown(key):
                     self.dots_pressed_states[i] = 1
                     self.braille_keys_pressed = True
             return True
-        elif keyEvent.charCode == ord(' '):  # space key
-            # 須檢查上一個注音輸入狀態
-            last_bopomofo = self.get_chewing_bopomofo_buffer()
-            if last_bopomofo:  # 剛輸入過注音符號，檢查是否代換成標點符號
-                for n in range(len(last_bopomofo), 0, -1):
-                    # 取得目前注音的最後 n 個字，檢查是否能對到標點
-                    symbol_keys = brl_space_dic.get(last_bopomofo[-n:])
-                    if symbol_keys:
-                        # 新酷音在注音打到一半的時候，改輸入標點，注音會自動消去換成標點
-                        self.send_keys_to_chewing(symbol_keys, keyEvent)
-                return True
         return super().onKeyDown(keyEvent)
 
     def filterKeyUp(self, keyEvent):
@@ -125,19 +270,24 @@ class BrailleChewingTextService(ChewingTextService):
             return True
         return super().onKeyUp(keyEvent)
 
-    # 將注音符號轉換成實體鍵盤的英數按鍵
-    def get_keys_for_bopomofo(self, bopomofo_seq):
-        keys = []
-        for bopomofo in bopomofo_seq:
-            idx = self.bopomofo_chars.find(bopomofo)
-            if idx >= 0:
-                key = self.bopomofo_to_keys[idx]
-            else:
-                key = bopomofo
-            keys.append(key)
-        return keys
-
+    # 模擬實體鍵盤的英數按鍵送到新酷音
     def send_keys_to_chewing(self, keys, keyEvent):
+        if not self.chewingContext:
+            print("send_keys_to_chewing:", "chewingContext not initialized")
+            return
+        # 輸入標點符號，不使用模擬按鍵的方法，因為涉及較多 GUI 反應
+        if keys.startswith("`") and len(keys) > 1:
+            # 直接將按鍵送給 libchewing, 此時與 GUI 顯示非同步
+            for key in keys:
+                self.chewingContext.handle_Default(ord(key))
+            compStr = ""
+            if self.chewingContext.buffer_Check():
+                compStr = self.chewingContext.buffer_String().decode("UTF-8")
+            # 根據 libchewing 緩衝區的狀態，更新組字區內容與游標位置
+            self.setCompositionString(compStr)
+            self.setCompositionCursor(self.chewingContext.cursor_Current())
+            return
+        # 其餘的按鍵，使用模擬的方式，會跟 GUI 顯示同步
         for key in keys:
             keyEvent.keyCode = ord(key.upper())  # 英文數字的 virtual keyCode 正好 = 大寫 ASCII code
             keyEvent.charCode = ord(key)  # charCode 為字元內碼
@@ -147,89 +297,71 @@ class BrailleChewingTextService(ChewingTextService):
             super().filterKeyUp(keyEvent)
             super().onKeyUp(keyEvent)
 
-    def send_bopomofo_to_chewing(self, bopomofo_seq, keyEvent):
-        # 依目前鍵盤對應，把注音符號轉回英數鍵盤按鍵，並且逐一送給新酷音
-        keys = self.get_keys_for_bopomofo(bopomofo_seq)
-        self.send_keys_to_chewing(keys, keyEvent)
-
-    def get_chewing_bopomofo_buffer(self):
+    def get_chewing_cand_totalPage(self):
         # access the chewingContext created by ChewingTextService
-        if self.chewingContext and self.chewingContext.bopomofo_Check():
-            return self.chewingContext.bopomofo_String(None).decode("UTF-8")
-        return ""
+        return self.chewingContext.cand_TotalPage() if self.chewingContext else 0
 
     # 將點字 8 點轉換成注音按鍵，送給新酷音處理
     def handle_braille_keys(self, keyEvent):
-        # 將 8 點狀態轉成用數字表示，例如 [False, True, True, True, True, False, True, False] 轉成 "23457"
-        current_braille = "".join([str(i + 1) for i, pressed in enumerate(self.dots_pressed_states) if pressed])
-
-        # FIXME: 區分英數和注音模式
-        # 8 點轉注音
-        clear_pending = True
-        if self.langMode == ENGLISH_MODE:
-            bopomofo_seq = brl_ascii_dic.get(current_braille)
-            self.last_braille = ""
+        if keyEvent.keyCode == VK_BACK:
+            current_braille = "\b"
+        else:
+            # 將點字鍵盤狀態轉成用數字表示，例如 [False, True, True, True, True, False, True, False] 轉成 "23457"
+            current_braille = "".join([str(i) for i, pressed in enumerate(self.dots_pressed_states) if pressed])
+        bopomofo_seq = ""
+        # 點字鍵入轉換成 ASCII 字元、熱鍵或者注音
+        if current_braille == "\b":
+            key = self.state.append_brl("\b")
+            if key:
+                bopomofo_seq = "\b" * key["VK_BACK"] + key["bopomofo"]
+            else:
+                return False
+        elif current_braille == "0245":
+            # 熱鍵 245+space 能夠在點字狀態失去控制時將它重設，不遺失已經存在組字區的中文
+            # 正在輸入注音，就把注音去掉
+            if self.chewingContext and self.chewingContext.bopomofo_Check():
+                # 清除打到一半的注音狀態
+                self.chewingContext.clean_bopomofo_buf()
+                compStr = ""
+                if self.chewingContext.buffer_Check():
+                    compStr = self.chewingContext.buffer_String().decode("UTF-8")
+                # 恢復原本組字區內蟲跟游標位置
+                self.setCompositionString(compStr)
+                self.setCompositionCursor(self.chewingContext.cursor_Current())
+            self.state.reset()
+        elif current_braille == "0456":
+            # 熱鍵 456+space 與 Shift 一樣能切換中打、英打模式
+            self.toggleLanguageMode()
+        elif current_braille.startswith("0") and len(current_braille) > 1:
+            # 未定義的熱鍵，發出警告聲，空白 "0" 不屬此類
+            winsound.MessageBeep()
+        elif self.langMode == ENGLISH_MODE:
+            bopomofo_seq = brl_ascii_dic.get(current_braille, "")
             if keyEvent.isKeyToggled(VK_CAPITAL):  # capslock
                 bopomofo_seq = bopomofo_seq.upper()  # convert to upper case
         else:
-            bopomofo_seq = brl_phonic_dic.get(current_braille)
-
-        if bopomofo_seq == "CHECK_NEXT":  # 須等待下一個輸入才能判斷
-            self.last_braille = current_braille
-            clear_pending=False
-            bopomofo_seq = None
-        elif bopomofo_seq == "CHECK_PREVIOUS":  # 須檢查上一個注音輸入狀態
-            last_bopomofo = self.get_chewing_bopomofo_buffer()
-            if current_braille == '356': # ['ㄧㄛ', 'ㄟ']
-                # 上一個注音不是聲母 => ㄧㄛ, 否則 'ㄟ'
-                # 還需要檢查特例，上一個點字是 13 時，注音尚未確定，此時 last_bopomofo = None
-                # 但有可能是ㄍ，可以接ㄟ，所以檢查上一個點字是否為 "13"
-                if (last_bopomofo and bopomofo_is_category(last_bopomofo[-1], "聲母")) or self.last_braille == "13":
-                    bopomofo_seq = 'ㄟ'
-                else:
-                    # 實際上也有可能是要打 ㄟ 接注聲 目前還沒有處理這個部分
-                    bopomofo_seq = 'ㄧㄛ'
-            elif current_braille == '1':  # ['ㄓ', '˙']
-                # 前一個注音是韻母，或前一個是舌尖音加 156 點 => ˙
-                if (last_bopomofo and bopomofo_is_category(last_bopomofo[-1], "韻母")) or (last_bopomofo and bopomofo_is_category(last_bopomofo[-1], "舌尖音")):
-                    bopomofo_seq = '˙'
-                else:
-                    bopomofo_seq = 'ㄓ'
-            elif current_braille == '156':  # 'ㄦ'
-                # 如果 ㄦ 前面是舌尖音則呼略 ㄦ
-                if last_bopomofo and bopomofo_is_category(last_bopomofo[-1], "舌尖音"): 
-                    bopomofo_seq = last_bopomofo
-                else:
-                    # 此時若聲母為 ㄘ 或 ㄙ 先暫時讓 156 變成 ㄦ 
-                    bopomofo_seq = 'ㄦ'
+            # 如果正在選字，允許使用點字數字
+            if self.get_chewing_cand_totalPage():
+                bopomofo_seq = brl_ascii_dic.get(current_braille, "")
+                if bopomofo_seq not in "0123456789":
+                    winsound.MessageBeep()
+            # 否則，將點字送給內部進行組字
             else:
-                bopomofo_seq = None
-
-        if self.last_braille and bopomofo_seq:  # 如果有剛剛無法判斷注音的六點輸入，和現在的輸入接在一起判斷
-            if bopomofo_is_category(bopomofo_seq, "韻母") or (bopomofo_is_category(bopomofo_seq, "疊韻") and bopomofo_seq[0] == 'ㄨ') or bopomofo_seq == 'ㄨ':
-                # 韻母 或 ㄨ疊韻 或ㄨ直接當韻母
-                last_bopomofo = {'13': 'ㄍ', '15': 'ㄙ', '245': 'ㄘ'}.get(self.last_braille)
-                # 因為 ㄦ 也是韻母 所以在這邊還必須處理 ㄘ 或 ㄙ + 156 接注聲的狀況                
-                if current_braille == "156":
-                    # 需把 ㄦ 去除 實際上沒有 ㄍㄦ 可以不用手動排除
-                    bopomofo_seq = last_bopomofo
+                key = self.state.append_brl(current_braille)
+                if key:
+                    bopomofo_seq = "\b" * key["VK_BACK"] + key["bopomofo"]
                 else:
-                    # 一般情況需要把聲母跟韻母或疊韻全部加起來
-                    bopomofo_seq = last_bopomofo + bopomofo_seq
-            elif bopomofo_seq in ('ㄧ', 'ㄩ') or (bopomofo_is_category(bopomofo_seq, "疊韻") and bopomofo_seq[0] in ('ㄧ', 'ㄩ')):
-                # ㄧ,ㄩ疊韻 或 ㄧ、ㄩ直接當韻母
-                last_bopomofo = {'13': 'ㄐ', '15': 'ㄒ', '245': 'ㄑ'}.get(self.last_braille)
-                bopomofo_seq = last_bopomofo + bopomofo_seq
-            else:
-                bopomofo_seq = None
+                    winsound.MessageBeep()
 
-        print(current_braille, "=>", bopomofo_seq)
+        print(current_braille.replace("\b", r"\b"), "=>", bopomofo_seq.replace("\b", r"\b"))
         if bopomofo_seq:
+            bopomofo_seq = "".join(self.bopomofo_to_keys.get(c, c) for c in bopomofo_seq)
             # 把注音送給新酷音
-            self.send_bopomofo_to_chewing(bopomofo_seq, keyEvent)
+            self.send_keys_to_chewing(bopomofo_seq, keyEvent)
 
         # 清除點字 buffer，準備打下一個字
-        self.reset_braille_mode(clear_pending=clear_pending)
+        self.reset_braille_mode(False)
+        return True # braille input processed
 
     # 切換中英文模式
     def toggleLanguageMode(self):
@@ -238,7 +370,9 @@ class BrailleChewingTextService(ChewingTextService):
             # 播放語音檔，說明目前是中文/英文
             mode = self.chewingContext.get_ChiEngMode()
             snd_file = os.path.join(self.sounds_dir, "chi.wav" if mode == CHINESE_MODE else "eng.wav")
-            winsound.PlaySound(snd_file, winsound.SND_FILENAME|winsound.SND_ASYNC)
+            winsound.PlaySound(snd_file, winsound.SND_FILENAME|winsound.SND_ASYNC|winsound.SND_NODEFAULT)
+            if mode == ENGLISH_MODE:
+                self.state.reset()
 
     # 切換全形/半形
     def toggleShapeMode(self):
@@ -247,4 +381,4 @@ class BrailleChewingTextService(ChewingTextService):
             # 播放語音檔，說明目前是全形/半形
             mode = self.chewingContext.get_ShapeMode()
             snd_file = os.path.join(self.sounds_dir, "full.wav" if mode == FULLSHAPE_MODE else "half.wav")
-            winsound.PlaySound(snd_file, winsound.SND_FILENAME|winsound.SND_ASYNC)
+            winsound.PlaySound(snd_file, winsound.SND_FILENAME|winsound.SND_ASYNC|winsound.SND_NODEFAULT)

@@ -317,6 +317,7 @@ Function ensureVCRedist
     ; Reference: https://blogs.msdn.microsoft.com/vcblog/2015/03/03/introducing-the-universal-crt/
     ;            https://docs.python.org/3/using/windows.html#embedded-distribution
     ${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+	${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
         MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VC2015_QUESTION) IDYES +2
             Abort ; this is skipped if the user select Yes
         ; Download VC++ 2015 redistibutable (x86 version)
@@ -330,8 +331,9 @@ Function ensureVCRedist
         ; Run vcredist installer
         ExecWait "$TEMP\vc2015_redist.x86.exe" $0
 
-        ; check again is ucrtbase.dll is available
+        ; check again if ucrtbase.dll or msvcp140.dll is available
         ${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+		${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
             MessageBox MB_ICONSTOP|MB_OK $(INST_VC2015_FAILED_MESSAGE)
             ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
             Abort

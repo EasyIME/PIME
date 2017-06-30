@@ -23,17 +23,13 @@ import uuid  # use to generate a random auth token
 import random
 import json
 
-current_dir = os.path.dirname(__file__)
-
-# The libchewing package is not in the default python path.
-# FIXME: set PYTHONPATH properly so we don't need to add this hack.
-sys.path.append(os.path.dirname(os.path.dirname(current_dir)))
-
 from chewing_config import chewingConfig
-from libchewing import ChewingContext, CHEWING_DATA_DIR
+from libchewing import ChewingContext
 from ctypes import c_uint, byref, create_string_buffer
 
 config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", "chewing")
+current_dir = os.path.dirname(__file__)
+data_dir = os.path.join(current_dir, "data")
 localdata_dir = os.path.join(os.path.expandvars("%LOCALAPPDATA%"), "PIME", "chewing")
 
 COOKIE_ID = "chewing_config_token"
@@ -43,7 +39,7 @@ SERVER_TIMEOUT = 120
 # syspath 參數可包含多個路徑，用 ; 分隔
 # 此處把 user 設定檔目錄插入到 system-wide 資料檔路徑前
 # 如此使用者變更設定後，可以比系統預設值有優先權
-search_paths = ";".join((chewingConfig.getConfigDir(), CHEWING_DATA_DIR)).encode("UTF-8")
+search_paths = ";".join((chewingConfig.getConfigDir(), data_dir)).encode("UTF-8")
 user_phrase = chewingConfig.getUserPhrase().encode("UTF-8")
 # print(search_paths, user_phrase)
 chewing_ctx = ChewingContext(syspath = search_paths, userpath = user_phrase)  # new libchewing context
@@ -114,7 +110,7 @@ class ConfigHandler(BaseHandler):
             with open(userFile, "r", encoding="UTF-8") as f:
                 return f.read()
         except FileNotFoundError:
-            with open(os.path.join(CHEWING_DATA_DIR, name), "r", encoding="UTF-8") as f:
+            with open(os.path.join(data_dir, name), "r", encoding="UTF-8") as f:
                 return f.read()
         except Exception:
             return ""
@@ -169,6 +165,54 @@ class UserPhraseHandler(BaseHandler):
         self.write({"add_result": add_result})
 
 
+class UserPhraseFileHandler(BaseHandler):
+
+    @tornado.web.authenticated
+    def get(self):  # download user phrase file
+        user_phrase_file = os.path.join(config_dir, "chewing.sqlite3")
+        if not os.path.exists(user_phrase_file):
+            raise HTTPError(404)
+        self.set_header("Content-Type", "application/force-download")
+        self.set_header("Content-Disposition", "attachment; filename=chewing.sqlite3")
+        with open(user_phrase_file, "rb") as f:
+            try:
+                self.write(f.read())
+                f.close()
+                self.finish()
+                return
+            except:
+                raise HTTPError(404)
+        raise HTTPError(500)
+
+    @tornado.web.authenticated
+    def post(self):  # upload file
+        try:
+            temp_user_phrase = os.path.join(config_dir, "chewing_tmp.sqlite3")
+            origin_user_phrase = os.path.join(config_dir, "chewing.sqlite3")
+            temp_user_phrase_file = open(temp_user_phrase, "wb")
+            temp_user_phrase_file.write(self.request.files["import_user_phrase"][0]["body"])
+            temp_user_phrase_file.close()
+            # error check
+            import sqlite3
+            conn = sqlite3.connect(temp_user_phrase)
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM config_v1")
+            conn.close()
+
+            user_phrase_file = open(origin_user_phrase, "wb")
+            user_phrase_file.write(self.request.files["import_user_phrase"][0]["body"])
+            user_phrase_file.close()
+            os.remove(temp_user_phrase)
+            response_html = """
+                <script type="text/javascript">
+                    alert("匯入詞庫成功！");
+                    window.location = "./user_phrase_editor.html";
+                </script>
+            """
+            self.write(response_html)
+        except:
+            self.write("詞庫格式錯誤，可能檔案損毀或選到錯誤的檔案，請按上一頁返回")
+
 class LoginHandler(BaseHandler):
 
     def post(self, page_name):
@@ -196,6 +240,7 @@ class ConfigApp(tornado.web.Application):
             (r"/(version.txt)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "../../../")}),
             (r"/config", ConfigHandler),  # main configuration handler
             (r"/user_phrases", UserPhraseHandler),  # user phrase editor
+            (r"/user_phrase_file", UserPhraseFileHandler),  # export user phrase
             (r"/keep_alive", KeepAliveHandler),  # keep the api server alive
             (r"/login/(.*)", LoginHandler),  # authentication
         ]

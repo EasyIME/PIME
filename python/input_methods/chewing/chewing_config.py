@@ -46,6 +46,7 @@ class ChewingConfig:
         self.easySymbolsWithCtrl = False
         self.easySymbolsWithShift = True
         self.enableCapsLock = True
+        self.enableShiftSpace = True
         self.escCleanAllBuf = True
         self.fontSize = DEF_FONT_SIZE
         self.fullShapeSymbols = True

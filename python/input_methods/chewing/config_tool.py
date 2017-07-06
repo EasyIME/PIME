@@ -169,6 +169,54 @@ class UserPhraseHandler(BaseHandler):
         self.write({"add_result": add_result})
 
 
+class UserPhraseFileHandler(BaseHandler):
+
+    @tornado.web.authenticated
+    def get(self):  # download user phrase file
+        user_phrase_file = os.path.join(config_dir, "chewing.sqlite3")
+        if not os.path.exists(user_phrase_file):
+            raise HTTPError(404)
+        self.set_header("Content-Type", "application/force-download")
+        self.set_header("Content-Disposition", "attachment; filename=chewing.sqlite3")
+        with open(user_phrase_file, "rb") as f:
+            try:
+                self.write(f.read())
+                f.close()
+                self.finish()
+                return
+            except:
+                raise HTTPError(404)
+        raise HTTPError(500)
+
+    @tornado.web.authenticated
+    def post(self):  # upload file
+        try:
+            temp_user_phrase = os.path.join(config_dir, "chewing_tmp.sqlite3")
+            origin_user_phrase = os.path.join(config_dir, "chewing.sqlite3")
+            temp_user_phrase_file = open(temp_user_phrase, "wb")
+            temp_user_phrase_file.write(self.request.files["import_user_phrase"][0]["body"])
+            temp_user_phrase_file.close()
+            # error check
+            import sqlite3
+            conn = sqlite3.connect(temp_user_phrase)
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM config_v1")
+            conn.close()
+
+            user_phrase_file = open(origin_user_phrase, "wb")
+            user_phrase_file.write(self.request.files["import_user_phrase"][0]["body"])
+            user_phrase_file.close()
+            os.remove(temp_user_phrase)
+            response_html = """
+                <script type="text/javascript">
+                    alert("匯入詞庫成功！");
+                    window.location = "./user_phrase_editor.html";
+                </script>
+            """
+            self.write(response_html)
+        except:
+            self.write("詞庫格式錯誤，可能檔案損毀或選到錯誤的檔案，請按上一頁返回")
+
 class LoginHandler(BaseHandler):
 
     def post(self, page_name):
@@ -196,6 +244,7 @@ class ConfigApp(tornado.web.Application):
             (r"/(version.txt)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "../../../")}),
             (r"/config", ConfigHandler),  # main configuration handler
             (r"/user_phrases", UserPhraseHandler),  # user phrase editor
+            (r"/user_phrase_file", UserPhraseFileHandler),  # export user phrase
             (r"/keep_alive", KeepAliveHandler),  # keep the api server alive
             (r"/login/(.*)", LoginHandler),  # authentication
         ]

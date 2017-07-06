@@ -199,6 +199,27 @@ function onRemovePhrase(delete_phrase) {
     });
 }
 
+// Execute export user phrases
+function onExportPhrase() {
+    window.location.href = "/user_phrase_file";
+}
+
+// Execute import user phrases
+// AJAX file upload
+function onImportPhrase() {
+    if (confirm("警告！匯入詞庫會\"清除現有詞庫\"，以匯入的詞庫取代，要繼續嗎？")) {
+        $("#import_user_phrase").change(function () {
+            var fileExtension = ["sqlite3"];
+            if ($.inArray($(this).val().split('.').pop().toLowerCase(), fileExtension) == -1) {
+                alert("副檔名錯誤！只允許.sqlite3檔案上傳");
+            } else {
+                $("#import_user_phrase_form").submit();
+            }
+        });
+        $("#import_user_phrase").click();
+    }
+}
+
 // jQuery ready
 $(function () {
     // workaround the same origin policy of IE.
@@ -206,7 +227,6 @@ $(function () {
     $.support.cors = true;
 
     // setup UI
-    //$("#buttons").buttonset();
     $("#user_phrase_buttons").controlgroup({
         direction: "vertical"
     });
@@ -237,8 +257,8 @@ $(function () {
     });
     $("#remove").click(onRemovePhrase);
     $("#reload").click(loadUserPhrases);
-    // $("#import").click(onImportPhrase);
-    // $("#export").click(onExportPhrase);
+    $("#import").click(onImportPhrase);
+    $("#export").click(onExportPhrase);
 
     // Change input to bopomofo
     $("#bopomofo_input").on("input", function (event) {

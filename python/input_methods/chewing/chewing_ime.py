@@ -707,14 +707,15 @@ class ChewingTextService(TextService):
 
     # 切換全形/半形
     def toggleShapeMode(self):
-        chewingContext = self.chewingContext
-        if chewingContext:
-            if chewingContext.get_ShapeMode() == HALFSHAPE_MODE:
-                new_mode = FULLSHAPE_MODE
-            else:
-                new_mode = HALFSHAPE_MODE
-            chewingContext.set_ShapeMode(new_mode)
-            self.updateLangButtons()
+        if (chewingConfig.enableShiftSpace):
+            chewingContext = self.chewingContext
+            if chewingContext:
+                if chewingContext.get_ShapeMode() == HALFSHAPE_MODE:
+                    new_mode = FULLSHAPE_MODE
+                else:
+                    new_mode = HALFSHAPE_MODE
+                chewingContext.set_ShapeMode(new_mode)
+                self.updateLangButtons()
 
     # 鍵盤開啟/關閉時會被呼叫 (在 Windows 10 Ctrl+Space 時)
     def onKeyboardStatusChanged(self, opened):

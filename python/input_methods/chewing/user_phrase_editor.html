@@ -15,10 +15,14 @@
         <button id="add">新增自訂詞彙</button>
         <button id="remove">刪除選取詞彙<span id="delete_count"></span></button>
         <button id="reload">重新載入</button>
-        <button id="import" disabled>從檔案匯入</button>
-        <button id="export" disabled>匯出辭庫</button>
+        <hr>
+        <button id="import">匯入詞庫</button>
+        <button id="export">匯出辭庫</button>
         <strong id="phrase_count"></strong>
     </div>
+    <form action="/user_phrase_file" enctype="multipart/form-data" method="post" id="import_user_phrase_form">
+        <input type="file" name="import_user_phrase" id="import_user_phrase" accept=".sqlite3" style="display:none;">
+    </form>
     <div id="top_box">
         <table id="phrase_table">
             <thead>

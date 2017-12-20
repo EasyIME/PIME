@@ -71739,13 +71739,15 @@
         "big5S": 10,
         "bopomofo": 0,
         "cjk": 7594,
+        "cjkCI": 3,
         "cjkCIS": 532,
         "cjkExtA": 6581,
         "cjkExtB": 42709,
         "cjkExtC": 0,
         "cjkExtD": 0,
         "cjkExtE": 0,
-        "cjkOther": 4,
+        "cjkExtF": 0,
+        "cjkOther": 1,
         "phrases": 0,
         "privateuse": 0,
         "totalchardefs": 70481
@@ -71892,6 +71894,7 @@
             "鏹"
         ],
         "cj": [
+            "﨨",
             "鉼"
         ],
         "ck": [
@@ -72129,6 +72132,7 @@
             "鼻"
         ],
         "hu": [
+            "龜",
             "𡷦",
             "旣",
             "穊"
@@ -72499,6 +72503,7 @@
             "匆"
         ],
         "pu": [
+            "慨",
             "包"
         ],
         "pv": [

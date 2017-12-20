@@ -62756,13 +62756,15 @@
         "big5S": 10,
         "bopomofo": 0,
         "cjk": 9013,
+        "cjkCI": 2,
         "cjkCIS": 0,
         "cjkExtA": 0,
         "cjkExtB": 0,
         "cjkExtC": 0,
         "cjkExtD": 0,
         "cjkExtE": 0,
-        "cjkOther": 108,
+        "cjkExtF": 0,
+        "cjkOther": 106,
         "phrases": 0,
         "privateuse": 0,
         "totalchardefs": 22174
@@ -62823,6 +62825,13 @@
         "y": "卜",
         "z": "重"
     },
-    "privateuse": {},
+    "privateuse": {
+        "grhne": [
+            "嗀"
+        ],
+        "mu": [
+            "兀"
+        ]
+    },
     "selkey": "1234567890"
 }

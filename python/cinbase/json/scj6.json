@@ -150197,13 +150197,15 @@
         "big5S": 76,
         "bopomofo": 82,
         "cjk": 5487,
+        "cjkCI": 5,
         "cjkCIS": 0,
         "cjkExtA": 880,
         "cjkExtB": 0,
         "cjkExtC": 0,
         "cjkExtD": 0,
         "cjkExtE": 0,
-        "cjkOther": 1607,
+        "cjkExtF": 0,
+        "cjkOther": 1602,
         "phrases": 4,
         "privateuse": 3047,
         "totalchardefs": 77297
@@ -152107,6 +152109,7 @@
             ""
         ],
         "gez": [
+            "嗀",
             "",
             ""
         ],
@@ -152760,6 +152763,9 @@
         ],
         "hx": [
             ""
+        ],
+        "hxu": [
+            "龜"
         ],
         "hybb": [
             ""
@@ -154245,10 +154251,17 @@
             "",
             ""
         ],
+        "mu": [
+            "兀"
+        ],
+        "mud": [
+            "兀"
+        ],
         "musmm": [
             ""
         ],
         "muz": [
+            "兀",
             "",
             "",
             "",

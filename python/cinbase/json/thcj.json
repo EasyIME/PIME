@@ -223161,13 +223161,15 @@
         "big5S": 11,
         "bopomofo": 82,
         "cjk": 9075,
+        "cjkCI": 21,
         "cjkCIS": 0,
         "cjkExtA": 7451,
         "cjkExtB": 47384,
         "cjkExtC": 4149,
         "cjkExtD": 222,
         "cjkExtE": 0,
-        "cjkOther": 2044,
+        "cjkExtF": 0,
+        "cjkOther": 2023,
         "phrases": 368,
         "privateuse": 1,
         "totalchardefs": 85865
@@ -223212,6 +223214,69 @@
         "z": "重"
     },
     "privateuse": {
+        "cgtj": [
+            "﨨"
+        ],
+        "cjkd": [
+            "﨧"
+        ],
+        "dfcq": [
+            "﨔"
+        ],
+        "dtoi": [
+            "﨓"
+        ],
+        "gccr": [
+            "﨏"
+        ],
+        "gcor": [
+            "﨏"
+        ],
+        "goyj": [
+            "﨣"
+        ],
+        "grhne": [
+            "嗀"
+        ],
+        "hxu": [
+            "龜"
+        ],
+        "ivnl": [
+            "郎"
+        ],
+        "lihqm": [
+            "﨡"
+        ],
+        "mfu": [
+            "礼"
+        ],
+        "mu": [
+            "兀"
+        ],
+        "nlhau": [
+            "﨩"
+        ],
+        "tbav": [
+            "﨟"
+        ],
+        "thdu": [
+            "蘒"
+        ],
+        "uytr": [
+            "﨑"
+        ],
+        "xgrhn": [
+            "嗀"
+        ],
+        "xmu": [
+            "兀"
+        ],
+        "yge": [
+            "﨎"
+        ],
+        "ynhe": [
+            "﨤"
+        ],
         "zf": [
             ""
         ]

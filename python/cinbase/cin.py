@@ -37,6 +37,7 @@ class Cin(object):
         self.charsetRange['cjkExtC'] = [int('0x2A700', 16), int('0x2B735', 16)]
         self.charsetRange['cjkExtD'] = [int('0x2B740', 16), int('0x2B81E', 16)]
         self.charsetRange['cjkExtE'] = [int('0x2B820', 16), int('0x2CEA2', 16)]
+        self.charsetRange['cjkExtF'] = [int('0x2CEB0', 16), int('0x2EBE1', 16)]
         self.charsetRange['pua'] = [int('0xE000', 16), int('0xF900', 16)]
         self.charsetRange['puaA'] = [int('0xF0000', 16), int('0xFFFFE', 16)]
         self.charsetRange['puaB'] = [int('0x100000', 16), int('0x10FFFE', 16)]
@@ -124,7 +125,7 @@ class Cin(object):
         matchchardefs = {}
         lowFrequencyChardefs = {}
         highFrequencyCharSetList = ["bopomofo", "bopomofoTone", "cjk", "big5F", "big5LF", "big5S"]
-        lowFrequencyCharSetList = ["cjkExtA", "cjkExtB", "cjkExtC", "cjkExtD", "cjkExtE", "pua", "cjkOther"]
+        lowFrequencyCharSetList = ["cjkExtA", "cjkExtB", "cjkExtC", "cjkExtD", "cjkExtE", "cjkExtF", "pua", "cjkOther"]
 
         highFrequencyWordCount = 0
         lowFrequencyWordCount = 0
@@ -267,6 +268,8 @@ class Cin(object):
                 return "cjkExtD"
             elif matchint in range(self.charsetRange['cjkExtE'][0], self.charsetRange['cjkExtE'][1]): # CJK Unified Ideographs Extension E 區域
                 return "cjkExtE"
+            elif matchint in range(self.charsetRange['cjkExtF'][0], self.charsetRange['cjkExtF'][1]): # CJK Unified Ideographs Extension F 區域
+                return "cjkExtF"
             elif (matchint in range(self.charsetRange['pua'][0], self.charsetRange['pua'][1]) or # Unicode Private Use 區域
                 matchint in range(self.charsetRange['puaA'][0], self.charsetRange['puaA'][1]) or
                 matchint in range(self.charsetRange['puaB'][0], self.charsetRange['puaB'][1])):

@@ -40,6 +40,7 @@ class Cin(object):
         self.charsetRange['pua'] = [int('0xE000', 16), int('0xF900', 16)]
         self.charsetRange['puaA'] = [int('0xF0000', 16), int('0xFFFFE', 16)]
         self.charsetRange['puaB'] = [int('0x100000', 16), int('0x10FFFE', 16)]
+        self.charsetRange['cjkCI'] = [int('0xF900', 16), int('0xFB00', 16)]
         self.charsetRange['cjkCIS'] = [int('0x2F800', 16), int('0x2FA20', 16)]
 
         self.__dict__.update(json.load(fs))
@@ -269,6 +270,8 @@ class Cin(object):
             elif (matchint in range(self.charsetRange['pua'][0], self.charsetRange['pua'][1]) or # Unicode Private Use 區域
                 matchint in range(self.charsetRange['puaA'][0], self.charsetRange['puaA'][1]) or
                 matchint in range(self.charsetRange['puaB'][0], self.charsetRange['puaB'][1])):
+                return "pua"
+            elif matchint in range(self.charsetRange['cjkCI'][0], self.charsetRange['cjkCI'][1]): # cjk compatibility ideographs 區域
                 return "pua"
             elif matchint in range(self.charsetRange['cjkCIS'][0], self.charsetRange['cjkCIS'][1]): # cjk compatibility ideographs supplement 區域
                 return "pua"

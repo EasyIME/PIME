@@ -75,6 +75,7 @@ class CinToJson(object):
         self.cincount['cjkExtE'] = 0
         self.cincount['cjkOther'] = 0
         self.cincount['phrases'] = 0
+        self.cincount['cjkCI'] = 0
         self.cincount['cjkCIS'] = 0
         self.cincount['privateuse'] = 0
         self.cincount['totalchardefs'] = 0
@@ -94,6 +95,7 @@ class CinToJson(object):
         self.charsetRange['pua'] = [int('0xE000', 16), int('0xF900', 16)]
         self.charsetRange['puaA'] = [int('0xF0000', 16), int('0xFFFFE', 16)]
         self.charsetRange['puaB'] = [int('0x100000', 16), int('0x10FFFE', 16)]
+        self.charsetRange['cjkCI'] = [int('0xF900', 16), int('0xFB00', 16)]
         self.charsetRange['cjkCIS'] = [int('0x2F800', 16), int('0x2FA20', 16)]
 
         self.haveHashtagInKeynames = ["ez.cin", "ezsmall.cin", "ezmid.cin", "ezbig.cin"]
@@ -408,6 +410,13 @@ class CinToJson(object):
                 except KeyError:
                     self.privateuse[key] = [root]
                 self.cincount['privateuse'] += 1
+                return "pua"
+            elif matchint in range(self.charsetRange['cjkCI'][0], self.charsetRange['cjkCI'][1]): # cjk compatibility ideographs 區域
+                try:
+                    self.privateuse[key].append(root) # CJK 相容字集區
+                except KeyError:
+                    self.privateuse[key] = [root]
+                self.cincount['cjkCI'] += 1
                 return "pua"
             elif matchint in range(self.charsetRange['cjkCIS'][0], self.charsetRange['cjkCIS'][1]): # cjk compatibility ideographs supplement 區域
                 try:

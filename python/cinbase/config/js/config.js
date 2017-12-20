@@ -6,6 +6,7 @@ var defaultcinCount = {
     "big5S": 0,
     "bopomofo": 0,
     "cjk": 0,
+    "cjkCI": 0,
     "cjkCIS": 0,
     "cjkExtA": 0,
     "cjkExtB": 0,
@@ -235,6 +236,7 @@ function updateCinCountElements() {
         setElementText('cjkExtC', cinCountList['cjkExtC']);
         setElementText('cjkExtD', cinCountList['cjkExtD']);
         setElementText('cjkExtE', cinCountList['cjkExtE']);
+        setElementText('cjkCI', cinCountList['cjkCI']);
         setElementText('cjkCIS', cinCountList['cjkCIS']);
         setElementText('cjkOther', cinCountList['cjkOther']);
         setElementText('phrases', cinCountList['phrases']);

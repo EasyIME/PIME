@@ -578,8 +578,8 @@ class CinBase:
                 self.resetComposition(cbTS)
                 self.resetCompositionBuffer(cbTS)
 
-            # Unicode 編碼字元超過 5 + 2 個
-            if cbTS.compositionChar[:2] == '`U' and len(cbTS.compositionChar) > 7:
+            # Unicode 編碼字元超過 6 + 2 個
+            if cbTS.compositionChar[:2] == '`U' and len(cbTS.compositionChar) > 8:
                 if cbTS.compositionBufferMode:
                     self.removeCompositionBufferString(cbTS, 1, True)
                 else:

@@ -41,7 +41,10 @@ class Cin(object):
         self.charsetRange['pua'] = [int('0xE000', 16), int('0xF900', 16)]
         self.charsetRange['puaA'] = [int('0xF0000', 16), int('0xFFFFE', 16)]
         self.charsetRange['puaB'] = [int('0x100000', 16), int('0x10FFFE', 16)]
-        self.charsetRange['cjkCI'] = [int('0xF900', 16), int('0xFB00', 16)]
+        self.charsetRange['cjkCIa'] = [int('0xF900', 16), int('0xFA0E', 16)]
+        self.charsetRange['cjkCIb'] = [int('0xFA0E', 16), int('0xFA0F', 16), int('0xFA11', 16), int('0xFA13', 16), int('0xFA14', 16), int('0xFA1F', 16), int('0xFA21', 16), int('0xFA23', 16), int('0xFA24', 16), int('0xFA27', 16), int('0xFA28', 16), int('0xFA29', 16)]
+        self.charsetRange['cjkCIc'] = [int('0xFA10', 16), int('0xFA12', 16), int('0xFA15', 16), int('0xFA16', 16), int('0xFA17', 16), int('0xFA18', 16), int('0xFA19', 16), int('0xFA1A', 16), int('0xFA1B', 16), int('0xFA1C', 16), int('0xFA1D', 16), int('0xFA1E', 16), int('0xFA20', 16), int('0xFA22', 16), int('0xFA25', 16), int('0xFA26', 16), int('0xFA2A', 16), int('0xFA2B', 16), int('0xFA2C', 16), int('0xFA2D', 16)]
+        self.charsetRange['cjkCId'] = [int('0xFA2E', 16), int('0xFB00', 16)]
         self.charsetRange['cjkCIS'] = [int('0x2F800', 16), int('0x2FA20', 16)]
 
         self.__dict__.update(json.load(fs))
@@ -125,7 +128,7 @@ class Cin(object):
         matchchardefs = {}
         lowFrequencyChardefs = {}
         highFrequencyCharSetList = ["bopomofo", "bopomofoTone", "cjk", "big5F", "big5LF", "big5S"]
-        lowFrequencyCharSetList = ["cjkExtA", "cjkExtB", "cjkExtC", "cjkExtD", "cjkExtE", "cjkExtF", "pua", "cjkOther"]
+        lowFrequencyCharSetList = ["cjkExtA", "cjkExtB", "cjkExtC", "cjkExtD", "cjkExtE", "cjkExtF", "cjkCIibm", "pua", "cjkOther"]
 
         highFrequencyWordCount = 0
         lowFrequencyWordCount = 0
@@ -270,11 +273,15 @@ class Cin(object):
                 return "cjkExtE"
             elif matchint in range(self.charsetRange['cjkExtF'][0], self.charsetRange['cjkExtF'][1]): # CJK Unified Ideographs Extension F 區域
                 return "cjkExtF"
+            elif matchint in self.charsetRange['cjkCIb']: # cjk compatibility ideographs 區域
+                return "cjkCIibm"
             elif (matchint in range(self.charsetRange['pua'][0], self.charsetRange['pua'][1]) or # Unicode Private Use 區域
                 matchint in range(self.charsetRange['puaA'][0], self.charsetRange['puaA'][1]) or
                 matchint in range(self.charsetRange['puaB'][0], self.charsetRange['puaB'][1])):
                 return "pua"
-            elif matchint in range(self.charsetRange['cjkCI'][0], self.charsetRange['cjkCI'][1]): # cjk compatibility ideographs 區域
+            elif (matchint in range(self.charsetRange['cjkCIa'][0], self.charsetRange['cjkCIa'][1]) or # cjk compatibility ideographs 區域
+                matchint in self.charsetRange['cjkCIc'] or
+                matchint in range(self.charsetRange['cjkCId'][0], self.charsetRange['cjkCId'][1])):
                 return "pua"
             elif matchint in range(self.charsetRange['cjkCIS'][0], self.charsetRange['cjkCIS'][1]): # cjk compatibility ideographs supplement 區域
                 return "pua"

@@ -58,6 +58,7 @@ class CinToJson(object):
         self.cjkExtD = {}
         self.cjkExtE = {}
         self.cjkExtF = {}
+        self.cjkCIibm = {}
         self.cjkOther = {}
         self.phrases = {}
         self.privateuse = {}
@@ -98,7 +99,10 @@ class CinToJson(object):
         self.charsetRange['pua'] = [int('0xE000', 16), int('0xF900', 16)]
         self.charsetRange['puaA'] = [int('0xF0000', 16), int('0xFFFFE', 16)]
         self.charsetRange['puaB'] = [int('0x100000', 16), int('0x10FFFE', 16)]
-        self.charsetRange['cjkCI'] = [int('0xF900', 16), int('0xFB00', 16)]
+        self.charsetRange['cjkCIa'] = [int('0xF900', 16), int('0xFA0E', 16)]
+        self.charsetRange['cjkCIb'] = [int('0xFA0E', 16), int('0xFA0F', 16), int('0xFA11', 16), int('0xFA13', 16), int('0xFA14', 16), int('0xFA1F', 16), int('0xFA21', 16), int('0xFA23', 16), int('0xFA24', 16), int('0xFA27', 16), int('0xFA28', 16), int('0xFA29', 16)]
+        self.charsetRange['cjkCIc'] = [int('0xFA10', 16), int('0xFA12', 16), int('0xFA15', 16), int('0xFA16', 16), int('0xFA17', 16), int('0xFA18', 16), int('0xFA19', 16), int('0xFA1A', 16), int('0xFA1B', 16), int('0xFA1C', 16), int('0xFA1D', 16), int('0xFA1E', 16), int('0xFA20', 16), int('0xFA22', 16), int('0xFA25', 16), int('0xFA26', 16), int('0xFA2A', 16), int('0xFA2B', 16), int('0xFA2C', 16), int('0xFA2D', 16)]
+        self.charsetRange['cjkCId'] = [int('0xFA2E', 16), int('0xFB00', 16)]
         self.charsetRange['cjkCIS'] = [int('0x2F800', 16), int('0x2FA20', 16)]
 
         self.haveHashtagInKeynames = ["ez.cin", "ezsmall.cin", "ezmid.cin", "ezbig.cin"]
@@ -122,6 +126,7 @@ class CinToJson(object):
         del self.cjkExtD
         del self.cjkExtE
         del self.cjkExtF
+        del self.cjkCIibm
         del self.cjkOther
         del self.privateuse
         del self.phrases
@@ -142,6 +147,7 @@ class CinToJson(object):
         self.cjkExtD = {}
         self.cjkExtE = {}
         self.cjkExtF = {}
+        self.cjkCIibm = {}
         self.cjkOther = {}
         self.privateuse = {}
         self.phrases = {}
@@ -256,7 +262,7 @@ class CinToJson(object):
         if self.sortByCharset:
             if DEBUG_MODE:
                 print("排序字元集!")
-            self.mergeDicts(self.big5F, self.big5LF, self.big5S, self.big5Other, self.bopomofo, self.cjk, self.cjkExtA, self.cjkExtB, self.cjkExtC, self.cjkExtD, self.cjkExtE, self.cjkExtF, self.cjkOther, self.phrases, self.privateuse)
+            self.mergeDicts(self.big5F, self.big5LF, self.big5S, self.big5Other, self.bopomofo, self.cjk, self.cjkExtA, self.cjkExtB, self.cjkExtC, self.cjkExtD, self.cjkExtE, self.cjkExtF, self.cjkCIibm, self.cjkOther, self.phrases, self.privateuse)
         self.saveJsonFile(self.jsonFile)
 
 
@@ -414,6 +420,13 @@ class CinToJson(object):
                     self.cjkExtF[key] = [root]
                 self.cincount['cjkExtF'] += 1
                 return "cjkExtF"
+            elif matchint in self.charsetRange['cjkCIb']: # cjk compatibility ideographs 區域
+                try:
+                    self.cjkCIibm[key].append(root) # CJK 相容字集區 12 特殊字
+                except KeyError:
+                    self.cjkCIibm[key] = [root]
+                self.cincount['cjkCI'] += 1
+                return "cjkCIibm"
             elif (matchint in range(self.charsetRange['pua'][0], self.charsetRange['pua'][1]) or # Unicode Private Use 區域
                 matchint in range(self.charsetRange['puaA'][0], self.charsetRange['puaA'][1]) or
                 matchint in range(self.charsetRange['puaB'][0], self.charsetRange['puaB'][1])):
@@ -423,7 +436,9 @@ class CinToJson(object):
                     self.privateuse[key] = [root]
                 self.cincount['privateuse'] += 1
                 return "pua"
-            elif matchint in range(self.charsetRange['cjkCI'][0], self.charsetRange['cjkCI'][1]): # cjk compatibility ideographs 區域
+            elif (matchint in range(self.charsetRange['cjkCIa'][0], self.charsetRange['cjkCIa'][1]) or # cjk compatibility ideographs 區域
+                matchint in self.charsetRange['cjkCIc'] or
+                matchint in range(self.charsetRange['cjkCId'][0], self.charsetRange['cjkCId'][1])):
                 try:
                     self.privateuse[key].append(root) # CJK 相容字集區
                 except KeyError:

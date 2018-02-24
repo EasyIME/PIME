@@ -12,7 +12,6 @@ init:
 install:
   - git submodule init
   - git submodule update
-  - choco install nsis
 
 build_script:
   - .\build.bat

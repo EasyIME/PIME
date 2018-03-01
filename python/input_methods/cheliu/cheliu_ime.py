@@ -35,7 +35,7 @@ class CheLiuTextService(TextService):
 
         # 輸入法模組自訂區域
         self.imeDirName = "cheliu"
-        self.maxCharLength = 5 # 輸入法最大編碼字元數量
+        self.maxCharLength = 4 # 輸入法最大編碼字元數量
         self.cinFileList = ["liu.json"]
 
         self.cinbase = CinBase

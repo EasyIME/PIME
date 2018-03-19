@@ -53355,13 +53355,15 @@
         "big5S": 17,
         "bopomofo": 41,
         "cjk": 2394,
+        "cjkCI": 2,
         "cjkCIS": 6,
         "cjkExtA": 557,
         "cjkExtB": 1222,
         "cjkExtC": 0,
         "cjkExtD": 0,
         "cjkExtE": 0,
-        "cjkOther": 446,
+        "cjkExtF": 0,
+        "cjkOther": 444,
         "phrases": 0,
         "privateuse": 580,
         "totalchardefs": 19867
@@ -53856,6 +53858,9 @@
         ],
         "arzk": [
             ""
+        ],
+        "as": [
+            "兀"
         ],
         "awap": [
             "晉"
@@ -54875,6 +54880,9 @@
         ],
         "vqiw": [
             ""
+        ],
+        "vqsb": [
+            "嗀"
         ],
         "vs,": [
             ""

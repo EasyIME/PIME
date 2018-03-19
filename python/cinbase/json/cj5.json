@@ -91139,13 +91139,15 @@
         "big5S": 10,
         "bopomofo": 41,
         "cjk": 9384,
+        "cjkCI": 15,
         "cjkCIS": 0,
         "cjkExtA": 6811,
         "cjkExtB": 0,
         "cjkExtC": 0,
         "cjkExtD": 0,
         "cjkExtE": 0,
-        "cjkOther": 663,
+        "cjkExtF": 0,
+        "cjkOther": 648,
         "phrases": 0,
         "privateuse": 1690,
         "totalchardefs": 32697
@@ -93020,6 +93022,9 @@
         "ishn": [
             ""
         ],
+        "ivnl": [
+            "郎"
+        ],
         "iyx": [
             ""
         ],
@@ -93418,6 +93423,9 @@
         ],
         "mfrbc": [
             ""
+        ],
+        "mfu": [
+            "礼"
         ],
         "mfyiu": [
             ""
@@ -95243,6 +95251,9 @@
         ],
         "thdg": [
             ""
+        ],
+        "thdu": [
+            "蘒"
         ],
         "thhl": [
             ""

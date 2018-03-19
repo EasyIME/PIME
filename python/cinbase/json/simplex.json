@@ -18906,13 +18906,15 @@
         "big5S": 0,
         "bopomofo": 0,
         "cjk": 17,
+        "cjkCI": 2,
         "cjkCIS": 0,
         "cjkExtA": 0,
         "cjkExtB": 0,
         "cjkExtC": 0,
         "cjkExtD": 0,
         "cjkExtE": 0,
-        "cjkOther": 109,
+        "cjkExtF": 0,
+        "cjkOther": 107,
         "phrases": 116,
         "privateuse": 4280,
         "totalchardefs": 17566
@@ -20355,6 +20357,7 @@
             ""
         ],
         "ge": [
+            "嗀",
             "",
             "",
             "",
@@ -21836,6 +21839,7 @@
             ""
         ],
         "mu": [
+            "兀",
             "",
             "",
             "",

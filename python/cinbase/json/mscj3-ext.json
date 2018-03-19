@@ -160191,13 +160191,15 @@
         "big5S": 10,
         "bopomofo": 0,
         "cjk": 9301,
+        "cjkCI": 3,
         "cjkCIS": 10,
         "cjkExtA": 6022,
         "cjkExtB": 31255,
         "cjkExtC": 0,
         "cjkExtD": 0,
         "cjkExtE": 0,
-        "cjkOther": 142,
+        "cjkExtF": 0,
+        "cjkOther": 139,
         "phrases": 0,
         "privateuse": 0,
         "totalchardefs": 59791
@@ -160234,11 +160236,20 @@
         "z": "重"
     },
     "privateuse": {
+        "grhne": [
+            "嗀"
+        ],
+        "hxu": [
+            "龜"
+        ],
         "liyso": [
             "蜨"
         ],
         "mta": [
             "晉"
+        ],
+        "mu": [
+            "兀"
         ],
         "nue": [
             "弢"

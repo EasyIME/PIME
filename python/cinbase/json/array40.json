@@ -41642,13 +41642,15 @@
         "big5S": 9,
         "bopomofo": 41,
         "cjk": 8,
+        "cjkCI": 2,
         "cjkCIS": 0,
         "cjkExtA": 0,
         "cjkExtB": 0,
         "cjkExtC": 0,
         "cjkExtD": 0,
         "cjkExtE": 0,
-        "cjkOther": 335,
+        "cjkExtF": 0,
+        "cjkOther": 333,
         "phrases": 0,
         "privateuse": 0,
         "totalchardefs": 14726
@@ -41718,6 +41720,13 @@
         "{": "7",
         "}": "8"
     },
-    "privateuse": {},
+    "privateuse": {
+        "al": [
+            "兀"
+        ],
+        "r;lb": [
+            "嗀"
+        ]
+    },
     "selkey": "'[]-=\"{}_"
 }

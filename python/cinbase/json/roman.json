@@ -88187,13 +88187,15 @@
         "big5S": 1,
         "bopomofo": 41,
         "cjk": 10158,
+        "cjkCI": 6,
         "cjkCIS": 680,
         "cjkExtA": 8366,
         "cjkExtB": 50097,
         "cjkExtC": 0,
         "cjkExtD": 0,
         "cjkExtE": 0,
-        "cjkOther": 8,
+        "cjkExtF": 0,
+        "cjkOther": 2,
         "phrases": 0,
         "privateuse": 0,
         "totalchardefs": 85201
@@ -88668,6 +88670,7 @@
             "柺"
         ],
         "guei": [
+            "龜",
             "嶲",
             "黾"
         ],
@@ -88953,6 +88956,7 @@
             "𥥼"
         ],
         "jven": [
+            "龜",
             "𠣞",
             "黾"
         ],
@@ -88961,6 +88965,12 @@
         ],
         "kai": [
             "開"
+        ],
+        "kai3": [
+            "慨"
+        ],
+        "kai4": [
+            "慨"
         ],
         "ke": [
             "刻"
@@ -89287,6 +89297,7 @@
             "𩇟"
         ],
         "qiou": [
+            "龜",
             "黾"
         ],
         "qv": [

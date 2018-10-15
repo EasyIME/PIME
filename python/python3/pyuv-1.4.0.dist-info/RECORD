@@ -1,0 +1,12 @@
+pyuv/__init__.py,sha256=AYPUidlwqp115t7mBGxk1DRR_pCm5Yaiaf9BvbG4yyw,58
+pyuv/_cpyuv.cp36-win32.pyd,sha256=Ukv81vcPfd1xePhfox29VlGLeuXDx1UGObJ2DyAOHtU,272896
+pyuv/_version.py,sha256=P2CJGz8WQfKqDRU1ogX-wjE7KSFfPN_LytuL6Rhsc9A,23
+pyuv-1.4.0.dist-info/DESCRIPTION.rst,sha256=KqKDi0QWvrbvoqBVqxYeq0a0-_O3dUNN_aKq4_lU2ZU,3083
+pyuv-1.4.0.dist-info/METADATA,sha256=vEKhVPAtxKm9Wq_zjGoF9TLZm0pfvJiSpI0F13J5zGU,4104
+pyuv-1.4.0.dist-info/RECORD,,
+pyuv-1.4.0.dist-info/WHEEL,sha256=xiHTm3JxoVljPSD6nSGhq3B4VY9iUqMNXwYQ259n1PI,102
+pyuv-1.4.0.dist-info/metadata.json,sha256=4egQDvFsqnKziDM91CR7WyYbFpmMy4NEsCU_0Ac6s-E,1070
+pyuv-1.4.0.dist-info/top_level.txt,sha256=LXgKjTea_k2FDttPWk05GeI1n94c4Vjr1mHDLeFcK-8,5
+pyuv-1.4.0.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+pyuv/__pycache__/_version.cpython-36.pyc,,
+pyuv/__pycache__/__init__.cpython-36.pyc,,

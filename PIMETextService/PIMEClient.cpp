@@ -612,6 +612,18 @@ void Client::init() {
 }
 
 bool Client::sendRequestText(HANDLE pipe, const char* data, int len, std::string& reply) {
+	BOOL clipboardLocked = FALSE;
+	for (int i = 0; !clipboardLocked && i < 100; ++i) {
+		clipboardLocked = ::OpenClipboard(NULL);
+		::Sleep(10); // sleep 10 ms
+	}
+	if (!clipboardLocked) {
+		// fail to get clipboard
+		return false;
+	}
+	auto inputFormat = ::RegisterClipboardFormat(L"PIME::Input");
+	auto hdata = ::GetClipboardData(inputFormat);
+
 	char buf[1024];
 	DWORD rlen = 0;
 	if (TransactNamedPipe(pipe, (void*)data, len, buf, sizeof(buf) - 1, &rlen, NULL)) {
@@ -650,27 +662,6 @@ bool Client::sendRequest(Json::Value& req, Json::Value & result) {
 	DWORD rlen = 0;
 	Json::FastWriter writer;
 	std::string reqStr = writer.write(req); // convert the json object to string
-
-	if (!connectingServerPipe_) {  // if we're not in the middle of initializing the pipe connection
-		// ensure that we're connected
-		if (!connectServerPipe()) {
-			// connection failed, schedule a timer to try again every 0.5 seconds
-			if (connectServerTimerId_ != 0) { // do not create a new timer if there is an existing one.
-				connectServerTimerId_ = SetTimer(NULL, 0, 500, [](HWND hwnd, UINT msg, UINT_PTR timerId, DWORD time) {
-					auto client = timerIdToClients_[timerId];
-					if (client->connectServerPipe()) {
-						// successfully connected, cancel the timer
-						KillTimer(NULL, timerId);
-						timerIdToClients_.erase(timerId);
-						client->connectServerTimerId_ = 0;
-					}
-				});
-				timerIdToClients_[connectServerTimerId_] = this;
-			}
-			return false;
-		}
-	}
-
 	if (sendRequestText(pipe_, reqStr.c_str(), reqStr.length(), ret)) {
 		Json::Reader reader;
 		success = reader.parse(ret, result);
@@ -679,129 +670,7 @@ bool Client::sendRequest(Json::Value& req, Json::Value & result) {
 				success = false;
 		}
 	}
-	else { // fail to send the request to the server
-		if (connectingServerPipe_) { // we're in the middle of initializing the pipe connection
-			return false;
-		}
-		else {
-			closePipe(); // close the pipe connection since it's broken
-		}
-	}
 	return success;
 }
-
-// establish a connection to the specified pipe and returns its handle
-// static
-HANDLE Client::connectPipe(const wchar_t* pipeName) {
-	bool hasErrors = false;
-	HANDLE pipe = INVALID_HANDLE_VALUE;
-	for (;;) {
-		pipe = CreateFile(pipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-		if (pipe != INVALID_HANDLE_VALUE) {
-			// the pipe is successfully created
-			// security check: make sure that we're connecting to the correct server
-			ULONG serverPid;
-			if (GetNamedPipeServerProcessId(pipe, &serverPid)) {
-				// FIXME: check the command line of the server?
-				// See this: http://www.codeproject.com/Articles/19685/Get-Process-Info-with-NtQueryInformationProcess
-				// Too bad! Undocumented Windows internal API might be needed here. :-(
-			}
-			break;
-		}
-		// being busy is not really an error since we just need to wait.
-		if (GetLastError() != ERROR_PIPE_BUSY) {
-			hasErrors = true; // otherwise, pipe creation fails
-			break;
-		}
-		// All pipe instances are busy, so wait for 2 seconds.
-		if (!WaitNamedPipe(pipeName, 2000)) {
-			hasErrors = true;
-			break;
-		}
-	}
-
-	if (!hasErrors) {
-		// The pipe is connected; change to message-read mode.
-		DWORD mode = PIPE_READMODE_MESSAGE;
-		if (!SetNamedPipeHandleState(pipe, &mode, NULL, NULL)) {
-			hasErrors = true;
-		}
-	}
-
-	// the pipe is created, but errors happened, destroy it.
-	if (hasErrors && pipe != INVALID_HANDLE_VALUE) {
-		DisconnectNamedPipe(pipe);
-		CloseHandle(pipe);
-		pipe = INVALID_HANDLE_VALUE;
-	}
-	return pipe;
-}
-
-
-// Ensure that we're connected to the PIME input method server
-// If we are already connected, the method simply returns true;
-// otherwise, it tries to establish the connection.
-bool Client::connectServerPipe() {
-	if (pipe_ == INVALID_HANDLE_VALUE) { // the pipe is not connected
-		connectingServerPipe_ = true;
-		wstring serverPipeName = getPipeName(L"Launcher");
-		// try to connect to the server
-		pipe_ = connectPipe(serverPipeName.c_str());
-
-		if (pipe_ != INVALID_HANDLE_VALUE) { // successfully connected to the server
-			init(); // send initialization info to the server
-			if (isActivated_) {
-				// we lost connection while being activated previously
-				// re-initialize the whole text service.
-
-				// cleanup for the previous instance.
-				// remove all buttons
-				for (auto& item: buttons_) {
-					textService_->removeButton(item.second);
-				}
-				buttons_.clear();
-
-				// FIXME: other cleanup might also be needed
-
-				// activate the text service again.
-				onActivate();
-			}
-		}
-		connectingServerPipe_ = false;
-		return (pipe_ != INVALID_HANDLE_VALUE);
-	}
-	return true;
-}
-
-void Client::closePipe() {
-	if (connectServerTimerId_) {
-		KillTimer(NULL, connectServerTimerId_);
-		timerIdToClients_.erase(connectServerTimerId_);
-		connectServerTimerId_ = 0;
-	}
-
-	if (pipe_ != INVALID_HANDLE_VALUE) {
-		DisconnectNamedPipe(pipe_);
-		CloseHandle(pipe_);
-		pipe_ = INVALID_HANDLE_VALUE;
-	}
-}
-
-wstring Client::getPipeName(const wchar_t* base_name) {
-	wstring pipeName = L"\\\\.\\pipe\\";
-	DWORD len = 0;
-	::GetUserNameW(NULL, &len); // get the required size of the buffer
-	if (len <= 0)
-		return false;
-	// add username to the pipe path so it won't clash with the other users' pipes
-	unique_ptr<wchar_t[]> username(new wchar_t[len]);
-	if (!::GetUserNameW(username.get(), &len))
-		return false;
-	pipeName += username.get();
-	pipeName += L"\\PIME\\";
-	pipeName += base_name;
-	return pipeName;
-}
-
 
 } // namespace PIME

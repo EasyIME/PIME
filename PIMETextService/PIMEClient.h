@@ -75,11 +75,8 @@ public:
 	void onCompositionTerminated(bool forced);
 
 private:
-	static HANDLE connectPipe(const wchar_t* pipeName);
-	bool connectServerPipe();
 	bool sendRequestText(HANDLE pipe, const char* data, int len, std::string& reply);
 	bool sendRequest(Json::Value& req, Json::Value& result);
-	void closePipe();
 	void init();
 
 	void keyEventToJson(Ime::KeyEvent& keyEvent, Json::Value& jsonValue);
@@ -87,8 +84,6 @@ private:
 	void updateStatus(Json::Value& msg, Ime::EditSession* session = nullptr);
 	void updateUI(const Json::Value& data);
 	bool sendOnMenu(std::string button_id, Json::Value& result);
-
-	static std::wstring getPipeName(const wchar_t* base_name);
 
 	TextService* textService_;
 	std::string guid_;

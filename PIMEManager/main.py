@@ -34,12 +34,12 @@ class ClientInfo(object):
         return text_service_to_backend_map[self.text_service_id]
 
 
-def handle_client_request(msg):
-    client_id = msg['clientId']
+def handle_client_request(client_id, msg):
+    # client_id = msg['clientId']
     if client_id not in all_clients:
         method = msg.get('method')
         if method == 'init':
-            client = ClientInfo(client_id=client_id, text_service_id=msg['guid'])
+            client = ClientInfo(client_id=client_id, text_service_id=msg['id'])
             all_clients[client_id] = client
         else:
             raise KeyError('not a init event')
@@ -47,12 +47,11 @@ def handle_client_request(msg):
         client = all_clients[client_id]
 
     backend = client.get_backend()
-    backend.handle_client_request()
+    backend.handle_client_request(client_id, msg)
 
 
-def handle_backend_response(msg):
+def handle_backend_response(client_id, msg):
     # add the current response to the output queue
-    client_id = msg['clientId']
     with open_clipboard(main_window):
         data = get_clipboard_data(OUTPUT_CLIPBOARD_FORMAT)
         if data is None:
@@ -69,11 +68,15 @@ def process_pending_client_requests(hwnd):
     # process incoming client requests from the input queue
     with open_clipboard(hwnd):
         data = get_clipboard_data(INPUT_CLIPBOARD_FORMAT)
+        set_clipboard_data(INPUT_CLIPBOARD_FORMAT, b'')  # clear the input queue
+        print('CLIPBOARD:', data)
         if data:
             for line in data.splitlines():
+                print('INPUT:', line)
                 try:
                     line = line.strip().decode('utf-8')
                     client_id, msg = line.split('\t', maxsplit=1)
+                    msg = json.loads(msg)
                     handle_client_request(client_id, msg)
                 except (UnicodeDecodeError, ValueError, TypeError) as e:
                     logger.exception('unable to parse input message: %s', e)

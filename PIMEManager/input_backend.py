@@ -26,7 +26,8 @@ class InputBackend(object):
         self.input_methods = {}
         self.init_input_methods()
 
-        self.response_callbacks = []
+        self._restarting = False
+        self._response_callbacks = []
 
     def init_input_methods(self):
         """Find all ime.json definition files for input method modules"""
@@ -34,10 +35,13 @@ class InputBackend(object):
         ime_files = glob.glob(input_methods_dir + '/*/ime.json', recursive=True)
         # load the ime.json file
         for file_name in ime_files:
-            with open(file_name, 'r', encoding='utf-8') as f:
-                ime_info = json.load(f)
-                guid = ime_info['guid']
-                self.input_methods[guid] = ime_info
+            try:
+                with open(file_name, 'r', encoding='utf-8') as f:
+                    ime_info = json.load(f)
+                    guid = ime_info['guid']
+                    self.input_methods[guid] = ime_info
+            except Exception as e:
+                logger.exception('fail to load ime info: %s', e)
         print(self.input_methods)
 
     def start(self):
@@ -52,10 +56,13 @@ class InputBackend(object):
 
         args = [
             command_path,
-            # self.params
-            os.path.join(cur_dir, 'test.py')
+            # os.path.join(self.working_dir, self.params)
+            self.params
         ]
-        work_dir = top_dir
+        work_dir = self.working_dir
+        if not os.path.isabs(work_dir):
+            work_dir = os.path.join(top_dir, work_dir)
+
         logger.info('argv: %s', args)
         self.stdin = pyuv.Pipe(loop)
         self.stdout = pyuv.Pipe(loop)
@@ -79,15 +86,12 @@ class InputBackend(object):
         self.process = process
         self.stdout.start_read(self.on_stdout_data_received)
         self.stderr.start_read(self.on_stderr_data_received)
-        logger.debug('%s, %s', self.stdout, process.pid)
-        self.stdin.write(b'xxxxx\n', self.on_data_sent)
-        self.stdin.write(b'xxxxx2\n', self.on_data_sent)
 
     def add_response_callback(self, callback):
-        self.response_callbacks.append(callback)
+        self._response_callbacks.append(callback)
 
     def remove_response_callback(self, callback):
-        self.response_callbacks.remove(callback)
+        self._response_callbacks.remove(callback)
 
     def on_stdout_data_received(self, pipe_handle, data, error):
         """Receive data from stdout of the backend process"""
@@ -98,14 +102,14 @@ class InputBackend(object):
             start_pos = 0
             while start_pos < len(self.output_buffer):
                 end_pos = self.output_buffer.find(b'\n', start_pos)
-                if end_pos == -1:  # the last line is not complete
+                if end_pos == -1:  # the last line is not complete, wait for more data
                     break
                 line = self.output_buffer[start_pos: end_pos].strip()
-                try:
-                    msg = json.loads(line)
-                    self.handle_backend_response(msg)
-                except Exception as e:
-                    logger.exception('fail to handle backend response')
+                if line.startswith(b'PIME_MSG'):
+                    try:
+                        self.parse_backend_response_line(line)
+                    except Exception as e:
+                        logger.exception('fail to handle backend response: %s', e)
                 start_pos = end_pos + 1
             self.output_buffer = self.output_buffer[start_pos:]
 
@@ -113,14 +117,20 @@ class InputBackend(object):
         if not error and data:
             logger.error('backend error: %s, %s', data, error)
 
-    def handle_client_request(self, msg: dict):
-        data = json.dumps(msg)
+    def handle_client_request(self, client_id: str, msg: dict):
+        data = client_id + '|' + json.dumps(msg) + '\n'
         self.stdin.write(data.encode('utf8'))
 
-    def handle_backend_response(self, msg: dict):
-        logger.info('MESSAGE: %s', msg)
-        for callback in self.response_callbacks:
-            callback(msg)
+    def parse_backend_response_line(self, line):
+        line = line.decode('utf-8')
+        prefix, client_id, msg_text = line.split('|', 2)
+        msg = json.loads(msg_text)
+        self.handle_backend_response(client_id, msg)
+
+    def handle_backend_response(self, client_id: str, msg: dict):
+        logger.debug('MESSAGE: %s', msg)
+        for callback in self._response_callbacks:
+            callback(client_id, msg)
 
     def on_data_sent(self, pipe_handle, error):
         logger.debug('sent: %s', error)
@@ -128,10 +138,14 @@ class InputBackend(object):
     def on_exit(self, process_handle, exit_status, term_signal):
         logger.info('process exit: %s, %s, %s', process_handle, exit_status, term_signal)
         self.process = None
+        if self._restarting:
+            self._restarting = False
+            self.start()
 
     def restart(self):
-        self.terminate()
-        self.start()
+        if not self._restarting:
+            self._restarting = True
+            self.terminate()
 
     def terminate(self):
         try:

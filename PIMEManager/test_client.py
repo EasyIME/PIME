@@ -13,7 +13,7 @@ OUTPUT_CLIPBOARD_FORMAT = windll.user32.RegisterClipboardFormatW(OUTPUT_CLIPBOAR
 def send_request(client_id, message):
     with open_clipboard(hwnd=0):
         data = get_clipboard_data(INPUT_CLIPBOARD_FORMAT) or b''
-        line = client_id + '\t' + json.dumps(message)
+        line = client_id + '\t' + json.dumps(message) + '\n'
         data += line.encode('utf-8')
         ret = set_clipboard_data(INPUT_CLIPBOARD_FORMAT, data)
         print('SET:', ret, data)

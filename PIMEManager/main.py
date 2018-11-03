@@ -35,6 +35,7 @@ class ClientInfo(object):
 
 
 def handle_client_request(client_id, msg):
+    # print('REQ:\n', client_id, msg)
     # client_id = msg['clientId']
     if client_id not in all_clients:
         method = msg.get('method')
@@ -52,6 +53,7 @@ def handle_client_request(client_id, msg):
 
 def handle_backend_response(client_id, msg):
     # add the current response to the output queue
+    # print('RESP:\n', client_id, msg)
     with open_clipboard(main_window):
         data = get_clipboard_data(OUTPUT_CLIPBOARD_FORMAT)
         if data is None:
@@ -68,13 +70,15 @@ def process_pending_client_requests(hwnd):
     # process incoming client requests from the input queue
     with open_clipboard(hwnd):
         data = get_clipboard_data(INPUT_CLIPBOARD_FORMAT)
-        set_clipboard_data(INPUT_CLIPBOARD_FORMAT, b'')  # clear the input queue
-        print('CLIPBOARD:', data)
+        # print('CLIPBOARD:', data)
         if data:
+            set_clipboard_data(INPUT_CLIPBOARD_FORMAT, b'')  # clear the input queue
             for line in data.splitlines():
-                print('INPUT:', line)
+                # print('INPUT:', line)
                 try:
                     line = line.strip().decode('utf-8')
+                    if not line:
+                        continue
                     client_id, msg = line.split('\t', maxsplit=1)
                     msg = json.loads(msg)
                     handle_client_request(client_id, msg)
@@ -85,12 +89,12 @@ def process_pending_client_requests(hwnd):
 
 
 def window_proc(hwnd, msg, wparam, lparam):
-    # print('msg:', hwnd, msg, wparam, lparam)
     if msg == WM_CLIPBOARDUPDATE:
-        print('clipboard changed:', windll.user32.GetClipboardSequenceNumber())
+        # print('clipboard changed:', windll.user32.GetClipboardSequenceNumber())
         process_pending_client_requests(hwnd)
     return windll.user32.DefWindowProcW(hwnd, msg, wparam, lparam)
 
+window_proc_ptr = None
 
 def init_clipboard_monitor():
     # register clipboard format
@@ -99,6 +103,9 @@ def init_clipboard_monitor():
     OUTPUT_CLIPBOARD_FORMAT = windll.user32.RegisterClipboardFormatW(OUTPUT_CLIPBOARD_FORMAT_NAME)
 
     # create main window
+    global wnd_proc_ptr
+    # this variable needs to be global to keep its alive outside this function.
+    # otherwise the C pointer will become invalid.
     wnd_proc_ptr = WNDPROC(window_proc)
     register_window_class(WINDOW_CLASS_NAME, wnd_proc_ptr)
 
@@ -111,6 +118,7 @@ def init_clipboard_monitor():
 
 
 def run_clipboard_monitor():
+    init_clipboard_monitor()
     process_pending_client_requests(main_window)
     run_windows_message_loop()
 
@@ -137,11 +145,12 @@ def main():
     logging.getLogger().setLevel(logging.DEBUG)
 
     init_backends()
+    for tid, value in text_service_to_backend_map.items():
+        print(tid, value)
 
     loop = pyuv.Loop.default_loop()
     # threading.Thread(target=run_clipboard_monitor)
 
-    init_clipboard_monitor()
     # run Windows message loop (this never returns)
     loop.queue_work(run_clipboard_monitor)
 

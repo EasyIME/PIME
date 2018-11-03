@@ -31,6 +31,8 @@
 #include <algorithm>
 #include <Winnls.h>  // for IS_HIGH_SURROGATE() macro for checking UTF16 surrogate pairs
 
+#include <thread>
+#include <chrono>
 
 using namespace std;
 
@@ -44,6 +46,7 @@ constexpr auto OUTPUT_CLIPBOARD_FORMAT_NAME = L"PIME::Output";
 
 Client::Client(TextService* service, REFIID langProfileGuid):
 	textService_(service),
+	initialized_{false},
 	pipe_(INVALID_HANDLE_VALUE),
 	newSeqNum_(0),
 	isActivated_(false),
@@ -64,6 +67,7 @@ Client::Client(TextService* service, REFIID langProfileGuid):
 		clientId_ = utf16ToUtf8(guidStr);
 		transform(clientId_.begin(), clientId_.end(), clientId_.begin(), tolower);  // convert GUID to lwoer case
 		::CoTaskMemFree(guidStr);
+		clientId_ = clientId_.substr(1, clientId_.size() - 2);  // strip { and }
 	}
 }
 
@@ -365,6 +369,12 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 
 // handlers for the text service
 void Client::onActivate() {
+	// FIXME: this is not robust
+	if (!initialized_) {
+		init();
+		initialized_ = true;
+	}
+
 	Json::Value req;
 	req["method"] = "onActivate";
 	req["isKeyboardOpen"] = textService_->isKeyboardOpened();
@@ -626,12 +636,13 @@ void Client::init() {
 
 bool Client::tryLockClipboard() {
 	BOOL clipboardLocked = FALSE;
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 1000; ++i) {
 		clipboardLocked = ::OpenClipboard(NULL);
 		if (clipboardLocked) {
 			break;
 		}
-		::Sleep(5); // sleep for 5 ms, and try again
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(1ms);
 	}
 	return bool(clipboardLocked);
 }
@@ -643,10 +654,11 @@ void Client::unlockClipboard() {
 std::string Client::getClipboardDataAsText(UINT format) {
 	std::string text;
 	auto hdata = ::GetClipboardData(format);
-	if (hdata) {
+	auto len = ::GlobalSize(hdata);
+	if (hdata && len > 0) {
 		auto ptr = reinterpret_cast<char*>(::GlobalLock(hdata));
 		if (ptr) {
-			auto len = ::GlobalSize(hdata);
+			len = strnlen_s(ptr, len);
 			text.assign(ptr, len);
 			::GlobalUnlock(hdata);
 		}
@@ -655,16 +667,18 @@ std::string Client::getClipboardDataAsText(UINT format) {
 }
 
 bool Client::setClipboardDataFromText(UINT format, const std::string& text) {
-	auto hdata = ::GlobalAlloc(GMEM_SHARE, text.length());
+	auto hdata = ::GlobalAlloc(GHND, text.length() + 1);
 	if (!hdata) {
 		return false;
 	}
 	auto ptr = reinterpret_cast<char*>(::GlobalLock(hdata));
 	if (!ptr) {
+		::GlobalFree(hdata);
 		return false;
 	}
 
 	std::memcpy(ptr, text.c_str(), text.length());
+	ptr[text.length()] = '\0';  // always null terminated
 
 	::GlobalUnlock(hdata);
 	::SetClipboardData(format, hdata);
@@ -684,7 +698,9 @@ bool Client::sendRequestText(const char* data, int len) {
 	inputQueueData += clientId_;
 	inputQueueData += '\t';
 	inputQueueData.append(data, len);
-	inputQueueData += '\n';
+	if (inputQueueData.back() != '\n') {
+		inputQueueData += '\n';
+	}
 
 	bool ret = setClipboardDataFromText(inputFormat, inputQueueData);
 
@@ -701,6 +717,7 @@ bool Client::tryFetchReplyText(std::string& reply) {
 	auto outputFormat = ::RegisterClipboardFormat(OUTPUT_CLIPBOARD_FORMAT_NAME);
 	auto outputQueueData = getClipboardDataAsText(outputFormat);
 	if (outputQueueData.empty()) {
+		unlockClipboard();
 		return false;
 	}
 
@@ -746,11 +763,12 @@ bool Client::tryFetchReplyText(std::string& reply) {
 }
 
 bool Client::waitReplyText(std::string& reply) {
-	for (int i = 0; i < 100; ++i) {
+	for (int i = 0; i < 1000; ++i) {
 		if (tryFetchReplyText(reply)) {
 			return true;
 		}
-		::Sleep(50);
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(1ms);
 	}
 	return false;
 }

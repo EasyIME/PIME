@@ -95,6 +95,7 @@ private:
 	std::string clientId_;
 	TextService* textService_;
 	std::string guid_;
+	bool initialized_;
 	HANDLE pipe_;
 	std::unordered_map<std::string, Ime::ComPtr<PIME::LangBarButton>> buttons_; // map buttons to string IDs
 	unsigned int newSeqNum_;

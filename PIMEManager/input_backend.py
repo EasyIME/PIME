@@ -38,7 +38,7 @@ class InputBackend(object):
             try:
                 with open(file_name, 'r', encoding='utf-8') as f:
                     ime_info = json.load(f)
-                    guid = ime_info['guid']
+                    guid = ime_info['guid'].lower()
                     self.input_methods[guid] = ime_info
             except Exception as e:
                 logger.exception('fail to load ime info: %s', e)
@@ -76,7 +76,8 @@ class InputBackend(object):
         process = pyuv.Process.spawn(loop=loop,
                                      args=args,
                                      executable=args[0],
-                                     env={},
+                                     # force python stdio to use UTF-8 rather than system locale
+                                     env={'PYTHONIOENCODING': 'utf-8:ignore'},
                                      cwd=work_dir,
                                      uid=pyuv.UV_PROCESS_SETUID,
                                      gid=pyuv.UV_PROCESS_SETUID,
@@ -122,7 +123,7 @@ class InputBackend(object):
         self.stdin.write(data.encode('utf8'))
 
     def parse_backend_response_line(self, line):
-        line = line.decode('utf-8')
+        line = line.decode('utf8')
         prefix, client_id, msg_text = line.split('|', 2)
         msg = json.loads(msg_text)
         self.handle_backend_response(client_id, msg)

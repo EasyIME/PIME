@@ -100,18 +100,18 @@ def get_clipboard_data(data_format):
         memmove(buffer, ptr, size)
         windll.kernel32.GlobalUnlock(hmem)
         # return the data as bytes
-        return buffer.raw
+        return buffer.value  # buffer.raw includes the trailing null
     return None
 
 
 def set_clipboard_data(data_format, data):
     if not isinstance(data, (bytes, bytearray)):
         raise TypeError('data needs to be byte-like objects')
-    size = len(data)
+    size = len(data) + 1
     hmem = windll.kernel32.GlobalAlloc(GHND, size)
     ptr = windll.kernel32.GlobalLock(hmem)
     buf = c_char_p(data)
-    memmove(ptr, buf, size)
+    memmove(ptr, buf, size)  # size includes the trailing zero
     windll.kernel32.GlobalUnlock(hmem)
     ret = windll.user32.SetClipboardData(data_format, hmem)
     return ret

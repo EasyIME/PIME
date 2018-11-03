@@ -75,7 +75,14 @@ public:
 	void onCompositionTerminated(bool forced);
 
 private:
-	bool sendRequestText(HANDLE pipe, const char* data, int len, std::string& reply);
+	bool tryLockClipboard();
+	void unlockClipboard();
+	std::string getClipboardDataAsText(UINT format);
+	bool setClipboardDataFromText(UINT format, const std::string& text);
+	bool sendRequestText(const char* data, int len);
+	bool tryFetchReplyText(std::string& reply);
+	bool waitReplyText(std::string& reply);
+	bool sendRequestAndWaitReply(const char* data, int len, std::string& reply);
 	bool sendRequest(Json::Value& req, Json::Value& result);
 	void init();
 
@@ -85,6 +92,7 @@ private:
 	void updateUI(const Json::Value& data);
 	bool sendOnMenu(std::string button_id, Json::Value& result);
 
+	std::string clientId_;
 	TextService* textService_;
 	std::string guid_;
 	HANDLE pipe_;

@@ -1,5 +1,5 @@
 //
-//	Copyright (C) 2015 - 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+//	Copyright (C) 2015 - 2018 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 //
 //	This library is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU Library General Public
@@ -31,11 +31,16 @@
 #include <algorithm>
 #include <Winnls.h>  // for IS_HIGH_SURROGATE() macro for checking UTF16 surrogate pairs
 
+
 using namespace std;
 
 namespace PIME {
 
 unordered_map<UINT_PTR, Client*> Client::timerIdToClients_;
+
+constexpr auto INPUT_CLIPBOARD_FORMAT_NAME = L"PIME::Input";
+constexpr auto OUTPUT_CLIPBOARD_FORMAT_NAME = L"PIME::Output";
+
 
 Client::Client(TextService* service, REFIID langProfileGuid):
 	textService_(service),
@@ -50,11 +55,19 @@ Client::Client(TextService* service, REFIID langProfileGuid):
 		transform(guid_.begin(), guid_.end(), guid_.begin(), tolower);  // convert GUID to lwoer case
 		::CoTaskMemFree(guidStr);
 	}
+
+	// create a new UUID for identifying this client
+	CLSID clientUuid = { 0 }; // create a new GUID on-the-fly
+	::CoCreateGuid(&clientUuid);
+	guidStr = NULL;
+	if (SUCCEEDED(::StringFromCLSID(clientUuid, &guidStr))) {
+		clientId_ = utf16ToUtf8(guidStr);
+		transform(clientId_.begin(), clientId_.end(), clientId_.begin(), tolower);  // convert GUID to lwoer case
+		::CoTaskMemFree(guidStr);
+	}
 }
 
 Client::~Client(void) {
-	closePipe();
-
 	// some language bar buttons are not unregistered properly
 	if (!buttons_.empty()) {
 		for (auto& item: buttons_) {
@@ -611,45 +624,139 @@ void Client::init() {
 	}
 }
 
-bool Client::sendRequestText(HANDLE pipe, const char* data, int len, std::string& reply) {
+bool Client::tryLockClipboard() {
 	BOOL clipboardLocked = FALSE;
-	for (int i = 0; !clipboardLocked && i < 100; ++i) {
+	for (int i = 0; i < 100; ++i) {
 		clipboardLocked = ::OpenClipboard(NULL);
-		::Sleep(10); // sleep 10 ms
+		if (clipboardLocked) {
+			break;
+		}
+		::Sleep(5); // sleep for 5 ms, and try again
 	}
-	if (!clipboardLocked) {
-		// fail to get clipboard
+	return bool(clipboardLocked);
+}
+
+void Client::unlockClipboard() {
+	::CloseClipboard();
+}
+
+std::string Client::getClipboardDataAsText(UINT format) {
+	std::string text;
+	auto hdata = ::GetClipboardData(format);
+	if (hdata) {
+		auto ptr = reinterpret_cast<char*>(::GlobalLock(hdata));
+		if (ptr) {
+			auto len = ::GlobalSize(hdata);
+			text.assign(ptr, len);
+			::GlobalUnlock(hdata);
+		}
+	}
+	return text;
+}
+
+bool Client::setClipboardDataFromText(UINT format, const std::string& text) {
+	auto hdata = ::GlobalAlloc(GMEM_SHARE, text.length());
+	if (!hdata) {
 		return false;
 	}
-	auto inputFormat = ::RegisterClipboardFormat(L"PIME::Input");
-	auto hdata = ::GetClipboardData(inputFormat);
+	auto ptr = reinterpret_cast<char*>(::GlobalLock(hdata));
+	if (!ptr) {
+		return false;
+	}
 
-	char buf[1024];
-	DWORD rlen = 0;
-	if (TransactNamedPipe(pipe, (void*)data, len, buf, sizeof(buf) - 1, &rlen, NULL)) {
-		buf[rlen] = '\0';
-		reply = buf;
-	}
-	else { // error!
-		if (GetLastError() != ERROR_MORE_DATA) { // unknown error happens
-			return false;
-		}
-		// still has more data to read
-		buf[rlen] = '\0';
-		reply = buf;
-		for (;;) {
-			BOOL success = ReadFile(pipe, buf, sizeof(buf) - 1, &rlen, NULL);
-			if (!success && (GetLastError() != ERROR_MORE_DATA)) {
-				// unknown error happens, reset the pipe?
-				return false; // error reading the pipe
-			}
-			buf[rlen] = '\0';
-			reply += buf;
-			if (success)
-				break;
-		}
-	}
+	std::memcpy(ptr, text.c_str(), text.length());
+
+	::GlobalUnlock(hdata);
+	::SetClipboardData(format, hdata);
 	return true;
+}
+
+bool Client::sendRequestText(const char* data, int len) {
+	bool clipboardLocked = tryLockClipboard();
+	if (!clipboardLocked) { // fail to get clipboard
+		return false;
+	}
+	auto inputFormat = ::RegisterClipboardFormat(INPUT_CLIPBOARD_FORMAT_NAME);
+	auto inputQueueData = getClipboardDataAsText(inputFormat);
+
+	// format of input queue data:
+	// each line contains: <client_id>\t<message json string>
+	inputQueueData += clientId_;
+	inputQueueData += '\t';
+	inputQueueData.append(data, len);
+	inputQueueData += '\n';
+
+	bool ret = setClipboardDataFromText(inputFormat, inputQueueData);
+
+	unlockClipboard();
+	return ret;
+}
+
+bool Client::tryFetchReplyText(std::string& reply) {
+	// fetch our reply message from the output message queue in clipboard, if there is any.
+	bool clipboardLocked = tryLockClipboard();
+	if (!clipboardLocked) { // fail to get clipboard
+		return false;
+	}
+	auto outputFormat = ::RegisterClipboardFormat(OUTPUT_CLIPBOARD_FORMAT_NAME);
+	auto outputQueueData = getClipboardDataAsText(outputFormat);
+	if (outputQueueData.empty()) {
+		return false;
+	}
+
+	bool found = false;
+	size_t start = 0;
+	auto minLineLen = clientId_.length() + 1; // minimal length of a message line
+	while(start < outputQueueData.length()) {
+		size_t end = outputQueueData.find('\n', start);
+		if (end == outputQueueData.npos) {
+			break;
+		}
+		// current line = outputQueueData[start: end]
+		auto line = outputQueueData.c_str() + start;
+		size_t lineLen = (end - start);
+		if (lineLen >= minLineLen) {
+			// this line belongs to our client
+			if (strncmp(line, clientId_.c_str(), clientId_.length()) == 0) {
+				// FIXME: we also need to check seqNum later
+				found = true;
+				// get the message part from the line as reply
+				auto msgLen = lineLen - clientId_.length() - 1;
+				reply = outputQueueData.substr(start + clientId_.length() + 1, msgLen);
+				// erase the line from the output queue data
+				outputQueueData.erase(start, end);
+				break;
+			}
+		}
+		else {
+			// error: this should not happen
+			// FIXME: do we need to erase the line?
+		}
+		start = end + 1;
+	}
+
+	bool ret = false;
+	if (found) {
+		// we fetched our reply text from the output queue data
+		// so we need to update the copy in the clipboard
+		ret = setClipboardDataFromText(outputFormat, outputQueueData);
+	}
+	unlockClipboard();
+	return ret;
+}
+
+bool Client::waitReplyText(std::string& reply) {
+	for (int i = 0; i < 100; ++i) {
+		if (tryFetchReplyText(reply)) {
+			return true;
+		}
+		::Sleep(50);
+	}
+	return false;
+}
+
+bool Client::sendRequestAndWaitReply(const char* data, int len, std::string& reply) {
+	return sendRequestText(data, len) && waitReplyText(reply);
 }
 
 // send the request to the server
@@ -662,7 +769,7 @@ bool Client::sendRequest(Json::Value& req, Json::Value & result) {
 	DWORD rlen = 0;
 	Json::FastWriter writer;
 	std::string reqStr = writer.write(req); // convert the json object to string
-	if (sendRequestText(pipe_, reqStr.c_str(), reqStr.length(), ret)) {
+	if (sendRequestAndWaitReply(reqStr.c_str(), reqStr.length(), ret)) {
 		Json::Reader reader;
 		success = reader.parse(ret, result);
 		if (success) {

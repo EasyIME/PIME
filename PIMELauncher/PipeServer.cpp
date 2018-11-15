@@ -36,6 +36,8 @@
 
 #include <json/json.h>
 
+#include <spdlog/spdlog.h>
+
 #include "BackendServer.h"
 #include "Utils.h"
 #include "../libIME/WindowsVersion.h"

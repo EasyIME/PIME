@@ -8,11 +8,16 @@ set(LIBUV_INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/libuv/src
 )
 
+set(SPDLOG_INCLUDE_DIRS
+    ${CMAKE_SOURCE_DIR}/spdlog-1.2.1/include
+)
+
 include_directories(
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
     ${LIBUV_INCLUDE_DIRS}
+    ${SPDLOG_INCLUDE_DIRS}
 )
 
 add_executable(PIMELauncher WIN32

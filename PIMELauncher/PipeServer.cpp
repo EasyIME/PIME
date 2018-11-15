@@ -44,9 +44,12 @@ using namespace std;
 
 static wstring_convert<codecvt_utf8<wchar_t>> utf8Codec;
 
+
 namespace PIME {
 
 PipeServer* PipeServer::singleton_ = nullptr;
+
+wchar_t PipeServer::wndClassName_[] = L"PIMELauncherWnd";
 
 
 ClientInfo::ClientInfo(PipeServer* server) :
@@ -464,8 +467,16 @@ int PipeServer::exec(LPSTR cmd) {
 		_this->onNewDebugClientConnected(server, status);
 	});
 
+	// run GUI message loop in another worker thread
+	uv_thread_t uiThread;
+	uv_thread_create(&uiThread, [](void* arg) {
+		reinterpret_cast<PipeServer*>(arg)->runGuiThread();
+	}, this);
+
 	// run the main loop
 	uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+
+	uv_thread_join(&uiThread);  // wait for the GUI message loop to quit
 	return 0;
 }
 
@@ -592,5 +603,84 @@ void PipeServer::outputDebugMessage(const char * msg, size_t len) {
 		});
 	}
 }
+
+// Window procedure of the main window
+// this method is called from an worker thread other than the main thread
+LRESULT PipeServer::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
+	switch (msg) {
+	case WM_CREATE:
+		return TRUE;
+	case WM_APP + 1:
+		::OutputDebugString(L"shell icon notify!\n");
+		break;
+	default:
+		return ::DefWindowProc(hwnd_, msg, wp, lp);
+	}
+	return 0;
+}
+
+LPCTSTR PipeServer::registerWndClass(WNDCLASSEX& wndClass) {
+	std::memset(&wndClass, 0, sizeof(wndClass));
+	wndClass.cbSize = sizeof(wndClass);
+	wndClass.hInstance = HINSTANCE(::GetModuleHandle(NULL));
+	wndClass.lpszClassName = wndClassName_;
+	wndClass.lpfnWndProc = [](HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) -> LRESULT {
+		if (msg == WM_NCCREATE) {
+			auto cs = reinterpret_cast<CREATESTRUCT*>(lp);
+			::SetWindowLongPtr(hwnd, GWL_USERDATA, LONG_PTR(cs->lpCreateParams));
+			return TRUE;
+		}
+		else {
+			auto pObj = reinterpret_cast<PipeServer*>(::GetWindowLongPtr(hwnd, GWL_USERDATA));
+			if (pObj) {
+				return pObj->wndProc(msg, wp, lp);
+			}
+		}
+		return 0;
+	};
+
+	auto wndClassAtom = ::RegisterClassEx(&wndClass);
+	return LPCTSTR(wndClassAtom);
+}
+
+void PipeServer::createShellNotifyIcon() {
+	memset(&shellNotifyIconData_, 0, sizeof(shellNotifyIconData_));
+	shellNotifyIconData_.cbSize = sizeof(shellNotifyIconData_);
+	shellNotifyIconData_.hWnd = hwnd_;
+	shellNotifyIconData_.uID = 1;
+	shellNotifyIconData_.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+	shellNotifyIconData_.uCallbackMessage = WM_APP + 1;
+	// auto hinstance = HINSTANCE(::GetModuleHandle(NULL));
+	// shellNotifyIconData_.hIcon = ::LoadIcon(hinstance, IDI_APPLICATION);
+	shellNotifyIconData_.hIcon = ::LoadIcon(NULL, IDI_APPLICATION);
+	wcscpy(shellNotifyIconData_.szTip, L"PIME Launcher");
+
+	::Shell_NotifyIcon(NIM_ADD, &shellNotifyIconData_);
+}
+
+void PipeServer::destroyShellNotifyIcon() {
+	::Shell_NotifyIcon(NIM_DELETE, &shellNotifyIconData_);
+}
+
+// Main Windows UI message loop
+void PipeServer::runGuiThread() {
+	// this method is called from an worker thread other than the main thread
+	// For libuv, it's only safe to use uv_aysnc_*() from within this thread.
+
+	WNDCLASSEX wndClass;
+	auto wndClassAtom = registerWndClass(wndClass);
+	hwnd_ = ::CreateWindowEx(0, LPCTSTR(wndClassAtom), NULL, 0, 0, 0, 0, 0, HWND_DESKTOP, NULL, wndClass.hInstance, this);
+
+	createShellNotifyIcon();
+
+	MSG msg;
+	while (::GetMessage(&msg, NULL, 0, 0)) {
+		::TranslateMessage(&msg);
+		::DispatchMessage(&msg);
+	}
+
+	destroyShellNotifyIcon();
+}
+
 
 } // namespace PIME

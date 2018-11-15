@@ -88,6 +88,13 @@ public:
 	void onBackendClosed(BackendServer* backend);
 
 private:
+	// Windows GUI message loop
+	void runGuiThread();
+	LPCTSTR registerWndClass(WNDCLASSEX& wndClass);
+	LRESULT wndProc(UINT msg, WPARAM wp, LPARAM lp);
+	void createShellNotifyIcon();
+	void destroyShellNotifyIcon();
+
 	// backend server
 	void initBackendServers(const std::wstring& topDirPath);
 	void finalizeBackendServers();
@@ -131,6 +138,10 @@ private:
 
 	std::vector<BackendServer*> backends_;
 	std::unordered_map<std::string, BackendServer*> backendMap_;
+
+	HWND hwnd_; // handle of the window
+	static wchar_t wndClassName_[];
+	NOTIFYICONDATA shellNotifyIconData_;
 };
 
 } // namespace PIME

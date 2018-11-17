@@ -42,7 +42,12 @@ public:
 	friend class PipeServer;
 
 	BackendServer(PipeServer* pipeServer, const Json::Value& info);
+
 	~BackendServer();
+
+	const std::string name() const {
+		return name_;
+	}
 
 	void startProcess();
 
@@ -50,10 +55,7 @@ public:
 
 	bool isProcessRunning();
 
-	void restartProcess() {
-		needRestart_ = true;
-		terminateProcess();
-	}
+	void restartProcess();
 
 	uv_stream_t* stdinStream() {
 		return reinterpret_cast<uv_stream_t*>(stdinPipe_);

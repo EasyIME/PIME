@@ -49,12 +49,9 @@ public:
 
 	void writePipe(const char* data, size_t len);
 
-	// special commands to the backend server
-	bool registerToBackend(const Json::Value& params);
+	bool setupBackend(const Json::Value& params);
 
-	void unregisterFromBackend();
-
-	bool isInitialized() const;
+	void disconnectFromBackend();
 
 	// close the pipe handle and delete the PipeClient object
 	void destroy();
@@ -68,7 +65,7 @@ private:
 
 	void handleClientMessage(const char* readBuf, size_t len);
 
-	void onTimeout();
+	void onRequestTimeout();
 
 private:
 	uv_pipe_t pipe_;

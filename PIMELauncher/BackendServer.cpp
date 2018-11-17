@@ -161,6 +161,13 @@ void BackendServer::startProcess() {
 	startReadPipe();
 }
 
+void BackendServer::restartProcess() {
+	if (!needRestart_) {
+		needRestart_ = true;
+		terminateProcess();
+	}
+}
+
 void BackendServer::terminateProcess() {
 	if (process_) {
 		closeStdioPipes();

@@ -107,7 +107,7 @@ private:
 	static std::string getPipeName(const char* base_name);
 	void initSecurityAttributes();
 	void initPipe(uv_pipe_t* pipe, const char * app_name, SECURITY_ATTRIBUTES* sa = nullptr);
-	void terminateExistingLauncher();
+	void terminateExistingLauncher(HWND existingHwnd);
 	void parseCommandLine(LPSTR cmd);
 	// bool launchBackendByName(const char* name);
 

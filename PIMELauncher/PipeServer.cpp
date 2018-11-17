@@ -269,12 +269,9 @@ void PipeServer::parseCommandLine(LPSTR cmd) {
 }
 
 // send IPC message "quit" to the existing PIME Launcher process.
-void PipeServer::terminateExistingLauncher() {
-	// TODO: we can use PostMessage to the target window
-	string pipe_name = getPipeName("Launcher");
-	char buf[16];
-	DWORD rlen;
-	::CallNamedPipeA(pipe_name.c_str(), "quit", 4, buf, sizeof(buf) - 1, &rlen, 1000); // wait for 1 sec.
+void PipeServer::terminateExistingLauncher(HWND existingHwnd) {
+	PostMessage(existingHwnd, WM_QUIT, 0, 0);
+	::DestroyWindow(existingHwnd);
 }
 
 void PipeServer::quit() {
@@ -450,12 +447,15 @@ void PipeServer::onClientDataReceived(uv_stream_t* stream, ssize_t nread, const 
 
 int PipeServer::exec(LPSTR cmd) {
 	parseCommandLine(cmd);
-	if (quitExistingLauncher_) { // terminate existing launcher process
-		terminateExistingLauncher();
+	if (HWND existingHwnd = ::FindWindow(wndClassName_, nullptr)) {
+		// found an existing process
+		if (quitExistingLauncher_) { // terminate existing launcher process
+			terminateExistingLauncher(existingHwnd);
+		}
 		return 0;
 	}
 
-	// get the PIME directory
+	// get the PIME installation directory
 	wchar_t exeFilePathBuf[MAX_PATH];
 	DWORD len = GetModuleFileNameW(NULL, exeFilePathBuf, MAX_PATH);
 	exeFilePathBuf[len] = '\0';
@@ -508,10 +508,6 @@ int PipeServer::exec(LPSTR cmd) {
 
 void PipeServer::handleClientMessage(ClientInfo* client, const char* readBuf, size_t len) {
 	// special handling, asked for quitting PIMELauncher.
-	if (len >= 4 && strncmp("quit", readBuf, 4) == 0) {
-		quit();
-		return;
-	}
 	if (!client->isInitialized()) {
 		Json::Value msg;
 		Json::Reader reader;
@@ -649,6 +645,8 @@ void PipeServer::runGuiThread() {
 	}
 
 	destroyShellNotifyIcon();
+
+	::ExitProcess(0);
 }
 
 

@@ -37,12 +37,15 @@
 
 #include "BackendServer.h"
 #include "PipeServer.h"
+#include "ClientInfo.h"
 
 using namespace std;
 
-static wstring_convert<codecvt_utf8<wchar_t>> utf8Codec;
-
 namespace PIME {
+
+static wstring_convert<codecvt_utf8<wchar_t>> utf8Codec;
+static constexpr auto MAX_RESPONSE_WAITING_TIME = 30;  // if a backend is non-responsive for 30 seconds, it's considered dead
+
 
 BackendServer::BackendServer(PipeServer* pipeServer, const Json::Value& info) :
 	pipeServer_{pipeServer},
@@ -178,12 +181,14 @@ bool BackendServer::isProcessRunning() {
 	return process_ != nullptr;
 }
 
+
 void BackendServer::allocReadBuf(uv_handle_t *, size_t suggested_size, uv_buf_t * buf) {
 	buf->base = new char[suggested_size];
 	buf->len = suggested_size;
 }
 
 void BackendServer::onProcessDataReceived(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf) {
+	// FIXME: need to do output buffering since we might not receive a full line
 	if (nread < 0 || nread == UV_EOF) {
 		if (buf->base) {
 			delete[]buf->base;
@@ -198,8 +203,7 @@ void BackendServer::onProcessDataReceived(uv_stream_t * stream, ssize_t nread, c
 			ready_ = true;
 		}
 		else {
-			// pass the reply to the main server for further handling and sending back to the client
-			pipeServer_->handleBackendReply(buf->base, nread);
+			handleBackendReply(buf->base, nread);
 		}
 		delete[]buf->base;
 	}
@@ -233,6 +237,44 @@ void BackendServer::closeStdioPipes() {
 			delete reinterpret_cast<uv_pipe_t*>(handle);
 		});
 		stdoutPipe_ = nullptr;
+	}
+}
+
+void BackendServer::handleBackendReply(const char * readBuf, size_t len) {
+	// print to debug log if there is any
+	pipeServer_->logger()->info(std::string(readBuf, len));
+
+	// pass the response back to the clients
+	auto line = readBuf;
+	auto buf_end = readBuf + len;
+	while (line < buf_end) {
+		// Format of each line:
+		// PIMG_MSG|<client_id>|<reply JSON string>\n
+		if (auto line_end = strchr(line, '\n')) {
+			// only handle lines prefixed with "PIME_MSG|" since other lines
+			// might be debug messages printed by the backend.
+			if (strncmp(line, "PIME_MSG|", 9) == 0) {
+				line += 9; // Skip the "PIME_MSG|" prefix
+
+				if (auto sep = strchr(line, '|')) {
+					// split the client_id from the remaining json reply
+					string clientId(line, sep - line);
+					auto msg = sep + 1;
+					auto msg_len = line_end - msg;
+					// because Windows uses CRLF "\r\n" for new lines, python and node.js
+					// try to convert "\n" to "\r\n" sometimes. Let's remove the additional '\r'
+					if (msg_len > 0 && msg[msg_len - 1] == '\r') {
+						--msg_len;
+					}
+					// send the reply message back to the client
+					pipeServer_->sendReplyToClient(clientId, msg, msg_len);
+				}
+			}
+			line = line_end + 1;
+		}
+		else {
+			break;
+		}
 	}
 }
 

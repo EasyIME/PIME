@@ -29,6 +29,8 @@ add_executable(PIMELauncher WIN32
     PipeServer.h
     BackendServer.cpp
     BackendServer.h
+    ClientInfo.cpp
+    ClientInfo.h
     Utils.cpp
     Utils.h
     # resources

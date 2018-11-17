@@ -18,6 +18,7 @@
 //
 
 #include "PipeServer.h"
+#include "ClientInfo.h"
 #include <Windows.h>
 #include <windowsx.h>
 #include <ShlObj.h>
@@ -62,39 +63,6 @@ static constexpr UINT ID_RESTART_PIME_BACKENDS = 1000;
 
 static constexpr size_t MAX_LOG_FILE_SIZE = 5 * 1024 * 1024; // log file size: 5 MB
 static constexpr int NUM_LOG_FILES = 5;  // backup 3 copies of the log file
-
-
-ClientInfo::ClientInfo(PipeServer* server) :
-	backend_(nullptr), server_{ server } {
-}
-
-bool ClientInfo::isInitialized() const {
-	return (!clientId_.empty() && backend_ != nullptr);
-}
-
-bool ClientInfo::init(const Json::Value & params) {
-	const char* method = params["method"].asCString();
-	if (method != nullptr) {
-		if (strcmp(method, "init") == 0) {  // the client connects to us the first time
-			// generate a new uuid for client ID
-			UUID uuid;
-			UuidCreate(&uuid);
-			RPC_CSTR uuid_str = nullptr;
-			UuidToStringA(&uuid, &uuid_str);
-			clientId_ = (char*)uuid_str;
-			RpcStringFreeA(&uuid_str);
-
-			// find a backend for the client text service
-			const char* guid = params["id"].asCString();
-			backend_ = server_->backendFromLangProfileGuid(guid);
-			if (backend_ != nullptr) {
-				// FIXME: write some response to indicate the failure
-				return true;
-			}
-		}
-	}
-	return false;
-}
 
 
 PipeServer::PipeServer() :
@@ -277,43 +245,6 @@ void PipeServer::terminateExistingLauncher(HWND existingHwnd) {
 void PipeServer::quit() {
 	finalizeBackendServers();
 	ExitProcess(0); // quit PipeServer
-}
-
-void PipeServer::handleBackendReply(const char * readBuf, size_t len) {
-	// print to debug log if there is any
-	logger_->info(std::string(readBuf, len));
-
-	// pass the response back to the clients
-	auto line = readBuf;
-	auto buf_end = readBuf + len;
-	while (line < buf_end) {
-		// Format of each line:
-		// PIMG_MSG|<client_id>|<json reply>\n
-		if (auto line_end = strchr(line, '\n')) {
-			// only handle lines prefixed with "PIME_MSG|" since other lines
-			// might be debug messages printed by the backend.
-			if (strncmp(line, "PIME_MSG|", 9) == 0) {
-				line += 9; // Skip the prefix
-				if (auto sep = strchr(line, '|')) {
-					// split the client_id from the remaining json reply
-					string clientId(line, sep - line);
-					auto msg = sep + 1;
-					auto msg_len = line_end - msg;
-					// because Windows uses CRLF "\r\n" for new lines, python and node.js
-					// try to convert "\n" to "\r\n" sometimes. Let's remove the additional '\r'
-					if (msg_len > 0 && msg[msg_len - 1] == '\r') {
-						--msg_len;
-					}
-					// send the reply message back to the client
-					sendReplyToClient(clientId, msg, msg_len);
-				}
-			}
-			line = line_end + 1;
-		}
-		else {
-			break;
-		}
-	}
 }
 
 void PipeServer::sendReplyToClient(const std::string clientId, const char* msg, size_t len) {

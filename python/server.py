@@ -74,6 +74,9 @@ class Server(object):
                 line = input().strip()
                 if not line:
                     continue
+                # parse PIME requests (one request per line):
+                # request format: "<client_id>|<JSON string>\n"
+                # response format: "PIME_MSG|<client_id>|<JSON string>\n"
                 client_id, msg_text = line.split('|', maxsplit=1)
                 msg = json.loads(msg_text)
                 client = self.clients.get(client_id)

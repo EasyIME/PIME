@@ -45,8 +45,11 @@ public:
 	~BackendServer();
 
 	void startProcess();
+
 	void terminateProcess();
+
 	bool isProcessRunning();
+
 	void restartProcess() {
 		needRestart_ = true;
 		terminateProcess();
@@ -67,6 +70,8 @@ private:
 	void onProcessDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
 	void onProcessTerminated(int64_t exit_status, int term_signal);
 	void closeStdioPipes();
+
+	void handleBackendReply(const char* readBuf, size_t len);
 
 private:
 	PipeServer* pipeServer_;

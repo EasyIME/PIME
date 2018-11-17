@@ -38,32 +38,14 @@
 
 #include <uv.h>
 
-namespace spdlog {
-	class logger;
-};
+#include <spdlog/spdlog.h>
+
 
 namespace PIME {
 
 class PipeServer;
 class BackendServer;
-
-struct ClientInfo {
-	BackendServer* backend_;
-	std::string textServiceGuid_;
-	std::string clientId_;
-	uv_pipe_t pipe_;
-	PipeServer* server_;
-
-	ClientInfo(PipeServer* server);
-
-	uv_stream_t* stream() {
-		return reinterpret_cast<uv_stream_t*>(&pipe_);
-	}
-
-	bool isInitialized() const;
-
-	bool init(const Json::Value& params);
-};
+struct ClientInfo;
 
 
 class PipeServer {
@@ -78,13 +60,17 @@ public:
 		return singleton_;
 	}
 
-	void quit();
+	std::shared_ptr<spdlog::logger>& logger() {
+		return logger_;
+	}
 
-	void handleBackendReply(const char* readBuf, size_t len);
+	void quit();
 
 	BackendServer* backendFromLangProfileGuid(const char* guid);
 
 	BackendServer* backendFromName(const char* name);
+
+	void sendReplyToClient(const std::string clientId, const char* msg, size_t len);
 
 	void onBackendClosed(BackendServer* backend);
 
@@ -109,14 +95,11 @@ private:
 	void initPipe(uv_pipe_t* pipe, const char * app_name, SECURITY_ATTRIBUTES* sa = nullptr);
 	void terminateExistingLauncher(HWND existingHwnd);
 	void parseCommandLine(LPSTR cmd);
-	// bool launchBackendByName(const char* name);
 
 	void onNewClientConnected(uv_stream_t* server, int status);
 	void onClientDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
 	void handleClientMessage(ClientInfo* client, const char* readBuf, size_t len);
 	void closeClient(ClientInfo* client);
-
-	void sendReplyToClient(const std::string clientId, const char* msg, size_t len);
 
 private:
 	// security attribute stuff for creating the server pipe

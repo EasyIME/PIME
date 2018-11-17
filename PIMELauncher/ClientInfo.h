@@ -17,11 +17,12 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#ifndef _PIME_CLIENT_INFO_H_
-#define _PIME_CLIENT_INFO_H_
+#ifndef _PIME_PIPE_CLIENT_H_
+#define _PIME_PIPE_CLIENT_H_
 
 #include <Windows.h>
 #include <memory>
+#include <cstdint>
 #include "BackendServer.h"
 
 #include <uv.h>
@@ -32,24 +33,46 @@ namespace PIME {
 class PipeServer;
 class BackendServer;
 
-struct ClientInfo {
+class PipeClient {
+public:
 	BackendServer* backend_;
 	std::string textServiceGuid_;
 	std::string clientId_;
 	uv_pipe_t pipe_;
 	PipeServer* server_;
 
-	ClientInfo(PipeServer* server);
+	// timer used to wait for response from backend server
+	uv_timer_t waitResponseTimer_;
+
+	PipeClient(PipeServer* server, DWORD pipeMode, SECURITY_ATTRIBUTES* securityAttributes);
 
 	uv_stream_t* stream() {
 		return reinterpret_cast<uv_stream_t*>(&pipe_);
 	}
 
+	void startRead();
+
+	// special commands to the backend server
+	bool init(const Json::Value& params);
+
+	void close();
+
 	bool isInitialized() const;
 
-	bool init(const Json::Value& params);
+	void startWaitTimer(std::uint64_t timeoutMs);
+
+	void stopWaitTimer();
+
+	void onClientDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
+
+	void handleClientMessage(const char* readBuf, size_t len);
+
+	void onTimeout();
+
+private:
+	void destroy();
 };
 
 } // namespace PIME
 
-#endif // _PIME_CLIENT_INFO_H_
+#endif // _PIME_PIPE_CLIENT_H_

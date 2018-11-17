@@ -64,7 +64,7 @@ BackendServer::~BackendServer() {
 	terminateProcess();
 }
 
-void BackendServer::handleClientMessage(ClientInfo * client, const char * readBuf, size_t len) {
+void BackendServer::handleClientMessage(PipeClient * client, const char * readBuf, size_t len) {
 	if (!isProcessRunning()) {
 		startProcess();
 	}

@@ -45,7 +45,7 @@ namespace PIME {
 
 class PipeServer;
 class BackendServer;
-struct ClientInfo;
+class PipeClient;
 
 
 class PipeServer {
@@ -70,9 +70,13 @@ public:
 
 	BackendServer* backendFromName(const char* name);
 
+	PipeClient* clientFromId(const std::string& clientId);
+
 	void sendReplyToClient(const std::string clientId, const char* msg, size_t len);
 
 	void onBackendClosed(BackendServer* backend);
+
+	void removeClient(PipeClient* client);
 
 private:
 	// Windows GUI message loop
@@ -96,10 +100,9 @@ private:
 	void terminateExistingLauncher(HWND existingHwnd);
 	void parseCommandLine(LPSTR cmd);
 
+	// client handling
 	void onNewClientConnected(uv_stream_t* server, int status);
-	void onClientDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
-	void handleClientMessage(ClientInfo* client, const char* readBuf, size_t len);
-	void closeClient(ClientInfo* client);
+	void acceptClient(PipeClient* client);
 
 private:
 	// security attribute stuff for creating the server pipe
@@ -113,7 +116,7 @@ private:
 	std::wstring topDirPath_;
 	bool quitExistingLauncher_;
 	static PipeServer* singleton_;
-	std::vector<ClientInfo*> clients_;
+	std::vector<PipeClient*> clients_;
 	uv_pipe_t serverPipe_; // main server pipe accepting connections from the clients
 
 	std::vector<BackendServer*> backends_;

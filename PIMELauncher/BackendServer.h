@@ -35,7 +35,7 @@
 namespace PIME {
 
 class PipeServer;
-struct ClientInfo;
+class PipeClient;
 
 class BackendServer {
 public:
@@ -63,7 +63,7 @@ public:
 		return reinterpret_cast<uv_stream_t*>(stdoutPipe_);
 	}
 
-	void handleClientMessage(ClientInfo* client, const char* readBuf, size_t len);
+	void handleClientMessage(PipeClient* client, const char* readBuf, size_t len);
 
 private:
 	static void allocReadBuf(uv_handle_t*, size_t suggested_size, uv_buf_t* buf);

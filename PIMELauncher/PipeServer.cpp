@@ -189,11 +189,11 @@ BackendServer* PipeServer::backendFromName(const char* name) {
 void PipeServer::onBackendClosed(BackendServer * backend) {
 	// the backend server is terminated, disconnect all clients using this backend
 	auto removed_it = std::remove_if(clients_.begin(), clients_.end(),
-		[backend](ClientInfo* client) {
+		[backend](PipeClient* client) {
 		if (client->backend_ == backend) {
 			// if the client is using this broken backend, disconnect it
 			uv_close((uv_handle_t*)&client->pipe_, [](uv_handle_t* handle) {
-				auto client = (ClientInfo*)handle->data;
+				auto client = (PipeClient*)handle->data;
 				delete client;
 			});
 			return true;
@@ -247,13 +247,22 @@ void PipeServer::quit() {
 	ExitProcess(0); // quit PipeServer
 }
 
-void PipeServer::sendReplyToClient(const std::string clientId, const char* msg, size_t len) {
+PipeClient* PipeServer::clientFromId(const std::string& clientId) {
+	PipeClient* client = nullptr;
 	// find the client with this ID
-	auto it = std::find_if(clients_.cbegin(), clients_.cend(), [clientId](const ClientInfo* client) {
+	auto it = std::find_if(clients_.cbegin(), clients_.cend(), [clientId](const PipeClient* client) {
 		return client->clientId_ == clientId;
 	});
 	if (it != clients_.cend()) {
-		auto client = *it;
+		client = *it;
+	}
+	return client;
+}
+
+void PipeServer::sendReplyToClient(const std::string clientId, const char* msg, size_t len) {
+	// find the client with this ID
+	auto client = clientFromId(clientId);
+	if (client) {
 		uv_buf_t buf = {len, (char*)msg};
 		uv_write_t* req = new uv_write_t{};
 		uv_write(req, client->stream(), &buf, 1, [](uv_write_t* req, int status) {
@@ -339,41 +348,21 @@ void PipeServer::initPipe(uv_pipe_t* pipe, const char* app_name, SECURITY_ATTRIB
 }
 
 
-void PipeServer::onNewClientConnected(uv_stream_t* server, int status) {
-	auto server_pipe = reinterpret_cast<uv_pipe_t*>(server);
-	auto client = new ClientInfo{this};
-	uv_pipe_init_windows_named_pipe(uv_default_loop(), &client->pipe_, 0, server_pipe->pipe_mode, server_pipe->security_attributes);
-	client->pipe_.data = client;
-	uv_stream_set_blocking((uv_stream_t*)&client->pipe_, 0);
-	uv_accept(server, (uv_stream_t*)&client->pipe_);
+void PipeServer::acceptClient(PipeClient* client) {
+	auto serverStream = reinterpret_cast<uv_stream_t*>(&serverPipe_);
+	uv_accept(serverStream, client->stream());
 	clients_.push_back(client);
-
-	uv_read_start((uv_stream_t*)&client->pipe_,
-		[](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-			buf->base = new char[suggested_size];
-			buf->len = suggested_size;
-		},
-		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-			auto client = (ClientInfo*)stream->data;
-			client->server_->onClientDataReceived(stream, nread, buf);
-		}
-	);
 }
 
-void PipeServer::onClientDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-	auto client = (ClientInfo*)stream->data;
-	if (nread <= 0 || nread == UV_EOF || buf->base == nullptr) {
-		if (buf->base) {
-			delete []buf->base;
-		}
-		// the client connection seems to be broken. close it.
-		closeClient(client);
-		return;
-	}
-	if (buf->base) {
-		handleClientMessage(client, buf->base, buf->len);
-		delete[]buf->base;
-	}
+void PipeServer::removeClient(PipeClient* client) {
+	clients_.erase(find(clients_.begin(), clients_.end(), client));
+}
+
+void PipeServer::onNewClientConnected(uv_stream_t* server, int status) {
+	auto server_pipe = reinterpret_cast<uv_pipe_t*>(server);
+	auto client = new PipeClient{this, server_pipe->pipe_mode, server_pipe->security_attributes };
+	acceptClient(client);
+	client->startRead();
 }
 
 int PipeServer::exec(LPSTR cmd) {
@@ -436,38 +425,6 @@ int PipeServer::exec(LPSTR cmd) {
 	uv_thread_join(&uiThread);  // wait for the GUI message loop to quit
 	return 0;
 }
-
-void PipeServer::handleClientMessage(ClientInfo* client, const char* readBuf, size_t len) {
-	// special handling, asked for quitting PIMELauncher.
-	if (!client->isInitialized()) {
-		Json::Value msg;
-		Json::Reader reader;
-		if (reader.parse(readBuf, msg)) {
-			client->init(msg);
-		}
-	}
-	// pass the incoming message to the backend
-	auto backend = client->backend_;
-	if (backend) {
-		backend->handleClientMessage(client, readBuf, len);
-	}
-}
-
-void PipeServer::closeClient(ClientInfo* client) {
-	if (client->backend_ != nullptr) {
-		// FIXME: client->backend_->removeClient(client->clientId_);
-		// notify the backend server to remove the client
-		const char msg[] = "{\"method\":\"close\"}";
-		client->backend_->handleClientMessage(client, msg, strlen(msg));
-	}
-
-	clients_.erase(find(clients_.begin(), clients_.end(), client));
-	uv_close((uv_handle_t*)&client->pipe_, [](uv_handle_t* handle) {
-		auto client = (ClientInfo*)handle->data;
-		delete client;
-	});
-}
-
 
 // Window procedure of the main window
 // this method is called from an worker thread other than the main thread

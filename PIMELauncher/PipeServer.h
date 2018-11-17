@@ -90,15 +90,17 @@ public:
 private:
 	// Windows GUI message loop
 	void runGuiThread();
-	LPCTSTR registerWndClass(WNDCLASSEX& wndClass);
+	LPCTSTR registerWndClass(WNDCLASSEX& wndClass) const;
 	LRESULT wndProc(UINT msg, WPARAM wp, LPARAM lp);
 	void createShellNotifyIcon();
 	void destroyShellNotifyIcon();
+	void showPopupMenu() const;
 
 	// backend server
 	void initBackendServers(const std::wstring& topDirPath);
 	void finalizeBackendServers();
 	void initInputMethods(const std::wstring& topDirPath);
+	void restartAllBackends();
 
 	static std::string getPipeName(const char* base_name);
 	void initSecurityAttributes();

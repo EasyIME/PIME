@@ -19,6 +19,7 @@
 
 #include "PipeServer.h"
 #include <Windows.h>
+#include <windowsx.h>
 #include <ShlObj.h>
 #include <Shellapi.h>
 #include <Lmcons.h> // for UNLEN
@@ -44,14 +45,18 @@
 
 using namespace std;
 
-static wstring_convert<codecvt_utf8<wchar_t>> utf8Codec;
-
-
 namespace PIME {
 
 PipeServer* PipeServer::singleton_ = nullptr;
 
 wchar_t PipeServer::wndClassName_[] = L"PIMELauncherWnd";
+
+static wstring_convert<codecvt_utf8<wchar_t>> utf8Codec;
+
+static constexpr UINT WM_SHELL_NOTIFY_ICON = WM_APP + 1;
+static constexpr UINT MAIN_SHELL_NOTIFY_ICON_ID = 1;
+
+static constexpr UINT ID_RESTART_PIME_BACKENDS = 1000;
 
 
 ClientInfo::ClientInfo(PipeServer* server) :
@@ -169,6 +174,14 @@ void PipeServer::finalizeBackendServers() {
 	for (BackendServer* backend : backends_) {
 		backend->terminateProcess();
 		delete backend;
+	}
+}
+
+void PipeServer::restartAllBackends() {
+	for (auto& backend : backends_) {
+		if (backend->isProcessRunning()) {
+			backend->restartProcess();
+		}
 	}
 }
 
@@ -612,8 +625,21 @@ LRESULT PipeServer::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
 	switch (msg) {
 	case WM_CREATE:
 		return TRUE;
-	case WM_APP + 1:
-		::OutputDebugString(L"shell icon notify!\n");
+	case WM_SHELL_NOTIFY_ICON:
+		// shell tray notification icon events
+		// reference: https://www.codeproject.com/Articles/4768/Basic-use-of-Shell-NotifyIcon-in-Win32
+		switch (LOWORD(lp)) {
+		case WM_RBUTTONDOWN:
+			showPopupMenu();
+			return 0;
+		}
+		break;
+	case WM_COMMAND:
+		switch (LOWORD(wp)) {
+		case ID_RESTART_PIME_BACKENDS:
+			restartAllBackends();
+			return 0;
+		}
 		break;
 	default:
 		return ::DefWindowProc(hwnd_, msg, wp, lp);
@@ -621,7 +647,7 @@ LRESULT PipeServer::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
 	return 0;
 }
 
-LPCTSTR PipeServer::registerWndClass(WNDCLASSEX& wndClass) {
+LPCTSTR PipeServer::registerWndClass(WNDCLASSEX& wndClass) const {
 	std::memset(&wndClass, 0, sizeof(wndClass));
 	wndClass.cbSize = sizeof(wndClass);
 	wndClass.hInstance = HINSTANCE(::GetModuleHandle(NULL));
@@ -648,13 +674,16 @@ LPCTSTR PipeServer::registerWndClass(WNDCLASSEX& wndClass) {
 void PipeServer::createShellNotifyIcon() {
 	memset(&shellNotifyIconData_, 0, sizeof(shellNotifyIconData_));
 	shellNotifyIconData_.cbSize = sizeof(shellNotifyIconData_);
+	shellNotifyIconData_.uVersion = NOTIFYICON_VERSION_4; // newer version after Windows Vista
 	shellNotifyIconData_.hWnd = hwnd_;
-	shellNotifyIconData_.uID = 1;
+	shellNotifyIconData_.uID = MAIN_SHELL_NOTIFY_ICON_ID;
 	shellNotifyIconData_.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
-	shellNotifyIconData_.uCallbackMessage = WM_APP + 1;
+	shellNotifyIconData_.uCallbackMessage = WM_SHELL_NOTIFY_ICON;
 	// auto hinstance = HINSTANCE(::GetModuleHandle(NULL));
 	// shellNotifyIconData_.hIcon = ::LoadIcon(hinstance, IDI_APPLICATION);
 	shellNotifyIconData_.hIcon = ::LoadIcon(NULL, IDI_APPLICATION);
+
+	// FIXME: make this translatable later
 	wcscpy(shellNotifyIconData_.szTip, L"PIME Launcher");
 
 	::Shell_NotifyIcon(NIM_ADD, &shellNotifyIconData_);
@@ -663,6 +692,21 @@ void PipeServer::createShellNotifyIcon() {
 void PipeServer::destroyShellNotifyIcon() {
 	::Shell_NotifyIcon(NIM_DELETE, &shellNotifyIconData_);
 }
+
+void PipeServer::showPopupMenu() const {
+	// NOTE: according to the API doc of NOTIFYICONDATA, we should able to get x & y pos from WPARAM.
+	// However, it does not work in Windows 10 during my experiment. So we get cursor pos instead.
+	POINT pos;
+	::GetCursorPos(&pos);
+
+	HMENU hmenu = ::CreatePopupMenu();
+	// FIXME: make this translatable later
+	::AppendMenu(hmenu, MF_STRING|MF_ENABLED, ID_RESTART_PIME_BACKENDS, L"Restart PIME");
+	::SetForegroundWindow(hwnd_);
+	::TrackPopupMenu(hmenu, TPM_LEFTALIGN| TPM_BOTTOMALIGN, pos.x, pos.y, 0, hwnd_, NULL);
+	::DestroyMenu(hmenu);
+}
+
 
 // Main Windows UI message loop
 void PipeServer::runGuiThread() {

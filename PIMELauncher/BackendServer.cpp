@@ -37,7 +37,7 @@
 
 #include "BackendServer.h"
 #include "PipeServer.h"
-#include "ClientInfo.h"
+#include "PipeClient.h"
 
 using namespace std;
 

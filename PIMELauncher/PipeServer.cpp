@@ -18,7 +18,7 @@
 //
 
 #include "PipeServer.h"
-#include "ClientInfo.h"
+#include "PipeClient.h"
 #include <Windows.h>
 #include <windowsx.h>
 #include <ShlObj.h>

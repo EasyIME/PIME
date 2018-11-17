@@ -17,7 +17,7 @@
 //	Boston, MA  02110-1301, USA.
 //
 
-#include "ClientInfo.h"
+#include "PipeClient.h"
 #include "PipeServer.h"
 
 #include "BackendServer.h"

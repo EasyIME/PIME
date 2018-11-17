@@ -11,6 +11,9 @@ set(LIBUV_INCLUDE_DIRS
 set(SPDLOG_INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/spdlog-1.2.1/include
 )
+add_definitions(
+    -DSPDLOG_WCHAR_FILENAMES=1
+)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}
@@ -35,14 +38,5 @@ add_executable(PIMELauncher WIN32
 target_link_libraries(PIMELauncher 
     jsoncpp_lib_static
     Rpcrt4 # for uuid stuff
-    libuv
-)
-
-add_executable(PIMEDebugConsole WIN32
-    PIMEDebugConsole.cpp
-    PIMEDebugConsole.rc
-)
-
-target_link_libraries(PIMEDebugConsole
     libuv
 )

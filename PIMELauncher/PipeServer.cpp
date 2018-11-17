@@ -38,6 +38,8 @@
 #include <json/json.h>
 
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_sinks.h>
+#include <spdlog/sinks/rotating_file_sink.h> // support for rotating file logging
 
 #include "BackendServer.h"
 #include "Utils.h"
@@ -57,6 +59,9 @@ static constexpr UINT WM_SHELL_NOTIFY_ICON = WM_APP + 1;
 static constexpr UINT MAIN_SHELL_NOTIFY_ICON_ID = 1;
 
 static constexpr UINT ID_RESTART_PIME_BACKENDS = 1000;
+
+static constexpr size_t MAX_LOG_FILE_SIZE = 5 * 1024 * 1024; // log file size: 5 MB
+static constexpr int NUM_LOG_FILES = 5;  // backup 3 copies of the log file
 
 
 ClientInfo::ClientInfo(PipeServer* server) :
@@ -97,16 +102,15 @@ PipeServer::PipeServer() :
 	acl_(nullptr),
 	everyoneSID_(nullptr),
 	allAppsSID_(nullptr),
-	quitExistingLauncher_(false),
-	debugClientPipe_{ nullptr } {
+	quitExistingLauncher_(false) {
 	// this can only be assigned once
 	assert(singleton_ == nullptr);
 	singleton_ = this;
+
+	initLogger();
 }
 
 PipeServer::~PipeServer() {
-	closeDebugClient();
-
 	if (everyoneSID_ != nullptr)
 		FreeSid(everyoneSID_);
 	if (allAppsSID_ != nullptr)
@@ -115,6 +119,25 @@ PipeServer::~PipeServer() {
 		LocalFree(securittyDescriptor_);
 	if (acl_ != nullptr)
 		LocalFree(acl_);
+}
+
+void PipeServer::initLogger() {
+	wchar_t* appDataDirPath = nullptr;
+	::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &appDataDirPath);
+	logDirPath_ = std::wstring(appDataDirPath) + L"\\PIME\\Log";
+	::CoTaskMemFree(appDataDirPath);
+
+	::SHCreateDirectoryEx(NULL, logDirPath_.c_str(), NULL);
+
+	auto logFile = logDirPath_ + L"\\PIMELauncher.log";
+	try {
+		logger_ = spdlog::rotating_logger_mt("PIMELauncher", logFile, MAX_LOG_FILE_SIZE, NUM_LOG_FILES);
+		spdlog::flush_on(spdlog::level::debug);  // flush to the file on any kind of errors (always flush)
+	}
+	catch(const spdlog::spdlog_ex& exc) {
+		// fail to create file logger, fallback to console logger
+		logger_ = spdlog::stderr_logger_mt("PIMELauncher");
+	}
 }
 
 void PipeServer::initBackendServers(const std::wstring & topDirPath) {
@@ -178,6 +201,7 @@ void PipeServer::finalizeBackendServers() {
 }
 
 void PipeServer::restartAllBackends() {
+	logger_->info("Restart all backends");
 	for (auto& backend : backends_) {
 		if (backend->isProcessRunning()) {
 			backend->restartProcess();
@@ -246,6 +270,7 @@ void PipeServer::parseCommandLine(LPSTR cmd) {
 
 // send IPC message "quit" to the existing PIME Launcher process.
 void PipeServer::terminateExistingLauncher() {
+	// TODO: we can use PostMessage to the target window
 	string pipe_name = getPipeName("Launcher");
 	char buf[16];
 	DWORD rlen;
@@ -258,13 +283,8 @@ void PipeServer::quit() {
 }
 
 void PipeServer::handleBackendReply(const char * readBuf, size_t len) {
-	recentDebugMessages_.emplace_back(readBuf, len);
-	// only keep recent 100 messages
-	if (recentDebugMessages_.size() >= 100) {
-		recentDebugMessages_.pop_front();
-	}
-	// print to debug console if there is any
-	outputDebugMessage(readBuf, len);
+	// print to debug log if there is any
+	logger_->info(std::string(readBuf, len));
 
 	// pass the response back to the clients
 	auto line = readBuf;
@@ -473,15 +493,6 @@ int PipeServer::exec(LPSTR cmd) {
 		_this->onNewClientConnected(server, status);
 	});
 
-	// initialize the debug pipe connected by debug console
-	initPipe(&debugServerPipe_, "Debug", nullptr);
-
-	// listen to events from the debug console
-	uv_listen(reinterpret_cast<uv_stream_t*>(&debugServerPipe_), 1, [](uv_stream_t* server, int status) {
-		PipeServer* _this = (PipeServer*)server->data;
-		_this->onNewDebugClientConnected(server, status);
-	});
-
 	// run GUI message loop in another worker thread
 	uv_thread_t uiThread;
 	uv_thread_create(&uiThread, [](void* arg) {
@@ -530,94 +541,6 @@ void PipeServer::closeClient(ClientInfo* client) {
 	});
 }
 
-void PipeServer::onNewDebugClientConnected(uv_stream_t* server, int status) {
-	auto server_pipe = reinterpret_cast<uv_pipe_t*>(server);
-	uv_pipe_t* client_pipe = new uv_pipe_t{};
-	uv_pipe_init_windows_named_pipe(uv_default_loop(), client_pipe, 0, server_pipe->pipe_mode, server_pipe->security_attributes);
-	client_pipe->data = this;
-	uv_stream_set_blocking((uv_stream_t*)client_pipe, 0);
-	uv_accept(server, (uv_stream_t*)client_pipe);
-
-	// kill existing debug console client since we only allow one connection
-	if (debugClientPipe_) {
-		closeDebugClient();
-	}
-	debugClientPipe_ = client_pipe;
-
-	// read debugging commands from the debug console
-	uv_read_start((uv_stream_t*)debugClientPipe_,
-		[](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-			buf->base = new char[suggested_size];
-			buf->len = suggested_size;
-		},
-		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-			auto server = (PipeServer*)stream->data;
-			server->onDebugClientDataReceived(stream, nread, buf);
-		}
-	);
-
-	// if there are recent debug messages, output them to the debug console
-	for (auto& msg : recentDebugMessages_) {
-		outputDebugMessage(msg.c_str(), msg.length());
-	}
-}
-
-void PipeServer::onDebugClientDataReceived(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf) {
-	// receive debug commands from the debug console
-	// debug commands are issued line by line and starts with "DEBUG_CMD:" prefix.
-	if (nread <= 0 || nread == UV_EOF || buf->base == nullptr) {
-		if (buf->base) {
-			delete[]buf->base;
-		}
-		// the client connection seems to be broken. close it.
-		closeDebugClient();
-		return;
-	}
-	if (buf->base) {
-		stringstream lines{ string(buf->base, nread) };
-		for (string line; getline(lines, line);) {
-			if (line == "DEBUG_CMD:RESTART_BACKENDS") {
-				for (auto& backend : backends_) {
-					if (backend->isProcessRunning()) {
-						string msg = "\nRestart backend:" + backend->name_ + "\n";
-						outputDebugMessage(msg.c_str(), msg.length());
-						backend->restartProcess();
-					}
-				}
-			}
-		}
-		delete[]buf->base;
-	}
-}
-
-void PipeServer::closeDebugClient() {
-	uv_close((uv_handle_t*)debugClientPipe_, [](uv_handle_t* handle) {
-		delete (uv_pipe_t*)handle;
-	});
-	debugClientPipe_ = nullptr;
-}
-
-struct DebugMessageReq {
-	uv_write_t req;
-	string msg;
-	PipeServer* pipeServer;
-};
-
-void PipeServer::outputDebugMessage(const char * msg, size_t len) {
-	if (debugClientPipe_ != nullptr) {
-		auto req_data = new DebugMessageReq{ {}, string{msg, len }, this};
-		req_data->req.data = req_data;
-		uv_buf_t buf = {req_data->msg.length(), (char*)req_data->msg.c_str()};
-
-		uv_write(&req_data->req, reinterpret_cast<uv_stream_t*>(debugClientPipe_), &buf, 1, [](uv_write_t* req, int status) {
-			DebugMessageReq* req_data = reinterpret_cast<DebugMessageReq*>(req->data);
-			if (status < 0 || status == UV_EOF) {
-				req_data->pipeServer->closeDebugClient();
-			}
-			delete req_data;
-		});
-	}
-}
 
 // Window procedure of the main window
 // this method is called from an worker thread other than the main thread

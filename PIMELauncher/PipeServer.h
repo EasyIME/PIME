@@ -38,6 +38,9 @@
 
 #include <uv.h>
 
+namespace spdlog {
+	class logger;
+};
 
 namespace PIME {
 
@@ -79,8 +82,6 @@ public:
 
 	void handleBackendReply(const char* readBuf, size_t len);
 
-	void outputDebugMessage(const char* msg, size_t len);
-
 	BackendServer* backendFromLangProfileGuid(const char* guid);
 
 	BackendServer* backendFromName(const char* name);
@@ -97,6 +98,7 @@ private:
 	void showPopupMenu() const;
 
 	// backend server
+	void initLogger();
 	void initBackendServers(const std::wstring& topDirPath);
 	void finalizeBackendServers();
 	void initInputMethods(const std::wstring& topDirPath);
@@ -114,10 +116,6 @@ private:
 	void handleClientMessage(ClientInfo* client, const char* readBuf, size_t len);
 	void closeClient(ClientInfo* client);
 
-	void onNewDebugClientConnected(uv_stream_t* server, int status);
-	void onDebugClientDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
-	void closeDebugClient();
-
 	void sendReplyToClient(const std::string clientId, const char* msg, size_t len);
 
 private:
@@ -134,9 +132,6 @@ private:
 	static PipeServer* singleton_;
 	std::vector<ClientInfo*> clients_;
 	uv_pipe_t serverPipe_; // main server pipe accepting connections from the clients
-	uv_pipe_t debugServerPipe_; // pipe used for communicate with the debug console
-	uv_pipe_t* debugClientPipe_; // connected client pipe of the debug console
-	std::deque<std::string> recentDebugMessages_; // buffer storing recent debug messages
 
 	std::vector<BackendServer*> backends_;
 	std::unordered_map<std::string, BackendServer*> backendMap_;
@@ -144,6 +139,10 @@ private:
 	HWND hwnd_; // handle of the window
 	static wchar_t wndClassName_[];
 	NOTIFYICONDATA shellNotifyIconData_;
+
+	// error logging
+	std::wstring logDirPath_;
+	std::shared_ptr<spdlog::logger> logger_;
 };
 
 } // namespace PIME

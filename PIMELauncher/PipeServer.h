@@ -86,12 +86,16 @@ private:
 	void showPopupMenu() const;
 
 	// backend server
-	void initLogger();
 	void initBackendServers(const std::wstring& topDirPath);
 	void finalizeBackendServers();
 	void initInputMethods(const std::wstring& topDirPath);
 	void restartAllBackends();
 
+	// main pipe server
+	void initDataDir();
+	void initLogger();
+	void loadConfig();
+	void saveConfig();
 	static std::string getPipeName(const char* base_name);
 	void initSecurityAttributes();
 	void initPipe(uv_pipe_t* pipe, const char * app_name, SECURITY_ATTRIBUTES* sa = nullptr);
@@ -125,7 +129,8 @@ private:
 	NOTIFYICONDATA shellNotifyIconData_;
 
 	// error logging
-	std::wstring logDirPath_;
+	spdlog::level::level_enum logLevel_;
+	std::wstring dataDirPath_;
 	std::shared_ptr<spdlog::logger> logger_;
 };
 

@@ -59,10 +59,14 @@ static wstring_convert<codecvt_utf8<wchar_t>> utf8Codec;
 static constexpr UINT WM_SHELL_NOTIFY_ICON = WM_APP + 1;
 static constexpr UINT MAIN_SHELL_NOTIFY_ICON_ID = 1;
 
-static constexpr UINT ID_RESTART_PIME_BACKENDS = 1000;
+static constexpr UINT ID_ENABLE_DEBUG_LOG = 1000;
+static constexpr UINT ID_SHOW_DEBUG_LOGS = 1001;
+static constexpr UINT ID_RESTART_PIME_BACKENDS = 1002;
 
 static constexpr size_t MAX_LOG_FILE_SIZE = 5 * 1024 * 1024; // log file size: 5 MB
 static constexpr int NUM_LOG_FILES = 5;  // backup 3 copies of the log file
+
+static constexpr wchar_t CONFIG_FILE_REL_PATH[] = L"\\PIMELauncher.json";
 
 
 PipeServer::PipeServer() :
@@ -70,11 +74,15 @@ PipeServer::PipeServer() :
 	acl_(nullptr),
 	everyoneSID_(nullptr),
 	allAppsSID_(nullptr),
-	quitExistingLauncher_(false) {
+	quitExistingLauncher_(false),
+	logLevel_{spdlog::level::warn} {
+
 	// this can only be assigned once
 	assert(singleton_ == nullptr);
 	singleton_ = this;
 
+	initDataDir();
+	loadConfig();
 	initLogger();
 }
 
@@ -89,15 +97,19 @@ PipeServer::~PipeServer() {
 		LocalFree(acl_);
 }
 
+void PipeServer::initDataDir() {
+	wchar_t* appLocalDataDirPath = nullptr;
+	::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &appLocalDataDirPath);
+	dataDirPath_ = std::wstring(appLocalDataDirPath) + L"\\PIME";
+	::CoTaskMemFree(appLocalDataDirPath);
+	::SHCreateDirectoryEx(NULL, dataDirPath_.c_str(), NULL);
+}
+
 void PipeServer::initLogger() {
-	wchar_t* appDataDirPath = nullptr;
-	::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &appDataDirPath);
-	logDirPath_ = std::wstring(appDataDirPath) + L"\\PIME\\Log";
-	::CoTaskMemFree(appDataDirPath);
+	auto logDirPath = dataDirPath_ + L"\\Log";
+	::SHCreateDirectoryEx(NULL, logDirPath.c_str(), NULL);
 
-	::SHCreateDirectoryEx(NULL, logDirPath_.c_str(), NULL);
-
-	auto logFile = logDirPath_ + L"\\PIMELauncher.log";
+	auto logFile = logDirPath + L"\\PIMELauncher.log";
 	try {
 		logger_ = spdlog::rotating_logger_mt("PIMELauncher", logFile, MAX_LOG_FILE_SIZE, NUM_LOG_FILES);
 		spdlog::flush_on(spdlog::level::debug);  // flush to the file on any kind of errors (always flush)
@@ -105,6 +117,26 @@ void PipeServer::initLogger() {
 	catch(const spdlog::spdlog_ex& exc) {
 		// fail to create file logger, fallback to console logger
 		logger_ = spdlog::stderr_logger_mt("PIMELauncher");
+	}
+
+	logger_->set_level(logLevel_);
+}
+
+void PipeServer::loadConfig() {
+	auto configFile = dataDirPath_ + CONFIG_FILE_REL_PATH;
+	Json::Value config;
+	if (loadJsonFile(configFile, config)) {
+		auto levelName = config["logLevel"].asString();
+		logLevel_ = spdlog::level::from_str(levelName);
+	}
+}
+
+void PipeServer::saveConfig() {
+	auto configFile = dataDirPath_ + CONFIG_FILE_REL_PATH;
+	Json::Value config;
+	config["logLevel"] = spdlog::level::to_c_str(logLevel_);
+	if (!saveJsonFile(configFile, config)) {
+		logger_->error("fail to write config file");
 	}
 }
 
@@ -431,6 +463,16 @@ LRESULT PipeServer::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
 		case ID_RESTART_PIME_BACKENDS:
 			restartAllBackends();
 			return 0;
+		case ID_ENABLE_DEBUG_LOG:
+			// toggle between log_level: warning <--> debug
+			logLevel_ = (logLevel_ <= spdlog::level::debug) ? spdlog::level::warn : spdlog::level::debug;
+			logger_->set_level(logLevel_);
+			saveConfig();
+			break;
+		case ID_SHOW_DEBUG_LOGS:
+			// show logs dir
+			::ShellExecuteW(hwnd_, L"open", (dataDirPath_ + L"\\Log").c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+			break;
 		}
 		break;
 	default:
@@ -493,7 +535,12 @@ void PipeServer::showPopupMenu() const {
 
 	HMENU hmenu = ::CreatePopupMenu();
 	// FIXME: make this translatable later
-	::AppendMenu(hmenu, MF_STRING|MF_ENABLED, ID_RESTART_PIME_BACKENDS, L"Restart PIME");
+	bool debugEnabled = logLevel_ <= spdlog::level::debug;
+	::AppendMenu(hmenu, MF_STRING|MF_ENABLED|(debugEnabled ? MF_CHECKED : 0), ID_ENABLE_DEBUG_LOG, L"Enable Debug Log");
+	::AppendMenu(hmenu, MF_STRING | MF_ENABLED, ID_SHOW_DEBUG_LOGS, L"Show Debug Logs");
+	::AppendMenu(hmenu, MF_SEPARATOR, 0, 0);
+	::AppendMenu(hmenu, MF_STRING | MF_ENABLED, ID_RESTART_PIME_BACKENDS, L"Restart PIME");
+
 	::SetForegroundWindow(hwnd_);
 	::TrackPopupMenu(hmenu, TPM_LEFTALIGN| TPM_BOTTOMALIGN, pos.x, pos.y, 0, hwnd_, NULL);
 	::DestroyMenu(hmenu);

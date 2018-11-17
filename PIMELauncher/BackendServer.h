@@ -65,6 +65,10 @@ public:
 
 	void handleClientMessage(PipeClient* client, const char* readBuf, size_t len);
 
+	void startReadPipe();
+
+	void writePipe(const char* data, size_t len);
+
 private:
 	static void allocReadBuf(uv_handle_t*, size_t suggested_size, uv_buf_t* buf);
 	void onProcessDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);

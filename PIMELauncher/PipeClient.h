@@ -38,11 +38,6 @@ public:
 	BackendServer* backend_;
 	std::string textServiceGuid_;
 	std::string clientId_;
-	uv_pipe_t pipe_;
-	PipeServer* server_;
-
-	// timer used to wait for response from backend server
-	uv_timer_t waitResponseTimer_;
 
 	PipeClient(PipeServer* server, DWORD pipeMode, SECURITY_ATTRIBUTES* securityAttributes);
 
@@ -50,15 +45,21 @@ public:
 		return reinterpret_cast<uv_stream_t*>(&pipe_);
 	}
 
-	void startRead();
+	void startReadPipe();
+
+	void writePipe(const char* data, size_t len);
 
 	// special commands to the backend server
-	bool init(const Json::Value& params);
+	bool registerToBackend(const Json::Value& params);
 
-	void close();
+	void unregisterFromBackend();
 
 	bool isInitialized() const;
 
+	// close the pipe handle and delete the PipeClient object
+	void destroy();
+
+private:
 	void startWaitTimer(std::uint64_t timeoutMs);
 
 	void stopWaitTimer();
@@ -70,7 +71,11 @@ public:
 	void onTimeout();
 
 private:
-	void destroy();
+	uv_pipe_t pipe_;
+	PipeServer* server_;
+
+	// timer used to wait for response from backend server
+	uv_timer_t waitResponseTimer_;
 };
 
 } // namespace PIME

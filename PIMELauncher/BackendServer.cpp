@@ -76,11 +76,7 @@ void BackendServer::handleClientMessage(PipeClient * client, const char * readBu
 	msg += "\n";
 
 	// write the message to the backend server
-	uv_buf_t buf = {msg.length(), (char*)msg.c_str()};
-	uv_write_t* req = new uv_write_t{};
-	uv_write(req, stdinStream(), &buf, 1, [](uv_write_t* req, int status) {
-		delete req;
-	});
+	writePipe(msg.c_str(), msg.length());
 }
 
 void BackendServer::startProcess() {
@@ -162,11 +158,7 @@ void BackendServer::startProcess() {
 	}
 
 	// start receiving data from the backend server
-	uv_read_start(stdoutStream(), allocReadBuf,
-		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-			reinterpret_cast<BackendServer*>(stream->data)->onProcessDataReceived(stream, nread, buf);
-		}
-	);
+	startReadPipe();
 }
 
 void BackendServer::terminateProcess() {
@@ -248,8 +240,7 @@ void BackendServer::handleBackendReply(const char * readBuf, size_t len) {
 	auto line = readBuf;
 	auto buf_end = readBuf + len;
 	while (line < buf_end) {
-		// Format of each line:
-		// PIMG_MSG|<client_id>|<reply JSON string>\n
+		// Format of each line: "PIMG_MSG|<client_id>|<reply JSON string>\n"
 		if (auto line_end = strchr(line, '\n')) {
 			// only handle lines prefixed with "PIME_MSG|" since other lines
 			// might be debug messages printed by the backend.
@@ -266,8 +257,11 @@ void BackendServer::handleBackendReply(const char * readBuf, size_t len) {
 					if (msg_len > 0 && msg[msg_len - 1] == '\r') {
 						--msg_len;
 					}
+
 					// send the reply message back to the client
-					pipeServer_->sendReplyToClient(clientId, msg, msg_len);
+					if (auto client = pipeServer_->clientFromId(clientId)) {
+						client->writePipe(msg, len);
+					}
 				}
 			}
 			line = line_end + 1;
@@ -276,6 +270,30 @@ void BackendServer::handleBackendReply(const char * readBuf, size_t len) {
 			break;
 		}
 	}
+}
+
+void BackendServer::startReadPipe() {
+	uv_read_start(stdoutStream(), allocReadBuf,
+		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
+			reinterpret_cast<BackendServer*>(stream->data)->onProcessDataReceived(stream, nread, buf);
+		}
+	);
+}
+
+void BackendServer::writePipe(const char* data, size_t len) {
+	// The memory pointed to by the buffers must remain valid until the callback gets called. 
+	// http://docs.libuv.org/en/v1.x/stream.html
+	// So we need to copy the buffer
+	char* copiedData = new char[len];
+	memcpy(copiedData, data, len);
+	uv_buf_t buf = { len, copiedData };
+	uv_write_t* req = new uv_write_t{};
+	req->data = copiedData;
+	uv_write(req, stdinStream(), &buf, 1, [](uv_write_t* req, int status) {
+		char* copiedData = reinterpret_cast<char*>(req->data);
+		delete[]copiedData;
+		delete req;
+	});
 }
 
 } // namespace PIME

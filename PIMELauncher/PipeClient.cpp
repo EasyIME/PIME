@@ -40,7 +40,7 @@ PipeClient::PipeClient(PipeServer* server, DWORD pipeMode, SECURITY_ATTRIBUTES* 
 	waitResponseTimer_.data = this;
 }
 
-void PipeClient::startRead() {
+void PipeClient::startReadPipe() {
 	uv_read_start((uv_stream_t*)&pipe_,
 		[](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
 		buf->base = new char[suggested_size];
@@ -49,6 +49,22 @@ void PipeClient::startRead() {
 		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 		auto client = (PipeClient*)stream->data;
 		client->onClientDataReceived(stream, nread, buf);
+	});
+}
+
+void PipeClient::writePipe(const char* data, size_t len) {
+	// The memory pointed to by the buffers must remain valid until the callback gets called. 
+	// http://docs.libuv.org/en/v1.x/stream.html
+	// So we need to copy the buffer
+	char* copiedData = new char[len];
+	memcpy(copiedData, data, len);
+	uv_buf_t buf = { len, copiedData };
+	uv_write_t* req = new uv_write_t{};
+	req->data = copiedData;
+	uv_write(req, stream(), &buf, 1, [](uv_write_t* req, int status) {
+		char* copiedData = reinterpret_cast<char*>(req->data);
+		delete[]copiedData;
+		delete req;
 	});
 }
 
@@ -65,7 +81,7 @@ void PipeClient::onClientDataReceived(uv_stream_t* stream, ssize_t nread, const 
 			delete[]buf->base;
 		}
 		// the client connection seems to be broken. close it.
-		close();
+		unregisterFromBackend();
 		return;
 	}
 	if (buf->base) {
@@ -75,12 +91,12 @@ void PipeClient::onClientDataReceived(uv_stream_t* stream, ssize_t nread, const 
 }
 
 void PipeClient::handleClientMessage(const char* readBuf, size_t len) {
-	// special handling, asked for quitting PIMELauncher.
+	// special handling, asked for init PIMELauncher.
 	if (!isInitialized()) {
 		Json::Value msg;
 		Json::Reader reader;
 		if (reader.parse(readBuf, msg)) {
-			init(msg);
+			registerToBackend(msg);
 		}
 	}
 	// pass the incoming message to the backend
@@ -94,7 +110,7 @@ bool PipeClient::isInitialized() const {
 	return (!clientId_.empty() && backend_ != nullptr);
 }
 
-bool PipeClient::init(const Json::Value & params) {
+bool PipeClient::registerToBackend(const Json::Value & params) {
 	const char* method = params["method"].asCString();
 	if (method != nullptr) {
 		if (strcmp(method, "init") == 0) {  // the client connects to us the first time
@@ -118,7 +134,7 @@ bool PipeClient::init(const Json::Value & params) {
 	return false;
 }
 
-void PipeClient::close() {
+void PipeClient::unregisterFromBackend() {
 	if (backend_ != nullptr) {
 		// FIXME: client->backend_->removeClient(client->clientId_);
 		// notify the backend server to remove the client

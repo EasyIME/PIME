@@ -192,10 +192,7 @@ void PipeServer::onBackendClosed(BackendServer * backend) {
 		[backend](PipeClient* client) {
 		if (client->backend_ == backend) {
 			// if the client is using this broken backend, disconnect it
-			uv_close((uv_handle_t*)&client->pipe_, [](uv_handle_t* handle) {
-				auto client = (PipeClient*)handle->data;
-				delete client;
-			});
+			client->destroy();
 			return true;
 		}
 		return false;
@@ -257,18 +254,6 @@ PipeClient* PipeServer::clientFromId(const std::string& clientId) {
 		client = *it;
 	}
 	return client;
-}
-
-void PipeServer::sendReplyToClient(const std::string clientId, const char* msg, size_t len) {
-	// find the client with this ID
-	auto client = clientFromId(clientId);
-	if (client) {
-		uv_buf_t buf = {len, (char*)msg};
-		uv_write_t* req = new uv_write_t{};
-		uv_write(req, client->stream(), &buf, 1, [](uv_write_t* req, int status) {
-			delete req;
-		});
-	}
 }
 
 void PipeServer::initSecurityAttributes() {
@@ -362,7 +347,7 @@ void PipeServer::onNewClientConnected(uv_stream_t* server, int status) {
 	auto server_pipe = reinterpret_cast<uv_pipe_t*>(server);
 	auto client = new PipeClient{this, server_pipe->pipe_mode, server_pipe->security_attributes };
 	acceptClient(client);
-	client->startRead();
+	client->startReadPipe();
 }
 
 int PipeServer::exec(LPSTR cmd) {

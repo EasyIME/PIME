@@ -72,8 +72,6 @@ public:
 
 	PipeClient* clientFromId(const std::string& clientId);
 
-	void sendReplyToClient(const std::string clientId, const char* msg, size_t len);
-
 	void onBackendClosed(BackendServer* backend);
 
 	void removeClient(PipeClient* client);

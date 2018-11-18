@@ -12,7 +12,11 @@ set(SPDLOG_INCLUDE_DIRS
     ${CMAKE_SOURCE_DIR}/spdlog-1.2.1/include
 )
 add_definitions(
+    # Enable using wchar_t & wstring for filenames
     -DSPDLOG_WCHAR_FILENAMES=1
+    # Prevent the fd of log files from being inherited by child processes
+    # This is required. Otherwise the file rotation will fail since the file is kept open by the child process.
+    -DSPDLOG_PREVENT_CHILD_FD=1
 )
 
 include_directories(

@@ -54,6 +54,10 @@ PipeClient::PipeClient(PipeServer* server, DWORD pipeMode, SECURITY_ATTRIBUTES* 
 	waitResponseTimer_.data = this;
 }
 
+std::shared_ptr<spdlog::logger>& PipeClient::logger() {
+	return server_->logger();
+}
+
 void PipeClient::startReadPipe() {
 	uv_read_start((uv_stream_t*)&pipe_,
 		[](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
@@ -139,7 +143,7 @@ bool PipeClient::setupBackend(const Json::Value & params) {
 			return true;
 		}
 		else {
-			server_->logger()->critical("Backend is not found for text service: {}", guid);
+			logger()->critical("Backend is not found for text service: {}", guid);
 		}
 	}
 	return false;
@@ -173,7 +177,7 @@ void PipeClient::onRequestTimeout() {
 	// We sent a message to the backend server, but haven't got any response before the timeout
 	// Assume that the backend server is dead. => Try to restart
 	if (backend_) {
-		server_->logger()->critical("Backend {} seems to be dead. Try to restart!", backend_->name());
+		logger()->critical("Backend {} seems to be dead. Try to restart!", backend_->name());
 		backend_->restartProcess();
 	}
 }

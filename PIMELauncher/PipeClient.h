@@ -26,6 +26,7 @@
 #include "BackendServer.h"
 
 #include <uv.h>
+#include <spdlog/spdlog.h>
 
 
 namespace PIME {
@@ -44,6 +45,8 @@ public:
 	uv_stream_t* stream() {
 		return reinterpret_cast<uv_stream_t*>(&pipe_);
 	}
+
+	std::shared_ptr<spdlog::logger>& logger();
 
 	void startReadPipe();
 

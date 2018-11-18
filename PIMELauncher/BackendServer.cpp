@@ -64,6 +64,10 @@ BackendServer::~BackendServer() {
 	terminateProcess();
 }
 
+std::shared_ptr<spdlog::logger>& BackendServer::logger() {
+	return pipeServer_->logger();
+}
+
 void BackendServer::handleClientMessage(PipeClient * client, const char * readBuf, size_t len) {
 	if (!isProcessRunning()) {
 		startProcess();
@@ -74,6 +78,8 @@ void BackendServer::handleClientMessage(PipeClient * client, const char * readBu
 	msg += "|";
 	msg.append(readBuf, len);
 	msg += "\n";
+
+	logger()->debug("SEND: {}", msg);
 
 	// write the message to the backend server
 	writePipe(msg.c_str(), msg.length());
@@ -241,7 +247,7 @@ void BackendServer::closeStdioPipes() {
 
 void BackendServer::handleBackendReply(const char * readBuf, size_t len) {
 	// print to debug log if there is any
-	pipeServer_->logger()->info(std::string(readBuf, len));
+	logger()->debug("RECV: {}", std::string(readBuf, len));
 
 	// pass the response back to the clients
 	auto line = readBuf;

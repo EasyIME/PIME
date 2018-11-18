@@ -31,6 +31,8 @@
 
 #include <uv.h>
 #include <json/json.h>
+#include <spdlog/spdlog.h>
+
 
 namespace PIME {
 
@@ -64,6 +66,8 @@ public:
 	uv_stream_t* stdoutStream() {
 		return reinterpret_cast<uv_stream_t*>(stdoutPipe_);
 	}
+
+	std::shared_ptr<spdlog::logger>& logger();
 
 	void handleClientMessage(PipeClient* client, const char* readBuf, size_t len);
 

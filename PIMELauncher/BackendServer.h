@@ -67,17 +67,24 @@ public:
 		return reinterpret_cast<uv_stream_t*>(stdoutPipe_);
 	}
 
+	uv_stream_t* stderrStream() {
+		return reinterpret_cast<uv_stream_t*>(stderrPipe_);
+	}
+
 	std::shared_ptr<spdlog::logger>& logger();
 
 	void handleClientMessage(PipeClient* client, const char* readBuf, size_t len);
 
-	void startReadPipe();
+	void startReadOutputPipe();
 
-	void writePipe(const char* data, size_t len);
+	void startReadErrorPipe();
+
+	void writeInputPipe(const char* data, size_t len);
 
 private:
 	static void allocReadBuf(uv_handle_t*, size_t suggested_size, uv_buf_t* buf);
 	void onProcessDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
+	void onProcessErrorReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
 	void onProcessTerminated(int64_t exit_status, int term_signal);
 	void closeStdioPipes();
 
@@ -89,6 +96,7 @@ private:
 	uv_process_t* process_;
 	uv_pipe_t* stdinPipe_;
 	uv_pipe_t* stdoutPipe_;
+	uv_pipe_t* stderrPipe_;
 	bool ready_;
 
 	bool needRestart_;

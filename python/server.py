@@ -22,10 +22,6 @@ import traceback
 if __name__ == "__main__":
     sys.path.append('python3')
 
-# redirect stdout to stderr so we can see all of the error messages in
-# PIMEDebugConsole since it only reads stdout.
-sys.stderr = sys.stdout
-
 from serviceManager import textServiceMgr
 
 

@@ -52,6 +52,7 @@ BackendServer::BackendServer(PipeServer* pipeServer, const Json::Value& info) :
 	process_{ nullptr },
 	stdinPipe_{nullptr},
 	stdoutPipe_{nullptr},
+	stderrPipe_{nullptr},
 	ready_{false},
 	name_(info["name"].asString()),
 	needRestart_{false},
@@ -82,7 +83,7 @@ void BackendServer::handleClientMessage(PipeClient * client, const char * readBu
 	logger()->debug("SEND: {}", msg);
 
 	// write the message to the backend server
-	writePipe(msg.c_str(), msg.length());
+	writeInputPipe(msg.c_str(), msg.length());
 }
 
 void BackendServer::startProcess() {
@@ -97,13 +98,17 @@ void BackendServer::startProcess() {
 	stdoutPipe_->data = this;
 	uv_pipe_init(uv_default_loop(), stdoutPipe_, 0);
 
+	stderrPipe_ = new uv_pipe_t{};
+	stderrPipe_->data = this;
+	uv_pipe_init(uv_default_loop(), stderrPipe_, 0);
+
 	uv_stdio_container_t stdio_containers[3];
 	stdio_containers[0].data.stream = stdinStream();
 	stdio_containers[0].flags = uv_stdio_flags(UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE);
 	stdio_containers[1].data.stream = stdoutStream();
 	stdio_containers[1].flags = uv_stdio_flags(UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE);
-	stdio_containers[2].data.stream = nullptr;
-	stdio_containers[2].flags = UV_IGNORE;
+	stdio_containers[2].data.stream = stderrStream();
+	stdio_containers[2].flags = uv_stdio_flags(UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE);
 
 	char full_exe_path[MAX_PATH];
 	size_t cwd_len = MAX_PATH;
@@ -152,19 +157,13 @@ void BackendServer::startProcess() {
 	if (ret < 0) {
 		delete process_;
 		process_ = nullptr;
-		uv_close(reinterpret_cast<uv_handle_t*>(stdinPipe_), [](uv_handle_t* handle) {
-			delete reinterpret_cast<uv_pipe_t*>(handle);
-		});
-		stdinPipe_ = nullptr;
-		uv_close(reinterpret_cast<uv_handle_t*>(stdoutPipe_), [](uv_handle_t* handle) {
-			delete reinterpret_cast<uv_pipe_t*>(handle);
-		});
-		stdoutPipe_ = nullptr;
+		closeStdioPipes();
 		return;
 	}
 
 	// start receiving data from the backend server
-	startReadPipe();
+	startReadOutputPipe();
+	startReadErrorPipe();
 }
 
 void BackendServer::restartProcess() {
@@ -214,6 +213,23 @@ void BackendServer::onProcessDataReceived(uv_stream_t * stream, ssize_t nread, c
 	}
 }
 
+void BackendServer::onProcessErrorReceived(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf) {
+	// FIXME: need to do output buffering since we might not receive a full line
+	if (nread < 0 || nread == UV_EOF) {
+		if (buf->base) {
+			delete[]buf->base;
+		}
+		// the backend server is broken, stop it
+		terminateProcess();
+		return;
+	}
+	if (buf->base) {
+		// log the error message
+		logger()->error("[Backend error] {}", std::string(buf->base, buf->len));
+		delete[]buf->base;
+	}
+}
+
 void BackendServer::onProcessTerminated(int64_t exit_status, int term_signal) {
 	delete process_;
 	process_ = nullptr;
@@ -242,6 +258,13 @@ void BackendServer::closeStdioPipes() {
 			delete reinterpret_cast<uv_pipe_t*>(handle);
 		});
 		stdoutPipe_ = nullptr;
+	}
+
+	if (stderrPipe_ != nullptr) {
+		uv_close(reinterpret_cast<uv_handle_t*>(stderrPipe_), [](uv_handle_t* handle) {
+			delete reinterpret_cast<uv_pipe_t*>(handle);
+		});
+		stderrPipe_ = nullptr;
 	}
 }
 
@@ -285,7 +308,7 @@ void BackendServer::handleBackendReply(const char * readBuf, size_t len) {
 	}
 }
 
-void BackendServer::startReadPipe() {
+void BackendServer::startReadOutputPipe() {
 	uv_read_start(stdoutStream(), allocReadBuf,
 		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 			reinterpret_cast<BackendServer*>(stream->data)->onProcessDataReceived(stream, nread, buf);
@@ -293,7 +316,15 @@ void BackendServer::startReadPipe() {
 	);
 }
 
-void BackendServer::writePipe(const char* data, size_t len) {
+void BackendServer::startReadErrorPipe() {
+	uv_read_start(stderrStream(), allocReadBuf,
+		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
+		reinterpret_cast<BackendServer*>(stream->data)->onProcessErrorReceived(stream, nread, buf);
+	}
+	);
+}
+
+void BackendServer::writeInputPipe(const char* data, size_t len) {
 	// The memory pointed to by the buffers must remain valid until the callback gets called. 
 	// http://docs.libuv.org/en/v1.x/stream.html
 	// So we need to copy the buffer

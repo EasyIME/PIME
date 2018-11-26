@@ -56,6 +56,7 @@ class ChewingConfig:
         self.outputSimpChinese = False
         self.selKeyType = 0
         self.spaceKeyAction = 1
+        self.spaceKeyCandidatesAction = 0
         self.switchLangWithShift = True
         self.upDownAction = 0
         self.upperCaseWithShift = True

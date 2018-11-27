@@ -38,29 +38,14 @@
 
 #include <uv.h>
 
+#include <spdlog/spdlog.h>
+
 
 namespace PIME {
 
 class PipeServer;
 class BackendServer;
-
-struct ClientInfo {
-	BackendServer* backend_;
-	std::string textServiceGuid_;
-	std::string clientId_;
-	uv_pipe_t pipe_;
-	PipeServer* server_;
-
-	ClientInfo(PipeServer* server);
-
-	uv_stream_t* stream() {
-		return reinterpret_cast<uv_stream_t*>(&pipe_);
-	}
-
-	bool isInitialized() const;
-
-	bool init(const Json::Value& params);
-};
+class PipeClient;
 
 
 class PipeServer {
@@ -75,41 +60,51 @@ public:
 		return singleton_;
 	}
 
+	std::shared_ptr<spdlog::logger>& logger() {
+		return logger_;
+	}
+
 	void quit();
-
-	void handleBackendReply(const char* readBuf, size_t len);
-
-	void outputDebugMessage(const char* msg, size_t len);
 
 	BackendServer* backendFromLangProfileGuid(const char* guid);
 
 	BackendServer* backendFromName(const char* name);
 
+	PipeClient* clientFromId(const std::string& clientId);
+
 	void onBackendClosed(BackendServer* backend);
 
+	void removeClient(PipeClient* client);
+
 private:
+	// Windows GUI message loop
+	void runGuiThread();
+	LPCTSTR registerWndClass(WNDCLASSEX& wndClass) const;
+	LRESULT wndProc(UINT msg, WPARAM wp, LPARAM lp);
+	void createShellNotifyIcon();
+	void destroyShellNotifyIcon();
+	void showPopupMenu() const;
+
 	// backend server
 	void initBackendServers(const std::wstring& topDirPath);
 	void finalizeBackendServers();
 	void initInputMethods(const std::wstring& topDirPath);
+	void restartAllBackends();
 
+	// main pipe server
+	void initDataDir();
+	void initLogger();
+	void loadConfig();
+	void saveConfig();
 	static std::string getPipeName(const char* base_name);
 	void initSecurityAttributes();
 	void initPipe(uv_pipe_t* pipe, const char * app_name, SECURITY_ATTRIBUTES* sa = nullptr);
-	void terminateExistingLauncher();
+	void terminateExistingLauncher(HWND existingHwnd);
 	void parseCommandLine(LPSTR cmd);
-	// bool launchBackendByName(const char* name);
 
+	// client handling
 	void onNewClientConnected(uv_stream_t* server, int status);
-	void onClientDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
-	void handleClientMessage(ClientInfo* client, const char* readBuf, size_t len);
-	void closeClient(ClientInfo* client);
-
-	void onNewDebugClientConnected(uv_stream_t* server, int status);
-	void onDebugClientDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
-	void closeDebugClient();
-
-	void sendReplyToClient(const std::string clientId, const char* msg, size_t len);
+	void acceptClient(PipeClient* client);
 
 private:
 	// security attribute stuff for creating the server pipe
@@ -123,14 +118,20 @@ private:
 	std::wstring topDirPath_;
 	bool quitExistingLauncher_;
 	static PipeServer* singleton_;
-	std::vector<ClientInfo*> clients_;
+	std::vector<PipeClient*> clients_;
 	uv_pipe_t serverPipe_; // main server pipe accepting connections from the clients
-	uv_pipe_t debugServerPipe_; // pipe used for communicate with the debug console
-	uv_pipe_t* debugClientPipe_; // connected client pipe of the debug console
-	std::deque<std::string> recentDebugMessages_; // buffer storing recent debug messages
 
 	std::vector<BackendServer*> backends_;
 	std::unordered_map<std::string, BackendServer*> backendMap_;
+
+	HWND hwnd_; // handle of the window
+	static wchar_t wndClassName_[];
+	NOTIFYICONDATA shellNotifyIconData_;
+
+	// error logging
+	spdlog::level::level_enum logLevel_;
+	std::wstring dataDirPath_;
+	std::shared_ptr<spdlog::logger> logger_;
 };
 
 } // namespace PIME

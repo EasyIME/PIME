@@ -37,18 +37,22 @@
 
 #include "BackendServer.h"
 #include "PipeServer.h"
+#include "PipeClient.h"
 
 using namespace std;
 
-static wstring_convert<codecvt_utf8<wchar_t>> utf8Codec;
-
 namespace PIME {
+
+static wstring_convert<codecvt_utf8<wchar_t>> utf8Codec;
+static constexpr auto MAX_RESPONSE_WAITING_TIME = 30;  // if a backend is non-responsive for 30 seconds, it's considered dead
+
 
 BackendServer::BackendServer(PipeServer* pipeServer, const Json::Value& info) :
 	pipeServer_{pipeServer},
 	process_{ nullptr },
 	stdinPipe_{nullptr},
 	stdoutPipe_{nullptr},
+	stderrPipe_{nullptr},
 	ready_{false},
 	name_(info["name"].asString()),
 	needRestart_{false},
@@ -61,7 +65,11 @@ BackendServer::~BackendServer() {
 	terminateProcess();
 }
 
-void BackendServer::handleClientMessage(ClientInfo * client, const char * readBuf, size_t len) {
+std::shared_ptr<spdlog::logger>& BackendServer::logger() {
+	return pipeServer_->logger();
+}
+
+void BackendServer::handleClientMessage(PipeClient * client, const char * readBuf, size_t len) {
 	if (!isProcessRunning()) {
 		startProcess();
 	}
@@ -72,12 +80,10 @@ void BackendServer::handleClientMessage(ClientInfo * client, const char * readBu
 	msg.append(readBuf, len);
 	msg += "\n";
 
+	logger()->debug("SEND: {}", msg);
+
 	// write the message to the backend server
-	uv_buf_t buf = {msg.length(), (char*)msg.c_str()};
-	uv_write_t* req = new uv_write_t{};
-	uv_write(req, stdinStream(), &buf, 1, [](uv_write_t* req, int status) {
-		delete req;
-	});
+	writeInputPipe(msg.c_str(), msg.length());
 }
 
 void BackendServer::startProcess() {
@@ -92,13 +98,17 @@ void BackendServer::startProcess() {
 	stdoutPipe_->data = this;
 	uv_pipe_init(uv_default_loop(), stdoutPipe_, 0);
 
+	stderrPipe_ = new uv_pipe_t{};
+	stderrPipe_->data = this;
+	uv_pipe_init(uv_default_loop(), stderrPipe_, 0);
+
 	uv_stdio_container_t stdio_containers[3];
 	stdio_containers[0].data.stream = stdinStream();
 	stdio_containers[0].flags = uv_stdio_flags(UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE);
 	stdio_containers[1].data.stream = stdoutStream();
 	stdio_containers[1].flags = uv_stdio_flags(UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE);
-	stdio_containers[2].data.stream = nullptr;
-	stdio_containers[2].flags = UV_IGNORE;
+	stdio_containers[2].data.stream = stderrStream();
+	stdio_containers[2].flags = uv_stdio_flags(UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE);
 
 	char full_exe_path[MAX_PATH];
 	size_t cwd_len = MAX_PATH;
@@ -147,23 +157,20 @@ void BackendServer::startProcess() {
 	if (ret < 0) {
 		delete process_;
 		process_ = nullptr;
-		uv_close(reinterpret_cast<uv_handle_t*>(stdinPipe_), [](uv_handle_t* handle) {
-			delete reinterpret_cast<uv_pipe_t*>(handle);
-		});
-		stdinPipe_ = nullptr;
-		uv_close(reinterpret_cast<uv_handle_t*>(stdoutPipe_), [](uv_handle_t* handle) {
-			delete reinterpret_cast<uv_pipe_t*>(handle);
-		});
-		stdoutPipe_ = nullptr;
+		closeStdioPipes();
 		return;
 	}
 
 	// start receiving data from the backend server
-	uv_read_start(stdoutStream(), allocReadBuf,
-		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-			reinterpret_cast<BackendServer*>(stream->data)->onProcessDataReceived(stream, nread, buf);
-		}
-	);
+	startReadOutputPipe();
+	startReadErrorPipe();
+}
+
+void BackendServer::restartProcess() {
+	if (!needRestart_) {
+		needRestart_ = true;
+		terminateProcess();
+	}
 }
 
 void BackendServer::terminateProcess() {
@@ -178,12 +185,14 @@ bool BackendServer::isProcessRunning() {
 	return process_ != nullptr;
 }
 
+
 void BackendServer::allocReadBuf(uv_handle_t *, size_t suggested_size, uv_buf_t * buf) {
 	buf->base = new char[suggested_size];
 	buf->len = suggested_size;
 }
 
 void BackendServer::onProcessDataReceived(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf) {
+	// FIXME: need to do output buffering since we might not receive a full line
 	if (nread < 0 || nread == UV_EOF) {
 		if (buf->base) {
 			delete[]buf->base;
@@ -198,9 +207,25 @@ void BackendServer::onProcessDataReceived(uv_stream_t * stream, ssize_t nread, c
 			ready_ = true;
 		}
 		else {
-			// pass the reply to the main server for further handling and sending back to the client
-			pipeServer_->handleBackendReply(buf->base, nread);
+			handleBackendReply(buf->base, nread);
 		}
+		delete[]buf->base;
+	}
+}
+
+void BackendServer::onProcessErrorReceived(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf) {
+	// FIXME: need to do output buffering since we might not receive a full line
+	if (nread < 0 || nread == UV_EOF) {
+		if (buf->base) {
+			delete[]buf->base;
+		}
+		// the backend server is broken, stop it
+		terminateProcess();
+		return;
+	}
+	if (buf->base) {
+		// log the error message
+		logger()->error("[Backend error] {}", std::string(buf->base, buf->len));
 		delete[]buf->base;
 	}
 }
@@ -234,6 +259,85 @@ void BackendServer::closeStdioPipes() {
 		});
 		stdoutPipe_ = nullptr;
 	}
+
+	if (stderrPipe_ != nullptr) {
+		uv_close(reinterpret_cast<uv_handle_t*>(stderrPipe_), [](uv_handle_t* handle) {
+			delete reinterpret_cast<uv_pipe_t*>(handle);
+		});
+		stderrPipe_ = nullptr;
+	}
+}
+
+void BackendServer::handleBackendReply(const char * readBuf, size_t len) {
+	// print to debug log if there is any
+	logger()->debug("RECV: {}", std::string(readBuf, len));
+
+	// pass the response back to the clients
+	auto line = readBuf;
+	auto buf_end = readBuf + len;
+	while (line < buf_end) {
+		// Format of each line: "PIMG_MSG|<client_id>|<reply JSON string>\n"
+		if (auto line_end = strchr(line, '\n')) {
+			// only handle lines prefixed with "PIME_MSG|" since other lines
+			// might be debug messages printed by the backend.
+			if (strncmp(line, "PIME_MSG|", 9) == 0) {
+				line += 9; // Skip the "PIME_MSG|" prefix
+
+				if (auto sep = strchr(line, '|')) {
+					// split the client_id from the remaining json reply
+					string clientId(line, sep - line);
+					auto msg = sep + 1;
+					auto msg_len = line_end - msg;
+					// because Windows uses CRLF "\r\n" for new lines, python and node.js
+					// try to convert "\n" to "\r\n" sometimes. Let's remove the additional '\r'
+					if (msg_len > 0 && msg[msg_len - 1] == '\r') {
+						--msg_len;
+					}
+
+					// send the reply message back to the client
+					if (auto client = pipeServer_->clientFromId(clientId)) {
+						client->writePipe(msg, len);
+					}
+				}
+			}
+			line = line_end + 1;
+		}
+		else {
+			break;
+		}
+	}
+}
+
+void BackendServer::startReadOutputPipe() {
+	uv_read_start(stdoutStream(), allocReadBuf,
+		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
+			reinterpret_cast<BackendServer*>(stream->data)->onProcessDataReceived(stream, nread, buf);
+		}
+	);
+}
+
+void BackendServer::startReadErrorPipe() {
+	uv_read_start(stderrStream(), allocReadBuf,
+		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
+		reinterpret_cast<BackendServer*>(stream->data)->onProcessErrorReceived(stream, nread, buf);
+	}
+	);
+}
+
+void BackendServer::writeInputPipe(const char* data, size_t len) {
+	// The memory pointed to by the buffers must remain valid until the callback gets called. 
+	// http://docs.libuv.org/en/v1.x/stream.html
+	// So we need to copy the buffer
+	char* copiedData = new char[len];
+	memcpy(copiedData, data, len);
+	uv_buf_t buf = { len, copiedData };
+	uv_write_t* req = new uv_write_t{};
+	req->data = copiedData;
+	uv_write(req, stdinStream(), &buf, 1, [](uv_write_t* req, int status) {
+		char* copiedData = reinterpret_cast<char*>(req->data);
+		delete[]copiedData;
+		delete req;
+	});
 }
 
 } // namespace PIME

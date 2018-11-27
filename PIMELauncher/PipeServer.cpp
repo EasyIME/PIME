@@ -18,7 +18,9 @@
 //
 
 #include "PipeServer.h"
+#include "PipeClient.h"
 #include <Windows.h>
+#include <windowsx.h>
 #include <ShlObj.h>
 #include <Shellapi.h>
 #include <Lmcons.h> // for UNLEN
@@ -36,50 +38,35 @@
 
 #include <json/json.h>
 
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_sinks.h>
+#include <spdlog/sinks/rotating_file_sink.h> // support for rotating file logging
+
 #include "BackendServer.h"
 #include "Utils.h"
 #include "../libIME/WindowsVersion.h"
 
 using namespace std;
 
-static wstring_convert<codecvt_utf8<wchar_t>> utf8Codec;
-
 namespace PIME {
 
 PipeServer* PipeServer::singleton_ = nullptr;
 
+wchar_t PipeServer::wndClassName_[] = L"PIMELauncherWnd";
 
-ClientInfo::ClientInfo(PipeServer* server) :
-	backend_(nullptr), server_{ server } {
-}
+static wstring_convert<codecvt_utf8<wchar_t>> utf8Codec;
 
-bool ClientInfo::isInitialized() const {
-	return (!clientId_.empty() && backend_ != nullptr);
-}
+static constexpr UINT WM_SHELL_NOTIFY_ICON = WM_APP + 1;
+static constexpr UINT MAIN_SHELL_NOTIFY_ICON_ID = 1;
 
-bool ClientInfo::init(const Json::Value & params) {
-	const char* method = params["method"].asCString();
-	if (method != nullptr) {
-		if (strcmp(method, "init") == 0) {  // the client connects to us the first time
-			// generate a new uuid for client ID
-			UUID uuid;
-			UuidCreate(&uuid);
-			RPC_CSTR uuid_str = nullptr;
-			UuidToStringA(&uuid, &uuid_str);
-			clientId_ = (char*)uuid_str;
-			RpcStringFreeA(&uuid_str);
+static constexpr UINT ID_ENABLE_DEBUG_LOG = 1000;
+static constexpr UINT ID_SHOW_DEBUG_LOGS = 1001;
+static constexpr UINT ID_RESTART_PIME_BACKENDS = 1002;
 
-			// find a backend for the client text service
-			const char* guid = params["id"].asCString();
-			backend_ = server_->backendFromLangProfileGuid(guid);
-			if (backend_ != nullptr) {
-				// FIXME: write some response to indicate the failure
-				return true;
-			}
-		}
-	}
-	return false;
-}
+static constexpr size_t MAX_LOG_FILE_SIZE = 5 * 1024 * 1024; // log file size: 5 MB
+static constexpr int NUM_LOG_FILES = 5;  // backup 3 copies of the log file
+
+static constexpr wchar_t CONFIG_FILE_REL_PATH[] = L"\\PIMELauncher.json";
 
 
 PipeServer::PipeServer() :
@@ -88,15 +75,18 @@ PipeServer::PipeServer() :
 	everyoneSID_(nullptr),
 	allAppsSID_(nullptr),
 	quitExistingLauncher_(false),
-	debugClientPipe_{ nullptr } {
+	logLevel_{spdlog::level::warn} {
+
 	// this can only be assigned once
 	assert(singleton_ == nullptr);
 	singleton_ = this;
+
+	initDataDir();
+	loadConfig();
+	initLogger();
 }
 
 PipeServer::~PipeServer() {
-	closeDebugClient();
-
 	if (everyoneSID_ != nullptr)
 		FreeSid(everyoneSID_);
 	if (allAppsSID_ != nullptr)
@@ -105,6 +95,49 @@ PipeServer::~PipeServer() {
 		LocalFree(securittyDescriptor_);
 	if (acl_ != nullptr)
 		LocalFree(acl_);
+}
+
+void PipeServer::initDataDir() {
+	wchar_t* appLocalDataDirPath = nullptr;
+	::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &appLocalDataDirPath);
+	dataDirPath_ = std::wstring(appLocalDataDirPath) + L"\\PIME";
+	::CoTaskMemFree(appLocalDataDirPath);
+	::SHCreateDirectoryEx(NULL, dataDirPath_.c_str(), NULL);
+}
+
+void PipeServer::initLogger() {
+	auto logDirPath = dataDirPath_ + L"\\Log";
+	::SHCreateDirectoryEx(NULL, logDirPath.c_str(), NULL);
+
+	auto logFile = logDirPath + L"\\PIMELauncher.log";
+	try {
+		logger_ = spdlog::rotating_logger_mt("PIMELauncher", logFile, MAX_LOG_FILE_SIZE, NUM_LOG_FILES);
+		spdlog::flush_on(spdlog::level::debug);  // flush to the file on any kind of errors (always flush)
+	}
+	catch(const spdlog::spdlog_ex& exc) {
+		// fail to create file logger, fallback to console logger
+		logger_ = spdlog::stderr_logger_mt("PIMELauncher");
+	}
+
+	logger_->set_level(logLevel_);
+}
+
+void PipeServer::loadConfig() {
+	auto configFile = dataDirPath_ + CONFIG_FILE_REL_PATH;
+	Json::Value config;
+	if (loadJsonFile(configFile, config)) {
+		auto levelName = config["logLevel"].asString();
+		logLevel_ = spdlog::level::from_str(levelName);
+	}
+}
+
+void PipeServer::saveConfig() {
+	auto configFile = dataDirPath_ + CONFIG_FILE_REL_PATH;
+	Json::Value config;
+	config["logLevel"] = spdlog::level::to_c_str(logLevel_);
+	if (!saveJsonFile(configFile, config)) {
+		logger_->error("fail to write config file");
+	}
 }
 
 void PipeServer::initBackendServers(const std::wstring & topDirPath) {
@@ -167,6 +200,15 @@ void PipeServer::finalizeBackendServers() {
 	}
 }
 
+void PipeServer::restartAllBackends() {
+	logger_->info("Restart all backends");
+	for (auto& backend : backends_) {
+		if (backend->isProcessRunning()) {
+			backend->restartProcess();
+		}
+	}
+}
+
 BackendServer* PipeServer::backendFromName(const char* name) {
 	// for such a small list, linear search is often faster than hash table or map
 	for (BackendServer* backend : backends_) {
@@ -179,13 +221,10 @@ BackendServer* PipeServer::backendFromName(const char* name) {
 void PipeServer::onBackendClosed(BackendServer * backend) {
 	// the backend server is terminated, disconnect all clients using this backend
 	auto removed_it = std::remove_if(clients_.begin(), clients_.end(),
-		[backend](ClientInfo* client) {
+		[backend](PipeClient* client) {
 		if (client->backend_ == backend) {
 			// if the client is using this broken backend, disconnect it
-			uv_close((uv_handle_t*)&client->pipe_, [](uv_handle_t* handle) {
-				auto client = (ClientInfo*)handle->data;
-				delete client;
-			});
+			client->destroy();
 			return true;
 		}
 		return false;
@@ -227,11 +266,9 @@ void PipeServer::parseCommandLine(LPSTR cmd) {
 }
 
 // send IPC message "quit" to the existing PIME Launcher process.
-void PipeServer::terminateExistingLauncher() {
-	string pipe_name = getPipeName("Launcher");
-	char buf[16];
-	DWORD rlen;
-	::CallNamedPipeA(pipe_name.c_str(), "quit", 4, buf, sizeof(buf) - 1, &rlen, 1000); // wait for 1 sec.
+void PipeServer::terminateExistingLauncher(HWND existingHwnd) {
+	PostMessage(existingHwnd, WM_QUIT, 0, 0);
+	::DestroyWindow(existingHwnd);
 }
 
 void PipeServer::quit() {
@@ -239,61 +276,16 @@ void PipeServer::quit() {
 	ExitProcess(0); // quit PipeServer
 }
 
-void PipeServer::handleBackendReply(const char * readBuf, size_t len) {
-	recentDebugMessages_.emplace_back(readBuf, len);
-	// only keep recent 100 messages
-	if (recentDebugMessages_.size() >= 100) {
-		recentDebugMessages_.pop_front();
-	}
-	// print to debug console if there is any
-	outputDebugMessage(readBuf, len);
-
-	// pass the response back to the clients
-	auto line = readBuf;
-	auto buf_end = readBuf + len;
-	while (line < buf_end) {
-		// Format of each line:
-		// PIMG_MSG|<client_id>|<json reply>\n
-		if (auto line_end = strchr(line, '\n')) {
-			// only handle lines prefixed with "PIME_MSG|" since other lines
-			// might be debug messages printed by the backend.
-			if (strncmp(line, "PIME_MSG|", 9) == 0) {
-				line += 9; // Skip the prefix
-				if (auto sep = strchr(line, '|')) {
-					// split the client_id from the remaining json reply
-					string clientId(line, sep - line);
-					auto msg = sep + 1;
-					auto msg_len = line_end - msg;
-					// because Windows uses CRLF "\r\n" for new lines, python and node.js
-					// try to convert "\n" to "\r\n" sometimes. Let's remove the additional '\r'
-					if (msg_len > 0 && msg[msg_len - 1] == '\r') {
-						--msg_len;
-					}
-					// send the reply message back to the client
-					sendReplyToClient(clientId, msg, msg_len);
-				}
-			}
-			line = line_end + 1;
-		}
-		else {
-			break;
-		}
-	}
-}
-
-void PipeServer::sendReplyToClient(const std::string clientId, const char* msg, size_t len) {
+PipeClient* PipeServer::clientFromId(const std::string& clientId) {
+	PipeClient* client = nullptr;
 	// find the client with this ID
-	auto it = std::find_if(clients_.cbegin(), clients_.cend(), [clientId](const ClientInfo* client) {
+	auto it = std::find_if(clients_.cbegin(), clients_.cend(), [clientId](const PipeClient* client) {
 		return client->clientId_ == clientId;
 	});
 	if (it != clients_.cend()) {
-		auto client = *it;
-		uv_buf_t buf = {len, (char*)msg};
-		uv_write_t* req = new uv_write_t{};
-		uv_write(req, client->stream(), &buf, 1, [](uv_write_t* req, int status) {
-			delete req;
-		});
+		client = *it;
 	}
+	return client;
 }
 
 void PipeServer::initSecurityAttributes() {
@@ -373,51 +365,34 @@ void PipeServer::initPipe(uv_pipe_t* pipe, const char* app_name, SECURITY_ATTRIB
 }
 
 
-void PipeServer::onNewClientConnected(uv_stream_t* server, int status) {
-	auto server_pipe = reinterpret_cast<uv_pipe_t*>(server);
-	auto client = new ClientInfo{this};
-	uv_pipe_init_windows_named_pipe(uv_default_loop(), &client->pipe_, 0, server_pipe->pipe_mode, server_pipe->security_attributes);
-	client->pipe_.data = client;
-	uv_stream_set_blocking((uv_stream_t*)&client->pipe_, 0);
-	uv_accept(server, (uv_stream_t*)&client->pipe_);
+void PipeServer::acceptClient(PipeClient* client) {
+	auto serverStream = reinterpret_cast<uv_stream_t*>(&serverPipe_);
+	uv_accept(serverStream, client->stream());
 	clients_.push_back(client);
-
-	uv_read_start((uv_stream_t*)&client->pipe_,
-		[](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-			buf->base = new char[suggested_size];
-			buf->len = suggested_size;
-		},
-		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-			auto client = (ClientInfo*)stream->data;
-			client->server_->onClientDataReceived(stream, nread, buf);
-		}
-	);
 }
 
-void PipeServer::onClientDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-	auto client = (ClientInfo*)stream->data;
-	if (nread <= 0 || nread == UV_EOF || buf->base == nullptr) {
-		if (buf->base) {
-			delete []buf->base;
-		}
-		// the client connection seems to be broken. close it.
-		closeClient(client);
-		return;
-	}
-	if (buf->base) {
-		handleClientMessage(client, buf->base, buf->len);
-		delete[]buf->base;
-	}
+void PipeServer::removeClient(PipeClient* client) {
+	clients_.erase(find(clients_.begin(), clients_.end(), client));
+}
+
+void PipeServer::onNewClientConnected(uv_stream_t* server, int status) {
+	auto server_pipe = reinterpret_cast<uv_pipe_t*>(server);
+	auto client = new PipeClient{this, server_pipe->pipe_mode, server_pipe->security_attributes };
+	acceptClient(client);
+	client->startReadPipe();
 }
 
 int PipeServer::exec(LPSTR cmd) {
 	parseCommandLine(cmd);
-	if (quitExistingLauncher_) { // terminate existing launcher process
-		terminateExistingLauncher();
+	if (HWND existingHwnd = ::FindWindow(wndClassName_, nullptr)) {
+		// found an existing process
+		if (quitExistingLauncher_) { // terminate existing launcher process
+			terminateExistingLauncher(existingHwnd);
+		}
 		return 0;
 	}
 
-	// get the PIME directory
+	// get the PIME installation directory
 	wchar_t exeFilePathBuf[MAX_PATH];
 	DWORD len = GetModuleFileNameW(NULL, exeFilePathBuf, MAX_PATH);
 	exeFilePathBuf[len] = '\0';
@@ -455,142 +430,144 @@ int PipeServer::exec(LPSTR cmd) {
 		_this->onNewClientConnected(server, status);
 	});
 
-	// initialize the debug pipe connected by debug console
-	initPipe(&debugServerPipe_, "Debug", nullptr);
-
-	// listen to events from the debug console
-	uv_listen(reinterpret_cast<uv_stream_t*>(&debugServerPipe_), 1, [](uv_stream_t* server, int status) {
-		PipeServer* _this = (PipeServer*)server->data;
-		_this->onNewDebugClientConnected(server, status);
-	});
+	// run GUI message loop in another worker thread
+	uv_thread_t uiThread;
+	uv_thread_create(&uiThread, [](void* arg) {
+		reinterpret_cast<PipeServer*>(arg)->runGuiThread();
+	}, this);
 
 	// run the main loop
 	uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+
+	uv_thread_join(&uiThread);  // wait for the GUI message loop to quit
 	return 0;
 }
 
-void PipeServer::handleClientMessage(ClientInfo* client, const char* readBuf, size_t len) {
-	// special handling, asked for quitting PIMELauncher.
-	if (len >= 4 && strncmp("quit", readBuf, 4) == 0) {
-		quit();
-		return;
-	}
-	if (!client->isInitialized()) {
-		Json::Value msg;
-		Json::Reader reader;
-		if (reader.parse(readBuf, msg)) {
-			client->init(msg);
+// Window procedure of the main window
+// this method is called from an worker thread other than the main thread
+LRESULT PipeServer::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
+	switch (msg) {
+	case WM_CREATE:
+		return TRUE;
+	case WM_SHELL_NOTIFY_ICON:
+		// shell tray notification icon events
+		// reference: https://www.codeproject.com/Articles/4768/Basic-use-of-Shell-NotifyIcon-in-Win32
+		switch (LOWORD(lp)) {
+		case WM_RBUTTONDOWN:
+			showPopupMenu();
+			return 0;
 		}
+		break;
+	case WM_COMMAND:
+		switch (LOWORD(wp)) {
+		case ID_RESTART_PIME_BACKENDS:
+			restartAllBackends();
+			return 0;
+		case ID_ENABLE_DEBUG_LOG:
+			// toggle between log_level: warning <--> debug
+			logLevel_ = (logLevel_ <= spdlog::level::debug) ? spdlog::level::warn : spdlog::level::debug;
+			logger_->set_level(logLevel_);
+			saveConfig();
+			break;
+		case ID_SHOW_DEBUG_LOGS:
+			// show logs dir
+			::ShellExecuteW(hwnd_, L"open", (dataDirPath_ + L"\\Log").c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+			break;
+		}
+		break;
+	default:
+		return ::DefWindowProc(hwnd_, msg, wp, lp);
 	}
-	// pass the incoming message to the backend
-	auto backend = client->backend_;
-	if (backend) {
-		backend->handleClientMessage(client, readBuf, len);
-	}
+	return 0;
 }
 
-void PipeServer::closeClient(ClientInfo* client) {
-	if (client->backend_ != nullptr) {
-		// FIXME: client->backend_->removeClient(client->clientId_);
-		// notify the backend server to remove the client
-		const char msg[] = "{\"method\":\"close\"}";
-		client->backend_->handleClientMessage(client, msg, strlen(msg));
-	}
-
-	clients_.erase(find(clients_.begin(), clients_.end(), client));
-	uv_close((uv_handle_t*)&client->pipe_, [](uv_handle_t* handle) {
-		auto client = (ClientInfo*)handle->data;
-		delete client;
-	});
-}
-
-void PipeServer::onNewDebugClientConnected(uv_stream_t* server, int status) {
-	auto server_pipe = reinterpret_cast<uv_pipe_t*>(server);
-	uv_pipe_t* client_pipe = new uv_pipe_t{};
-	uv_pipe_init_windows_named_pipe(uv_default_loop(), client_pipe, 0, server_pipe->pipe_mode, server_pipe->security_attributes);
-	client_pipe->data = this;
-	uv_stream_set_blocking((uv_stream_t*)client_pipe, 0);
-	uv_accept(server, (uv_stream_t*)client_pipe);
-
-	// kill existing debug console client since we only allow one connection
-	if (debugClientPipe_) {
-		closeDebugClient();
-	}
-	debugClientPipe_ = client_pipe;
-
-	// read debugging commands from the debug console
-	uv_read_start((uv_stream_t*)debugClientPipe_,
-		[](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-			buf->base = new char[suggested_size];
-			buf->len = suggested_size;
-		},
-		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-			auto server = (PipeServer*)stream->data;
-			server->onDebugClientDataReceived(stream, nread, buf);
+LPCTSTR PipeServer::registerWndClass(WNDCLASSEX& wndClass) const {
+	std::memset(&wndClass, 0, sizeof(wndClass));
+	wndClass.cbSize = sizeof(wndClass);
+	wndClass.hInstance = HINSTANCE(::GetModuleHandle(NULL));
+	wndClass.lpszClassName = wndClassName_;
+	wndClass.lpfnWndProc = [](HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) -> LRESULT {
+		if (msg == WM_NCCREATE) {
+			auto cs = reinterpret_cast<CREATESTRUCT*>(lp);
+			::SetWindowLongPtr(hwnd, GWL_USERDATA, LONG_PTR(cs->lpCreateParams));
+			return TRUE;
 		}
-	);
-
-	// if there are recent debug messages, output them to the debug console
-	for (auto& msg : recentDebugMessages_) {
-		outputDebugMessage(msg.c_str(), msg.length());
-	}
-}
-
-void PipeServer::onDebugClientDataReceived(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf) {
-	// receive debug commands from the debug console
-	// debug commands are issued line by line and starts with "DEBUG_CMD:" prefix.
-	if (nread <= 0 || nread == UV_EOF || buf->base == nullptr) {
-		if (buf->base) {
-			delete[]buf->base;
-		}
-		// the client connection seems to be broken. close it.
-		closeDebugClient();
-		return;
-	}
-	if (buf->base) {
-		stringstream lines{ string(buf->base, nread) };
-		for (string line; getline(lines, line);) {
-			if (line == "DEBUG_CMD:RESTART_BACKENDS") {
-				for (auto& backend : backends_) {
-					if (backend->isProcessRunning()) {
-						string msg = "\nRestart backend:" + backend->name_ + "\n";
-						outputDebugMessage(msg.c_str(), msg.length());
-						backend->restartProcess();
-					}
-				}
+		else {
+			auto pObj = reinterpret_cast<PipeServer*>(::GetWindowLongPtr(hwnd, GWL_USERDATA));
+			if (pObj) {
+				return pObj->wndProc(msg, wp, lp);
 			}
 		}
-		delete[]buf->base;
+		return 0;
+	};
+
+	auto wndClassAtom = ::RegisterClassEx(&wndClass);
+	return LPCTSTR(wndClassAtom);
+}
+
+void PipeServer::createShellNotifyIcon() {
+	memset(&shellNotifyIconData_, 0, sizeof(shellNotifyIconData_));
+	shellNotifyIconData_.cbSize = sizeof(shellNotifyIconData_);
+	shellNotifyIconData_.uVersion = NOTIFYICON_VERSION_4; // newer version after Windows Vista
+	shellNotifyIconData_.hWnd = hwnd_;
+	shellNotifyIconData_.uID = MAIN_SHELL_NOTIFY_ICON_ID;
+	shellNotifyIconData_.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+	shellNotifyIconData_.uCallbackMessage = WM_SHELL_NOTIFY_ICON;
+	// auto hinstance = HINSTANCE(::GetModuleHandle(NULL));
+	// shellNotifyIconData_.hIcon = ::LoadIcon(hinstance, IDI_APPLICATION);
+	shellNotifyIconData_.hIcon = ::LoadIcon(NULL, IDI_APPLICATION);
+
+	// FIXME: make this translatable later
+	wcscpy(shellNotifyIconData_.szTip, L"PIME Launcher");
+
+	::Shell_NotifyIcon(NIM_ADD, &shellNotifyIconData_);
+}
+
+void PipeServer::destroyShellNotifyIcon() {
+	::Shell_NotifyIcon(NIM_DELETE, &shellNotifyIconData_);
+}
+
+void PipeServer::showPopupMenu() const {
+	// NOTE: according to the API doc of NOTIFYICONDATA, we should able to get x & y pos from WPARAM.
+	// However, it does not work in Windows 10 during my experiment. So we get cursor pos instead.
+	POINT pos;
+	::GetCursorPos(&pos);
+
+	HMENU hmenu = ::CreatePopupMenu();
+	// FIXME: make this translatable later
+	bool debugEnabled = logLevel_ <= spdlog::level::debug;
+	::AppendMenu(hmenu, MF_STRING|MF_ENABLED|(debugEnabled ? MF_CHECKED : 0), ID_ENABLE_DEBUG_LOG, L"Enable Debug Log");
+	::AppendMenu(hmenu, MF_STRING | MF_ENABLED, ID_SHOW_DEBUG_LOGS, L"Show Debug Logs");
+	::AppendMenu(hmenu, MF_SEPARATOR, 0, 0);
+	::AppendMenu(hmenu, MF_STRING | MF_ENABLED, ID_RESTART_PIME_BACKENDS, L"Restart PIME");
+
+	::SetForegroundWindow(hwnd_);
+	::TrackPopupMenu(hmenu, TPM_LEFTALIGN| TPM_BOTTOMALIGN, pos.x, pos.y, 0, hwnd_, NULL);
+	::DestroyMenu(hmenu);
+}
+
+
+// Main Windows UI message loop
+void PipeServer::runGuiThread() {
+	// this method is called from an worker thread other than the main thread
+	// For libuv, it's only safe to use uv_aysnc_*() from within this thread.
+
+	WNDCLASSEX wndClass;
+	auto wndClassAtom = registerWndClass(wndClass);
+	hwnd_ = ::CreateWindowEx(0, LPCTSTR(wndClassAtom), NULL, 0, 0, 0, 0, 0, HWND_DESKTOP, NULL, wndClass.hInstance, this);
+
+	createShellNotifyIcon();
+
+	MSG msg;
+	while (::GetMessage(&msg, NULL, 0, 0)) {
+		::TranslateMessage(&msg);
+		::DispatchMessage(&msg);
 	}
+
+	destroyShellNotifyIcon();
+
+	::ExitProcess(0);
 }
 
-void PipeServer::closeDebugClient() {
-	uv_close((uv_handle_t*)debugClientPipe_, [](uv_handle_t* handle) {
-		delete (uv_pipe_t*)handle;
-	});
-	debugClientPipe_ = nullptr;
-}
-
-struct DebugMessageReq {
-	uv_write_t req;
-	string msg;
-	PipeServer* pipeServer;
-};
-
-void PipeServer::outputDebugMessage(const char * msg, size_t len) {
-	if (debugClientPipe_ != nullptr) {
-		auto req_data = new DebugMessageReq{ {}, string{msg, len }, this};
-		req_data->req.data = req_data;
-		uv_buf_t buf = {req_data->msg.length(), (char*)req_data->msg.c_str()};
-
-		uv_write(&req_data->req, reinterpret_cast<uv_stream_t*>(debugClientPipe_), &buf, 1, [](uv_write_t* req, int status) {
-			DebugMessageReq* req_data = reinterpret_cast<DebugMessageReq*>(req->data);
-			if (status < 0 || status == UV_EOF) {
-				req_data->pipeServer->closeDebugClient();
-			}
-			delete req_data;
-		});
-	}
-}
 
 } // namespace PIME

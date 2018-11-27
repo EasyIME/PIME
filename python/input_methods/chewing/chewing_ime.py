@@ -418,6 +418,17 @@ class ChewingTextService(TextService):
                         charCode = ord(charStr.lower())
                     chewingContext.handle_Default(charCode)
                 elif keyEvent.keyCode == VK_SPACE: # 空白鍵
+                    # 使用空白鍵移動游標選字
+                    if self.showCandidates and cfg.spaceKeyCandidatesAction == 1:                        
+                        candCursor = self.candidateCursor  # 目前的游標位置
+                        candCount = len(self.candidateList)  # 目前選字清單項目數                        
+                        if (candCursor + cfg.candPerRow) < candCount:
+                            candCursor += cfg.candPerRow
+                        else :
+                            chewingContext.handle_PageDown() 
+                        
+                        self.setCandidateCursor(candCursor)
+                
                     # NOTE: libchewing 有 bug: 當啟用 "使用空白鍵選字" 時，chewing_handle_Space()
                     # 會忽略空白鍵，造成打不出空白。因此在此只有當 composition string 有內容
                     # 有需要選字時，才呼叫 handle_Space()，否則改用 handle_Default()，以免空白鍵被吃掉

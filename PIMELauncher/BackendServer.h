@@ -88,7 +88,7 @@ private:
 	void onProcessTerminated(int64_t exit_status, int term_signal);
 	void closeStdioPipes();
 
-	void handleBackendReply(const char* readBuf, size_t len);
+	void handleBackendReply();
 
 private:
 	PipeServer* pipeServer_;
@@ -98,6 +98,7 @@ private:
 	uv_pipe_t* stdoutPipe_;
 	uv_pipe_t* stderrPipe_;
 	bool ready_;
+	std::string stdoutReadBuf_;
 
 	bool needRestart_;
 	// command to launch the server process

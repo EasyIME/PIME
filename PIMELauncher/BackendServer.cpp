@@ -97,6 +97,7 @@ void BackendServer::startProcess() {
 	stdoutPipe_ = new uv_pipe_t{};
 	stdoutPipe_->data = this;
 	uv_pipe_init(uv_default_loop(), stdoutPipe_, 0);
+	stdoutReadBuf_.clear();
 
 	stderrPipe_ = new uv_pipe_t{};
 	stderrPipe_->data = this;
@@ -202,13 +203,23 @@ void BackendServer::onProcessDataReceived(uv_stream_t * stream, ssize_t nread, c
 		return;
 	}
 	if (buf->base) {
+		// print to debug log if there is any
+		logger()->debug("RECV: {}", std::string(buf->base, buf->len));
+
 		// initial ready message from the backend server
-		if (buf->base[0] == '\0') {
+		if (!ready_ && buf->base[0] == '\0') {
 			ready_ = true;
+			// skip the first byte, and add the received data to our buffer
+			// FIXME: this is not very reliable
+			stdoutReadBuf_.append(buf->base + 1, buf->len - 1);
 		}
 		else {
-			handleBackendReply(buf->base, nread);
+			// add the received data to our buffer
+			stdoutReadBuf_.append(buf->base, buf->len);
 		}
+
+		handleBackendReply();
+
 		delete[]buf->base;
 	}
 }
@@ -258,6 +269,7 @@ void BackendServer::closeStdioPipes() {
 			delete reinterpret_cast<uv_pipe_t*>(handle);
 		});
 		stdoutPipe_ = nullptr;
+		stdoutReadBuf_.clear();
 	}
 
 	if (stderrPipe_ != nullptr) {
@@ -268,44 +280,49 @@ void BackendServer::closeStdioPipes() {
 	}
 }
 
-void BackendServer::handleBackendReply(const char * readBuf, size_t len) {
-	// print to debug log if there is any
-	logger()->debug("RECV: {}", std::string(readBuf, len));
+void BackendServer::handleBackendReply() {
+	// each output message should be a full line ends with \n or \r\n, so we need to do buffering and
+	// handle the messages line by line.
+	auto lineStartPos = 0;
+	for (;;) {
+		auto lineEndPos = stdoutReadBuf_.find('\n', lineStartPos);
+		if (lineEndPos != stdoutReadBuf_.npos) {
+			auto lineLen = lineEndPos - lineStartPos;
+			auto line = stdoutReadBuf_.c_str() + lineStartPos;
+			auto lineEnd = line + lineLen;
 
-	// pass the response back to the clients
-	auto line = readBuf;
-	auto buf_end = readBuf + len;
-	while (line < buf_end) {
-		// Format of each line: "PIMG_MSG|<client_id>|<reply JSON string>\n"
-		if (auto line_end = strchr(line, '\n')) {
 			// only handle lines prefixed with "PIME_MSG|" since other lines
 			// might be debug messages printed by the backend.
+			// Format of each message: "PIMG_MSG|<client_id>|<reply JSON string>\n"
 			if (strncmp(line, "PIME_MSG|", 9) == 0) {
 				line += 9; // Skip the "PIME_MSG|" prefix
-
 				if (auto sep = strchr(line, '|')) {
 					// split the client_id from the remaining json reply
 					string clientId(line, sep - line);
 					auto msg = sep + 1;
-					auto msg_len = line_end - msg;
+					auto msgLen = lineEnd - msg;
 					// because Windows uses CRLF "\r\n" for new lines, python and node.js
 					// try to convert "\n" to "\r\n" sometimes. Let's remove the additional '\r'
-					if (msg_len > 0 && msg[msg_len - 1] == '\r') {
-						--msg_len;
+					if (msgLen > 0 && msg[msgLen - 1] == '\r') {
+						--msgLen;
 					}
 
 					// send the reply message back to the client
 					if (auto client = pipeServer_->clientFromId(clientId)) {
-						client->writePipe(msg, len);
+						client->writePipe(msg, msgLen);
 					}
 				}
 			}
-			line = line_end + 1;
+
+			// skip empty lines or additional CRLF, and go to the next non-empty line
+			lineStartPos = lineEndPos + 1;
 		}
 		else {
 			break;
 		}
 	}
+	// Leave remaining data not processed in the buffer, waiting for the next \n so it becomes a full line.
+	stdoutReadBuf_ = stdoutReadBuf_.substr(lineStartPos);
 }
 
 void BackendServer::startReadOutputPipe() {

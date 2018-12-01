@@ -156,7 +156,7 @@ def run_test():
     activate_window(random.choice(target_windows))
     time.sleep(1)
 
-    for i in range(5000):
+    for i in range(n):
         phrase, keys = random.choice(phrases)
         try:
             print(i, phrase, keys)
@@ -171,16 +171,16 @@ def run_test():
             press_key('\r')
             press_key('\r')
 
-        # 按下 Ctrl + space (10% 機率發生)
-        if random.random() < 0.1:
+        # 按下 Ctrl + space (30% 機率發生)
+        if random.random() < 0.3:
             time.sleep(0.5)
             keybd_event(VK_CONTROL, 0, 0, 0)
             press_key(' ')
             keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
             time.sleep(0.5)
 
-        # 按下 shift  0.3 秒後後放開 (10% 機率發生)
-        if random.random() < 0.1:
+        # 按下 shift  0.3 秒後後放開 (30% 機率發生)
+        if random.random() < 0.3:
             press_key(VK_SHIFT, hold=0.3)
 
         # 按下[下方向鍵] 開啟選字 (20% 機率發生)
@@ -193,8 +193,8 @@ def run_test():
             else:
                 press_key(VK_ESCAPE)  # 按下 ESC 關閉選字清單
 
-        # 切換視窗 (10% 發生率)
-        if len(target_windows) > 1 and random.random() < 0.1:
+        # 切換視窗 (20% 發生率)
+        if len(target_windows) > 1 and random.random() < 0.2:
             """
             # Alt + Tab
             time.sleep(0.5)

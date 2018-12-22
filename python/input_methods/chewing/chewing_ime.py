@@ -422,8 +422,8 @@ class ChewingTextService(TextService):
                     if self.showCandidates and cfg.spaceKeyCandidatesAction == 1:                        
                         candCursor = self.candidateCursor  # 目前的游標位置
                         candCount = len(self.candidateList)  # 目前選字清單項目數                        
-                        if (candCursor + cfg.candPerRow) < candCount:
-                            candCursor += cfg.candPerRow
+                        if (candCursor + 1) < candCount:
+                            candCursor += 1
                         else :
                             chewingContext.handle_PageDown() 
                         

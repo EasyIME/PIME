@@ -432,7 +432,7 @@ class ChewingTextService(TextService):
                     # NOTE: libchewing 有 bug: 當啟用 "使用空白鍵選字" 時，chewing_handle_Space()
                     # 會忽略空白鍵，造成打不出空白。因此在此只有當 composition string 有內容
                     # 有需要選字時，才呼叫 handle_Space()，否則改用 handle_Default()，以免空白鍵被吃掉
-                    if self.isComposing():
+                    elif self.isComposing():
                         chewingContext.handle_Space()
                     else:
                         chewingContext.handle_Default(charCode)

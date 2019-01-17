@@ -419,16 +419,16 @@ class ChewingTextService(TextService):
                     chewingContext.handle_Default(charCode)
                 elif keyEvent.keyCode == VK_SPACE: # 空白鍵
                     # 使用空白鍵移動游標選字
-                    if self.showCandidates and cfg.spaceKeyCandidatesAction == 1:                        
+                    if self.showCandidates and cfg.spaceKeyCandidatesAction == 1:
                         candCursor = self.candidateCursor  # 目前的游標位置
-                        candCount = len(self.candidateList)  # 目前選字清單項目數                        
+                        candCount = len(self.candidateList)  # 目前選字清單項目數
                         if (candCursor + 1) < candCount:
                             candCursor += 1
-                        else :
-                            chewingContext.handle_PageDown() 
-                        
+                        else:
+                            chewingContext.handle_PageDown()
+                            candCursor = 0  # 如果選字清單沒有下一頁，重設游標為第一個，讓空白鍵可以循環移動游標
+
                         self.setCandidateCursor(candCursor)
-                
                     # NOTE: libchewing 有 bug: 當啟用 "使用空白鍵選字" 時，chewing_handle_Space()
                     # 會忽略空白鍵，造成打不出空白。因此在此只有當 composition string 有內容
                     # 有需要選字時，才呼叫 handle_Space()，否則改用 handle_Default()，以免空白鍵被吃掉
@@ -441,7 +441,7 @@ class ChewingTextService(TextService):
                 elif keyEvent.isKeyToggled(VK_NUMLOCK) and keyCode >= VK_NUMPAD0 and keyCode <= VK_DIVIDE:
                     # numlock 開啟，處理 NumPad 按鍵
                     chewingContext.handle_Numlock(charCode)
-                else : # 其他按鍵不需要特殊處理
+                else: # 其他按鍵不需要特殊處理
                     chewingContext.handle_Default(charCode)
         else:  # 不可見字元 (方向鍵, Enter, Page Down...等等)
             # 如果有啟用在選字視窗內移動游標選字，而且目前正在選字
@@ -460,12 +460,17 @@ class ChewingTextService(TextService):
                         if candCursor > 0:
                             candCursor -= 1
                             ignoreKey = keyHandled = True
+                        else:  # 如果選字清單沒有下一頁，重設游標為最後一個，讓左右鍵可以循環移動游標
+                            candCursor = candCount - 1
+
                     elif keyCode == VK_RIGHT:  # 游標右移
                         if (candCursor + 1) < candCount:
                             candCursor += 1
                             ignoreKey = keyHandled = True
+                        else:  # 如果選字清單沒有下一頁，重設游標為第一個，讓左右鍵可以循環移動游標
+                            candCursor = 0
 
-                if cfg.upDownAction == 0:   # 使用上下鍵游標選字
+                if cfg.upDownAction == 0:   # 使用上下鍵游標選字，因上下鍵需要作為組字模式切換，所以不設定循環
                     if keyCode == VK_UP:  # 游標上移
                         if candCursor >= cfg.candPerRow:
                             candCursor -= cfg.candPerRow
@@ -527,7 +532,10 @@ class ChewingTextService(TextService):
                     self.setCandidateList(candidates)  # 更新候選字清單
                     self.setShowCandidates(True)
                     if cfg.leftRightAction == 0 or cfg.upDownAction == 0:  # 如果啟用選字清單內使用游標選字
-                        self.setCandidateCursor(0)  # 重設游標位置
+                        if keyCode == VK_LEFT:  # 如果按下左鍵，設定游標為選字清單前一頁最後一個
+                            self.setCandidateCursor(len(self.candidateList) - 1)
+                        else:  # 其他按鍵重設游標為第一個
+                            self.setCandidateCursor(0)
 
                 if not self.showCandidates:  # 如果目前沒有顯示選字視窗
                     self.setShowCandidates(True)  # 顯示選字視窗

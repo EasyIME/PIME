@@ -51,6 +51,7 @@ using namespace std;
 namespace PIME {
 
 PipeServer* PipeServer::singleton_ = nullptr;
+wchar_t PipeServer::singleInstanceMutexName_[] = L"PIMELauncherMutex";
 
 wchar_t PipeServer::wndClassName_[] = L"PIMELauncherWnd";
 
@@ -75,6 +76,7 @@ PipeServer::PipeServer() :
 	everyoneSID_(nullptr),
 	allAppsSID_(nullptr),
 	quitExistingLauncher_(false),
+	singleInstanceMutex_(nullptr),
 	logLevel_{spdlog::level::warn} {
 
 	// this can only be assigned once
@@ -95,6 +97,9 @@ PipeServer::~PipeServer() {
 		LocalFree(securittyDescriptor_);
 	if (acl_ != nullptr)
 		LocalFree(acl_);
+	if (singleInstanceMutex_) {
+		::CloseHandle(singleInstanceMutex_);
+	}
 }
 
 void PipeServer::initDataDir() {
@@ -384,11 +389,18 @@ void PipeServer::onNewClientConnected(uv_stream_t* server, int status) {
 
 int PipeServer::exec(LPSTR cmd) {
 	parseCommandLine(cmd);
-	if (HWND existingHwnd = ::FindWindow(wndClassName_, nullptr)) {
-		// found an existing process
-		if (quitExistingLauncher_) { // terminate existing launcher process
+
+	if (quitExistingLauncher_) { // terminate existing launcher process
+		if (HWND existingHwnd = ::FindWindow(wndClassName_, nullptr)) {
 			terminateExistingLauncher(existingHwnd);
 		}
+		return 0;
+	}
+
+	// ensure that only one instance of PIMELauncher can be running
+	singleInstanceMutex_ = ::CreateMutex(NULL, FALSE, singleInstanceMutexName_);
+	if (GetLastError() == ERROR_ALREADY_EXISTS) {
+		// mutex already exists: found an existing process.
 		return 0;
 	}
 

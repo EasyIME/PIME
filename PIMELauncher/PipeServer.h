@@ -118,6 +118,7 @@ private:
 	std::wstring topDirPath_;
 	bool quitExistingLauncher_;
 	static PipeServer* singleton_;
+	static wchar_t singleInstanceMutexName_[];
 	std::vector<PipeClient*> clients_;
 	uv_pipe_t serverPipe_; // main server pipe accepting connections from the clients
 
@@ -127,6 +128,8 @@ private:
 	HWND hwnd_; // handle of the window
 	static wchar_t wndClassName_[];
 	NOTIFYICONDATA shellNotifyIconData_;
+
+	HANDLE singleInstanceMutex_;
 
 	// error logging
 	spdlog::level::level_enum logLevel_;

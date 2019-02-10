@@ -177,40 +177,53 @@ $(function () {
 
         // Setup keybord page
         var keyboardNames = [
-            "預設",
-            "許氏鍵盤",
-            "IBM",
-            "精業",
-            "倚天",
-            "倚天 26 鍵",
-            "DVORAK",
-            "DVORAK 許氏",
-            "大千 26 鍵",
-            "漢語拼音",
-            "台灣華語羅馬拼音",
-            "注音二式",
-            "CARPALX"
+            ["預設", "default-chewing"],
+            ["許氏鍵盤", "hsu"],
+            ["IBM", "ibm"],
+            ["精業", "jingye"],
+            ["倚天 41 鍵", "et41"],
+            ["倚天 26 鍵", "et26"],
+            ["DVORAK", "dvorak-chewing"],
+            ["DVORAK 許氏鍵盤", "dvorak-hsu"],
+            ["大千 26 鍵", "dacian26"],
+            ["漢語拼音", "pinyin"],
+            ["台灣華語羅馬拼音", "pinyin"],
+            ["注音二式", "pinyin"],
+            ["CARPALX", "carpalx"]
         ];
 
-        var keyboard_page = $("#keyboard_tab"),
-            item = '';
+        var keyboard_page = $("#keyboard_tab");
+        var item = '<img id="keyboard_layouts" src="images\\keyborad_layouts\\pinyin.png" alt="pinyin">';
 
         for (var i = 0; i < keyboardNames.length; ++i) {
             var id = "kb" + i;
-            var name = keyboardNames[i];
+            var name = keyboardNames[i][0];
+            var layout = keyboardNames[i][1]
             item += '<div class="radio radio-info">' +
-                '<input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '">' +
-                '<label for="' + id + '">' + name + '</label><br>' +
+                '<input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '" data-layout="' + layout + '">' +
+                '<label for="' + id + '">' + name + '</label><br>' +                
                 '</div>';
         }
         keyboard_page.html(item);
 
-        $.each(keyboardNames, function (value, keybordName) {
-            var item = '<input type="radio" id="kb' + value + '" name="keyboardLayout" value="' + value + '">' + '<label for="kb' + value + '">' + keybordName + '</label><br>';
-            $("#keyboard_page").append(item);
-        });
-        $("#kb" + chewingConfig.keyboardLayout).prop("checked", true);
+        // Checked keyboard layout radio
+        var checkedKetboardLayoutRadio = $("#kb" + chewingConfig.keyboardLayout);
+        checkedKetboardLayoutRadio.prop("checked", true);
+        $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" + checkedKetboardLayoutRadio.data("layout") + ".png");
+        $("#keyboard_layouts").prop("alt", checkedKetboardLayoutRadio.data("layout"));
+        
 
+        // Register change keyboard_layouts event
+        $("#keyboard_tab input:radio").on("click", function() {
+            var layout_file_name = $(this).data("layout");
+            $("#keyboard_layouts").fadeOut(200, function(){
+                $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" + layout_file_name + ".png");
+                $("#keyboard_layouts").prop("alt", layout_file_name);                
+            });
+            
+            $("#keyboard_layouts").fadeIn(200);            
+        });
+        
         // Use for select phrase example
         function updateSelExample() {
             var example = ["選", "字", "大", "小", "範", "例"];

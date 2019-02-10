@@ -68,6 +68,14 @@ textarea {
     font-family: monospace;
 }
 
+#keyboard_tab #keyboard_layouts {	
+    display: block;
+    width: 70%;
+    float: right;
+    margin: 2em 5em 0 0;
+    box-shadow: 5px 6px #888888
+}
+
 #ui_tab .btn {
     text-transform: none;
 }

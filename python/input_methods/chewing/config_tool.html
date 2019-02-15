@@ -81,11 +81,11 @@
                                 <input type="checkbox" id="advanceAfterSelection" name="advanceAfterSelection">
                                 <label for="advanceAfterSelection">選字完畢自動跳到下一個字</label>
                             </div>
-                            <label for="upDownAction">使用<kbd>↑</kbd><kbd>↓</kbd>鍵：</label>
+                            使用<kbd>↑</kbd><kbd>↓</kbd>鍵：
                             <select name="upDownAction" id="upDownAction"></select><br>
-                            <label for="leftRightAction">使用<kbd>←</kbd><kbd>→</kbd>鍵：</label>
+                            使用<kbd>←</kbd><kbd>→</kbd>鍵：
                             <select name="leftRightAction" id="leftRightAction"></select><br>
-                            <label for="spaceKeyAction">使用<kbd>空白鍵</kbd>在打字時：</label>
+                            使用<kbd>空白鍵</kbd>在打字時：
                             <select name="spaceKeyAction" id="spaceKeyAction"></select>，在選字時：<select name="spaceKeyCandidatesAction" id="spaceKeyCandidatesAction"></select><br>
                         </div>
                         <div class="config_section">
@@ -106,10 +106,8 @@
                                 <input type="checkbox" id="outputSimpChinese" name="outputSimpChinese">
                                 <label for="outputSimpChinese">預設輸出簡體中文</label><br>
                             </div>
-                            <div class="checkbox checkbox-info">
-                                <input type="checkbox" id="addPhraseForward" name="addPhraseForward">
-                                <label for="addPhraseForward"><kbd>Ctrl</kbd> + 數字加入游標前方的詞</label><br>
-                            </div>
+                            使用<kbd>Ctrl</kbd>+<kbd>1 ~ 9數字鍵</kbd>加入游標
+                            <select name="addPhraseForward" id="addPhraseForward"></select><br>
                         </div>
                     </div>
                     <div role="tabpanel" class="tab-pane fade" id="ui_tab">
@@ -170,7 +168,6 @@
     <script src="js/jquery-3.2.1.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/bootstrap-select.min.js"></script>
-    <script src="js/es6-promise.auto.min.js"></script>
     <script src="js/sweetalert2.min.js"></script>
     <script src="js/config.js"></script>
 </body>

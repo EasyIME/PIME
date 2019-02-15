@@ -53,27 +53,29 @@
                             </div>
                         </div>
                         <div class="config_section">
-                            <h1>中文模式輸入</h1>
+                            <h1>中文模式輸入設定</h1>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="fullShapeSymbols" name="fullShapeSymbols">
+                                <label for="fullShapeSymbols">非注音符號對應鍵輸出全形標點符號（例如預設注音鍵盤配置下的"＝「」＼、"鍵，會輸出全形標點符號）</label>
+                            </div>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="fullShapeSymbolsWithShift" name="fullShapeSymbolsWithShift">
+                                <label for="fullShapeSymbolsWithShift">按住<kbd>Shift</kbd>輸出全形標點符號</label>
+                            </div>
+                            <div class="checkbox checkbox-info">
+                                <input type="checkbox" id="upperCaseWithShift" name="upperCaseWithShift">
+                                <label for="upperCaseWithShift">按住<kbd>Shift</kbd>輸出英文大寫字母</label>
+                            </div>
                             <div class="checkbox checkbox-info">
                                 <input type="checkbox" id="escCleanAllBuf" name="escCleanAllBuf">
                                 <label for="escCleanAllBuf">使用<kbd>Esc</kbd>清空輸入區字串</label>
                             </div>
                             <div class="checkbox checkbox-info">
-                                <input type="checkbox" id="fullShapeSymbols" name="fullShapeSymbols">
-                                <label for="fullShapeSymbols">中文模式下輸入全形標點符號（僅限非注音符號對應鍵，例如預設注音配置下＝「」＼、會輸出全形標點符號）</label>
-                            </div>
-                            <div class="checkbox checkbox-info">
-                                <input type="checkbox" id="fullShapeSymbolsWithShift" name="fullShapeSymbolsWithShift">
-                                <label for="fullShapeSymbolsWithShift">中文模式下按住<kbd>Shift</kbd>輸入全形標點符號</label>
-                            </div>
-                            <div class="checkbox checkbox-info">
-                                <input type="checkbox" id="upperCaseWithShift" name="upperCaseWithShift">
-                                <label for="upperCaseWithShift">中文模式下按住<kbd>Shift</kbd>輸入大寫英文字母</label>
-                            </div>
-                            <div class="checkbox checkbox-info">
                                 <input type="checkbox" id="enableShiftSpace" name="enableShiftSpace">
                                 <label for="enableShiftSpace">使用<kbd>Shift</kbd>+<kbd>空白鍵</kbd>切換全形/半形</label>
                             </div>
+                            使用<kbd>Ctrl</kbd>+<kbd>1 ~ 9數字鍵</kbd>加入游標
+                            <select name="addPhraseForward" id="addPhraseForward"></select>
                         </div>
                         <div class="config_section">
                             <h1>選字視窗動作</h1>
@@ -92,7 +94,7 @@
                             <h1>其他</h1>
                             <div class="checkbox checkbox-info">
                                 <input type="checkbox" id="disableOnStartup" name="disableOnStartup">
-                                <label for="disableOnStartup">預設以停用輸入法模式啟動 (Windows 8 以上適用)</label>
+                                <label for="disableOnStartup">預設以停用輸入法模式啟動（Windows 8 以上適用）</label>
                             </div>
                             <div class="checkbox checkbox-info">
                                 <input type="checkbox" id="defaultFullSpace" name="defaultFullSpace">
@@ -106,8 +108,6 @@
                                 <input type="checkbox" id="outputSimpChinese" name="outputSimpChinese">
                                 <label for="outputSimpChinese">預設輸出簡體中文</label><br>
                             </div>
-                            使用<kbd>Ctrl</kbd>+<kbd>1 ~ 9數字鍵</kbd>加入游標
-                            <select name="addPhraseForward" id="addPhraseForward"></select><br>
                         </div>
                     </div>
                     <div role="tabpanel" class="tab-pane fade" id="ui_tab">

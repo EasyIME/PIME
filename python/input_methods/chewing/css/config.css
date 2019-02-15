@@ -16,6 +16,10 @@ kbd {
     white-space: nowrap;
 }
 
+.btn-group {
+    width: 12em !important;
+}
+
 textarea {
     min-height: 400px;
 }

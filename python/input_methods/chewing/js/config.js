@@ -70,6 +70,10 @@ $(function () {
             "config": chewingConfig
         }
         if (symbolsChanged) {
+            // Append "\n" prevent error
+            if ($("#symbols").val().slice(-1) != "\n") {
+                $("#symbols").val($("#symbols").val() + "\n");
+            }
             data.symbols = $("#symbols").val();
         }
         if (swkbChanged) {

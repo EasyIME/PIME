@@ -606,7 +606,7 @@ class ChewingTextService(TextService):
         return False
 
     def onPreservedKey(self, guid):
-        self.lastKeyDownCode = 0;
+        self.lastKeyDownCode = 0
         # some preserved keys registered are pressed
         if guid == SHIFT_SPACE_GUID: # 使用者按下 shift + space
             self.toggleShapeMode()  # 切換全半形

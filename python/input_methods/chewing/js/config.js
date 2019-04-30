@@ -70,6 +70,10 @@ $(function () {
             "config": chewingConfig
         }
         if (symbolsChanged) {
+            // Append "\n" prevent error
+            if ($("#symbols").val().slice(-1) != "\n") {
+                $("#symbols").val($("#symbols").val() + "\n");
+            }
             data.symbols = $("#symbols").val();
         }
         if (swkbChanged) {
@@ -148,7 +152,7 @@ $(function () {
             "spaceKeyAction": {
                 1: "叫出選字視窗",
                 0: "輸出空格"
-            },            
+            },
             "spaceKeyCandidatesAction": {
                 1: "移動游標（循環）",
                 0: "翻頁"
@@ -160,6 +164,10 @@ $(function () {
                 "asdfjkl789",
                 "aoeuhtn789",
                 "1234qweras"
+            ],
+            "addPhraseForward": [
+                "後方的詞",
+                "前方的詞"
             ]
         };
 
@@ -201,7 +209,7 @@ $(function () {
             var layout = keyboardNames[i][1]
             item += '<div class="radio radio-info">' +
                 '<input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '" data-layout="' + layout + '">' +
-                '<label for="' + id + '">' + name + '</label><br>' +                
+                '<label for="' + id + '">' + name + '</label><br>' +
                 '</div>';
         }
         keyboard_page.html(item);
@@ -211,19 +219,18 @@ $(function () {
         checkedKetboardLayoutRadio.prop("checked", true);
         $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" + checkedKetboardLayoutRadio.data("layout") + ".png");
         $("#keyboard_layouts").prop("alt", checkedKetboardLayoutRadio.data("layout"));
-        
 
         // Register change keyboard_layouts event
         $("#keyboard_tab input:radio").on("click", function() {
             var layout_file_name = $(this).data("layout");
             $("#keyboard_layouts").fadeOut(200, function(){
                 $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" + layout_file_name + ".png");
-                $("#keyboard_layouts").prop("alt", layout_file_name);                
+                $("#keyboard_layouts").prop("alt", layout_file_name);
             });
-            
-            $("#keyboard_layouts").fadeIn(200);            
+
+            $("#keyboard_layouts").fadeIn(200);
         });
-        
+
         // Use for select phrase example
         function updateSelExample() {
             var example = ["選", "字", "大", "小", "範", "例"];

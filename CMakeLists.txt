@@ -51,3 +51,5 @@ if("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")
 
     add_subdirectory(${PROJECT_SOURCE_DIR}/PIMELauncher)
 endif("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")
+
+enable_testing()

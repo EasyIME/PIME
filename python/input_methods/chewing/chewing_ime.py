@@ -116,22 +116,22 @@ class ChewingTextService(TextService):
         chewingContext = self.chewingContext
 
         # 按下 Ctrl+ 數字加入游標"前方"的詞 (或是後方)
-        chewingContext.set_addPhraseDirection(cfg.addPhraseForward);
+        chewingContext.set_addPhraseDirection(cfg.addPhraseForward)
 
         # 選字後自動把游標往後移一個字
-        chewingContext.set_autoShiftCur(cfg.advanceAfterSelection);
+        chewingContext.set_autoShiftCur(cfg.advanceAfterSelection)
 
         # 每頁顯示幾個候選字
-        chewingContext.set_candPerPage(cfg.candPerPage);
+        chewingContext.set_candPerPage(cfg.candPerPage)
 
         # 按下 ESC 鍵清除正在編輯的字
-        chewingContext.set_escCleanAllBuf(cfg.escCleanAllBuf);
+        chewingContext.set_escCleanAllBuf(cfg.escCleanAllBuf)
 
         # 鍵盤 layout 種類
-        chewingContext.set_KBType(cfg.keyboardLayout);
+        chewingContext.set_KBType(cfg.keyboardLayout)
 
         # Space 鍵行為
-        chewingContext.set_spaceAsSelection(cfg.spaceKeyAction);
+        chewingContext.set_spaceAsSelection(cfg.spaceKeyAction)
 
         # 設定 UI 外觀
         self.customizeUI(candFontName = 'MingLiu',
@@ -190,7 +190,7 @@ class ChewingTextService(TextService):
 
         # 向系統宣告 Shift + Space 這個組合為特殊用途 (全半形切換)
         # 當 Shift + Space 被按下的時候，onPreservedKey() 會被呼叫
-        self.addPreservedKey(VK_SPACE, TF_MOD_SHIFT, SHIFT_SPACE_GUID); # shift + space
+        self.addPreservedKey(VK_SPACE, TF_MOD_SHIFT, SHIFT_SPACE_GUID) # shift + space
 
         # 啟動時預設停用中文輸入 (限 Windows 8 以上適用)
         if self.client.isWindows8Above:

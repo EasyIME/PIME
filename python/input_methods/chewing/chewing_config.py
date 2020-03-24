@@ -47,6 +47,7 @@ class ChewingConfig:
         self.easySymbolsWithShift = True
         self.enableCapsLock = True
         self.enableShiftSpace = True
+        self.enableSwitchTCSC = True
         self.escCleanAllBuf = True
         self.fontSize = DEF_FONT_SIZE
         self.fullShapeSymbols = True
@@ -82,7 +83,7 @@ class ChewingConfig:
         return selKeys[self.selKeyType]
 
     def getLastTime(self):
-        return self._lastTime
+        return self._lastUpdateTime
 
     def load(self):
         filename = self.getConfigFile()
@@ -127,7 +128,7 @@ class ChewingConfig:
                 return path
         return None
 
-    def copytree(slef, src, dst, symlinks=False, ignore=None):
+    def copytree(self, src, dst, symlinks=False, ignore=None):
         for item in os.listdir(src):
             s = os.path.join(src, item)
             d = os.path.join(dst, item)

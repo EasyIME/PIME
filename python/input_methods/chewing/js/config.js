@@ -98,22 +98,22 @@ $(function () {
         // Get values from checkboxes, text and radio
         $("input").each(function (index, inputItem) {
             switch (inputItem.type) {
-            case "checkbox":
-                chewingConfig[inputItem.name] = inputItem.checked;
-                break;
-            case "text":
-            case "number":
-                var inputValue = inputItem.value;
-                if ($.isNumeric(inputValue)) {
-                    inputValue = parseInt(inputValue);
-                }
-                chewingConfig[inputItem.name] = inputValue;
-                break;
-            case "radio":
-                if (inputItem.checked === true) {
-                    chewingConfig[inputItem.name] = parseInt(inputItem.value);
-                }
-                break;
+                case "checkbox":
+                    chewingConfig[inputItem.name] = inputItem.checked;
+                    break;
+                case "text":
+                case "number":
+                    var inputValue = inputItem.value;
+                    if ($.isNumeric(inputValue)) {
+                        inputValue = parseInt(inputValue);
+                    }
+                    chewingConfig[inputItem.name] = inputValue;
+                    break;
+                case "radio":
+                    if (inputItem.checked === true) {
+                        chewingConfig[inputItem.name] = parseInt(inputItem.value);
+                    }
+                    break;
             }
         });
 
@@ -129,13 +129,13 @@ $(function () {
         // Setup checkbox and text values
         $("input").each(function () {
             switch ($(this).attr("type")) {
-            case "checkbox":
-                $(this).prop("checked", chewingConfig[$(this).attr("id")]);
-                break;
-            case "text":
-            case "number":
-                $(this).val(chewingConfig[$(this).attr("id")]);
-                break;
+                case "checkbox":
+                    $(this).prop("checked", chewingConfig[$(this).attr("id")]);
+                    break;
+                case "text":
+                case "number":
+                    $(this).val(chewingConfig[$(this).attr("id")]);
+                    break;
             }
         });
 
@@ -221,9 +221,9 @@ $(function () {
         $("#keyboard_layouts").prop("alt", checkedKetboardLayoutRadio.data("layout"));
 
         // Register change keyboard_layouts event
-        $("#keyboard_tab input:radio").on("click", function() {
+        $("#keyboard_tab input:radio").on("click", function () {
             var layout_file_name = $(this).data("layout");
-            $("#keyboard_layouts").fadeOut(200, function(){
+            $("#keyboard_layouts").fadeOut(200, function () {
                 $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" + layout_file_name + ".png");
                 $("#keyboard_layouts").prop("alt", layout_file_name);
             });

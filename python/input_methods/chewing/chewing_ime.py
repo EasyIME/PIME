@@ -422,11 +422,18 @@ class ChewingTextService(TextService):
                     if self.showCandidates and cfg.spaceKeyCandidatesAction == 1:
                         candCursor = self.candidateCursor  # 目前的游標位置
                         candCount = len(self.candidateList)  # 目前選字清單項目數
+                        # 還沒到選字視窗底部，移動游標
                         if (candCursor + 1) < candCount:
                             candCursor += 1
                         else:
-                            chewingContext.handle_PageDown()
-                            candCursor = 0  # 如果選字清單沒有下一頁，重設游標為第一個，讓空白鍵可以循環移動游標
+                            # 游標到選字視窗底部，游標重設為第一個
+                            candCursor = 0
+                            if (chewingContext.cand_hasNext()):
+                                # 如果選字清單有下一頁，執行翻頁
+                                chewingContext.handle_PageDown()
+                            else:
+                                # 選字清單到底，按下「下」，可以切換組字模式
+                                chewingContext.handle_Down()                                
 
                         self.setCandidateCursor(candCursor)
                     # NOTE: libchewing 有 bug: 當啟用 "使用空白鍵選字" 時，chewing_handle_Space()

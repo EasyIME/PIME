@@ -23,9 +23,9 @@ import shutil
 DEF_FONT_SIZE = 16
 
 # from libchewing/include/internal/userphrase-private.h
-DB_NAME	= "chewing.sqlite3"
+DB_NAME = "chewing.sqlite3"
 
-selKeys=(
+selKeys = (
     "1234567890",
     "asdfghjkl;",
     "asdfzxcv89",
@@ -33,6 +33,7 @@ selKeys=(
     "aoeuhtn789",
     "1234qweras"
 )
+
 
 class ChewingConfig:
 
@@ -56,6 +57,7 @@ class ChewingConfig:
         self.leftRightAction = 0
         self.outputSimpChinese = False
         self.selKeyType = 0
+        self.shiftMoveCursor = 0
         self.spaceKeyAction = 1
         self.spaceKeyCandidatesAction = 0
         self.switchLangWithShift = True
@@ -66,10 +68,11 @@ class ChewingConfig:
         # version: last modified time of (config.json, symbols.dat, swkb.dat)
         self._version = (0.0, 0.0, 0.0)
         self._lastUpdateTime = 0.0
-        self.load() # try to load from the config file
+        self.load()  # try to load from the config file
 
     def getConfigDir(self):
-        config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", "chewing")
+        config_dir = os.path.join(
+            os.path.expandvars("%APPDATA%"), "PIME", "chewing")
         os.makedirs(config_dir, mode=0o700, exist_ok=True)
         return config_dir
 
@@ -92,11 +95,13 @@ class ChewingConfig:
                 with open(filename, "r") as f:
                     self.__dict__.update(json.load(f))
             else:
-                filename = os.path.join(os.path.expanduser("~"), "PIME", "chewing", "config.json")
+                filename = os.path.join(os.path.expanduser(
+                    "~"), "PIME", "chewing", "config.json")
                 if not os.path.exists(filename) or os.stat(filename).st_size == 0:
                     self.save()
                 else:
-                    src_dir = os.path.join(os.path.expanduser("~"), "PIME", "chewing")
+                    src_dir = os.path.join(
+                        os.path.expanduser("~"), "PIME", "chewing")
                     dst_dir = self.getConfigDir()
                     self.copytree(src_dir, dst_dir)
                     filename = self.getConfigFile()
@@ -116,7 +121,7 @@ class ChewingConfig:
                 js = json.dump(json, f, indent=4)
             self.update()
         except Exception:
-            pass # FIXME: handle I/O errors?
+            pass  # FIXME: handle I/O errors?
 
     def getDataDir(self):
         return os.path.join(os.path.dirname(__file__), "data")
@@ -170,7 +175,7 @@ class ChewingConfig:
 
         # the main config file is changed, reload it
         if lastConfigTime != configTime:
-            if not hasattr(self, "_in_update"): # avoid recursion
+            if not hasattr(self, "_in_update"):  # avoid recursion
                 self._in_update = True  # avoid recursion since update() will be called by load
                 self.load()
                 del self._in_update
@@ -189,6 +194,7 @@ class ChewingConfig:
     # symbols.dat and swkb.dat files.
     def isFullReloadNeeded(self, currentVersion):
         return currentVersion[1:] != self._version[1:]
+
 
 # globally shared config object
 # load configurations from a user-specific config file

@@ -601,6 +601,12 @@ class ChewingTextService(TextService):
                 # 按下和放開的時間相隔 < 0.5 秒
                 if pressedDuration < 0.5:
                     self.toggleLanguageMode()  # 切換中英文模式
+
+        # 使用 Ctrl + F12 切換簡體/繁體
+        if chewingConfig.enableSwitchTCSC:
+            if keyEvent.isKeyDown(VK_CONTROL) and self.lastKeyDownCode == VK_F12 and keyEvent.keyCode == VK_F12:
+                self.setOutputSimplifiedChinese(not self.outputSimpChinese)
+
         self.lastKeyDownCode = 0
         self.lastKeyDownTime = 0.0
         return False

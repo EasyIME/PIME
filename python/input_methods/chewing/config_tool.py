@@ -123,7 +123,7 @@ class ConfigHandler(BaseHandler):
         try:
             with open(os.path.join(config_dir, filename), "w", encoding="UTF-8") as f:
                 f.write(data)
-                if file == "symbols":
+                if filename == "symbols":
                     f.write("\n")
         except Exception:
             pass

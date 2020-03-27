@@ -31,6 +31,6 @@ add_library(PIMETextService SHARED
 )
 
 target_link_libraries(PIMETextService
-    libIME_static
+    libIME2_static
     jsoncpp_lib_static
 )

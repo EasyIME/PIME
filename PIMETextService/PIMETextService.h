@@ -20,11 +20,11 @@
 #ifndef NODE_TEXT_SERVICE_H
 #define NODE_TEXT_SERVICE_H
 
-#include <LibIME/TextService.h>
-#include <LibIME/CandidateWindow.h>
-#include <LibIME/MessageWindow.h>
-#include <LibIME/EditSession.h>
-#include <LibIME/LangBarButton.h>
+#include <LibIME2/src/TextService.h>
+#include <LibIME2/src/CandidateWindow.h>
+#include <LibIME2/src/MessageWindow.h>
+#include <LibIME2/src/EditSession.h>
+#include <LibIME2/src/LangBarButton.h>
 #include "PIMEImeModule.h"
 #include <sys/types.h>
 #include "PIMEClient.h"

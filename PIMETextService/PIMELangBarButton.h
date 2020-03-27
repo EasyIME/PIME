@@ -20,7 +20,7 @@
 #ifndef PIME_LANGUAGE_BAR_BUTTON_H
 #define PIME_LANGUAGE_BAR_BUTTON_H
 
-#include <libIME/LangBarButton.h>
+#include <libIME2/src/LangBarButton.h>
 #include <json/json.h>
 #include <string>
 #include <unordered_map>

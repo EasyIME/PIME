@@ -18,7 +18,7 @@
 //
 
 #include "PIMEClient.h"
-#include "libIME/Utils.h"
+#include "libIME2/src/Utils.h"
 #include <algorithm>
 #include <json/json.h>
 
@@ -30,6 +30,7 @@
 #include <cctype>
 #include <algorithm>
 #include <Winnls.h>  // for IS_HIGH_SURROGATE() macro for checking UTF16 surrogate pairs
+#include <VersionHelpers.h>  // Provided by Windows SDK >= 8.1
 
 using namespace std;
 
@@ -264,7 +265,7 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 		for (auto btn_it = addButtonVal.begin(); btn_it != addButtonVal.end(); ++btn_it) {
 			const Json::Value& btn = *btn_it;
 			// FIXME: when to clear the id <=> button map??
-			Ime::ComPtr<PIME::LangBarButton> langBtn{ PIME::LangBarButton::fromJson(textService_, btn), false };
+			auto langBtn = Ime::ComPtr<PIME::LangBarButton>::takeover(PIME::LangBarButton::fromJson(textService_, btn));
 			if (langBtn != nullptr) {
 				buttons_.emplace(langBtn->id(), langBtn); // insert into the map
 				textService_->addButton(langBtn);
@@ -600,7 +601,7 @@ void Client::init() {
 	Json::Value req;
 	req["method"] = "init";
 	req["id"] = guid_.c_str();  // language profile guid
-	req["isWindows8Above"] = textService_->imeModule()->isWindows8Above();
+	req["isWindows8Above"] = ::IsWindows8OrGreater();
 	req["isMetroApp"] = textService_->isMetroApp();
 	req["isUiLess"] = textService_->isUiLess();
 	req["isConsole"] = textService_->isConsole();

@@ -20,7 +20,7 @@
 #ifndef NODE_IME_MODULE_H
 #define NODE_IME_MODULE_H
 
-#include <LibIME/ImeModule.h>
+#include <LibIME2/src/ImeModule.h>
 #include <string>
 #include <vector>
 #include <json/json.h>

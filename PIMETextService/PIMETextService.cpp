@@ -20,9 +20,9 @@
 #include "PIMETextService.h"
 #include <assert.h>
 #include <string>
-#include <libIME/ComPtr.h>
-#include <libIME/Utils.h>
-#include <libIME/LangBarButton.h>
+#include <libIME2/src/ComPtr.h>
+#include <libIME2/src/Utils.h>
+#include <libIME2/src/LangBarButton.h>
 #include "PIMEImeModule.h"
 #include "resource.h"
 #include <Shellapi.h>
@@ -180,10 +180,8 @@ void TextService::onKeyboardStatusChanged(bool opened) {
 	else { // keyboard is closed
 		if(isComposing()) {
 			// end current composition if needed
-			ITfContext* context = currentContext();
-			if(context) {
+			if(auto context = currentContext()) {
 				endComposition(context);
-				context->Release();
 			}
 		}
 		if(showingCandidates()) // disable candidate window if it's opened
@@ -234,7 +232,7 @@ void TextService::createCandidateWindow(Ime::EditSession* session) {
 		candidateWindow_->Release();  // decrease ref count caused by new
 
 		candidateWindow_->setFont(font_);
-		Ime::ComQIPtr<ITfUIElementMgr> elementMgr = threadMgr();
+		auto elementMgr = Ime::ComPtr<ITfUIElementMgr>::queryFrom(threadMgr());
 		if (elementMgr) {
 			BOOL pbShow = false;
 			if (validCandidateListElementId_ =
@@ -287,7 +285,7 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 	}
 
 	if (validCandidateListElementId_) {
-		Ime::ComQIPtr<ITfUIElementMgr> elementMgr = threadMgr();
+		auto elementMgr = Ime::ComPtr<ITfUIElementMgr>::queryFrom(threadMgr());
 		if (elementMgr) {
 			elementMgr->UpdateUIElement(candidateListElementId_);
 		}
@@ -307,7 +305,7 @@ void TextService::updateCandidatesWindow(Ime::EditSession* session) {
 
 void TextService::refreshCandidates() {
 	if (validCandidateListElementId_) {
-		Ime::ComQIPtr<ITfUIElementMgr> elementMgr = threadMgr();
+		auto elementMgr = Ime::ComPtr<ITfUIElementMgr>::queryFrom(threadMgr());
 		if (elementMgr) {
 			elementMgr->UpdateUIElement(candidateListElementId_);
 		}
@@ -334,7 +332,7 @@ void TextService::showCandidates(Ime::EditSession* session) {
 // hide candidate list window
 void TextService::hideCandidates() {
 	if (validCandidateListElementId_) {
-		Ime::ComQIPtr<ITfUIElementMgr> elementMgr = threadMgr();
+		auto elementMgr = Ime::ComPtr<ITfUIElementMgr>::queryFrom(threadMgr());
 		if (elementMgr) {
 			elementMgr->EndUIElement(candidateListElementId_);
 			candidateListElementId_ = 0;

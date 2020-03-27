@@ -1,12 +1,12 @@
 [submodule "jsoncpp"]
 	path = jsoncpp
 	url = https://github.com/open-source-parsers/jsoncpp.git
-[submodule "libIME"]
-	path = libIME
-	url = https://github.com/EasyIME/libIME.git
 [submodule "python/input_methods/rime/brise"]
 	path = python/input_methods/rime/brise
 	url = https://github.com/rime/brise.git
 [submodule "libuv"]
 	path = libuv
 	url = https://github.com/EasyIME/libuv.git
+[submodule "libIME2"]
+	path = libIME2
+	url = https://github.com/EasyIME/libIME2.git

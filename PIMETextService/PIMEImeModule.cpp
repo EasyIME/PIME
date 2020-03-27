@@ -26,7 +26,7 @@
 #include <Shellapi.h>
 #include <Shlwapi.h>
 #include <json/json.h>
-#include "../libIME/Utils.h"
+#include "../libIME2/src/Utils.h"
 
 namespace PIME {
 

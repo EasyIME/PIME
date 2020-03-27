@@ -20,7 +20,7 @@
 
 #include "PIMELangBarButton.h"
 #include "PIMETextService.h"
-#include "libIME/Utils.h"
+#include "libIME2/src/Utils.h"
 
 // this is the GUID of the IME mode icon in Windows 8
 // the value is not available in older SDK versions, so let's define it ourselves.

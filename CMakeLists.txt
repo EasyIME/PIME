@@ -32,7 +32,7 @@ add_definitions(
     -D_WIN32_WINNT=0x0600  # 0x0600 is Windows Vista
 )
 
-add_subdirectory(${PROJECT_SOURCE_DIR}/libIME)
+add_subdirectory(${PROJECT_SOURCE_DIR}/libIME2)
 
 # turn of some unnecessary build options for jsoncpp
 # Reference: http://stackoverflow.com/questions/3766740/overriding-a-default-option-value-in-cmake-from-a-parent-cmakelists-txt

@@ -20,9 +20,9 @@
 #ifndef _PIME_CLIENT_H_
 #define _PIME_CLIENT_H_
 #define NDEBUG
-#include <libIME/TextService.h>
-#include <libIME/KeyEvent.h>
-#include <libIME/EditSession.h>
+#include <libIME2/src/TextService.h>
+#include <libIME2/src/KeyEvent.h>
+#include <libIME2/src/EditSession.h>
 #include "PIMELangBarButton.h"
 
 #include <unordered_map>

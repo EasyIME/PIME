@@ -5,8 +5,10 @@
 #include <vector>
 #include <ShlObj.h>
 #include <Shlwapi.h> // for PathIsRelative
+#include <VersionHelpers.h>  // Provided by Windows SDK >= 8.1
+
 #include <json/json.h>
-#include "../libIME/Utils.h"
+#include "../libIME2/src/Utils.h"
 
 
 PIME::ImeModule* g_imeModule = NULL;
@@ -77,8 +79,9 @@ static inline Ime::LangProfileInfo langProfileFromJson(std::wstring file, std::s
 
 STDAPI DllRegisterServer(void) {
 	int iconIndex = 0; // use classic icon
-	if(g_imeModule->isWindows8Above())
+	if(::IsWindows8OrGreater()) {
 		iconIndex = 1; // use Windows 8 style IME icon
+    }
 	std::vector<Ime::LangProfileInfo> langProfiles;
 	std::wstring dirPath;
 	for (const auto backendDir: g_imeModule->backendDirs()) {

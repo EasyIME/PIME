@@ -13,23 +13,23 @@ All parts are licensed under GNU LGPL v2.1 license.
 # Development
 
 ## Tool Requirements
-*   [CMake](http://www.cmake.org/) >= 2.8.11
-*   [Visual Studio 2015](https://www.visualstudio.com/)
+*   [CMake](http://www.cmake.org/) >= 3.0
+*   [Visual Studio 2019](https://visualstudio.microsoft.com/vs)
 *   [git](http://windows.github.com/)
 
 ## How to Build
-*   Get source from github
+*   Get source from github.
 
         git clone https://github.com/EasyIME/PIME.git
         cd PIME
         git submodule update --init
 
-*   Use one of the following CMake commands to generate Visual Studio project
+*   Use the following CMake commands to generate Visual Studio project.
 
-        cmake -G "Visual Studio 14 2015" <path to PIME source folder>
-        cmake -G "Visual Studio 14 2015 Win64" <path to PIME source folder>
+        cmake -G "Visual Studio 16 2019" -A Win32 <path to PIME source folder>
+        cmake -G "Visual Studio 16 2019" -A x64 <path to PIME source folder>
 
-*   Open generated project with Visual Studio and build it
+*   Open generated project with Visual Studio and build it.
 
 ## TSF References
 *   [Text Services Framework](http://msdn.microsoft.com/en-us/library/windows/desktop/ms629032%28v=vs.85%29.aspx)

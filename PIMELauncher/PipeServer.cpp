@@ -24,6 +24,8 @@
 #include <ShlObj.h>
 #include <Shellapi.h>
 #include <Lmcons.h> // for UNLEN
+#include <VersionHelpers.h>
+
 #include <iostream>
 #include <cstring>
 #include <cassert>
@@ -44,7 +46,6 @@
 
 #include "BackendServer.h"
 #include "Utils.h"
-#include "../libIME/WindowsVersion.h"
 
 using namespace std;
 
@@ -426,7 +427,7 @@ int PipeServer::exec(LPSTR cmd) {
 
 	// preparing for the server pipe
 	SECURITY_ATTRIBUTES* sa = nullptr;
-	if (Ime::WindowsVersion().isWindows8Above()) {
+	if (::IsWindows8OrGreater()) {
 		// Setting special security attributes to the named pipe is only needed 
 		// for Windows >= 8 since older versions do not have app containers (metro apps) 
 		// in which connecting to pipes are blocked by default permission settings.

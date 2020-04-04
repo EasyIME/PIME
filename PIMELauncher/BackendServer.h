@@ -28,6 +28,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <sstream>
 
 #include <uv.h>
 #include <json/json.h>
@@ -98,7 +99,7 @@ private:
 	uv_pipe_t* stdoutPipe_;
 	uv_pipe_t* stderrPipe_;
 	bool ready_;
-	std::string stdoutReadBuf_;
+	std::stringstream stdoutReadBuf_;
 
 	bool needRestart_;
 	// command to launch the server process

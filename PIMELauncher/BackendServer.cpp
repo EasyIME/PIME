@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <codecvt>  // for utf8 conversion
 #include <locale>  // for wstring_convert
+#include <sstream>
 
 #include <json/json.h>
 
@@ -211,11 +212,11 @@ void BackendServer::onProcessDataReceived(uv_stream_t * stream, ssize_t nread, c
 			ready_ = true;
 			// skip the first byte, and add the received data to our buffer
 			// FIXME: this is not very reliable
-			stdoutReadBuf_.append(buf->base + 1, buf->len - 1);
+			stdoutReadBuf_.write(buf->base + 1, buf->len - 1);
 		}
 		else {
 			// add the received data to our buffer
-			stdoutReadBuf_.append(buf->base, buf->len);
+			stdoutReadBuf_.write(buf->base, buf->len);
 		}
 
 		handleBackendReply();
@@ -269,8 +270,8 @@ void BackendServer::closeStdioPipes() {
 			delete reinterpret_cast<uv_pipe_t*>(handle);
 		});
 		stdoutPipe_ = nullptr;
-		stdoutReadBuf_.clear();
-	}
+        stdoutReadBuf_ = std::stringstream();
+    }
 
 	if (stderrPipe_ != nullptr) {
 		uv_close(reinterpret_cast<uv_handle_t*>(stderrPipe_), [](uv_handle_t* handle) {
@@ -283,46 +284,43 @@ void BackendServer::closeStdioPipes() {
 void BackendServer::handleBackendReply() {
 	// each output message should be a full line ends with \n or \r\n, so we need to do buffering and
 	// handle the messages line by line.
-	auto lineStartPos = 0;
+    std::string line;
 	for (;;) {
-		auto lineEndPos = stdoutReadBuf_.find('\n', lineStartPos);
-		if (lineEndPos != stdoutReadBuf_.npos) {
-			auto lineLen = lineEndPos - lineStartPos;
-			auto line = stdoutReadBuf_.c_str() + lineStartPos;
-			auto lineEnd = line + lineLen;
+        std::getline(stdoutReadBuf_, line);
+        if (stdoutReadBuf_.eof()) {
+            // getline() reached end of buffer before finding a '\n'. The current line is incomplete.
+            // Put remaining data back to the buffer and wait for the next \n so it becomes a full line.
+            stdoutReadBuf_.clear();
+            stdoutReadBuf_.str(line);
+            break;
+        }
 
-			// only handle lines prefixed with "PIME_MSG|" since other lines
-			// might be debug messages printed by the backend.
-			// Format of each message: "PIMG_MSG|<client_id>|<reply JSON string>\n"
-			if (strncmp(line, "PIME_MSG|", 9) == 0) {
-				line += 9; // Skip the "PIME_MSG|" prefix
-				if (auto sep = strchr(line, '|')) {
-					// split the client_id from the remaining json reply
-					string clientId(line, sep - line);
-					auto msg = sep + 1;
-					auto msgLen = lineEnd - msg;
-					// because Windows uses CRLF "\r\n" for new lines, python and node.js
-					// try to convert "\n" to "\r\n" sometimes. Let's remove the additional '\r'
-					if (msgLen > 0 && msg[msgLen - 1] == '\r') {
-						--msgLen;
-					}
+		// only handle lines prefixed with "PIME_MSG|" since other lines
+		// might be debug messages printed by the backend.
+		// Format of each message: "PIMG_MSG|<client_id>|<reply JSON string>\n"
+        constexpr char pimeMsgPrefix[] = "PIME_MSG|";
+        constexpr size_t pimeMsgPrefixLen = 9;
+		if (line.compare(0, pimeMsgPrefixLen, pimeMsgPrefix) == 0) {
+            // because Windows uses CRLF "\r\n" for new lines, python and node.js
+            // try to convert "\n" to "\r\n" sometimes. Let's remove the additional '\r'
+            if (line.back() == '\r') {
+                line.pop_back();
+            }
 
-					// send the reply message back to the client
-					if (auto client = pipeServer_->clientFromId(clientId)) {
-						client->writePipe(msg, msgLen);
-					}
+            auto sep = line.find('|', pimeMsgPrefixLen);  // Find the next "|".
+			if (sep != line.npos) {
+				// split the client_id from the remaining json reply
+				string clientId = line.substr(pimeMsgPrefixLen, sep - pimeMsgPrefixLen);
+                // send the reply message back to the client
+                auto msgStart = sep + 1;
+                auto msg = line.c_str() + msgStart;
+				auto msgLen = line.length() - msgStart;
+				if (auto client = pipeServer_->clientFromId(clientId)) {
+					client->writePipe(msg, msgLen);
 				}
 			}
-
-			// skip empty lines or additional CRLF, and go to the next non-empty line
-			lineStartPos = lineEndPos + 1;
-		}
-		else {
-			break;
 		}
 	}
-	// Leave remaining data not processed in the buffer, waiting for the next \n so it becomes a full line.
-	stdoutReadBuf_ = stdoutReadBuf_.substr(lineStartPos);
 }
 
 void BackendServer::startReadOutputPipe() {

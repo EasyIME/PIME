@@ -77,12 +77,14 @@ public:
 private:
 	static HANDLE connectPipe(const wchar_t* pipeName);
 	bool connectServerPipe();
-	bool sendRequestText(HANDLE pipe, const char* data, int len, std::string& reply);
-	bool sendRequest(Json::Value& req, Json::Value& result);
+
+    Json::Value createRpcRequest(const char* methodName);
+	bool callRpcMethod(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply);
+	bool callRpcMethod(Json::Value& request, Json::Value& response);
 	void closePipe();
 	void init();
 
-	void keyEventToJson(Ime::KeyEvent& keyEvent, Json::Value& jsonValue);
+	void addKeyEventToRcpRequest(Json::Value& request, Ime::KeyEvent& keyEvent);
 	bool handleReply(Json::Value& msg, Ime::EditSession* session = nullptr);
 	void updateStatus(Json::Value& msg, Ime::EditSession* session = nullptr);
 	void updateUI(const Json::Value& data);
@@ -94,7 +96,7 @@ private:
 	std::string guid_;
 	HANDLE pipe_;
 	std::unordered_map<std::string, Ime::ComPtr<PIME::LangBarButton>> buttons_; // map buttons to string IDs
-	unsigned int newSeqNum_;
+	unsigned int nextSeqNum_;
 	bool isActivated_;
 	bool connectingServerPipe_;
 	UINT connectServerTimerId_;

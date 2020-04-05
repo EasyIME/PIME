@@ -38,19 +38,31 @@ namespace PIME {
 
 unordered_map<UINT_PTR, Client*> Client::timerIdToClients_;
 
+static std::string uuidToString(const UUID& uuid) {
+    std::string result;
+    LPOLESTR buf = nullptr;
+    if (SUCCEEDED(::StringFromCLSID(uuid, &buf))) {
+        result = utf16ToUtf8(buf);
+        ::CoTaskMemFree(buf);
+        // convert GUID to lwoer case
+        transform(result.begin(), result.end(), result.begin(), tolower);
+    }
+    return result;
+}
+
+bool uuidFromString(const char* uuidStr, UUID& result) {
+    std::wstring utf16UuidStr = utf8ToUtf16(uuidStr);
+    return SUCCEEDED(CLSIDFromString(utf16UuidStr.c_str(), &result));
+}
+
+
 Client::Client(TextService* service, REFIID langProfileGuid):
 	textService_(service),
 	pipe_(INVALID_HANDLE_VALUE),
-	newSeqNum_(0),
+	nextSeqNum_(0),
 	isActivated_(false),
-	connectingServerPipe_(false) {
-
-	LPOLESTR guidStr = NULL;
-	if (SUCCEEDED(::StringFromCLSID(langProfileGuid, &guidStr))) {
-		guid_ = utf16ToUtf8(guidStr);
-		transform(guid_.begin(), guid_.end(), guid_.begin(), tolower);  // convert GUID to lwoer case
-		::CoTaskMemFree(guidStr);
-	}
+	connectingServerPipe_(false),
+    guid_{uuidToString(langProfileGuid)} {
 }
 
 Client::~Client(void) {
@@ -67,18 +79,18 @@ Client::~Client(void) {
 
 // pack a keyEvent object into a json value
 //static
-void Client::keyEventToJson(Ime::KeyEvent& keyEvent, Json::Value& jsonValue) {
-	jsonValue["charCode"] = keyEvent.charCode();
-	jsonValue["keyCode"] = keyEvent.keyCode();
-	jsonValue["repeatCount"] = keyEvent.repeatCount();
-	jsonValue["scanCode"] = keyEvent.scanCode();
-	jsonValue["isExtended"] = keyEvent.isExtended();
+void Client::addKeyEventToRcpRequest(Json::Value& request, Ime::KeyEvent& keyEvent) {
+	request["charCode"] = keyEvent.charCode();
+	request["keyCode"] = keyEvent.keyCode();
+	request["repeatCount"] = keyEvent.repeatCount();
+	request["scanCode"] = keyEvent.scanCode();
+	request["isExtended"] = keyEvent.isExtended();
 	Json::Value keyStates(Json::arrayValue);
 	const BYTE* states = keyEvent.keyStates();
 	for(int i = 0; i < 256; ++i) {
 		keyStates.append(states[i]);
 	}
-	jsonValue["keyStates"] = keyStates;
+	request["keyStates"] = keyStates;
 }
 
 bool Client::handleReply(Json::Value& msg, Ime::EditSession* session) {
@@ -159,9 +171,8 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 			// FIXME: directly access private member is dirty!!!
 			vector<wstring>& candidates = textService_->candidates_;
 			candidates.clear();
-			for (auto cand_it = candidateListVal.begin(); cand_it != candidateListVal.end(); ++cand_it) {
-				wstring cand = utf8ToUtf16(cand_it->asCString());
-				candidates.push_back(cand);
+			for (const auto& candidate: candidateListVal) {
+				candidates.emplace_back(utf8ToUtf16(candidate.asCString()));
 			}
 			textService_->updateCandidates(session);
 			if (!showCandidatesVal.asBool()) {
@@ -262,8 +273,7 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 	// language buttons
 	const auto& addButtonVal = msg["addButton"];
 	if (addButtonVal.isArray()) {
-		for (auto btn_it = addButtonVal.begin(); btn_it != addButtonVal.end(); ++btn_it) {
-			const Json::Value& btn = *btn_it;
+		for (const auto& btn: addButtonVal) {
 			// FIXME: when to clear the id <=> button map??
 			auto langBtn = Ime::ComPtr<PIME::LangBarButton>::takeover(PIME::LangBarButton::fromJson(textService_, btn));
 			if (langBtn != nullptr) {
@@ -276,9 +286,9 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 	const auto& removeButtonVal = msg["removeButton"];
 	if (removeButtonVal.isArray()) {
 		// FIXME: handle windows-mode-icon
-		for (auto btn_it = removeButtonVal.begin(); btn_it != removeButtonVal.end(); ++btn_it) {
-			if (btn_it->isString()) {
-				string id = btn_it->asString();
+        for (const auto& btn : removeButtonVal) {
+            if (btn.isString()) {
+				string id = btn.asString();
 				auto map_it = buttons_.find(id);
 				if (map_it != buttons_.end()) {
 					textService_->removeButton(map_it->second);
@@ -290,8 +300,7 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 	const auto& changeButtonVal = msg["changeButton"];
 	if (changeButtonVal.isArray()) {
 		// FIXME: handle windows-mode-icon
-		for (auto btn_it = changeButtonVal.begin(); btn_it != changeButtonVal.end(); ++btn_it) {
-			const Json::Value& btn = *btn_it;
+		for (const auto& btn: changeButtonVal) {
 			if (btn.isObject()) {
 				string id = btn["id"].asString();
 				auto map_it = buttons_.find(id);
@@ -306,27 +315,26 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 	const auto& addPreservedKeyVal = msg["addPreservedKey"];
 	if (addPreservedKeyVal.isArray()) {
 		// preserved keys
-		for (auto key_it = addPreservedKeyVal.begin(); key_it != addPreservedKeyVal.end(); ++key_it) {
-			const Json::Value& key = *key_it;
+		for (auto& key: addPreservedKeyVal) {
 			if (key.isObject()) {
-				std::wstring guidStr = utf8ToUtf16(key["guid"].asCString());
-				CLSID guid = { 0 };
-				CLSIDFromString(guidStr.c_str(), &guid);
 				UINT keyCode = key["keyCode"].asUInt();
 				UINT modifiers = key["modifiers"].asUInt();
-				textService_->addPreservedKey(keyCode, modifiers, guid);
+                UUID guid = { 0 };
+                if (uuidFromString(key["guid"].asCString(), guid)) {
+                    textService_->addPreservedKey(keyCode, modifiers, guid);
+                }
 			}
 		}
 	}
 	
 	const auto& removePreservedKeyVal = msg["removePreservedKey"];
 	if (removePreservedKeyVal.isArray()) {
-		for (auto key_it = removePreservedKeyVal.begin(); key_it != removePreservedKeyVal.end(); ++key_it) {
-			if (key_it->isString()) {
-				std::wstring guidStr = utf8ToUtf16(key_it->asCString());
-				CLSID guid = { 0 };
-				CLSIDFromString(guidStr.c_str(), &guid);
-				textService_->removePreservedKey(guid);
+		for (auto& key: removePreservedKeyVal) {
+			if (key.isString()) {
+				UUID guid = { 0 };
+                if (uuidFromString(key["guid"].asCString(), guid)) {
+                    textService_->removePreservedKey(guid);
+                }
 			}
 		}
 	}
@@ -353,23 +361,20 @@ void Client::updateStatus(Json::Value& msg, Ime::EditSession* session) {
 
 // handlers for the text service
 void Client::onActivate() {
-	Json::Value req;
-	req["method"] = "onActivate";
+    Json::Value req = createRpcRequest("onActivate");
 	req["isKeyboardOpen"] = textService_->isKeyboardOpened();
 
 	Json::Value ret;
-	sendRequest(req, ret);
+	callRpcMethod(req, ret);
 	if (handleReply(ret)) {
 	}
 	isActivated_ = true;
 }
 
 void Client::onDeactivate() {
-	Json::Value req;
-	req["method"] = "onDeactivate";
-
+    Json::Value req = createRpcRequest("onDeactivate");
 	Json::Value ret;
-	sendRequest(req, ret);
+	callRpcMethod(req, ret);
 	if (handleReply(ret)) {
 	}
 	LangBarButton::clearIconCache();
@@ -377,12 +382,11 @@ void Client::onDeactivate() {
 }
 
 bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
-	Json::Value req;
-	req["method"] = "filterKeyDown";
-	keyEventToJson(keyEvent, req);
+    Json::Value req = createRpcRequest("filterKeyDown");
+	addKeyEventToRcpRequest(req, keyEvent);
 
 	Json::Value ret;
-	sendRequest(req, ret);
+	callRpcMethod(req, ret);
 	if (handleReply(ret)) {
 		return ret["return"].asBool();
 	}
@@ -390,12 +394,11 @@ bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
 }
 
 bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
-	Json::Value req;
-	req["method"] = "onKeyDown";
-	keyEventToJson(keyEvent, req);
+    Json::Value req = createRpcRequest("onKeyDown");
+	addKeyEventToRcpRequest(req, keyEvent);
 
 	Json::Value ret;
-	sendRequest(req, ret);
+	callRpcMethod(req, ret);
 	if (handleReply(ret, session)) {
 		return ret["return"].asBool();
 	}
@@ -403,12 +406,11 @@ bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 }
 
 bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
-	Json::Value req;
-	req["method"] = "filterKeyUp";
-	keyEventToJson(keyEvent, req);
+    Json::Value req = createRpcRequest("filterKeyUp");
+	addKeyEventToRcpRequest(req, keyEvent);
 
 	Json::Value ret;
-	sendRequest(req, ret);
+	callRpcMethod(req, ret);
 	if (handleReply(ret)) {
 		return ret["return"].asBool();
 	}
@@ -416,12 +418,11 @@ bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
 }
 
 bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
-	Json::Value req;
-	req["method"] = "onKeyUp";
-	keyEventToJson(keyEvent, req);
+    Json::Value req = createRpcRequest("onKeyUp");
+	addKeyEventToRcpRequest(req, keyEvent);
 
 	Json::Value ret;
-	sendRequest(req, ret);
+	callRpcMethod(req, ret);
 	if (handleReply(ret, session)) {
 		return ret["return"].asBool();
 	}
@@ -429,15 +430,13 @@ bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 }
 
 bool Client::onPreservedKey(const GUID& guid) {
-	LPOLESTR str = NULL;
-	if (SUCCEEDED(::StringFromCLSID(guid, &str))) {
-		Json::Value req;
-		req["method"] = "onPreservedKey";
-		req["guid"] = utf16ToUtf8(str);
-		::CoTaskMemFree(str);
+    auto guidStr = uuidToString(guid);
+	if (!guidStr.empty()) {
+        Json::Value req = createRpcRequest("onPreservedKey");
+        req["guid"] = std::move(guidStr);
 
 		Json::Value ret;
-		sendRequest(req, ret);
+		callRpcMethod(req, ret);
 		if (handleReply(ret)) {
 			return ret["return"].asBool();
 		}
@@ -446,13 +445,12 @@ bool Client::onPreservedKey(const GUID& guid) {
 }
 
 bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
-	Json::Value req;
-	req["method"] = "onCommand";
+    Json::Value req = createRpcRequest("onCommand");
 	req["id"] = id;
 	req["type"] = type;
 
 	Json::Value ret;
-	sendRequest(req, ret);
+	callRpcMethod(req, ret);
 	if (handleReply(ret)) {
 		return ret["return"].asBool();
 	}
@@ -460,11 +458,10 @@ bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
 }
 
 bool Client::sendOnMenu(std::string button_id, Json::Value& result) {
-	Json::Value req;
-	req["method"] = "onMenu";
+    Json::Value req = createRpcRequest("onMenu");
 	req["id"] = button_id;
 
-	sendRequest(req, result);
+	callRpcMethod(req, result);
 	if (handleReply(result)) {
 		return true;
 	}
@@ -473,8 +470,7 @@ bool Client::sendOnMenu(std::string button_id, Json::Value& result) {
 
 static bool menuFromJson(ITfMenu* pMenu, const Json::Value& menuInfo) {
 	if (pMenu != nullptr && menuInfo.isArray()) {
-		for (Json::Value::const_iterator it = menuInfo.begin(); it != menuInfo.end(); ++it) {
-			const Json::Value& item = *it;
+		for (const auto& item: menuInfo) {
 			UINT id = item.get("id", 0).asUInt();
 			std::wstring text = utf8ToUtf16(item.get("text", "").asCString());
 			
@@ -518,8 +514,7 @@ bool Client::onMenu(LangBarButton* btn, ITfMenu* pMenu) {
 static HMENU menuFromJson(const Json::Value& menuInfo) {
 	if (menuInfo.isArray()) {
 		HMENU menu = ::CreatePopupMenu();
-		for (auto it = menuInfo.begin(); it != menuInfo.end(); ++it) {
-			const Json::Value& item = *it;
+		for (const auto& item: menuInfo) {
 			UINT id = item.get("id", 0).asUInt();
 			std::wstring text = utf8ToUtf16(item.get("text", "").asCString());
 
@@ -559,15 +554,13 @@ HMENU Client::onMenu(LangBarButton* btn) {
 
 // called when a compartment value is changed
 void Client::onCompartmentChanged(const GUID& key) {
-	LPOLESTR str = NULL;
-	if (SUCCEEDED(::StringFromCLSID(key, &str))) {
-		Json::Value req;
-		req["method"] = "onCompartmentChanged";
-		req["guid"] = utf16ToUtf8(str);
-		::CoTaskMemFree(str);
+    auto guidStr = uuidToString(key);
+	if (!guidStr.empty()) {
+        Json::Value req = createRpcRequest("onCompartmentChanged");
+        req["guid"] = std::move(guidStr);
 
 		Json::Value ret;
-		sendRequest(req, ret);
+		callRpcMethod(req, ret);
 		if (handleReply(ret)) {
 		}
 	}
@@ -575,31 +568,28 @@ void Client::onCompartmentChanged(const GUID& key) {
 
 // called when the keyboard is opened or closed
 void Client::onKeyboardStatusChanged(bool opened) {
-	Json::Value req;
-	req["method"] = "onKeyboardStatusChanged";
+    Json::Value req = createRpcRequest("onKeyboardStatusChanged");
 	req["opened"] = opened;
 
 	Json::Value ret;
-	sendRequest(req, ret);
+	callRpcMethod(req, ret);
 	if (handleReply(ret)) {
 	}
 }
 
 // called just before current composition is terminated for doing cleanup.
 void Client::onCompositionTerminated(bool forced) {
-	Json::Value req;
-	req["method"] = "onCompositionTerminated";
+    Json::Value req = createRpcRequest("onCompositionTerminated");
 	req["forced"] = forced;
 
 	Json::Value ret;
-	sendRequest(req, ret);
+	callRpcMethod(req, ret);
 	if (handleReply(ret)) {
 	}
 }
 
 void Client::init() {
-	Json::Value req;
-	req["method"] = "init";
+    Json::Value req = createRpcRequest("init");
 	req["id"] = guid_.c_str();  // language profile guid
 	req["isWindows8Above"] = ::IsWindows8OrGreater();
 	req["isMetroApp"] = textService_->isMetroApp();
@@ -607,50 +597,57 @@ void Client::init() {
 	req["isConsole"] = textService_->isConsole();
 
 	Json::Value ret;
-	sendRequest(req, ret);
+	callRpcMethod(req, ret);
 	if (handleReply(ret)) {
 	}
 }
 
-bool Client::sendRequestText(HANDLE pipe, const char* data, int len, std::string& reply) {
+Json::Value Client::createRpcRequest(const char* methodName) {
+    Json::Value request;
+    request["method"] = methodName;
+
+    // TODO: add other environment info?
+    return request;
+}
+
+bool Client::callRpcMethod(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply) {
 	char buf[1024];
 	DWORD rlen = 0;
-	if (TransactNamedPipe(pipe, (void*)data, len, buf, sizeof(buf) - 1, &rlen, NULL)) {
-		buf[rlen] = '\0';
-		reply = buf;
-	}
-	else { // error!
-		if (GetLastError() != ERROR_MORE_DATA) { // unknown error happens
-			return false;
-		}
-		// still has more data to read
-		buf[rlen] = '\0';
-		reply = buf;
-		for (;;) {
-			BOOL success = ReadFile(pipe, buf, sizeof(buf) - 1, &rlen, NULL);
-			if (!success && (GetLastError() != ERROR_MORE_DATA)) {
-				// unknown error happens, reset the pipe?
-				return false; // error reading the pipe
-			}
-			buf[rlen] = '\0';
-			reply += buf;
-			if (success)
-				break;
-		}
-	}
+    bool hasMoreData = false;
+    if (!TransactNamedPipe(pipe, (void*)serializedRequest.data(), serializedRequest.size(), buf, sizeof(buf), &rlen, NULL)) {
+        if (GetLastError() == ERROR_MORE_DATA) {
+            hasMoreData = true;
+        }
+        else {  // unknown error
+            return false;
+        }
+    }
+    serializedReply.append(buf, rlen);
+
+    while (hasMoreData) {
+        if (ReadFile(pipe, buf, sizeof(buf), &rlen, NULL)) {
+            hasMoreData = false;
+        }
+        else if (::GetLastError() != ERROR_MORE_DATA) {  // unknown error
+            return false;
+        }
+        serializedReply.append(buf, rlen);
+    }
 	return true;
 }
 
 // send the request to the server
 // a sequence number will be added to the req object automatically.
-bool Client::sendRequest(Json::Value& req, Json::Value & result) {
+bool Client::callRpcMethod(Json::Value& request, Json::Value & response) {
+    // Add a sequence number for the request.
+    auto seqNum = nextSeqNum_++;
+    request["seqNum"] = seqNum;
+
 	bool success = false;
-	unsigned int seqNum = newSeqNum_++;
-	req["seqNum"] = seqNum; // add a sequence number for the request
-	std::string ret;
+	std::string serializedResponse;
 	DWORD rlen = 0;
 	Json::FastWriter writer;
-	std::string reqStr = writer.write(req); // convert the json object to string
+	std::string serializedRequest = writer.write(request); // convert the json object to string
 
 	if (!connectingServerPipe_) {  // if we're not in the middle of initializing the pipe connection
 		// ensure that we're connected
@@ -672,15 +669,19 @@ bool Client::sendRequest(Json::Value& req, Json::Value & result) {
 		}
 	}
 
-	if (sendRequestText(pipe_, reqStr.c_str(), reqStr.length(), ret)) {
+	if (callRpcMethod(pipe_, serializedRequest, serializedResponse)) {
 		Json::Reader reader;
-		success = reader.parse(ret, result);
+		success = reader.parse(serializedResponse, response);
 		if (success) {
-			if (result["seqNum"].asUInt() != seqNum) // sequence number mismatch
+			if (response["seqNum"].asUInt() != seqNum) // sequence number mismatch
 				success = false;
 		}
 	}
-	else { // fail to send the request to the server
+    else {
+        success = false;
+    }
+
+	if(!success) { // fail to send the request to the server
 		if (connectingServerPipe_) { // we're in the middle of initializing the pipe connection
 			return false;
 		}

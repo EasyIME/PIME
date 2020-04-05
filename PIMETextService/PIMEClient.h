@@ -75,7 +75,8 @@ public:
 	void onCompositionTerminated(bool forced);
 
 private:
-	HANDLE connectPipe(const wchar_t* pipeName, int timeoutMs);
+    static std::wstring getPipeName(const wchar_t* base_name);
+    HANDLE connectPipe(const wchar_t* pipeName, int timeoutMs);
 
     Json::Value createRpcRequest(const char* methodName);
 	bool callRpcMethod(Json::Value& request, Json::Value& response);
@@ -84,17 +85,28 @@ private:
     bool waitForRpcConnection();
     bool callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply);
     void closeRpcConnection();
+
 	bool init();
     void resetTextServiceState();
 
 	void addKeyEventToRpcRequest(Json::Value& request, Ime::KeyEvent& keyEvent);
-	bool handleReply(Json::Value& msg, Ime::EditSession* session = nullptr);
-	void updateStatus(Json::Value& msg, Ime::EditSession* session = nullptr);
-	void updateUI(const Json::Value& data);
-	bool sendOnMenu(std::string button_id, Json::Value& result);
+    bool sendOnMenu(std::string button_id, Json::Value& result);
 
-	static std::wstring getPipeName(const wchar_t* base_name);
+    bool handleRpcResponse(Json::Value& msg, Ime::EditSession* session = nullptr);
 
+    // Update text service and UI status based on RPC responses.
+    void updateSelectionKeys(Json::Value& msg);
+    void updateMessageWindow(Json::Value& msg, Ime::EditSession* session, bool& endComposition);
+	void updateCommitString(Json::Value& msg, Ime::EditSession* session);
+	void updateComposition(Json::Value& msg, Ime::EditSession* session, bool& endComposition);
+	void updateLanguageButtons(Json::Value& msg);
+	void updatePreservedKeys(Json::Value& msg);
+	void updateKeyboardStatus(Json::Value& msg);
+    void updateCandidateList(Json::Value& msg, Ime::EditSession* session);
+    void updateUI(const Json::Value& data);
+    void updateStatus(Json::Value& msg, Ime::EditSession* session = nullptr);
+
+private:
 	TextService* textService_;
 	std::string guid_;
 	HANDLE pipe_;

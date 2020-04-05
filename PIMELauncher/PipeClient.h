@@ -25,8 +25,10 @@
 #include <cstdint>
 #include "BackendServer.h"
 
-#include <uv.h>
 #include <spdlog/spdlog.h>
+
+#define HAVE_UV_NAMED_PIPE
+#include <UvPipe.h>
 
 
 namespace PIME {
@@ -43,16 +45,22 @@ public:
 	PipeClient(PipeServer* server, DWORD pipeMode, SECURITY_ATTRIBUTES* securityAttributes);
 
 	uv_stream_t* stream() {
-		return reinterpret_cast<uv_stream_t*>(&pipe_);
+        return pipe_.streamHandle();
 	}
 
 	std::shared_ptr<spdlog::logger>& logger();
 
-	void startReadPipe();
+    void startRead() {
+        pipe_.startRead();
+    }
 
-	void writePipe(const char* data, size_t len);
+    void writePipe(const char* data, size_t len) {
+        // we got a response before request timeout, so stop the timer
+        stopRequestTimeoutTimer();
+        pipe_.write(data, len);
+    }
 
-	bool setupBackend(const Json::Value& params);
+	bool initBackend(const Json::Value& params);
 
 	void disconnectFromBackend();
 
@@ -60,18 +68,18 @@ public:
 	void destroy();
 
 private:
-	void startWaitTimer(std::uint64_t timeoutMs);
+    void onReadError(int error);
 
-	void stopWaitTimer();
+    void handleClientMessage(const char* readBuf, size_t len);
 
-	void onClientDataReceived(const char* buf, ssize_t nread);
+    void startRequestTimeoutTimer(std::uint64_t timeoutMs);
 
-	void handleClientMessage(const char* readBuf, size_t len);
+    void stopRequestTimeoutTimer();
 
-	void onRequestTimeout();
+    void onRequestTimeout();
 
 private:
-	uv_pipe_t pipe_;
+    uv::Pipe pipe_;
 	PipeServer* server_;
 
 	// timer used to wait for response from backend server

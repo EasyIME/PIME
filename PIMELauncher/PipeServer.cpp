@@ -375,7 +375,7 @@ void PipeServer::onNewClientConnected(uv_stream_t* server, int status) {
 	auto server_pipe = reinterpret_cast<uv_pipe_t*>(server);
 	auto client = new PipeClient{this, server_pipe->pipe_mode, server_pipe->security_attributes };
 	acceptClient(client);
-	client->startReadPipe();
+	client->startRead();
 }
 
 bool PipeServer::initSingleInstance() {

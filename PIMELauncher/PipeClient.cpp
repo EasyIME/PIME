@@ -22,6 +22,7 @@
 #include "Utils.h"
 #include "BackendServer.h"
 
+
 using namespace std;
 
 namespace PIME {
@@ -33,17 +34,31 @@ static constexpr std::uint64_t BACKEND_REQUEST_TIMEOUT_MS = 30 * 1000;
 
 
 PipeClient::PipeClient(PipeServer* server, DWORD pipeMode, SECURITY_ATTRIBUTES* securityAttributes) :
-	backend_(nullptr),
-	server_{ server },
+    server_{ server },
+    backend_(nullptr),
     // generate a new uuid for client ID
-    clientId_{ generateUuidStr() } {
+    clientId_{ generateUuidStr() },
+    pipe_{ pipeMode, securityAttributes } {
 
-	// setup pipe
-	uv_pipe_init_windows_named_pipe(uv_default_loop(), &pipe_, 0, pipeMode, securityAttributes);
-	pipe_.data = this;
-	uv_stream_set_blocking((uv_stream_t*)&pipe_, 0);
+    pipe_.setBlocking(false);
 
-	// setup a timer to detect request timeout
+    pipe_.setReadCallback(
+        [this](const char* data, size_t len) {
+            handleClientMessage(data, len);
+        }
+    );
+    pipe_.setReadErrorCallback(
+        [this](int status) {
+            onReadError(status);
+        }
+    );
+    pipe_.setCloseCallback(
+        [this]() {
+            delete this;
+        }
+    );
+
+    // setup a timer to detect request timeout
 	uv_timer_init(uv_default_loop(), &waitResponseTimer_);
 	waitResponseTimer_.data = this;
 }
@@ -52,59 +67,15 @@ std::shared_ptr<spdlog::logger>& PipeClient::logger() {
 	return server_->logger();
 }
 
-void PipeClient::startReadPipe() {
-	uv_read_start((uv_stream_t*)&pipe_,
-        // Allocate memory buffer.
-		[](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-            buf->base = new char[suggested_size];
-            buf->len = suggested_size;
-        },
-        // Handle data.
-		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-            auto client = (PipeClient*)stream->data;
-            client->onClientDataReceived(buf->base, nread);
-            if (buf->base) {
-                delete[]buf->base;
-            }
-        });
-}
-
-void PipeClient::writePipe(const char* data, size_t len) {
-	// we got a response before request timeout, so stop the timer
-	stopWaitTimer();
-
-	// The memory pointed to by the buffers must remain valid until the callback gets called. 
-	// http://docs.libuv.org/en/v1.x/stream.html
-	// So we need to copy the buffer
-	char* copiedData = new char[len];
-	memcpy(copiedData, data, len);
-	uv_buf_t buf = { len, copiedData };
-	uv_write_t* req = new uv_write_t{};
-	req->data = copiedData;
-	uv_write(req, stream(), &buf, 1, [](uv_write_t* req, int status) {
-		char* copiedData = reinterpret_cast<char*>(req->data);
-		delete[]copiedData;
-		delete req;
-	});
-}
-
 void PipeClient::destroy() {
     server_->removeClient(this);
-	uv_close((uv_handle_t*)&pipe_, [](uv_handle_t* handle) {
-		auto client = (PipeClient*)handle->data;
-		delete client;
-	});
+    pipe_.close();
 }
 
-void PipeClient::onClientDataReceived(const char* buf, ssize_t nread) {
-	if (nread < 0 || nread == UV_EOF || buf == nullptr) {  // error
-		// the client connection seems to be broken. close it.
-		disconnectFromBackend();
-        destroy();
-	}
-    else if (nread > 0) {
-        handleClientMessage(buf, nread);
-    }
+void PipeClient::onReadError(int error) {
+    // the client connection seems to be broken. close it.
+    disconnectFromBackend();
+    destroy();
 }
 
 void PipeClient::handleClientMessage(const char* readBuf, size_t len) {
@@ -114,21 +85,19 @@ void PipeClient::handleClientMessage(const char* readBuf, size_t len) {
 		Json::Value msg;
 		Json::Reader reader;
 		if (reader.parse(readBuf, msg)) {
-			setupBackend(msg);
+			initBackend(msg);
 		}
 	}
 
 	// pass the incoming message to the backend
 	if (backend_) {
 		// start a timer to see if we can get a response from backend server before timeout.
-		startWaitTimer(BACKEND_REQUEST_TIMEOUT_MS);
-
-		// really call the backend
+		startRequestTimeoutTimer(BACKEND_REQUEST_TIMEOUT_MS);
 		backend_->handleClientMessage(this, readBuf, len);
 	}
 }
 
-bool PipeClient::setupBackend(const Json::Value & params) {
+bool PipeClient::initBackend(const Json::Value & params) {
 	const char* method = params["method"].asCString();
 	if (method != nullptr && strcmp(method, "init") == 0) {  // the client connects to us the first time
 		// find a backend for the client text service
@@ -154,14 +123,14 @@ void PipeClient::disconnectFromBackend() {
 	}
 }
 
-void PipeClient::startWaitTimer(std::uint64_t timeoutMs) {
+void PipeClient::startRequestTimeoutTimer(std::uint64_t timeoutMs) {
 	uv_timer_start(&waitResponseTimer_, [](uv_timer_t* handle) {
 		auto pThis = reinterpret_cast<PipeClient*>(handle->data);
 		pThis->onRequestTimeout();
 	}, timeoutMs, 0);
 }
 
-void PipeClient::stopWaitTimer() {
+void PipeClient::stopRequestTimeoutTimer() {
 	uv_timer_stop(&waitResponseTimer_);
 }
 
@@ -172,6 +141,8 @@ void PipeClient::onRequestTimeout() {
 		logger()->critical("Backend {} seems to be dead. Try to restart!", backend_->name());
 		backend_->restartProcess();
 	}
+
+    // FIXME: do we need to close the pipe or write some error response?
 }
 
 } // namespace PIME

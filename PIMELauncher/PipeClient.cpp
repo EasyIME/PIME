@@ -54,7 +54,7 @@ PipeClient::PipeClient(PipeServer* server, DWORD pipeMode, SECURITY_ATTRIBUTES* 
     );
     pipe_.setCloseCallback(
         [this]() {
-            delete this;
+            server_->removeClient(this);
         }
     );
 
@@ -67,15 +67,14 @@ std::shared_ptr<spdlog::logger>& PipeClient::logger() {
 	return server_->logger();
 }
 
-void PipeClient::destroy() {
-    server_->removeClient(this);
+void PipeClient::close() {
     pipe_.close();
 }
 
 void PipeClient::onReadError(int error) {
     // the client connection seems to be broken. close it.
     disconnectFromBackend();
-    destroy();
+    close();
 }
 
 void PipeClient::handleClientMessage(const char* readBuf, size_t len) {

@@ -63,8 +63,7 @@ public:
 
 	void disconnectFromBackend();
 
-	// close the pipe handle and delete the PipeClient object
-	void destroy();
+	void close();
 
 private:
     void onReadError(int error);

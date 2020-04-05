@@ -224,16 +224,12 @@ BackendServer* PipeServer::backendFromName(const char* name) {
 
 void PipeServer::onBackendClosed(BackendServer * backend) {
 	// the backend server is terminated, disconnect all clients using this backend
-	auto removed_it = std::remove_if(clients_.begin(), clients_.end(),
-		[backend](PipeClient* client) {
-		if (client->backend_ == backend) {
-			// if the client is using this broken backend, disconnect it
-			client->destroy();
-			return true;
-		}
-		return false;
-	});
-	clients_.erase(removed_it, clients_.cend());
+    for (auto client : clients_) {
+        if (client->backend_ == backend) {
+            // if the client is using this broken backend, disconnect it
+            client->close();
+        }
+    }
 }
 
 BackendServer* PipeServer::backendFromLangProfileGuid(const char* guid) {
@@ -369,6 +365,7 @@ void PipeServer::acceptClient(PipeClient* client) {
 
 void PipeServer::removeClient(PipeClient* client) {
 	clients_.erase(find(clients_.begin(), clients_.end(), client));
+    delete client;
 }
 
 void PipeServer::onNewClientConnected(uv_stream_t* server, int status) {

@@ -64,7 +64,7 @@ private:
 
 	void stopWaitTimer();
 
-	void onClientDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
+	void onClientDataReceived(const char* buf, ssize_t nread);
 
 	void handleClientMessage(const char* readBuf, size_t len);
 

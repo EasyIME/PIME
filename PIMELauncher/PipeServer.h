@@ -96,9 +96,10 @@ private:
 	void initLogger();
 	void loadConfig();
 	void saveConfig();
-	static std::string getPipeName(const char* base_name);
+    bool initSingleInstance();
+	static std::wstring getPipeName(const wchar_t* baseName);
 	void initSecurityAttributes();
-	void initPipe(uv_pipe_t* pipe, const char * app_name, SECURITY_ATTRIBUTES* sa = nullptr);
+	void initPipe(uv_pipe_t* pipe, const wchar_t* appName, SECURITY_ATTRIBUTES* sa = nullptr);
 	void terminateExistingLauncher(HWND existingHwnd);
 	void parseCommandLine(LPSTR cmd);
 

@@ -90,7 +90,9 @@ PipeServer::PipeServer() :
 }
 
 PipeServer::~PipeServer() {
-	if (everyoneSID_ != nullptr)
+    singleton_ = nullptr;
+
+    if (everyoneSID_ != nullptr)
 		FreeSid(everyoneSID_);
 	if (allAppsSID_ != nullptr)
 		FreeSid(allAppsSID_);
@@ -104,16 +106,13 @@ PipeServer::~PipeServer() {
 }
 
 void PipeServer::initDataDir() {
-	wchar_t* appLocalDataDirPath = nullptr;
-	::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &appLocalDataDirPath);
-	dataDirPath_ = std::wstring(appLocalDataDirPath) + L"\\PIME";
-	::CoTaskMemFree(appLocalDataDirPath);
-	::SHCreateDirectoryEx(NULL, dataDirPath_.c_str(), NULL);
+	dataDirPath_ = getAppLocalDir() + L"\\PIME";
+	makeDirs(dataDirPath_);
 }
 
 void PipeServer::initLogger() {
 	auto logDirPath = dataDirPath_ + L"\\Log";
-	::SHCreateDirectoryEx(NULL, logDirPath.c_str(), NULL);
+	makeDirs(logDirPath);
 
 	auto logFile = logDirPath + L"\\PIMELauncher.log";
 	try {
@@ -149,13 +148,10 @@ void PipeServer::saveConfig() {
 void PipeServer::initBackendServers(const std::wstring & topDirPath) {
 	// load known backend implementations
 	Json::Value backends;
-	if (loadJsonFile(topDirPath + L"\\backends.json", backends)) {
-		if (backends.isArray()) {
-			for (auto it = backends.begin(); it != backends.end(); ++it) {
-				auto& backendInfo = *it;
-				BackendServer* backend = new BackendServer(this, backendInfo);
-				backends_.push_back(backend);
-			}
+	if (loadJsonFile(topDirPath + L"\\backends.json", backends) && backends.isArray()) {
+        for(auto& backendInfo: backends) {
+			BackendServer* backend = new BackendServer(this, backendInfo);
+			backends_.push_back(backend);
 		}
 	}
 
@@ -173,22 +169,24 @@ void PipeServer::initInputMethods(const std::wstring& topDirPath) {
 		if (hFind != INVALID_HANDLE_VALUE) {
 			do {
 				if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { // this is a subdir
-					if (findData.cFileName[0] != '.') {
-						std::wstring imejson = dirPath;
-						imejson += '\\';
-						imejson += findData.cFileName;
-						imejson += L"\\ime.json";
-						// Make sure the file exists
-						DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
-						if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
-							// load the json file to get the info of input method
-							Json::Value json;
-							if (loadJsonFile(imejson, json)) {
-								std::string guid = json["guid"].asString();
-								transform(guid.begin(), guid.end(), guid.begin(), tolower);  // convert GUID to lwoer case
-																							 // map text service GUID to its backend server
-								backendMap_.insert(std::make_pair(guid, backendFromName(backend->name_.c_str())));
-							}
+                    if (findData.cFileName[0] == '.') {
+                        continue;
+                    }
+
+					std::wstring imejson = dirPath;
+					imejson += '\\';
+					imejson += findData.cFileName;
+					imejson += L"\\ime.json";
+					// Make sure the file exists
+					DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
+					if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
+						// load the json file to get the info of input method
+						Json::Value json;
+						if (loadJsonFile(imejson, json)) {
+							std::string guid = json["guid"].asString();
+							transform(guid.begin(), guid.end(), guid.begin(), tolower);  // convert GUID to lwoer case
+																							// map text service GUID to its backend server
+							backendMap_.insert(std::make_pair(guid, backendFromName(backend->name_.c_str())));
 						}
 					}
 				}
@@ -245,18 +243,18 @@ BackendServer* PipeServer::backendFromLangProfileGuid(const char* guid) {
 	return nullptr;
 }
 
-string PipeServer::getPipeName(const char* base_name) {
-	string pipe_name;
-	char username[UNLEN + 1];
+std::wstring PipeServer::getPipeName(const wchar_t* baseName) {
+	std::wstring pipeName;
+	wchar_t username[UNLEN + 1];
 	DWORD unlen = UNLEN + 1;
-	if (GetUserNameA(username, &unlen)) {
+	if (GetUserNameW(username, &unlen)) {
 		// add username to the pipe path so it will not clash with other users' pipes.
-		pipe_name = "\\\\.\\pipe\\";
-		pipe_name += username;
-		pipe_name += "\\PIME\\";
-		pipe_name += base_name;
+        pipeName = L"\\\\.\\pipe\\";
+        pipeName += username;
+        pipeName += L"\\PIME\\";
+        pipeName += baseName;
 	}
-	return pipe_name;
+	return pipeName;
 }
 
 void PipeServer::parseCommandLine(LPSTR cmd) {
@@ -355,19 +353,11 @@ void PipeServer::initSecurityAttributes() {
 
 // References:
 // https://msdn.microsoft.com/en-us/library/windows/desktop/aa365588(v=vs.85).aspx
-void PipeServer::initPipe(uv_pipe_t* pipe, const char* app_name, SECURITY_ATTRIBUTES* sa) {
-	wchar_t username[UNLEN + 1];
-	DWORD unlen = UNLEN + 1;
-	if (GetUserNameW(username, &unlen)) {
-		// add username to the pipe path so it will not clash with other users' pipes.
-		char pipe_name[MAX_PATH];
-		std::string utf8_username = utf8Codec.to_bytes(username, username + unlen);
-		sprintf(pipe_name, "\\\\.\\pipe\\%s\\PIME\\%s", utf8_username.c_str(), app_name);
-		// create the pipe
-		uv_pipe_init_windows_named_pipe(uv_default_loop(), pipe, 0, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, sa);
-		pipe->data = this;
-		uv_pipe_bind(pipe, pipe_name);
-	}
+void PipeServer::initPipe(uv_pipe_t* pipe, const wchar_t* appName, SECURITY_ATTRIBUTES* sa) {
+    auto utf8PipeName = utf8Codec.to_bytes(getPipeName(appName));
+	uv_pipe_init_windows_named_pipe(uv_default_loop(), pipe, 0, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, sa);
+	pipe->data = this;
+	uv_pipe_bind(pipe, utf8PipeName.c_str());
 }
 
 
@@ -388,6 +378,15 @@ void PipeServer::onNewClientConnected(uv_stream_t* server, int status) {
 	client->startReadPipe();
 }
 
+bool PipeServer::initSingleInstance() {
+    singleInstanceMutex_ = ::CreateMutex(NULL, FALSE, singleInstanceMutexName_);
+    if (GetLastError() == ERROR_ALREADY_EXISTS) {
+        // mutex already exists: found an existing process.
+        return false;
+    }
+    return true;
+}
+
 int PipeServer::exec(LPSTR cmd) {
 	parseCommandLine(cmd);
 
@@ -397,28 +396,16 @@ int PipeServer::exec(LPSTR cmd) {
 		}
 		return 0;
 	}
+    // ensure that only one instance of PIMELauncher can be running
+    if (!initSingleInstance()) {
+        return 0;
+    }
 
-	// ensure that only one instance of PIMELauncher can be running
-	singleInstanceMutex_ = ::CreateMutex(NULL, FALSE, singleInstanceMutexName_);
-	if (GetLastError() == ERROR_ALREADY_EXISTS) {
-		// mutex already exists: found an existing process.
-		return 0;
-	}
+    // Ask Windows to restart our process when crashes happen.
+    RegisterApplicationRestart(L"/restarted", 0);  // should not include executable name.
 
 	// get the PIME installation directory
-	wchar_t exeFilePathBuf[MAX_PATH];
-	DWORD len = GetModuleFileNameW(NULL, exeFilePathBuf, MAX_PATH);
-	exeFilePathBuf[len] = '\0';
-
-	// Ask Windows to restart our process when crashes happen.
-	RegisterApplicationRestart(exeFilePathBuf, 0);
-
-	// strip the filename part to get dir path
-	wchar_t* p = wcsrchr(exeFilePathBuf, '\\');
-	if (p)
-		*p = '\0';
-	topDirPath_ = exeFilePathBuf;
-
+    topDirPath_ = getCurrentExecutableDir();
 	// must set CWD to our dir. otherwise the backends won't launch.
 	::SetCurrentDirectoryW(topDirPath_.c_str());
 
@@ -435,11 +422,11 @@ int PipeServer::exec(LPSTR cmd) {
 		sa = &securityAttributes_;
 	}
 	// initialize the server pipe
-	initPipe(&serverPipe_, "Launcher", sa);
+	initPipe(&serverPipe_, L"Launcher", sa);
 
 	// listen to events from clients
 	uv_listen(reinterpret_cast<uv_stream_t*>(&serverPipe_), 32, [](uv_stream_t* server, int status) {
-		PipeServer* _this = (PipeServer*)server->data;
+		auto _this = reinterpret_cast<PipeServer*>(server->data);
 		_this->onNewClientConnected(server, status);
 	});
 

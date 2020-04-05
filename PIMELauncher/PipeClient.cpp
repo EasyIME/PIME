@@ -1,5 +1,5 @@
 //
-//	Copyright (C) 2015 - 2018 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+//	Copyright (C) 2015 - 2020 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 //
 //	This library is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU Library General Public
@@ -19,7 +19,7 @@
 
 #include "PipeClient.h"
 #include "PipeServer.h"
-
+#include "Utils.h"
 #include "BackendServer.h"
 
 using namespace std;
@@ -34,20 +34,14 @@ static constexpr std::uint64_t BACKEND_REQUEST_TIMEOUT_MS = 30 * 1000;
 
 PipeClient::PipeClient(PipeServer* server, DWORD pipeMode, SECURITY_ATTRIBUTES* securityAttributes) :
 	backend_(nullptr),
-	server_{ server } {
+	server_{ server },
+    // generate a new uuid for client ID
+    clientId_{ generateUuidStr() } {
 
 	// setup pipe
 	uv_pipe_init_windows_named_pipe(uv_default_loop(), &pipe_, 0, pipeMode, securityAttributes);
 	pipe_.data = this;
 	uv_stream_set_blocking((uv_stream_t*)&pipe_, 0);
-
-	// generate a new uuid for client ID
-	UUID uuid;
-	UuidCreate(&uuid);
-	RPC_CSTR uuid_str = nullptr;
-	UuidToStringA(&uuid, &uuid_str);
-	clientId_ = (char*)uuid_str;
-	RpcStringFreeA(&uuid_str);
 
 	// setup a timer to detect request timeout
 	uv_timer_init(uv_default_loop(), &waitResponseTimer_);
@@ -60,14 +54,19 @@ std::shared_ptr<spdlog::logger>& PipeClient::logger() {
 
 void PipeClient::startReadPipe() {
 	uv_read_start((uv_stream_t*)&pipe_,
+        // Allocate memory buffer.
 		[](uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-		buf->base = new char[suggested_size];
-		buf->len = suggested_size;
-	},
+            buf->base = new char[suggested_size];
+            buf->len = suggested_size;
+        },
+        // Handle data.
 		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-		auto client = (PipeClient*)stream->data;
-		client->onClientDataReceived(stream, nread, buf);
-	});
+            auto client = (PipeClient*)stream->data;
+            client->onClientDataReceived(buf->base, nread);
+            if (buf->base) {
+                delete[]buf->base;
+            }
+        });
 }
 
 void PipeClient::writePipe(const char* data, size_t len) {
@@ -90,25 +89,22 @@ void PipeClient::writePipe(const char* data, size_t len) {
 }
 
 void PipeClient::destroy() {
+    server_->removeClient(this);
 	uv_close((uv_handle_t*)&pipe_, [](uv_handle_t* handle) {
 		auto client = (PipeClient*)handle->data;
 		delete client;
 	});
 }
 
-void PipeClient::onClientDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-	if (nread <= 0 || nread == UV_EOF || buf->base == nullptr) {
-		if (buf->base) {
-			delete[]buf->base;
-		}
+void PipeClient::onClientDataReceived(const char* buf, ssize_t nread) {
+	if (nread < 0 || nread == UV_EOF || buf == nullptr) {  // error
 		// the client connection seems to be broken. close it.
 		disconnectFromBackend();
-		return;
+        destroy();
 	}
-	if (buf->base) {
-		handleClientMessage(buf->base, buf->len);
-		delete[]buf->base;
-	}
+    else if (nread > 0) {
+        handleClientMessage(buf, nread);
+    }
 }
 
 void PipeClient::handleClientMessage(const char* readBuf, size_t len) {
@@ -156,10 +152,6 @@ void PipeClient::disconnectFromBackend() {
 		const char msg[] = "{\"method\":\"close\"}";
 		backend_->handleClientMessage(this, msg, strlen(msg));
 	}
-
-	server_->removeClient(this);
-
-	destroy();
 }
 
 void PipeClient::startWaitTimer(std::uint64_t timeoutMs) {

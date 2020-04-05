@@ -71,7 +71,6 @@ BackendServer::BackendServer(PipeServer* pipeServer, const Json::Value& info) :
 	stdinPipe_{nullptr},
 	stdoutPipe_{nullptr},
 	stderrPipe_{nullptr},
-	ready_{false},
 	name_(info["name"].asString()),
 	needRestart_{false},
 	command_(info["command"].asString()),
@@ -232,19 +231,7 @@ bool BackendServer::isProcessRunning() {
 void BackendServer::onStdoutRead(const char* buf, size_t len) {
     // print to debug log if there is any
     logger()->debug("RECV: {}", std::string(buf, len));
-
-    // initial ready message from the backend server
-    if (!ready_ && buf[0] == '\0') {
-        ready_ = true;
-        // skip the first byte, and add the received data to our buffer
-        // FIXME: this is not very reliable
-        stdoutReadBuf_.write(buf + 1, len - 1);
-    }
-    else {
-        // add the received data to our buffer
-        stdoutReadBuf_.write(buf, len);
-    }
-
+    stdoutReadBuf_.write(buf, len);
     handleBackendReply();
 }
 
@@ -274,7 +261,6 @@ void BackendServer::onProcessTerminated(int64_t exit_status, int term_signal) {
 }
 
 void BackendServer::closeStdioPipes() {
-	ready_ = false;
 	if (stdinPipe_ != nullptr) {
         stdinPipe_->close();
 		stdinPipe_ = nullptr;

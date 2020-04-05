@@ -91,7 +91,6 @@ private:
 	uv::Pipe* stdinPipe_;
     uv::Pipe* stdoutPipe_;
     uv::Pipe* stderrPipe_;
-	bool ready_;
 	std::stringstream stdoutReadBuf_;
 
 	bool needRestart_;

@@ -645,7 +645,6 @@ bool Client::callRpcMethod(Json::Value& request, Json::Value & response) {
 
 	bool success = false;
 	std::string serializedResponse;
-	DWORD rlen = 0;
 	Json::FastWriter writer;
 	std::string serializedRequest = writer.write(request); // convert the json object to string
 

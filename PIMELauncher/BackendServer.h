@@ -29,11 +29,12 @@
 #include <vector>
 #include <unordered_map>
 #include <sstream>
+#include <memory>
 
-#include <uv.h>
 #include <json/json.h>
 #include <spdlog/spdlog.h>
 
+#include "UvPipe.h"
 
 namespace PIME {
 
@@ -60,34 +61,26 @@ public:
 
 	void restartProcess();
 
-	uv_stream_t* stdinStream() {
-		return reinterpret_cast<uv_stream_t*>(stdinPipe_);
-	}
-
-	uv_stream_t* stdoutStream() {
-		return reinterpret_cast<uv_stream_t*>(stdoutPipe_);
-	}
-
-	uv_stream_t* stderrStream() {
-		return reinterpret_cast<uv_stream_t*>(stderrPipe_);
-	}
-
 	std::shared_ptr<spdlog::logger>& logger();
 
 	void handleClientMessage(PipeClient* client, const char* readBuf, size_t len);
 
-	void startReadOutputPipe();
-
-	void startReadErrorPipe();
-
-	void writeInputPipe(const char* data, size_t len);
-
 private:
-	static void allocReadBuf(uv_handle_t*, size_t suggested_size, uv_buf_t* buf);
-	void onProcessDataReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
-	void onProcessErrorReceived(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);
+    uv::Pipe* createStdinPipe();
+
+    uv::Pipe* createStdoutPipe();
+
+    uv::Pipe* createStderrPipe();
+
+    void onStdoutRead(const char* buf, size_t len);
+
+    void onStderrRead(const char* buf, size_t len);
+
+    void onReadError(int status);
+
 	void onProcessTerminated(int64_t exit_status, int term_signal);
-	void closeStdioPipes();
+
+    void closeStdioPipes();
 
 	void handleBackendReply();
 
@@ -95,9 +88,9 @@ private:
 	PipeServer* pipeServer_;
 	std::string name_;
 	uv_process_t* process_;
-	uv_pipe_t* stdinPipe_;
-	uv_pipe_t* stdoutPipe_;
-	uv_pipe_t* stderrPipe_;
+	uv::Pipe* stdinPipe_;
+    uv::Pipe* stdoutPipe_;
+    uv::Pipe* stderrPipe_;
 	bool ready_;
 	std::stringstream stdoutReadBuf_;
 

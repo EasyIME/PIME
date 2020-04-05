@@ -47,6 +47,23 @@ namespace PIME {
 static wstring_convert<codecvt_utf8<wchar_t>> utf8Codec;
 static constexpr auto MAX_RESPONSE_WAITING_TIME = 30;  // if a backend is non-responsive for 30 seconds, it's considered dead
 
+static std::string getUtf8CurrentDir() {
+    char dirPath[MAX_PATH];
+    size_t len = MAX_PATH;
+    uv_cwd(dirPath, &len);
+    return dirPath;
+}
+
+static std::vector<std::string> getUtf8EnvironmentVariables() {
+    // build our own new environments
+    auto env_strs = GetEnvironmentStringsW();
+    vector<string> utf8Environ;
+    for (auto penv = env_strs; *penv; penv += wcslen(penv) + 1) {
+        utf8Environ.emplace_back(utf8Codec.to_bytes(penv));
+    }
+    FreeEnvironmentStringsW(env_strs);
+    return utf8Environ;
+}
 
 BackendServer::BackendServer(PipeServer* pipeServer, const Json::Value& info) :
 	pipeServer_{pipeServer},
@@ -84,41 +101,68 @@ void BackendServer::handleClientMessage(PipeClient * client, const char * readBu
 	logger()->debug("SEND: {}", msg);
 
 	// write the message to the backend server
-	writeInputPipe(msg.c_str(), msg.length());
+    stdinPipe_->write(std::move(msg));
+}
+
+uv::Pipe* BackendServer::createStdinPipe() {
+    auto stdinPipe = new uv::Pipe();
+    stdinPipe->setCloseCallback([stdinPipe]() {delete stdinPipe; });
+    return stdinPipe;
+}
+
+uv::Pipe* BackendServer::createStdoutPipe() {
+    auto stdoutPipe = new uv::Pipe();
+    stdoutPipe->setReadCallback(
+        [this](const char* buf, size_t len) {
+            onStdoutRead(buf, len);
+        }
+    );
+    stdoutPipe->setReadErrorCallback(
+        [this](int error) {
+            onReadError(error);
+        }
+    );
+    return stdoutPipe;
+}
+
+uv::Pipe* BackendServer::createStderrPipe() {
+    auto stderrPipe = new uv::Pipe();
+    stderrPipe->setReadCallback(
+        [this](const char* buf, size_t len) {
+            onStderrRead(buf, len);
+        }
+    );
+    stderrPipe->setReadErrorCallback(
+        [this](int error) {
+            onReadError(error);
+        }
+    );
+    stderrPipe->setCloseCallback([this, stderrPipe]() {delete stderrPipe; });
+    return stderrPipe;
 }
 
 void BackendServer::startProcess() {
 	process_ = new uv_process_t{};
 	process_->data = this;
 	// create pipes for stdio of the child process
-	stdinPipe_ = new uv_pipe_t{};
-	stdinPipe_->data = this;
-	uv_pipe_init(uv_default_loop(), stdinPipe_, 0);
+    stdoutPipe_ = createStdoutPipe();
+    stdoutReadBuf_.clear();
+    stdinPipe_ = createStdinPipe();
+    stderrPipe_ = createStderrPipe();
 
-	stdoutPipe_ = new uv_pipe_t{};
-	stdoutPipe_->data = this;
-	uv_pipe_init(uv_default_loop(), stdoutPipe_, 0);
-	stdoutReadBuf_.clear();
-
-	stderrPipe_ = new uv_pipe_t{};
-	stderrPipe_->data = this;
-	uv_pipe_init(uv_default_loop(), stderrPipe_, 0);
-
+    constexpr auto pipeFlags = uv_stdio_flags(UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE);
 	uv_stdio_container_t stdio_containers[3];
-	stdio_containers[0].data.stream = stdinStream();
-	stdio_containers[0].flags = uv_stdio_flags(UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE);
-	stdio_containers[1].data.stream = stdoutStream();
-	stdio_containers[1].flags = uv_stdio_flags(UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE);
-	stdio_containers[2].data.stream = stderrStream();
-	stdio_containers[2].flags = uv_stdio_flags(UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE);
+    stdio_containers[0].data.stream = stdinPipe_->streamHandle();
+	stdio_containers[0].flags = pipeFlags;
+    stdio_containers[1].data.stream = stdoutPipe_->streamHandle();
+	stdio_containers[1].flags = pipeFlags;
+    stdio_containers[2].data.stream = stderrPipe_->streamHandle();
+	stdio_containers[2].flags = pipeFlags;
 
-	char full_exe_path[MAX_PATH];
-	size_t cwd_len = MAX_PATH;
-	uv_cwd(full_exe_path, &cwd_len);
-	full_exe_path[cwd_len] = '\\';
-	strcpy(full_exe_path + cwd_len + 1, command_.c_str());
+    auto utf8CurrentDirPath = getUtf8CurrentDir();
+    auto executablePath = utf8CurrentDirPath + '\\' + command_;
 	const char* argv[] = {
-		full_exe_path,
+        executablePath.c_str(),
 		params_.c_str(),
 		nullptr
 	};
@@ -127,27 +171,24 @@ void BackendServer::startProcess() {
 		reinterpret_cast<BackendServer*>(process->data)->onProcessTerminated(exit_status, term_signal);
 	};
 	options.flags = UV_PROCESS_WINDOWS_HIDE; //  UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS;
-	options.file = argv[0];
+    options.file = executablePath.c_str();
 	options.args = const_cast<char**>(argv);
-	char full_working_dir[MAX_PATH];
-	::GetFullPathNameA(workingDir_.c_str(), MAX_PATH, full_working_dir, nullptr);
-	options.cwd = full_working_dir;
+
+    auto backendWorkingDirPath = utf8CurrentDirPath + '\\' + workingDir_;
+	options.cwd = backendWorkingDirPath.c_str();
 
 	// build our own new environments
-	auto env_strs = GetEnvironmentStringsW();
-	vector<string> utf8_environ;
-	for (auto penv = env_strs; *penv; penv += wcslen(penv) + 1) {
-		utf8_environ.emplace_back(utf8Codec.to_bytes(penv));
-	}
-	FreeEnvironmentStringsW(env_strs);
+    auto utf8EnvVars = getUtf8EnvironmentVariables();
 	// add our own environment variables
 	// NOTE: Force python to output UTF-8 encoded strings
 	// Reference: https://docs.python.org/3/using/cmdline.html#envvar-PYTHONIOENCODING
 	// By default, python uses ANSI encoding in Windows and this breaks our unicode support.
 	// FIXME: makes this configurable from backend.json.
-	utf8_environ.emplace_back("PYTHONIOENCODING=utf-8:ignore");
-	vector<const char*> env;
-	for (auto& v : utf8_environ) {
+	utf8EnvVars.emplace_back("PYTHONIOENCODING=utf-8:ignore");
+
+    // convert to a null terminated char* array.
+	std::vector<const char*> env;
+	for (auto& v : utf8EnvVars) {
 		env.emplace_back(v.c_str());
 	}
 	env.emplace_back(nullptr);
@@ -164,8 +205,8 @@ void BackendServer::startProcess() {
 	}
 
 	// start receiving data from the backend server
-	startReadOutputPipe();
-	startReadErrorPipe();
+    stdoutPipe_->startRead();
+    stderrPipe_->startRead();
 }
 
 void BackendServer::restartProcess() {
@@ -187,59 +228,34 @@ bool BackendServer::isProcessRunning() {
 	return process_ != nullptr;
 }
 
+void BackendServer::onStdoutRead(const char* buf, size_t len) {
+    // print to debug log if there is any
+    logger()->debug("RECV: {}", std::string(buf, len));
 
-void BackendServer::allocReadBuf(uv_handle_t *, size_t suggested_size, uv_buf_t * buf) {
-	buf->base = new char[suggested_size];
-	buf->len = suggested_size;
+    // initial ready message from the backend server
+    if (!ready_ && buf[0] == '\0') {
+        ready_ = true;
+        // skip the first byte, and add the received data to our buffer
+        // FIXME: this is not very reliable
+        stdoutReadBuf_.write(buf + 1, len - 1);
+    }
+    else {
+        // add the received data to our buffer
+        stdoutReadBuf_.write(buf, len);
+    }
+
+    handleBackendReply();
 }
 
-void BackendServer::onProcessDataReceived(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf) {
-	// FIXME: need to do output buffering since we might not receive a full line
-	if (nread < 0 || nread == UV_EOF) {
-		if (buf->base) {
-			delete[]buf->base;
-		}
-		// the backend server is broken, stop it
-		terminateProcess();
-		return;
-	}
-	if (buf->base) {
-		// print to debug log if there is any
-		logger()->debug("RECV: {}", std::string(buf->base, buf->len));
-
-		// initial ready message from the backend server
-		if (!ready_ && buf->base[0] == '\0') {
-			ready_ = true;
-			// skip the first byte, and add the received data to our buffer
-			// FIXME: this is not very reliable
-			stdoutReadBuf_.write(buf->base + 1, buf->len - 1);
-		}
-		else {
-			// add the received data to our buffer
-			stdoutReadBuf_.write(buf->base, buf->len);
-		}
-
-		handleBackendReply();
-
-		delete[]buf->base;
-	}
+void BackendServer::onReadError(int status) {
+    // the backend server is broken, stop it
+    terminateProcess();
 }
 
-void BackendServer::onProcessErrorReceived(uv_stream_t * stream, ssize_t nread, const uv_buf_t * buf) {
-	// FIXME: need to do output buffering since we might not receive a full line
-	if (nread < 0 || nread == UV_EOF) {
-		if (buf->base) {
-			delete[]buf->base;
-		}
-		// the backend server is broken, stop it
-		terminateProcess();
-		return;
-	}
-	if (buf->base) {
-		// log the error message
-		logger()->error("[Backend error] {}", std::string(buf->base, buf->len));
-		delete[]buf->base;
-	}
+void BackendServer::onStderrRead(const char* buf, size_t len) {
+    // FIXME: need to do output buffering since we might not receive a full line
+    // log the error message
+    logger()->error("[Backend error] {}", std::string(buf, len));
 }
 
 void BackendServer::onProcessTerminated(int64_t exit_status, int term_signal) {
@@ -259,24 +275,18 @@ void BackendServer::onProcessTerminated(int64_t exit_status, int term_signal) {
 void BackendServer::closeStdioPipes() {
 	ready_ = false;
 	if (stdinPipe_ != nullptr) {
-		uv_close(reinterpret_cast<uv_handle_t*>(stdinPipe_), [](uv_handle_t* handle) {
-			delete reinterpret_cast<uv_pipe_t*>(handle);
-		});
+        stdinPipe_->close();
 		stdinPipe_ = nullptr;
 	}
 
 	if (stdoutPipe_ != nullptr) {
-		uv_close(reinterpret_cast<uv_handle_t*>(stdoutPipe_), [](uv_handle_t* handle) {
-			delete reinterpret_cast<uv_pipe_t*>(handle);
-		});
+        stdoutPipe_->close();
 		stdoutPipe_ = nullptr;
         stdoutReadBuf_ = std::stringstream();
     }
 
 	if (stderrPipe_ != nullptr) {
-		uv_close(reinterpret_cast<uv_handle_t*>(stderrPipe_), [](uv_handle_t* handle) {
-			delete reinterpret_cast<uv_pipe_t*>(handle);
-		});
+        stderrPipe_->close();
 		stderrPipe_ = nullptr;
 	}
 }
@@ -321,38 +331,6 @@ void BackendServer::handleBackendReply() {
 			}
 		}
 	}
-}
-
-void BackendServer::startReadOutputPipe() {
-	uv_read_start(stdoutStream(), allocReadBuf,
-		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-			reinterpret_cast<BackendServer*>(stream->data)->onProcessDataReceived(stream, nread, buf);
-		}
-	);
-}
-
-void BackendServer::startReadErrorPipe() {
-	uv_read_start(stderrStream(), allocReadBuf,
-		[](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-		reinterpret_cast<BackendServer*>(stream->data)->onProcessErrorReceived(stream, nread, buf);
-	}
-	);
-}
-
-void BackendServer::writeInputPipe(const char* data, size_t len) {
-	// The memory pointed to by the buffers must remain valid until the callback gets called. 
-	// http://docs.libuv.org/en/v1.x/stream.html
-	// So we need to copy the buffer
-	char* copiedData = new char[len];
-	memcpy(copiedData, data, len);
-	uv_buf_t buf = { len, copiedData };
-	uv_write_t* req = new uv_write_t{};
-	req->data = copiedData;
-	uv_write(req, stdinStream(), &buf, 1, [](uv_write_t* req, int status) {
-		char* copiedData = reinterpret_cast<char*>(req->data);
-		delete[]copiedData;
-		delete req;
-	});
 }
 
 } // namespace PIME

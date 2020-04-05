@@ -27,7 +27,6 @@
 
 #include <spdlog/spdlog.h>
 
-#define HAVE_UV_NAMED_PIPE
 #include <UvPipe.h>
 
 

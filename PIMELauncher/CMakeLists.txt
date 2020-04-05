@@ -17,6 +17,9 @@ add_definitions(
     # Prevent the fd of log files from being inherited by child processes
     # This is required. Otherwise the file rotation will fail since the file is kept open by the child process.
     -DSPDLOG_PREVENT_CHILD_FD=1
+
+    # Enable our own patched libuv in UvPipe.h
+    -DHAVE_UV_NAMED_PIPE
 )
 
 include_directories(

@@ -84,7 +84,7 @@ private:
 	void closePipe();
 	void init();
 
-	void addKeyEventToRcpRequest(Json::Value& request, Ime::KeyEvent& keyEvent);
+	void addKeyEventToRpcRequest(Json::Value& request, Ime::KeyEvent& keyEvent);
 	bool handleReply(Json::Value& msg, Ime::EditSession* session = nullptr);
 	void updateStatus(Json::Value& msg, Ime::EditSession* session = nullptr);
 	void updateUI(const Json::Value& data);

@@ -1,5 +1,5 @@
 //
-//	Copyright (C) 2015 - 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
+//	Copyright (C) 2015 - 2020 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 //
 //	This library is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU Library General Public
@@ -79,7 +79,7 @@ Client::~Client(void) {
 
 // pack a keyEvent object into a json value
 //static
-void Client::addKeyEventToRcpRequest(Json::Value& request, Ime::KeyEvent& keyEvent) {
+void Client::addKeyEventToRpcRequest(Json::Value& request, Ime::KeyEvent& keyEvent) {
 	request["charCode"] = keyEvent.charCode();
 	request["keyCode"] = keyEvent.keyCode();
 	request["repeatCount"] = keyEvent.repeatCount();
@@ -383,7 +383,7 @@ void Client::onDeactivate() {
 
 bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
     Json::Value req = createRpcRequest("filterKeyDown");
-	addKeyEventToRcpRequest(req, keyEvent);
+	addKeyEventToRpcRequest(req, keyEvent);
 
 	Json::Value ret;
 	callRpcMethod(req, ret);
@@ -395,7 +395,7 @@ bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
 
 bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
     Json::Value req = createRpcRequest("onKeyDown");
-	addKeyEventToRcpRequest(req, keyEvent);
+	addKeyEventToRpcRequest(req, keyEvent);
 
 	Json::Value ret;
 	callRpcMethod(req, ret);
@@ -407,7 +407,7 @@ bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 
 bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
     Json::Value req = createRpcRequest("filterKeyUp");
-	addKeyEventToRcpRequest(req, keyEvent);
+	addKeyEventToRpcRequest(req, keyEvent);
 
 	Json::Value ret;
 	callRpcMethod(req, ret);
@@ -419,7 +419,7 @@ bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
 
 bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
     Json::Value req = createRpcRequest("onKeyUp");
-	addKeyEventToRcpRequest(req, keyEvent);
+	addKeyEventToRpcRequest(req, keyEvent);
 
 	Json::Value ret;
 	callRpcMethod(req, ret);

@@ -75,14 +75,17 @@ public:
 	void onCompositionTerminated(bool forced);
 
 private:
-	static HANDLE connectPipe(const wchar_t* pipeName);
-	bool connectServerPipe();
+	HANDLE connectPipe(const wchar_t* pipeName, int timeoutMs);
 
     Json::Value createRpcRequest(const char* methodName);
-	bool callRpcMethod(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply);
 	bool callRpcMethod(Json::Value& request, Json::Value& response);
-	void closePipe();
-	void init();
+
+    bool isPipeCreatedByPIMEServer(HANDLE pipe);
+    bool waitForRpcConnection();
+    bool callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply);
+    void closeRpcConnection();
+	bool init();
+    void resetTextServiceState();
 
 	void addKeyEventToRpcRequest(Json::Value& request, Ime::KeyEvent& keyEvent);
 	bool handleReply(Json::Value& msg, Ime::EditSession* session = nullptr);
@@ -98,10 +101,7 @@ private:
 	std::unordered_map<std::string, Ime::ComPtr<PIME::LangBarButton>> buttons_; // map buttons to string IDs
 	unsigned int nextSeqNum_;
 	bool isActivated_;
-	bool connectingServerPipe_;
-	UINT connectServerTimerId_;
-
-	static std::unordered_map<UINT_PTR, Client*> timerIdToClients_;
+    bool shouldWaitConnection_;
 };
 
 }

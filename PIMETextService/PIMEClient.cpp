@@ -36,8 +36,6 @@ using namespace std;
 
 namespace PIME {
 
-unordered_map<UINT_PTR, Client*> Client::timerIdToClients_;
-
 static std::string uuidToString(const UUID& uuid) {
     std::string result;
     LPOLESTR buf = nullptr;
@@ -61,19 +59,13 @@ Client::Client(TextService* service, REFIID langProfileGuid):
 	pipe_(INVALID_HANDLE_VALUE),
 	nextSeqNum_(0),
 	isActivated_(false),
-	connectingServerPipe_(false),
-    guid_{uuidToString(langProfileGuid)} {
+    guid_{uuidToString(langProfileGuid)},
+    shouldWaitConnection_{true} {
 }
 
 Client::~Client(void) {
-	closePipe();
-
-	// some language bar buttons are not unregistered properly
-	if (!buttons_.empty()) {
-		for (auto& item: buttons_) {
-			textService_->removeButton(item.second);
-		}
-	}
+	closeRpcConnection();
+    resetTextServiceState();
 	LangBarButton::clearIconCache();
 }
 
@@ -588,7 +580,7 @@ void Client::onCompositionTerminated(bool forced) {
 	}
 }
 
-void Client::init() {
+bool Client::init() {
     Json::Value req = createRpcRequest("init");
 	req["id"] = guid_.c_str();  // language profile guid
 	req["isWindows8Above"] = ::IsWindows8OrGreater();
@@ -597,10 +589,9 @@ void Client::init() {
 	req["isConsole"] = textService_->isConsole();
 
 	Json::Value ret;
-	callRpcMethod(req, ret);
-	if (handleReply(ret)) {
-	}
+    return callRpcMethod(req, ret) && handleReply(ret);
 }
+
 
 Json::Value Client::createRpcRequest(const char* methodName) {
     Json::Value request;
@@ -610,7 +601,7 @@ Json::Value Client::createRpcRequest(const char* methodName) {
     return request;
 }
 
-bool Client::callRpcMethod(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply) {
+bool Client::callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply) {
 	char buf[1024];
 	DWORD rlen = 0;
     bool hasMoreData = false;
@@ -639,36 +630,20 @@ bool Client::callRpcMethod(HANDLE pipe, const std::string& serializedRequest, st
 // send the request to the server
 // a sequence number will be added to the req object automatically.
 bool Client::callRpcMethod(Json::Value& request, Json::Value & response) {
+    if (shouldWaitConnection_ && !waitForRpcConnection()) {
+        return false;
+    }
+
     // Add a sequence number for the request.
     auto seqNum = nextSeqNum_++;
     request["seqNum"] = seqNum;
 
-	bool success = false;
-	std::string serializedResponse;
 	Json::FastWriter writer;
 	std::string serializedRequest = writer.write(request); // convert the json object to string
 
-	if (!connectingServerPipe_) {  // if we're not in the middle of initializing the pipe connection
-		// ensure that we're connected
-		if (!connectServerPipe()) {
-			// connection failed, schedule a timer to try again every 0.5 seconds
-			if (connectServerTimerId_ != 0) { // do not create a new timer if there is an existing one.
-				connectServerTimerId_ = SetTimer(NULL, 0, 500, [](HWND hwnd, UINT msg, UINT_PTR timerId, DWORD time) {
-					auto client = timerIdToClients_[timerId];
-					if (client->connectServerPipe()) {
-						// successfully connected, cancel the timer
-						KillTimer(NULL, timerId);
-						timerIdToClients_.erase(timerId);
-						client->connectServerTimerId_ = 0;
-					}
-				});
-				timerIdToClients_[connectServerTimerId_] = this;
-			}
-			return false;
-		}
-	}
-
-	if (callRpcMethod(pipe_, serializedRequest, serializedResponse)) {
+    std::string serializedResponse;
+    bool success = false;
+    if (callRpcPipe(pipe_, serializedRequest, serializedResponse)) {
 		Json::Reader reader;
 		success = reader.parse(serializedResponse, response);
 		if (success) {
@@ -681,60 +656,40 @@ bool Client::callRpcMethod(Json::Value& request, Json::Value & response) {
     }
 
 	if(!success) { // fail to send the request to the server
-		if (connectingServerPipe_) { // we're in the middle of initializing the pipe connection
-			return false;
-		}
-		else {
-			closePipe(); // close the pipe connection since it's broken
-		}
+		closeRpcConnection(); // close the pipe connection since it's broken
+        resetTextServiceState();  // since we lost the connection, the state is unknonw so we reset.
 	}
 	return success;
 }
 
+bool Client::isPipeCreatedByPIMEServer(HANDLE pipe) {
+    // security check: make sure that we're connecting to the correct server
+    ULONG serverPid;
+    if (GetNamedPipeServerProcessId(pipe, &serverPid)) {
+        // FIXME: check the command line of the server?
+        // See this: http://www.codeproject.com/Articles/19685/Get-Process-Info-with-NtQueryInformationProcess
+        // Too bad! Undocumented Windows internal API might be needed here. :-(
+    }
+    return true;
+}
+
 // establish a connection to the specified pipe and returns its handle
 // static
-HANDLE Client::connectPipe(const wchar_t* pipeName) {
-	bool hasErrors = false;
-	HANDLE pipe = INVALID_HANDLE_VALUE;
-	for (;;) {
-		pipe = CreateFile(pipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-		if (pipe != INVALID_HANDLE_VALUE) {
-			// the pipe is successfully created
-			// security check: make sure that we're connecting to the correct server
-			ULONG serverPid;
-			if (GetNamedPipeServerProcessId(pipe, &serverPid)) {
-				// FIXME: check the command line of the server?
-				// See this: http://www.codeproject.com/Articles/19685/Get-Process-Info-with-NtQueryInformationProcess
-				// Too bad! Undocumented Windows internal API might be needed here. :-(
-			}
-			break;
-		}
-		// being busy is not really an error since we just need to wait.
-		if (GetLastError() != ERROR_PIPE_BUSY) {
-			hasErrors = true; // otherwise, pipe creation fails
-			break;
-		}
-		// All pipe instances are busy, so wait for 2 seconds.
-		if (!WaitNamedPipe(pipeName, 2000)) {
-			hasErrors = true;
-			break;
-		}
-	}
+HANDLE Client::connectPipe(const wchar_t* pipeName, int timeoutMs) {
+    HANDLE pipe = INVALID_HANDLE_VALUE;
+    if (WaitNamedPipe(pipeName, timeoutMs)) {
+        pipe = CreateFile(pipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    }
 
-	if (!hasErrors) {
-		// The pipe is connected; change to message-read mode.
-		DWORD mode = PIPE_READMODE_MESSAGE;
-		if (!SetNamedPipeHandleState(pipe, &mode, NULL, NULL)) {
-			hasErrors = true;
-		}
-	}
-
-	// the pipe is created, but errors happened, destroy it.
-	if (hasErrors && pipe != INVALID_HANDLE_VALUE) {
-		DisconnectNamedPipe(pipe);
-		CloseHandle(pipe);
-		pipe = INVALID_HANDLE_VALUE;
-	}
+    if (pipe != INVALID_HANDLE_VALUE) {
+        DWORD mode = PIPE_READMODE_MESSAGE;
+        // The pipe is connected; change to message-read mode.
+        if (!isPipeCreatedByPIMEServer(pipe) || !::SetNamedPipeHandleState(pipe, &mode, NULL, NULL)) {
+            DisconnectNamedPipe(pipe);
+            CloseHandle(pipe);
+            pipe = INVALID_HANDLE_VALUE;
+        }
+    }
 	return pipe;
 }
 
@@ -742,45 +697,55 @@ HANDLE Client::connectPipe(const wchar_t* pipeName) {
 // Ensure that we're connected to the PIME input method server
 // If we are already connected, the method simply returns true;
 // otherwise, it tries to establish the connection.
-bool Client::connectServerPipe() {
-	if (pipe_ == INVALID_HANDLE_VALUE) { // the pipe is not connected
-		connectingServerPipe_ = true;
-		wstring serverPipeName = getPipeName(L"Launcher");
+bool Client::waitForRpcConnection() {
+    if (pipe_ != INVALID_HANDLE_VALUE) {
+        return true;
+    }
+
+	wstring serverPipeName = getPipeName(L"Launcher");
+    for (int attempt = 0; pipe_ == INVALID_HANDLE_VALUE && attempt < 5; ++attempt) {
 		// try to connect to the server
-		pipe_ = connectPipe(serverPipeName.c_str());
-
-		if (pipe_ != INVALID_HANDLE_VALUE) { // successfully connected to the server
-			init(); // send initialization info to the server
-			if (isActivated_) {
-				// we lost connection while being activated previously
-				// re-initialize the whole text service.
-
-				// cleanup for the previous instance.
-				// remove all buttons
-				for (auto& item: buttons_) {
-					textService_->removeButton(item.second);
-				}
-				buttons_.clear();
-
-				// FIXME: other cleanup might also be needed
-
-				// activate the text service again.
-				onActivate();
-			}
-		}
-		connectingServerPipe_ = false;
-		return (pipe_ != INVALID_HANDLE_VALUE);
+		pipe_ = connectPipe(serverPipeName.c_str(), 30000);
 	}
-	return true;
+
+    if (pipe_ != INVALID_HANDLE_VALUE) {
+        // send initialization info to the server for hand-shake.
+        shouldWaitConnection_ = false;  // prevent recursive call of waitForRpcConnection
+        if (!init()) {
+            closeRpcConnection();
+            shouldWaitConnection_ = true;
+            return false;
+        }
+
+        if (isActivated_) {
+            // we lost connection while being activated previously
+            // re-initialize the whole text service.
+            // activate the text service again.
+            onActivate();
+        }
+        shouldWaitConnection_ = true;
+    }
+    // if init() or onActivate() RPC fails, the pipe_ might have been closed.
+    return pipe_ != INVALID_HANDLE_VALUE;
 }
 
-void Client::closePipe() {
-	if (connectServerTimerId_) {
-		KillTimer(NULL, connectServerTimerId_);
-		timerIdToClients_.erase(connectServerTimerId_);
-		connectServerTimerId_ = 0;
-	}
+void Client::resetTextServiceState() {
+    // we lost connection while being activated previously
+    // re-initialize the whole text service.
 
+    // cleanup for the previous instance.
+    // remove all buttons
+
+    // some language bar buttons are not unregistered properly
+    if (!buttons_.empty()) {
+        for (auto& item : buttons_) {
+            textService_->removeButton(item.second);
+        }
+        buttons_.clear();
+    }
+}
+
+void Client::closeRpcConnection() {
 	if (pipe_ != INVALID_HANDLE_VALUE) {
 		DisconnectNamedPipe(pipe_);
 		CloseHandle(pipe_);

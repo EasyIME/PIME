@@ -28,6 +28,7 @@ include_directories(
 )
 
 add_executable(PIMELauncher WIN32
+    UvPipe.h
     PIMELauncher.cpp
     PipeServer.cpp
     PipeServer.h

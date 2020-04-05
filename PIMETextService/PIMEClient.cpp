@@ -289,10 +289,10 @@ void Client::updatePreservedKeys(Json::Value& msg) {
 
     const auto& removePreservedKeyVal = msg["removePreservedKey"];
     if (removePreservedKeyVal.isArray()) {
-        for (auto& key : removePreservedKeyVal) {
-            if (key.isString()) {
+        for (auto& item : removePreservedKeyVal) {
+            if (item.isString()) {
                 UUID guid = { 0 };
-                if (uuidFromString(key["guid"].asCString(), guid)) {
+                if (uuidFromString(item.asCString(), guid)) {
                     textService_->removePreservedKey(guid);
                 }
             }

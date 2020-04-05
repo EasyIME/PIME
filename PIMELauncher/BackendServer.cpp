@@ -122,6 +122,7 @@ uv::Pipe* BackendServer::createStdoutPipe() {
             onReadError(error);
         }
     );
+    stdoutPipe->setCloseCallback([stdoutPipe]() {delete stdoutPipe; });
     return stdoutPipe;
 }
 

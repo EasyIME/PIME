@@ -14,12 +14,16 @@ function loadUserPhrases() {
         },
         text: "載入詞彙中，請稍後..."
     });
-    $("body").LoadingOverlay("show", { color: "rgba(80, 80, 80, 0.8)", fade: [0, 400], custom: loading_message });
+    $("body").LoadingOverlay("show", {
+        color: "rgba(80, 80, 80, 0.8)",
+        fade: [0, 400],
+        custom: loading_message
+    });
 
     // Get user_phrases
-    $.get("/user_phrases", function (data, status) {
+    $.get("/user_phrases", function(data, status) {
         if (data.data != undefined) {
-            var table_content = data.data.map(function (user_phrase) {
+            var table_content = data.data.map(function(user_phrase) {
                 return '<tr><td><input type="checkbox" data-phrase="' + user_phrase.phrase + '" data-bopomofo="' + user_phrase.bopomofo + '">' + user_phrase.phrase + '</td><td>' + user_phrase.bopomofo + '</td><td><button>刪除「' + user_phrase.phrase + '」</button></td></tr>';
             }).join("");
             $("#table_content").html(table_content);
@@ -30,7 +34,7 @@ function loadUserPhrases() {
         $.LoadingOverlay("hide", true);
 
         // Register remove phrase button click event
-        $("#table_content button").click(function () {
+        $("#table_content button").click(function() {
             var delete_phrase = {
                 phrase: $(this).parent().prev().prev().children().data("phrase"),
                 bopomofo: $(this).parent().prev().prev().children().data("bopomofo")
@@ -39,7 +43,7 @@ function loadUserPhrases() {
         });
 
         // Register click table row to select phrase
-        $("#table_content tr").click(function () {
+        $("#table_content tr").click(function() {
             $(this).find("input[type=checkbox]").prop("checked", !$(this).find("input[type=checkbox]").prop("checked"));
             $(this).toggleClass("phrase_selected");
             if ($("#table_content input[type=checkbox]:checked").length != 0) {
@@ -50,13 +54,13 @@ function loadUserPhrases() {
         });
 
         // Make the "#table_content tr" click event correct check checkbox
-        $("#table_content input[type=checkbox]").click(function () {
+        $("#table_content input[type=checkbox]").click(function() {
             $(this).prop("checked", !$(this).prop("checked"));
         });
 
         // Register click to select all phrases
         $("input[type=checkbox][name='select_all']").prop("checked", false);
-        $("input[type=checkbox][name='select_all']").click(function () {
+        $("input[type=checkbox][name='select_all']").click(function() {
             if ($(this).prop("checked")) {
                 $("#table_content input[type=checkbox]").prop("checked", true);
                 $("#table_content input[type=checkbox]").parent().parent().addClass("phrase_selected");
@@ -120,7 +124,7 @@ function onAddPhrase() {
     // Check phrase has repeated
     var phrase_repeated;
     var phrase_repeated_index;
-    $("#table_content input[type=checkbox]").each(function (idx, item) {
+    $("#table_content input[type=checkbox]").each(function(idx, item) {
         if (phrase == $(item).data("phrase")) {
             phrase_repeated = true;
             phrase_repeated_index = idx;
@@ -130,8 +134,12 @@ function onAddPhrase() {
 
     if (phrase_repeated == true) {
         var phrase_repeated_item = $("#table_content input[type=checkbox]:eq(" + phrase_repeated_index + ")");
-        $('html, body').animate({ scrollTop: phrase_repeated_item.offset().top - 200 }, 200);
-        phrase_repeated_item.parent().effect("highlight", { color: '#f2f207' }, 5000);
+        $('html, body').animate({
+            scrollTop: phrase_repeated_item.offset().top - 200
+        }, 200);
+        phrase_repeated_item.parent().effect("highlight", {
+            color: '#f2f207'
+        }, 5000);
         $("#phrase_input").select();
         alert("詞彙已經重複，請重新輸入");
         return;
@@ -142,9 +150,14 @@ function onAddPhrase() {
         url: "/user_phrases",
         method: "POST",
         contentType: "application/json",
-        data: JSON.stringify({ add: [{ phrase: phrase, bopomofo: bopomofo }] }),
+        data: JSON.stringify({
+            add: [{
+                phrase: phrase,
+                bopomofo: bopomofo
+            }]
+        }),
         dataType: "json",
-        complete: function (response) {
+        complete: function(response) {
             if (response.responseJSON.add_result == 0) {
                 alert("新增失敗，請檢查詞彙跟注音格式是否正確");
             } else {
@@ -165,7 +178,7 @@ function onRemovePhrase(delete_phrase) {
             return;
 
         var confirm_text = "確定刪除以下" + $("#table_content input[type=checkbox]:checked").length + "個詞彙？（此動作無法復原）";
-        $("#table_content input[type=checkbox]:checked").each(function (phrase_index, item) {
+        $("#table_content input[type=checkbox]:checked").each(function(phrase_index, item) {
             if (phrase_index < 25) {
                 confirm_text += "\n- " + $(item).data("phrase");
             } else if (phrase_index == 25) {
@@ -190,9 +203,11 @@ function onRemovePhrase(delete_phrase) {
         url: "/user_phrases",
         method: "POST",
         contentType: "application/json",
-        data: JSON.stringify({ remove: phrases }),
+        data: JSON.stringify({
+            remove: phrases
+        }),
         dataType: "json",
-        complete: function () {
+        complete: function() {
             alert("刪除詞彙成功！");
             loadUserPhrases();
         }
@@ -208,7 +223,7 @@ function onExportPhrase() {
 // AJAX file upload
 function onImportPhrase() {
     if (confirm("警告！匯入詞庫會\"清除現有詞庫\"，以匯入的詞庫取代，要繼續嗎？")) {
-        $("#import_user_phrase").change(function () {
+        $("#import_user_phrase").change(function() {
             var fileExtension = ["sqlite3"];
             if ($.inArray($(this).val().split('.').pop().toLowerCase(), fileExtension) == -1) {
                 alert("副檔名錯誤！只允許.sqlite3檔案上傳");
@@ -221,7 +236,7 @@ function onImportPhrase() {
 }
 
 // jQuery ready
-$(function () {
+$(function() {
     // workaround the same origin policy of IE.
     // http://stackoverflow.com/questions/7852225/is-it-safe-to-use-support-cors-true-in-jquery
     $.support.cors = true;
@@ -237,20 +252,18 @@ $(function () {
         resizable: false,
         dialogClass: "fixed_dialog",
         width: 500,
-        buttons: [
-            {
-                text: "確定",
-                click: onAddPhrase
-            }, {
-                text: "取消",
-                click: function () {
-                    $(this).dialog("close");
-                }
+        buttons: [{
+            text: "確定",
+            click: onAddPhrase
+        }, {
+            text: "取消",
+            click: function() {
+                $(this).dialog("close");
             }
-        ]
+        }]
     });
 
-    $("#add").click(function () {
+    $("#add").click(function() {
         $("#phrase_input").val("");
         $("#bopomofo_input").val("");
         $("#add_dialog").dialog("open");
@@ -261,7 +274,7 @@ $(function () {
     $("#export").click(onExportPhrase);
 
     // Change input to bopomofo
-    $("#bopomofo_input").on("input", function (event) {
+    $("#bopomofo_input").on("input", function(event) {
         var keycode_to_bopomofo = {
             49: "ㄅ",
             81: "ㄆ",
@@ -347,7 +360,7 @@ $(function () {
     loadUserPhrases();
 
     // keep the server alive every 20 second
-    window.setInterval(function () {
+    window.setInterval(function() {
         $.ajax({
             url: "/keep_alive",
             cache: false // needs to turn off cache. otherwise the server will be requested only once.

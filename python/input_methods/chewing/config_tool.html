@@ -2,7 +2,6 @@
 <html>
 
 <head>
-    <meta http-equiv="x-ua-compatible" content="ie=9">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>設定新酷音輸入法</title>
@@ -46,10 +45,7 @@
                             <h1>中英文切換</h1>
                             <div class="checkbox checkbox-info">
                                 <input type="checkbox" id="switchLangWithShift" name="switchLangWithShift">
-                                <label for="switchLangWithShift" data-title="建議不要和〔使用左 Shift、右 Shift在打字時移動游標〕共用"
-                                    data-toggle="popover" data-placement="bottom"
-                                    data-trigger="hover">使用<kbd>Shift</kbd>切換中英文模式<i
-                                        class="glyphicon glyphicon-exclamation-sign text-warning"></i></label>
+                                <label for="switchLangWithShift" data-title="建議不要和〔使用左 Shift、右 Shift在打字時移動游標〕共用" data-toggle="popover" data-placement="bottom" data-trigger="hover">使用<kbd>Shift</kbd>切換中英文模式<i class="glyphicon glyphicon-exclamation-sign text-warning"></i></label>
                             </div>
                             <div class="checkbox checkbox-info">
                                 <input type="checkbox" id="enableCapsLock" name="enableCapsLock">
@@ -93,18 +89,15 @@
                             </div>
                             <div class="checkbox checkbox-info">
                                 <input type="checkbox" id="shiftMoveCursor" name="shiftMoveCursor">
-                                <label for="shiftMoveCursor" data-title="建議不要和〔使用Shift切換中英文模式〕共用" data-toggle="popover"
-                                    data-placement="bottom" data-trigger="hover">使用<kbd>左
-                                        Shift</kbd>、<kbd>右 Shift</kbd>在打字時移動游標<i
-                                        class="glyphicon glyphicon-exclamation-sign text-warning"></i></label>
+                                <label for="shiftMoveCursor" data-title="建議不要和〈使用Shift切換中英文模式〉共用 <br> 並且在 Windows 設定中關閉〈相黏鍵〉、〈篩選鍵〉功能" data-toggle="popover" data-placement="bottom" data-trigger="hover" data-html="true">
+                                    使用<kbd>左 Shift</kbd>、<kbd>右 Shift</kbd>在打字時移動游標<i class="glyphicon glyphicon-exclamation-sign text-warning"></i></label>
                             </div>
                             使用<kbd>↑</kbd><kbd>↓</kbd>鍵：
                             <select name="upDownAction" id="upDownAction"></select><br>
                             使用<kbd>←</kbd><kbd>→</kbd>鍵：
                             <select name="leftRightAction" id="leftRightAction"></select><br>
                             使用<kbd>空白鍵</kbd>在打字時：
-                            <select name="spaceKeyAction" id="spaceKeyAction"></select>，在選字時：<select
-                                name="spaceKeyCandidatesAction" id="spaceKeyCandidatesAction"></select><br>
+                            <select name="spaceKeyAction" id="spaceKeyAction"></select>，在選字時：<select name="spaceKeyCandidatesAction" id="spaceKeyCandidatesAction"></select><br>
                         </div>
                         <div class="config_section">
                             <h1>其他</h1>
@@ -129,14 +122,11 @@
                     <div role="tabpanel" class="tab-pane fade" id="ui_tab">
                         <div class="form-inline">
                             <label for="candPerRow">每列顯示候選字個數（1-10）：</label>
-                            <input type="number" class="form-control" id="candPerRow" name="candPerRow" min="1"
-                                max="10"><br>
+                            <input type="number" class="form-control" id="candPerRow" name="candPerRow" min="1" max="10"><br>
                             <label for="candPerPage">每頁顯示候選字總數（1-10）：</label>
-                            <input type="number" class="form-control" id="candPerPage" name="candPerPage" min="1"
-                                max="10"><br>
+                            <input type="number" class="form-control" id="candPerPage" name="candPerPage" min="1" max="10"><br>
                             <label for="fontSize">選字及訊息視窗文字大小：</label>
-                            <input type="number" class="form-control" id="fontSize" name="fontSize" min="6"
-                                max="200"><br>
+                            <input type="number" class="form-control" id="fontSize" name="fontSize" min="6" max="200"><br>
                             <label for="selKeyType">選字視窗選字鍵：</label>
                             <select name="selKeyType" id="selKeyType"></select><br>
                             <div id="selExample"></div>
@@ -160,11 +150,7 @@
 
                         <div class="checkbox checkbox-info">
                             <input type="checkbox" id="easySymbolsWithCtrl" name="easySymbolsWithCtrl">
-                            <label for="easySymbolsWithCtrl" data-html="true" data-title="容易產生熱鍵衝突，不建議使用"
-                                data-content="例如常用的複製貼上熱鍵<kbd>Ctrl</kbd> + C, <kbd>Ctrl</kbd> + V，就會和這個功能衝突，需要切回英文模式才能使用"
-                                data-toggle="popover" data-placement="bottom"
-                                data-trigger="hover">中文模式下按住<kbd>Ctrl</kbd> 快速輸入符號 <i
-                                    class="glyphicon glyphicon-exclamation-sign text-warning"></i></label>
+                            <label for="easySymbolsWithCtrl" data-html="true" data-title="容易產生熱鍵衝突，不建議使用" data-content="例如常用的複製貼上熱鍵<kbd>Ctrl</kbd> + C, <kbd>Ctrl</kbd> + V，就會和這個功能衝突，需要切回英文模式才能使用" data-toggle="popover" data-placement="bottom" data-trigger="hover">中文模式下按住<kbd>Ctrl</kbd> 快速輸入符號 <i class="glyphicon glyphicon-exclamation-sign text-warning"></i></label>
                         </div>
                         <p class="well">
                             以下是使用<kbd>Ctrl</kbd>或<kbd>Shift</kbd>快速輸入符號的設定，每一行表示一個鍵所對應的字串，格式為<strong>「英文大寫」+「半形空白」+「字串」</strong><br>例如「M
@@ -175,11 +161,8 @@
                     <div role="tabpanel" class="tab-pane fade" id="about_tab">
                         <p class="text-center"><img src="images/logo.png" alt="新酷音輸入法Logo" /></p>
                         <p>PIME 輸入法平台版本：<strong id="version"></strong></p>
-                        <p>最早的「酷音輸入法」是<a href="http://www.csie.ntu.edu.tw/~b6506053/" target="_blank">龔律全</a>與<a
-                                href="https://plus.google.com/u/0/106631098488727416298/posts"
-                                target="_blank">陳康本</a>兩人的資訊專題 (分別在兩人就讀台大資工系與台大電機系的時期)，由中央研究院資訊研究所的
-                            <a href="http://www.iis.sinica.edu.tw/~tshsu"
-                                target="_blank">徐讚昇</a>博士提供技術指導與超過兩年的經濟及設備支援，最終的成果選擇以 GPL 授權釋出，可說是 XIM (X Input
+                        <p>最早的「酷音輸入法」是<a href="http://www.csie.ntu.edu.tw/~b6506053/" target="_blank">龔律全</a>與<a href="https://plus.google.com/u/0/106631098488727416298/posts" target="_blank">陳康本</a>兩人的資訊專題 (分別在兩人就讀台大資工系與台大電機系的時期)，由中央研究院資訊研究所的
+                            <a href="http://www.iis.sinica.edu.tw/~tshsu" target="_blank">徐讚昇</a>博士提供技術指導與超過兩年的經濟及設備支援，最終的成果選擇以 GPL 授權釋出，可說是 XIM (X Input
                             Method)中最接近新注音或是自然輸入法的實作，詳情可參閱龔律全所撰寫的
                             <a href="http://chewing.im/doc/chewing-report.pdf" target="_blank">技術報告（PDF）</a>。</p>
                         <p>但是酷音輸入法的兩位原創者已不再維護，後續的發展由許多熱心的朋友移植到不同的平台上，諸如 TimHsu (crazykid) 與 jserv 維護的 JMCCE 1.4.x
@@ -187,10 +170,8 @@
                             SpaceChewing
                             計畫等。而新酷音就是扮演整合這些分支的角色，並且更廣泛移植與改良酷音輸入法的適用性，並且於 2004 年 12
                             月有獨立的專案資源，到目前為止，已有許多熱心的貢獻者加入開發行列，期待更多的朋友參與。</p>
-                        <p>關於本計畫概況，可參閱新酷音計畫在 2004 國際開放源碼研討會（ICOS 2004）上的<a
-                                href="http://chewing.im/doc/chewing-intro.html" target="_blank">簡報（Adobe Flash）</a>。</p>
-                        <p>本 Windows 版本是由<a href="https://github.com/PCMan" target="_blank">洪任諭（PCMan）</a>移植到 <a
-                                href="https://github.com/EasyIME/PIME" target="_blank">PIME 輸入法平台</a>上 Copyright &copy;
+                        <p>關於本計畫概況，可參閱新酷音計畫在 2004 國際開放源碼研討會（ICOS 2004）上的<a href="http://chewing.im/doc/chewing-intro.html" target="_blank">簡報（Adobe Flash）</a>。</p>
+                        <p>本 Windows 版本是由<a href="https://github.com/PCMan" target="_blank">洪任諭（PCMan）</a>移植到 <a href="https://github.com/EasyIME/PIME" target="_blank">PIME 輸入法平台</a>上 Copyright &copy;
                             2015 - 2016</p>
                     </div>
                 </div>

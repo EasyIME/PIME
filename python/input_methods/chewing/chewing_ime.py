@@ -89,6 +89,7 @@ class ChewingTextService(TextService):
         self.lastKeyDownCode = 0
         self.lastKeyDownTime = 0.0
         self.lastKeyDownStates = []
+
         self.configVersion = chewingConfig.getVersion()
 
         # 使用 OpenCC 繁體中文轉簡體

@@ -1,4 +1,4 @@
-$(function () {
+$(function() {
     var chewingConfig = {},
         symbolsChanged = false,
         swkbChanged = false,
@@ -15,7 +15,7 @@ $(function () {
     }
 
     function loadConfig() {
-        $.get(CONFIG_URL, function (data, status) {
+        $.get(CONFIG_URL, function(data, status) {
             chewingConfig = data.config;
             $("#symbols").val(data.symbols);
             $("#ez_symbols").val(data.swkb);
@@ -96,7 +96,7 @@ $(function () {
         chewingConfig = {};
 
         // Get values from checkboxes, text and radio
-        $("input").each(function (index, inputItem) {
+        $("input").each(function(index, inputItem) {
             switch (inputItem.type) {
                 case "checkbox":
                     chewingConfig[inputItem.name] = inputItem.checked;
@@ -118,7 +118,7 @@ $(function () {
         });
 
         // Get values from select
-        $("select").each(function (index, selectItem) {
+        $("select").each(function(index, selectItem) {
             if (selectItem.value) {
                 chewingConfig[selectItem.name] = parseInt(selectItem.value);
             }
@@ -127,7 +127,7 @@ $(function () {
 
     function initializeUI() {
         // Setup checkbox and text values
-        $("input").each(function () {
+        $("input").each(function() {
             switch ($(this).attr("type")) {
                 case "checkbox":
                     $(this).prop("checked", chewingConfig[$(this).attr("id")]);
@@ -171,8 +171,8 @@ $(function () {
             ]
         };
 
-        $.each(selectOptions, function (id, options) {
-            $.each(options, function (value, optionName) {
+        $.each(selectOptions, function(id, options) {
+            $.each(options, function(value, optionName) {
                 $("#" + id).append('<option value="' + value + '">' + optionName + '</option>');
                 if (value == chewingConfig[id]) {
                     $("#" + id + " option:last-child").prop("selected", true);
@@ -220,10 +220,22 @@ $(function () {
         $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" + checkedKetboardLayoutRadio.data("layout") + ".png");
         $("#keyboard_layouts").prop("alt", checkedKetboardLayoutRadio.data("layout"));
 
-        // Register change keyboard_layouts event
-        $("#keyboard_tab input:radio").on("click", function () {
+        // Bind shift action event
+        $("#switchLangWithShift").on("click", function() {
+            if (this.checked) {
+                $("#shiftMoveCursor").prop("checked", false);
+            }
+        });
+        $("#shiftMoveCursor").on("click", function() {
+            if (this.checked) {
+                $("#switchLangWithShift").prop("checked", false)
+            };
+        });
+
+        // Bind change keyboard_layouts event
+        $("#keyboard_tab input:radio").on("click", function() {
             var layout_file_name = $(this).data("layout");
-            $("#keyboard_layouts").fadeOut(200, function () {
+            $("#keyboard_layouts").fadeOut(200, function() {
                 $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" + layout_file_name + ".png");
                 $("#keyboard_layouts").prop("alt", layout_file_name);
             });
@@ -268,18 +280,18 @@ $(function () {
     $("#version").load(VERSION_URL);
 
     // setup UI
-    $("#symbols").on('change', function () {
+    $("#symbols").on('change', function() {
         symbolsChanged = true;
     });
 
-    $("#ez_symbols").on('change', function () {
+    $("#ez_symbols").on('change', function() {
         swkbChanged = true;
     });
 
     // OK button
-    $("#ok").on('click', function () {
+    $("#ok").on('click', function() {
         updateConfig(); // update the config based on the state of UI elements
-        saveConfig(function () {
+        saveConfig(function() {
             swal(
                 '好耶！',
                 '設定成功儲存！',
@@ -293,7 +305,7 @@ $(function () {
     loadConfig();
 
     // keep the server alive every 20 second
-    setInterval(function () {
+    setInterval(function() {
         $.ajax({
             url: KEEP_ALIVE_URL + '?' + Date.now()
         });

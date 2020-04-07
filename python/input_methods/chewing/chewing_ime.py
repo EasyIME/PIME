@@ -86,9 +86,8 @@ class ChewingTextService(TextService):
         self.lastShapeMode = None
         self.lastOutputSimpChinese = None
 
-        self.lastKeyDownCode = 0
         self.lastKeyDownTime = 0.0
-        self.lastKeyDownStates = []
+        self.lastKeyEvent = None
 
         self.configVersion = chewingConfig.getVersion()
 
@@ -253,8 +252,7 @@ class ChewingTextService(TextService):
         TextService.onDeactivate(self)
         # 釋放 libchewing context 的資源
         self.chewingContext = None
-        self.lastKeyDownCode = 0
-
+        self.lastKeyEvent = None
         # 丟棄輸入法狀態
         self.lastLangMode = None
         self.lastShapeMode = None
@@ -289,9 +287,8 @@ class ChewingTextService(TextService):
     # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
     def filterKeyDown(self, keyEvent):
         cfg = chewingConfig
-        # 紀錄最後一次按下的鍵和按下的時間，在 filterKeyUp() 中要用
-        self.lastKeyDownCode = keyEvent.keyCode
-        self.lastKeyDownStates = keyEvent.keyStates
+        # 紀錄最後一次按下的 keyEvent，在 filterKeyUp() 中要用
+        self.lastKeyEvent = keyEvent
         if self.lastKeyDownTime == 0.0:
             self.lastKeyDownTime = time.time()
 
@@ -613,7 +610,7 @@ class ChewingTextService(TextService):
     # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
     def filterKeyUp(self, keyEvent):
         # 最後按下和放開都是 Shift 鍵
-        if self.lastKeyDownCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
+        if self.lastKeyEvent.keyCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
             # 若啟用使用 Shift 在打字時移動游標，呼叫onKeyUp()
             if chewingConfig.shiftMoveCursor:
                 return True
@@ -627,33 +624,29 @@ class ChewingTextService(TextService):
 
         # 使用 Ctrl + F12 切換簡體/繁體中文
         if chewingConfig.enableSwitchTCSC:
-            if keyEvent.isKeyDown(VK_CONTROL) and self.lastKeyDownCode == VK_F12 and keyEvent.keyCode == VK_F12:
+            if keyEvent.isKeyDown(VK_CONTROL) and self.lastKeyEvent.keyCode == VK_F12 and keyEvent.keyCode == VK_F12:
                 self.setOutputSimplifiedChinese(not self.outputSimpChinese)
 
-        self.lastKeyDownStates = []
-        self.lastKeyDownCode = 0
         self.lastKeyDownTime = 0.0
         return False
 
     def onKeyUp(self, keyEvent):
         pressedDuration = time.time() - self.lastKeyDownTime
         if pressedDuration < 0.5 and self.isComposing() and not self.chewingContext.bopomofo_Check():
-            if self.lastKeyDownStates[VK_RSHIFT] > 127 and self.compositionCursor < len(self.compositionString):
+            if self.lastKeyEvent.keyStates[VK_RSHIFT] > 127 and self.compositionCursor < len(self.compositionString):
                 self.chewingContext.handle_Right()
                 self.setCompositionCursor(self.chewingContext.cursor_Current())
-            if self.lastKeyDownStates[VK_LSHIFT] > 127 and self.compositionCursor > 0:
+            if self.lastKeyEvent.keyStates[VK_LSHIFT] > 127 and self.compositionCursor > 0:
                 self.chewingContext.handle_Left()
                 self.setCompositionCursor(self.chewingContext.cursor_Current())
 
-            self.lastKeyDownStates = []
-            self.lastKeyDownCode = 0
             self.lastKeyDownTime = 0.0
             return True
         else:
             return False
 
     def onPreservedKey(self, guid):
-        self.lastKeyDownCode = 0
+        self.lastKeyEvent = None
         # some preserved keys registered are pressed
         if guid == SHIFT_SPACE_GUID:  # 使用者按下 shift + space
             self.toggleShapeMode()  # 切換全半形

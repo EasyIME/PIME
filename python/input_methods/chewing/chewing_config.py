@@ -195,7 +195,6 @@ class ChewingConfig:
     def isFullReloadNeeded(self, currentVersion):
         return currentVersion[1:] != self._version[1:]
 
-
 # globally shared config object
 # load configurations from a user-specific config file
 chewingConfig = ChewingConfig()

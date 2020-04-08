@@ -41,10 +41,6 @@ textarea {
     margin-top: 1em;
 }
 
-.popover {
-    max-width: 100%;
-}
-
 .config_section {
     padding-left: 2em;
 }
@@ -106,15 +102,13 @@ textarea {
     width: 100%;
 }
 
-#phrase_table th,
-td {
+#phrase_table th, td {
     padding: 8px;
     text-align: left;
     border-bottom: 1px solid #dddddd;
 }
 
-#phrase_table #phrase,
-#phrase_table #delete_phrase {
+#phrase_table #phrase, #phrase_table #delete_phrase {
     width: 12em;
 }
 
@@ -122,8 +116,7 @@ td {
     width: 25em;
 }
 
-#table_content tr:hover,
-.phrase_selected {
+#table_content tr:hover, .phrase_selected {
     background-color: #eab342;
 }
 

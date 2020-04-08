@@ -253,6 +253,7 @@ class ChewingTextService(TextService):
         # 釋放 libchewing context 的資源
         self.chewingContext = None
         self.lastKeyEvent = None
+
         # 丟棄輸入法狀態
         self.lastLangMode = None
         self.lastShapeMode = None
@@ -633,10 +634,10 @@ class ChewingTextService(TextService):
     def onKeyUp(self, keyEvent):
         pressedDuration = time.time() - self.lastKeyDownTime
         if pressedDuration < 0.5 and self.isComposing() and not self.chewingContext.bopomofo_Check():
-            if self.lastKeyEvent.keyStates[VK_RSHIFT] > 127 and self.compositionCursor < len(self.compositionString):
+            if self.lastKeyEvent.isKeyDown(VK_RSHIFT) and self.compositionCursor < len(self.compositionString):
                 self.chewingContext.handle_Right()
                 self.setCompositionCursor(self.chewingContext.cursor_Current())
-            if self.lastKeyEvent.keyStates[VK_LSHIFT] > 127 and self.compositionCursor > 0:
+            if self.lastKeyEvent.isKeyDown(VK_LSHIFT) and self.compositionCursor > 0:
                 self.chewingContext.handle_Left()
                 self.setCompositionCursor(self.chewingContext.cursor_Current())
 

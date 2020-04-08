@@ -611,7 +611,7 @@ class ChewingTextService(TextService):
     # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
     def filterKeyUp(self, keyEvent):
         # 最後按下和放開都是 Shift 鍵
-        if self.lastKeyEvent.keyCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
+        if self.lastKeyEvent and self.lastKeyEvent.keyCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
             # 若啟用使用 Shift 在打字時移動游標，呼叫onKeyUp()
             if chewingConfig.shiftMoveCursor:
                 return True
@@ -624,7 +624,7 @@ class ChewingTextService(TextService):
                     self.toggleLanguageMode()  # 切換中英文模式
 
         # 使用 Ctrl + F12 切換簡體/繁體中文
-        if chewingConfig.enableSwitchTCSC:
+        if chewingConfig.enableSwitchTCSC and self.lastKeyEvent:
             if keyEvent.isKeyDown(VK_CONTROL) and self.lastKeyEvent.keyCode == VK_F12 and keyEvent.keyCode == VK_F12:
                 self.setOutputSimplifiedChinese(not self.outputSimpChinese)
 
@@ -634,12 +634,13 @@ class ChewingTextService(TextService):
     def onKeyUp(self, keyEvent):
         pressedDuration = time.time() - self.lastKeyDownTime
         if pressedDuration < 0.5 and self.isComposing() and not self.chewingContext.bopomofo_Check():
-            if self.lastKeyEvent.isKeyDown(VK_RSHIFT) and self.compositionCursor < len(self.compositionString):
-                self.chewingContext.handle_Right()
-                self.setCompositionCursor(self.chewingContext.cursor_Current())
-            if self.lastKeyEvent.isKeyDown(VK_LSHIFT) and self.compositionCursor > 0:
-                self.chewingContext.handle_Left()
-                self.setCompositionCursor(self.chewingContext.cursor_Current())
+            if self.lastKeyEvent:
+                if self.lastKeyEvent.isKeyDown(VK_RSHIFT) and self.compositionCursor < len(self.compositionString):
+                    self.chewingContext.handle_Right()
+                    self.setCompositionCursor(self.chewingContext.cursor_Current())
+                if self.lastKeyEvent.isKeyDown(VK_LSHIFT) and self.compositionCursor > 0:
+                    self.chewingContext.handle_Left()
+                    self.setCompositionCursor(self.chewingContext.cursor_Current())
 
             self.lastKeyDownTime = 0.0
             return True

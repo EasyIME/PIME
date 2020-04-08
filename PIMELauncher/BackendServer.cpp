@@ -79,6 +79,12 @@ BackendServer::BackendServer(PipeServer* pipeServer, const Json::Value& info) :
 }
 
 BackendServer::~BackendServer() {
+    if (process_) {
+        // Callbacks of uv_process might be triggered after our destructor.
+        // So we cannot free process_ here, but after this point, callbacks from libuv
+        // should no longer access this BackendServer object, either.
+        process_->data = nullptr;
+    }
 	terminateProcess();
 }
 
@@ -168,7 +174,17 @@ void BackendServer::startProcess() {
 	};
 	uv_process_options_t options = { 0 };
 	options.exit_cb = [](uv_process_t* process, int64_t exit_status, int term_signal) {
-		reinterpret_cast<BackendServer*>(process->data)->onProcessTerminated(exit_status, term_signal);
+        if (process->data) {
+            reinterpret_cast<BackendServer*>(process->data)->onProcessTerminated(exit_status, term_signal);
+        }
+        else {
+            // The process->data pointer is set to nullptr in ~BackendServer(). The object no longer exist.
+            // So free the resources taken by the uv_process_t object directly.
+            uv_close(reinterpret_cast<uv_handle_t*>(process), [](uv_handle_t* handle) {
+                delete reinterpret_cast<uv_process_t*>(handle);
+                }
+            );
+        }
 	};
 	options.flags = UV_PROCESS_WINDOWS_HIDE; //  UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS;
     options.file = executablePath.c_str();
@@ -247,7 +263,10 @@ void BackendServer::onStderrRead(const char* buf, size_t len) {
 }
 
 void BackendServer::onProcessTerminated(int64_t exit_status, int term_signal) {
-	delete process_;
+    uv_close(reinterpret_cast<uv_handle_t*>(process_), [](uv_handle_t* handle) {
+        delete reinterpret_cast<uv_process_t*>(handle);
+        }
+    );
 	process_ = nullptr;
 
 	closeStdioPipes();

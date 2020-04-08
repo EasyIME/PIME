@@ -38,7 +38,8 @@ PipeClient::PipeClient(PipeServer* server, DWORD pipeMode, SECURITY_ATTRIBUTES* 
     backend_(nullptr),
     // generate a new uuid for client ID
     clientId_{ generateUuidStr() },
-    pipe_{ pipeMode, securityAttributes } {
+    pipe_{ pipeMode, securityAttributes },
+    waitResponseTimer_{ std::make_unique<uv_timer_t>() } {
 
     pipe_.setBlocking(false);
 
@@ -59,8 +60,20 @@ PipeClient::PipeClient(PipeServer* server, DWORD pipeMode, SECURITY_ATTRIBUTES* 
     );
 
     // setup a timer to detect request timeout
-	uv_timer_init(uv_default_loop(), &waitResponseTimer_);
-	waitResponseTimer_.data = this;
+	uv_timer_init(uv_default_loop(), waitResponseTimer_.get());
+	waitResponseTimer_->data = this;
+}
+
+PipeClient::~PipeClient() {
+    stopRequestTimeoutTimer();
+
+    // Close the uv timer and free its resources.
+    // NOTE: The operation is async and it's not safe to free the memory here.
+    // We release the ownership to the unique_ptr and delete the raw pointer in the callback of uv_close().
+    uv_close(reinterpret_cast<uv_handle_t*>(waitResponseTimer_.release()), [](uv_handle_t* handle) {
+        delete reinterpret_cast<uv_timer_t*>(handle);
+        }
+    );
 }
 
 std::shared_ptr<spdlog::logger>& PipeClient::logger() {
@@ -123,14 +136,14 @@ void PipeClient::disconnectFromBackend() {
 }
 
 void PipeClient::startRequestTimeoutTimer(std::uint64_t timeoutMs) {
-	uv_timer_start(&waitResponseTimer_, [](uv_timer_t* handle) {
+	uv_timer_start(waitResponseTimer_.get(), [](uv_timer_t* handle) {
 		auto pThis = reinterpret_cast<PipeClient*>(handle->data);
 		pThis->onRequestTimeout();
 	}, timeoutMs, 0);
 }
 
 void PipeClient::stopRequestTimeoutTimer() {
-	uv_timer_stop(&waitResponseTimer_);
+	uv_timer_stop(waitResponseTimer_.get());
 }
 
 void PipeClient::onRequestTimeout() {

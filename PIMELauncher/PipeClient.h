@@ -43,6 +43,8 @@ public:
 
 	PipeClient(PipeServer* server, DWORD pipeMode, SECURITY_ATTRIBUTES* securityAttributes);
 
+    ~PipeClient();
+
 	uv_stream_t* stream() {
         return pipe_.streamHandle();
 	}
@@ -81,7 +83,7 @@ private:
 	PipeServer* server_;
 
 	// timer used to wait for response from backend server
-	uv_timer_t waitResponseTimer_;
+	std::unique_ptr<uv_timer_t> waitResponseTimer_;
 };
 
 } // namespace PIME

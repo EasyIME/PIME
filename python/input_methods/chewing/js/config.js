@@ -218,20 +218,19 @@ $(function() {
             ["CARPALX", "carpalx"]
         ];
 
-        var keyboard_page = $("#keyboard_tab");
         var item = '<img id="keyboard_layouts" src="images\\keyborad_layouts\\pinyin.png" alt="pinyin">';
 
         for (var i = 0; i < keyboardNames.length; ++i) {
             var id = "kb" + i;
             var name = keyboardNames[i][0];
             var layout = keyboardNames[i][1]
-            item += '<div class="radio radio-info">' +
-                '<input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '" data-layout="' +
+            item += '<div class="custom-control custom-radio">' +
+                '<input class="custom-control-input" type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '" data-layout="' +
                 layout + '">' +
-                '<label for="' + id + '">' + name + '</label><br>' +
+                '<label class="custom-control-label" for="' + id + '">' + name + '</label><br>' +
                 '</div>';
         }
-        keyboard_page.html(item);
+        $("#keyboard_tab").html(item);
 
         // Checked keyboard layout radio
         var checkedKetboardLayoutRadio = $("#kb" + chewingConfig.keyboardLayout);

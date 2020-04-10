@@ -226,7 +226,8 @@ $(function() {
             var name = keyboardNames[i][0];
             var layout = keyboardNames[i][1]
             item += '<div class="radio radio-info">' +
-                '<input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '" data-layout="' + layout + '">' +
+                '<input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '" data-layout="' +
+                layout + '">' +
                 '<label for="' + id + '">' + name + '</label><br>' +
                 '</div>';
         }
@@ -235,14 +236,16 @@ $(function() {
         // Checked keyboard layout radio
         var checkedKetboardLayoutRadio = $("#kb" + chewingConfig.keyboardLayout);
         checkedKetboardLayoutRadio.prop("checked", true);
-        $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" + checkedKetboardLayoutRadio.data("layout") + ".png");
+        $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" + checkedKetboardLayoutRadio.data(
+            "layout") + ".png");
         $("#keyboard_layouts").prop("alt", checkedKetboardLayoutRadio.data("layout"));
 
         // Bind change keyboard_layouts event
         $("#keyboard_tab input:radio").on("click", function() {
             var layout_file_name = $(this).data("layout");
             $("#keyboard_layouts").fadeOut(200, function() {
-                $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" + layout_file_name + ".png");
+                $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" +
+                    layout_file_name + ".png");
                 $("#keyboard_layouts").prop("alt", layout_file_name);
             });
 

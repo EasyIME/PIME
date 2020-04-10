@@ -7,8 +7,6 @@
     <title>設定新酷音輸入法</title>
     <link rel="shortcut icon" href="images/logo.ico" type="image/vnd.microsoft.icon">
     <link rel="stylesheet" href="css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/font-awesome.min.css">
-    <link rel="stylesheet" href="css/awesome-bootstrap-checkbox.css">
     <link rel="stylesheet" href="css/bootstrap-select.min.css">
     <link rel="stylesheet" href="css/sweetalert2.min.css">
     <link rel="stylesheet" href="css/config.css">
@@ -17,36 +15,36 @@
 <body>
     <div class="container">
         <div class="row">
-            <div class="col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
+            <div class="col-12">
                 <ul class="nav nav-tabs" role="tablist">
-                    <li role="presentation" class="active">
-                        <a href="#typing_tab" aria-controls="typing_tab" role="tab" data-toggle="tab">打字行為</a>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#typing_tab" aria-controls="typing_tab" role="tab" data-toggle="tab">打字行為</a>
                     </li>
-                    <li role="presentation">
-                        <a href="#ui_tab" aria-controls="ui_tab" role="tab" data-toggle="tab">選字視窗外觀</a>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#ui_tab" aria-controls="ui_tab" role="tab" data-toggle="tab">選字視窗外觀</a>
                     </li>
-                    <li role="presentation">
-                        <a href="#keyboard_tab" aria-controls="keyboard_tab" role="tab" data-toggle="tab">鍵盤設定</a>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#keyboard_tab" aria-controls="keyboard_tab" role="tab" data-toggle="tab">鍵盤設定</a>
                     </li>
-                    <li role="presentation">
-                        <a href="#symbols_tab" aria-controls="symbols_tab" role="tab" data-toggle="tab">特殊符號</a>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#symbols_tab" aria-controls="symbols_tab" role="tab" data-toggle="tab">特殊符號</a>
                     </li>
-                    <li role="presentation">
-                        <a href="#ez_symbols_tab" aria-controls="ez_symbols_tab" role="tab" data-toggle="tab">簡易符號輸入</a>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#ez_symbols_tab" aria-controls="ez_symbols_tab" role="tab" data-toggle="tab">簡易符號輸入</a>
                     </li>
-                    <li role="presentation" class="pull-right">
-                        <a href="#about_tab" aria-controls="about_tab" role="tab" data-toggle="tab">關於新酷音</a>
+                    <li class="nav-item ml-auto">
+                        <a class="nav-link" href="#about_tab" aria-controls="about_tab" role="tab" data-toggle="tab">關於新酷音</a>
                     </li>
                 </ul>
 
                 <div class="tab-content">
-                    <div role="tabpanel" class="tab-pane fade in active form" id="typing_tab">
+                    <div role="tabpanel" class="tab-pane fade in show active form" id="typing_tab">
                         <div class="config_section">
                             <h1>中英文切換</h1>
                             <div class="checkbox checkbox-info">
                                 <input type="checkbox" id="switchLangWithShift" name="switchLangWithShift">
                                 <label for="switchLangWithShift" data-title="建議不要和〔使用左 Shift、右 Shift在打字時移動游標〕共用" data-toggle="popover" data-placement="bottom"
-                                    data-trigger="hover">使用<kbd>Shift</kbd>切換中英文模式<i class="glyphicon glyphicon-exclamation-sign text-warning"></i></label>
+                                    data-trigger="hover">使用<kbd>Shift</kbd>切換中英文模式 🛈</label>
                             </div>
                             <div class="checkbox checkbox-info">
                                 <input type="checkbox" id="enableCapsLock" name="enableCapsLock">
@@ -92,7 +90,7 @@
                                 <input type="checkbox" id="shiftMoveCursor" name="shiftMoveCursor">
                                 <label for="shiftMoveCursor" data-title="建議不要和〔使用Shift切換中英文模式〕共用" data-toggle="popover" data-placement="bottom"
                                     data-trigger="hover">使用<kbd>左 Shift</kbd>、 <kbd>右 Shift</kbd>
-                                    在打字時移動游標<i class="glyphicon glyphicon-exclamation-sign text-warning"></i></label>
+                                    在打字時移動游標 🛈</label>
                             </div>
                             使用<kbd>↑</kbd><kbd>↓</kbd>鍵：
                             <select name="upDownAction" id="upDownAction"></select><br>
@@ -155,8 +153,7 @@
                             <input type="checkbox" id="easySymbolsWithCtrl" name="easySymbolsWithCtrl">
                             <label for="easySymbolsWithCtrl" data-html="true" data-title="容易產生熱鍵衝突，不建議使用"
                                 data-content="例如常用的複製貼上熱鍵<kbd>Ctrl</kbd> + C, <kbd>Ctrl</kbd> + V，就會和這個功能衝突，需要切回英文模式才能使用" data-toggle="popover"
-                                data-placement="bottom" data-trigger="hover">中文模式下按住<kbd>Ctrl</kbd> 快速輸入符號 <i
-                                    class="glyphicon glyphicon-exclamation-sign text-warning"></i></label>
+                                data-placement="bottom" data-trigger="hover">中文模式下按住<kbd>Ctrl</kbd> 快速輸入符號 🛈</label>
                         </div>
                         <p class="well">
                             以下是使用<kbd>Ctrl</kbd>或<kbd>Shift</kbd>快速輸入符號的設定，每一行表示一個鍵所對應的字串，格式為<strong>「英文大寫」+「半形空白」+「字串」</strong><br>例如「M
@@ -187,13 +184,13 @@
                 </div>
             </div>
         </div>
-        <div class="row">
-            <button class="col-md-4 col-md-offset-4 btn btn-primary" id="ok">套用設定</button>
+        <div class="row justify-content-center">
+            <button class="col-md-4 btn btn-primary" id="ok">套用設定</button>
         </div>
     </div>
 
-    <script src="js/jquery-3.3.1.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
     <script src="js/bootstrap-select.min.js"></script>
     <script src="js/sweetalert2.min.js"></script>
     <script src="js/config.js"></script>

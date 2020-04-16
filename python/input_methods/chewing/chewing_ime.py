@@ -74,7 +74,7 @@ class ChewingTextService(TextService):
     def __init__(self, client):
         TextService.__init__(self, client)
         self.curdir = os.path.abspath(os.path.dirname(__file__))
-        self.icon_dir = self.curdir
+        self.icon_dir = os.path.join(self.curdir, "icons")
         self.chewingContext = None  # libchewing context
 
         self.langMode = -1
@@ -147,7 +147,6 @@ class ChewingTextService(TextService):
         self.setOutputSimplifiedChinese(cfg.outputSimpChinese)
 
     # 初始化新酷音輸入法引擎
-
     def initChewingContext(self):
         # load libchewing context
         if not self.chewingContext:
@@ -185,7 +184,6 @@ class ChewingTextService(TextService):
             self.setOutputSimplifiedChinese(self.lastOutputSimpChinese)
 
     # 輸入法被使用者啟用
-
     def onActivate(self):
         cfg = chewingConfig  # globally shared config object
         TextService.onActivate(self)
@@ -206,7 +204,14 @@ class ChewingTextService(TextService):
 
         # Windows 8 以上已取消語言列功能，改用 systray IME mode icon
         if self.client.isWindows8Above:
-            icon_name = "chi.ico" if self.langMode == CHINESE_MODE else "eng.ico"  # 切換中英文
+            # 切換中英文、簡繁體圖示
+            if self.langMode == CHINESE_MODE:
+                if self.outputSimpChinese:
+                    icon_name = "simC.ico"
+                else:
+                    icon_name = "traC.ico"
+            else:
+                icon_name = "eng.ico"
             self.addButton("windows-mode-icon",
                            icon=os.path.join(self.icon_dir, icon_name),
                            tooltip="中英文切換",
@@ -216,8 +221,14 @@ class ChewingTextService(TextService):
     def addLangButtons(self):
         if self.hasLangButtons:
             return
-        # 切換中英文
-        icon_name = "chi.ico" if self.langMode == CHINESE_MODE else "eng.ico"
+        # 切換中英文、簡繁體
+        if self.langMode == CHINESE_MODE:
+            if self.outputSimpChinese:
+                icon_name = "simC.ico"
+            else:
+                icon_name = "traC.ico"
+        else:
+            icon_name = "eng.ico"
         self.addButton("switch-lang",
                        icon=os.path.join(self.icon_dir, icon_name),
                        tooltip="中英文切換",
@@ -282,6 +293,8 @@ class ChewingTextService(TextService):
                     opencc.OPENCC_DEFAULT_CONFIG_TRAD_TO_SIMP)
         else:
             self.opencc = None
+
+        self.updateLangButtons()
 
     # 使用者按下按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
     # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
@@ -637,10 +650,12 @@ class ChewingTextService(TextService):
             if self.lastKeyEvent:
                 if self.lastKeyEvent.isKeyDown(VK_RSHIFT) and self.compositionCursor < len(self.compositionString):
                     self.chewingContext.handle_Right()
-                    self.setCompositionCursor(self.chewingContext.cursor_Current())
+                    self.setCompositionCursor(
+                        self.chewingContext.cursor_Current())
                 if self.lastKeyEvent.isKeyDown(VK_LSHIFT) and self.compositionCursor > 0:
                     self.chewingContext.handle_Left()
-                    self.setCompositionCursor(self.chewingContext.cursor_Current())
+                    self.setCompositionCursor(
+                        self.chewingContext.cursor_Current())
 
             self.lastKeyDownTime = 0.0
             return True
@@ -736,15 +751,23 @@ class ChewingTextService(TextService):
             ]
         return None
 
-    # 依照目前輸入法狀態，更新語言列顯示
+    # 依照目前輸入法狀態，更新語言列
     def updateLangButtons(self):
         chewingContext = self.chewingContext
         if not chewingContext:
             return
         langMode = chewingContext.get_ChiEngMode()
-        if langMode != self.langMode:  # 如果中英文模式發生改變
+
+        # 如果中英文模式、簡繁模式發生改變
+        if langMode != self.langMode or self.lastOutputSimpChinese != self.outputSimpChinese:
             self.langMode = langMode
-            icon_name = "chi.ico" if langMode == CHINESE_MODE else "eng.ico"
+            if langMode == CHINESE_MODE:
+                if self.outputSimpChinese:
+                    icon_name = "simC.ico"
+                else:
+                    icon_name = "traC.ico"
+            else:
+                icon_name = "eng.ico"
             icon_path = os.path.join(self.icon_dir, icon_name)
             if self.hasLangButtons:
                 self.changeButton("switch-lang", icon=icon_path)

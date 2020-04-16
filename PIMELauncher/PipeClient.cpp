@@ -91,12 +91,13 @@ void PipeClient::onReadError(int error) {
 }
 
 void PipeClient::handleClientMessage(const char* readBuf, size_t len) {
+    // NOTE: readBuf is not null terminated.
 	if (!backend_) {
 		// special handling, asked for init PIMELauncher.
 		// extract backend info from the request message and find a suitable backend
 		Json::Value msg;
 		Json::Reader reader;
-		if (reader.parse(readBuf, msg)) {
+		if (reader.parse(readBuf, readBuf + len, msg)) {
 			initBackend(msg);
 		}
 	}

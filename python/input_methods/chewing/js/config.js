@@ -1,4 +1,4 @@
-$(function () {
+$(function() {
     var chewingConfig = {},
         symbolsChanged = false,
         swkbChanged = false,
@@ -15,7 +15,7 @@ $(function () {
     }
 
     function loadConfig() {
-        $.get(CONFIG_URL, function (data, status) {
+        $.get(CONFIG_URL, function(data, status) {
             chewingConfig = data.config;
             $("#symbols").val(data.symbols);
             $("#ez_symbols").val(data.swkb);
@@ -27,7 +27,7 @@ $(function () {
         // Check easy symbols format
         var ez_symbols_array = $("#ez_symbols").val().split("\n");
         for (var i = 0; i < ez_symbols_array.length; i++) {
-            if (!/^[A-Z] .{1,10}$/.test(ez_symbols_array[i])) {
+            if (!/^[A-Z][ ].{1,10}$/.test(ez_symbols_array[i])) {
                 // Select error range
                 $("#ez_symbols").select();
                 var selectionStart = 0;
@@ -37,8 +37,8 @@ $(function () {
                 $("#ez_symbols").prop("selectionStart", selectionStart);
                 $("#ez_symbols").prop("selectionEnd", selectionStart + ez_symbols_array[i].length + 1);
                 swal(
-                    '糟糕',
-                    '簡易符號輸入設定第 ' + (i + 1) + ' 行 (' + ez_symbols_array[i] + ')格式錯誤\n請使用「英文大寫 + 空格 + 符號」的格式，符號最多10個字元',
+                    '輸入錯誤',
+                    `簡易符號輸入設定第 ${i + 1} 行 (${ez_symbols_array[i]})格式錯誤\n請使用「英文大寫 + 空格 + 字串」的格式，字串最多10個字元`,
                     'error'
                 );
                 return false;
@@ -58,8 +58,8 @@ $(function () {
                 $("#symbols").prop("selectionStart", selectionStart);
                 $("#symbols").prop("selectionEnd", selectionStart + symbols_array[i].length);
                 swal(
-                    '糟糕',
-                    '特殊符號設定第 ' + (i + 1) + ' 行格式錯誤\n單行不能超過一個字元，或是沒有 = 符號區隔',
+                    '輸入錯誤',
+                    `特殊符號設定第 ${i + 1} 行格式錯誤\n單行不能超過一個字元，或是沒有 = 符號區隔`,
                     'error'
                 );
                 return false;
@@ -96,7 +96,7 @@ $(function () {
         chewingConfig = {};
 
         // Get values from checkboxes, text and radio
-        $("input").each(function (index, inputItem) {
+        $("input").each(function(index, inputItem) {
             switch (inputItem.type) {
                 case "checkbox":
                     chewingConfig[inputItem.name] = inputItem.checked;
@@ -118,16 +118,17 @@ $(function () {
         });
 
         // Get values from select
-        $("select").each(function (index, selectItem) {
+        $("select").each(function(index, selectItem) {
             if (selectItem.value) {
                 chewingConfig[selectItem.name] = parseInt(selectItem.value);
             }
         });
     }
 
+    // Initialize UI
     function initializeUI() {
         // Setup checkbox and text values
-        $("input").each(function () {
+        $("input").each(function() {
             switch ($(this).attr("type")) {
                 case "checkbox":
                     $(this).prop("checked", chewingConfig[$(this).attr("id")]);
@@ -171,8 +172,8 @@ $(function () {
             ]
         };
 
-        $.each(selectOptions, function (id, options) {
-            $.each(options, function (value, optionName) {
+        $.each(selectOptions, function(id, options) {
+            $.each(options, function(value, optionName) {
                 $("#" + id).append('<option value="' + value + '">' + optionName + '</option>');
                 if (value == chewingConfig[id]) {
                     $("#" + id + " option:last-child").prop("selected", true);
@@ -180,8 +181,25 @@ $(function () {
             });
         });
 
+        // Bind Bootstrap
         $("select").selectpicker();
         $('[data-toggle="popover"]').popover();
+
+        // Bind shift action event
+        $("#switchLangWithShift").on("click", function() {
+            if (this.checked) {
+                $("#shiftMoveCursor").prop("checked", false);
+            }
+        });
+        $("#shiftMoveCursor").on("click", function() {
+            if (this.checked) {
+                $("#switchLangWithShift").prop("checked", false)
+            };
+        });
+
+        // Setup select phrase example & Bind updateSelExample event
+        updateSelExample();
+        $("#ui_tab input, #ui_tab select").on("change keyup", updateSelExample);
 
         // Setup keybord page
         var keyboardNames = [
@@ -200,64 +218,61 @@ $(function () {
             ["CARPALX", "carpalx"]
         ];
 
-        var keyboard_page = $("#keyboard_tab");
         var item = '<img id="keyboard_layouts" src="images\\keyborad_layouts\\pinyin.png" alt="pinyin">';
 
         for (var i = 0; i < keyboardNames.length; ++i) {
             var id = "kb" + i;
             var name = keyboardNames[i][0];
             var layout = keyboardNames[i][1]
-            item += '<div class="radio radio-info">' +
-                '<input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '" data-layout="' + layout + '">' +
-                '<label for="' + id + '">' + name + '</label><br>' +
+            item += '<div class="custom-control custom-radio">' +
+                '<input class="custom-control-input" type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '" data-layout="' +
+                layout + '">' +
+                '<label class="custom-control-label" for="' + id + '">' + name + '</label><br>' +
                 '</div>';
         }
-        keyboard_page.html(item);
+        $("#keyboard_tab").html(item);
 
         // Checked keyboard layout radio
         var checkedKetboardLayoutRadio = $("#kb" + chewingConfig.keyboardLayout);
         checkedKetboardLayoutRadio.prop("checked", true);
-        $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" + checkedKetboardLayoutRadio.data("layout") + ".png");
+        $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" + checkedKetboardLayoutRadio.data(
+            "layout") + ".png");
         $("#keyboard_layouts").prop("alt", checkedKetboardLayoutRadio.data("layout"));
 
-        // Register change keyboard_layouts event
-        $("#keyboard_tab input:radio").on("click", function () {
+        // Bind change keyboard_layouts event
+        $("#keyboard_tab input:radio").on("click", function() {
             var layout_file_name = $(this).data("layout");
-            $("#keyboard_layouts").fadeOut(200, function () {
-                $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" + layout_file_name + ".png");
+            $("#keyboard_layouts").fadeOut(200, function() {
+                $("#keyboard_layouts").prop("src", "images\\keyborad_layouts\\" +
+                    layout_file_name + ".png");
                 $("#keyboard_layouts").prop("alt", layout_file_name);
             });
 
             $("#keyboard_layouts").fadeIn(200);
         });
+    }
 
-        // Use for select phrase example
-        function updateSelExample() {
-            var example = ["選", "字", "大", "小", "範", "例"];
-            var selectItems = $("#selKeyType option").eq($("#selKeyType").val()).html();
-            var html = "";
+    // Use for select phrase example
+    function updateSelExample() {
+        var example = ["選", "字", "大", "小", "範", "例"];
+        var selectItems = $("#selKeyType option").eq($("#selKeyType").val()).html();
+        var html = "";
 
-            for (number = 0, i = 0, row = 0; number < $("#candPerPage").val(); number++, i++, row++) {
-                if (example[i] == null) {
-                    i = 0;
-                }
-
-                if (row == $("#candPerRow").val()) {
-                    row = 0;
-                    html += "<br>";
-                }
-
-                html += "<span>" + selectItems.substr(number, 1) + ".</span> " + example[i] + "";
+        for (var number = 0, i = 0, row = 0; number < $("#candPerPage").val(); number++, i++, row++) {
+            if (example[i] == null) {
+                i = 0;
             }
 
-            $("#selExample").html(html);
-            $("#selExample").css("font-size", $("#fontSize").val() + "pt");
+            if (row == $("#candPerRow").val()) {
+                row = 0;
+                html += "<br>";
+            }
+
+            html += "<span>" + selectItems.substr(number, 1) + ".</span> " + example[i] + "";
         }
 
-        updateSelExample();
-
-        // Register updateSelExample event
-        $("#ui_tab input, #ui_tab select").on("change keyup", updateSelExample);
+        $("#selExample").html(html);
+        $("#selExample").css("font-size", $("#fontSize").val() + "pt");
     }
 
     // workaround the same origin policy of IE.
@@ -268,18 +283,18 @@ $(function () {
     $("#version").load(VERSION_URL);
 
     // setup UI
-    $("#symbols").on('change', function () {
+    $("#symbols").on('change', function() {
         symbolsChanged = true;
     });
 
-    $("#ez_symbols").on('change', function () {
+    $("#ez_symbols").on('change', function() {
         swkbChanged = true;
     });
 
     // OK button
-    $("#ok").on('click', function () {
+    $("#ok").on('click', function() {
         updateConfig(); // update the config based on the state of UI elements
-        saveConfig(function () {
+        saveConfig(function() {
             swal(
                 '好耶！',
                 '設定成功儲存！',
@@ -293,7 +308,7 @@ $(function () {
     loadConfig();
 
     // keep the server alive every 20 second
-    setInterval(function () {
+    setInterval(function() {
         $.ajax({
             url: KEEP_ALIVE_URL + '?' + Date.now()
         });

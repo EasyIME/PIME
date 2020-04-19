@@ -139,7 +139,7 @@ void PipeServer::loadConfig() {
 void PipeServer::saveConfig() {
 	auto configFile = dataDirPath_ + CONFIG_FILE_REL_PATH;
 	Json::Value config;
-	config["logLevel"] = spdlog::level::to_c_str(logLevel_);
+	config["logLevel"] = spdlog::level::to_string_view(logLevel_).data();
 	if (!saveJsonFile(configFile, config)) {
 		logger_->error("fail to write config file");
 	}

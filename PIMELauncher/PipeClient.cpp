@@ -22,6 +22,7 @@
 #include "Utils.h"
 #include "BackendServer.h"
 
+#include <codecvt>  // FIXME: this is deprecated in C++ 17.
 
 using namespace std;
 

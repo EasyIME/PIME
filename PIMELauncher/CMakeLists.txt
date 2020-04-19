@@ -9,7 +9,7 @@ set(LIBUV_INCLUDE_DIRS
 )
 
 set(SPDLOG_INCLUDE_DIRS
-    ${CMAKE_SOURCE_DIR}/spdlog-1.2.1/include
+    ${CMAKE_SOURCE_DIR}/spdlog-1.5.0/include
 )
 add_definitions(
     # Enable using wchar_t & wstring for filenames

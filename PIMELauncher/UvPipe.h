@@ -81,14 +81,16 @@ public:
             },
             [](uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
                 auto this_ = reinterpret_cast<Pipe*>(stream->data);
-                if (nread > 0) {
-                    if (this_->readCallback_) {
-                        this_->readCallback_(buf->base, size_t(nread));
+                if (nread != UV_ECANCELED && this_ != nullptr) {
+                    if (nread > 0) {
+                        if (this_->readCallback_) {
+                            this_->readCallback_(buf->base, size_t(nread));
+                        }
                     }
-                }
-                else if (nread < 0) {
-                    if (this_->readErrorCallback_) {
-                        this_->readErrorCallback_(nread);
+                    else if (nread < 0) {
+                        if (this_->readErrorCallback_) {
+                            this_->readErrorCallback_(nread);
+                        }
                     }
                 }
 
@@ -126,9 +128,11 @@ public:
             streamHandle(), &buf, 1,
             [](uv_write_t* req, int status) {
                 auto writeReqData = reinterpret_cast<WriteReqData*>(req->data);
-                auto this_ = writeReqData->pipe;
-                if (this_->writeCallback_) {
-                    this_->writeCallback_(status);
+                if (status != UV_ECANCELED) {
+                    auto this_ = writeReqData->pipe;
+                    if (this_->writeCallback_) {
+                        this_->writeCallback_(status);
+                    }
                 }
                 delete writeReqData;
             });
@@ -141,6 +145,8 @@ public:
 
         uv_close(handle(),
             [](uv_handle_t* handle) {
+                // All other read/write callbacks will be called with UV_ECANCELED before the close callback.
+                // So this should be the last callback called on the handle.
                 auto this_ = reinterpret_cast<Pipe*>(handle->data);
                 if (this_->closeCallback_) {
                     // The close callback may delete `this', which frees the function object.

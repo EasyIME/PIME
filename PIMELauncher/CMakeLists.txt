@@ -37,6 +37,8 @@ add_executable(PIMELauncher WIN32
     PipeServer.h
     PipeClient.cpp
     PipeClient.h
+    PipeSecurity.cpp
+    PipeSecurity.h
     BackendServer.cpp
     BackendServer.h
     Utils.cpp

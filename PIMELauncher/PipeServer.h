@@ -35,6 +35,7 @@
 #include <deque>
 #include <memory>
 #include "BackendServer.h"
+#include "PipeSecurity.h"
 
 #include <uv.h>
 
@@ -96,7 +97,6 @@ private:
 	void saveConfig();
     bool initSingleInstance();
 	static std::wstring getPipeName(const wchar_t* baseName);
-	void initSecurityAttributes();
 	void initPipe(uv_pipe_t* pipe, const wchar_t* appName, SECURITY_ATTRIBUTES* sa = nullptr);
 	void terminateExistingLauncher(HWND existingHwnd);
 	void parseCommandLine(LPSTR cmd);
@@ -107,12 +107,7 @@ private:
 
 private:
 	// security attribute stuff for creating the server pipe
-	PSECURITY_DESCRIPTOR securittyDescriptor_;
-	SECURITY_ATTRIBUTES securityAttributes_;
-	PACL acl_;
-	EXPLICIT_ACCESS explicitAccesses_[2];
-	PSID everyoneSID_;
-	PSID allAppsSID_;
+    PipeSecurityAttributes securityAttributes_;
 	
 	std::wstring topDirPath_;
 	bool quitExistingLauncher_;

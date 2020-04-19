@@ -130,7 +130,6 @@ bool PipeClient::initBackend(const Json::Value & params) {
 
 void PipeClient::disconnectFromBackend() {
 	if (backend_ != nullptr) {
-		// FIXME: client->backend_->removeClient(client->clientId_);
 		// notify the backend server to remove the client
 		const char msg[] = "{\"method\":\"close\"}";
 		backend_->handleClientMessage(this, msg, strlen(msg));

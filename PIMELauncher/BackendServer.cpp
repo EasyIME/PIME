@@ -231,8 +231,9 @@ bool BackendServer::isProcessRunning() {
 }
 
 void BackendServer::onStdoutRead(const char* buf, size_t len) {
-    // print to debug log if there is any
-    logger()->debug("RECV: {}", std::string(buf, len));
+    if (logger()->level() <= spdlog::level::debug) {
+        logger()->debug("RECV: {}", std::string(buf, len));
+    }
     stdoutReadBuf_.write(buf, len);
     handleBackendReply();
 }

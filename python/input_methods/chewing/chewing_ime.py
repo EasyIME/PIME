@@ -96,6 +96,7 @@ class ChewingTextService(TextService):
 
         # has language buttons
         self.hasLangButtons = False
+        self.updateSwitchLangIcon = False  # 更新 中/英 切換 icon
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):
@@ -294,6 +295,7 @@ class ChewingTextService(TextService):
         else:
             self.opencc = None
 
+        self.updateSwitchLangIcon = True
         self.updateLangButtons()
 
     # 使用者按下按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
@@ -759,7 +761,8 @@ class ChewingTextService(TextService):
         langMode = chewingContext.get_ChiEngMode()
 
         # 如果中英文模式、簡繁模式發生改變
-        if langMode != self.langMode or self.lastOutputSimpChinese != self.outputSimpChinese:
+        if langMode != self.langMode or self.updateSwitchLangIcon:
+            self.updateSwitchLangIcon = False
             self.langMode = langMode
             if langMode == CHINESE_MODE:
                 if self.outputSimpChinese:

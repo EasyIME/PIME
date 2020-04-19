@@ -69,20 +69,29 @@ LangBarButton* LangBarButton::fromJson(TextService* service, const Json::Value& 
 	return nullptr;
 }
 
+void LangBarButton::setIconFile(std::wstring filePath) {
+    if (filePath != iconFile_) {
+        iconFile_ = std::move(filePath);
+
+        HICON icon = NULL;
+        auto icon_it = iconCache_.find(iconFile_);
+        if (icon_it != iconCache_.end()) { // found in the cache
+            icon = icon_it->second;
+        }
+        else { // not in the cache
+            icon = (HICON)LoadImageW(NULL, iconFile_.c_str(), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_LOADFROMFILE);
+            iconCache_[iconFile_] = icon; // cache the icon
+        }
+        if (icon) {
+            setIcon(icon);
+        }
+    }
+}
+
 void LangBarButton::updateFromJson(const Json::Value& info) {
 	const Json::Value& iconValue = info["icon"];
 	if (iconValue.isString()) {
-		std::wstring iconPath = utf8ToUtf16(iconValue.asCString());
-		HICON icon = NULL;
-		auto icon_it = iconCache_.find(iconPath);
-		if (icon_it != iconCache_.end()) // found in the cache
-			icon = icon_it->second;
-		else { // not in the cache
-			icon = (HICON)LoadImageW(NULL, iconPath.c_str(), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_LOADFROMFILE);
-			iconCache_[iconPath] = icon; // cache the icon
-		}
-		if (icon)
-			setIcon(icon);
+        setIconFile(utf8ToUtf16(iconValue.asCString()));
 	}
 
 	const Json::Value& cmdValue = info["commandId"];

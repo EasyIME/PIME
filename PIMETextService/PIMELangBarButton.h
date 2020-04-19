@@ -40,6 +40,8 @@ public:
 		return id_;
 	}
 
+    void setIconFile(std::wstring filePath);
+
 	static void clearIconCache();
 
 	// ITfLangBarItemButton
@@ -51,6 +53,7 @@ protected:
 
 private:
 	std::string id_;
+    std::wstring iconFile_;
 	static std::unordered_map<std::wstring, HICON> iconCache_; // cache loaded icons
 };
 

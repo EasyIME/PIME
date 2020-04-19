@@ -70,6 +70,7 @@ PipeClient::~PipeClient() {
     // Close the uv timer and free its resources.
     // NOTE: The operation is async and it's not safe to free the memory here.
     // We release the ownership to the unique_ptr and delete the raw pointer in the callback of uv_close().
+    waitResponseTimer_->data = nullptr;  // Avoid referencing to this since this object is destructing.
     uv_close(reinterpret_cast<uv_handle_t*>(waitResponseTimer_.release()), [](uv_handle_t* handle) {
         delete reinterpret_cast<uv_timer_t*>(handle);
         }
@@ -138,8 +139,10 @@ void PipeClient::disconnectFromBackend() {
 
 void PipeClient::startRequestTimeoutTimer(std::uint64_t timeoutMs) {
 	uv_timer_start(waitResponseTimer_.get(), [](uv_timer_t* handle) {
-		auto pThis = reinterpret_cast<PipeClient*>(handle->data);
-		pThis->onRequestTimeout();
+        if (handle->data) {
+            auto pThis = reinterpret_cast<PipeClient*>(handle->data);
+            pThis->onRequestTimeout();
+        }
 	}, timeoutMs, 0);
 }
 

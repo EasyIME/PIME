@@ -64,8 +64,6 @@ public:
 		return logger_;
 	}
 
-	void quit();
-
 	BackendServer* backendFromLangProfileGuid(const char* guid);
 
 	BackendServer* backendFromName(const char* name);
@@ -87,7 +85,6 @@ private:
 
 	// backend server
 	void initBackendServers(const std::wstring& topDirPath);
-	void finalizeBackendServers();
 	void initInputMethods(const std::wstring& topDirPath);
 	void restartAllBackends();
 
@@ -123,7 +120,7 @@ private:
 	std::vector<PipeClient*> clients_;
 	uv_pipe_t serverPipe_; // main server pipe accepting connections from the clients
 
-	std::vector<BackendServer*> backends_;
+	std::vector<std::unique_ptr<BackendServer>> backends_;
 	std::unordered_map<std::string, BackendServer*> backendMap_;
 
 	HWND hwnd_; // handle of the window

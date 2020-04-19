@@ -150,8 +150,9 @@ void PipeServer::initBackendServers(const std::wstring & topDirPath) {
 	Json::Value backends;
 	if (loadJsonFile(topDirPath + L"\\backends.json", backends) && backends.isArray()) {
         for(auto& backendInfo: backends) {
-			BackendServer* backend = new BackendServer(this, backendInfo);
-			backends_.push_back(backend);
+			backends_.emplace_back(
+                std::make_unique<BackendServer>(this, backendInfo)
+                );
 		}
 	}
 
@@ -161,7 +162,7 @@ void PipeServer::initBackendServers(const std::wstring & topDirPath) {
 
 void PipeServer::initInputMethods(const std::wstring& topDirPath) {
 	// maps language profiles to backend names
-	for (BackendServer* backend : backends_) {
+	for (auto& backend : backends_) {
 		std::wstring dirPath = topDirPath + L"\\" + utf8Codec.from_bytes(backend->name_) + L"\\input_methods";
 		// scan the dir for lang profile definition files (ime.json)
 		WIN32_FIND_DATA findData = { 0 };
@@ -196,13 +197,6 @@ void PipeServer::initInputMethods(const std::wstring& topDirPath) {
 	}
 }
 
-void PipeServer::finalizeBackendServers() {
-	// try to terminate launched backend server processes
-	for (BackendServer* backend : backends_) {
-		delete backend;
-	}
-}
-
 void PipeServer::restartAllBackends() {
 	logger_->info("Restart all backends");
 	for (auto& backend : backends_) {
@@ -214,9 +208,10 @@ void PipeServer::restartAllBackends() {
 
 BackendServer* PipeServer::backendFromName(const char* name) {
 	// for such a small list, linear search is often faster than hash table or map
-	for (BackendServer* backend : backends_) {
-		if (backend->name_ == name)
-			return backend;
+	for (auto& backend : backends_) {
+        if (backend->name_ == name) {
+            return backend.get();
+        }
 	}
 	return nullptr;
 }
@@ -268,11 +263,6 @@ void PipeServer::parseCommandLine(LPSTR cmd) {
 void PipeServer::terminateExistingLauncher(HWND existingHwnd) {
 	PostMessage(existingHwnd, WM_QUIT, 0, 0);
 	::DestroyWindow(existingHwnd);
-}
-
-void PipeServer::quit() {
-	finalizeBackendServers();
-	ExitProcess(0); // quit PipeServer
 }
 
 PipeClient* PipeServer::clientFromId(const std::string& clientId) {

@@ -199,7 +199,6 @@ void PipeServer::initInputMethods(const std::wstring& topDirPath) {
 void PipeServer::finalizeBackendServers() {
 	// try to terminate launched backend server processes
 	for (BackendServer* backend : backends_) {
-		backend->terminateProcess();
 		delete backend;
 	}
 }

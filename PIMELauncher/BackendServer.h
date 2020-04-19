@@ -78,8 +78,6 @@ private:
 
     void onReadError(int status);
 
-	void onProcessTerminated(int64_t exit_status, int term_signal);
-
     void closeStdioPipes();
 
 	void handleBackendReply();
@@ -93,7 +91,6 @@ private:
     uv::Pipe* stderrPipe_;
 	std::stringstream stdoutReadBuf_;
 
-	bool needRestart_;
 	// command to launch the server process
 	std::string command_;
 	std::string params_;

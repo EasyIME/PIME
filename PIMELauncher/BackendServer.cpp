@@ -72,19 +72,12 @@ BackendServer::BackendServer(PipeServer* pipeServer, const Json::Value& info) :
 	stdoutPipe_{nullptr},
 	stderrPipe_{nullptr},
 	name_(info["name"].asString()),
-	needRestart_{false},
 	command_(info["command"].asString()),
 	workingDir_(info["workingDir"].asString()),
 	params_(info["params"].asString()) {
 }
 
 BackendServer::~BackendServer() {
-    if (process_) {
-        // Callbacks of uv_process might be triggered after our destructor.
-        // So we cannot free process_ here, but after this point, callbacks from libuv
-        // should no longer access this BackendServer object, either.
-        process_->data = nullptr;
-    }
 	terminateProcess();
 }
 
@@ -149,7 +142,6 @@ uv::Pipe* BackendServer::createStderrPipe() {
 
 void BackendServer::startProcess() {
 	process_ = new uv_process_t{};
-	process_->data = this;
 	// create pipes for stdio of the child process
     stdoutPipe_ = createStdoutPipe();
     stdoutReadBuf_.clear();
@@ -173,19 +165,6 @@ void BackendServer::startProcess() {
 		nullptr
 	};
 	uv_process_options_t options = { 0 };
-	options.exit_cb = [](uv_process_t* process, int64_t exit_status, int term_signal) {
-        if (process->data) {
-            reinterpret_cast<BackendServer*>(process->data)->onProcessTerminated(exit_status, term_signal);
-        }
-        else {
-            // The process->data pointer is set to nullptr in ~BackendServer(). The object no longer exist.
-            // So free the resources taken by the uv_process_t object directly.
-            uv_close(reinterpret_cast<uv_handle_t*>(process), [](uv_handle_t* handle) {
-                delete reinterpret_cast<uv_process_t*>(handle);
-                }
-            );
-        }
-	};
 	options.flags = UV_PROCESS_WINDOWS_HIDE; //  UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS;
     options.file = executablePath.c_str();
 	options.args = const_cast<char**>(argv);
@@ -226,17 +205,24 @@ void BackendServer::startProcess() {
 }
 
 void BackendServer::restartProcess() {
-	if (!needRestart_) {
-		needRestart_ = true;
-		terminateProcess();
-	}
+	terminateProcess();
+    startProcess();
 }
 
 void BackendServer::terminateProcess() {
 	if (process_) {
 		closeStdioPipes();
+
 		uv_process_kill(process_, SIGTERM);
+        uv_close(reinterpret_cast<uv_handle_t*>(process_),
+            [](uv_handle_t* handle) {
+                delete reinterpret_cast<uv_process_t*>(handle);
+            }
+        );
+
+        process_ = nullptr;
 	}
+    pipeServer_->onBackendClosed(this);
 }
 
 // check if the backend server process is running
@@ -252,31 +238,14 @@ void BackendServer::onStdoutRead(const char* buf, size_t len) {
 }
 
 void BackendServer::onReadError(int status) {
-    // the backend server is broken, stop it
-    terminateProcess();
+    // the backend server is broken, restart it.
+    restartProcess();
 }
 
 void BackendServer::onStderrRead(const char* buf, size_t len) {
     // FIXME: need to do output buffering since we might not receive a full line
     // log the error message
     logger()->error("[Backend error] {}", std::string(buf, len));
-}
-
-void BackendServer::onProcessTerminated(int64_t exit_status, int term_signal) {
-    uv_close(reinterpret_cast<uv_handle_t*>(process_), [](uv_handle_t* handle) {
-        delete reinterpret_cast<uv_process_t*>(handle);
-        }
-    );
-	process_ = nullptr;
-
-	closeStdioPipes();
-
-	pipeServer_->onBackendClosed(this);
-
-	if (needRestart_) {
-		startProcess();
-		needRestart_ = false;
-	}
 }
 
 void BackendServer::closeStdioPipes() {

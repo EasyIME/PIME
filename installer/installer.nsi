@@ -65,14 +65,6 @@ RequestExecutionLevel admin
 !define MUI_COMPONENTSPAGE_SMALLDESC
 !insertmacro MUI_PAGE_COMPONENTS
 
-; Custom IE Protected Mode
-; custom page
-Var HWND
-ReserveFile ".\resource\zh_TW\ieprotectedpage.ini" \
-            ".\resource\zh_CN\ieprotectedpage.ini" \
-            ".\resource\en_US\ieprotectedpage.ini"
-Page custom setIEProtectedPage leaveIEProtectedPage
-
 ; installation progress page
 !insertmacro MUI_PAGE_INSTFILES
 
@@ -274,14 +266,6 @@ Function .onInit
 		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 	${EndIf}
 
-	InitPluginsDir
-	StrCmp $LANGUAGE "2052" 0 +3
-	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\zh_CN\ieprotectedpage.ini"
-	Goto +3
-	StrCmp $LANGUAGE "1033" 0 +3
-	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\en_US\ieprotectedpage.ini"
-	Goto +2
-	File "/oname=$PLUGINSDIR\ieprotectedpage.ini" ".\resource\zh_TW\ieprotectedpage.ini"
 	File "/oname=$PLUGINSDIR\PIMETextService_x86.dll" "..\build\PIMETextService\Release\PIMETextService.dll"
 	File "/oname=$PLUGINSDIR\PIMETextService_x64.dll" "..\build64\PIMETextService\Release\PIMETextService.dll"
 
@@ -337,35 +321,6 @@ Function ensureVCRedist
             Abort
         ${EndIf}
     ${EndIf}
-FunctionEnd
-
-; Custom IE Protected Mode
-Function setIEProtectedPage
-	ReadRegDWORD $R0 HKCU "Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" "2500"
-	${If} $R0 == 3
-		WriteINIStr "$PLUGINSDIR\ieprotectedpage.ini" "Field 2" State 1
-	${Endif}
-	InstallOptions::initDialog /NOUNLOAD "$PLUGINSDIR\ieprotectedpage.ini"
-	Pop $HWND
-	!insertmacro MUI_HEADER_TEXT $(IEProtectedPage_TITLE) $(IEProtectedPage_MESSAGE)
-
-	GetDlgItem $0 $HWND 1205
-	EnableWindow $0 0
-	InstallOptions::show
-FunctionEnd
-
-; Custom IE Protected Mode
-Function leaveIEProtectedPage
-	ReadINIStr $0 "$PLUGINSDIR\ieprotectedpage.ini" Settings State
-	${Switch} $0
-		${Default}
-			Abort
-		${Case} 2
-			GetDlgItem $1 $HWND 1205
-			EnableWindow $1 0
-			Abort
-		${Case} 0
-	${EndSwitch}
 FunctionEnd
 
 ;Installer Type

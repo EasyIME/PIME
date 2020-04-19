@@ -39,6 +39,7 @@
 #include <sstream>
 
 #include <json/json.h>
+#include <uv.h>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_sinks.h>
@@ -198,12 +199,34 @@ void PipeServer::initInputMethods(const std::wstring& topDirPath) {
 }
 
 void PipeServer::restartAllBackends() {
-	logger_->info("Restart all backends");
-	for (auto& backend : backends_) {
-		if (backend->isProcessRunning()) {
-			backend->restartProcess();
-		}
-	}
+    logger_->info("Restart all backends");
+    for (auto& backend : backends_) {
+        if (backend->isProcessRunning()) {
+            backend->restartProcess();
+        }
+    }
+}
+
+void PipeServer::asyncRestartAllBackends() {
+    // The backend objects runs in another thread owned by uv loop.
+    // So it's only safe to touch them in uv async callbacks.
+    auto callback = [](uv_async_t* asyncTask) {
+        // The callback is called from uv_loop's thread.
+        auto this_ = reinterpret_cast<PipeServer*>(asyncTask->data);
+        // really restart the backends.
+        this_->restartAllBackends();
+
+        // Free the resources used by the async task.
+        uv_close(reinterpret_cast<uv_handle_t*>(asyncTask),
+            [](uv_handle_t* handle) {
+                delete reinterpret_cast<uv_async_t*>(handle);
+            }
+        );
+    };
+    auto asyncTask = new uv_async_t{};
+    asyncTask->data = this;
+    uv_async_init(uv_default_loop(), asyncTask, callback);
+    uv_async_send(asyncTask);
 }
 
 BackendServer* PipeServer::backendFromName(const char* name) {
@@ -447,7 +470,7 @@ LRESULT PipeServer::wndProc(UINT msg, WPARAM wp, LPARAM lp) {
 	case WM_COMMAND:
 		switch (LOWORD(wp)) {
 		case ID_RESTART_PIME_BACKENDS:
-			restartAllBackends();
+            asyncRestartAllBackends();
 			return 0;
 		case ID_ENABLE_DEBUG_LOG:
 			// toggle between log_level: warning <--> debug

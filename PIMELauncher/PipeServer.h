@@ -86,7 +86,8 @@ private:
 	// backend server
 	void initBackendServers(const std::wstring& topDirPath);
 	void initInputMethods(const std::wstring& topDirPath);
-	void restartAllBackends();
+	void asyncRestartAllBackends();
+    void restartAllBackends();
 
 	// main pipe server
 	void initDataDir();

@@ -96,7 +96,7 @@ $(function() {
         chewingConfig = {};
 
         // Get values from checkboxes, text and radio
-        $("input").each(function(index, inputItem) {
+        $(".container input").each(function(index, inputItem) {
             switch (inputItem.type) {
                 case "checkbox":
                     chewingConfig[inputItem.name] = inputItem.checked;
@@ -118,7 +118,7 @@ $(function() {
         });
 
         // Get values from select
-        $("select").each(function(index, selectItem) {
+        $(".container select").each(function(index, selectItem) {
             if (selectItem.value) {
                 chewingConfig[selectItem.name] = parseInt(selectItem.value);
             }
@@ -128,7 +128,7 @@ $(function() {
     // Initialize UI
     function initializeUI() {
         // Setup checkbox and text values
-        $("input").each(function() {
+        $(".container input").each(function() {
             switch ($(this).attr("type")) {
                 case "checkbox":
                     $(this).prop("checked", chewingConfig[$(this).attr("id")]);
@@ -182,7 +182,7 @@ $(function() {
         });
 
         // Bind Bootstrap
-        $("select").selectpicker();
+        $(".container select").selectpicker();
         $('[data-toggle="popover"]').popover();
 
         // Bind shift action event

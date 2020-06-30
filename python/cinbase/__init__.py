@@ -94,6 +94,7 @@ class CinBase:
         cbTS.shapeMode = -1
         cbTS.switchPageWithSpace = False
         cbTS.outputSimpChinese = False
+        cbTS.enableSwitchTCSC = True
         cbTS.hidePromptMessages = True
         cbTS.autoClearCompositionChar = False
         cbTS.playSoundWhenNonCand = False
@@ -226,9 +227,15 @@ class CinBase:
         if cbTS.client.isWindows8Above:
             if cbTS.langMode == CHINESE_MODE:
                 if cbTS.shapeMode == FULLSHAPE_MODE:
-                    icon_name = "chi_full_capson.ico" if cbTS.capsStates else "chi_full_capsoff.ico"
+                    if cbTS.outputSimpChinese:
+                        icon_name = "sim_full_capson.ico" if cbTS.capsStates else "sim_full_capsoff.ico"
+                    else:
+                        icon_name = "chi_full_capson.ico" if cbTS.capsStates else "chi_full_capsoff.ico"
                 else:
-                    icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
+                    if cbTS.outputSimpChinese:
+                        icon_name = "sim_half_capson.ico" if cbTS.capsStates else "sim_half_capsoff.ico"
+                    else:
+                        icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
             else:
                 if cbTS.shapeMode == FULLSHAPE_MODE:
                     icon_name = "eng_full_capson.ico" if cbTS.capsStates else "eng_full_capsoff.ico"
@@ -2274,6 +2281,11 @@ class CinBase:
         if cbTS.lastKeyDownCode == VK_CAPITAL and keyEvent.keyCode == VK_CAPITAL:
             return True
 
+        # 使用 Ctrl + F12 切換簡體/繁體中文
+        if cbTS.enableSwitchTCSC and cbTS.lastKeyDownCode:
+            if keyEvent.isKeyDown(VK_CONTROL) and cbTS.lastKeyDownCode == VK_F12 and keyEvent.keyCode == VK_F12:
+                self.setOutputSimplifiedChinese(cbTS, not cbTS.outputSimpChinese)
+
         cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
 
@@ -2511,9 +2523,15 @@ class CinBase:
         if cbTS.client.isWindows8Above:  # windows 8 mode icon
             if cbTS.langMode == CHINESE_MODE:
                 if cbTS.shapeMode == FULLSHAPE_MODE:
-                    icon_name = "chi_full_capson.ico" if cbTS.capsStates else "chi_full_capsoff.ico"
+                    if cbTS.outputSimpChinese:
+                        icon_name = "sim_full_capson.ico" if cbTS.capsStates else "sim_full_capsoff.ico"
+                    else:
+                        icon_name = "chi_full_capson.ico" if cbTS.capsStates else "chi_full_capsoff.ico"
                 else:
-                    icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
+                    if cbTS.outputSimpChinese:
+                        icon_name = "sim_half_capson.ico" if cbTS.capsStates else "sim_half_capsoff.ico"
+                    else:
+                        icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
             else:
                 if cbTS.shapeMode == FULLSHAPE_MODE:
                     icon_name = "eng_full_capson.ico" if cbTS.capsStates else "eng_full_capsoff.ico"
@@ -2538,6 +2556,7 @@ class CinBase:
                 cbTS.opencc = opencc.OpenCC(opencc.OPENCC_DEFAULT_CONFIG_TRAD_TO_SIMP)
         else:
             cbTS.opencc = None
+        self.updateLangButtons(cbTS)
 
 
     # 按下「`」鍵的選單命令
@@ -3062,6 +3081,9 @@ class CinBase:
 
         # 轉換輸出成簡體中文?
         self.setOutputSimplifiedChinese(cbTS, cfg.outputSimpChinese)
+
+        # 使用 Ctrl+F12 切換繁體/簡體?
+        cbTS.enableSwitchTCSC = cfg.enableSwitchTCSC
 
         # Shift 輸入全形標點?
         cbTS.fullShapeSymbols = cfg.fullShapeSymbols

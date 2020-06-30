@@ -25,6 +25,7 @@
   "directOutFSymbols": false,
   "directCommitSymbol": true,
   "outputSimpChinese": false,
+  "enableSwitchTCSC": true,
   "reLoadTable": false,
   "directCommitString": false,
   "directShowCand": true,

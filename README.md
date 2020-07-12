@@ -1,4 +1,6 @@
-# PIME
+# arabic-ime is a Arabic IME based on the PIME project
+
+Arabic support is not yet implemented, changes coming soon.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/ju8c225nt9qgxeee?svg=true)](https://ci.appveyor.com/project/EasyIME/PIME)
 [![GitHub release](https://img.shields.io/github/release/EasyIME/PIME.svg)](https://github.com/EasyIME/PIME/releases)

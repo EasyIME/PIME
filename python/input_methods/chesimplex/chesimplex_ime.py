@@ -36,7 +36,7 @@ class CheSimplexTextService(TextService):
         # 輸入法模組自訂區域
         self.imeDirName = "chesimplex"
         self.maxCharLength = 2 # 輸入法最大編碼字元數量
-        self.cinFileList = ["simplecj.json", "simplex.json", "simplex5.json"]
+        self.cinFileList = ["simplecj.json"]
 
         self.cinbase = CinBase
         self.curdir = os.path.abspath(os.path.dirname(__file__))

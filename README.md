@@ -1,3 +1,10 @@
+# بسم الله الرحمان الرحيم
+# In the name of Allah, the Ever Merciful, Dispenser of Mercy
+
+Arabic (including its dialects) is a language spoken by roughly 440 million native speakers. It is also the language of the Qur'an which extends the importance of this language
+to almost a quarter of the world's population. Though one of the main purposes of IMEs are to cater to languages with characters that exceed the number of keys on a keyboard, many people, including native arabic speakers do not have access to keyboards with Arabic characters. This is the case even though arabic keyboard layouts exist.
+In order to ease the lives of everyone who needs to type in Arabic using non-Arabic keyboard layouts.
+
 # arabic-ime is a Arabic IME based on the PIME project
 
 Arabic support is not yet implemented, changes coming soon.

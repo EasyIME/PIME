@@ -13,21 +13,17 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-from keycodes import *  # for VK_XXX constants
-from textService import *
-import io
 import os.path
+
 import copy
 
 from cinbase import CinBase
 from cinbase import LoadCinTable
-from cinbase import LoadRCinTable
-from cinbase import LoadHCinTable
 from cinbase.config import CinBaseConfig
+from textService import *
 
 
 class CheSimplexTextService(TextService):
-
     compositionChar = ''
 
     def __init__(self, client):
@@ -35,7 +31,7 @@ class CheSimplexTextService(TextService):
 
         # 輸入法模組自訂區域
         self.imeDirName = "chesimplex"
-        self.maxCharLength = 2 # 輸入法最大編碼字元數量
+        self.maxCharLength = 2  # 輸入法最大編碼字元數量
         self.cinFileList = ["simplecj.json"]
 
         self.cinbase = CinBase
@@ -52,7 +48,6 @@ class CheSimplexTextService(TextService):
         self.cfg.cinFileList = self.cinFileList
         self.cfg.load()
         self.jsondir = self.cfg.getJsonDir()
-        self.cindir = self.cfg.getCinDir()
         self.ignorePrivateUseArea = self.cfg.ignorePrivateUseArea
         self.cinbase.initCinBaseContext(self)
 
@@ -65,23 +60,19 @@ class CheSimplexTextService(TextService):
                 continue
             self.cin = CinTable.cin
 
-
     # 檢查設定檔是否有被更改，是否需要套用新設定
     def checkConfigChange(self):
         self.cinbase.checkConfigChange(self, CinTable, RCinTable, HCinTable)
-
 
     # 輸入法被使用者啟用
     def onActivate(self):
         TextService.onActivate(self)
         self.cinbase.onActivate(self)
 
-
     # 使用者離開輸入法
     def onDeactivate(self):
         TextService.onDeactivate(self)
         self.cinbase.onDeactivate(self)
-
 
     # 使用者按下按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
     # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
@@ -90,11 +81,9 @@ class CheSimplexTextService(TextService):
         KeyState = self.cinbase.filterKeyDown(self, keyEvent, CinTable, RCinTable, HCinTable)
         return KeyState
 
-
     def onKeyDown(self, keyEvent):
         KeyState = self.cinbase.onKeyDown(self, keyEvent, CinTable, RCinTable, HCinTable)
         return KeyState
-
 
     # 使用者放開按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
     # return True，系統會呼叫 onKeyUp() 進一步處理這個按鍵
@@ -103,31 +92,25 @@ class CheSimplexTextService(TextService):
         KeyState = self.cinbase.filterKeyUp(self, keyEvent)
         return KeyState
 
-
     def onKeyUp(self, keyEvent):
         self.cinbase.onKeyUp(self, keyEvent)
-
 
     def onPreservedKey(self, guid):
         KeyState = self.cinbase.onPreservedKey(self, guid)
         return KeyState
 
-
     def onCommand(self, commandId, commandType):
         self.cinbase.onCommand(self, commandId, commandType)
-
 
     # 開啟語言列按鈕選單
     def onMenu(self, buttonId):
         MenuItems = self.cinbase.onMenu(self, buttonId)
         return MenuItems
 
-
     # 鍵盤開啟/關閉時會被呼叫 (在 Windows 10 Ctrl+Space 時)
     def onKeyboardStatusChanged(self, opened):
         TextService.onKeyboardStatusChanged(self, opened)
         self.cinbase.onKeyboardStatusChanged(self, opened)
-
 
     # 當中文編輯結束時會被呼叫。若中文編輯不是正常結束，而是因為使用者
     # 切換到其他應用程式或其他原因，導致我們的輸入法被強制關閉，此時
@@ -136,7 +119,6 @@ class CheSimplexTextService(TextService):
         TextService.onCompositionTerminated(self, forced)
         self.cinbase.onCompositionTerminated(self, forced)
 
-
     # 設定候選字頁數
     def setCandidatePage(self, page):
         self.currentCandPage = page
@@ -144,26 +126,35 @@ class CheSimplexTextService(TextService):
 
 class CinTable:
     loading = False
+
     def __init__(self):
         self.cin = None
         self.curCinType = None
         self.userExtendTable = None
         self.priorityExtendTable = None
         self.ignorePrivateUseArea = None
+
+
 CinTable = CinTable()
 
 
 class RCinTable:
     loading = False
+
     def __init__(self):
         self.cin = None
         self.curCinType = None
+
+
 RCinTable = RCinTable()
 
 
 class HCinTable:
     loading = False
+
     def __init__(self):
         self.cin = None
         self.curCinType = None
+
+
 HCinTable = HCinTable()

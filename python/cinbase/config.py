@@ -133,9 +133,6 @@ class CinBaseConfig:
     def getDataDir(self):
         return os.path.join(os.path.dirname(__file__), "data")
 
-    def getCinDir(self):
-        return os.path.join(os.path.dirname(__file__), "cin")
-
     def getJsonDir(self):
         return os.path.join(os.path.dirname(__file__), "json")
 

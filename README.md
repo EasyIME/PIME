@@ -20,57 +20,40 @@ Implement input methods easily for Windows via Text Services Framework:
 All parts are licensed under GNU LGPL v2.1 license.
 
 # Development
-
 ## Tool Requirements
 *   [CMake](http://www.cmake.org/) >= 3.0
 *   [Visual Studio 2019](https://visualstudio.microsoft.com/vs)
-*   [git](http://windows.github.com/)
+*   [Git](http://windows.github.com/)
+*   [NSIS](http://nsis.sourceforge.net/Download)
 
 ## How to Build
 *   Get source from github.
 
-        git clone https://github.com/EasyIME/PIME.git
-        cd PIME
+        git clone https://github.com/ArabicIME/arabic-ime.git
+        cd arabic-ime
         git submodule update --init
 
 *   Use the following CMake commands to generate Visual Studio project.
 
-        cmake -G "Visual Studio 16 2019" -A Win32 <path to PIME source folder> -B "build32"
-        cmake -G "Visual Studio 16 2019" -A x64 <path to PIME source folder> -B "build64"
+        cmake -G "Visual Studio 16 2019" -A Win32 <path to arabic-ime> -B "build"
+        cmake -G "Visual Studio 16 2019" -A x64 <path to arabic-ime> -B "build64"
 
 *   Open a generated project with Visual Studio and build it. You'll need to build both for 64-bit.
 
 ## Install
-*   Copy `PIMETextService.dll` to C:\Program Files (X86)\PIME\x86\.
-*   Copy `PIMETextService.dll` to C:\Program Files (X86)\PIME\x64\.
-*   Copy the folder `python` to `C:\Program Files (X86)\PIME\`
-*   Copy the folder `node` to `C:\Program Files (X86)\PIME\`
-*   Use `regsvr32` to register `PIMETextService.dll`. 64-bit system need to register both 32-bit and 64-bit `PIMETextService.dll`
-
-        regsvr32 "C:\Program Files (X86)\PIME\x86\PIMETextService.dll" (run as administrator)
-        regsvr32 "C:\Program Files (X86)\PIME\x64\PIMETextService.dll" (run as administrator)
-
-*   NOTICE: the `regsvr32` command needs to be run as Administrator. Otherwise you'll get access denied error.
-*   In Windows 8, if you put the dlls in places other than C:\Windows or C:\Program Files, they will not be accessible in metro apps.
+*   Run the uninstaller C:\Program Files (x86)\PIME\Uninstall.exe.
+*   Compile \<path to arabic-ime\>\installer\installer.nsi with NSIS.
+*   Run the installer
 
 ## Uninstall
-*   Use `regsvr32` to unregister `PIMETextService.dll`. 64-bit system need to register both 32-bit and 64-bit `PIMETextService.dll`
-
-        regsvr32 /u "C:\Program Files (X86)\PIME\x86\PIMETextService.dll" (run as administrator)
-        regsvr32 /u "C:\Program Files (X86)\PIME\x64\PIMETextService.dll" (run as administrator)
-*   Remove `C:\Program Files (X86)\PIME`
-
-*   NOTICE: the `regsvr32` command needs to be run as Administrator. Otherwise you'll get access denied error.
-
+*   Run the uninstaller C:\Program Files (x86)\PIME\Uninstall.exe
 
 ## Quick testing of the python code
-
 *   Instead of copying python over to C:\Program Files(x86)\PIME\, create a hardlink to your checked out python folder. Use the following in the PIME directory:
 
-        mklink /J python "path to repo"\arabic-ime\python
-        
-*   Restart PIMELauncher to test your changes.
+        mklink /J python <path to repo>\arabic-ime\python
 
+*   Restart PIMELauncher to test your changes.
 
 ## TSF References
 *   [Text Services Framework](http://msdn.microsoft.com/en-us/library/windows/desktop/ms629032%28v=vs.85%29.aspx)

@@ -103,9 +103,6 @@ var INST_PYTHON
 var INST_CINBASE
 var INST_NODE
 
-; The table file of Liu input method
-var LIU_UNI_TAB_FILE
-
 ; Uninstall old versions
 Function uninstallOldVersion
 	ClearErrors
@@ -168,17 +165,7 @@ Function uninstallOldVersion
 			RMDir /REBOOTOK /r "$INSTDIR\server"
 
 			; Delete shortcuts
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING).lnk"
-            Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING_PHRASES).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHECJ).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHELIU).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEARRAY).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEDAYI).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPINYIN).lnk"
 			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk"
-            ; Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_BRAILLE_CHEWING).lnk"
 			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
 			RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
 
@@ -278,7 +265,6 @@ Function .onInit
 
 	; check if old version is installed and uninstall it first
 	Call uninstallOldVersion
-	Call hideSection
 FunctionEnd
 
 ; called to show an error message when errors happen
@@ -353,62 +339,6 @@ SectionEnd
 
 SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
 	SectionGroup /e $(PYTHON_CHT_SECTION_GROUP) python_cht_section_group
-		Section $(CHEWING) chewing
-			SectionIn 1 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\chewing"
-			StrCpy $INST_PYTHON "True"
-		SectionEnd
-
-		Section $(CHECJ) checj
-			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\checj"
-			StrCpy $INST_PYTHON "True"
-			StrCpy $INST_CINBASE "True"
-		SectionEnd
-
-		Section $(CHELIU) cheliu
-            SectionIn 2
-            ; Ask the user to provide "liu-uni.tab" file
-            MessageBox MB_OK|MB_ICONQUESTION "$(SELECT_LIU_FILE)"
-            nsDialogs::SelectFileDialog open "" "liu-uni.tab file|liu-uni.tab"
-            Pop $LIU_UNI_TAB_FILE
-			${If} ${FileExists} "$LIU_UNI_TAB_FILE"
-				SetOutPath "$INSTDIR\python\input_methods"
-				File /r "..\python\input_methods\cheliu"
-				SetOutPath "$INSTDIR\python\cinbase\cin"
-				StrCpy $INST_PYTHON "True"
-				StrCpy $INST_CINBASE "True"
-            ${Else}
-                MessageBox MB_OK|MB_ICONSTOP "$(CANNOT_INSTALL_LIU)"
-                StrCpy $LIU_UNI_TAB_FILE ""
-			${EndIf}
-		SectionEnd
-
-		Section $(CHEARRAY) chearray
-			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\chearray"
-			StrCpy $INST_PYTHON "True"
-			StrCpy $INST_CINBASE "True"
-		SectionEnd
-
-		Section $(CHEDAYI) chedayi
-			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\chedayi"
-			StrCpy $INST_PYTHON "True"
-			StrCpy $INST_CINBASE "True"
-		SectionEnd
-
-		Section $(CHEPINYIN) chepinyin
-			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\chepinyin"
-			StrCpy $INST_PYTHON "True"
-			StrCpy $INST_CINBASE "True"
-		SectionEnd
 
 		Section $(CHESIMPLEX) chesimplex
 			SectionIn 2
@@ -418,56 +348,8 @@ SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
 			StrCpy $INST_CINBASE "True"
 		SectionEnd
 
-		Section $(CHEPHONETIC) chephonetic
-			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\chephonetic"
-			StrCpy $INST_PYTHON "True"
-			StrCpy $INST_CINBASE "True"
-		SectionEnd
-
-		Section $(CHEEZ) cheez
-			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\cheez"
-			StrCpy $INST_PYTHON "True"
-			StrCpy $INST_CINBASE "True"
-		SectionEnd
-
-		Section $(CHEENG) cheeng
-			${If} ${AtLeastWin8}
-				SectionIn 2
-				SetOutPath "$INSTDIR\python\input_methods"
-				File /r "..\python\input_methods\cheeng"
-				StrCpy $INST_PYTHON "True"
-			${EndIf}
-		SectionEnd
-
-		Section $(BRAILLE_CHEWING) braille_chewing
-            SectionIn 2
-            SetOutPath "$INSTDIR\python\input_methods"
-            File /r "..\python\input_methods\braille_chewing"
-            StrCpy $INST_PYTHON "True"
-		SectionEnd
-
     SectionGroupEnd
 
-	SectionGroup /e $(PYTHON_CHS_SECTION_GROUP) python_chs_section_group
-		Section $(RIME) rime
-			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r /x "brise" "..\python\input_methods\rime"
-			SetOutPath "$INSTDIR\python\input_methods\rime\data"
-			File "..\python\input_methods\rime\brise\*.txt"
-			File "..\python\input_methods\rime\brise\*.yaml"
-			File "..\python\input_methods\rime\brise\preset\*.yaml"
-			File "..\python\input_methods\rime\brise\supplement\*.yaml"
-			File "..\python\input_methods\rime\brise\extra\*.yaml"
-			SetOutPath "$INSTDIR\python\input_methods\rime\data\opencc"
-			File "..\python\opencc\*.json" "..\python\opencc\*.ocd"
-			StrCpy $INST_PYTHON "True"
-		SectionEnd
-	SectionGroupEnd
 SectionGroupEnd
 
 SectionGroup /e $(NODE_SECTION_GROUP) node_section_group
@@ -481,15 +363,9 @@ SectionGroup /e $(NODE_SECTION_GROUP) node_section_group
 	SectionGroupEnd
 SectionGroupEnd
 
-Function hideSection
-	${IfNot} ${AtLeastWin8}
-		SectionSetText ${cheeng} ""
-	${EndIf}
-FunctionEnd
-
 Section "" Register
 	SectionIn 1 2
-	; Install the python backend and input method modules along with an embedable version of python 3.
+	; Install the python backend and input method modules along with an embeddable version of python 3.
 	${If} $INST_PYTHON == "True"
 		SetOutPath "$INSTDIR"
 		File /r /x "__pycache__" /x "input_methods" /x "cinbase" /x ".git" /x ".idea" "..\python"
@@ -501,15 +377,9 @@ Section "" Register
 	${If} $INST_CINBASE == "True"
 		SetOutPath "$INSTDIR\python"
 		File /r /x "__pycache__" /x "cin" "..\python\cinbase"
-        ${If} ${SectionIsSelected} ${cheliu}
-            ; Convert the tab file to *.cin format first.
-            nsExec::ExecToLog '"$INSTDIR\python\python3\python.exe" "$INSTDIR\python\cinbase\tools\liu_unitab2cin.py" "$LIU_UNI_TAB_FILE" "$INSTDIR\python\cinbase\cin\liu.cin"'
-            ; Convert the liu.cin file to json format used by cinbase.
-            nsExec::ExecToLog '"$INSTDIR\python\python3\python.exe" "$INSTDIR\python\cinbase\tools\cintojson.py" "liu.cin"'
-        ${EndIf}
 	${EndIf}
 
-	; Install the node.js backend and input method modules along with an embedable version of node v6.
+	; Install the node.js backend and input method modules along with an embeddable version of node v6.
 	${If} $INST_NODE == "True"
 		SetOutPath "$INSTDIR"
 		File /r /x "input_methods" "..\node"
@@ -563,41 +433,9 @@ Section "" Register
 
 	; Create shortcuts
 	CreateDirectory "$SMPROGRAMS\$(PRODUCT_NAME)"
-	${If} ${SectionIsSelected} ${chewing}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\input_methods\chewing\config_tool.py" config' "$INSTDIR\python\input_methods\chewing\icon.ico" 0
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING_PHRASES).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\input_methods\chewing\config_tool.py" user_phrase_editor' "$INSTDIR\python\input_methods\chewing\icon.ico" 0
-	${EndIf}
-
-	${If} ${SectionIsSelected} ${checj}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHECJ).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config checj' "$INSTDIR\python\input_methods\checj\icon.ico" 0
-	${EndIf}
-
-	${If} ${SectionIsSelected} ${cheliu}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHELIU).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config cheliu' "$INSTDIR\python\input_methods\cheliu\icon.ico" 0
-	${EndIf}
-
-	${If} ${SectionIsSelected} ${chearray}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEARRAY).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config chearray' "$INSTDIR\python\input_methods\chearray\icon.ico" 0
-	${EndIf}
-
-	${If} ${SectionIsSelected} ${chedayi}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEDAYI).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config chedayi' "$INSTDIR\python\input_methods\chedayi\icon.ico" 0
-	${EndIf}
-
-	${If} ${SectionIsSelected} ${chepinyin}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPINYIN).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config chepinyin' "$INSTDIR\python\input_methods\chepinyin\icon.ico" 0
-	${EndIf}
 
 	${If} ${SectionIsSelected} ${chesimplex}
 		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config chesimplex' "$INSTDIR\python\input_methods\chesimplex\icon.ico" 0
-	${EndIf}
-
-	${If} ${SectionIsSelected} ${chephonetic}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config chephonetic' "$INSTDIR\python\input_methods\chephonetic\icon.ico" 0
-	${EndIf}
-
-	${If} ${SectionIsSelected} ${cheez}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config cheez' "$INSTDIR\python\input_methods\cheez\icon.ico" 0
 	${EndIf}
 
 	CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk" "$INSTDIR\Uninstall.exe"
@@ -608,23 +446,10 @@ SectionEnd
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} $(SecMain_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${python_section_group} $(PYTHON_SECTION_GROUP_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${python_cht_section_group} $(PYTHON_CHT_SECTION_GROUP_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${python_chs_section_group} $(PYTHON_CHS_SECTION_GROUP_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${node_section_group} $(NODE_SECTION_GROUP_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${node_cht_section_group} $(NODE_CHT_SECTION_GROUP_DESC)
-	;!insertmacro MUI_DESCRIPTION_TEXT ${node_chs_section_group} $(NODE_CHS_SECTION_GROUP_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${chewing} $(chewing_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${checj} $(checj_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${cheliu} $(cheliu_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${chearray} $(chearray_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${chedayi} $(chedayi_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${chepinyin} $(chepinyin_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${chesimplex} $(chesimplex_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${chephonetic} $(chephonetic_DESC)
-    !insertmacro MUI_DESCRIPTION_TEXT ${cheez} $(cheez_DESC)
-    !insertmacro MUI_DESCRIPTION_TEXT ${rime} $(rime_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${emojime} $(emojime_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${cheeng} $(cheeng_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${braille_chewing} $(braille_chewing_DESC)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;Uninstaller Section
@@ -653,16 +478,7 @@ Section "Uninstall"
     Delete "$INSTDIR\backends.json"
 
 	; Delete shortcuts
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHECJ).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHELIU).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEARRAY).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEDAYI).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPINYIN).lnk"
 	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk"
-    Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk"
-	; Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_BRAILLE_CHEWING).lnk"
 	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
 	RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
 

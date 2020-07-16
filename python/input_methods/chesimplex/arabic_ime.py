@@ -23,7 +23,7 @@ from cinbase.config import CinBaseConfig
 from textService import *
 
 
-class CheSimplexTextService(TextService):
+class ArabicTextService(TextService):
     compositionChar = ''
 
     def __init__(self, client):

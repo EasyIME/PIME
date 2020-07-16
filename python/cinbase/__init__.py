@@ -16,7 +16,6 @@
 from keycodes import *  # for VK_XXX constants
 import os.path
 import time
-import opencc  # OpenCC 繁體簡體中文轉換
 
 import io
 import sys
@@ -85,8 +84,6 @@ class CinBase:
     def initTextService(self, cbTS, TextService):
         cbTS.TextService = TextService
         cbTS.TextService.setSelKeys(cbTS, self.candselKeys)
-        # 使用 OpenCC 繁體中文轉簡體
-        cbTS.opencc = None
 
         cbTS.keyboardLayout = 0
         cbTS.selKeys = "1234567890"
@@ -1099,7 +1096,7 @@ class CinBase:
             if keyEvent.isKeyDown(VK_SHIFT) and cbTS.langMode == CHINESE_MODE and not cbTS.imeDirName == "cheez":
                 CommitStr = charStr
                 # 如果按鍵及萬用字元為*
-                if charStr == '*' and cbTS.supportWildcard and cbTS.selWildcardChar == charStr: 
+                if charStr == '*' and cbTS.supportWildcard and cbTS.selWildcardChar == charStr:
                     keyname = '＊'
                     if cbTS.compositionBufferMode:
                         if (len(cbTS.compositionChar) < cbTS.maxCharLength):
@@ -1273,7 +1270,7 @@ class CinBase:
             # 若按下 Shift 鍵
             if keyEvent.isKeyDown(VK_SHIFT) and cbTS.langMode == CHINESE_MODE:
                 # 如果按鍵及萬用字元為*
-                if charStr == '*' and cbTS.supportWildcard and cbTS.selWildcardChar == charStr: 
+                if charStr == '*' and cbTS.supportWildcard and cbTS.selWildcardChar == charStr:
                     keyname = '＊'
                     if cbTS.compositionBufferMode:
                         if (len(cbTS.compositionChar) < cbTS.maxCharLength):
@@ -1764,10 +1761,6 @@ class CinBase:
                                                 else:
                                                     cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
 
-                                    # 如果使用打繁出簡，就轉成簡體中文
-                                    if cbTS.outputSimpChinese:
-                                        commitStr = cbTS.opencc.convert(commitStr)
-
                                     if cbTS.compositionBufferMode:
                                         RemoveStringLength = 0
                                         if not cbTS.menusymbolsmode:
@@ -2084,7 +2077,7 @@ class CinBase:
                         if cbTS.imeDirName == "chedayi":
                             i = cbTS.selKeys.index(charStr) + 1
                         else:
-                            i = cbTS.selKeys.index(charStr) 
+                            i = cbTS.selKeys.index(charStr)
                         if i < cbTS.candPerPage and i < len(cbTS.candidateList):
                             commitStr = cbTS.candidateList[i]
                             cbTS.compositionBufferType = "phrase"
@@ -2550,12 +2543,6 @@ class CinBase:
     # 設定輸出成簡體中文
     def setOutputSimplifiedChinese(self, cbTS, outputSimpChinese):
         cbTS.outputSimpChinese = outputSimpChinese
-        # 建立 OpenCC instance 用來做繁簡體中文轉換
-        if outputSimpChinese:
-            if not cbTS.opencc:
-                cbTS.opencc = opencc.OpenCC(opencc.OPENCC_DEFAULT_CONFIG_TRAD_TO_SIMP)
-        else:
-            cbTS.opencc = None
         self.updateLangButtons(cbTS)
 
 
@@ -2861,10 +2848,6 @@ class CinBase:
                 cbTS.showMessageOnKeyUp = True
                 cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
 
-        # 如果使用打繁出簡，就轉成簡體中文
-        if cbTS.outputSimpChinese:
-            commitStr = cbTS.opencc.convert(commitStr)
-
         if not cbTS.compositionBufferMode:
             cbTS.setCommitString(commitStr)
         else:
@@ -3007,7 +2990,7 @@ class CinBase:
             del cbTS.dsymbols
 
         self.applyConfig(cbTS) # 套用其餘的使用者設定
-        
+
         datadirs = (cfg.getConfigDir(), cfg.getDataDir())
         swkbPath = cfg.findFile(datadirs, "swkb.dat")
         with io.open(swkbPath, 'r', encoding='utf-8') as fs:
@@ -3110,7 +3093,7 @@ class CinBase:
         cbTS.autoClearCompositionChar = cfg.autoClearCompositionChar
 
         # 拆錯字碼時發出警告嗶聲提示?
-        cbTS.playSoundWhenNonCand  = cfg.playSoundWhenNonCand 
+        cbTS.playSoundWhenNonCand  = cfg.playSoundWhenNonCand
 
         # 直接顯示候選字清單 (不須按空白鍵)?
         cbTS.directShowCand = cfg.directShowCand
@@ -3357,7 +3340,7 @@ class LoadRCinTable(threading.Thread):
                 self.RCinTable.cin = RCin(fs, self.cbTS.imeDirName)
         else:
             self.cbTS.RCinFileNotExist = True
-            
+
         self.RCinTable.curCinType = self.cbTS.cfg.selRCinType
         self.RCinTable.loading = False
 

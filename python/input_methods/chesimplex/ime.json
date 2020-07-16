@@ -6,8 +6,8 @@
     "fallbackLocale": "ar",
     "icon": "icon.ico",
     "win8_icon": "",
-    "moduleName": "chesimplex_ime",
-    "serviceName": "CheSimplexTextService",
+    "moduleName": "arabic_ime",
+    "serviceName": "ArabicTextService",
     "configTool": "..\\..\\python3\\pythonw.exe",
     "configToolParams": "configtool.py config chesimplex",
     "configToolDir": "..\\..\\cinbase"

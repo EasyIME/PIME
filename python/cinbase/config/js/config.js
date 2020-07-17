@@ -440,14 +440,9 @@ function pageReady() {
     $("#flangs").val(flangsData);
     $("#extendtable").val(extendtableData);
 
-    if (imeFolderName == "chedayi") {
-        $("#candPerRow").TouchSpin({min:1, max:6});
-        $("#candPerPage").TouchSpin({min:1, max:6});
-    }
-    else {
-        $("#candPerRow").TouchSpin({min:1, max:10});
-        $("#candPerPage").TouchSpin({min:1, max:10});
-    }
+    $("#candPerRow").TouchSpin({min:1, max:10});
+    $("#candPerPage").TouchSpin({min:1, max:10});
+
     $("#candMaxItems").TouchSpin({min:100, max:10000});
     $("#fontSize").TouchSpin({min:6, max:200});
 
@@ -518,20 +513,6 @@ function pageReady() {
     }
     $("#kb" + checjConfig.keyboardLayout).prop("checked", true);
     updateKeyboardLayout();
-
-    if(imeFolderName == "chedayi") {
-        var selDayiSymbolChars=[
-            "＝　",
-            "號　"
-        ];
-        var selDayiSymbolCharType = $("#selDayiSymbolCharType");
-        for(var i = 0; i < selDayiSymbolChars.length; ++i) {
-            var selDayiSymbolChar = selDayiSymbolChars[i];
-            var item = '<option value="' + i + '">' + selDayiSymbolChar + '</option>';
-            selDayiSymbolCharType.append(item);
-        }
-        selDayiSymbolCharType.children().eq(checjConfig.selDayiSymbolCharType).prop("selected", true);
-    }
 
     $("#symbols").change(function(){
         symbolsChanged = true;

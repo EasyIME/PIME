@@ -377,23 +377,6 @@ function updateKeyboardLayout() {
             break;
         }
     }
-
-    if(imeFolderName == "chephonetic") {
-        switch (radioval) {
-            case "0":
-                $("#keyboard_preview").load("kblayout.htm #keyboard_chephonetic_layout0");
-                break;
-            case "1":
-                $("#keyboard_preview").load("kblayout.htm #keyboard_chephonetic_layout1");
-                break;
-            case "2":
-                $("#keyboard_preview").load("kblayout.htm #keyboard_chephonetic_layout2");
-                break;
-            case "3":
-                $("#keyboard_preview").load("kblayout.htm #keyboard_chephonetic_layout3");
-                break;
-        }
-    }
 }
 
 
@@ -499,9 +482,6 @@ function pageReady() {
     selWildcardType.children().eq(checjConfig.selWildcardType).prop("selected", true);
 
     var keyboard_ddmenu = $("#keyboard_ddmenu");
-    if(imeFolderName == "chephonetic") {
-        keyboard_ddmenu.show();
-    }
 
     var keyboard_page = $("#keyboard_layout");
     for(var i = 0; i < keyboardNames.length; ++i) {

@@ -30,22 +30,8 @@
 !insertmacro LANG_STRING NODE_CHT_SECTION_GROUP "中文繁体"
 !insertmacro LANG_STRING NODE_CHS_SECTION_GROUP "中文简体"
 
-!insertmacro LANG_STRING CHEWING 新酷音
-!insertmacro LANG_STRING CHECJ 酷仓
-!insertmacro LANG_STRING CHELIU "虾米 (须自备正版码表)"
-!insertmacro LANG_STRING CHEARRAY 行列
-!insertmacro LANG_STRING CHEDAYI 大易
-!insertmacro LANG_STRING CHEPINYIN 拼音
 !insertmacro LANG_STRING CHESIMPLEX 速成
-!insertmacro LANG_STRING CHEPHONETIC 注音
-!insertmacro LANG_STRING CHEEZ 轻松
-!insertmacro LANG_STRING RIME 中州韵
 !insertmacro LANG_STRING EMOJIME emojime
-!insertmacro LANG_STRING CHEENG 英数
-!insertmacro LANG_STRING BRAILLE_CHEWING "盲文酷音"
-
-!insertmacro LANG_STRING SELECT_LIU_FILE "虾米模块需要「正版」呒虾米输入法的码表 (liu-uni.tab) 才能安装。$\r$\n请选取 liu-uni.tab 文件所在位置。"
-!insertmacro LANG_STRING CANNOT_INSTALL_LIU "缺少 liu-uni.tab 码表，无法安装虾米输入法。"
 
 !insertmacro LANG_STRING SecMain_DESC "安装 $(PRODUCT_NAME) 主程序到你的电脑里。"
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP_DESC "Python 输入法模块"
@@ -54,31 +40,9 @@
 !insertmacro LANG_STRING NODE_SECTION_GROUP_DESC "NODE 输入法模块"
 !insertmacro LANG_STRING NODE_CHT_SECTION_GROUP_DESC "中文繁体"
 !insertmacro LANG_STRING NODE_CHS_SECTION_GROUP_DESC "中文简体"
-!insertmacro LANG_STRING chewing_DESC "安装新酷音输入法模块。"
-!insertmacro LANG_STRING checj_DESC "安装酷仓输入法模块。"
-!insertmacro LANG_STRING cheliu_DESC "安装虾米输入法模块。"
-!insertmacro LANG_STRING chearray_DESC "安装行列输入法模块。"
-!insertmacro LANG_STRING chedayi_DESC "安装大易输入法模块。"
-!insertmacro LANG_STRING chepinyin_DESC "安装拼音输入法模块。"
 !insertmacro LANG_STRING chesimplex_DESC "安装速成输入法模块。"
-!insertmacro LANG_STRING chephonetic_DESC "安装注音输入法模块。"
-!insertmacro LANG_STRING cheez_DESC "安装轻松输入法模块。"
-!insertmacro LANG_STRING rime_DESC "安装中州韵输入法引擎，内含拼音、注音、仓颉、五笔、粤拼、吴语等数种输入方案。"
 !insertmacro LANG_STRING emojime_DESC "安装 emojime 输入法模块。"
-!insertmacro LANG_STRING cheeng_DESC "安装英数输入法模块。"
-!insertmacro LANG_STRING braille_chewing_DESC "安装盲文酷音输入法模块。"
 
-!insertmacro LANG_STRING SET_CHEWING "设置新酷音输入法"
-!insertmacro LANG_STRING SET_CHEWING_PHRASES "编辑新酷音使用者词库"
-
-!insertmacro LANG_STRING SET_CHECJ "设置酷仓输入法"
-!insertmacro LANG_STRING SET_CHELIU "设置虾米输入法"
-!insertmacro LANG_STRING SET_CHEARRAY "设置行列输入法"
-!insertmacro LANG_STRING SET_CHEDAYI "设置大易输入法"
-!insertmacro LANG_STRING SET_CHEPINYIN "设置拼音输入法"
 !insertmacro LANG_STRING SET_CHESIMPLEX "设置速成输入法"
-!insertmacro LANG_STRING SET_CHEPHONETIC "设置注音输入法"
-!insertmacro LANG_STRING SET_CHEEZ "设置轻松输入法"
-!insertmacro LANG_STRING SET_BRAILLE_CHEWING "设置盲文酷音输入法"
 
 !insertmacro LANG_STRING UNINSTALL_PIME "卸载 PIME"

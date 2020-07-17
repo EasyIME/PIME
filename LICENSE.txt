@@ -21,9 +21,3 @@ The following components are from other projects:
   jsoncpp:
     C++ library used to parse and write json data licensed under MIT license.
     https://github.com/open-source-parsers/jsoncpp
-
-  python\input_methods\chewing\libchewing.dll, tests/tsi.src.txt, tests/phone.cin.txt:
-    libchewing is one of the best smart phonetic input method engine in Taiwan
-    licensed under GNU LGPL v2.1 license.
-    http://chewing.im/
-    https://github.com/chewing/libchewing

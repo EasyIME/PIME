@@ -1692,12 +1692,10 @@ class CinBase:
                                         cbTS.isShowCandidates = True
                                         cbTS.canUseSelKey = False
                                 else:
-                                    if not cbTS.imeDirName == "chephonetic":
-                                        cbTS.canUseSelKey = True
+                                    cbTS.canUseSelKey = True
                             else:
                                 if cbTS.isShowCandidates:
-                                    if not cbTS.imeDirName == "chephonetic":
-                                        cbTS.canUseSelKey = True
+                                    cbTS.canUseSelKey = True
 
                         if (keyCode == VK_SPACE or keyCode == VK_DOWN) and not cbTS.isShowCandidates:  # 按下空白鍵和向下鍵
                             # 如果只有一個候選字就直接出字或組字編輯模式未啟用直接顯示候選清單

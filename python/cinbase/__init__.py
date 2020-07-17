@@ -77,7 +77,7 @@ class CinBase:
             self.emoji = emoji(fs)
 
         self.emojimenulist = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
-        self.imeNameList = ["chesimplex"]
+        self.imeNameList = ["arabic"]
         self.hcinFileList = []
 
     def initTextService(self, cbTS, TextService):
@@ -3241,7 +3241,7 @@ class LoadRCinTable(threading.Thread):
         threading.Thread.__init__(self)
         self.cbTS = cbTS
         self.RCinTable = RCinTable
-        self.rcinFileList = (["simplex.json"])
+        self.rcinFileList = (["arabic.json"])
 
     def run(self):
         if DEBUG_MODE:

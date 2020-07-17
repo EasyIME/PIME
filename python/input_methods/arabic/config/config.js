@@ -1,11 +1,9 @@
 // 此輸入法模組的資料夾名稱
-var imeFolderName = "chesimplex"
+var imeFolderName = "arabic"
 
 // 此輸入法模組使用的碼表
 var selCins = [
-    "正體簡易",
-    "速成",
-    "簡易五代"
+    "Arabic"
 ];
 
 // 此輸入法模組使用的鍵盤類型

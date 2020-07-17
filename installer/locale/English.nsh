@@ -31,7 +31,7 @@
 !insertmacro LANG_STRING NODE_CHS_SECTION_GROUP "Simplified Chinese"
 
 
-!insertmacro LANG_STRING CHESIMPLEX "Quick"
+!insertmacro LANG_STRING ARABIC "Arabic"
 !insertmacro LANG_STRING EMOJIME "emojime"
 
 !insertmacro LANG_STRING SecMain_DESC "Install the $(PRODUCT_NAME) main program to your computer."
@@ -41,9 +41,9 @@
 !insertmacro LANG_STRING NODE_SECTION_GROUP_DESC "Input method modules with Node"
 !insertmacro LANG_STRING NODE_CHT_SECTION_GROUP_DESC "Traditional Chinese"
 !insertmacro LANG_STRING NODE_CHS_SECTION_GROUP_DESC "Simplified Chinese"
-!insertmacro LANG_STRING chesimplex_DESC "Install Quick input method module."
+!insertmacro LANG_STRING arabic_DESC "Install Arabic input method module."
 !insertmacro LANG_STRING emojime_DESC "Install emojime input method module."
 
-!insertmacro LANG_STRING SET_CHESIMPLEX "Setup Quick input method"
+!insertmacro LANG_STRING SET_ARABIC "Setup Arabic input method"
 
 !insertmacro LANG_STRING UNINSTALL_PIME "Uninstall PIME"

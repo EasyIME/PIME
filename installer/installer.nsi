@@ -92,8 +92,6 @@ RequestExecutionLevel admin
   !insertmacro LANG_STRING "un.${NAME}" "${VALUE}"
 !macroend
 
-!insertmacro LANG_LOAD "TradChinese" ; Traditional Chinese
-!insertmacro LANG_LOAD "SimpChinese" ; Simplified Chinese
 !insertmacro LANG_LOAD "English" ; English
 
 var UPDATEX86DLL
@@ -165,7 +163,7 @@ Function uninstallOldVersion
 			RMDir /REBOOTOK /r "$INSTDIR\server"
 
 			; Delete shortcuts
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk"
+			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_ARABIC).lnk"
 			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
 			RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
 
@@ -230,10 +228,6 @@ Function .onInit
 	;Language selection dialog
 
 	Push ""
-	Push ${LANG_TRADCHINESE}
-	Push "繁體中文"
-	Push ${LANG_SIMPCHINESE}
-	Push "简体中文"
 	Push ${LANG_ENGLISH}
 	Push "English"
 	Push A ; A means auto count languages
@@ -340,10 +334,10 @@ SectionEnd
 SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
 	SectionGroup /e $(PYTHON_CHT_SECTION_GROUP) python_cht_section_group
 
-		Section $(CHESIMPLEX) chesimplex
+		Section $(ARABIC) arabic
 			SectionIn 2
 			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\chesimplex"
+			File /r "..\python\input_methods\arabic"
 			StrCpy $INST_PYTHON "True"
 			StrCpy $INST_CINBASE "True"
 		SectionEnd
@@ -434,8 +428,8 @@ Section "" Register
 	; Create shortcuts
 	CreateDirectory "$SMPROGRAMS\$(PRODUCT_NAME)"
 
-	${If} ${SectionIsSelected} ${chesimplex}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config chesimplex' "$INSTDIR\python\input_methods\chesimplex\icon.ico" 0
+	${If} ${SectionIsSelected} ${arabic}
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_ARABIC).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config arabic' "$INSTDIR\python\input_methods\arabic\icon.ico" 0
 	${EndIf}
 
 	CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk" "$INSTDIR\Uninstall.exe"
@@ -448,7 +442,7 @@ SectionEnd
 	!insertmacro MUI_DESCRIPTION_TEXT ${python_cht_section_group} $(PYTHON_CHT_SECTION_GROUP_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${node_section_group} $(NODE_SECTION_GROUP_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${node_cht_section_group} $(NODE_CHT_SECTION_GROUP_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${chesimplex} $(chesimplex_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${arabic} $(arabic_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${emojime} $(emojime_DESC)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
@@ -478,7 +472,7 @@ Section "Uninstall"
     Delete "$INSTDIR\backends.json"
 
 	; Delete shortcuts
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk"
+	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_ARABIC).lnk"
 	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
 	RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
 

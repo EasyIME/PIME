@@ -14,7 +14,7 @@ class Debug:
         self.startTime = {}
         self.endTime = {}
         self.imeDirName = imeDirName
-        self.jsonNameDict = ({"simplecj.json": "正體簡易"})
+        self.jsonNameDict = ({"arabic.json": "Arabic"})
 
     def getConfigDir(self):
         config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", self.imeDirName)

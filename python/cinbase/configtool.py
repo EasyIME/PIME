@@ -138,7 +138,7 @@ class ConfigHandler(BaseHandler):
     def load_cindata(self):
         cfg.load()
         CinDict ={}
-        CinDict["chesimplex"] = ["simplecj.json"]
+        CinDict["arabic"] = ["arabic.json"]
         jsonFile = CinDict[cfg.imeDirName][cfg.selCinType]
 
         datafile = os.path.join(json_dir, jsonFile)

@@ -41,7 +41,7 @@ All parts are licensed under GNU LGPL v2.1 license.
 *   Open a generated project with Visual Studio and build it. You'll need to build both for 64-bit.
 
 ## Install
-*   Run the uninstaller C:\Program Files (x86)\PIME\Uninstall.exe.
+*   Build release version of PIMETextService.dll (both 64 bit and 32 bit versions are required).
 *   Compile \<path to arabic-ime\>\installer\installer.nsi with NSIS.
 *   Run the installer
 

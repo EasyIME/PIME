@@ -332,7 +332,7 @@ Section $(SECTION_MAIN) SecMain
 SectionEnd
 
 SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
-	SectionGroup /e $(PYTHON_CHT_SECTION_GROUP) python_cht_section_group
+	SectionGroup /e $(PYTHON_AR_SECTION_GROUP) python_ar_section_group
 
 		Section $(ARABIC) arabic
 			SectionIn 2
@@ -439,7 +439,7 @@ SectionEnd
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} $(SecMain_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${python_section_group} $(PYTHON_SECTION_GROUP_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${python_cht_section_group} $(PYTHON_CHT_SECTION_GROUP_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${python_ar_section_group} $(PYTHON_AR_SECTION_GROUP_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${node_section_group} $(NODE_SECTION_GROUP_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${node_cht_section_group} $(NODE_CHT_SECTION_GROUP_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${arabic} $(arabic_DESC)

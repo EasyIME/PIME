@@ -24,8 +24,7 @@
 
 !insertmacro LANG_STRING SECTION_MAIN "PIME input method platform"
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP "Input method modules with Python"
-!insertmacro LANG_STRING PYTHON_CHT_SECTION_GROUP "Traditional Chinese"
-!insertmacro LANG_STRING PYTHON_CHS_SECTION_GROUP "Simplified Chinese"
+!insertmacro LANG_STRING PYTHON_AR_SECTION_GROUP "Arabic"
 !insertmacro LANG_STRING NODE_SECTION_GROUP "Input method modules with Node"
 !insertmacro LANG_STRING NODE_CHT_SECTION_GROUP "Traditional Chinese"
 !insertmacro LANG_STRING NODE_CHS_SECTION_GROUP "Simplified Chinese"
@@ -36,11 +35,9 @@
 
 !insertmacro LANG_STRING SecMain_DESC "Install the $(PRODUCT_NAME) main program to your computer."
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP_DESC "Input method modules with Python"
-!insertmacro LANG_STRING PYTHON_CHT_SECTION_GROUP_DESC "Traditional Chinese"
-!insertmacro LANG_STRING PYTHON_CHS_SECTION_GROUP_DESC "Simplified Chinese"
+!insertmacro LANG_STRING PYTHON_AR_SECTION_GROUP_DESC "Arabic"
 !insertmacro LANG_STRING NODE_SECTION_GROUP_DESC "Input method modules with Node"
 !insertmacro LANG_STRING NODE_CHT_SECTION_GROUP_DESC "Traditional Chinese"
-!insertmacro LANG_STRING NODE_CHS_SECTION_GROUP_DESC "Simplified Chinese"
 !insertmacro LANG_STRING arabic_DESC "Install Arabic input method module."
 !insertmacro LANG_STRING emojime_DESC "Install emojime input method module."
 

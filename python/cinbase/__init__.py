@@ -198,31 +198,23 @@ class CinBase:
         # 當 Shift + Space 被按下的時候，onPreservedKey() 會被呼叫
         cbTS.addPreservedKey(VK_SPACE, TF_MOD_SHIFT, SHIFT_SPACE_GUID)  # shift + space
 
-        # 切換中英文
-        icon_name = "chi.ico" if cbTS.langMode == ARABIC_MODE else "eng.ico"
+        # Switch between arabic and latin
+        icon_name = "arabic.ico" if cbTS.langMode == ARABIC_MODE else "latin.ico"
         cbTS.addButton("switch-lang",
                        icon=os.path.join(self.icondir, icon_name),
-                       tooltip="中英文切換",
+                       tooltip="Switching language mode",
                        commandId=ID_SWITCH_LANG
                        )
 
-        # Windows 8 以上已取消語言列功能，改用 systray IME mode icon
         if cbTS.client.isWindows8Above:
-            if cbTS.langMode == ARABIC_MODE:
-                icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
-            else:
-                icon_name = "eng_half_capson.ico" if cbTS.capsStates else "eng_half_capsoff.ico"
-
             cbTS.addButton("windows-mode-icon",
                            icon=os.path.join(self.icondir, icon_name),
-                           tooltip="中英文切換",
+                           tooltip="Switch language mode",
                            commandId=ID_MODE_ICON
                            )
 
             # 啟動時預設停用中文輸入
             cbTS.setKeyboardOpen(not cfg.disableOnStartup)
-
-        icon_name = "half.ico"
 
         # 設定
         cbTS.addButton("settings",
@@ -2092,7 +2084,7 @@ class CinBase:
         cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
 
-        # 若放開 Shift 鍵,且觸發中英文切換
+        # 若放開 Shift 鍵,且觸發Switching language mode
         if cbTS.isLangModeChanged and keyCode == VK_SHIFT:
             self.toggleLanguageMode(cbTS)  # 切換中英文模式
             cbTS.isLangModeChanged = False
@@ -2166,11 +2158,11 @@ class CinBase:
         # (windows 8 mode icon)
         if buttonId == "settings" or buttonId == "windows-mode-icon":
             return [
-                {"text": "ArabicIME(&W)", "id": ID_WEBSITE},
+                {"text": "ArabicIME (&W)", "id": ID_WEBSITE},
                 {},
-                {"text": "ArabicIME Bug Report(&B)", "id": ID_BUGREPORT},
+                {"text": "ArabicIME Bug Report (&B)", "id": ID_BUGREPORT},
                 {},
-                {"text": "Settings(&C)", "id": ID_SETTINGS},
+                {"text": "Settings (&C)", "id": ID_SETTINGS},
                 {},
                 {"text": "Dictionaries (&D)", "submenu": [
                     {"text": "Lexilogos", "id": ID_LEXILOGOS},
@@ -2246,23 +2238,14 @@ class CinBase:
     # 依照目前輸入法狀態，更新語言列顯示
     def updateLangButtons(self, cbTS):
         # 如果中英文模式發生改變
-        icon_name = "chi.ico" if cbTS.langMode == ARABIC_MODE else "eng.ico"
+        icon_name = "arabic.ico" if cbTS.langMode == ARABIC_MODE else "latin.ico"
         icon_path = os.path.join(self.icondir, icon_name)
         cbTS.changeButton("switch-lang", icon=icon_path)
         cbTS.capsStates = True if self.getKeyState(VK_CAPITAL) else False
+        icon_path = os.path.join(self.icondir, icon_name)
 
         if cbTS.client.isWindows8Above:  # windows 8 mode icon
-            if cbTS.langMode == ARABIC_MODE:
-                icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
-            else:
-                icon_name = "eng_half_capson.ico" if cbTS.capsStates else "eng_half_capsoff.ico"
-
-            icon_path = os.path.join(self.icondir, icon_name)
             cbTS.changeButton("windows-mode-icon", icon=icon_path)
-
-        # 如果全形半形模式改變
-        icon_name = "half.ico"
-        icon_path = os.path.join(self.icondir, icon_name)
 
     # 按下「`」鍵的選單命令
     def onMenuCommand(self, cbTS, commandId, commandType):

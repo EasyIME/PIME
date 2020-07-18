@@ -41,8 +41,8 @@ from .swkb import swkb
 from .symbols import symbols
 from .userphrase import userphrase
 
-CHINESE_MODE = 1
-ENGLISH_MODE = 0
+ARABIC_MODE = 1
+LATIN_MODE = 0
 DEBUG_MODE = False
 
 # shift + space 熱鍵的 GUID
@@ -203,7 +203,7 @@ class CinBase:
         cbTS.addPreservedKey(VK_SPACE, TF_MOD_SHIFT, SHIFT_SPACE_GUID)  # shift + space
 
         # 切換中英文
-        icon_name = "chi.ico" if cbTS.langMode == CHINESE_MODE else "eng.ico"
+        icon_name = "chi.ico" if cbTS.langMode == ARABIC_MODE else "eng.ico"
         cbTS.addButton("switch-lang",
                        icon=os.path.join(self.icondir, icon_name),
                        tooltip="中英文切換",
@@ -212,7 +212,7 @@ class CinBase:
 
         # Windows 8 以上已取消語言列功能，改用 systray IME mode icon
         if cbTS.client.isWindows8Above:
-            if cbTS.langMode == CHINESE_MODE:
+            if cbTS.langMode == ARABIC_MODE:
                 icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
             else:
                 icon_name = "eng_half_capson.ico" if cbTS.capsStates else "eng_half_capsoff.ico"
@@ -301,7 +301,7 @@ class CinBase:
         # 如果按下 Ctrl 鍵
         if keyEvent.isKeyDown(VK_CONTROL):
             # 若按下的是指定的符號鍵，輸入法需要處理此按鍵
-            if self.isCtrlSymbolsChar(keyEvent.keyCode) and cbTS.langMode == CHINESE_MODE:
+            if self.isCtrlSymbolsChar(keyEvent.keyCode) and cbTS.langMode == ARABIC_MODE:
                 return True
             else:
                 if cbTS.isShowMessage:
@@ -310,7 +310,7 @@ class CinBase:
 
         # 若按下 Shift 鍵
         if keyEvent.isKeyDown(VK_SHIFT):
-            if cbTS.langMode == CHINESE_MODE and not keyEvent.isKeyDown(VK_CONTROL):
+            if cbTS.langMode == ARABIC_MODE and not keyEvent.isKeyDown(VK_CONTROL):
                 # 若開啟 Shift 快速輸入符號，輸入法需要處理此按鍵
                 if cbTS.easySymbolsWithShift and self.isLetterChar(keyEvent.keyCode):
                     return True
@@ -333,7 +333,7 @@ class CinBase:
                 return False  # bypass IME
 
         # 如果是英文半形模式，輸入法不做任何處理
-        if cbTS.langMode == ENGLISH_MODE:
+        if cbTS.langMode == LATIN_MODE:
             if cbTS.isShowMessage and not keyEvent.isKeyDown(VK_SHIFT):
                 cbTS.hideMessageOnKeyUp = True
             return False
@@ -390,7 +390,7 @@ class CinBase:
             cbTS.compositionBufferType = "default"
             cbTS.compositionBufferChar = {}
 
-        if cbTS.langMode == ENGLISH_MODE:
+        if cbTS.langMode == LATIN_MODE:
             if cbTS.isComposing() or cbTS.showCandidates:
                 cbTS.tempEnglishMode = True
         else:
@@ -434,7 +434,7 @@ class CinBase:
         if cbTS.multifunctionmode:
             cbTS.canUseSelKey = True
 
-        if cbTS.langMode == CHINESE_MODE and not cbTS.showmenu:
+        if cbTS.langMode == ARABIC_MODE and not cbTS.showmenu:
             if len(cbTS.compositionChar) == 0 and charStr == '`':
                 cbTS.compositionChar += charStr
                 if cbTS.compositionBufferMode:
@@ -617,7 +617,7 @@ class CinBase:
                 cbTS.menusymbolsmode = True
 
         # 功能選單 ----------------------------------------------------------------
-        if cbTS.langMode == CHINESE_MODE and (cbTS.compositionChar == "`M" or cbTS.compositionChar == "`E"):
+        if cbTS.langMode == ARABIC_MODE and (cbTS.compositionChar == "`M" or cbTS.compositionChar == "`E"):
             menu_fullShapeSymbols = "☑ Shift 輸入全形標點" if cbTS.fullShapeSymbols else "☐ Shift 輸入全形標點"
             menu_easySymbolsWithShift = "☑ Shift 快速輸入符號" if cbTS.easySymbolsWithShift else "☐ Shift 快速輸入符號"
             menu_autoClearCompositionChar = "☑ 拆錯字碼時自動清除輸入字串" if cbTS.autoClearCompositionChar else "☐ 拆錯字碼時自動清除輸入字串"
@@ -929,7 +929,7 @@ class CinBase:
             return False
 
         # 若按下 Ctrl 鍵
-        if cbTS.langMode == CHINESE_MODE and keyEvent.isKeyDown(VK_CONTROL):
+        if cbTS.langMode == ARABIC_MODE and keyEvent.isKeyDown(VK_CONTROL):
             # 若按下的是指定的符號鍵，輸入法需要處理此按鍵
             if self.isCtrlSymbolsChar(keyCode):
                 if cbTS.msymbols.isInCharDef(charStr) and cbTS.closemenu and not cbTS.multifunctionmode:
@@ -1027,7 +1027,7 @@ class CinBase:
                 charStrLow) and cbTS.closemenu and not cbTS.multifunctionmode and not keyEvent.isKeyDown(
             VK_CONTROL) and not cbTS.ctrlsymbolsmode and not cbTS.dayisymbolsmode and not cbTS.selcandmode and not cbTS.tempEnglishMode and not cbTS.phrasemode:
             # 若按下 Shift 鍵
-            if keyEvent.isKeyDown(VK_SHIFT) and cbTS.langMode == CHINESE_MODE:
+            if keyEvent.isKeyDown(VK_SHIFT) and cbTS.langMode == ARABIC_MODE:
                 CommitStr = charStr
                 # 如果按鍵及萬用字元為*
                 if charStr == '*' and cbTS.supportWildcard and cbTS.selWildcardChar == charStr:
@@ -1163,7 +1163,7 @@ class CinBase:
                 charStrLow) and cbTS.closemenu and not cbTS.multifunctionmode and not keyEvent.isKeyDown(
             VK_CONTROL) and not cbTS.ctrlsymbolsmode and not cbTS.dayisymbolsmode and not cbTS.selcandmode and not cbTS.tempEnglishMode and not cbTS.phrasemode:
             # 若按下 Shift 鍵
-            if keyEvent.isKeyDown(VK_SHIFT) and cbTS.langMode == CHINESE_MODE:
+            if keyEvent.isKeyDown(VK_SHIFT) and cbTS.langMode == ARABIC_MODE:
                 # 如果按鍵及萬用字元為*
                 if charStr == '*' and cbTS.supportWildcard and cbTS.selWildcardChar == charStr:
                     keyname = '＊'
@@ -1221,7 +1221,7 @@ class CinBase:
                                                       cbTS.compositionBufferCursor)
                         self.resetComposition(cbTS)
 
-        if cbTS.langMode == CHINESE_MODE and len(
+        if cbTS.langMode == ARABIC_MODE and len(
                 cbTS.compositionChar) >= 1 and not cbTS.menumode and not cbTS.multifunctionmode:
             cbTS.showmenu = False
             if not cbTS.directShowCand and not cbTS.selcandmode:
@@ -1467,7 +1467,7 @@ class CinBase:
             candidates = cbTS.tempengcandidates
 
         # 候選清單處理
-        if (cbTS.langMode == CHINESE_MODE and len(cbTS.compositionChar) >= 1 and not cbTS.menumode) or (
+        if (cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1 and not cbTS.menumode) or (
                 cbTS.tempEnglishMode and cbTS.isComposing()):
             # 如果字根首字是符號就直接輸出
             if cbTS.directCommitSymbol and not cbTS.tempEnglishMode and not cbTS.phrasemode and not cbTS.selcandmode:
@@ -1521,7 +1521,7 @@ class CinBase:
                                 if cbTS.sortByPhrase and candidates:
                                     candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
 
-            if cbTS.langMode == CHINESE_MODE and cbTS.dayisymbolsmode and len(cbTS.compositionChar) == 1 and (
+            if cbTS.langMode == ARABIC_MODE and cbTS.dayisymbolsmode and len(cbTS.compositionChar) == 1 and (
                     keyCode == VK_SPACE or keyCode == VK_RETURN):
                 candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
                 if cbTS.compositionBufferMode and cbTS.directShowCand:
@@ -2022,7 +2022,7 @@ class CinBase:
                 cbTS.phrasemode = False
                 cbTS.isShowPhraseCandidates = False
 
-        if cbTS.langMode == CHINESE_MODE and cbTS.isComposing() and not cbTS.showCandidates:
+        if cbTS.langMode == ARABIC_MODE and cbTS.isComposing() and not cbTS.showCandidates:
             if cbTS.closemenu and not cbTS.multifunctionmode and not cbTS.phrasemode and not cbTS.selcandmode:
                 if keyCode == VK_RETURN:
                     if cbTS.cin.isInKeyName(cbTS.compositionChar) and len(
@@ -2111,7 +2111,7 @@ class CinBase:
             cbTS.showmenu = False
             cbTS.multifunctionmode = False
             if not cbTS.hidePromptMessages and not cbTS.client.isUiLess:
-                message = '中文模式' if cbTS.langMode == CHINESE_MODE else '英數模式'
+                message = '中文模式' if cbTS.langMode == ARABIC_MODE else '英數模式'
                 cbTS.isShowMessage = True
                 cbTS.showMessage(message, cbTS.messageDurationTime)
             if cbTS.showCandidates or len(cbTS.compositionChar) > 0 or len(cbTS.compositionBufferString) > 0:
@@ -2260,22 +2260,22 @@ class CinBase:
 
     # 切換中英文模式
     def toggleLanguageMode(self, cbTS):
-        if cbTS.langMode == CHINESE_MODE:
-            cbTS.langMode = ENGLISH_MODE
-        elif cbTS.langMode == ENGLISH_MODE:
-            cbTS.langMode = CHINESE_MODE
+        if cbTS.langMode == ARABIC_MODE:
+            cbTS.langMode = LATIN_MODE
+        elif cbTS.langMode == LATIN_MODE:
+            cbTS.langMode = ARABIC_MODE
         self.updateLangButtons(cbTS)
 
     # 依照目前輸入法狀態，更新語言列顯示
     def updateLangButtons(self, cbTS):
         # 如果中英文模式發生改變
-        icon_name = "chi.ico" if cbTS.langMode == CHINESE_MODE else "eng.ico"
+        icon_name = "chi.ico" if cbTS.langMode == ARABIC_MODE else "eng.ico"
         icon_path = os.path.join(self.icondir, icon_name)
         cbTS.changeButton("switch-lang", icon=icon_path)
         cbTS.capsStates = True if self.getKeyState(VK_CAPITAL) else False
 
         if cbTS.client.isWindows8Above:  # windows 8 mode icon
-            if cbTS.langMode == CHINESE_MODE:
+            if cbTS.langMode == ARABIC_MODE:
                 icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
             else:
                 icon_name = "eng_half_capson.ico" if cbTS.capsStates else "eng_half_capsoff.ico"
@@ -2437,7 +2437,7 @@ class CinBase:
 
     # 一般字元轉全形
     def charCodeToFullshape(self, cbTS, charCode, keyCode):
-        if cbTS.langMode == CHINESE_MODE and cbTS.outputSmallLetterWithShift and self.isLetterChar(keyCode):
+        if cbTS.langMode == ARABIC_MODE and cbTS.outputSmallLetterWithShift and self.isLetterChar(keyCode):
             char = chr(charCode).upper() if cbTS.capsStates else chr(charCode).lower()
             charCode = ord(char)
 
@@ -2711,7 +2711,7 @@ class CinBase:
 
         if not cbTS.initCinBaseState:
             # 預設英數 or 中文模式
-            cbTS.langMode = ENGLISH_MODE if cfg.defaultEnglish else CHINESE_MODE
+            cbTS.langMode = LATIN_MODE if cfg.defaultEnglish else ARABIC_MODE
 
             self.updateLangButtons(cbTS)
 

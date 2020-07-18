@@ -43,8 +43,6 @@ from .userphrase import userphrase
 
 CHINESE_MODE = 1
 ENGLISH_MODE = 0
-FULLSHAPE_MODE = 1
-HALFSHAPE_MODE = 0
 DEBUG_MODE = False
 
 # shift + space 熱鍵的 GUID
@@ -53,7 +51,6 @@ TF_MOD_SHIFT = 0x0004
 
 # 選單項目和語言列按鈕的 command ID
 ID_SWITCH_LANG = 1
-ID_SWITCH_SHAPE = 2
 ID_SETTINGS = 3
 ID_MODE_ICON = 4
 ID_WEBSITE = 5
@@ -87,7 +84,6 @@ class CinBase:
         cbTS.keyboardLayout = 0
         cbTS.selKeys = "1234567890"
         cbTS.langMode = -1
-        cbTS.shapeMode = -1
         cbTS.switchPageWithSpace = False
         cbTS.outputSimpChinese = False
         cbTS.enableSwitchTCSC = True
@@ -154,7 +150,6 @@ class CinBase:
         cbTS.isSelKeysChanged = False
         cbTS.isWildcardChardefs = False
         cbTS.isLangModeChanged = False
-        cbTS.isShapeModeChanged = False
         cbTS.isShowCandidates = False
         cbTS.isShowPhraseCandidates = False
         cbTS.isShowMessage = False
@@ -221,21 +216,12 @@ class CinBase:
         # Windows 8 以上已取消語言列功能，改用 systray IME mode icon
         if cbTS.client.isWindows8Above:
             if cbTS.langMode == CHINESE_MODE:
-                if cbTS.shapeMode == FULLSHAPE_MODE:
-                    if cbTS.outputSimpChinese:
-                        icon_name = "sim_full_capson.ico" if cbTS.capsStates else "sim_full_capsoff.ico"
-                    else:
-                        icon_name = "chi_full_capson.ico" if cbTS.capsStates else "chi_full_capsoff.ico"
+                if cbTS.outputSimpChinese:
+                    icon_name = "sim_half_capson.ico" if cbTS.capsStates else "sim_half_capsoff.ico"
                 else:
-                    if cbTS.outputSimpChinese:
-                        icon_name = "sim_half_capson.ico" if cbTS.capsStates else "sim_half_capsoff.ico"
-                    else:
-                        icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
+                    icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
             else:
-                if cbTS.shapeMode == FULLSHAPE_MODE:
-                    icon_name = "eng_full_capson.ico" if cbTS.capsStates else "eng_full_capsoff.ico"
-                else:
-                    icon_name = "eng_half_capson.ico" if cbTS.capsStates else "eng_half_capsoff.ico"
+                icon_name = "eng_half_capson.ico" if cbTS.capsStates else "eng_half_capsoff.ico"
 
             cbTS.addButton("windows-mode-icon",
                            icon=os.path.join(self.icondir, icon_name),
@@ -246,13 +232,7 @@ class CinBase:
             # 啟動時預設停用中文輸入
             cbTS.setKeyboardOpen(not cfg.disableOnStartup)
 
-        # 切換全半形
-        icon_name = "full.ico" if cbTS.shapeMode == FULLSHAPE_MODE else "half.ico"
-        cbTS.addButton("switch-shape",
-                       icon=os.path.join(self.icondir, icon_name),
-                       tooltip="全形/半形切換",
-                       commandId=ID_SWITCH_SHAPE
-                       )
+        icon_name = "half.ico"
 
         # 設定
         cbTS.addButton("settings",
@@ -268,7 +248,6 @@ class CinBase:
         cbTS.removePreservedKey(SHIFT_SPACE_GUID)  # shift + space
 
         cbTS.removeButton("switch-lang")
-        cbTS.removeButton("switch-shape")
         cbTS.removeButton("settings")
         if cbTS.client.isWindows8Above:
             cbTS.removeButton("windows-mode-icon")
@@ -348,7 +327,7 @@ class CinBase:
                 # 若萬用字元使用*，輸入法需要處理*按鍵
                 if cbTS.selWildcardChar == '*' and keyEvent.keyCode == 0x38:
                     return True
-                if not cbTS.isComposing() and cbTS.compositionBufferMode and not cbTS.directShowCand and cbTS.shapeMode == HALFSHAPE_MODE:
+                if not cbTS.isComposing() and cbTS.compositionBufferMode and not cbTS.directShowCand:
                     return False
 
         # 不論中英文模式，NumPad 都允許直接輸入數字，輸入法不處理
@@ -358,17 +337,6 @@ class CinBase:
                 if cbTS.isShowMessage:
                     cbTS.hideMessageOnKeyUp = True
                 return False  # bypass IME
-
-        # 不管中英文模式，只要是全形可見字元或空白，輸入法都需要進一步處理(半形轉為全形)
-        if cbTS.shapeMode == FULLSHAPE_MODE:
-            if keyEvent.isPrintableChar() or keyEvent.keyCode == VK_SPACE:
-                return True
-            else:
-                if cbTS.isShowMessage and not keyEvent.isKeyDown(VK_SHIFT):
-                    cbTS.hideMessageOnKeyUp = True
-                return False
-
-        # --------------   以下皆為半形模式   --------------
 
         # 如果是英文半形模式，輸入法不做任何處理
         if cbTS.langMode == ENGLISH_MODE:
@@ -436,16 +404,8 @@ class CinBase:
 
         if cbTS.tempEnglishMode:
             if not cbTS.showCandidates and keyEvent.isPrintableChar() and not keyEvent.isKeyDown(VK_CONTROL):
-                if cbTS.shapeMode == HALFSHAPE_MODE:
-                    cbTS.compositionBufferType = "english"
-                    self.setCompositionBufferString(cbTS, charStr, 0)
-                else:
-                    if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
-                        cStr = self.SymbolscharCodeToFullshape(charCode)
-                    else:
-                        cStr = self.charCodeToFullshape(cbTS, charCode, keyCode)
-                    cbTS.compositionBufferType = "fullshape"
-                    self.setCompositionBufferString(cbTS, cStr, 0)
+                cbTS.compositionBufferType = "english"
+                self.setCompositionBufferString(cbTS, charStr, 0)
                 self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, charStr, cbTS.compositionBufferCursor)
 
         # 鍵盤對映 (注音)
@@ -1094,11 +1054,8 @@ class CinBase:
                         CommitStr = candidates[0]
                         candidates = []
                     else:  # 不在快速符號表裡
-                        if cbTS.shapeMode == FULLSHAPE_MODE:  # 全形模式
-                            CommitStr = self.charCodeToFullshape(cbTS, charCode, keyCode)
-                        else:
-                            if cbTS.outputSmallLetterWithShift:
-                                CommitStr = charStr.upper() if cbTS.capsStates else charStr.lower()
+                        if cbTS.outputSmallLetterWithShift:
+                            CommitStr = charStr.upper() if cbTS.capsStates else charStr.lower()
                     if cbTS.compositionBufferMode:
                         RemoveStringLength = 0
                         if not cbTS.compositionChar == '':
@@ -1111,7 +1068,7 @@ class CinBase:
                                 self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, charStr,
                                                               cbTS.compositionBufferCursor - CommitStr.index(char))
                         else:
-                            cbTS.compositionBufferType = "fullshape" if cbTS.shapeMode == FULLSHAPE_MODE else "english"
+                            cbTS.compositionBufferType = "english"
                             self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, charStr,
                                                           cbTS.compositionBufferCursor)
                     else:
@@ -1141,8 +1098,6 @@ class CinBase:
                                     cbTS.setCompositionString(keyname)
                                     cbTS.setCompositionCursor(len(cbTS.compositionString))
                             else:
-                                if cbTS.shapeMode == FULLSHAPE_MODE:  # 全形模式
-                                    CommitStr = self.SymbolscharCodeToFullshape(charCode)
                                 if cbTS.compositionBufferMode:
                                     RemoveStringLength = 0
                                     if not cbTS.compositionChar == '':
@@ -1155,17 +1110,14 @@ class CinBase:
                                     cbTS.setCommitString(CommitStr)
                                 self.resetComposition(cbTS)
                     else:  # 如果是字母
-                        if cbTS.shapeMode == FULLSHAPE_MODE:  # 全形模式
-                            CommitStr = self.charCodeToFullshape(cbTS, charCode, keyCode)
-                        else:
-                            if cbTS.outputSmallLetterWithShift:
-                                CommitStr = charStr.upper() if cbTS.capsStates else charStr.lower()
+                        if cbTS.outputSmallLetterWithShift:
+                            CommitStr = charStr.upper() if cbTS.capsStates else charStr.lower()
                         if cbTS.compositionBufferMode:
                             RemoveStringLength = 0
                             if not cbTS.compositionChar == '':
                                 RemoveStringLength = self.calcRemoveStringLength(cbTS)
                             self.setCompositionBufferString(cbTS, CommitStr, RemoveStringLength)
-                            cbTS.compositionBufferType = "fullshape" if cbTS.shapeMode == FULLSHAPE_MODE else "english"
+                            cbTS.compositionBufferType = "english"
                             self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, charStr,
                                                           cbTS.compositionBufferCursor)
                         else:
@@ -1182,56 +1134,37 @@ class CinBase:
                             cbTS.setCompositionString(keyname)
                             cbTS.setCompositionCursor(len(cbTS.compositionString))
                     else:
-                        if cbTS.shapeMode == FULLSHAPE_MODE:  # 全形模式
-                            # 如果是符號或數字，將字串轉為全形再輸出
-                            if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
-                                CommitStr = self.SymbolscharCodeToFullshape(charCode)
-                            else:
-                                CommitStr = self.charCodeToFullshape(cbTS, charCode, keyCode)
-                        else:
-                            if self.isLetterChar(keyCode) and cbTS.outputSmallLetterWithShift:
-                                CommitStr = charStr.upper() if cbTS.capsStates else charStr.lower()
+                        if self.isLetterChar(keyCode) and cbTS.outputSmallLetterWithShift:
+                            CommitStr = charStr.upper() if cbTS.capsStates else charStr.lower()
                         if cbTS.compositionBufferMode and cbTS.isComposing():
                             RemoveStringLength = 0
                             if not cbTS.compositionChar == '':
                                 RemoveStringLength = self.calcRemoveStringLength(cbTS)
                             self.setCompositionBufferString(cbTS, CommitStr, RemoveStringLength)
-                            cbTS.compositionBufferType = "fullshape" if cbTS.shapeMode == FULLSHAPE_MODE else "english"
+                            cbTS.compositionBufferType = "english"
                             self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, charStr,
                                                           cbTS.compositionBufferCursor)
                         else:
                             cbTS.setCommitString(CommitStr)
                         self.resetComposition(cbTS)
             else:  # 若沒按下 Shift 鍵
-                # 如果是英文全形模式，將字串轉為全形再輸出
-                if cbTS.shapeMode == FULLSHAPE_MODE and cbTS.langMode == ENGLISH_MODE:
-                    # 如果是符號或數字，將字串轉為全形再輸出
-                    if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
-                        CommitStr = self.SymbolscharCodeToFullshape(charCode)
-                    else:
-                        CommitStr = self.charCodeToFullshape(cbTS, charCode, keyCode)
-                    cbTS.setCommitString(CommitStr)
-                    if cbTS.compositionBufferMode:
-                        self.resetCompositionBuffer(cbTS)
-                    self.resetComposition(cbTS)
-                else:  # 送出 CIN 所定義的字根
-                    if not cbTS.directShowCand and cbTS.showCandidates and self.isInSelKeys(cbTS, charCode):
-                        # 不送出 CIN 所定義的字根
-                        cbTS.compositionChar = cbTS.compositionChar
-                    else:
-                        if not cbTS.menusymbolsmode:
-                            cbTS.compositionChar += charStrLow
-                            keyname = cbTS.cin.getKeyName(charStrLow)
-                            if cbTS.compositionBufferMode:
-                                if (len(cbTS.compositionChar) <= cbTS.maxCharLength):
-                                    self.setCompositionBufferString(cbTS, keyname, 0)
-                                else:
-                                    cbTS.compositionChar = cbTS.compositionChar[:-1]
+                if not cbTS.directShowCand and cbTS.showCandidates and self.isInSelKeys(cbTS, charCode):
+                    # 不送出 CIN 所定義的字根
+                    cbTS.compositionChar = cbTS.compositionChar
+                else:
+                    if not cbTS.menusymbolsmode:
+                        cbTS.compositionChar += charStrLow
+                        keyname = cbTS.cin.getKeyName(charStrLow)
+                        if cbTS.compositionBufferMode:
+                            if (len(cbTS.compositionChar) <= cbTS.maxCharLength):
+                                self.setCompositionBufferString(cbTS, keyname, 0)
                             else:
-                                cbTS.setCompositionString(cbTS.compositionString + keyname)
-                                cbTS.setCompositionCursor(len(cbTS.compositionString))
+                                cbTS.compositionChar = cbTS.compositionChar[:-1]
                         else:
-                            cbTS.menusymbolsmode = False
+                            cbTS.setCompositionString(cbTS.compositionString + keyname)
+                            cbTS.setCompositionCursor(len(cbTS.compositionString))
+                    else:
+                        cbTS.menusymbolsmode = False
         # 按下的鍵不存在於 CIN 所定義的字根
         elif not cbTS.cin.isInKeyName(
                 charStrLow) and cbTS.closemenu and not cbTS.multifunctionmode and not keyEvent.isKeyDown(
@@ -1250,39 +1183,20 @@ class CinBase:
                         cbTS.setCompositionString(cbTS.compositionString + keyname)
                 # 如果停用 Shift 輸入全形標點
                 elif not cbTS.fullShapeSymbols:
-                    # 如果是全形模式，將字串轉為全形再輸出
-                    if cbTS.shapeMode == FULLSHAPE_MODE:
-                        # 如果是符號或數字，將字串轉為全形再輸出
-                        if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
-                            CommitStr = self.SymbolscharCodeToFullshape(charCode)
-                        else:
-                            CommitStr = self.charCodeToFullshape(cbTS, charCode, keyCode)
-                        if cbTS.compositionBufferMode:
-                            RemoveStringLength = 0
-                            if not cbTS.compositionChar == '':
-                                RemoveStringLength = self.calcRemoveStringLength(cbTS)
-                            self.setCompositionBufferString(cbTS, CommitStr, RemoveStringLength)
-                            cbTS.compositionBufferType = "fullshape"
-                            self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, charStr,
-                                                          cbTS.compositionBufferCursor)
-                        else:
-                            cbTS.setCommitString(CommitStr)
-                        self.resetComposition(cbTS)
-                    else:  # 半形模式直接輸出不作處理
-                        CommitStr = charStr
-                        if self.isLetterChar(keyCode) and cbTS.outputSmallLetterWithShift:
-                            CommitStr = charStr.upper() if cbTS.capsStates else charStr.lower()
-                        if cbTS.compositionBufferMode:
-                            RemoveStringLength = 0
-                            if not cbTS.compositionChar == '':
-                                RemoveStringLength = self.calcRemoveStringLength(cbTS)
-                            self.setCompositionBufferString(cbTS, CommitStr, RemoveStringLength)
-                            cbTS.compositionBufferType = "english"
-                            self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, charStr,
-                                                          cbTS.compositionBufferCursor)
-                        else:
-                            cbTS.setCommitString(CommitStr)
-                        self.resetComposition(cbTS)
+                    CommitStr = charStr
+                    if self.isLetterChar(keyCode) and cbTS.outputSmallLetterWithShift:
+                        CommitStr = charStr.upper() if cbTS.capsStates else charStr.lower()
+                    if cbTS.compositionBufferMode:
+                        RemoveStringLength = 0
+                        if not cbTS.compositionChar == '':
+                            RemoveStringLength = self.calcRemoveStringLength(cbTS)
+                        self.setCompositionBufferString(cbTS, CommitStr, RemoveStringLength)
+                        cbTS.compositionBufferType = "english"
+                        self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, charStr,
+                                                      cbTS.compositionBufferCursor)
+                    else:
+                        cbTS.setCommitString(CommitStr)
+                    self.resetComposition(cbTS)
                 else:  # 如果啟用 Shift 輸入全形標點
                     # 如果是符號或數字鍵，將字串轉為全形再輸出
                     if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
@@ -1306,37 +1220,13 @@ class CinBase:
                                 cbTS.setCommitString(CommitStr)
                             self.resetComposition(cbTS)
             else:  # 若沒按下 Shift 鍵
-                # 如果是全形模式，將字串轉為全形再輸出
-                if cbTS.shapeMode == FULLSHAPE_MODE and len(cbTS.compositionChar) == 0:
-                    if keyEvent.isPrintableChar():
-                        if not (cbTS.phrasemode and (self.isNumberChar(keyCode) or keyCode == VK_SPACE)):
-                            if self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
-                                CommitStr = self.SymbolscharCodeToFullshape(charCode)
-                            else:
-                                CommitStr = self.charCodeToFullshape(cbTS, charCode, keyCode)
-
-                            if not cbTS.compositionBufferMode:
-                                cbTS.setCommitString(CommitStr)
-                                self.resetComposition(cbTS)
-                            else:
-                                # 如果是英文全形模式，將字串轉為全形再輸出
-                                if cbTS.langMode == ENGLISH_MODE:
-                                    cbTS.setCommitString(CommitStr)
-                                    self.resetCompositionBuffer(cbTS)
-                                else:
-                                    self.setCompositionBufferString(cbTS, CommitStr, 0)
-                                    cbTS.compositionBufferType = "fullshape"
-                                    self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, charStr,
-                                                                  cbTS.compositionBufferCursor)
-                                self.resetComposition(cbTS)
-                else:  # 半形模式
-                    if cbTS.compositionBufferMode:
-                        if cbTS.isComposing() and keyEvent.isPrintableChar() and not cbTS.showCandidates and cbTS.compositionChar == '':
-                            self.setCompositionBufferString(cbTS, charStr, 0)
-                            cbTS.compositionBufferType = "english"
-                            self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, charStr,
-                                                          cbTS.compositionBufferCursor)
-                            self.resetComposition(cbTS)
+                if cbTS.compositionBufferMode:
+                    if cbTS.isComposing() and keyEvent.isPrintableChar() and not cbTS.showCandidates and cbTS.compositionChar == '':
+                        self.setCompositionBufferString(cbTS, charStr, 0)
+                        cbTS.compositionBufferType = "english"
+                        self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, charStr,
+                                                      cbTS.compositionBufferCursor)
+                        self.resetComposition(cbTS)
 
         if cbTS.langMode == CHINESE_MODE and len(
                 cbTS.compositionChar) >= 1 and not cbTS.menumode and not cbTS.multifunctionmode:
@@ -2122,8 +2012,7 @@ class CinBase:
                             cbTS.multifunctionmode = True
                             if not cbTS.compositionBufferMode:
                                 cbTS.setCompositionString(cbTS.compositionChar)
-                        elif keyEvent.isPrintableChar() and not keyEvent.isKeyDown(
-                                VK_SHIFT) and cbTS.shapeMode == HALFSHAPE_MODE:
+                        elif keyEvent.isPrintableChar() and not keyEvent.isKeyDown(VK_SHIFT):
                             if cbTS.compositionBufferMode:
                                 self.setCompositionBufferString(cbTS, charStr, 0)
                             else:
@@ -2207,10 +2096,6 @@ class CinBase:
         cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
 
-        # 若切換全形/半形模式
-        if cbTS.isShapeModeChanged:
-            return True
-
         if cbTS.isSelKeysChanged:
             return True
 
@@ -2251,18 +2136,6 @@ class CinBase:
         if keyEvent.keyCode == VK_CAPITAL:
             self.updateLangButtons(cbTS)
 
-        if cbTS.isShapeModeChanged:
-            cbTS.isShapeModeChanged = False
-            if not cbTS.hidePromptMessages and not cbTS.client.isUiLess:
-                message = '半形模式' if cbTS.shapeMode == HALFSHAPE_MODE else '全形模式'
-                cbTS.isShowMessage = True
-                cbTS.showMessage(message, cbTS.messageDurationTime)
-            if cbTS.showCandidates or len(cbTS.compositionChar) > 0:
-                if cbTS.compositionBufferMode and not cbTS.selcandmode:
-                    RemoveStringLength = self.calcRemoveStringLength(cbTS)
-                    self.removeCompositionBufferString(cbTS, RemoveStringLength, True)
-                self.resetComposition(cbTS)
-
         if cbTS.isSelKeysChanged:
             cbTS.setCandidateList(cbTS.candidateList)
             if cbTS.isShowCandidates:
@@ -2284,19 +2157,13 @@ class CinBase:
             cbTS.hideMessageOnKeyUp = False
 
     def onPreservedKey(self, cbTS, guid):
-        cbTS.lastKeyDownCode = 0;
+        cbTS.lastKeyDownCode = 0
         # some preserved keys registered are pressed
-        if guid == SHIFT_SPACE_GUID:  # 使用者按下 shift + space
-            cbTS.isShapeModeChanged = True
-            self.toggleShapeMode(cbTS)  # 切換全半形
-            return True
         return False
 
     def onCommand(self, cbTS, commandId, commandType):
         if commandId == ID_SWITCH_LANG and commandType == 0:  # 切換中英文模式
             self.toggleLanguageMode(cbTS)
-        elif commandId == ID_SWITCH_SHAPE and commandType == 0:  # 切換全形/半形
-            self.toggleShapeMode(cbTS)
         elif commandId == ID_SETTINGS:  # 開啟設定工具
             tool_name = "config"
             config_tool = '"{0}" {1} {2}'.format(os.path.join(self.cinbasecurdir, "configtool.py"), tool_name,
@@ -2414,14 +2281,6 @@ class CinBase:
             cbTS.langMode = CHINESE_MODE
         self.updateLangButtons(cbTS)
 
-    # 切換全形/半形
-    def toggleShapeMode(self, cbTS):
-        if cbTS.shapeMode == HALFSHAPE_MODE:
-            cbTS.shapeMode = FULLSHAPE_MODE
-        elif cbTS.shapeMode == FULLSHAPE_MODE:
-            cbTS.shapeMode = HALFSHAPE_MODE
-        self.updateLangButtons(cbTS)
-
     # 依照目前輸入法狀態，更新語言列顯示
     def updateLangButtons(self, cbTS):
         # 如果中英文模式發生改變
@@ -2432,29 +2291,19 @@ class CinBase:
 
         if cbTS.client.isWindows8Above:  # windows 8 mode icon
             if cbTS.langMode == CHINESE_MODE:
-                if cbTS.shapeMode == FULLSHAPE_MODE:
-                    if cbTS.outputSimpChinese:
-                        icon_name = "sim_full_capson.ico" if cbTS.capsStates else "sim_full_capsoff.ico"
-                    else:
-                        icon_name = "chi_full_capson.ico" if cbTS.capsStates else "chi_full_capsoff.ico"
+                if cbTS.outputSimpChinese:
+                    icon_name = "sim_half_capson.ico" if cbTS.capsStates else "sim_half_capsoff.ico"
                 else:
-                    if cbTS.outputSimpChinese:
-                        icon_name = "sim_half_capson.ico" if cbTS.capsStates else "sim_half_capsoff.ico"
-                    else:
-                        icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
+                    icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
             else:
-                if cbTS.shapeMode == FULLSHAPE_MODE:
-                    icon_name = "eng_full_capson.ico" if cbTS.capsStates else "eng_full_capsoff.ico"
-                else:
-                    icon_name = "eng_half_capson.ico" if cbTS.capsStates else "eng_half_capsoff.ico"
+                icon_name = "eng_half_capson.ico" if cbTS.capsStates else "eng_half_capsoff.ico"
 
             icon_path = os.path.join(self.icondir, icon_name)
             cbTS.changeButton("windows-mode-icon", icon=icon_path)
 
         # 如果全形半形模式改變
-        icon_name = "full.ico" if cbTS.shapeMode == FULLSHAPE_MODE else "half.ico"
+        icon_name = "half.ico"
         icon_path = os.path.join(self.icondir, icon_name)
-        cbTS.changeButton("switch-shape", icon=icon_path)
 
     # 設定輸出成簡體中文
     def setOutputSimplifiedChinese(self, cbTS, outputSimpChinese):
@@ -2889,9 +2738,6 @@ class CinBase:
         if not cbTS.initCinBaseState:
             # 預設英數 or 中文模式
             cbTS.langMode = ENGLISH_MODE if cfg.defaultEnglish else CHINESE_MODE
-
-            # 預設全形 or 半形
-            cbTS.shapeMode = FULLSHAPE_MODE if cfg.defaultFullSpace else HALFSHAPE_MODE
 
             self.updateLangButtons(cbTS)
 

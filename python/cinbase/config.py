@@ -32,7 +32,6 @@ class CinBaseConfig:
     def __init__(self):
         self.candPerRow = 3
         self.defaultEnglish = False
-        self.defaultFullSpace = False
         self.disableOnStartup = False
         self.switchLangWithShift = True
         self.outputSmallLetterWithShift = False

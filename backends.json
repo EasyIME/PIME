@@ -4,11 +4,5 @@
         "command": "python\\python3\\python.exe",
         "workingDir": "python",
         "params": "server.py"
-    },
-    {
-        "name": "node",
-        "command": "node\\node.exe",
-        "workingDir": "node",
-        "params": "server.js"
     }
 ]

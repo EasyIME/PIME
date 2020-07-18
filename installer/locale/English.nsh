@@ -8,7 +8,6 @@
 !insertmacro LANG_STRING INST_TYPE_STD "Standard installation"
 !insertmacro LANG_STRING INST_TYPE_FULL "Full installation"
 !insertmacro LANG_STRING MB_REBOOT_REQUIRED "A reboot is required to complete the uninstallation。$\r$\nDo you want to reboot now? (Select $\"No$\" if you want to reboot at a later time)"
-!insertmacro LANG_STRING PRODUCT_PAGE "PIME project home page"
 !insertmacro LANG_STRING PRODUCT_PUBLISHER "PIME development team"
 
 !insertmacro LANG_STRING AtLeastWinVista_MESSAGE "Sorry，this program currently only supports Windows Vista or later"
@@ -24,22 +23,12 @@
 
 !insertmacro LANG_STRING SECTION_MAIN "PIME input method platform"
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP "Input method modules with Python"
-!insertmacro LANG_STRING PYTHON_AR_SECTION_GROUP "Arabic"
-!insertmacro LANG_STRING NODE_SECTION_GROUP "Input method modules with Node"
-!insertmacro LANG_STRING NODE_CHT_SECTION_GROUP "Traditional Chinese"
-!insertmacro LANG_STRING NODE_CHS_SECTION_GROUP "Simplified Chinese"
-
 
 !insertmacro LANG_STRING ARABIC "Arabic"
-!insertmacro LANG_STRING EMOJIME "emojime"
 
 !insertmacro LANG_STRING SecMain_DESC "Install the $(PRODUCT_NAME) main program to your computer."
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP_DESC "Input method modules with Python"
-!insertmacro LANG_STRING PYTHON_AR_SECTION_GROUP_DESC "Arabic"
-!insertmacro LANG_STRING NODE_SECTION_GROUP_DESC "Input method modules with Node"
-!insertmacro LANG_STRING NODE_CHT_SECTION_GROUP_DESC "Traditional Chinese"
 !insertmacro LANG_STRING arabic_DESC "Install Arabic input method module."
-!insertmacro LANG_STRING emojime_DESC "Install emojime input method module."
 
 !insertmacro LANG_STRING SET_ARABIC "Setup Arabic input method"
 

@@ -42,7 +42,7 @@ AllowSkipFiles off ; cannot skip a file
 !define /file PRODUCT_VERSION "..\version.txt"
 
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
-!define HOMEPAGE_URL "https://github.com/EasyIME/"
+!define HOMEPAGE_URL "https://github.com/ArabicIME/arabic-ime"
 
 Name "$(PRODUCT_NAME)"
 BrandingText "$(PRODUCT_NAME)"
@@ -69,8 +69,6 @@ RequestExecutionLevel admin
 !insertmacro MUI_PAGE_INSTFILES
 
 ; finish page
-!define MUI_FINISHPAGE_LINK_LOCATION "${HOMEPAGE_URL}"
-!define MUI_FINISHPAGE_LINK "$(PRODUCT_PAGE) ${MUI_FINISHPAGE_LINK_LOCATION}"
 !insertmacro MUI_PAGE_FINISH
 
 ; uninstallation pages
@@ -99,7 +97,6 @@ var UPDATEX64DLL
 
 var INST_PYTHON
 var INST_CINBASE
-var INST_NODE
 
 ; Uninstall old versions
 Function uninstallOldVersion
@@ -157,7 +154,6 @@ Function uninstallOldVersion
 
             Delete "$INSTDIR\backends.json"
 			RMDir /REBOOTOK /r "$INSTDIR\python"
-			RMDir /REBOOTOK /r "$INSTDIR\node"
 
 			; Only exist in earlier versions, but need to delete it.
 			RMDir /REBOOTOK /r "$INSTDIR\server"
@@ -255,7 +251,6 @@ Function .onInit
 
 	StrCpy $INST_PYTHON "False"
 	StrCpy $INST_CINBASE "False"
-	StrCpy $INST_NODE "False"
 
 	; check if old version is installed and uninstall it first
 	Call uninstallOldVersion
@@ -332,29 +327,13 @@ Section $(SECTION_MAIN) SecMain
 SectionEnd
 
 SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
-	SectionGroup /e $(PYTHON_AR_SECTION_GROUP) python_ar_section_group
-
 		Section $(ARABIC) arabic
-			SectionIn 2
+			SectionIn 1 2 RO
 			SetOutPath "$INSTDIR\python\input_methods"
 			File /r "..\python\input_methods\arabic"
 			StrCpy $INST_PYTHON "True"
 			StrCpy $INST_CINBASE "True"
 		SectionEnd
-
-    SectionGroupEnd
-
-SectionGroupEnd
-
-SectionGroup /e $(NODE_SECTION_GROUP) node_section_group
-	SectionGroup /e $(NODE_CHT_SECTION_GROUP) node_cht_section_group
-		Section $(EMOJIME) emojime
-				SectionIn 2
-				SetOutPath "$INSTDIR\node\input_methods"
-				File /r "..\node\input_methods\emojime"
-				StrCpy $INST_NODE "True"
-		SectionEnd
-	SectionGroupEnd
 SectionGroupEnd
 
 Section "" Register
@@ -371,12 +350,6 @@ Section "" Register
 	${If} $INST_CINBASE == "True"
 		SetOutPath "$INSTDIR\python"
 		File /r /x "__pycache__" /x "cin" "..\python\cinbase"
-	${EndIf}
-
-	; Install the node.js backend and input method modules along with an embeddable version of node v6.
-	${If} $INST_NODE == "True"
-		SetOutPath "$INSTDIR"
-		File /r /x "input_methods" "..\node"
 	${EndIf}
 
 	; Install the text service dlls
@@ -439,11 +412,7 @@ SectionEnd
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} $(SecMain_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${python_section_group} $(PYTHON_SECTION_GROUP_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${python_ar_section_group} $(PYTHON_AR_SECTION_GROUP_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${node_section_group} $(NODE_SECTION_GROUP_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${node_cht_section_group} $(NODE_CHT_SECTION_GROUP_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${arabic} $(arabic_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${emojime} $(emojime_DESC)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;Uninstaller Section
@@ -468,7 +437,6 @@ Section "Uninstall"
 
 	RMDir /REBOOTOK /r "$INSTDIR\x86"
 	RMDir /REBOOTOK /r "$INSTDIR\python"
-	RMDir /REBOOTOK /r "$INSTDIR\node"
     Delete "$INSTDIR\backends.json"
 
 	; Delete shortcuts

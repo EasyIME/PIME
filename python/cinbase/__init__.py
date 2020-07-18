@@ -51,16 +51,13 @@ TF_MOD_SHIFT = 0x0004
 
 # 選單項目和語言列按鈕的 command ID
 ID_SWITCH_LANG = 1
-ID_SETTINGS = 3
-ID_MODE_ICON = 4
-ID_WEBSITE = 5
-ID_BUGREPORT = 6
-ID_FORUM = 7
-ID_MOEDICT = 8
-ID_DICT = 9
-ID_SIMPDICT = 10
-ID_LITTLEDICT = 11
-ID_PROVERBDICT = 12
+ID_SETTINGS = 2
+ID_MODE_ICON = 3
+ID_WEBSITE = 4
+ID_BUGREPORT = 5
+ID_LEXILOGOS = 6
+ID_BAHETH = 7
+ID_ALMAANY = 8
 
 
 class CinBase:
@@ -156,7 +153,6 @@ class CinBase:
         cbTS.canUseSpaceAsPageKey = True
         cbTS.endKeyList = []
         cbTS.useEndKey = False
-        cbTS.useDayiSymbols = False
         cbTS.dayisymbolsmode = False
         cbTS.autoShowCandWhenMaxChar = False
         cbTS.lastCommitString = ""
@@ -352,14 +348,6 @@ class CinBase:
         # 中文模式下，若按下 ` 鍵，讓輸入法進行處理
         if keyEvent.isKeyDown(VK_OEM_3):
             return True
-
-        if cbTS.useDayiSymbols:
-            if cbTS.selDayiSymbolCharType == 0:
-                if keyEvent.isKeyDown(VK_OEM_PLUS):
-                    return True
-            else:
-                if keyEvent.isKeyDown(VK_OEM_7):
-                    return True
 
         # 其餘狀況一律不處理，原按鍵輸入直接送還給應用程式
         if cbTS.isShowMessage and not keyEvent.isKeyDown(VK_SHIFT):
@@ -2162,44 +2150,33 @@ class CinBase:
             r = windll.shell32.ShellExecuteW(None, "open", python_exe, config_tool, self.cinbasecurdir,
                                              0)  # SW_HIDE = 0 (hide the window)
         elif commandId == ID_MODE_ICON:  # windows 8 mode icon
-            self.toggleLanguageMode(cbTS)  # 切換中英文模式
-        elif commandId == ID_WEBSITE:  # visit chewing website
-            os.startfile("https://github.com/EasyIME/PIME")
+            self.toggleLanguageMode(cbTS)
+        elif commandId == ID_WEBSITE:
+            os.startfile("https://github.com/ArabicIME/arabic-ime")
         elif commandId == ID_BUGREPORT:  # visit bug tracker page
-            os.startfile("https://github.com/EasyIME/PIME/issues")
-        elif commandId == ID_FORUM:
-            os.startfile("https://github.com/EasyIME/forum")
-        elif commandId == ID_MOEDICT:  # a very awesome online Chinese dictionary
-            os.startfile("https://www.moedict.tw/")
-        elif commandId == ID_DICT:  # online Chinese dictonary
-            os.startfile("http://dict.revised.moe.edu.tw/cbdic/")
-        elif commandId == ID_SIMPDICT:  # a simplified version of the online dictonary
-            os.startfile("http://dict.concised.moe.edu.tw/jbdic/")
-        elif commandId == ID_LITTLEDICT:  # a simplified dictionary for little children
-            os.startfile("http://dict.mini.moe.edu.tw/cgi-bin/gdic/gsweb.cgi?o=ddictionary")
-        elif commandId == ID_PROVERBDICT:  # a dictionary for proverbs (seems to be broken at the moment?)
-            os.startfile("http://dict.idioms.moe.edu.tw/cydic/")
+            os.startfile("https://github.com/ArabicIME/arabic-ime/issues")
+        elif commandId == ID_LEXILOGOS:
+            os.startfile("https://www.lexilogos.com/english/arabic_dictionary.htm")
+        elif commandId == ID_BAHETH:
+            os.startfile("http://www.baheth.info")
+        elif commandId == ID_ALMAANY:
+            os.startfile("https://www.almaany.com/en/dict/ar-en/")
 
-    # 開啟語言列按鈕選單
     def onMenu(self, cbTS, buttonId):
-        # 設定按鈕 (windows 8 mode icon 按鈕也使用同一個選單)
+        # (windows 8 mode icon)
         if buttonId == "settings" or buttonId == "windows-mode-icon":
-            # 用 json 語法表示選單結構
             return [
-                {"text": "參觀 PIME 官方網站(&W)", "id": ID_WEBSITE},
+                {"text": "ArabicIME(&W)", "id": ID_WEBSITE},
                 {},
-                {"text": "PIME 錯誤回報(&B)", "id": ID_BUGREPORT},
-                {"text": "PIME 討論區 (&F)", "id": ID_FORUM},
+                {"text": "ArabicIME Bug Report(&B)", "id": ID_BUGREPORT},
                 {},
-                {"text": "設定輸入法模組(&C)", "id": ID_SETTINGS},
+                {"text": "Settings(&C)", "id": ID_SETTINGS},
                 {},
-                {"text": "網路辭典 (&D)", "submenu": [
-                    {"text": "萌典 (moedict)", "id": ID_MOEDICT},
+                {"text": "Dictionaries (&D)", "submenu": [
+                    {"text": "Lexilogos", "id": ID_LEXILOGOS},
                     {},
-                    {"text": "教育部國語辭典", "id": ID_DICT},
-                    {"text": "教育部國語辭典簡編本", "id": ID_SIMPDICT},
-                    {"text": "教育部國語小字典", "id": ID_LITTLEDICT},
-                    {"text": "教育部成語典", "id": ID_PROVERBDICT},
+                    {"text": "الباحِثُ العَرَبيُّ", "id": ID_BAHETH},
+                    {"text": "المَعاني", "id": ID_ALMAANY},
                 ]},
             ]
         return None
@@ -2765,11 +2742,6 @@ class CinBase:
         extendtablePath = cfg.findFile(datadirs, "extendtable.dat")
         with io.open(extendtablePath, 'r', encoding='utf8') as fs:
             cbTS.extendtable = extendtable(fs)
-
-        if cbTS.useDayiSymbols:
-            dsymbolsPath = cfg.findFile(datadirs, "dsymbols.json")
-            with io.open(dsymbolsPath, 'r', encoding='utf8') as fs:
-                cbTS.dsymbols = dsymbols(fs)
 
         if not PhraseData.phrase and not PhraseData.loading:
             loadPhraseData = LoadPhraseData(cbTS, PhraseData)

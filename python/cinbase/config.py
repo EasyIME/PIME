@@ -36,8 +36,6 @@ class CinBaseConfig:
         self.switchLangWithShift = True
         self.outputSmallLetterWithShift = False
         self.switchPageWithSpace = False
-        self.outputSimpChinese = False
-        self.enableSwitchTCSC = True
         self.messageDurationTime = 3
         self.hidePromptMessages = True
         self.autoClearCompositionChar = False

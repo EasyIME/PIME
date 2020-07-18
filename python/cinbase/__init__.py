@@ -61,7 +61,6 @@ ID_DICT = 9
 ID_SIMPDICT = 10
 ID_LITTLEDICT = 11
 ID_PROVERBDICT = 12
-ID_OUTPUT_SIMP_CHINESE = 13
 
 
 class CinBase:
@@ -85,8 +84,6 @@ class CinBase:
         cbTS.selKeys = "1234567890"
         cbTS.langMode = -1
         cbTS.switchPageWithSpace = False
-        cbTS.outputSimpChinese = False
-        cbTS.enableSwitchTCSC = True
         cbTS.hidePromptMessages = True
         cbTS.autoClearCompositionChar = False
         cbTS.playSoundWhenNonCand = False
@@ -216,10 +213,7 @@ class CinBase:
         # Windows 8 以上已取消語言列功能，改用 systray IME mode icon
         if cbTS.client.isWindows8Above:
             if cbTS.langMode == CHINESE_MODE:
-                if cbTS.outputSimpChinese:
-                    icon_name = "sim_half_capson.ico" if cbTS.capsStates else "sim_half_capsoff.ico"
-                else:
-                    icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
+                icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
             else:
                 icon_name = "eng_half_capson.ico" if cbTS.capsStates else "eng_half_capsoff.ico"
 
@@ -624,7 +618,6 @@ class CinBase:
 
         # 功能選單 ----------------------------------------------------------------
         if cbTS.langMode == CHINESE_MODE and (cbTS.compositionChar == "`M" or cbTS.compositionChar == "`E"):
-            menu_OutputSimpChinese = "輸出繁體" if cbTS.outputSimpChinese else "輸出簡體"
             menu_fullShapeSymbols = "☑ Shift 輸入全形標點" if cbTS.fullShapeSymbols else "☐ Shift 輸入全形標點"
             menu_easySymbolsWithShift = "☑ Shift 快速輸入符號" if cbTS.easySymbolsWithShift else "☐ Shift 快速輸入符號"
             menu_autoClearCompositionChar = "☑ 拆錯字碼時自動清除輸入字串" if cbTS.autoClearCompositionChar else "☐ 拆錯字碼時自動清除輸入字串"
@@ -648,7 +641,7 @@ class CinBase:
 
                 if not cbTS.emojimenumode:
                     cbTS.menutype = 0
-                    menu = ["功能設定", menu_OutputSimpChinese, "功能開關", "特殊符號", "注音符號", "外語文字", "表情符號"]
+                    menu = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字", "表情符號"]
                     cbTS.setCandidateList(menu)
                 else:
                     cbTS.menutype = 7
@@ -794,7 +787,7 @@ class CinBase:
                         else:
                             cbTS.resetMenuCand = self.switchMenuType(cbTS, 7, [])
                     elif cbTS.menutype == 0:  # 執行主頁面其它項目
-                        menu = ["功能設定", menu_OutputSimpChinese, "功能開關", "特殊符號", "注音符號", "外語文字", "表情符號"]
+                        menu = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字", "表情符號"]
                         i = menu.index(itemName)
                         self.onMenuCommand(cbTS, i, 0)
                         if cbTS.compositionBufferMode:
@@ -2088,11 +2081,6 @@ class CinBase:
         if cbTS.lastKeyDownCode == VK_CAPITAL and keyEvent.keyCode == VK_CAPITAL:
             return True
 
-        # 使用 Ctrl + F12 切換簡體/繁體中文
-        if cbTS.enableSwitchTCSC and cbTS.lastKeyDownCode:
-            if keyEvent.isKeyDown(VK_CONTROL) and cbTS.lastKeyDownCode == VK_F12 and keyEvent.keyCode == VK_F12:
-                self.setOutputSimplifiedChinese(cbTS, not cbTS.outputSimpChinese)
-
         cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
 
@@ -2191,8 +2179,6 @@ class CinBase:
             os.startfile("http://dict.mini.moe.edu.tw/cgi-bin/gdic/gsweb.cgi?o=ddictionary")
         elif commandId == ID_PROVERBDICT:  # a dictionary for proverbs (seems to be broken at the moment?)
             os.startfile("http://dict.idioms.moe.edu.tw/cydic/")
-        elif commandId == ID_OUTPUT_SIMP_CHINESE:  # 切換簡體中文輸出
-            self.setOutputSimplifiedChinese(cbTS, not cbTS.outputSimpChinese)
 
     # 開啟語言列按鈕選單
     def onMenu(self, cbTS, buttonId):
@@ -2215,7 +2201,6 @@ class CinBase:
                     {"text": "教育部國語小字典", "id": ID_LITTLEDICT},
                     {"text": "教育部成語典", "id": ID_PROVERBDICT},
                 ]},
-                {"text": "輸出簡體中文 (&S)", "id": ID_OUTPUT_SIMP_CHINESE, "checked": cbTS.outputSimpChinese}
             ]
         return None
 
@@ -2291,10 +2276,7 @@ class CinBase:
 
         if cbTS.client.isWindows8Above:  # windows 8 mode icon
             if cbTS.langMode == CHINESE_MODE:
-                if cbTS.outputSimpChinese:
-                    icon_name = "sim_half_capson.ico" if cbTS.capsStates else "sim_half_capsoff.ico"
-                else:
-                    icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
+                icon_name = "chi_half_capson.ico" if cbTS.capsStates else "chi_half_capsoff.ico"
             else:
                 icon_name = "eng_half_capson.ico" if cbTS.capsStates else "eng_half_capsoff.ico"
 
@@ -2304,11 +2286,6 @@ class CinBase:
         # 如果全形半形模式改變
         icon_name = "half.ico"
         icon_path = os.path.join(self.icondir, icon_name)
-
-    # 設定輸出成簡體中文
-    def setOutputSimplifiedChinese(self, cbTS, outputSimpChinese):
-        cbTS.outputSimpChinese = outputSimpChinese
-        self.updateLangButtons(cbTS)
 
     # 按下「`」鍵的選單命令
     def onMenuCommand(self, cbTS, commandId, commandType):
@@ -2322,8 +2299,6 @@ class CinBase:
                 # 此處也可以用 subprocess，不過使用 windows API 比較方便
                 r = windll.shell32.ShellExecuteW(None, "open", python_exe, config_tool, self.cinbasecurdir,
                                                  0)  # SW_HIDE = 0 (hide the window)
-            elif commandId == 1:
-                self.setOutputSimplifiedChinese(cbTS, not cbTS.outputSimpChinese)
         elif commandType == 1:  # 功能開關
             commandItem = cbTS.smenuitems[commandId]
             if commandItem == "fullShapeSymbols":
@@ -2366,8 +2341,7 @@ class CinBase:
 
     def switchMenuCand(self, cbTS, menutype):
         if menutype == 0:
-            menu_OutputSimpChinese = "輸出繁體" if cbTS.outputSimpChinese else "輸出簡體"
-            cbTS.menucandidates = ["功能設定", menu_OutputSimpChinese, "功能開關", "特殊符號", "注音符號", "外語文字", "表情符號"]
+            cbTS.menucandidates = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字", "表情符號"]
         if menutype == 2:
             cbTS.menucandidates = cbTS.symbols.getKeyNames()
         if menutype == 5:
@@ -2832,12 +2806,6 @@ class CinBase:
 
         # 使用空白鍵作為候選清單換頁鍵?
         cbTS.switchPageWithSpace = cfg.switchPageWithSpace
-
-        # 轉換輸出成簡體中文?
-        self.setOutputSimplifiedChinese(cbTS, cfg.outputSimpChinese)
-
-        # 使用 Ctrl+F12 切換繁體/簡體?
-        cbTS.enableSwitchTCSC = cfg.enableSwitchTCSC
 
         # Shift 輸入全形標點?
         cbTS.fullShapeSymbols = cfg.fullShapeSymbols

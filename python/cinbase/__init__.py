@@ -354,7 +354,7 @@ class CinBase:
 
         if CinTable.loading:
             if not cbTS.client.isUiLess:
-                messagestr = '正在載入輸入法碼表，請稍後...'
+                messagestr = 'Loading input method code table, please wait...'
                 cbTS.isShowMessage = True
                 cbTS.showMessage(messagestr, cbTS.messageDurationTime)
             return True
@@ -2671,7 +2671,7 @@ class CinBase:
 
         if not cbTS.initCinBaseState:
             # 預設英數 or 中文模式
-            cbTS.langMode = LATIN_MODE if cfg.defaultEnglish else ARABIC_MODE
+            cbTS.langMode = LATIN_MODE if cfg.defaultLatin else ARABIC_MODE
 
             self.updateLangButtons(cbTS)
 

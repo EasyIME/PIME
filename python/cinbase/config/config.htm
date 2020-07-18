@@ -23,17 +23,17 @@
                     <div id="navbars" class="collapse navbar-collapse">
                         <ul class="nav navbar-nav">
                             <li class="dropdown active">
-                                <a class="dropdown-toggle" data-toggle="dropdown" href="#">一般設定<span class="caret"></span></a>
+                                <a class="dropdown-toggle" data-toggle="dropdown" href="#">General settings<span class="caret"></span></a>
                                 <ul class="dropdown-menu">
-                                    <li class="active"><a data-toggle="tab" href="#typing_page">打字行為</a></li>
-                                    <li id="intelligent_ddmenu" style="display:none;"><a data-toggle="tab" href="#intelligent_page">智能輸入</a></li>
-                                    <li><a data-toggle="tab" href="#ui_page">介面外觀</a></li>
-                                    <li id="keyboard_ddmenu" style="display:none;"><a data-toggle="tab" href="#keyboard_page">鍵盤設定</a></li>
+                                    <li class="active"><a data-toggle="tab" href="#typing_page">Typing behavior</a></li>
+                                    <li id="intelligent_ddmenu" style="display:none;"><a data-toggle="tab" href="#intelligent_page">Smart input</a></li>
+                                    <li><a data-toggle="tab" href="#ui_page">Interface appearance</a></li>
+                                    <li id="keyboard_ddmenu" style="display:none;"><a data-toggle="tab" href="#keyboard_page">Keyboard settings</a></li>
                                 </ul>
                             </li>
 
                             <li class="dropdown">
-                                <a class="dropdown-toggle" data-toggle="dropdown" href="#">碼表設定<span class="caret"></span></a>
+                                <a class="dropdown-toggle" data-toggle="dropdown" href="#">Table settings<span class="caret"></span></a>
                                 <ul class="dropdown-menu">
                                     <li><a data-toggle="tab" href="#cin_page">輸入法碼表</a></li>
                                     <li><a data-toggle="tab" href="#extendtable_page">擴展碼表</a></li>
@@ -92,9 +92,8 @@
                             <h3 class="panel-title">Default state</h3>
                         </div>
                         <div class="panel-body">
-
-                            <input type="checkbox" id="defaultEnglish" name="defaultEnglish" />
-                            <label for="defaultEnglish">預設以英文模式啟動</label><br />
+                            <input type="checkbox" id="defaultLatin" name="defaultLatin" />
+                            <label for="defaultLatin">Start by default in Latin mode</label><br />
 
                             <input type="checkbox" id="disableOnStartup" name="disableOnStartup" />
                             <label for="disableOnStartup">預設以停用輸入法模式啟動 (Windows 8 以上適用)</label><br />
@@ -106,7 +105,7 @@
                         </div>
                         <div class="panel-body">
                             <input type="checkbox" id="switchLangWithShift" name="switchLangWithShift" />
-                            <label for="switchLangWithShift">使用 Shift 快速切換中英文</label><br />
+                            <label for="switchLangWithShift">T Shift Quickly switch between Arabic and Latin modes</label><br />
 
                             <input type="checkbox" id="autoClearCompositionChar" name="autoClearCompositionChar" />
                             <label for="autoClearCompositionChar">拆錯字碼時自動清除輸入字串</label><br />

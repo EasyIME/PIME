@@ -1,4 +1,3 @@
-// 此輸入法模組的資料夾名稱
 var imeFolderName = "arabic"
 
 // 此輸入法模組使用的碼表

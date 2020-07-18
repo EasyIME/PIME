@@ -29,18 +29,18 @@ class ArabicTextService(TextService):
     def __init__(self, client):
         TextService.__init__(self, client)
 
-        # 輸入法模組自訂區域
+        # Input method module customization area
         self.imeDirName = "arabic"
-        self.maxCharLength = 2  # 輸入法最大編碼字元數量
+        self.maxCharLength = 2  # Maximum number of encoding characters for input method
         self.cinFileList = ["arabic.json"]
 
         self.cinbase = CinBase
         self.curdir = os.path.abspath(os.path.dirname(__file__))
 
-        # 初始化輸入行為設定
+        # Initialize input behavior settings
         self.cinbase.initTextService(self, TextService)
 
-        # 載入用戶設定值
+        # Load user settings
         CinBaseConfig.__init__()
         self.configVersion = CinBaseConfig.getVersion()
         self.cfg = copy.deepcopy(CinBaseConfig)
@@ -51,7 +51,7 @@ class ArabicTextService(TextService):
         self.ignorePrivateUseArea = self.cfg.ignorePrivateUseArea
         self.cinbase.initCinBaseContext(self)
 
-        # 載入輸入法碼表
+        # Load input method code table
         if not CinTable.curCinType == self.cfg.selCinType and not CinTable.loading:
             loadCinFile = LoadCinTable(self, CinTable)
             loadCinFile.start()
@@ -60,23 +60,24 @@ class ArabicTextService(TextService):
                 continue
             self.cin = CinTable.cin
 
-    # 檢查設定檔是否有被更改，是否需要套用新設定
+    # Check whether the configuration file has been changed and whether the new settings need to be applied
     def checkConfigChange(self):
         self.cinbase.checkConfigChange(self, CinTable, RCinTable, HCinTable)
 
-    # 輸入法被使用者啟用
+    # Input method is activated by user
     def onActivate(self):
         TextService.onActivate(self)
         self.cinbase.onActivate(self)
 
-    # 使用者離開輸入法
+    # User leaves the input method
     def onDeactivate(self):
         TextService.onDeactivate(self)
         self.cinbase.onDeactivate(self)
 
-    # 使用者按下按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
-    # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
-    # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
+    # The user presses the keys and filters those keys before the app receives them,
+    # which is required by the input method.
+    # return True, the system will call onKeyDown() to further process the button
+    # return False， means that we don’t need this key, the system will pass the key to the application intact
     def filterKeyDown(self, keyEvent):
         KeyState = self.cinbase.filterKeyDown(self, keyEvent, CinTable, RCinTable, HCinTable)
         return KeyState
@@ -85,9 +86,10 @@ class ArabicTextService(TextService):
         KeyState = self.cinbase.onKeyDown(self, keyEvent, CinTable, RCinTable, HCinTable)
         return KeyState
 
-    # 使用者放開按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
-    # return True，系統會呼叫 onKeyUp() 進一步處理這個按鍵
-    # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
+    # The user releases the keys and filters those keys before the app receives them,
+    # which is required by the input method.
+    # return True， the system will call onKeyUp() to further process this button
+    # return False， means that we don’t need this key, the system will pass the key to the application intact
     def filterKeyUp(self, keyEvent):
         KeyState = self.cinbase.filterKeyUp(self, keyEvent)
         return KeyState
@@ -102,24 +104,26 @@ class ArabicTextService(TextService):
     def onCommand(self, commandId, commandType):
         self.cinbase.onCommand(self, commandId, commandType)
 
-    # 開啟語言列按鈕選單
+    # Open language bar button menu
     def onMenu(self, buttonId):
         MenuItems = self.cinbase.onMenu(self, buttonId)
         return MenuItems
 
-    # 鍵盤開啟/關閉時會被呼叫 (在 Windows 10 Ctrl+Space 時)
+    # Called when the keyboard is turned on/off (in Windows 10 Ctrl+Space)
     def onKeyboardStatusChanged(self, opened):
         TextService.onKeyboardStatusChanged(self, opened)
         self.cinbase.onKeyboardStatusChanged(self, opened)
 
-    # 當中文編輯結束時會被呼叫。若中文編輯不是正常結束，而是因為使用者
-    # 切換到其他應用程式或其他原因，導致我們的輸入法被強制關閉，此時
-    # forced 參數會是 True，在這種狀況下，要清除一些 buffer
+    # It will be called when the Chinese editing is finished.
+    # If Chinese editing does not end normally, but because
+    # the user switches to other applications or other reasons,
+    # our input method is forcibly closed, then the forced parameter will be True.
+    # In this case, some buffers should be cleared.
     def onCompositionTerminated(self, forced):
         TextService.onCompositionTerminated(self, forced)
         self.cinbase.onCompositionTerminated(self, forced)
 
-    # 設定候選字頁數
+    # Set the number of candidate pages
     def setCandidatePage(self, page):
         self.currentCandPage = page
 

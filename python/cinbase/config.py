@@ -34,7 +34,6 @@ class CinBaseConfig:
         self.defaultLatin = False
         self.disableOnStartup = False
         self.switchLangWithShift = True
-        self.outputSmallLetterWithShift = False
         self.switchPageWithSpace = False
         self.messageDurationTime = 3
         self.hidePromptMessages = True
@@ -59,8 +58,6 @@ class CinBaseConfig:
         self.autoMoveCursorInBrackets = False
         self.selWildcardType = 0
         self.imeReverseLookup = False
-        self.homophoneQuery = False
-        self.selHCinType = 0
         self.userExtendTable = False
         self.reLoadTable = False
         self.priorityExtendTable = False

@@ -24,7 +24,7 @@ from textService import *
 
 
 class ArabicTextService(TextService):
-    compositionChar = ''
+    compositionChar = ';'
 
     def __init__(self, client):
         TextService.__init__(self, client)
@@ -62,7 +62,7 @@ class ArabicTextService(TextService):
 
     # Check whether the configuration file has been changed and whether the new settings need to be applied
     def checkConfigChange(self):
-        self.cinbase.checkConfigChange(self, CinTable, RCinTable, HCinTable)
+        self.cinbase.checkConfigChange(self, CinTable, RCinTable)
 
     # Input method is activated by user
     def onActivate(self):
@@ -79,11 +79,11 @@ class ArabicTextService(TextService):
     # return True, the system will call onKeyDown() to further process the button
     # return False， means that we don’t need this key, the system will pass the key to the application intact
     def filterKeyDown(self, keyEvent):
-        KeyState = self.cinbase.filterKeyDown(self, keyEvent, CinTable, RCinTable, HCinTable)
+        KeyState = self.cinbase.filterKeyDown(self, keyEvent, CinTable, RCinTable)
         return KeyState
 
     def onKeyDown(self, keyEvent):
-        KeyState = self.cinbase.onKeyDown(self, keyEvent, CinTable, RCinTable, HCinTable)
+        KeyState = self.cinbase.onKeyDown(self, keyEvent, CinTable, RCinTable)
         return KeyState
 
     # The user releases the keys and filters those keys before the app receives them,
@@ -151,14 +151,3 @@ class RCinTable:
 
 
 RCinTable = RCinTable()
-
-
-class HCinTable:
-    loading = False
-
-    def __init__(self):
-        self.cin = None
-        self.curCinType = None
-
-
-HCinTable = HCinTable()

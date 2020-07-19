@@ -33,7 +33,6 @@ from .emoji import emoji
 from .extendtable import extendtable
 from .flangs import flangs
 from .fsymbols import fsymbols
-from .hcin import HCin
 from .msymbols import msymbols
 from .phrase import phrase
 from .rcin import RCin
@@ -71,7 +70,6 @@ class CinBase:
 
         self.emojimenulist = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
         self.imeNameList = ["arabic"]
-        self.hcinFileList = []
 
     def initTextService(self, cbTS, TextService):
         cbTS.TextService = TextService
@@ -99,7 +97,6 @@ class CinBase:
         cbTS.compositionBufferMode = False
         cbTS.autoMoveCursorInBrackets = False
         cbTS.imeReverseLookup = False
-        cbTS.homophoneQuery = False
         cbTS.userExtendTable = False
         cbTS.reLoadTable = False
         cbTS.priorityExtendTable = False
@@ -161,12 +158,6 @@ class CinBase:
         cbTS.resetMenuCand = False
         cbTS.keepComposition = False
         cbTS.keepType = ""
-
-        cbTS.homophonemode = False
-        cbTS.homophoneChar = ""
-        cbTS.homophoneStr = ""
-        cbTS.isHomophoneChardefs = False
-        cbTS.homophonecandidates = []
 
         cbTS.showMessageOnKeyUp = False
         cbTS.hideMessageOnKeyUp = False
@@ -254,7 +245,7 @@ class CinBase:
     # 使用者按下按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
     # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
     # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
-    def filterKeyDown(self, cbTS, keyEvent, CinTable, RCinTable, HCinTable):
+    def filterKeyDown(self, cbTS, keyEvent, CinTable, RCinTable):
         charCode = keyEvent.charCode
         charStr = chr(charCode)
         charStrLow = charStr.lower()
@@ -346,7 +337,7 @@ class CinBase:
             cbTS.hideMessageOnKeyUp = True
         return False
 
-    def onKeyDown(self, cbTS, keyEvent, CinTable, RCinTable, HCinTable):
+    def onKeyDown(self, cbTS, keyEvent, CinTable, RCinTable):
         charCode = keyEvent.charCode
         keyCode = keyEvent.keyCode
         charStr = chr(charCode)
@@ -362,7 +353,7 @@ class CinBase:
         # NumPad 某些狀況允許輸入法處理
         if keyEvent.isKeyToggled(VK_NUMLOCK):  # NumLock is on
             # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
-            if keyEvent.keyCode >= VK_NUMPAD0 and keyEvent.keyCode <= VK_DIVIDE:
+            if VK_NUMPAD0 <= keyEvent.keyCode <= VK_DIVIDE:
                 if not cbTS.compositionBufferMode or cbTS.showCandidates:
                     return True  # bypass IME
 
@@ -606,14 +597,13 @@ class CinBase:
             menu_sortByPhrase = "☑ 優先以聯想字詞排序候選清單" if cbTS.sortByPhrase else "☐ 優先以聯想字詞排序候選清單"
             menu_supportWildcard = "☑ 萬用字元查詢" if cbTS.supportWildcard else "☐ 萬用字元查詢"
             menu_imeReverseLookup = "☑ 反查輸入字根" if cbTS.imeReverseLookup else "☐ 反查輸入字根"
-            menu_homophoneQuery = "☑ 同音字查詢" if cbTS.homophoneQuery else "☐ 同音字查詢"
 
             cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar,
                                     menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase,
-                                    menu_supportWildcard, menu_imeReverseLookup, menu_homophoneQuery]
+                                    menu_supportWildcard, menu_imeReverseLookup]
             cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "autoClearCompositionChar",
                                "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "supportWildcard",
-                               "imeReverseLookup", "homophoneQuery"]
+                               "imeReverseLookup"]
 
             if not cbTS.closemenu:
                 cbTS.setCandidateCursor(0)
@@ -913,9 +903,6 @@ class CinBase:
             # 若按下的是指定的符號鍵，輸入法需要處理此按鍵
             if self.isCtrlSymbolsChar(keyCode):
                 if cbTS.msymbols.isInCharDef(charStr) and cbTS.closemenu and not cbTS.multifunctionmode:
-                    if cbTS.homophoneQuery and cbTS.homophonemode:
-                        self.resetHomophoneMode(cbTS)
-
                     if not cbTS.compositionBufferMode:
                         if not cbTS.ctrlsymbolsmode:
                             cbTS.ctrlsymbolsmode = True
@@ -1026,9 +1013,6 @@ class CinBase:
                         candidates = cbTS.swkb.getCharDef(charStr.upper())
                         CommitStr = candidates[0]
                         candidates = []
-                    else:  # 不在快速符號表裡
-                        if cbTS.outputSmallLetterWithShift:
-                            CommitStr = charStr.upper() if cbTS.capsStates else charStr.lower()
                     if cbTS.compositionBufferMode:
                         RemoveStringLength = 0
                         if not cbTS.compositionChar == '':
@@ -1083,8 +1067,6 @@ class CinBase:
                                     cbTS.setCommitString(CommitStr)
                                 self.resetComposition(cbTS)
                     else:  # 如果是字母
-                        if cbTS.outputSmallLetterWithShift:
-                            CommitStr = charStr.upper() if cbTS.capsStates else charStr.lower()
                         if cbTS.compositionBufferMode:
                             RemoveStringLength = 0
                             if not cbTS.compositionChar == '':
@@ -1107,8 +1089,6 @@ class CinBase:
                             cbTS.setCompositionString(keyname)
                             cbTS.setCompositionCursor(len(cbTS.compositionString))
                     else:
-                        if self.isLetterChar(keyCode) and cbTS.outputSmallLetterWithShift:
-                            CommitStr = charStr.upper() if cbTS.capsStates else charStr.lower()
                         if cbTS.compositionBufferMode and cbTS.isComposing():
                             RemoveStringLength = 0
                             if not cbTS.compositionChar == '':
@@ -1157,8 +1137,6 @@ class CinBase:
                 # 如果停用 Shift 輸入全形標點
                 elif not cbTS.fullShapeSymbols:
                     CommitStr = charStr
-                    if self.isLetterChar(keyCode) and cbTS.outputSmallLetterWithShift:
-                        CommitStr = charStr.upper() if cbTS.capsStates else charStr.lower()
                     if cbTS.compositionBufferMode:
                         RemoveStringLength = 0
                         if not cbTS.compositionChar == '':
@@ -1227,9 +1205,6 @@ class CinBase:
 
             # 刪掉一個字根
             if keyCode == VK_BACK:
-                if cbTS.homophoneQuery and cbTS.homophonemode:
-                    self.resetHomophoneMode(cbTS)
-
                 if not cbTS.compositionBufferMode:
                     if cbTS.compositionString != "":
                         if cbTS.cin.isInKeyName(cbTS.compositionChar[len(cbTS.compositionChar) - 1:]):
@@ -1274,9 +1249,7 @@ class CinBase:
                     cbTS.setCompositionString(cbTS.compositionString[:-keyLength])
                 cbTS.compositionChar = cbTS.compositionChar[:-1]
 
-            if cbTS.homophoneQuery and cbTS.homophonemode and cbTS.homophoneChar == cbTS.compositionChar:
-                candidates = cbTS.homophonecandidates
-            elif cbTS.cin.isInCharDef(
+            if cbTS.cin.isInCharDef(
                     cbTS.compositionChar) and cbTS.closemenu and not cbTS.ctrlsymbolsmode and not cbTS.dayisymbolsmode:
                 candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
                 if cbTS.sortByPhrase and candidates:
@@ -2277,8 +2250,6 @@ class CinBase:
                 cbTS.sortByPhrase = not cbTS.sortByPhrase
             elif commandItem == "imeReverseLookup":
                 cbTS.imeReverseLookup = not cbTS.imeReverseLookup
-            elif commandItem == "homophoneQuery":
-                cbTS.homophoneQuery = not cbTS.homophoneQuery
 
     def switchMenuType(self, cbTS, menutype, prevmenutypelist):
         cbTS.menutype = menutype
@@ -2344,11 +2315,6 @@ class CinBase:
         cbTS.fullsymbolsmode = False
         cbTS.dayisymbolsmode = False
         cbTS.keepComposition = False
-        cbTS.homophonemode = False
-        cbTS.homophoneChar = ''
-        cbTS.homophoneStr = ''
-        cbTS.isHomophoneChardefs = False
-        cbTS.homophonecandidates = []
         cbTS.selcandmode = False
         cbTS.lastCompositionCharLength = 0
 
@@ -2358,14 +2324,6 @@ class CinBase:
             cbTS.compositionBufferCursor = 0
             cbTS.compositionBufferString = ''
             cbTS.setCompositionString('')
-
-    # 重置同音字模式
-    def resetHomophoneMode(self, cbTS):
-        cbTS.homophonemode = False
-        cbTS.homophoneChar = ''
-        cbTS.homophoneStr = ''
-        cbTS.isHomophoneChardefs = False
-        cbTS.homophonecandidates = []
 
     # 判斷數字鍵?
     def isNumberChar(self, keyCode):
@@ -2397,10 +2355,6 @@ class CinBase:
 
     # 一般字元轉全形
     def charCodeToFullshape(self, cbTS, charCode, keyCode):
-        if cbTS.langMode == ARABIC_MODE and cbTS.outputSmallLetterWithShift and self.isLetterChar(keyCode):
-            char = chr(charCode).upper() if cbTS.capsStates else chr(charCode).lower()
-            charCode = ord(char)
-
         charStr = ''
         if charCode < 0x0020 or charCode > 0x7e:
             charStr = chr(charCode)
@@ -2539,13 +2493,6 @@ class CinBase:
                     else:
                         cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
 
-        if cbTS.homophoneQuery and cbTS.isHomophoneChardefs:
-            cbTS.isHomophoneChardefs = False
-            if not cbTS.client.isUiLess:
-                cbTS.isShowMessage = True
-                cbTS.showMessageOnKeyUp = True
-                cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
-
         if not cbTS.compositionBufferMode:
             cbTS.setCommitString(commitStr)
         else:
@@ -2580,9 +2527,6 @@ class CinBase:
                                                   cbTS.compositionBufferCursor)
 
     def setOutputFSymbols(self, cbTS, charStr):
-        if cbTS.homophoneQuery and cbTS.homophonemode:
-            self.resetHomophoneMode(cbTS)
-
         cbTS.compositionBufferType = "fsymbols"
         if cbTS.compositionBufferMode and cbTS.directShowCand and cbTS.directOutFSymbols and cbTS.fullsymbolsmode:
             self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, cbTS.compositionChar,
@@ -2733,31 +2677,28 @@ class CinBase:
         cbTS.initCinBaseState = True
 
     def applyConfig(self, cbTS):
-        cfg = cbTS.cfg  # 所有 TextService 共享一份設定物件
+        cfg = cbTS.cfg  # All TextService share a configuration object
         cbTS.configVersion = cfg.getVersion()
 
-        # 每列顯示幾個候選字
+        # Number of candidates in each column
         cbTS.candPerRow = cfg.candPerRow
 
-        # 如果程式為 UiLess 模式就取代設定
+        # If the program is in UiLess mode, replace the setting
         if cbTS.client.isUiLess:
             cbTS.candPerRow = 1
 
-        # 每頁顯示幾個候選字
+        # Number of candidates per page
         cbTS.candPerPage = cfg.candPerPage
 
-        # 設定 UI 外觀
+        # Set UI appearance
         cbTS.customizeUI(candFontSize=cfg.fontSize,
-                         candFontName='MingLiu',
+                         candFontName='Segoe UI',
                          candPerRow=cfg.candPerRow,
                          candUseCursor=cfg.cursorCandList)
 
-        # 設定選字按鍵 (123456..., asdf.... 等)
+        # Set word selection buttons (123456..., asdf.... etc.)
         # if cbTS.cin.getSelection():
         #     cbTS.setSelKeys(cbTS.cin.getSelection())
-
-        # 押住 Shift 輸出英文時預設小寫?
-        cbTS.outputSmallLetterWithShift = cfg.outputSmallLetterWithShift
 
         # 使用空白鍵作為候選清單換頁鍵?
         cbTS.switchPageWithSpace = cfg.switchPageWithSpace
@@ -2789,7 +2730,7 @@ class CinBase:
         # 拆錯字碼時發出警告嗶聲提示?
         cbTS.playSoundWhenNonCand = cfg.playSoundWhenNonCand
 
-        # 直接顯示候選字清單 (不須按空白鍵)?
+        # Directly display the candidate list (no need to press the blank key)?
         cbTS.directShowCand = cfg.directShowCand
 
         # 標點符號自動確認輸入?
@@ -2820,10 +2761,6 @@ class CinBase:
         cbTS.imeReverseLookup = cfg.imeReverseLookup
         cbTS.selRCinType = cfg.selRCinType
 
-        # 同音字查詢
-        cbTS.homophoneQuery = cfg.homophoneQuery
-        cbTS.selHCinType = cfg.selHCinType
-
         # 載入碼表時忽略 Unicode 私用區?
         cbTS.ignorePrivateUseArea = cfg.ignorePrivateUseArea
 
@@ -2836,7 +2773,7 @@ class CinBase:
         cbTS.messageDurationTime = cfg.messageDurationTime
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
-    def checkConfigChange(self, cbTS, CinTable, RCinTable, HCinTable):
+    def checkConfigChange(self, cbTS, CinTable, RCinTable):
         cfg = cbTS.cfg  # 所有 TextService 共享一份設定物件
         cfg.update()  # 更新設定檔狀態
         reLoadCinTable = False
@@ -2876,13 +2813,6 @@ class CinBase:
                     loadRCinFile = LoadRCinTable(cbTS, RCinTable)
                     loadRCinFile.start()
 
-        if cfg.homophoneQuery or cbTS.homophoneQuery:
-            # 載入同音字碼表
-            if not HCinTable.loading and not CinTable.loading:
-                if not HCinTable.curCinType == cfg.selHCinType or HCinTable.cin is None:
-                    loadHCinFile = LoadHCinTable(cbTS, HCinTable)
-                    loadHCinFile.start()
-
         # 比較我們先前存的版本號碼，和目前設定檔的版本號
         if cfg.isFullReloadNeeded(cbTS.configVersion):
             # 資料改變需整個 reload，重建一個新的 checj context
@@ -2909,8 +2839,7 @@ class CinBase:
 
         if DEBUG_MODE:
             if not cbTS.debugLog == cbTS.debug.debugLog:
-                if not CinTable.loading and (not cbTS.imeReverseLookup or not RCinTable.loading) and (
-                        not cbTS.homophoneQuery or not HCinTable.loading):
+                if not CinTable.loading and (not cbTS.imeReverseLookup or not RCinTable.loading):
                     cbTS.debug.saveDebugLog(cbTS.debugLog)
 
 
@@ -3042,36 +2971,3 @@ class LoadRCinTable(threading.Thread):
                                                                                                 self.cbTS.debug.jsonNameDict[
                                                                                                     selCinFile] + "」反查碼表載入時間約為 " + self.cbTS.debug.getDurationTime(
                 "LoadRCinTable") + " 秒"
-
-
-class LoadHCinTable(threading.Thread):
-    def __init__(self, cbTS, HCinTable):
-        threading.Thread.__init__(self)
-        self.cbTS = cbTS
-        self.HCinTable = HCinTable
-
-    def run(self):
-        if DEBUG_MODE:
-            self.cbTS.debug.setStartTimer("LoadHCinTable")
-
-        self.HCinTable.loading = True
-        selCinFile = CinBase.hcinFileList[self.cbTS.cfg.selHCinType]
-        jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
-
-        if self.HCinTable.cin is not None and hasattr(self.HCinTable.cin, '__del__'):
-            self.HCinTable.cin.__del__()
-
-        self.HCinTable.cin = None
-
-        with io.open(jsonPath, 'r', encoding='utf8') as fs:
-            self.HCinTable.cin = HCin(fs, self.cbTS.imeDirName)
-        self.HCinTable.curCinType = self.cbTS.cfg.selHCinType
-        self.HCinTable.loading = False
-
-        if DEBUG_MODE:
-            self.cbTS.debug.setEndTimer("LoadHCinTable")
-            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [H]"] = self.cbTS.debug.info[
-                                                                                                    'brand'] + ":「" + \
-                                                                                                self.cbTS.debug.jsonNameDict[
-                                                                                                    selCinFile] + "」同音字碼表載入時間約為 " + self.cbTS.debug.getDurationTime(
-                "LoadHCinTable") + " 秒"

@@ -8,7 +8,7 @@ var selCins = [
 // 此輸入法模組使用的鍵盤類型
 var keyboardNames = [];
 
-// 此輸入法模組在特定碼表須停用的設定項目 (從 0 開始, 100 之後代表全部碼表)
+// The setting items that this input method module must disable in a specific code table (starting from 0, after 100 means all code tables)
 var disableConfigItem = {
     101: ["selWildcardType", null]
 };

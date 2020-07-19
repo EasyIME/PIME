@@ -35,7 +35,6 @@ from .flangs import flangs
 from .fsymbols import fsymbols
 from .msymbols import msymbols
 from .phrase import phrase
-from .rcin import RCin
 from .swkb import swkb
 from .symbols import symbols
 from .userphrase import userphrase
@@ -96,7 +95,6 @@ class CinBase:
         cbTS.sortByPhrase = False
         cbTS.compositionBufferMode = False
         cbTS.autoMoveCursorInBrackets = False
-        cbTS.imeReverseLookup = False
         cbTS.userExtendTable = False
         cbTS.reLoadTable = False
         cbTS.priorityExtendTable = False
@@ -163,7 +161,6 @@ class CinBase:
         cbTS.hideMessageOnKeyUp = False
         cbTS.onKeyUpMessage = ""
         cbTS.reLoadCinTable = False
-        cbTS.RCinFileNotExist = False
         cbTS.capsStates = True if self.getKeyState(VK_CAPITAL) else False
 
         cbTS.bopomofolist = []
@@ -242,10 +239,11 @@ class CinBase:
         if hasattr(cbTS, 'dsymbols'):
             del cbTS.dsymbols
 
-    # 使用者按下按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
-    # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
-    # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
-    def filterKeyDown(self, cbTS, keyEvent, CinTable, RCinTable):
+    # The user presses the keys and filters those keys before the app receives them,
+    # which is required by the input method.
+    # return True, the system will call onKeyDown() to further process this button.
+    # return False, means that we don’t need this key, the system will pass the key to the application intact.
+    def filterKeyDown(self, cbTS, keyEvent, CinTable):
         charCode = keyEvent.charCode
         charStr = chr(charCode)
         charStrLow = charStr.lower()
@@ -337,7 +335,7 @@ class CinBase:
             cbTS.hideMessageOnKeyUp = True
         return False
 
-    def onKeyDown(self, cbTS, keyEvent, CinTable, RCinTable):
+    def onKeyDown(self, cbTS, keyEvent, CinTable):
         charCode = keyEvent.charCode
         keyCode = keyEvent.keyCode
         charStr = chr(charCode)
@@ -596,14 +594,12 @@ class CinBase:
             menu_showPhrase = "☑ 輸出字串後顯示聯想字詞" if cbTS.showPhrase else "☐ 輸出字串後顯示聯想字詞"
             menu_sortByPhrase = "☑ 優先以聯想字詞排序候選清單" if cbTS.sortByPhrase else "☐ 優先以聯想字詞排序候選清單"
             menu_supportWildcard = "☑ 萬用字元查詢" if cbTS.supportWildcard else "☐ 萬用字元查詢"
-            menu_imeReverseLookup = "☑ 反查輸入字根" if cbTS.imeReverseLookup else "☐ 反查輸入字根"
 
             cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar,
                                     menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase,
-                                    menu_supportWildcard, menu_imeReverseLookup]
+                                    menu_supportWildcard]
             cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "autoClearCompositionChar",
-                               "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "supportWildcard",
-                               "imeReverseLookup"]
+                               "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "supportWildcard"]
 
             if not cbTS.closemenu:
                 cbTS.setCandidateCursor(0)
@@ -1490,7 +1486,7 @@ class CinBase:
                                     if cbTS.compositionBufferMode:
                                         commitStr = candidates[0]
                                         cbTS.lastCommitString = commitStr
-                                        self.setOutputString(cbTS, RCinTable, commitStr)
+                                        self.setOutputString(cbTS, commitStr)
                                         if cbTS.showPhrase and not cbTS.selcandmode:
                                             cbTS.phrasemode = True
                                         self.resetComposition(cbTS)
@@ -1516,7 +1512,7 @@ class CinBase:
                                             commitStr = candidates[0]
                                             cbTS.lastCommitString = commitStr
 
-                                            self.setOutputString(cbTS, RCinTable, commitStr)
+                                            self.setOutputString(cbTS, commitStr)
                                             if cbTS.showPhrase and not cbTS.selcandmode:
                                                 cbTS.phrasemode = True
                                             self.resetComposition(cbTS)
@@ -1550,26 +1546,6 @@ class CinBase:
                                         cbTS.wildcardcandidates = []
                                         cbTS.wildcardpagecandidates = []
                                         cbTS.isWildcardChardefs = False
-
-                                    if cbTS.imeReverseLookup:
-                                        if RCinTable.cin is not None:
-                                            if not RCinTable.cin.getCharEncode(commitStr) == "":
-                                                if not cbTS.client.isUiLess:
-                                                    cbTS.isShowMessage = True
-                                                    message = RCinTable.cin.getCharEncode(commitStr)
-                                                    if not cbTS.client.isMetroApp:
-                                                        cbTS.showMessageOnKeyUp = True
-                                                        cbTS.onKeyUpMessage = message
-                                                    else:
-                                                        cbTS.showMessage(message, cbTS.messageDurationTime)
-                                        else:
-                                            if not cbTS.client.isUiLess:
-                                                cbTS.isShowMessage = True
-                                                cbTS.showMessageOnKeyUp = True
-                                                if cbTS.RCinFileNotExist:
-                                                    cbTS.onKeyUpMessage = "反查字根碼表檔案不存在！"
-                                                else:
-                                                    cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
 
                                     if cbTS.compositionBufferMode:
                                         RemoveStringLength = 0
@@ -1647,7 +1623,7 @@ class CinBase:
                         if i < cbTS.candPerPage and i < len(cbTS.candidateList):
                             commitStr = cbTS.candidateList[i]
                             cbTS.lastCommitString = commitStr
-                            self.setOutputString(cbTS, RCinTable, commitStr)
+                            self.setOutputString(cbTS, commitStr)
                             if cbTS.showPhrase and not cbTS.selcandmode:
                                 cbTS.phrasemode = True
                             self.resetComposition(cbTS)
@@ -1703,7 +1679,7 @@ class CinBase:
                             keyCode == VK_SPACE and not cbTS.switchPageWithSpace)) and cbTS.canSetCommitString:  # 按下 Enter 鍵或空白鍵
                         commitStr = cbTS.candidateList[candCursor]
                         cbTS.lastCommitString = commitStr
-                        self.setOutputString(cbTS, RCinTable, commitStr)
+                        self.setOutputString(cbTS, commitStr)
                         if cbTS.showPhrase and not cbTS.selcandmode:
                             cbTS.phrasemode = True
                             if keyCode == VK_SPACE:
@@ -1848,7 +1824,7 @@ class CinBase:
                         if i < cbTS.candPerPage and i < len(cbTS.candidateList):
                             commitStr = cbTS.candidateList[i]
                             cbTS.compositionBufferType = "phrase"
-                            self.setOutputString(cbTS, RCinTable, commitStr)
+                            self.setOutputString(cbTS, commitStr)
 
                             cbTS.phrasemode = False
                             cbTS.isShowPhraseCandidates = False
@@ -1909,7 +1885,7 @@ class CinBase:
                         # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                         commitStr = cbTS.candidateList[candCursor]
                         cbTS.compositionBufferType = "phrase"
-                        self.setOutputString(cbTS, RCinTable, commitStr)
+                        self.setOutputString(cbTS, commitStr)
 
                         cbTS.phrasemode = False
                         cbTS.isShowPhraseCandidates = False
@@ -2248,8 +2224,6 @@ class CinBase:
                 cbTS.showPhrase = not cbTS.showPhrase
             elif commandItem == "sortByPhrase":
                 cbTS.sortByPhrase = not cbTS.sortByPhrase
-            elif commandItem == "imeReverseLookup":
-                cbTS.imeReverseLookup = not cbTS.imeReverseLookup
 
     def switchMenuType(self, cbTS, menutype, prevmenutypelist):
         cbTS.menutype = menutype
@@ -2462,7 +2436,7 @@ class CinBase:
         cbTS.setCompositionString(cbTS.compositionBufferString)
         cbTS.setCompositionCursor(cbTS.compositionBufferCursor)
 
-    def setOutputString(self, cbTS, RCinTable, commitStr):
+    def setOutputString(self, cbTS, commitStr):
         # 如果使用萬用字元解碼
         if cbTS.isWildcardChardefs:
             if not cbTS.client.isUiLess:
@@ -2472,26 +2446,6 @@ class CinBase:
             cbTS.wildcardcandidates = []
             cbTS.wildcardpagecandidates = []
             cbTS.isWildcardChardefs = False
-
-        if cbTS.imeReverseLookup:
-            if RCinTable.cin is not None:
-                if not RCinTable.cin.getCharEncode(commitStr) == "":
-                    if not cbTS.client.isUiLess:
-                        cbTS.isShowMessage = True
-                        message = RCinTable.cin.getCharEncode(commitStr)
-                        if not cbTS.client.isMetroApp:
-                            cbTS.showMessageOnKeyUp = True
-                            cbTS.onKeyUpMessage = message
-                        else:
-                            cbTS.showMessage(message, cbTS.messageDurationTime)
-            else:
-                if not cbTS.client.isUiLess:
-                    cbTS.isShowMessage = True
-                    cbTS.showMessageOnKeyUp = True
-                    if cbTS.RCinFileNotExist:
-                        cbTS.onKeyUpMessage = "反查字根碼表檔案不存在！"
-                    else:
-                        cbTS.onKeyUpMessage = "反查字根碼表尚在載入中！"
 
         if not cbTS.compositionBufferMode:
             cbTS.setCommitString(commitStr)
@@ -2757,10 +2711,6 @@ class CinBase:
         # 自動移動組字游標至括號中間?
         cbTS.autoMoveCursorInBrackets = cfg.autoMoveCursorInBrackets
 
-        # 反查輸入法字根
-        cbTS.imeReverseLookup = cfg.imeReverseLookup
-        cbTS.selRCinType = cfg.selRCinType
-
         # 載入碼表時忽略 Unicode 私用區?
         cbTS.ignorePrivateUseArea = cfg.ignorePrivateUseArea
 
@@ -2773,7 +2723,7 @@ class CinBase:
         cbTS.messageDurationTime = cfg.messageDurationTime
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
-    def checkConfigChange(self, cbTS, CinTable, RCinTable):
+    def checkConfigChange(self, cbTS, CinTable):
         cfg = cbTS.cfg  # 所有 TextService 共享一份設定物件
         cfg.update()  # 更新設定檔狀態
         reLoadCinTable = False
@@ -2806,13 +2756,6 @@ class CinBase:
                 if cfg.userExtendTable:
                     reLoadCinTable = True
 
-        if cfg.imeReverseLookup or cbTS.imeReverseLookup:
-            # 載入反查輸入法碼表
-            if not RCinTable.loading and not CinTable.loading:
-                if not RCinTable.curCinType == cfg.selRCinType or RCinTable.cin is None:
-                    loadRCinFile = LoadRCinTable(cbTS, RCinTable)
-                    loadRCinFile.start()
-
         # 比較我們先前存的版本號碼，和目前設定檔的版本號
         if cfg.isFullReloadNeeded(cbTS.configVersion):
             # 資料改變需整個 reload，重建一個新的 checj context
@@ -2839,7 +2782,7 @@ class CinBase:
 
         if DEBUG_MODE:
             if not cbTS.debugLog == cbTS.debug.debugLog:
-                if not CinTable.loading and (not cbTS.imeReverseLookup or not RCinTable.loading):
+                if not CinTable.loading:
                     cbTS.debug.saveDebugLog(cbTS.debugLog)
 
 
@@ -2932,42 +2875,3 @@ class LoadCinTable(threading.Thread):
                                                                                                 self.cbTS.debug.jsonNameDict[
                                                                                                     selCinFile] + "」碼表載入時間約為 " + self.cbTS.debug.getDurationTime(
                 "LoadCinTable") + " 秒"
-
-
-class LoadRCinTable(threading.Thread):
-    def __init__(self, cbTS, RCinTable):
-        threading.Thread.__init__(self)
-        self.cbTS = cbTS
-        self.RCinTable = RCinTable
-        self.rcinFileList = (["arabic.json"])
-
-    def run(self):
-        if DEBUG_MODE:
-            self.cbTS.debug.setStartTimer("LoadRCinTable")
-
-        self.RCinTable.loading = True
-        selCinFile = self.rcinFileList[self.cbTS.cfg.selRCinType]
-        jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
-
-        if self.RCinTable.cin is not None and hasattr(self.RCinTable.cin, '__del__'):
-            self.RCinTable.cin.__del__()
-
-        self.RCinTable.cin = None
-
-        if os.path.exists(jsonPath):
-            self.cbTS.RCinFileNotExist = False
-            with io.open(jsonPath, 'r', encoding='utf8') as fs:
-                self.RCinTable.cin = RCin(fs, self.cbTS.imeDirName)
-        else:
-            self.cbTS.RCinFileNotExist = True
-
-        self.RCinTable.curCinType = self.cbTS.cfg.selRCinType
-        self.RCinTable.loading = False
-
-        if DEBUG_MODE:
-            self.cbTS.debug.setEndTimer("LoadRCinTable")
-            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [R]"] = self.cbTS.debug.info[
-                                                                                                    'brand'] + ":「" + \
-                                                                                                self.cbTS.debug.jsonNameDict[
-                                                                                                    selCinFile] + "」反查碼表載入時間約為 " + self.cbTS.debug.getDurationTime(
-                "LoadRCinTable") + " 秒"

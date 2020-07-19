@@ -57,11 +57,9 @@ class CinBaseConfig:
         self.compositionBufferMode = False
         self.autoMoveCursorInBrackets = False
         self.selWildcardType = 0
-        self.imeReverseLookup = False
         self.userExtendTable = False
         self.reLoadTable = False
         self.priorityExtendTable = False
-        self.selRCinType = 0
         self.candMaxItems = 100
         self.messageDurationTime = 3
         self.keyboardType = 0

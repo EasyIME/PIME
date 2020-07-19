@@ -20,10 +20,6 @@ var defaultcinCount = {
     "totalchardefs": 0
 }
 
-var selRCins = [
-    "Arabic"
-];
-
 var debugMode = false;
 var checjConfig = {};
 var cinCount = {};
@@ -415,14 +411,6 @@ function pageReady() {
         selCinType.append(item);
     }
     selCinType.children().eq(checjConfig.selCinType).prop("selected", true);
-
-    var selRCinType = $("#selRCinType");
-    for(var i = 0; i < selRCins.length; ++i) {
-        var selRCin = selRCins[i];
-        var item = '<option value="' + i + '">' + selRCin + '</option>';
-        selRCinType.append(item);
-    }
-    selRCinType.children().eq(checjConfig.selRCinType).prop("selected", true);
 
     var selWildcards=[
         "Ｚ　",

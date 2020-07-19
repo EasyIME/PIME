@@ -25,7 +25,6 @@
     "sortByPhrase": true,
     "compositionBufferMode": false,
     "autoMoveCursorInBrackets": false,
-    "imeReverseLookup": false,
     "userExtendTable": false,
     "reLoadTable": false
 }

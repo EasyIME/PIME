@@ -1,10 +1,5 @@
 var imeFolderName = "arabic"
 
-// 此輸入法模組使用的碼表
-var selCins = [
-    "Arabic"
-];
-
 // 此輸入法模組使用的鍵盤類型
 var keyboardNames = [];
 

@@ -107,7 +107,7 @@ class Cin(object):
 
 
     def getCharDef(self, key):
-        """ 
+        """
         will return a list conaining all possible result
         """
         return self.chardefs[key]
@@ -121,59 +121,6 @@ class Cin(object):
                 if len(chardefslist) >= 2:
                     break
         return chardefslist
-
-
-    def getWildcardCharDefs(self, CompositionChar, WildcardChar, candMaxItems):
-        wildcardchardefs = []
-        matchchardefs = {}
-        lowFrequencyChardefs = {}
-        highFrequencyCharSetList = ["bopomofo", "bopomofoTone", "cjk", "big5F", "big5LF", "big5S"]
-        lowFrequencyCharSetList = ["cjkExtA", "cjkExtB", "cjkExtC", "cjkExtD", "cjkExtE", "cjkExtF", "cjkCIibm", "pua", "cjkOther"]
-
-        highFrequencyWordCount = 0
-        lowFrequencyWordCount = 0
-
-        for i in range(7):
-            lowFrequencyChardefs[i] = []
-
-        keyLength = len(CompositionChar)
-
-        matchstring = CompositionChar
-        for char in ['\\', '.', '*', '?', '+', '[', '{', '|', '(', ')', '^', '$']:
-            if char in matchstring:
-                if not char == WildcardChar:
-                    matchstring = matchstring.replace(char, '\\' + char)
-
-        matchstring = matchstring.replace(WildcardChar, '(.)')
-        sortedchardefs = sorted(self.chardefs.keys())
-        matchchardefs = [self.chardefs[key] for key in sortedchardefs if re.match('^' + matchstring + '$', key) and len(key) == keyLength]
-
-        if matchchardefs:
-            for chardef in matchchardefs:
-                for matchstr in chardef:
-                    if len(matchstr) > 1:
-                        charSet = self.getCharSet(matchstr[0])
-                    else:
-                        charSet = self.getCharSet(matchstr)
-
-                    if charSet in highFrequencyCharSetList:
-                        wildcardchardefs.append(matchstr)
-                        highFrequencyWordCount += 1
-                        if len(wildcardchardefs) >= candMaxItems:
-                            return wildcardchardefs
-                    else:
-                        i = lowFrequencyCharSetList.index(charSet)
-                        if not matchstr in lowFrequencyChardefs[i]:
-                            lowFrequencyChardefs[i].append(matchstr)
-                            lowFrequencyWordCount += 1
-
-            for key in lowFrequencyChardefs:
-                for char in lowFrequencyChardefs[key]:
-                    if not char in wildcardchardefs:
-                        wildcardchardefs.append(char)
-                    if len(wildcardchardefs) >= candMaxItems:
-                        return wildcardchardefs
-        return wildcardchardefs
 
 
     def getCharEncode(self, root):
@@ -243,7 +190,7 @@ class Cin(object):
 
         if matchint <= self.charsetRange['cjk'][1]:
             if (matchint in range(self.charsetRange['bopomofo'][0], self.charsetRange['bopomofo'][1]) or # Bopomofo 區域
-                matchint in self.charsetRange['bopomofoTone']): 
+                matchint in self.charsetRange['bopomofoTone']):
                 return "bopomofo"
             elif matchint in range(self.charsetRange['cjk'][0], self.charsetRange['cjk'][1]): # CJK Unified Ideographs 區域
                 try:

@@ -28,8 +28,6 @@ import winsound
 from keycodes import *  # for VK_XXX constants
 from .cin import Cin
 from .debug import Debug
-from .dsymbols import dsymbols
-from .emoji import emoji
 from .extendtable import extendtable
 from .flangs import flangs
 from .fsymbols import fsymbols
@@ -64,10 +62,6 @@ class CinBase:
         self.icondir = os.path.join(os.path.dirname(__file__), "icons")
         self.candselKeys = "1234567890"
 
-        with io.open(os.path.join(os.path.dirname(__file__), "data", "emoji.json"), 'r', encoding='utf8') as fs:
-            self.emoji = emoji(fs)
-
-        self.emojimenulist = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
         self.imeNameList = ["arabic"]
 
     def initTextService(self, cbTS, TextService):
@@ -106,12 +100,8 @@ class CinBase:
 
         cbTS.menucandidates = []
         cbTS.smenucandidates = []
-        cbTS.wildcardcandidates = []
-        cbTS.wildcardpagecandidates = []
-        cbTS.wildcardcompositionChar = ""
         cbTS.currentCandPage = 0
 
-        cbTS.emojitype = 0
         cbTS.prevmenutypelist = []
         cbTS.prevmenucandlist = []
 
@@ -131,13 +121,11 @@ class CinBase:
         cbTS.tempEnglishMode = False
         cbTS.multifunctionmode = False
         cbTS.menumode = False
-        cbTS.emojimenumode = False
         cbTS.menusymbolsmode = False
         cbTS.ctrlsymbolsmode = False
         cbTS.fullsymbolsmode = False
         cbTS.phrasemode = False
         cbTS.isSelKeysChanged = False
-        cbTS.isWildcardChardefs = False
         cbTS.isLangModeChanged = False
         cbTS.isShowCandidates = False
         cbTS.isShowPhraseCandidates = False
@@ -236,8 +224,6 @@ class CinBase:
             del cbTS.msymbols
         if hasattr(cbTS, 'extendtable'):
             del cbTS.extendtable
-        if hasattr(cbTS, 'dsymbols'):
-            del cbTS.dsymbols
 
     # The user presses the keys and filters those keys before the app receives them,
     # which is required by the input method.
@@ -293,9 +279,6 @@ class CinBase:
                 # 若開啟 Shift 輸入全形標點，輸入法需要處理此按鍵
                 if cbTS.fullShapeSymbols and (
                         self.isSymbolsChar(keyEvent.keyCode) or self.isNumberChar(keyEvent.keyCode)):
-                    return True
-                # 若萬用字元使用*，輸入法需要處理*按鍵
-                if cbTS.selWildcardChar == '*' and keyEvent.keyCode == 0x38:
                     return True
                 if not cbTS.isComposing() and cbTS.compositionBufferMode and not cbTS.directShowCand:
                     return False
@@ -388,7 +371,6 @@ class CinBase:
                     self.moveCursorInBrackets(cbTS)
 
         candidates = []
-        cbTS.isWildcardChardefs = False
         cbTS.canSetCommitString = True
         cbTS.keyUsedState = False
 
@@ -422,10 +404,6 @@ class CinBase:
                     if charStr == 'm':
                         cbTS.multifunctionmode = False
                         cbTS.closemenu = False
-                    elif charStr == 'e':
-                        cbTS.multifunctionmode = False
-                        cbTS.closemenu = False
-                        cbTS.emojimenumode = True
                 elif self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
                     if self.isNumberChar(keyCode):
                         cbTS.canUseSelKey = False
@@ -590,25 +568,19 @@ class CinBase:
             menu_playSoundWhenNonCand = "☑ 拆錯字碼時發出警告嗶聲提示" if cbTS.playSoundWhenNonCand else "☐ 拆錯字碼時發出警告嗶聲提示"
             menu_showPhrase = "☑ 輸出字串後顯示聯想字詞" if cbTS.showPhrase else "☐ 輸出字串後顯示聯想字詞"
             menu_sortByPhrase = "☑ 優先以聯想字詞排序候選清單" if cbTS.sortByPhrase else "☐ 優先以聯想字詞排序候選清單"
-            menu_supportWildcard = "☑ 萬用字元查詢" if cbTS.supportWildcard else "☐ 萬用字元查詢"
 
             cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar,
-                                    menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase,
-                                    menu_supportWildcard]
+                                    menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase]
             cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "autoClearCompositionChar",
-                               "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "supportWildcard"]
+                               "playSoundWhenNonCand", "showPhrase", "sortByPhrase"]
 
             if not cbTS.closemenu:
                 cbTS.setCandidateCursor(0)
                 cbTS.setCandidatePage(0)
 
-                if not cbTS.emojimenumode:
-                    cbTS.menutype = 0
-                    menu = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字", "表情符號"]
-                    cbTS.setCandidateList(menu)
-                else:
-                    cbTS.menutype = 7
-                    cbTS.setCandidateList(self.emojimenulist)
+                cbTS.menutype = 0
+                menu = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字"]
+                cbTS.setCandidateList(menu)
 
                 cbTS.menucandidates = cbTS.candidateList
                 cbTS.prevmenutypelist = []
@@ -679,7 +651,6 @@ class CinBase:
                     candCursor = 0
                     currentCandPage = 0
                     cbTS.showmenu = False
-                    cbTS.emojimenumode = False
                     cbTS.menutype = 0
                     cbTS.prevmenutypelist = []
                     cbTS.prevmenucandlist = []
@@ -741,16 +712,8 @@ class CinBase:
                         pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
                         cbTS.resetMenuCand = self.switchMenuType(cbTS, 5,
                                                                  ["0," + str(candCursor) + "," + str(currentCandPage)])
-                    elif cbTS.menutype == 0 and itemName == "表情符號":  # 切至表情符號頁面
-                        cbTS.menucandidates = self.emojimenulist
-                        pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
-                        if not cbTS.emojimenumode:
-                            cbTS.resetMenuCand = self.switchMenuType(cbTS, 7, [
-                                "0," + str(candCursor) + "," + str(currentCandPage)])
-                        else:
-                            cbTS.resetMenuCand = self.switchMenuType(cbTS, 7, [])
                     elif cbTS.menutype == 0:  # 執行主頁面其它項目
-                        menu = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字", "表情符號"]
+                        menu = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字"]
                         i = menu.index(itemName)
                         self.onMenuCommand(cbTS, i, 0)
                         if cbTS.compositionBufferMode:
@@ -801,65 +764,6 @@ class CinBase:
                             self.removeCompositionBufferString(cbTS, len(cbTS.compositionChar), True)
                             self.setCompositionBufferString(cbTS, cbTS.candidateList[candCursor], 0)
                             cbTS.compositionBufferType = "menuflangs"
-                            self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType,
-                                                          cbTS.compositionBufferMenuItem, cbTS.compositionBufferCursor)
-                        else:
-                            cbTS.setCommitString(cbTS.candidateList[candCursor])
-                        cbTS.resetMenuCand = self.closeMenuCand(cbTS)
-                    elif cbTS.menutype == 7:  # 切換至表情符號分類頁面
-                        menutype = 8
-                        i = self.emojimenulist.index(cbTS.candidateList[candCursor])
-                        if i == 0:
-                            cbTS.emojitype = 0
-                            cbTS.menucandidates = self.emoji.emoticons_keynames
-                        elif i == 1:
-                            cbTS.emojitype = 1
-                            cbTS.menucandidates = self.emoji.pictographs_keynames
-                        elif i == 2:
-                            cbTS.emojitype = 2
-                            cbTS.menucandidates = self.emoji.miscellaneous_keynames
-                        elif i == 3:
-                            cbTS.emojitype = 3
-                            cbTS.menucandidates = self.emoji.dingbats_keynames
-                        elif i == 4:
-                            cbTS.emojitype = 4
-                            cbTS.menucandidates = self.emoji.transport_keynames
-                        elif i == 5:
-                            cbTS.emojitype = 5
-                            cbTS.menucandidates = self.emoji.modifiercolor
-                            menutype = 9
-                        pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
-                        cbTS.resetMenuCand = self.switchMenuType(cbTS, menutype,
-                                                                 ["7," + str(candCursor) + "," + str(currentCandPage)])
-                    elif cbTS.menutype == 8:  # 切換至表情符號分類子頁面
-                        if cbTS.emojitype == 0:
-                            if cbTS.compositionBufferMode:
-                                cbTS.compositionBufferMenuItem = "emoticons," + cbTS.candidateList[candCursor]
-                            cbTS.menucandidates = self.emoji.getCharDef("emoticons", cbTS.candidateList[candCursor])
-                        elif cbTS.emojitype == 1:
-                            if cbTS.compositionBufferMode:
-                                cbTS.compositionBufferMenuItem = "pictographs," + cbTS.candidateList[candCursor]
-                            cbTS.menucandidates = self.emoji.getCharDef("pictographs", cbTS.candidateList[candCursor])
-                        elif cbTS.emojitype == 2:
-                            if cbTS.compositionBufferMode:
-                                cbTS.compositionBufferMenuItem = "miscellaneous," + cbTS.candidateList[candCursor]
-                            cbTS.menucandidates = self.emoji.getCharDef("miscellaneous", cbTS.candidateList[candCursor])
-                        elif cbTS.emojitype == 3:
-                            if cbTS.compositionBufferMode:
-                                cbTS.compositionBufferMenuItem = "dingbats," + cbTS.candidateList[candCursor]
-                            cbTS.menucandidates = self.emoji.getCharDef("dingbats", cbTS.candidateList[candCursor])
-                        elif cbTS.emojitype == 4:
-                            if cbTS.compositionBufferMode:
-                                cbTS.compositionBufferMenuItem = "transport," + cbTS.candidateList[candCursor]
-                            cbTS.menucandidates = self.emoji.getCharDef("transport", cbTS.candidateList[candCursor])
-                        pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
-                        cbTS.resetMenuCand = self.switchMenuType(cbTS, 9,
-                                                                 ["8," + str(candCursor) + "," + str(currentCandPage)])
-                    elif cbTS.menutype == 9:  # 執行表情符號分類子頁面項目
-                        if cbTS.compositionBufferMode:
-                            self.removeCompositionBufferString(cbTS, len(cbTS.compositionChar), True)
-                            self.setCompositionBufferString(cbTS, cbTS.candidateList[candCursor], 0)
-                            cbTS.compositionBufferType = "menuemoji"
                             self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType,
                                                           cbTS.compositionBufferMenuItem, cbTS.compositionBufferCursor)
                         else:
@@ -1066,8 +970,6 @@ class CinBase:
                     cbTS.lastCompositionCharLength = cbTS.lastCompositionCharLength - 1
                     cbTS.setCandidateCursor(0)
                     cbTS.setCandidatePage(0)
-                    cbTS.wildcardcandidates = []
-                    cbTS.wildcardpagecandidates = []
                     if not cbTS.directShowCand:
                         cbTS.isShowCandidates = False
                         cbTS.setShowCandidates(False)
@@ -1101,30 +1003,6 @@ class CinBase:
                 candidates = cbTS.msymbols.getCharDef(cbTS.compositionChar)
                 if cbTS.compositionBufferMode and not cbTS.selcandmode:
                     cbTS.compositionBufferType = "msymbols"
-            elif cbTS.dayisymbolsmode and cbTS.closemenu:
-                if cbTS.dsymbols.isInCharDef(cbTS.compositionChar[1:]):
-                    candidates = cbTS.dsymbols.getCharDef(cbTS.compositionChar[1:])
-                    if cbTS.compositionBufferMode and not cbTS.selcandmode:
-                        self.setCompositionBufferString(cbTS, candidates[0], 1)
-                        cbTS.compositionBufferType = "dayisymbols"
-                    else:
-                        cbTS.setCompositionString(candidates[0])
-            elif cbTS.supportWildcard and cbTS.selWildcardChar in cbTS.compositionChar and cbTS.closemenu:
-                if cbTS.wildcardcandidates and cbTS.wildcardcompositionChar == cbTS.compositionChar:
-                    candidates = cbTS.wildcardcandidates
-                else:
-                    cbTS.setCandidateCursor(0)
-                    cbTS.setCandidatePage(0)
-                    cbTS.wildcardcandidates = cbTS.cin.getWildcardCharDefs(cbTS.compositionChar, cbTS.selWildcardChar,
-                                                                           cbTS.candMaxItems)
-                    cbTS.wildcardpagecandidates = []
-                    cbTS.wildcardcompositionChar = cbTS.compositionChar
-                    candidates = cbTS.wildcardcandidates
-                    if cbTS.compositionBufferMode and not cbTS.selcandmode:
-                        cbTS.compositionBufferType = "default"
-                cbTS.isWildcardChardefs = True
-                if cbTS.sortByPhrase and candidates:
-                    candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
 
         # 組字編輯模式
         if cbTS.compositionBufferMode and cbTS.isComposing() and cbTS.compositionChar == "" and cbTS.closemenu and not cbTS.multifunctionmode and not cbTS.phrasemode and not cbTS.selcandmode:
@@ -1198,10 +1076,6 @@ class CinBase:
                         cbTS.compositionChar = sellist[1] if sellist[1][0] != "`" else sellist[1][1:]
                         candidates = cbTS.msymbols.getCharDef(cbTS.compositionChar)
                         cbTS.selcandmode = True
-                    elif sellist[0] == 'dayisymbols':
-                        cbTS.compositionChar = sellist[1]
-                        candidates = cbTS.dsymbols.getCharDef(sellist[1][1:])
-                        cbTS.selcandmode = True
                     elif sellist[0] == 'fsymbols':
                         cbTS.compositionChar = 'none'
                         candidates = cbTS.fsymbols.getCharDef(sellist[1])
@@ -1217,11 +1091,6 @@ class CinBase:
                     elif sellist[0] == 'menuflangs':
                         cbTS.compositionChar = 'none'
                         candidates = cbTS.flangs.getCharDef(sellist[1])
-                        cbTS.selcandmode = True
-                    elif sellist[0] == 'menuemoji':
-                        cbTS.compositionChar = 'none'
-                        elist = sellist[1].split(',', 2)
-                        candidates = self.emoji.getCharDef(elist[0], elist[1])
                         cbTS.selcandmode = True
                     elif sellist[0] == 'default':
                         if cbTS.cin.isInCharDef(sellist[1]):
@@ -1378,16 +1247,6 @@ class CinBase:
                                     cbTS.lastCommitString = commitStr
                                     cbTS.canUseSpaceAsPageKey = False
 
-                                    # 如果使用萬用字元解碼
-                                    if cbTS.isWildcardChardefs:
-                                        if not cbTS.client.isUiLess:
-                                            cbTS.isShowMessage = True
-                                            cbTS.showMessageOnKeyUp = True
-                                            cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
-                                        cbTS.wildcardcandidates = []
-                                        cbTS.wildcardpagecandidates = []
-                                        cbTS.isWildcardChardefs = False
-
                                     if cbTS.compositionBufferMode:
                                         RemoveStringLength = 0
                                         if not cbTS.menusymbolsmode:
@@ -1431,15 +1290,7 @@ class CinBase:
                     currentCandPageCount = math.ceil(len(candidates) / cbTS.candPerPage)  # 目前的選字清單總頁數
                     currentCandPage = cbTS.currentCandPage  # 目前的選字清單頁數
 
-                    # 候選清單分頁
-                    if cbTS.isWildcardChardefs:
-                        if cbTS.wildcardpagecandidates:
-                            pagecandidates = cbTS.wildcardpagecandidates
-                        else:
-                            cbTS.wildcardpagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
-                            pagecandidates = cbTS.wildcardpagecandidates
-                    else:
-                        pagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
+                    pagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
                     cbTS.setCandidateList(pagecandidates[currentCandPage])
 
                     if not cbTS.isSelKeysChanged:
@@ -2014,8 +1865,6 @@ class CinBase:
                 for cStr in cbTS.compositionChar:
                     if cbTS.cin.isInKeyName(cStr):
                         cbTS.compositionString += cbTS.cin.getKeyName(cStr)
-                    elif cbTS.supportWildcard and cbTS.selWildcardChar == "*" and cStr == "*":
-                        cbTS.compositionString += "＊"
             cbTS.setCompositionCursor(len(cbTS.compositionString))
 
     # 切換中英文模式
@@ -2056,8 +1905,6 @@ class CinBase:
                 cbTS.fullShapeSymbols = not cbTS.fullShapeSymbols
             elif commandItem == "easySymbolsWithShift":
                 cbTS.easySymbolsWithShift = not cbTS.easySymbolsWithShift
-            elif commandItem == "supportWildcard":
-                cbTS.supportWildcard = not cbTS.supportWildcard
             elif commandItem == "autoClearCompositionChar":
                 cbTS.autoClearCompositionChar = not cbTS.autoClearCompositionChar
             elif commandItem == "playSoundWhenNonCand":
@@ -2080,7 +1927,6 @@ class CinBase:
 
     def closeMenuCand(self, cbTS):
         cbTS.showmenu = False
-        cbTS.emojimenumode = False
         cbTS.menutype = 0
         cbTS.prevmenutypelist = []
         self.resetComposition(cbTS)
@@ -2088,26 +1934,11 @@ class CinBase:
 
     def switchMenuCand(self, cbTS, menutype):
         if menutype == 0:
-            cbTS.menucandidates = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字", "表情符號"]
+            cbTS.menucandidates = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字"]
         if menutype == 2:
             cbTS.menucandidates = cbTS.symbols.getKeyNames()
         if menutype == 5:
             cbTS.menucandidates = cbTS.menucandidates = cbTS.flangs.getKeyNames()
-        if menutype == 7:
-            cbTS.menucandidates = self.emojimenulist
-        if menutype == 8:
-            if cbTS.emojitype == 0:
-                cbTS.menucandidates = self.emoji.emoticons_keynames
-            elif cbTS.emojitype == 1:
-                cbTS.menucandidates = self.emoji.pictographs_keynames
-            elif cbTS.emojitype == 2:
-                cbTS.menucandidates = self.emoji.miscellaneous_keynames
-            elif cbTS.emojitype == 3:
-                cbTS.menucandidates = self.emoji.dingbats_keynames
-            elif cbTS.emojitype == 4:
-                cbTS.menucandidates = self.emoji.transport_keynames
-            elif cbTS.emojitype == 5:
-                cbTS.menucandidates = self.emoji.modifiercolor
 
         pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
         return pagecandidates
@@ -2122,8 +1953,6 @@ class CinBase:
         cbTS.setCandidatePage(0)
         cbTS.setCandidateList([])
         cbTS.setShowCandidates(False)
-        cbTS.wildcardcandidates = []
-        cbTS.wildcardpagecandidates = []
         cbTS.menumode = False
         cbTS.multifunctionmode = False
         cbTS.menusymbolsmode = False
@@ -2279,16 +2108,6 @@ class CinBase:
         cbTS.setCompositionCursor(cbTS.compositionBufferCursor)
 
     def setOutputString(self, cbTS, commitStr):
-        # 如果使用萬用字元解碼
-        if cbTS.isWildcardChardefs:
-            if not cbTS.client.isUiLess:
-                cbTS.isShowMessage = True
-                cbTS.showMessageOnKeyUp = True
-                cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
-            cbTS.wildcardcandidates = []
-            cbTS.wildcardpagecandidates = []
-            cbTS.isWildcardChardefs = False
-
         if not cbTS.compositionBufferMode:
             cbTS.setCommitString(commitStr)
         else:
@@ -2432,8 +2251,6 @@ class CinBase:
             del cbTS.msymbols
         if hasattr(cbTS, 'extendtable'):
             del cbTS.extendtable
-        if hasattr(cbTS, 'dsymbols'):
-            del cbTS.dsymbols
 
         self.applyConfig(cbTS)  # 套用其餘的使用者設定
 
@@ -2534,15 +2351,6 @@ class CinBase:
 
         # 允許內建符號輸入方式連續輸入?
         cbTS.directOutMSymbols = cfg.directOutMSymbols
-
-        # 支援以萬用字元代替組字字根?
-        cbTS.supportWildcard = cfg.supportWildcard
-
-        # 使用的萬用字元?
-        if cfg.selWildcardType == 0:
-            cbTS.selWildcardChar = 'z'
-        elif cfg.selWildcardType == 1:
-            cbTS.selWildcardChar = '*'
 
         # 最大候選字個數?
         cbTS.candMaxItems = cfg.candMaxItems

@@ -18,8 +18,6 @@
     "directCommitString": false,
     "directCommitSymbol": true,
     "directOutMSymbols": true,
-    "supportWildcard": true,
-    "selWildcardType": 0,
     "candMaxItems": 100,
     "showPhrase": false,
     "sortByPhrase": true,

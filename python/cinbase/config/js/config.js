@@ -412,18 +412,6 @@ function pageReady() {
     }
     selCinType.children().eq(checjConfig.selCinType).prop("selected", true);
 
-    var selWildcards=[
-        "Ｚ　",
-        "＊　"
-    ];
-    var selWildcardType = $("#selWildcardType");
-    for(var i = 0; i < selWildcards.length; ++i) {
-        var selWildcard = selWildcards[i];
-        var item = '<option value="' + i + '">' + selWildcard + '</option>';
-        selWildcardType.append(item);
-    }
-    selWildcardType.children().eq(checjConfig.selWildcardType).prop("selected", true);
-
     var keyboard_ddmenu = $("#keyboard_ddmenu");
 
     var keyboard_page = $("#keyboard_layout");
@@ -571,10 +559,6 @@ function pageReady() {
             $("#directOutFSymbols")[0].disabled = true;
         } else {
             $("#directOutFSymbols")[0].disabled = false;
-        }
-
-        if ($('#selWildcardType')[0].disabled == true) {
-            $("#selWildcardType").val(1);
         }
     }
 

@@ -94,7 +94,6 @@ class CinBase:
         cbTS.priorityExtendTable = False
         cbTS.messageDurationTime = 3
 
-        cbTS.selDayiSymbolCharType = 0
         cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
 
@@ -136,7 +135,6 @@ class CinBase:
         cbTS.canUseSpaceAsPageKey = True
         cbTS.endKeyList = []
         cbTS.useEndKey = False
-        cbTS.dayisymbolsmode = False
         cbTS.autoShowCandWhenMaxChar = False
         cbTS.lastCommitString = ""
         cbTS.lastCompositionCharLength = 0
@@ -889,7 +887,7 @@ class CinBase:
         # 按下的鍵為 CIN 內有定義的字根
         if cbTS.cin.isInKeyName(
                 charStr) and cbTS.closemenu and not cbTS.multifunctionmode and not keyEvent.isKeyDown(
-            VK_CONTROL) and not cbTS.ctrlsymbolsmode and not cbTS.dayisymbolsmode and not cbTS.selcandmode and not cbTS.tempEnglishMode and not cbTS.phrasemode:
+            VK_CONTROL) and not cbTS.ctrlsymbolsmode and not cbTS.selcandmode and not cbTS.tempEnglishMode and not cbTS.phrasemode:
             if not cbTS.directShowCand and cbTS.showCandidates and self.isInSelKeys(cbTS, charCode):
                 # 不送出 CIN 所定義的字根
                 cbTS.compositionChar = cbTS.compositionChar
@@ -910,7 +908,7 @@ class CinBase:
         # 按下的鍵不存在於 CIN 所定義的字根
         elif not cbTS.cin.isInKeyName(
                 charStr) and cbTS.closemenu and not cbTS.multifunctionmode and not keyEvent.isKeyDown(
-            VK_CONTROL) and not cbTS.ctrlsymbolsmode and not cbTS.dayisymbolsmode and not cbTS.selcandmode and not cbTS.tempEnglishMode and not cbTS.phrasemode:
+            VK_CONTROL) and not cbTS.ctrlsymbolsmode and not cbTS.selcandmode and not cbTS.tempEnglishMode and not cbTS.phrasemode:
             # 若沒按下 Shift 鍵
             if cbTS.compositionBufferMode:
                 if cbTS.isComposing() and keyEvent.isPrintableChar() and not cbTS.showCandidates and cbTS.compositionChar == '':
@@ -989,7 +987,7 @@ class CinBase:
                 cbTS.compositionChar = cbTS.compositionChar[:-1]
 
             if cbTS.cin.isInCharDef(
-                    cbTS.compositionChar) and cbTS.closemenu and not cbTS.ctrlsymbolsmode and not cbTS.dayisymbolsmode:
+                cbTS.compositionChar) and cbTS.closemenu and not cbTS.ctrlsymbolsmode:
                 candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
                 if cbTS.sortByPhrase and candidates:
                     candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
@@ -1180,12 +1178,6 @@ class CinBase:
                                 if cbTS.sortByPhrase and candidates:
                                     candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
 
-            if cbTS.langMode == ARABIC_MODE and cbTS.dayisymbolsmode and len(cbTS.compositionChar) == 1 and (
-                    keyCode == VK_SPACE or keyCode == VK_RETURN):
-                candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
-                if cbTS.compositionBufferMode and cbTS.directShowCand:
-                    self.removeCompositionBufferString(cbTS, 1, True)
-
             if candidates and not cbTS.phrasemode:
                 if not cbTS.selcandmode:
                     if not cbTS.directShowCand:
@@ -1214,25 +1206,11 @@ class CinBase:
                                     cbTS.canUseSelKey = True
 
                         # 字滿及符號處理 (大易、注音、輕鬆)
-                        if cbTS.autoShowCandWhenMaxChar or cbTS.dayisymbolsmode:
-                            if len(cbTS.compositionChar) == cbTS.maxCharLength or cbTS.dayisymbolsmode:
+                        if cbTS.autoShowCandWhenMaxChar:
+                            if len(cbTS.compositionChar) == cbTS.maxCharLength:
                                 if not cbTS.isShowCandidates:
-                                    if cbTS.compositionBufferMode:
-                                        if cbTS.dayisymbolsmode and not len(cbTS.compositionChar) == 1:
-                                            commitStr = candidates[0]
-                                            cbTS.lastCommitString = commitStr
-
-                                            self.setOutputString(cbTS, commitStr)
-                                            if cbTS.showPhrase and not cbTS.selcandmode:
-                                                cbTS.phrasemode = True
-                                            self.resetComposition(cbTS)
-                                            candCursor = 0
-                                            currentCandPage = 0
-                                            cbTS.canSetCommitString = True
-                                            cbTS.isShowCandidates = False
-                                    else:
-                                        cbTS.isShowCandidates = True
-                                        cbTS.canUseSelKey = False
+                                    cbTS.isShowCandidates = True
+                                    cbTS.canUseSelKey = False
                                 else:
                                     cbTS.canUseSelKey = True
                             else:
@@ -1612,7 +1590,7 @@ class CinBase:
                                 cbTS.setCompositionString(keyname)
                                 cbTS.setCompositionCursor(len(cbTS.compositionString))
 
-                            if cbTS.directShowCand and not cbTS.dayisymbolsmode:
+                            if cbTS.directShowCand:
                                 if cbTS.cin.isInCharDef(cbTS.compositionChar):
                                     candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
                                     if cbTS.sortByPhrase and candidates:
@@ -1958,7 +1936,6 @@ class CinBase:
         cbTS.menusymbolsmode = False
         cbTS.ctrlsymbolsmode = False
         cbTS.fullsymbolsmode = False
-        cbTS.dayisymbolsmode = False
         cbTS.keepComposition = False
         cbTS.selcandmode = False
         cbTS.lastCompositionCharLength = 0
@@ -2116,8 +2093,6 @@ class CinBase:
                 if cbTS.menusymbolsmode:
                     RemoveStringLength = len(cbTS.compositionChar) - 1
                     cbTS.menusymbolsmode = False
-                elif cbTS.dayisymbolsmode:
-                    RemoveStringLength = self.calcRemoveStringLength(cbTS) - 1
                 else:
                     RemoveStringLength = self.calcRemoveStringLength(cbTS)
             else:

@@ -39,6 +39,8 @@
 .navbar-brand>img {
     height: 100%;
     width: auto;
+    border-radius: 5px;
+    background: none no-repeat scroll 0 0 #fff;
     -webkit-box-shadow: 0 3px 5px 3px rgba(0,0,0,0.75);
     -moz-box-shadow: 0 3px 5px 3px rgba(0,0,0,0.75);
     box-shadow: 0 3px 5px 3px rgba(0,0,0,0.75);
@@ -56,7 +58,7 @@
 }
 
 .glyphicon-size18 {
-    top: 4px; 
+    top: 4px;
     font-size: 18px;
 }
 

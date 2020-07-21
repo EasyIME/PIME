@@ -362,44 +362,6 @@ function pageReady() {
     }
     selCinType.children().eq(checjConfig.selCinType).prop("selected", true);
 
-    var keyboard_ddmenu = $("#keyboard_ddmenu");
-
-    var keyboard_page = $("#keyboard_layout");
-    for(var i = 0; i < keyboardNames.length; ++i) {
-        var id = "kb" + i;
-        var name = keyboardNames[i];
-        var item = '<div class="col-xs-6 col-sm-6 col-md-3 col-lg-3"><input type="radio" id="' + id + '" name="keyboardLayout" value="' + i + '">' +
-            '<label for="' + id + '">' + name + '</label></div>';
-        keyboard_page.append(item);
-    }
-    $("#kb" + checjConfig.keyboardLayout).prop("checked", true);
-    updateKeyboardLayout();
-
-    $("#symbols").change(function(){
-        symbolsChanged = true;
-    });
-
-    $("#ez_symbols").change(function(){
-        swkbChanged = true;
-    });
-
-    $("#fs_symbols").change(function(){
-        fsymbolsChanged = true;
-    });
-
-    $("#phrase").change(function(){
-        phraseChanged = true;
-    });
-
-    $("#flangs").change(function(){
-        flangsChanged = true;
-    });
-
-    $("#extendtable").change(function(){
-        extendtableChanged = true;
-        $("#reLoadTable")[0].checked = true;
-    });
-
     // OK button
     $("#ok").on('click', function () {
         updateConfig(); // update the config based on the state of UI elements

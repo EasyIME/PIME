@@ -1396,10 +1396,6 @@ class CinBase:
                                     if len(cbTS.compositionChar) > 2:
                                         commitStr = chr(int(cbTS.compositionChar[2:], 16))
                                         cbTS.lastCommitString = commitStr
-                                        if not cbTS.client.isUiLess:
-                                            cbTS.isShowMessage = True
-                                            cbTS.showMessageOnKeyUp = True
-                                            cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
 
                                         if cbTS.compositionBufferMode:
                                             cbTS.compositionBufferType = "menuunicode"
@@ -2354,12 +2350,7 @@ class CinBase:
         reLoadCinTable = False
         updateExtendTable = False
 
-        if hasattr(cbTS, 'cin'):
-            if hasattr(cbTS.cin, 'cincount'):
-                if not os.path.exists(cbTS.cin.getCountFile()):
-                    cbTS.cin.saveCountFile()
-
-        # 如果有更換輸入法碼表，就重新載入碼表資料
+        # If the input method code table is changed, reload the code table data
         if not CinTable.loading:
             if not CinTable.curCinType == cfg.selCinType:
                 reLoadCinTable = True
@@ -2487,7 +2478,7 @@ class LoadCinTable(threading.Thread):
             else:
                 self.cbTS.extendtable = {}
         self.cbTS.cin.updateCinTable(self.cbTS.cfg.userExtendTable, self.cbTS.cfg.priorityExtendTable,
-                                     self.cbTS.extendtable, self.cbTS.cfg.ignorePrivateUseArea)
+                                     self.cbTS.extendtable)
         self.CinTable.userExtendTable = self.cbTS.cfg.userExtendTable
         self.CinTable.priorityExtendTable = self.cbTS.cfg.priorityExtendTable
         self.CinTable.ignorePrivateUseArea = self.cbTS.cfg.ignorePrivateUseArea

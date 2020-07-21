@@ -1,28 +1,5 @@
-
-var defaultcinCount = {
-    "big5F": 0,
-    "big5LF": 0,
-    "big5Other": 0,
-    "big5S": 0,
-    "bopomofo": 0,
-    "cjk": 0,
-    "cjkCI": 0,
-    "cjkCIS": 0,
-    "cjkExtA": 0,
-    "cjkExtB": 0,
-    "cjkExtC": 0,
-    "cjkExtD": 0,
-    "cjkExtE": 0,
-    "cjkExtF": 0,
-    "cjkOther": 0,
-    "phrases": 0,
-    "privateuse": 0,
-    "totalchardefs": 0
-}
-
 var debugMode = false;
 var checjConfig = {};
-var cinCount = {};
 var CONFIG_URL = '/config';
 var VERSION_URL = '/version.txt';
 var KEEP_ALIVE_URL = '/keep_alive';
@@ -88,7 +65,6 @@ if (!Date.now) {
 function loadConfig() {
     $.get(CONFIG_URL, function(data, status) {
         checjConfig = data.config;
-        cinCount = data.cincount;
         symbolsData = data.symbols;
         swkbData = data.swkb;
         fsymbolsData = data.fsymbols;
@@ -179,31 +155,6 @@ function setElementText(elemId, elemText) {
     } else {
         elem.innerText = elemText;
     }
-}
-
-
-function updateCinCountElements() {
-    $.get(CONFIG_URL + '?' + Date.now(), function(data, status) {
-        cinCountList = data.cincount;
-        setElementText('big5F', cinCountList['big5F']);
-        setElementText('big5LF', cinCountList['big5LF']);
-        setElementText('big5S', cinCountList['big5S']);
-        setElementText('big5Other', cinCountList['big5Other']);
-        setElementText('bopomofo', cinCountList['bopomofo']);
-        setElementText('cjk', cinCountList['cjk']);
-        setElementText('cjkExtA', cinCountList['cjkExtA']);
-        setElementText('cjkExtB', cinCountList['cjkExtB']);
-        setElementText('cjkExtC', cinCountList['cjkExtC']);
-        setElementText('cjkExtD', cinCountList['cjkExtD']);
-        setElementText('cjkExtE', cinCountList['cjkExtE']);
-        setElementText('cjkExtF', cinCountList['cjkExtF']);
-        setElementText('cjkCI', cinCountList['cjkCI']);
-        setElementText('cjkCIS', cinCountList['cjkCIS']);
-        setElementText('cjkOther', cinCountList['cjkOther']);
-        setElementText('phrases', cinCountList['phrases']);
-        setElementText('privateuse', cinCountList['privateuse']);
-        setElementText('totalchardefs', cinCountList['totalchardefs']);
-    }, "json");
 }
 
 
@@ -372,7 +323,6 @@ function pageWait() {
 }
 
 function pageReady() {
-    updateCinCountElements();
     $('[data-toggle="popover"]').popover()
 
     $("#symbols").val(symbolsData);
@@ -455,18 +405,17 @@ function pageReady() {
         updateConfig(); // update the config based on the state of UI elements
         saveConfig(function() {
             $.jAlert({
-            'title': '好耶！',
-            'content': '設定成功儲存！',
+            'title': 'Great!',
+            'content': 'Settings successfully saved!',
             'theme': 'blue',
             'size': 'md',
             'blurBackground': true,
             'closeOnClick': true,
             'showAnimation': 'zoomIn',
             'hideAnimation': 'zoomOutDown',
-            'btns': {'text': '關閉', 'theme': 'blue'}
+            'btns': {'text': 'shut down', 'theme': 'blue'}
             });
         });
-        updateCinCountElements();
         return false;
     });
 

@@ -80,7 +80,6 @@ class ConfigHandler(BaseHandler):
         data = {
             "imename": cfg.imeDirName,
             "config": self.load_config(),
-            "cincount": self.load_cindata(),
             "symbols": self.load_data("symbols.dat"),
             "swkb": self.load_data("swkb.dat"),
             "fsymbols": self.load_data("fsymbols.dat"),
@@ -134,21 +133,6 @@ class ConfigHandler(BaseHandler):
         cfg.load()
         config = cfg.toJson()  # the current settings
         return config
-
-    def load_cindata(self):
-        cfg.load()
-        CinDict ={}
-        CinDict["arabic"] = ["arabic.json"]
-        jsonFile = CinDict[cfg.imeDirName][cfg.selCinType]
-
-        datafile = os.path.join(json_dir, jsonFile)
-        if os.path.exists(datafile):
-            try:
-                with open(datafile, "r", encoding="UTF-8") as f:
-                    jsondata = json.load(f)
-                    return jsondata['cincount']
-            except Exception as e:
-                print(e)
 
     def load_data(self, name):
         try:

@@ -133,26 +133,6 @@
       "ز"
     ]
   },
-  "cincount": {
-    "big5F": 0,
-    "big5LF": 0,
-    "big5Other": 0,
-    "big5S": 0,
-    "bopomofo": 0,
-    "cjk": 0,
-    "cjkCI": 0,
-    "cjkCIS": 0,
-    "cjkExtA": 0,
-    "cjkExtB": 0,
-    "cjkExtC": 0,
-    "cjkExtD": 0,
-    "cjkExtE": 0,
-    "cjkExtF": 0,
-    "cjkOther": 0,
-    "phrases": 43,
-    "privateuse": 0,
-    "totalchardefs": 43
-  },
   "cname": "Arabic",
   "dupchardefs": {},
   "ename": "Arabic",

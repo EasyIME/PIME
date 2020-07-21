@@ -83,9 +83,6 @@ class CinBaseConfig:
     def getSelKeys(self):
         return selKeys[self.selKeyType]
 
-    def getLastTime(self):
-        return self._lastTime
-
     def load(self):
         filename = self.getConfigFile()
         try:

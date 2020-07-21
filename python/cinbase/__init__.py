@@ -223,6 +223,20 @@ class CinBase:
         if hasattr(cbTS, 'extendtable'):
             del cbTS.extendtable
 
+    def getCandidates(self, cbTS, keys, step=1):
+        candidates = []
+        for i in reversed(range(1, len(keys)+1)):
+            charset = cbTS.cin.getCharDef(keys[0:i])
+            if charset:
+                for char in charset:
+                    newCandidates = self.getCandidates(cbTS, keys[i:], i)
+                    if newCandidates:
+                        for newCandidate in newCandidates:
+                            candidates.append(char + newCandidate)
+                    else:
+                        candidates.append(char)
+        return candidates
+
     # The user presses the keys and filters those keys before the app receives them,
     # which is required by the input method.
     # return True, the system will call onKeyDown() to further process this button.
@@ -986,11 +1000,8 @@ class CinBase:
                     cbTS.setCompositionString(cbTS.compositionString[:-keyLength])
                 cbTS.compositionChar = cbTS.compositionChar[:-1]
 
-            if cbTS.cin.isInCharDef(
-                cbTS.compositionChar) and cbTS.closemenu and not cbTS.ctrlsymbolsmode:
-                candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
-                if cbTS.sortByPhrase and candidates:
-                    candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
+            if cbTS.cin.isCharactersInKeyName(cbTS.compositionChar) and cbTS.closemenu and not cbTS.ctrlsymbolsmode:
+                candidates = self.getCandidates(cbTS,cbTS.compositionChar)
                 if cbTS.compositionBufferMode and not cbTS.selcandmode:
                     cbTS.compositionBufferType = "default"
             elif cbTS.fullShapeSymbols and cbTS.fsymbols.isInCharDef(cbTS.compositionChar) and cbTS.closemenu:

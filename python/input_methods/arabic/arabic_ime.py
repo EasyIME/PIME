@@ -31,7 +31,7 @@ class ArabicTextService(TextService):
 
         # Input method module customization area
         self.imeDirName = "arabic"
-        self.maxCharLength = 2  # Maximum number of encoding characters for input method
+        self.maxCharLength = 26  # Maximum number of encoding characters for input method
         self.cinFileList = ["arabic.json"]
 
         self.cinbase = CinBase

@@ -67,11 +67,20 @@ class Cin(object):
     def isInCharDef(self, key):
         return key in self.chardefs
 
+    def isCharactersInKeyName(self, characters):
+        for character in characters:
+            if not self.isInKeyName(character):
+                return False
+        return True
+
     def getCharDef(self, key):
         """
         will return a list containing all possible result
         """
-        return self.chardefs[key]
+        try:
+            return self.chardefs[key]
+        except:
+            return []
 
     def haveNextCharDef(self, key):
         chardefslist = []

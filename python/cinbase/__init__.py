@@ -149,18 +149,6 @@ class CinBase:
         cbTS.reLoadCinTable = False
         cbTS.capsStates = True if self.getKeyState(VK_CAPITAL) else False
 
-        cbTS.bopomofolist = []
-        for i in range(0x3105, 0x311A):
-            cbTS.bopomofolist.append(chr(i))
-        for i in range(0x3127, 0x312A):
-            cbTS.bopomofolist.append(chr(i))
-        for i in range(0x311A, 0x3127):
-            cbTS.bopomofolist.append(chr(i))
-        cbTS.bopomofolist.append(chr(0x02D9))
-        cbTS.bopomofolist.append(chr(0x02CA))
-        cbTS.bopomofolist.append(chr(0x02C7))
-        cbTS.bopomofolist.append(chr(0x02CB))
-
         if DEBUG_MODE:
             cbTS.debug = Debug(cbTS.imeDirName)
             cbTS.debugLog = cbTS.debug.loadDebugLog()
@@ -298,7 +286,7 @@ class CinBase:
         # 不論中英文模式，NumPad 都允許直接輸入數字，輸入法不處理
         if keyEvent.isKeyToggled(VK_NUMLOCK):  # NumLock is on
             # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
-            if keyEvent.keyCode >= VK_NUMPAD0 and keyEvent.keyCode <= VK_DIVIDE:
+            if VK_NUMPAD0 <= keyEvent.keyCode <= VK_DIVIDE:
                 if cbTS.isShowMessage:
                     cbTS.hideMessageOnKeyUp = True
                 return False  # bypass IME
@@ -714,11 +702,6 @@ class CinBase:
                         pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
                         cbTS.resetMenuCand = self.switchMenuType(cbTS, 2,
                                                                  ["0," + str(candCursor) + "," + str(currentCandPage)])
-                    elif cbTS.menutype == 0 and itemName == "注音符號":  # 切至注音符號頁面
-                        cbTS.menucandidates = cbTS.bopomofolist
-                        pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
-                        cbTS.resetMenuCand = self.switchMenuType(cbTS, 4,
-                                                                 ["0," + str(candCursor) + "," + str(currentCandPage)])
                     elif cbTS.menutype == 0 and itemName == "外語文字":  # 切至外語文字頁面
                         cbTS.menucandidates = cbTS.flangs.getKeyNames()
                         pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
@@ -751,16 +734,6 @@ class CinBase:
                             cbTS.compositionBufferType = "menusymbols"
                             self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType,
                                                           cbTS.compositionBufferMenuItem, cbTS.compositionBufferCursor)
-                        else:
-                            cbTS.setCommitString(cbTS.candidateList[candCursor])
-                        cbTS.resetMenuCand = self.closeMenuCand(cbTS)
-                    elif cbTS.menutype == 4:  # 執行注音符號頁面項目
-                        if cbTS.compositionBufferMode:
-                            self.removeCompositionBufferString(cbTS, len(cbTS.compositionChar), True)
-                            self.setCompositionBufferString(cbTS, cbTS.candidateList[candCursor], 0)
-                            cbTS.compositionBufferType = "menubopomofo"
-                            self.setCompositionBufferChar(cbTS, cbTS.compositionBufferType, 'none',
-                                                          cbTS.compositionBufferCursor)
                         else:
                             cbTS.setCommitString(cbTS.candidateList[candCursor])
                         cbTS.resetMenuCand = self.closeMenuCand(cbTS)
@@ -1092,10 +1065,6 @@ class CinBase:
                     elif sellist[0] == 'menusymbols':
                         cbTS.compositionChar = 'none'
                         candidates = cbTS.symbols.getCharDef(sellist[1])
-                        cbTS.selcandmode = True
-                    elif sellist[0] == 'menubopomofo':
-                        cbTS.compositionChar = 'none'
-                        candidates = cbTS.bopomofolist
                         cbTS.selcandmode = True
                     elif sellist[0] == 'menuflangs':
                         cbTS.compositionChar = 'none'

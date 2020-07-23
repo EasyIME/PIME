@@ -165,11 +165,11 @@ class CinBase:
             cbTS.debug = Debug(cbTS.imeDirName)
             cbTS.debugLog = cbTS.debug.loadDebugLog()
 
-    # 輸入法被使用者啟用
+    # When the input method is activated by the user
     def onActivate(self, cbTS):
         cfg = cbTS.cfg
-        # 向系統宣告 Shift + Space 這個組合為特殊用途 (全半形切換)
-        # 當 Shift + Space 被按下的時候，onPreservedKey() 會被呼叫
+        # Declare to the system that the combination of Shift + Space is of a special purpose
+        # When Shift + Space is pressed, onPreservedKey() will be called
         cbTS.addPreservedKey(VK_SPACE, TF_MOD_SHIFT, SHIFT_SPACE_GUID)  # shift + space
 
         # Switch between arabic and latin
@@ -187,20 +187,20 @@ class CinBase:
                            commandId=ID_MODE_ICON
                            )
 
-            # 啟動時預設停用中文輸入
+            # Arabic input is enabled by default at startup
             cbTS.setKeyboardOpen(not cfg.disableOnStartup)
 
-        # 設定
+        # Settings
         cbTS.addButton("settings",
                        icon=os.path.join(self.icondir, "config.ico"),
-                       tooltip="設定",
+                       tooltip="settings",
                        type="menu"
                        )
 
-    # 使用者離開輸入法
+    # When the input method is deactivated by the user
     def onDeactivate(self, cbTS):
         cbTS.lastKeyDownCode = 0
-        # 向系統宣告移除 Shift + Space 這個組合鍵用途 (全半形切換)
+        # Announce the removal of the key combination Shift + Space to the system
         cbTS.removePreservedKey(SHIFT_SPACE_GUID)  # shift + space
 
         cbTS.removeButton("switch-lang")
@@ -1120,7 +1120,7 @@ class CinBase:
                             cbTS.selcandmode = False
                             if not cbTS.client.isUiLess:
                                 cbTS.isShowMessage = True
-                                cbTS.showMessage("沒有候選字...", cbTS.messageDurationTime)
+                                cbTS.showMessage("No candidates...", cbTS.messageDurationTime)
 
                     if cbTS.selcandmode:
                         cbTS.isShowCandidates = True
@@ -1423,11 +1423,11 @@ class CinBase:
                                     else:
                                         if not cbTS.client.isUiLess:
                                             cbTS.isShowMessage = True
-                                            cbTS.showMessage("請輸入 Unicode 編碼...", cbTS.messageDurationTime)
+                                            cbTS.showMessage("Please enter the Unicode code...", cbTS.messageDurationTime)
                         else:
                             if not cbTS.client.isUiLess:
                                 cbTS.isShowMessage = True
-                                cbTS.showMessage("查無組字...", cbTS.messageDurationTime)
+                                cbTS.showMessage("Check no group words...", cbTS.messageDurationTime)
                             if cbTS.autoClearCompositionChar:
                                 if cbTS.compositionBufferMode:
                                     RemoveStringLength = 0
@@ -1442,7 +1442,7 @@ class CinBase:
                         if not len(cbTS.compositionChar) == 1 and not cbTS.compositionChar == charStr:
                             if not cbTS.client.isUiLess:
                                 cbTS.isShowMessage = True
-                                cbTS.showMessage("查無組字...", cbTS.messageDurationTime)
+                                cbTS.showMessage("Check no group words...", cbTS.messageDurationTime)
                             if cbTS.autoClearCompositionChar:
                                 if cbTS.compositionBufferMode:
                                     RemoveStringLength = 0

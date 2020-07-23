@@ -264,7 +264,7 @@ class TextService:
         data.update(kwargs)
 
     def isComposing(self):
-        return (self.compositionString != "" or self.showCandidates)
+        return self.compositionString != "" or self.showCandidates
 
     '''
     Ask libIME to show a tooltip-like transient message to the user

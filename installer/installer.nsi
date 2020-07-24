@@ -35,6 +35,11 @@ SetCompressor /SOLID lzma ; use LZMA for best compression ratio
 SetCompressorDictSize 16 ; larger dictionary size for better compression ratio
 AllowSkipFiles off ; cannot skip a file
 
+; We need the Replace in file plugin
+!addincludedir "utils"
+!include "StrRep.nsh"
+!include "ReplaceInFile.nsh"
+
 ; icons of the generated installer and uninstaller
 !define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\orange-install.ico"
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\orange-uninstall.ico"
@@ -299,8 +304,8 @@ Function ensureVCRedist
 FunctionEnd
 
 ;Installer Type
-InstType "$(INST_TYPE_STD)"
-InstType "$(INST_TYPE_FULL)"
+InstType "$(INST_TYPE_FR)"
+InstType "$(INST_TYPE_US)"
 
 ;Installer Sections
 Section $(SECTION_MAIN) SecMain
@@ -324,16 +329,20 @@ Section $(SECTION_MAIN) SecMain
 
 	; Install the launcher responsible to launch the backends
 	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
+
+	SetOutPath "$INSTDIR\python\input_methods"
+    File /r "..\python\input_methods\arabic"
+    StrCpy $INST_PYTHON "True"
+    StrCpy $INST_CINBASE "True"
 SectionEnd
 
 SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
-		Section $(ARABIC) arabic
-			SectionIn 1 2 RO
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\arabic"
-			StrCpy $INST_PYTHON "True"
-			StrCpy $INST_CINBASE "True"
-		SectionEnd
+    Section $(FRENCH) french
+    	SectionIn 1 RO
+    SectionEnd
+    Section $(US) us
+    	SectionIn 2 RO
+    SectionEnd
 SectionGroupEnd
 
 Section "" Register
@@ -345,6 +354,13 @@ Section "" Register
 		SetOutPath "$INSTDIR\python\input_methods"
 		File "..\python\input_methods\__init__.py"
 	${EndIf}
+
+	${If} ${SectionIsSelected} ${french}
+    		!insertmacro _ReplaceInFile "$INSTDIR\python\input_methods\arabic\ime.json" "%locale" "fr-FR"
+    ${EndIf}
+    ${If} ${SectionIsSelected} ${us}
+        	!insertmacro _ReplaceInFile "$INSTDIR\python\input_methods\arabic\ime.json" "%locale" "en-US"
+    ${EndIf}
 
 	; Install the CinBase Class for all cin-based input method modules.
 	${If} $INST_CINBASE == "True"
@@ -401,10 +417,7 @@ Section "" Register
 	; Create shortcuts
 	CreateDirectory "$SMPROGRAMS\$(PRODUCT_NAME)"
 
-	${If} ${SectionIsSelected} ${arabic}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_ARABIC).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config arabic' "$INSTDIR\python\input_methods\arabic\icon.ico" 0
-	${EndIf}
-
+	CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_ARABIC).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config arabic' "$INSTDIR\python\input_methods\arabic\icon.ico" 0
 	CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
 
@@ -412,7 +425,8 @@ SectionEnd
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 	!insertmacro MUI_DESCRIPTION_TEXT ${SecMain} $(SecMain_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${python_section_group} $(PYTHON_SECTION_GROUP_DESC)
-	!insertmacro MUI_DESCRIPTION_TEXT ${arabic} $(arabic_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${french} $(french_DESC)
+    !insertmacro MUI_DESCRIPTION_TEXT ${us} $(us_DESC)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;Uninstaller Section

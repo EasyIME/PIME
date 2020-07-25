@@ -9,13 +9,11 @@ var symbolsChanged = false;
 var swkbChanged = false;
 var fsymbolsChanged = false;
 var flangsChanged = false;
-var extendtableChanged = false;
 
 var symbolsData = "";
 var swkbData = "";
 var fsymbolsData = "";
 var flangsData = "";
-var extendtableData = "";
 
 var isIE = (function() {
     var browser = {};
@@ -67,7 +65,6 @@ function loadConfig() {
         swkbData = data.swkb;
         fsymbolsData = data.fsymbols;
         flangsData = data.flangs;
-        extendtableData = data.extendtable;
     }, "json");
 }
 loadConfig();
@@ -98,12 +95,6 @@ function saveConfig(callbackFunc) {
         return false;
     }
 
-    // Check extendtable format
-    checkState = checkDataFormat($("#extendtable").val(), "3", "#extendtable", "擴展碼表");
-    if (!checkState) {
-        return false;
-    }
-
     var data = {
         "config": checjConfig
     }
@@ -120,10 +111,6 @@ function saveConfig(callbackFunc) {
     if(flangsChanged) {
         data.flangs = $("#flangs").val();
     }
-    if(extendtableChanged) {
-        data.extendtable = $("#extendtable").val();
-    }
-
     $.ajax({
         url: CONFIG_URL,
         method: "POST",
@@ -288,7 +275,6 @@ $(function() {
     $("#intelligent_page").load("config.htm #intelligent_page");
     $("#ui_page").load("config.htm #ui_page");
     $("#cin_options").load("config.htm #cin_options");
-    $("#extendtable_page").load("config.htm #extendtable_page");
     $("#symbols_page").load("config.htm #symbols_page");
     $("#fs_symbols_page").load("config.htm #fs_symbols_page");
     $("#ez_symbols_page").load("config.htm #ez_symbols_page");
@@ -314,7 +300,6 @@ function pageReady() {
     $("#ez_symbols").val(swkbData);
     $("#fs_symbols").val(fsymbolsData);
     $("#flangs").val(flangsData);
-    $("#extendtable").val(extendtableData);
 
     $("#candPerRow").TouchSpin({min:1, max:10});
     $("#candPerPage").TouchSpin({min:1, max:10});

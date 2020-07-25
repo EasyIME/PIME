@@ -51,9 +51,6 @@ class CinBaseConfig:
         self.directOutFSymbols = False
         self.directOutMSymbols = True
         self.easySymbolsWithShift = False
-        self.userExtendTable = False
-        self.reLoadTable = False
-        self.priorityExtendTable = False
         self.candMaxItems = 100
         self.messageDurationTime = 3
         self.keyboardType = 0
@@ -178,14 +175,6 @@ class CinBaseConfig:
         if flangsFile:
             try:
                 flangsTime = os.path.getmtime(flangsFile)
-            except Exception:
-                pass
-
-        extendtableTime = 0.0
-        extendtableFile = self.findFile(datadirs, "extendtable.dat")
-        if extendtableFile:
-            try:
-                extendtableTime = os.path.getmtime(extendtableFile)
             except Exception:
                 pass
 

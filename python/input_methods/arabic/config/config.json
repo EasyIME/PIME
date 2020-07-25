@@ -19,6 +19,4 @@
     "directCommitSymbol": true,
     "directOutMSymbols": true,
     "candMaxItems": 100,
-    "userExtendTable": false,
-    "reLoadTable": false
 }

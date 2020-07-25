@@ -91,21 +91,5 @@ class Cin(object):
                     break
         return chardefslist
 
-    def updateCinTable(self, userExtendTable, priorityExtendTable, extendtable):
-        if userExtendTable:
-            for key in extendtable.chardefs:
-                for root in extendtable.chardefs[key]:
-                    if priorityExtendTable:
-                        i = extendtable.chardefs[key].index(root)
-                        try:
-                            self.chardefs[key].insert(i, root)
-                        except KeyError:
-                            self.chardefs[key] = [root]
-                    else:
-                        try:
-                            self.chardefs[key].append(root)
-                        except KeyError:
-                            self.chardefs[key] = [root]
-
 
 __all__ = ["Cin"]

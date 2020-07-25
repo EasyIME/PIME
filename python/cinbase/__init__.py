@@ -27,7 +27,6 @@ import winsound
 from keycodes import *  # for VK_XXX constants
 from .cin import Cin
 from .debug import Debug
-from .extendtable import extendtable
 from .flangs import flangs
 from .fsymbols import fsymbols
 from .msymbols import msymbols
@@ -82,9 +81,7 @@ class CinBase:
         cbTS.fullShapeSymbols = False
         cbTS.directOutFSymbols = False
         cbTS.easySymbolsWithShift = False
-        cbTS.userExtendTable = False
         cbTS.reLoadTable = False
-        cbTS.priorityExtendTable = False
         cbTS.messageDurationTime = 3
 
         cbTS.lastKeyDownCode = 0
@@ -191,8 +188,6 @@ class CinBase:
             del cbTS.flangs
         if hasattr(cbTS, 'msymbols'):
             del cbTS.msymbols
-        if hasattr(cbTS, 'extendtable'):
-            del cbTS.extendtable
 
     def getCandidates(self, cbTS, keys, step=1):
         candidates = []
@@ -1365,8 +1360,6 @@ class CinBase:
             del cbTS.flangs
         if hasattr(cbTS, 'msymbols'):
             del cbTS.msymbols
-        if hasattr(cbTS, 'extendtable'):
-            del cbTS.extendtable
 
         self.applyConfig(cbTS)  # 套用其餘的使用者設定
 
@@ -1390,10 +1383,6 @@ class CinBase:
         msymbolsPath = cfg.findFile(datadirs, "msymbols.json")
         with io.open(msymbolsPath, 'r', encoding='utf-8') as fs:
             cbTS.msymbols = msymbols(fs)
-
-        extendtablePath = cfg.findFile(datadirs, "extendtable.dat")
-        with io.open(extendtablePath, 'r', encoding='utf8') as fs:
-            cbTS.extendtable = extendtable(fs)
 
         cbTS.initCinBaseState = True
 
@@ -1461,9 +1450,7 @@ class CinBase:
         cbTS.ignorePrivateUseArea = cfg.ignorePrivateUseArea
 
         # 擴充碼表?
-        cbTS.userExtendTable = cfg.userExtendTable
         cbTS.reLoadTable = cfg.reLoadTable
-        cbTS.priorityExtendTable = cfg.priorityExtendTable
 
         # 訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime
@@ -1473,7 +1460,6 @@ class CinBase:
         cfg = cbTS.cfg  # 所有 TextService 共享一份設定物件
         cfg.update()  # 更新設定檔狀態
         reLoadCinTable = False
-        updateExtendTable = False
 
         # If the input method code table is changed, reload the code table data
         if not CinTable.loading:
@@ -1484,18 +1470,9 @@ class CinBase:
                 reLoadCinTable = True
 
             if cfg.reLoadTable:
-                updateExtendTable = True
                 reLoadCinTable = True
                 cfg.reLoadTable = False
                 cfg.save()
-
-            if not CinTable.userExtendTable == cfg.userExtendTable:
-                updateExtendTable = True
-                reLoadCinTable = True
-
-            if not CinTable.priorityExtendTable == cfg.priorityExtendTable:
-                if cfg.userExtendTable:
-                    reLoadCinTable = True
 
         # 比較我們先前存的版本號碼，和目前設定檔的版本號
         if cfg.isFullReloadNeeded(cbTS.configVersion):
@@ -1505,14 +1482,8 @@ class CinBase:
             # 只有偵測到設定檔變更，需要套用新設定
             self.applyConfig(cbTS)
 
-        if reLoadCinTable or updateExtendTable:
+        if reLoadCinTable:
             datadirs = (cfg.getConfigDir(), cfg.getDataDir())
-            if updateExtendTable:
-                if hasattr(cbTS, 'extendtable'):
-                    del cbTS.extendtable
-                extendtablePath = cfg.findFile(datadirs, "extendtable.dat")
-                with io.open(extendtablePath, encoding='utf-8') as fs:
-                    cbTS.extendtable = extendtable(fs)
             if reLoadCinTable:
                 cbTS.reLoadCinTable = True
             loadCinFile = LoadCinTable(cbTS, CinTable)
@@ -1537,9 +1508,6 @@ class LoadCinTable(threading.Thread):
         self.CinTable = CinTable
 
     def run(self):
-        if DEBUG_MODE:
-            self.cbTS.debug.setStartTimer("LoadCinTable")
-
         self.CinTable.loading = True
         if self.cbTS.cfg.selCinType >= len(self.cbTS.cinFileList):
             self.cbTS.cfg.selCinType = 0
@@ -1562,25 +1530,5 @@ class LoadCinTable(threading.Thread):
             self.CinTable.cin = self.cbTS.cin
             self.CinTable.curCinType = self.cbTS.cfg.selCinType
 
-        if not hasattr(self.cbTS, 'extendtable'):
-            if self.cbTS.cfg.userExtendTable:
-                datadirs = (self.cbTS.cfg.getConfigDir(), self.cbTS.cfg.getDataDir())
-                extendtablePath = self.cbTS.cfg.findFile(datadirs, "extendtable.dat")
-                with io.open(extendtablePath, encoding='utf-8') as fs:
-                    self.cbTS.extendtable = extendtable(fs)
-            else:
-                self.cbTS.extendtable = {}
-        self.cbTS.cin.updateCinTable(self.cbTS.cfg.userExtendTable, self.cbTS.cfg.priorityExtendTable,
-                                     self.cbTS.extendtable)
-        self.CinTable.userExtendTable = self.cbTS.cfg.userExtendTable
-        self.CinTable.priorityExtendTable = self.cbTS.cfg.priorityExtendTable
         self.CinTable.ignorePrivateUseArea = self.cbTS.cfg.ignorePrivateUseArea
         self.CinTable.loading = False
-
-        if DEBUG_MODE:
-            self.cbTS.debug.setEndTimer("LoadCinTable")
-            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [C]"] = self.cbTS.debug.info[
-                                                                                                    'brand'] + ":「" + \
-                                                                                                self.cbTS.debug.jsonNameDict[
-                                                                                                    selCinFile] + "」碼表載入時間約為 " + self.cbTS.debug.getDurationTime(
-                "LoadCinTable") + " 秒"

@@ -99,7 +99,6 @@ class CinBase:
         cbTS.switchmenu = False
         cbTS.closemenu = True
         cbTS.tempEnglishMode = False
-        cbTS.multifunctionmode = False
         cbTS.menumode = False
         cbTS.menusymbolsmode = False
         cbTS.ctrlsymbolsmode = False
@@ -324,105 +323,6 @@ class CinBase:
             cbTS.isShowMessage = False
             cbTS.hideMessage()
 
-        # 多功能前導字元 ---------------------------------------------------------
-        if cbTS.multifunctionmode:
-            cbTS.canUseSelKey = True
-
-        if cbTS.langMode == ARABIC_MODE and not cbTS.showmenu:
-            if len(cbTS.compositionChar) == 0 and charStr == '`':
-                cbTS.compositionChar += charStr
-                cbTS.setCompositionString(cbTS.compositionChar)
-                if not cbTS.hidePromptMessages and not cbTS.client.isUiLess:
-                    cbTS.isShowMessage = True
-                    cbTS.showMessageOnKeyUp = True
-                    cbTS.onKeyUpMessage = 'Multi-function leading characters'
-                cbTS.multifunctionmode = True
-            elif len(cbTS.compositionChar) == 1 and cbTS.multifunctionmode:
-                if charStr == 'm' or charStr == 'u' or charStr == 'e':
-                    cbTS.compositionChar += charStr.upper()
-                    cbTS.setCompositionString(cbTS.compositionChar)
-                    if charStr == 'm':
-                        cbTS.multifunctionmode = False
-                        cbTS.closemenu = False
-                elif self.isSymbolsChar(keyCode) or self.isNumberChar(keyCode):
-                    if self.isNumberChar(keyCode):
-                        cbTS.canUseSelKey = False
-                    cbTS.compositionChar += charStr
-            elif len(cbTS.compositionChar) > 1 and cbTS.multifunctionmode:
-                if cbTS.msymbols.isInCharDef(cbTS.compositionChar[1:] + charStr):
-                    cbTS.menusymbolsmode = False
-                    cbTS.compositionChar += charStr
-                elif cbTS.compositionChar[:2] == '`U':
-                    if keyCode >= 0x30 and keyCode <= 0x46:
-                        cbTS.compositionChar += charStr.upper()
-                        cbTS.setCompositionString(cbTS.compositionChar)
-                elif cbTS.compositionChar[:2] == '``':
-                    if keyCode == VK_OEM_3:
-                        cbTS.compositionChar += charStr
-
-            if len(cbTS.compositionChar) == 3 and cbTS.multifunctionmode:
-                if cbTS.compositionChar == '```':
-                    cbTS.compositionChar = '`M'
-                    cbTS.setCompositionString(cbTS.compositionChar)
-                    cbTS.multifunctionmode = False
-                    cbTS.closemenu = False
-
-        if cbTS.multifunctionmode:
-            # 按下 ESC 鍵
-            if keyCode == VK_ESCAPE and (cbTS.showCandidates or len(cbTS.compositionChar) > 0):
-                self.resetComposition(cbTS)
-                return True
-            # 刪掉一個字根
-            elif keyCode == VK_BACK:
-                if cbTS.compositionString != '':
-                    cbTS.setCompositionString(cbTS.compositionString[:-1])
-                    cbTS.compositionChar = cbTS.compositionChar[:-1]
-                    cbTS.setCandidateCursor(0)
-                    cbTS.setCandidatePage(0)
-                    if cbTS.compositionChar == '':
-                        self.resetComposition(cbTS)
-                        return True
-            elif keyCode == VK_RETURN and cbTS.menusymbolsmode and cbTS.isComposing() and not cbTS.showCandidates:
-                cbTS.setCommitString(cbTS.compositionString)
-                self.resetComposition(cbTS)
-
-            # Unicode 編碼字元超過 6 + 2 個
-            if cbTS.compositionChar[:2] == '`U' and len(cbTS.compositionChar) > 8:
-                cbTS.setCompositionString(cbTS.compositionString[:-1])
-                cbTS.compositionChar = cbTS.compositionChar[:-1]
-
-            if cbTS.msymbols.isInCharDef(cbTS.compositionChar[1:]) and cbTS.closemenu and len(
-                    cbTS.compositionChar) >= 2:
-                candidates = cbTS.msymbols.getCharDef(cbTS.compositionChar[1:])
-                if charStr == '`' and cbTS.menusymbolsmode:
-                    commitStr = cbTS.compositionString
-                    self.resetComposition(cbTS)
-                    if cbTS.directOutMSymbols:
-                        cbTS.setCommitString(commitStr)
-                        cbTS.keepComposition = True
-                        cbTS.keepType = "menusymbols"
-                    cbTS.menusymbolsmode = False
-                    cbTS.multifunctionmode = True
-                    cbTS.compositionChar = "`"
-                    cbTS.setCompositionString("`")
-                    if cbTS.directOutMSymbols:
-                        return True
-                else:
-                    cbTS.setCompositionString(candidates[0])
-                cbTS.setCompositionCursor(len(cbTS.compositionString))
-
-        if cbTS.multifunctionmode and not cbTS.menusymbolsmode and cbTS.directCommitSymbol:
-            if cbTS.msymbols.isInCharDef(cbTS.compositionChar[1:]):
-                cbTS.menusymbolsmode = True
-        elif cbTS.multifunctionmode and cbTS.menusymbolsmode and cbTS.directCommitSymbol and keyEvent.isPrintableChar():
-            if not cbTS.msymbols.isInCharDef(cbTS.compositionChar[1:] + charStr) and cbTS.cin.isInKeyName(charStr):
-                cbTS.setCommitString(cbTS.compositionString)
-                self.resetComposition(cbTS)
-                cbTS.keepComposition = True
-        elif cbTS.multifunctionmode and not cbTS.menusymbolsmode and not cbTS.directCommitSymbol:
-            if cbTS.msymbols.isInCharDef(cbTS.compositionChar[1:]):
-                cbTS.menusymbolsmode = True
-
         # 功能選單 ----------------------------------------------------------------
         if cbTS.langMode == ARABIC_MODE and (cbTS.compositionChar == "`M" or cbTS.compositionChar == "`E"):
             menu_fullShapeSymbols = "☑ Shift 輸入全形標點" if cbTS.fullShapeSymbols else "☐ Shift 輸入全形標點"
@@ -598,7 +498,7 @@ class CinBase:
         # 按鍵處理 ----------------------------------------------------------------
         # 某些狀況須要特別處理或忽略
         # 如果輸入編輯區為空且選單未開啟過，不處理 Enter 及 Backspace 鍵
-        if not cbTS.isComposing() and cbTS.closemenu and not cbTS.multifunctionmode:
+        if not cbTS.isComposing() and cbTS.closemenu:
             if keyCode == VK_RETURN or keyCode == VK_BACK:
                 return False
 
@@ -610,7 +510,7 @@ class CinBase:
         if cbTS.langMode == ARABIC_MODE and keyEvent.isKeyDown(VK_CONTROL):
             # If the specified symbol key is pressed, the input method needs to process this key
             if self.isCtrlSymbolsChar(keyCode):
-                if cbTS.msymbols.isInCharDef(charStr) and cbTS.closemenu and not cbTS.multifunctionmode:
+                if cbTS.msymbols.isInCharDef(charStr) and cbTS.closemenu:
                     if not cbTS.ctrlsymbolsmode:
                         cbTS.ctrlsymbolsmode = True
                         cbTS.compositionChar = charStr
@@ -641,7 +541,7 @@ class CinBase:
 
         # 按下的鍵為 CIN 內有定義的字根
         if cbTS.cin.isInKeyName(
-                charStr) and cbTS.closemenu and not cbTS.multifunctionmode and not keyEvent.isKeyDown(
+                charStr) and cbTS.closemenu and not keyEvent.isKeyDown(
             VK_CONTROL) and not cbTS.ctrlsymbolsmode and not cbTS.selcandmode and not cbTS.tempEnglishMode:
             if not cbTS.directShowCand and cbTS.showCandidates and self.isInSelKeys(cbTS, charCode):
                 # 不送出 CIN 所定義的字根
@@ -655,8 +555,7 @@ class CinBase:
                 else:
                     cbTS.menusymbolsmode = False
 
-        if cbTS.langMode == ARABIC_MODE and len(
-                cbTS.compositionChar) >= 1 and not cbTS.menumode and not cbTS.multifunctionmode:
+        if cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1 and not cbTS.menumode:
             cbTS.showmenu = False
             if not cbTS.directShowCand and not cbTS.selcandmode:
                 if not cbTS.lastCompositionCharLength == len(cbTS.compositionChar):
@@ -797,15 +696,6 @@ class CinBase:
                     if not cbTS.isSelKeysChanged:
                         cbTS.setShowCandidates(True)
 
-                # 多功能前導字元
-                if cbTS.multifunctionmode and cbTS.directCommitSymbol and not cbTS.selcandmode:
-                    if len(candidates) == 1:
-                        cand = candidates[0]
-                        cbTS.setCommitString(cand)
-                        self.resetComposition(cbTS)
-                        candCursor = 0
-                        currentCandPage = 0
-
                 if cbTS.isShowCandidates:
                     # 使用選字鍵執行項目或輸出候選字
                     if self.isInSelKeys(cbTS, charCode) and not keyEvent.isKeyDown(VK_SHIFT) and cbTS.canUseSelKey:
@@ -895,31 +785,13 @@ class CinBase:
                 # Pressed space or enter
                 if (keyCode == VK_SPACE or keyCode == VK_RETURN) and not cbTS.tempEnglishMode:
                     if len(candidates) == 0:
-                        if cbTS.multifunctionmode:
-                            if cbTS.compositionChar == '`':
-                                cbTS.setCommitString(cbTS.compositionChar)
-                                self.resetComposition(cbTS)
-                            else:
-                                if cbTS.compositionChar[:2] == '`U':
-                                    if len(cbTS.compositionChar) > 2:
-                                        commitStr = chr(int(cbTS.compositionChar[2:], 16))
-                                        cbTS.lastCommitString = commitStr
-
-                                        cbTS.setCommitString(commitStr)
-
-                                        self.resetComposition(cbTS)
-                                    else:
-                                        if not cbTS.client.isUiLess:
-                                            cbTS.isShowMessage = True
-                                            cbTS.showMessage("Please enter the Unicode code...", cbTS.messageDurationTime)
-                        else:
-                            if not cbTS.client.isUiLess:
-                                cbTS.isShowMessage = True
-                                cbTS.showMessage("Check no group words 1...", cbTS.messageDurationTime)
-                            if cbTS.autoClearCompositionChar:
-                                self.resetComposition(cbTS)
-                            if cbTS.playSoundWhenNonCand:
-                                winsound.PlaySound('alert', winsound.SND_ASYNC)
+                        if not cbTS.client.isUiLess:
+                            cbTS.isShowMessage = True
+                            cbTS.showMessage("Check no group words 1...", cbTS.messageDurationTime)
+                        if cbTS.autoClearCompositionChar:
+                            self.resetComposition(cbTS)
+                        if cbTS.playSoundWhenNonCand:
+                            winsound.PlaySound('alert', winsound.SND_ASYNC)
                 elif cbTS.useEndKey and charStr in cbTS.endKeyList:
                     if len(candidates) == 0:
                         if not len(cbTS.compositionChar) == 1 and not cbTS.compositionChar == charStr:
@@ -935,7 +807,7 @@ class CinBase:
                 cbTS.isShowCandidates = False
 
         if cbTS.langMode == ARABIC_MODE and cbTS.isComposing() and not cbTS.showCandidates:
-            if cbTS.closemenu and not cbTS.multifunctionmode and not cbTS.selcandmode:
+            if cbTS.closemenu and not cbTS.selcandmode:
                 if keyCode == VK_RETURN:
                     if cbTS.cin.isInKeyName(cbTS.compositionChar) and len(
                             cbTS.compositionChar) == 1 and self.isSymbolsAndNumberChar(cbTS.compositionChar):
@@ -994,7 +866,6 @@ class CinBase:
             self.toggleLanguageMode(cbTS)  # Switch between Arabic and Latin mode
             cbTS.isLangModeChanged = False
             cbTS.showmenu = False
-            cbTS.multifunctionmode = False
             if not cbTS.hidePromptMessages and not cbTS.client.isUiLess:
                 message = 'Arabic mode' if cbTS.langMode == ARABIC_MODE else 'Latin mode'
                 cbTS.isShowMessage = True
@@ -1096,12 +967,6 @@ class CinBase:
             cbTS.keepComposition = False
 
             if cbTS.keepType != "":
-                if cbTS.keepType == "menusymbols":
-                    if cbTS.compositionChar == "`":
-                        self.resetComposition(cbTS)
-                        cbTS.multifunctionmode = True
-                        cbTS.compositionChar = "`"
-                        cbTS.setCompositionString("`")
                 if cbTS.keepType == "fullShapeSymbols":
                     if cbTS.fsymbols.isInCharDef(cbTS.compositionChar):
                         fullShapeSymbolsList = cbTS.fsymbols.getCharDef(cbTS.compositionChar)
@@ -1197,7 +1062,6 @@ class CinBase:
         cbTS.setCandidateList([])
         cbTS.setShowCandidates(False)
         cbTS.menumode = False
-        cbTS.multifunctionmode = False
         cbTS.menusymbolsmode = False
         cbTS.ctrlsymbolsmode = False
         cbTS.fullsymbolsmode = False

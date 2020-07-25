@@ -53,8 +53,6 @@ class CinBaseConfig:
         self.easySymbolsWithShift = False
         self.showPhrase = False
         self.sortByPhrase = True
-        self.compositionBufferMode = False
-        self.autoMoveCursorInBrackets = False
         self.userExtendTable = False
         self.reLoadTable = False
         self.priorityExtendTable = False

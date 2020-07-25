@@ -460,12 +460,6 @@ function pageReady() {
             }
         }
 
-        if ($('#compositionBufferMode')[0].checked == false) {
-            $("#autoMoveCursorInBrackets")[0].disabled = true;
-        } else {
-            $("#autoMoveCursorInBrackets")[0].disabled = false;
-        }
-
         if ($('#fullShapeSymbols')[0].checked == false) {
             $("#directOutFSymbols")[0].disabled = true;
         } else {
@@ -479,14 +473,6 @@ function pageReady() {
     $('#navbars ul li a').click(function(){
         if($('.navbar-toggle').css('display') != 'none' && $(this).attr('href') != '#') {
             $('.navbar-toggle').click();
-        }
-    });
-
-    $('#compositionBufferMode').click(function() {
-        if ($('#compositionBufferMode')[0].checked == false) {
-            $("#autoMoveCursorInBrackets")[0].disabled = true;
-        } else {
-            $("#autoMoveCursorInBrackets")[0].disabled = false;
         }
     });
 
@@ -510,15 +496,9 @@ function pageReady() {
         updateKeyboardLayout();
     });
 
-    if(!debugMode) {
-        $("#compositionBufferMode")[0].disabled = true;
-        $("#autoMoveCursorInBrackets")[0].disabled = true;
-        $("#compositionBufferMode")[0].checked = false;
-        $("#autoMoveCursorInBrackets")[0].checked = false;
-    } else {
+    if(debugMode) {
         $('#intelligent_ddmenu').show();
     }
-
 
     // keep the server alive every 20 second
     setInterval(function () {

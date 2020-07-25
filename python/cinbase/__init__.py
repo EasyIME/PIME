@@ -27,7 +27,6 @@ import winsound
 from keycodes import *  # for VK_XXX constants
 from .cin import Cin
 from .debug import Debug
-from .flangs import flangs
 from .fsymbols import fsymbols
 from .msymbols import msymbols
 from .swkb import swkb
@@ -184,8 +183,6 @@ class CinBase:
             del cbTS.symbols
         if hasattr(cbTS, 'fsymbols'):
             del cbTS.fsymbols
-        if hasattr(cbTS, 'flangs'):
-            del cbTS.flangs
         if hasattr(cbTS, 'msymbols'):
             del cbTS.msymbols
 
@@ -572,11 +569,6 @@ class CinBase:
                         pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
                         cbTS.resetMenuCand = self.switchMenuType(cbTS, 2,
                                                                  ["0," + str(candCursor) + "," + str(currentCandPage)])
-                    elif cbTS.menutype == 0 and itemName == "外語文字":  # 切至外語文字頁面
-                        cbTS.menucandidates = cbTS.flangs.getKeyNames()
-                        pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
-                        cbTS.resetMenuCand = self.switchMenuType(cbTS, 5,
-                                                                 ["0," + str(candCursor) + "," + str(currentCandPage)])
                     elif cbTS.menutype == 0:  # 執行主頁面其它項目
                         menu = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字"]
                         i = menu.index(itemName)
@@ -594,11 +586,6 @@ class CinBase:
                     elif cbTS.menutype == 3:  # 執行特殊符號子頁面項目
                         cbTS.setCommitString(cbTS.candidateList[candCursor])
                         cbTS.resetMenuCand = self.closeMenuCand(cbTS)
-                    elif cbTS.menutype == 5:  # 切至外語文字子頁面
-                        cbTS.menucandidates = cbTS.flangs.getCharDef(cbTS.candidateList[candCursor])
-                        pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
-                        cbTS.resetMenuCand = self.switchMenuType(cbTS, 6,
-                                                                 ["5," + str(candCursor) + "," + str(currentCandPage)])
                     elif cbTS.menutype == 6:  # 執行外語文字子頁面項目
                         cbTS.setCommitString(cbTS.candidateList[candCursor])
                         cbTS.resetMenuCand = self.closeMenuCand(cbTS)
@@ -1207,8 +1194,6 @@ class CinBase:
             cbTS.menucandidates = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字"]
         if menutype == 2:
             cbTS.menucandidates = cbTS.symbols.getKeyNames()
-        if menutype == 5:
-            cbTS.menucandidates = cbTS.menucandidates = cbTS.flangs.getKeyNames()
 
         pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
         return pagecandidates
@@ -1356,8 +1341,6 @@ class CinBase:
             del cbTS.symbols
         if hasattr(cbTS, 'fsymbols'):
             del cbTS.fsymbols
-        if hasattr(cbTS, 'flangs'):
-            del cbTS.flangs
         if hasattr(cbTS, 'msymbols'):
             del cbTS.msymbols
 
@@ -1375,10 +1358,6 @@ class CinBase:
         fsymbolsPath = cfg.findFile(datadirs, "fsymbols.dat")
         with io.open(fsymbolsPath, 'r', encoding='utf-8') as fs:
             cbTS.fsymbols = fsymbols(fs)
-
-        flangsPath = cfg.findFile(datadirs, "flangs.dat")
-        with io.open(flangsPath, 'r', encoding='utf-8') as fs:
-            cbTS.flangs = flangs(fs)
 
         msymbolsPath = cfg.findFile(datadirs, "msymbols.json")
         with io.open(msymbolsPath, 'r', encoding='utf-8') as fs:

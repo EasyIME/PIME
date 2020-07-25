@@ -75,8 +75,7 @@ class ConfigHandler(BaseHandler):
             "config": self.load_config(),
             "symbols": self.load_data("symbols.dat"),
             "swkb": self.load_data("swkb.dat"),
-            "fsymbols": self.load_data("fsymbols.dat"),
-            "flangs": self.load_data("flangs.dat"),
+            "fsymbols": self.load_data("fsymbols.dat")
         }
         self.write(data)
 
@@ -103,11 +102,6 @@ class ConfigHandler(BaseHandler):
         fsymbols = data.get("fsymbols", None)
         if fsymbols:
             self.save_file("fsymbols.dat", fsymbols)
-        self.write('{"return":true}')
-
-        flangs = data.get("flangs", None)
-        if flangs:
-            self.save_file("flangs.dat", flangs)
         self.write('{"return":true}')
 
     def load_config(self):

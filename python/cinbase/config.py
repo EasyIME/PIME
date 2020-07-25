@@ -61,7 +61,7 @@ class CinBaseConfig:
         self.selCinFile = ""
         self.imeDirName = ""
 
-        # version: last modified time of (config.json, symbols.dat, swkb.dat, fsymbols.dat, flangs.dat)
+        # version: last modified time of (config.json, symbols.dat, swkb.dat, fsymbols.dat)
         self._version = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self._lastUpdateTime = 0.0
 
@@ -170,16 +170,8 @@ class CinBaseConfig:
             except Exception:
                 pass
 
-        flangsTime = 0.0
-        flangsFile = self.findFile(datadirs, "flangs.dat")
-        if flangsFile:
-            try:
-                flangsTime = os.path.getmtime(flangsFile)
-            except Exception:
-                pass
-
         lastConfigTime = self._version[0]
-        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime, flangsTime)
+        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime)
 
         # the main config file is changed, reload it
         if lastConfigTime != configTime:

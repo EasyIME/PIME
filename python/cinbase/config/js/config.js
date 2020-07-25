@@ -8,12 +8,10 @@ var hasInnerText = (document.getElementsByTagName("body")[0].innerText !== undef
 var symbolsChanged = false;
 var swkbChanged = false;
 var fsymbolsChanged = false;
-var flangsChanged = false;
 
 var symbolsData = "";
 var swkbData = "";
 var fsymbolsData = "";
-var flangsData = "";
 
 var isIE = (function() {
     var browser = {};
@@ -64,7 +62,6 @@ function loadConfig() {
         symbolsData = data.symbols;
         swkbData = data.swkb;
         fsymbolsData = data.fsymbols;
-        flangsData = data.flangs;
     }, "json");
 }
 loadConfig();
@@ -89,12 +86,6 @@ function saveConfig(callbackFunc) {
         return false;
     }
 
-    // Check foreign language format
-    checkState = checkDataFormat($("#flangs").val(), "2", "#flangs", "外語文字");
-    if (!checkState) {
-        return false;
-    }
-
     var data = {
         "config": checjConfig
     }
@@ -107,9 +98,6 @@ function saveConfig(callbackFunc) {
     }
     if(fsymbolsChanged) {
         data.fsymbols = $("#fs_symbols").val();
-    }
-    if(flangsChanged) {
-        data.flangs = $("#flangs").val();
     }
     $.ajax({
         url: CONFIG_URL,
@@ -278,7 +266,6 @@ $(function() {
     $("#symbols_page").load("config.htm #symbols_page");
     $("#fs_symbols_page").load("config.htm #fs_symbols_page");
     $("#ez_symbols_page").load("config.htm #ez_symbols_page");
-    $("#flangs_page").load("config.htm #flangs_page");
     $("#navbar_bottom").load("config.htm #navbar_bottom");
     pageWait();
 });
@@ -299,7 +286,6 @@ function pageReady() {
     $("#symbols").val(symbolsData);
     $("#ez_symbols").val(swkbData);
     $("#fs_symbols").val(fsymbolsData);
-    $("#flangs").val(flangsData);
 
     $("#candPerRow").TouchSpin({min:1, max:10});
     $("#candPerPage").TouchSpin({min:1, max:10});

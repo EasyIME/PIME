@@ -8,14 +8,12 @@ var hasInnerText = (document.getElementsByTagName("body")[0].innerText !== undef
 var symbolsChanged = false;
 var swkbChanged = false;
 var fsymbolsChanged = false;
-var phraseChanged = false;
 var flangsChanged = false;
 var extendtableChanged = false;
 
 var symbolsData = "";
 var swkbData = "";
 var fsymbolsData = "";
-var phraseData = "";
 var flangsData = "";
 var extendtableData = "";
 
@@ -68,7 +66,6 @@ function loadConfig() {
         symbolsData = data.symbols;
         swkbData = data.swkb;
         fsymbolsData = data.fsymbols;
-        phraseData = data.phrase;
         flangsData = data.flangs;
         extendtableData = data.extendtable;
     }, "json");
@@ -91,12 +88,6 @@ function saveConfig(callbackFunc) {
 
     // Check fullshape symbols format
     checkState = checkDataFormat($("#fs_symbols").val(), "2", "#fs_symbols", "全形標點符號");
-    if (!checkState) {
-        return false;
-    }
-
-    // Check user phrase format
-    checkState = checkDataFormat($("#phrase").val(), "2", "#phrase", "聯想字詞");
     if (!checkState) {
         return false;
     }
@@ -125,9 +116,6 @@ function saveConfig(callbackFunc) {
     }
     if(fsymbolsChanged) {
         data.fsymbols = $("#fs_symbols").val();
-    }
-    if(phraseChanged) {
-        data.phrase = $("#phrase").val();
     }
     if(flangsChanged) {
         data.flangs = $("#flangs").val();
@@ -299,14 +287,11 @@ $(function() {
     $("#typing_page").load("config.htm #typing_page");
     $("#intelligent_page").load("config.htm #intelligent_page");
     $("#ui_page").load("config.htm #ui_page");
-    $("#keyboard_page").load("config.htm #keyboard_page");
-    $("#cin_count").load("config.htm #cin_count");
     $("#cin_options").load("config.htm #cin_options");
     $("#extendtable_page").load("config.htm #extendtable_page");
     $("#symbols_page").load("config.htm #symbols_page");
     $("#fs_symbols_page").load("config.htm #fs_symbols_page");
     $("#ez_symbols_page").load("config.htm #ez_symbols_page");
-    $("#phrase_page").load("config.htm #phrase_page");
     $("#flangs_page").load("config.htm #flangs_page");
     $("#navbar_bottom").load("config.htm #navbar_bottom");
     pageWait();
@@ -328,7 +313,6 @@ function pageReady() {
     $("#symbols").val(symbolsData);
     $("#ez_symbols").val(swkbData);
     $("#fs_symbols").val(fsymbolsData);
-    $("#phrase").val(phraseData);
     $("#flangs").val(flangsData);
     $("#extendtable").val(extendtableData);
 

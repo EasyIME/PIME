@@ -51,8 +51,6 @@ class CinBaseConfig:
         self.directOutFSymbols = False
         self.directOutMSymbols = True
         self.easySymbolsWithShift = False
-        self.showPhrase = False
-        self.sortByPhrase = True
         self.userExtendTable = False
         self.reLoadTable = False
         self.priorityExtendTable = False
@@ -66,7 +64,7 @@ class CinBaseConfig:
         self.selCinFile = ""
         self.imeDirName = ""
 
-        # version: last modified time of (config.json, symbols.dat, swkb.dat, fsymbols.dat, flangs.dat, userphrase.dat)
+        # version: last modified time of (config.json, symbols.dat, swkb.dat, fsymbols.dat, flangs.dat)
         self._version = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self._lastUpdateTime = 0.0
 
@@ -183,14 +181,6 @@ class CinBaseConfig:
             except Exception:
                 pass
 
-        userphraseTime = 0.0
-        userphraseFile = self.findFile(datadirs, "userphrase.dat")
-        if userphraseFile:
-            try:
-                userphraseTime = os.path.getmtime(userphraseFile)
-            except Exception:
-                pass
-
         extendtableTime = 0.0
         extendtableFile = self.findFile(datadirs, "extendtable.dat")
         if extendtableFile:
@@ -200,7 +190,7 @@ class CinBaseConfig:
                 pass
 
         lastConfigTime = self._version[0]
-        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime, flangsTime, userphraseTime)
+        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime, flangsTime)
 
         # the main config file is changed, reload it
         if lastConfigTime != configTime:

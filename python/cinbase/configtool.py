@@ -39,10 +39,7 @@ data_dir = os.path.join(current_dir, "data")
 json_dir = os.path.join(current_dir, "json")
 localdata_dir = os.path.join(cfg.getConfigDir())
 
-if len(sys.argv) >= 2 and sys.argv[1] == "user_phrase_editor":
-    tool_name = "user_phrase_editor"
-else:
-    tool_name = "config"
+tool_name = "config"
 
 COOKIE_ID = "cinbase_config_token"
 SERVER_TIMEOUT = 120
@@ -83,7 +80,6 @@ class ConfigHandler(BaseHandler):
             "symbols": self.load_data("symbols.dat"),
             "swkb": self.load_data("swkb.dat"),
             "fsymbols": self.load_data("fsymbols.dat"),
-            "phrase": self.load_data("userphrase.dat"),
             "flangs": self.load_data("flangs.dat"),
             "extendtable": self.load_data("extendtable.dat")
         }
@@ -112,11 +108,6 @@ class ConfigHandler(BaseHandler):
         fsymbols = data.get("fsymbols", None)
         if fsymbols:
             self.save_file("fsymbols.dat", fsymbols)
-        self.write('{"return":true}')
-
-        phrase = data.get("phrase", None)
-        if phrase:
-            self.save_file("userphrase.dat", phrase)
         self.write('{"return":true}')
 
         flangs = data.get("flangs", None)
@@ -160,8 +151,7 @@ class LoginHandler(BaseHandler):
         token = self.get_argument("token", "")
         if token == self.settings["access_token"]:
             self.set_cookie(COOKIE_ID, token)
-            if page_name != "user_phrase_editor":
-                page_name = "config"
+            page_name = "config"
             self.redirect("/{}.html".format(page_name))
 
 

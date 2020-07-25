@@ -24,7 +24,7 @@ from textService import *
 
 
 class ArabicTextService(TextService):
-    compositionChar = ';'
+    compositionChar = ''
 
     def __init__(self, client):
         TextService.__init__(self, client)

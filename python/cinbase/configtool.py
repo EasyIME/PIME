@@ -74,7 +74,6 @@ class ConfigHandler(BaseHandler):
             "imename": cfg.imeDirName,
             "config": self.load_config(),
             "symbols": self.load_data("symbols.dat"),
-            "swkb": self.load_data("swkb.dat"),
             "fsymbols": self.load_data("fsymbols.dat")
         }
         self.write(data)
@@ -93,11 +92,6 @@ class ConfigHandler(BaseHandler):
         symbols = data.get("symbols", None)
         if symbols:
             self.save_file("symbols.dat", symbols)
-
-        swkb = data.get("swkb", None)
-        if swkb:
-            self.save_file("swkb.dat", swkb)
-        self.write('{"return":true}')
 
         fsymbols = data.get("fsymbols", None)
         if fsymbols:

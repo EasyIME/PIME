@@ -6,11 +6,9 @@ var KEEP_ALIVE_URL = '/keep_alive';
 var hasInnerText = (document.getElementsByTagName("body")[0].innerText !== undefined) ? true : false;
 
 var symbolsChanged = false;
-var swkbChanged = false;
 var fsymbolsChanged = false;
 
 var symbolsData = "";
-var swkbData = "";
 var fsymbolsData = "";
 
 var isIE = (function() {
@@ -60,7 +58,6 @@ function loadConfig() {
     $.get(CONFIG_URL, function(data, status) {
         checjConfig = data.config;
         symbolsData = data.symbols;
-        swkbData = data.swkb;
         fsymbolsData = data.fsymbols;
     }, "json");
 }
@@ -70,12 +67,6 @@ function saveConfig(callbackFunc) {
     var checkState = true
     // Check symbols format
     checkState = checkDataFormat($("#symbols").val(), "2", "#symbols", "特殊符號");
-    if (!checkState) {
-        return false;
-    }
-
-    // Check easy symbols format
-    checkState = checkDataFormat($("#ez_symbols").val(), "1", "#ez_symbols", "簡易符號");
     if (!checkState) {
         return false;
     }
@@ -92,9 +83,6 @@ function saveConfig(callbackFunc) {
 
     if(symbolsChanged) {
         data.symbols = $("#symbols").val();
-    }
-    if(swkbChanged) {
-        data.swkb = $("#ez_symbols").val();
     }
     if(fsymbolsChanged) {
         data.fsymbols = $("#fs_symbols").val();
@@ -265,7 +253,6 @@ $(function() {
     $("#cin_options").load("config.htm #cin_options");
     $("#symbols_page").load("config.htm #symbols_page");
     $("#fs_symbols_page").load("config.htm #fs_symbols_page");
-    $("#ez_symbols_page").load("config.htm #ez_symbols_page");
     $("#navbar_bottom").load("config.htm #navbar_bottom");
     pageWait();
 });
@@ -284,7 +271,6 @@ function pageReady() {
     $('[data-toggle="popover"]').popover()
 
     $("#symbols").val(symbolsData);
-    $("#ez_symbols").val(swkbData);
     $("#fs_symbols").val(fsymbolsData);
 
     $("#candPerRow").TouchSpin({min:1, max:10});

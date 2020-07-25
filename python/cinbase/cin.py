@@ -9,9 +9,8 @@ class Cin(object):
     # TODO check the possiblility if the encoding is not utf-8
     encoding = 'utf-8'
 
-    def __init__(self, fs, imeDirName, ignorePrivateUseArea):
+    def __init__(self, fs, imeDirName):
         self.imeDirName = imeDirName
-        self.ignorePrivateUseArea = ignorePrivateUseArea
         self.curdir = os.path.abspath(os.path.dirname(__file__))
 
         self.ename = ""
@@ -19,28 +18,17 @@ class Cin(object):
         self.selkey = ""
         self.keynames = {}
         self.chardefs = {}
-        self.privateuse = {}
         self.dupchardefs = {}
 
         self.__dict__.update(json.load(fs))
 
-        if self.ignorePrivateUseArea:
-            for key in self.privateuse:
-                newvalue = list(self.chardefs[key])
-                for value in self.privateuse[key]:
-                    if value in newvalue:
-                        newvalue.remove(value)
-                self.chardefs[key] = newvalue
-
     def __del__(self):
         del self.keynames
         del self.chardefs
-        del self.privateuse
         del self.dupchardefs
 
         self.keynames = {}
         self.chardefs = {}
-        self.privateuse = {}
         self.dupchardefs = {}
 
     def getEname(self):

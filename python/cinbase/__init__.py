@@ -29,7 +29,6 @@ from .cin import Cin
 from .debug import Debug
 from .fsymbols import fsymbols
 from .msymbols import msymbols
-from .swkb import swkb
 from .symbols import symbols
 
 ARABIC_MODE = 1
@@ -75,11 +74,9 @@ class CinBase:
         cbTS.directCommitSymbolList = ["，", "。", "、", "；", "？", "！"]
         cbTS.bracketSymbolList = ["「」", "『』", "［］", "【】", "〖〗", "〔〕", "﹝﹞", "（）", "﹙﹚", "〈〉", "《》", "＜＞", "﹤﹥", "｛｝",
                                   "﹛﹜"]
-        cbTS.ignorePrivateUseArea = True
         cbTS.directOutMSymbols = True
         cbTS.fullShapeSymbols = False
         cbTS.directOutFSymbols = False
-        cbTS.easySymbolsWithShift = False
         cbTS.reLoadTable = False
         cbTS.messageDurationTime = 3
 
@@ -177,8 +174,6 @@ class CinBase:
         if cbTS.client.isWindows8Above:
             cbTS.removeButton("windows-mode-icon")
 
-        if hasattr(cbTS, 'swkb'):
-            del cbTS.swkb
         if hasattr(cbTS, 'symbols'):
             del cbTS.symbols
         if hasattr(cbTS, 'fsymbols'):
@@ -245,9 +240,6 @@ class CinBase:
         # 若按下 Shift 鍵
         if keyEvent.isKeyDown(VK_SHIFT):
             if cbTS.langMode == ARABIC_MODE and not keyEvent.isKeyDown(VK_CONTROL):
-                # 若開啟 Shift 快速輸入符號，輸入法需要處理此按鍵
-                if cbTS.easySymbolsWithShift and self.isLetterChar(keyEvent.keyCode):
-                    return True
                 # 若開啟 Shift 輸入全形標點，輸入法需要處理此按鍵
                 if cbTS.fullShapeSymbols and (
                         self.isSymbolsChar(keyEvent.keyCode) or self.isNumberChar(keyEvent.keyCode)):
@@ -434,13 +426,12 @@ class CinBase:
         # 功能選單 ----------------------------------------------------------------
         if cbTS.langMode == ARABIC_MODE and (cbTS.compositionChar == "`M" or cbTS.compositionChar == "`E"):
             menu_fullShapeSymbols = "☑ Shift 輸入全形標點" if cbTS.fullShapeSymbols else "☐ Shift 輸入全形標點"
-            menu_easySymbolsWithShift = "☑ Shift 快速輸入符號" if cbTS.easySymbolsWithShift else "☐ Shift 快速輸入符號"
             menu_autoClearCompositionChar = "☑ 拆錯字碼時自動清除輸入字串" if cbTS.autoClearCompositionChar else "☐ 拆錯字碼時自動清除輸入字串"
             menu_playSoundWhenNonCand = "☑ 拆錯字碼時發出警告嗶聲提示" if cbTS.playSoundWhenNonCand else "☐ 拆錯字碼時發出警告嗶聲提示"
 
-            cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar,
+            cbTS.smenucandidates = [menu_fullShapeSymbols, menu_autoClearCompositionChar,
                                     menu_playSoundWhenNonCand]
-            cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "autoClearCompositionChar",
+            cbTS.smenuitems = ["fullShapeSymbols", "autoClearCompositionChar",
                                "playSoundWhenNonCand"]
 
             if not cbTS.closemenu:
@@ -773,7 +764,7 @@ class CinBase:
                                 if cbTS.isShowCandidates:
                                     cbTS.canUseSelKey = True
 
-                        # Word full and symbol processing (Zhuyin, Easy)
+                        # Word full and symbol processing (Zhuyin)
                         if cbTS.autoShowCandWhenMaxChar:
                             if len(cbTS.compositionChar) == cbTS.maxCharLength:
                                 if not cbTS.isShowCandidates:
@@ -1164,8 +1155,6 @@ class CinBase:
             commandItem = cbTS.smenuitems[commandId]
             if commandItem == "fullShapeSymbols":
                 cbTS.fullShapeSymbols = not cbTS.fullShapeSymbols
-            elif commandItem == "easySymbolsWithShift":
-                cbTS.easySymbolsWithShift = not cbTS.easySymbolsWithShift
             elif commandItem == "autoClearCompositionChar":
                 cbTS.autoClearCompositionChar = not cbTS.autoClearCompositionChar
             elif commandItem == "playSoundWhenNonCand":
@@ -1332,11 +1321,8 @@ class CinBase:
 
             self.updateLangButtons(cbTS)
 
-        # 所有 CheCJTextService 共享一份輸入法碼表
         cbTS.selCinType = cfg.selCinType
 
-        if hasattr(cbTS, 'swkb'):
-            del cbTS.swkb
         if hasattr(cbTS, 'symbols'):
             del cbTS.symbols
         if hasattr(cbTS, 'fsymbols'):
@@ -1347,10 +1333,6 @@ class CinBase:
         self.applyConfig(cbTS)  # 套用其餘的使用者設定
 
         datadirs = (cfg.getConfigDir(), cfg.getDataDir())
-        swkbPath = cfg.findFile(datadirs, "swkb.dat")
-        with io.open(swkbPath, 'r', encoding='utf-8') as fs:
-            cbTS.swkb = swkb(fs)
-
         symbolsPath = cfg.findFile(datadirs, "symbols.dat")
         with io.open(symbolsPath, 'r', encoding='utf-8') as fs:
             cbTS.symbols = symbols(fs)
@@ -1398,9 +1380,6 @@ class CinBase:
         # 直接輸出全形標點首個候選符號?
         cbTS.directOutFSymbols = cfg.directOutFSymbols
 
-        # Shift 快速輸入符號?
-        cbTS.easySymbolsWithShift = cfg.easySymbolsWithShift
-
         # 提示訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime
 
@@ -1425,9 +1404,6 @@ class CinBase:
         # 最大候選字個數?
         cbTS.candMaxItems = cfg.candMaxItems
 
-        # 載入碼表時忽略 Unicode 私用區?
-        cbTS.ignorePrivateUseArea = cfg.ignorePrivateUseArea
-
         # 擴充碼表?
         cbTS.reLoadTable = cfg.reLoadTable
 
@@ -1443,9 +1419,6 @@ class CinBase:
         # If the input method code table is changed, reload the code table data
         if not CinTable.loading:
             if not CinTable.curCinType == cfg.selCinType:
-                reLoadCinTable = True
-
-            if not CinTable.ignorePrivateUseArea == cfg.ignorePrivateUseArea:
                 reLoadCinTable = True
 
             if cfg.reLoadTable:
@@ -1505,9 +1478,8 @@ class LoadCinTable(threading.Thread):
             self.CinTable.cin = None
 
             with io.open(jsonPath, 'r', encoding='utf8') as fs:
-                self.cbTS.cin = Cin(fs, self.cbTS.imeDirName, self.cbTS.ignorePrivateUseArea)
+                self.cbTS.cin = Cin(fs, self.cbTS.imeDirName)
             self.CinTable.cin = self.cbTS.cin
             self.CinTable.curCinType = self.cbTS.cfg.selCinType
 
-        self.CinTable.ignorePrivateUseArea = self.cbTS.cfg.ignorePrivateUseArea
         self.CinTable.loading = False

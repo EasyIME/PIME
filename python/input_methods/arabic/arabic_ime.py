@@ -48,7 +48,6 @@ class ArabicTextService(TextService):
         self.cfg.cinFileList = self.cinFileList
         self.cfg.load()
         self.jsondir = self.cfg.getJsonDir()
-        self.ignorePrivateUseArea = self.cfg.ignorePrivateUseArea
         self.cinbase.initCinBaseContext(self)
 
         # Load input method code table
@@ -134,7 +133,6 @@ class CinTable:
     def __init__(self):
         self.cin = None
         self.curCinType = None
-        self.ignorePrivateUseArea = None
 
 
 CinTable = CinTable()

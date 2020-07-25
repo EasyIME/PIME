@@ -1,8 +1,7 @@
 {
     "keyboardLayout": 0,
     "defaultLatin": false,
-    "candPerRow": 3,
-    "easySymbolsWithShift": false,
+    "candPerRow": 1,
     "candPerPage": 9,
     "selCinType": 0,
     "switchLangWithShift": true,
@@ -18,5 +17,5 @@
     "directCommitString": false,
     "directCommitSymbol": true,
     "directOutMSymbols": true,
-    "candMaxItems": 100,
+    "candMaxItems": 100
 }

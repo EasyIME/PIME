@@ -43,14 +43,12 @@ class CinBaseConfig:
         self.directCommitSymbol = False
         self.fontSize = DEF_FONT_SIZE
         self.selCinType = 0
-        self.ignorePrivateUseArea = True
         self.selKeyType = 0
         self.candPerPage = 9
         self.cursorCandList = True
         self.fullShapeSymbols = False
         self.directOutFSymbols = False
         self.directOutMSymbols = True
-        self.easySymbolsWithShift = False
         self.candMaxItems = 100
         self.messageDurationTime = 3
         self.keyboardType = 0
@@ -61,7 +59,7 @@ class CinBaseConfig:
         self.selCinFile = ""
         self.imeDirName = ""
 
-        # version: last modified time of (config.json, symbols.dat, swkb.dat, fsymbols.dat)
+        # version: last modified time of (config.json, symbols.dat, fsymbols.dat)
         self._version = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self._lastUpdateTime = 0.0
 
@@ -154,14 +152,6 @@ class CinBaseConfig:
             except Exception:
                 pass
 
-        ezSymbolsTime = 0.0
-        ezSymbolsFile = self.findFile(datadirs, "swkb.dat")
-        if ezSymbolsFile:
-            try:
-                ezSymbolsTime = os.path.getmtime(ezSymbolsFile)
-            except Exception:
-                pass
-
         fsymbolsTime = 0.0
         fsymbolsFile = self.findFile(datadirs, "fsymbols.dat")
         if fsymbolsFile:
@@ -171,7 +161,7 @@ class CinBaseConfig:
                 pass
 
         lastConfigTime = self._version[0]
-        self._version = (configTime, symbolsTime, ezSymbolsTime, fsymbolsTime)
+        self._version = (configTime, symbolsTime, fsymbolsTime)
 
         # the main config file is changed, reload it
         if lastConfigTime != configTime:
@@ -191,7 +181,7 @@ class CinBaseConfig:
     # isFullReloadNeeded() checks whether you need to delete the
     # existing chewing context and create a new one.
     # This is often caused by change of data files, such as
-    # symbols.dat and swkb.dat files.
+    # symbols.dat files.
     def isFullReloadNeeded(self, currentVersion):
         return currentVersion[1:] != self._version[1:]
 

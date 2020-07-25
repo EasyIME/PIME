@@ -652,7 +652,7 @@ class CinBase:
 
         # 若按下 Ctrl 鍵
         if cbTS.langMode == ARABIC_MODE and keyEvent.isKeyDown(VK_CONTROL):
-            # 若按下的是指定的符號鍵，輸入法需要處理此按鍵
+            # If the specified symbol key is pressed, the input method needs to process this key
             if self.isCtrlSymbolsChar(keyCode):
                 if cbTS.msymbols.isInCharDef(charStr) and cbTS.closemenu and not cbTS.multifunctionmode:
                     if not cbTS.ctrlsymbolsmode:
@@ -737,7 +737,7 @@ class CinBase:
                     if cbTS.compositionChar == '':
                         self.resetComposition(cbTS)
 
-            # 組字字根超過最大值
+            # Group word exceeds maximum
             if len(cbTS.compositionChar) > cbTS.maxCharLength:
                 if cbTS.cin.isInKeyName(cbTS.compositionChar[len(cbTS.compositionChar) - 1:]):
                     keyLength = len(cbTS.cin.getKeyName(cbTS.compositionChar[len(cbTS.compositionChar) - 1:]))
@@ -756,12 +756,12 @@ class CinBase:
         if cbTS.selcandmode and cbTS.compositionChar != '':
             candidates = cbTS.tempengcandidates
 
-        # 候選清單處理
+        # Candidate list processing
         if (cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1 and not cbTS.menumode) or (
                 cbTS.tempEnglishMode and cbTS.isComposing()):
-            # 如果字根首字是符號就直接輸出
+            # If the first character is a symbol, output directly
             if cbTS.directCommitSymbol and not cbTS.tempEnglishMode and not cbTS.phrasemode and not cbTS.selcandmode:
-                # 如果是全形標點
+                # If it is full-form punctuation
                 if cbTS.fullShapeSymbols and cbTS.fullsymbolsmode:
                     if len(cbTS.compositionChar) >= 2 and cbTS.fsymbols.isInCharDef(cbTS.compositionChar[0]):
                         cbTS.fullsymbolsmode = False
@@ -778,7 +778,7 @@ class CinBase:
                                 candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
                                 if cbTS.sortByPhrase and candidates:
                                     candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
-                # 如果是碼表標點
+                # If it is code table punctuation
                 if cbTS.cin.isInKeyName(cbTS.compositionChar[0]):
                     if cbTS.cin.getKeyName(cbTS.compositionChar[0]) in cbTS.directCommitSymbolList:
                         if not cbTS.cin.isInCharDef(cbTS.compositionChar):
@@ -812,7 +812,7 @@ class CinBase:
                                 if cbTS.isShowCandidates:
                                     cbTS.canUseSelKey = True
 
-                        # 字滿及符號處理 (大易、注音、輕鬆)
+                        # Word full and symbol processing (Zhuyin, Easy)
                         if cbTS.autoShowCandWhenMaxChar:
                             if len(cbTS.compositionChar) == cbTS.maxCharLength:
                                 if not cbTS.isShowCandidates:
@@ -945,8 +945,8 @@ class CinBase:
                     cbTS.setCandidateCursor(candCursor)
                     cbTS.setCandidatePage(currentCandPage)
                     cbTS.setCandidateList(pagecandidates[currentCandPage])
-            else:  # 沒有候選字
-                # 按下空白鍵或 Enter 鍵
+            else:  # No candidates
+                # Pressed space or enter
                 if (keyCode == VK_SPACE or keyCode == VK_RETURN) and not cbTS.tempEnglishMode:
                     if len(candidates) == 0:
                         if cbTS.multifunctionmode:
@@ -971,7 +971,7 @@ class CinBase:
                         else:
                             if not cbTS.client.isUiLess:
                                 cbTS.isShowMessage = True
-                                cbTS.showMessage("Check no group words...", cbTS.messageDurationTime)
+                                cbTS.showMessage("Check no group words 1...", cbTS.messageDurationTime)
                             if cbTS.autoClearCompositionChar:
                                 self.resetComposition(cbTS)
                             if cbTS.playSoundWhenNonCand:
@@ -981,7 +981,7 @@ class CinBase:
                         if not len(cbTS.compositionChar) == 1 and not cbTS.compositionChar == charStr:
                             if not cbTS.client.isUiLess:
                                 cbTS.isShowMessage = True
-                                cbTS.showMessage("Check no group words...", cbTS.messageDurationTime)
+                                cbTS.showMessage("Check no group words 2...", cbTS.messageDurationTime)
                             if cbTS.autoClearCompositionChar:
                                 self.resetComposition(cbTS)
                             if cbTS.playSoundWhenNonCand:

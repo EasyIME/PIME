@@ -16,22 +16,23 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 # keyboard modifiers used by TSF (from msctf.h of Windows SDK)
-TF_MOD_ALT                       = 0x0001
-TF_MOD_CONTROL                   = 0x0002
-TF_MOD_SHIFT                     = 0x0004
-TF_MOD_RALT                      = 0x0008
-TF_MOD_RCONTROL                  = 0x0010
-TF_MOD_RSHIFT                    = 0x0020
-TF_MOD_LALT                      = 0x0040
-TF_MOD_LCONTROL                  = 0x0080
-TF_MOD_LSHIFT                    = 0x0100
-TF_MOD_ON_KEYUP                  = 0x0200
-TF_MOD_IGNORE_ALL_MODIFIER       = 0x0400
+TF_MOD_ALT = 0x0001
+TF_MOD_CONTROL = 0x0002
+TF_MOD_SHIFT = 0x0004
+TF_MOD_RALT = 0x0008
+TF_MOD_RCONTROL = 0x0010
+TF_MOD_RSHIFT = 0x0020
+TF_MOD_LALT = 0x0040
+TF_MOD_LCONTROL = 0x0080
+TF_MOD_LSHIFT = 0x0100
+TF_MOD_ON_KEYUP = 0x0200
+TF_MOD_IGNORE_ALL_MODIFIER = 0x0400
 
 # command type parameter of TextService.onCommand
-COMMAND_LEFT_CLICK  = 0
+COMMAND_LEFT_CLICK = 0
 COMMAND_RIGHT_CLICK = 1
-COMMAND_MENU        = 2
+COMMAND_MENU = 2
+
 
 class KeyEvent:
     def __init__(self, msg):
@@ -193,6 +194,7 @@ class TextService:
     @enable: if the button is enabled (optional)
     @toggled: is the button toggled, only valid if type is "toggle" (optional)
     """
+
     def addButton(self, button_id, **kwargs):
         buttons = self.currentReply.setdefault("addButton", [])
         info = kwargs
@@ -206,6 +208,7 @@ class TextService:
     """
     See addButton() for allowed arguments.
     """
+
     def changeButton(self, button_id, **kwargs):
         buttons = self.currentReply.setdefault("changeButton", [])
         info = kwargs
@@ -216,7 +219,7 @@ class TextService:
     def addPreservedKey(self, keyCode, modifiers, guid):
         keys = self.currentReply.setdefault("addPreservedKey", [])
         keys.append({
-            "keyCode" : keyCode,
+            "keyCode": keyCode,
             "modifiers": modifiers,
             "guid": guid.lower()})
 
@@ -259,6 +262,7 @@ class TextService:
     Valid arguments:
     candFontName, cadFontSize, candPerRow, candUseCursor
     '''
+
     def customizeUI(self, **kwargs):
         data = self.currentReply.setdefault("customizeUI", {})
         data.update(kwargs)
@@ -272,6 +276,7 @@ class TextService:
     @duration is in seconds. After the specified duration, the message will be hidden.
     The currently shown message, if there is any, will be replaced by calling this method.
     '''
+
     def showMessage(self, message, duration=3):
         self.currentReply["showMessage"] = {
             "message": message,

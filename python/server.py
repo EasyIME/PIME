@@ -17,6 +17,7 @@
 
 import json
 import sys
+
 import traceback
 
 if __name__ == "__main__":
@@ -40,7 +41,7 @@ class Client(object):
         self.service = textServiceMgr.createService(self, self.guid)
         return (self.service is not None)
 
-    def handleRequest(self, msg): # msg is a json object
+    def handleRequest(self, msg):  # msg is a json object
         method = msg.get("method")
         seqNum = msg.get("seqNum", 0)
         # print("handle message: ", str(id(self)), method, seqNum)
@@ -51,7 +52,7 @@ class Client(object):
         else:  # the text service is not yet initialized
             reply = {"seqNum": seqNum}
             success = False
-            if method == "init": # initialize the text service
+            if method == "init":  # initialize the text service
                 success = self.init(msg)
             reply["success"] = success
         # print(reply)

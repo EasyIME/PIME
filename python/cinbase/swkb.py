@@ -1,8 +1,8 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
-class swkb(object):
 
+class swkb(object):
     # TODO check the possiblility if the encoding is not utf-8
     encoding = 'utf-8'
 
@@ -31,7 +31,7 @@ class swkb(object):
         return key in self.chardefs
 
     def getCharDef(self, key):
-        """ 
+        """
         will return a list conaining all possible result
         """
         return self.chardefs[key]
@@ -44,5 +44,6 @@ def safeSplit(line):
         return line.split('\t', 1)
     else:
         return line, "Error"
+
 
 __all__ = ["swkb"]

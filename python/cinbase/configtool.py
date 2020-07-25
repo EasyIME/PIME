@@ -15,19 +15,15 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+import json
+import os
+import random
+import sys
+import uuid  # use to generate a random auth token
+
 import tornado.ioloop
 import tornado.web
-import sys
-import io
-import os
-import uuid  # use to generate a random auth token
-import random
-import json
-import threading
-
 from config import CinBaseConfig
-from cin import Cin
-from ctypes import c_uint, byref, create_string_buffer
 
 cfg = CinBaseConfig
 cfg.imeDirName = sys.argv[2]
@@ -44,11 +40,11 @@ tool_name = "config"
 COOKIE_ID = "cinbase_config_token"
 SERVER_TIMEOUT = 120
 
-
 # syspath 參數可包含多個路徑，用 ; 分隔
 # 此處把 user 設定檔目錄插入到 system-wide 資料檔路徑前
 # 如此使用者變更設定後，可以比系統預設值有優先權
 search_paths = ";".join((cfg.getConfigDir(), data_dir)).encode("UTF-8")
+
 
 class BaseHandler(tornado.web.RequestHandler):
 
@@ -144,7 +140,6 @@ class ConfigHandler(BaseHandler):
             pass
 
 
-
 class LoginHandler(BaseHandler):
 
     def post(self, page_name):
@@ -155,14 +150,13 @@ class LoginHandler(BaseHandler):
             self.redirect("/{}.html".format(page_name))
 
 
-
 class ConfigApp(tornado.web.Application):
 
     def __init__(self):
         # generate a new auth token using UUID
         self.access_token = uuid.uuid4().hex
         settings = {
-            "access_token": self.access_token, # our custom setting
+            "access_token": self.access_token,  # our custom setting
             "login_url": "/version",
             "debug": True
         }

@@ -107,4 +107,5 @@ class Cin(object):
                         except KeyError:
                             self.chardefs[key] = [root]
 
+
 __all__ = ["Cin"]

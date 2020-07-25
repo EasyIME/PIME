@@ -22,7 +22,6 @@ import threading
 import time
 from ctypes import windll
 
-import copy
 import winsound
 
 from keycodes import *  # for VK_XXX constants
@@ -197,7 +196,7 @@ class CinBase:
 
     def getCandidates(self, cbTS, keys, step=1):
         candidates = []
-        for i in reversed(range(1, len(keys)+1)):
+        for i in reversed(range(1, len(keys) + 1)):
             charset = cbTS.cin.getCharDef(keys[0:i])
             if charset:
                 for char in charset:
@@ -300,7 +299,6 @@ class CinBase:
         keyCode = keyEvent.keyCode
         charStr = chr(charCode)
 
-
         if CinTable.loading:
             if not cbTS.client.isUiLess:
                 messagestr = 'Loading input method code table, please wait...'
@@ -327,7 +325,6 @@ class CinBase:
             if not keyEvent.isKeyDown(VK_SHIFT) and not keyEvent.isKeyDown(VK_CONTROL):
                 charIndex = cbTS.kbtypelist[cbTS.keyboardLayout].index(charStr)
                 charStr = cbTS.kbtypelist[0][charIndex]
-
 
         cbTS.selKeys = "1234567890"
         if not self.candselKeys == "1234567890":
@@ -733,7 +730,7 @@ class CinBase:
                 cbTS.compositionChar = cbTS.compositionChar[:-1]
 
             if cbTS.cin.isCharactersInKeyName(cbTS.compositionChar) and cbTS.closemenu and not cbTS.ctrlsymbolsmode:
-                candidates = self.getCandidates(cbTS,cbTS.compositionChar)
+                candidates = self.getCandidates(cbTS, cbTS.compositionChar)
             elif cbTS.fullShapeSymbols and cbTS.fsymbols.isInCharDef(cbTS.compositionChar) and cbTS.closemenu:
                 candidates = cbTS.fsymbols.getCharDef(cbTS.compositionChar)
             elif cbTS.msymbols.isInCharDef(cbTS.compositionChar) and cbTS.closemenu and cbTS.ctrlsymbolsmode:
@@ -1531,6 +1528,7 @@ class CinBase:
 
 
 CinBase = CinBase()
+
 
 class LoadCinTable(threading.Thread):
     def __init__(self, cbTS, CinTable):

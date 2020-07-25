@@ -1,8 +1,8 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
-class fsymbols(object):
 
+class fsymbols(object):
     # TODO check the possiblility if the encoding is not utf-8
     encoding = 'utf-8'
 
@@ -18,7 +18,7 @@ class fsymbols(object):
             key, root = safeSplit(line)
             key = key.strip()
             root = root.strip()
-            
+
             for rootstr in root:
                 try:
                     self.chardefs[key].append(rootstr)
@@ -38,7 +38,7 @@ class fsymbols(object):
         return key in self.chardefs
 
     def getCharDef(self, key):
-        """ 
+        """
         will return a list conaining all possible result
         """
         return self.chardefs[key]
@@ -56,5 +56,6 @@ def safeSplit(line):
         return line.split('\t', 1)
     else:
         return line, line
+
 
 __all__ = ["fsymbols"]

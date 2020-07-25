@@ -15,10 +15,11 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+import importlib
+import json
 import os
 import threading
-import json
-import importlib
+
 
 class TextServiceInfo:
     def __init__(self):
@@ -37,7 +38,7 @@ class TextServiceInfo:
         self.modulePrefix = os.path.relpath(dirName).replace(os.sep, ".")
         # Read the moduleName(xxx.py) & serviceName(class name) from JSON
         jsonData = None
-        with open(jsonFile, encoding = "UTF-8") as dataFile:
+        with open(jsonFile, encoding="UTF-8") as dataFile:
             jsonData = json.load(dataFile)
         if jsonData:
             self.name = jsonData.get("name", "")
@@ -53,13 +54,13 @@ class TextServiceInfo:
     def createInstance(self, client):
         if not self.moduleName or not self.serviceName or not self.guid:
             return None
-        if not self.textServiceClass: # constructor is not yet imported
+        if not self.textServiceClass:  # constructor is not yet imported
             # import the module
             mod = importlib.import_module(self.moduleName)
             self.textServiceClass = getattr(mod, self.serviceName)
             if not self.textServiceClass:
                 return None
-        return self.textServiceClass(client) # create a new instance for this text service
+        return self.textServiceClass(client)  # create a new instance for this text service
 
 
 class TextServiceManager:

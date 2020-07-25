@@ -17,15 +17,15 @@
 
 import json
 import os
-import io
-import time
 import shutil
+import time
 
 DEF_FONT_SIZE = 12
 
-selKeys=(
+selKeys = (
     "1234567890"
 )
+
 
 class CinBaseConfig:
 
@@ -110,7 +110,7 @@ class CinBaseConfig:
                 js = json.dump(jsondata, f, sort_keys=True, indent=4)
             self.update()
         except Exception:
-            pass # FIXME: handle I/O errors?
+            pass  # FIXME: handle I/O errors?
 
     def getDataDir(self):
         return os.path.join(os.path.dirname(__file__), "data")
@@ -194,7 +194,7 @@ class CinBaseConfig:
 
         # the main config file is changed, reload it
         if lastConfigTime != configTime:
-            if not hasattr(self, "_in_update"): # avoid recursion
+            if not hasattr(self, "_in_update"):  # avoid recursion
                 self._in_update = True  # avoid recursion since update() will be called by load
                 self.load()
                 del self._in_update

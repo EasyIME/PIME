@@ -41,7 +41,6 @@ TF_MOD_SHIFT = 0x0004
 
 # 選單項目和語言列按鈕的 command ID
 ID_SWITCH_LANG = 1
-ID_SETTINGS = 2
 ID_MODE_ICON = 3
 ID_WEBSITE = 4
 ID_BUGREPORT = 5
@@ -902,15 +901,6 @@ class CinBase:
     def onCommand(self, cbTS, commandId, commandType):
         if commandId == ID_SWITCH_LANG and commandType == 0:  # Switch between Arabic and Latin mode
             self.toggleLanguageMode(cbTS)
-        elif commandId == ID_SETTINGS:  # Open the configuration tool
-            tool_name = "config"
-            config_tool = '"{0}" {1} {2}'.format(os.path.join(self.cinbasecurdir, "configtool.py"), tool_name,
-                                                 cbTS.imeDirName)
-            python_exe = sys.executable  # Find python executable
-            # 使用我們自帶的 python runtime exe 執行 config tool
-            # 此處也可以用 subprocess，不過使用 windows API 比較方便
-            r = windll.shell32.ShellExecuteW(None, "open", python_exe, config_tool, self.cinbasecurdir,
-                                             0)  # SW_HIDE = 0 (hide the window)
         elif commandId == ID_MODE_ICON:  # windows 8 mode icon
             self.toggleLanguageMode(cbTS)
         elif commandId == ID_WEBSITE:
@@ -931,8 +921,6 @@ class CinBase:
                 {"text": "ArabicIME (&W)", "id": ID_WEBSITE},
                 {},
                 {"text": "ArabicIME Bug Report (&B)", "id": ID_BUGREPORT},
-                {},
-                {"text": "Settings (&C)", "id": ID_SETTINGS},
                 {},
                 {"text": "Dictionaries (&D)", "submenu": [
                     {"text": "Lexilogos", "id": ID_LEXILOGOS},
@@ -1006,17 +994,7 @@ class CinBase:
 
     # 按下「`」鍵的選單命令
     def onMenuCommand(self, cbTS, commandId, commandType):
-        if commandType == 0:
-            if commandId == 0:
-                tool_name = "config"
-                config_tool = '"{0}" {1} {2}'.format(os.path.join(self.cinbasecurdir, "configtool.py"), tool_name,
-                                                     cbTS.imeDirName)
-                python_exe = sys.executable  # 找到 python 執行檔
-                # 使用我們自帶的 python runtime exe 執行 config tool
-                # 此處也可以用 subprocess，不過使用 windows API 比較方便
-                r = windll.shell32.ShellExecuteW(None, "open", python_exe, config_tool, self.cinbasecurdir,
-                                                 0)  # SW_HIDE = 0 (hide the window)
-        elif commandType == 1:  # 功能開關
+        if commandType == 1:  # 功能開關
             commandItem = cbTS.smenuitems[commandId]
             if commandItem == "fullShapeSymbols":
                 cbTS.fullShapeSymbols = not cbTS.fullShapeSymbols

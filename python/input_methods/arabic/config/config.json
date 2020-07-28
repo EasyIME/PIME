@@ -5,11 +5,9 @@
     "candPerPage": 9,
     "selCinType": 0,
     "switchLangWithShift": true,
-    "colorCandWnd": true,
     "fontSize": 12,
     "hidePromptMessages": true,
     "directShowCand": true,
-    "directCommitString": false,
     "directCommitSymbol": true,
     "directOutMSymbols": true,
     "candMaxItems": 100

@@ -83,7 +83,6 @@ class CinBase:
         cbTS.switchmenu = False
         cbTS.closemenu = True
         cbTS.tempEnglishMode = False
-        cbTS.menusymbolsmode = False
         cbTS.ctrlsymbolsmode = False
         cbTS.isSelKeysChanged = False
         cbTS.isLangModeChanged = False
@@ -342,13 +341,10 @@ class CinBase:
                 # 不送出 CIN 所定義的字根
                 cbTS.compositionChar = cbTS.compositionChar
             else:
-                if not cbTS.menusymbolsmode:
-                    cbTS.compositionChar += charStr
-                    keyname = cbTS.cin.getKeyName(charStr)
-                    cbTS.setCompositionString(cbTS.compositionString + keyname)
-                    cbTS.setCompositionCursor(len(cbTS.compositionString))
-                else:
-                    cbTS.menusymbolsmode = False
+                cbTS.compositionChar += charStr
+                keyname = cbTS.cin.getKeyName(charStr)
+                cbTS.setCompositionString(cbTS.compositionString + keyname)
+                cbTS.setCompositionCursor(len(cbTS.compositionString))
 
         if cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1:
             cbTS.showmenu = False
@@ -740,7 +736,6 @@ class CinBase:
         cbTS.setCandidatePage(0)
         cbTS.setCandidateList([])
         cbTS.setShowCandidates(False)
-        cbTS.menusymbolsmode = False
         cbTS.ctrlsymbolsmode = False
         cbTS.keepComposition = False
         cbTS.selcandmode = False
@@ -784,20 +779,6 @@ class CinBase:
 
     def setOutputString(self, cbTS, commitStr):
         cbTS.setCommitString(commitStr)
-
-    def calcRemoveStringLength(self, cbTS):
-        RemoveStringLength = 0
-        if not cbTS.compositionChar == '':
-            if cbTS.menusymbolsmode:
-                if cbTS.msymbols.isInCharDef(cbTS.compositionChar[1:]):
-                    RemoveStringLength = len(cbTS.msymbols.getCharDef(cbTS.compositionChar[1:])[0])
-            else:
-                for char in cbTS.compositionChar:
-                    if cbTS.cin.isInKeyName(char):
-                        RemoveStringLength += len(cbTS.cin.getKeyName(char))
-                    else:
-                        RemoveStringLength += 1
-        return RemoveStringLength
 
     ################################################################
     # config 相關

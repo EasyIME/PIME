@@ -466,11 +466,9 @@ class CinBase:
                                 if cbTS.isShowCandidates:
                                     cbTS.canUseSelKey = True
 
-                        if (keyCode == VK_SPACE or keyCode == VK_DOWN) and not cbTS.isShowCandidates:  # 按下空白鍵和向下鍵
-                            cbTS.isShowCandidates = True
-                            cbTS.canSetCommitString = False
-                            if keyCode == VK_SPACE:
-                                cbTS.canUseSpaceAsPageKey = False
+                        cbTS.isShowCandidates = True
+                        if keyCode == VK_SPACE:
+                            cbTS.canUseSpaceAsPageKey = False
                     else:
                         cbTS.isShowCandidates = True
                         cbTS.canSetCommitString = True

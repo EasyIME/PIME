@@ -73,12 +73,7 @@ class CinBase:
         cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
 
-        cbTS.menucandidates = []
-        cbTS.smenucandidates = []
         cbTS.currentCandPage = 0
-
-        cbTS.prevmenutypelist = []
-        cbTS.prevmenucandlist = []
 
         cbTS.tempengcandidates = []
         cbTS.keyUsedState = False
@@ -89,10 +84,8 @@ class CinBase:
         cbTS.switchmenu = False
         cbTS.closemenu = True
         cbTS.tempEnglishMode = False
-        cbTS.menumode = False
         cbTS.menusymbolsmode = False
         cbTS.ctrlsymbolsmode = False
-        cbTS.fullsymbolsmode = False
         cbTS.isSelKeysChanged = False
         cbTS.isLangModeChanged = False
         cbTS.isShowCandidates = False
@@ -104,7 +97,6 @@ class CinBase:
         cbTS.useEndKey = False
         cbTS.lastCommitString = ""
         cbTS.lastCompositionCharLength = 0
-        cbTS.menutype = 0
         cbTS.resetMenuCand = False
         cbTS.keepComposition = False
         cbTS.keepType = ""
@@ -186,9 +178,6 @@ class CinBase:
     # return True, the system will call onKeyDown() to further process this button.
     # return False, means that we don’t need this key, the system will pass the key to the application intact.
     def filterKeyDown(self, cbTS, keyEvent, CinTable):
-        charCode = keyEvent.charCode
-        charStr = chr(charCode)
-
         # Record the last key pressed and the time pressed, used in filterKeyUp()
         cbTS.lastKeyDownCode = keyEvent.keyCode
         if cbTS.lastKeyDownTime == 0.0:
@@ -362,7 +351,7 @@ class CinBase:
                 else:
                     cbTS.menusymbolsmode = False
 
-        if cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1 and not cbTS.menumode:
+        if cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1:
             cbTS.showmenu = False
             if not cbTS.directShowCand and not cbTS.selcandmode:
                 if not cbTS.lastCompositionCharLength == len(cbTS.compositionChar):
@@ -417,7 +406,7 @@ class CinBase:
             candidates = cbTS.tempengcandidates
 
         # Candidate list processing
-        if (cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1 and not cbTS.menumode) or (
+        if (cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1) or (
                 cbTS.tempEnglishMode and cbTS.isComposing()):
             # If the first character is a symbol, output directly
             if cbTS.directCommitSymbol and not cbTS.tempEnglishMode and not cbTS.selcandmode:
@@ -623,7 +612,6 @@ class CinBase:
         return False
 
     def onKeyUp(self, cbTS, keyEvent):
-        charCode = keyEvent.charCode
         keyCode = keyEvent.keyCode
         cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
@@ -744,9 +732,7 @@ class CinBase:
             cbTS.langMode = ARABIC_MODE
         self.updateLangButtons(cbTS)
 
-    # 依照目前輸入法狀態，更新語言列顯示
     def updateLangButtons(self, cbTS):
-        # 如果中英文模式發生改變
         icon_name = "arabic.ico" if cbTS.langMode == ARABIC_MODE else "latin.ico"
         icon_path = os.path.join(self.icondir, icon_name)
         cbTS.changeButton("switch-lang", icon=icon_path)
@@ -756,34 +742,6 @@ class CinBase:
         if cbTS.client.isWindows8Above:  # windows 8 mode icon
             cbTS.changeButton("windows-mode-icon", icon=icon_path)
 
-    def switchMenuType(self, cbTS, menutype, prevmenutypelist):
-        cbTS.menutype = menutype
-        if menutype == 0:
-            cbTS.prevmenutypelist = prevmenutypelist
-        else:
-            if prevmenutypelist:
-                cbTS.prevmenutypelist.append(prevmenutypelist[0])
-            else:
-                cbTS.prevmenutypelist = prevmenutypelist
-        return True
-
-    def closeMenuCand(self, cbTS):
-        cbTS.showmenu = False
-        cbTS.menutype = 0
-        cbTS.prevmenutypelist = []
-        self.resetComposition(cbTS)
-        return True
-
-    def switchMenuCand(self, cbTS, menutype):
-        if menutype == 0:
-            cbTS.menucandidates = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字"]
-        if menutype == 2:
-            cbTS.menucandidates = cbTS.symbols.getKeyNames()
-
-        pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
-        return pagecandidates
-
-    # 重置輸入的字根
     def resetComposition(self, cbTS):
         cbTS.compositionChar = ''
         cbTS.setCompositionString('')
@@ -792,10 +750,8 @@ class CinBase:
         cbTS.setCandidatePage(0)
         cbTS.setCandidateList([])
         cbTS.setShowCandidates(False)
-        cbTS.menumode = False
         cbTS.menusymbolsmode = False
         cbTS.ctrlsymbolsmode = False
-        cbTS.fullsymbolsmode = False
         cbTS.keepComposition = False
         cbTS.selcandmode = False
         cbTS.lastCompositionCharLength = 0

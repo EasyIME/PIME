@@ -65,7 +65,6 @@ class CinBase:
         cbTS.langMode = -1
         cbTS.switchPageWithSpace = False
         cbTS.hidePromptMessages = True
-        cbTS.autoClearCompositionChar = False
         cbTS.playSoundWhenNonCand = False
         cbTS.directShowCand = False
         cbTS.directCommitSymbol = False
@@ -311,13 +310,10 @@ class CinBase:
 
         # 功能選單 ----------------------------------------------------------------
         if cbTS.langMode == ARABIC_MODE and (cbTS.compositionChar == "`M" or cbTS.compositionChar == "`E"):
-            menu_autoClearCompositionChar = "☑ 拆錯字碼時自動清除輸入字串" if cbTS.autoClearCompositionChar else "☐ 拆錯字碼時自動清除輸入字串"
             menu_playSoundWhenNonCand = "☑ 拆錯字碼時發出警告嗶聲提示" if cbTS.playSoundWhenNonCand else "☐ 拆錯字碼時發出警告嗶聲提示"
 
-            cbTS.smenucandidates = [menu_autoClearCompositionChar,
-                                    menu_playSoundWhenNonCand]
-            cbTS.smenuitems = ["autoClearCompositionChar",
-                               "playSoundWhenNonCand"]
+            cbTS.smenucandidates = [menu_playSoundWhenNonCand]
+            cbTS.smenuitems = ["playSoundWhenNonCand"]
 
             if not cbTS.closemenu:
                 cbTS.setCandidateCursor(0)
@@ -756,8 +752,6 @@ class CinBase:
                         if not cbTS.client.isUiLess:
                             cbTS.isShowMessage = True
                             cbTS.showMessage("Check no group words 1...", cbTS.messageDurationTime)
-                        if cbTS.autoClearCompositionChar:
-                            self.resetComposition(cbTS)
                         if cbTS.playSoundWhenNonCand:
                             winsound.PlaySound('alert', winsound.SND_ASYNC)
                 elif cbTS.useEndKey and charStr in cbTS.endKeyList:
@@ -766,8 +760,6 @@ class CinBase:
                             if not cbTS.client.isUiLess:
                                 cbTS.isShowMessage = True
                                 cbTS.showMessage("Check no group words 2...", cbTS.messageDurationTime)
-                            if cbTS.autoClearCompositionChar:
-                                self.resetComposition(cbTS)
                             if cbTS.playSoundWhenNonCand:
                                 winsound.PlaySound('alert', winsound.SND_ASYNC)
 
@@ -960,9 +952,7 @@ class CinBase:
     def onMenuCommand(self, cbTS, commandId, commandType):
         if commandType == 1:  # 功能開關
             commandItem = cbTS.smenuitems[commandId]
-            if commandItem == "autoClearCompositionChar":
-                cbTS.autoClearCompositionChar = not cbTS.autoClearCompositionChar
-            elif commandItem == "playSoundWhenNonCand":
+            if commandItem == "playSoundWhenNonCand":
                 cbTS.playSoundWhenNonCand = not cbTS.playSoundWhenNonCand
 
     def switchMenuType(self, cbTS, menutype, prevmenutypelist):
@@ -1127,9 +1117,6 @@ class CinBase:
 
         # 隱藏提示訊息?
         cbTS.hidePromptMessages = cfg.hidePromptMessages
-
-        # 拆錯字碼時自動清除輸入字串?
-        cbTS.autoClearCompositionChar = cfg.autoClearCompositionChar
 
         # 拆錯字碼時發出警告嗶聲提示?
         cbTS.playSoundWhenNonCand = cfg.playSoundWhenNonCand

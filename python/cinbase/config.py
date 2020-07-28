@@ -30,14 +30,13 @@ selKeys = (
 class CinBaseConfig:
 
     def __init__(self):
-        self.candPerRow = 3
+        self.candPerRow = 1
         self.defaultLatin = False
         self.disableOnStartup = False
         self.switchLangWithShift = True
         self.switchPageWithSpace = False
         self.messageDurationTime = 3
         self.hidePromptMessages = True
-        self.autoClearCompositionChar = False
         self.playSoundWhenNonCand = False
         self.directShowCand = False
         self.directCommitSymbol = False

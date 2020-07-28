@@ -46,8 +46,6 @@ class CinBaseConfig:
         self.selKeyType = 0
         self.candPerPage = 9
         self.cursorCandList = True
-        self.fullShapeSymbols = False
-        self.directOutFSymbols = False
         self.directOutMSymbols = True
         self.candMaxItems = 100
         self.messageDurationTime = 3
@@ -59,7 +57,7 @@ class CinBaseConfig:
         self.selCinFile = ""
         self.imeDirName = ""
 
-        # version: last modified time of (config.json, symbols.dat, fsymbols.dat)
+        # version: last modified time of (config.json, symbols.dat)
         self._version = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self._lastUpdateTime = 0.0
 
@@ -152,16 +150,8 @@ class CinBaseConfig:
             except Exception:
                 pass
 
-        fsymbolsTime = 0.0
-        fsymbolsFile = self.findFile(datadirs, "fsymbols.dat")
-        if fsymbolsFile:
-            try:
-                fsymbolsTime = os.path.getmtime(fsymbolsFile)
-            except Exception:
-                pass
-
         lastConfigTime = self._version[0]
-        self._version = (configTime, symbolsTime, fsymbolsTime)
+        self._version = (configTime, symbolsTime)
 
         # the main config file is changed, reload it
         if lastConfigTime != configTime:

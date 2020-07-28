@@ -27,7 +27,6 @@ import winsound
 from keycodes import *  # for VK_XXX constants
 from .cin import Cin
 from .debug import Debug
-from .fsymbols import fsymbols
 from .msymbols import msymbols
 from .symbols import symbols
 
@@ -74,8 +73,6 @@ class CinBase:
         cbTS.bracketSymbolList = ["「」", "『』", "［］", "【】", "〖〗", "〔〕", "﹝﹞", "（）", "﹙﹚", "〈〉", "《》", "＜＞", "﹤﹥", "｛｝",
                                   "﹛﹜"]
         cbTS.directOutMSymbols = True
-        cbTS.fullShapeSymbols = False
-        cbTS.directOutFSymbols = False
         cbTS.reLoadTable = False
         cbTS.messageDurationTime = 3
 
@@ -174,8 +171,6 @@ class CinBase:
 
         if hasattr(cbTS, 'symbols'):
             del cbTS.symbols
-        if hasattr(cbTS, 'fsymbols'):
-            del cbTS.fsymbols
         if hasattr(cbTS, 'msymbols'):
             del cbTS.msymbols
 
@@ -234,14 +229,6 @@ class CinBase:
                 if cbTS.isShowMessage:
                     cbTS.hideMessageOnKeyUp = True
                 return False
-
-        # 若按下 Shift 鍵
-        if keyEvent.isKeyDown(VK_SHIFT):
-            if cbTS.langMode == ARABIC_MODE and not keyEvent.isKeyDown(VK_CONTROL):
-                # 若開啟 Shift 輸入全形標點，輸入法需要處理此按鍵
-                if cbTS.fullShapeSymbols and (
-                        self.isSymbolsChar(keyEvent.keyCode) or self.isNumberChar(keyEvent.keyCode)):
-                    return True
 
         # 不論中英文模式，NumPad 都允許直接輸入數字，輸入法不處理
         if keyEvent.isKeyToggled(VK_NUMLOCK):  # NumLock is on
@@ -324,13 +311,12 @@ class CinBase:
 
         # 功能選單 ----------------------------------------------------------------
         if cbTS.langMode == ARABIC_MODE and (cbTS.compositionChar == "`M" or cbTS.compositionChar == "`E"):
-            menu_fullShapeSymbols = "☑ Shift 輸入全形標點" if cbTS.fullShapeSymbols else "☐ Shift 輸入全形標點"
             menu_autoClearCompositionChar = "☑ 拆錯字碼時自動清除輸入字串" if cbTS.autoClearCompositionChar else "☐ 拆錯字碼時自動清除輸入字串"
             menu_playSoundWhenNonCand = "☑ 拆錯字碼時發出警告嗶聲提示" if cbTS.playSoundWhenNonCand else "☐ 拆錯字碼時發出警告嗶聲提示"
 
-            cbTS.smenucandidates = [menu_fullShapeSymbols, menu_autoClearCompositionChar,
+            cbTS.smenucandidates = [menu_autoClearCompositionChar,
                                     menu_playSoundWhenNonCand]
-            cbTS.smenuitems = ["fullShapeSymbols", "autoClearCompositionChar",
+            cbTS.smenuitems = ["autoClearCompositionChar",
                                "playSoundWhenNonCand"]
 
             if not cbTS.closemenu:
@@ -602,8 +588,6 @@ class CinBase:
 
             if cbTS.cin.isCharactersInKeyName(cbTS.compositionChar) and cbTS.closemenu and not cbTS.ctrlsymbolsmode:
                 candidates = self.getCandidates(cbTS, cbTS.compositionChar)
-            elif cbTS.fullShapeSymbols and cbTS.fsymbols.isInCharDef(cbTS.compositionChar) and cbTS.closemenu:
-                candidates = cbTS.fsymbols.getCharDef(cbTS.compositionChar)
             elif cbTS.msymbols.isInCharDef(cbTS.compositionChar) and cbTS.closemenu and cbTS.ctrlsymbolsmode:
                 candidates = cbTS.msymbols.getCharDef(cbTS.compositionChar)
 
@@ -615,21 +599,6 @@ class CinBase:
                 cbTS.tempEnglishMode and cbTS.isComposing()):
             # If the first character is a symbol, output directly
             if cbTS.directCommitSymbol and not cbTS.tempEnglishMode and not cbTS.selcandmode:
-                # If it is full-form punctuation
-                if cbTS.fullShapeSymbols and cbTS.fullsymbolsmode:
-                    if len(cbTS.compositionChar) >= 2 and cbTS.fsymbols.isInCharDef(cbTS.compositionChar[0]):
-                        cbTS.fullsymbolsmode = False
-                        if not cbTS.cin.isInCharDef(cbTS.compositionChar):
-                            cbTS.keepComposition = True
-                            commitStr = cbTS.compositionString[:1]
-                            compositionStr = cbTS.compositionString[1:]
-                            compositionChar = cbTS.compositionChar[1:]
-                            cbTS.setCommitString(commitStr)
-                            cbTS.compositionChar = compositionChar
-                            cbTS.setCompositionString(compositionStr)
-                            cbTS.setCompositionCursor(len(cbTS.compositionString))
-                            if cbTS.cin.isInCharDef(cbTS.compositionChar):
-                                candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
                 # If it is code table punctuation
                 if cbTS.cin.isInKeyName(cbTS.compositionChar[0]):
                     if cbTS.cin.getKeyName(cbTS.compositionChar[0]) in cbTS.directCommitSymbolList:
@@ -955,11 +924,6 @@ class CinBase:
             cbTS.keepComposition = False
 
             if cbTS.keepType != "":
-                if cbTS.keepType == "fullShapeSymbols":
-                    if cbTS.fsymbols.isInCharDef(cbTS.compositionChar):
-                        fullShapeSymbolsList = cbTS.fsymbols.getCharDef(cbTS.compositionChar)
-                        cbTS.fullsymbolsmode = True
-                        cbTS.setCompositionString(fullShapeSymbolsList[0])
                 if cbTS.keepType == "ctrlsymbols":
                     if cbTS.msymbols.isInCharDef(cbTS.compositionChar):
                         ctrlSymbolsList = cbTS.msymbols.getCharDef(cbTS.compositionChar)
@@ -996,9 +960,7 @@ class CinBase:
     def onMenuCommand(self, cbTS, commandId, commandType):
         if commandType == 1:  # 功能開關
             commandItem = cbTS.smenuitems[commandId]
-            if commandItem == "fullShapeSymbols":
-                cbTS.fullShapeSymbols = not cbTS.fullShapeSymbols
-            elif commandItem == "autoClearCompositionChar":
+            if commandItem == "autoClearCompositionChar":
                 cbTS.autoClearCompositionChar = not cbTS.autoClearCompositionChar
             elif commandItem == "playSoundWhenNonCand":
                 cbTS.playSoundWhenNonCand = not cbTS.playSoundWhenNonCand
@@ -1075,42 +1037,6 @@ class CinBase:
                 return True
         return False
 
-    # 一般字元轉全形
-    def charCodeToFullshape(self, cbTS, charCode, keyCode):
-        charStr = ''
-        if charCode < 0x0020 or charCode > 0x7e:
-            charStr = chr(charCode)
-        if charCode == 0x0020:  # Spacebar
-            charStr = chr(0x3000)
-        else:
-            charCode += 0xfee0
-            charStr = chr(charCode)
-        return charStr
-
-    # 符號字元轉全形
-    def SymbolscharCodeToFullshape(self, charCode):
-        charStr = ''
-        if charCode < 0x0020 or charCode > 0x7e:
-            charStr = chr(charCode)
-        if charCode == 0x0020:  # Spacebar
-            charStr = chr(0x3000)
-        elif charCode == 0x0022:  # char(") to char(、)
-            charStr = chr(0x3001)
-        elif charCode == 0x0027:  # char(') to char(、)
-            charStr = chr(0x3001)
-        elif charCode == 0x002e:  # char(.) to char(。)
-            charStr = chr(0x3002)
-        elif charCode == 0x003c:  # char(<) to char(，)
-            charStr = chr(0xff0c)
-        elif charCode == 0x003e:  # char(>) to char(。)
-            charStr = chr(0x3002)
-        elif charCode == 0x005f:  # char(_) to char(－)
-            charStr = chr(0xff0d)
-        else:
-            charCode += 0xfee0
-            charStr = chr(charCode)
-        return charStr
-
     # List 分段
     def chunks(self, l, n):
         for i in range(0, len(l), n):
@@ -1121,20 +1047,6 @@ class CinBase:
 
     def setOutputString(self, cbTS, commitStr):
         cbTS.setCommitString(commitStr)
-
-    def setOutputFSymbols(self, cbTS, charStr):
-        cbTS.compositionChar = charStr
-        fullShapeSymbolsList = cbTS.fsymbols.getCharDef(cbTS.compositionChar)
-
-        commitStr = cbTS.compositionString
-        if cbTS.directOutFSymbols and cbTS.fullsymbolsmode:
-            cbTS.setCommitString(commitStr)
-            cbTS.keepComposition = True
-            cbTS.keepType = "fullShapeSymbols"
-        cbTS.compositionChar = charStr
-        cbTS.setCompositionString(fullShapeSymbolsList[0])
-        cbTS.setCompositionCursor(len(cbTS.compositionString))
-        cbTS.fullsymbolsmode = True
 
     def calcRemoveStringLength(self, cbTS):
         RemoveStringLength = 0
@@ -1167,8 +1079,6 @@ class CinBase:
 
         if hasattr(cbTS, 'symbols'):
             del cbTS.symbols
-        if hasattr(cbTS, 'fsymbols'):
-            del cbTS.fsymbols
         if hasattr(cbTS, 'msymbols'):
             del cbTS.msymbols
 
@@ -1178,10 +1088,6 @@ class CinBase:
         symbolsPath = cfg.findFile(datadirs, "symbols.dat")
         with io.open(symbolsPath, 'r', encoding='utf-8') as fs:
             cbTS.symbols = symbols(fs)
-
-        fsymbolsPath = cfg.findFile(datadirs, "fsymbols.dat")
-        with io.open(fsymbolsPath, 'r', encoding='utf-8') as fs:
-            cbTS.fsymbols = fsymbols(fs)
 
         msymbolsPath = cfg.findFile(datadirs, "msymbols.json")
         with io.open(msymbolsPath, 'r', encoding='utf-8') as fs:
@@ -1215,12 +1121,6 @@ class CinBase:
 
         # 使用空白鍵作為候選清單換頁鍵?
         cbTS.switchPageWithSpace = cfg.switchPageWithSpace
-
-        # Shift 輸入全形標點?
-        cbTS.fullShapeSymbols = cfg.fullShapeSymbols
-
-        # 直接輸出全形標點首個候選符號?
-        cbTS.directOutFSymbols = cfg.directOutFSymbols
 
         # 提示訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime

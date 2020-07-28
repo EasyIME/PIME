@@ -22,13 +22,11 @@ import time
 
 from keycodes import *  # for VK_XXX constants
 from .cin import Cin
-from .debug import Debug
 from .msymbols import msymbols
 from .symbols import symbols
 
 ARABIC_MODE = 1
 LATIN_MODE = 0
-DEBUG_MODE = False
 
 # shift + space 熱鍵的 GUID
 SHIFT_SPACE_GUID = "{f1dae0fb-8091-44a7-8a0c-3082a1515447}"
@@ -104,10 +102,6 @@ class CinBase:
         cbTS.onKeyUpMessage = ""
         cbTS.reLoadCinTable = False
         cbTS.capsStates = True if self.getKeyState(VK_CAPITAL) else False
-
-        if DEBUG_MODE:
-            cbTS.debug = Debug(cbTS.imeDirName)
-            cbTS.debugLog = cbTS.debug.loadDebugLog()
 
     # When the input method is activated by the user
     def onActivate(self, cbTS):
@@ -894,11 +888,6 @@ class CinBase:
         else:
             if not cbTS.cin == CinTable.cin:
                 cbTS.cin = CinTable.cin
-
-        if DEBUG_MODE:
-            if not cbTS.debugLog == cbTS.debug.debugLog:
-                if not CinTable.loading:
-                    cbTS.debug.saveDebugLog(cbTS.debugLog)
 
 
 CinBase = CinBase()

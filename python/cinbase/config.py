@@ -37,7 +37,6 @@ class CinBaseConfig:
         self.switchPageWithSpace = False
         self.messageDurationTime = 3
         self.hidePromptMessages = True
-        self.playSoundWhenNonCand = False
         self.directShowCand = False
         self.directCommitSymbol = False
         self.fontSize = DEF_FONT_SIZE

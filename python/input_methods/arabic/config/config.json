@@ -9,7 +9,6 @@
     "colorCandWnd": true,
     "fontSize": 12,
     "hidePromptMessages": true,
-    "playSoundWhenNonCand": false,
     "directShowCand": true,
     "directCommitString": false,
     "directCommitSymbol": true,

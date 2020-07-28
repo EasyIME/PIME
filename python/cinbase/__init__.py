@@ -17,12 +17,8 @@ import ctypes
 import io
 import math
 import os.path
-import sys
 import threading
 import time
-from ctypes import windll
-
-import winsound
 
 from keycodes import *  # for VK_XXX constants
 from .cin import Cin
@@ -65,7 +61,6 @@ class CinBase:
         cbTS.langMode = -1
         cbTS.switchPageWithSpace = False
         cbTS.hidePromptMessages = True
-        cbTS.playSoundWhenNonCand = False
         cbTS.directShowCand = False
         cbTS.directCommitSymbol = False
         cbTS.directCommitSymbolList = ["，", "。", "、", "；", "？", "！"]
@@ -307,174 +302,6 @@ class CinBase:
         if cbTS.isShowMessage:
             cbTS.isShowMessage = False
             cbTS.hideMessage()
-
-        # 功能選單 ----------------------------------------------------------------
-        if cbTS.langMode == ARABIC_MODE and (cbTS.compositionChar == "`M" or cbTS.compositionChar == "`E"):
-            menu_playSoundWhenNonCand = "☑ 拆錯字碼時發出警告嗶聲提示" if cbTS.playSoundWhenNonCand else "☐ 拆錯字碼時發出警告嗶聲提示"
-
-            cbTS.smenucandidates = [menu_playSoundWhenNonCand]
-            cbTS.smenuitems = ["playSoundWhenNonCand"]
-
-            if not cbTS.closemenu:
-                cbTS.setCandidateCursor(0)
-                cbTS.setCandidatePage(0)
-
-                cbTS.menutype = 0
-                menu = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字"]
-                cbTS.setCandidateList(menu)
-
-                cbTS.menucandidates = cbTS.candidateList
-                cbTS.prevmenutypelist = []
-                cbTS.prevmenucandlist = []
-                cbTS.showmenu = True
-
-            if cbTS.showmenu:
-                cbTS.menumode = True
-                cbTS.closemenu = False
-                candidates = cbTS.menucandidates
-                candCursor = cbTS.candidateCursor  # 目前的游標位置
-                candCount = len(cbTS.candidateList)  # 目前選字清單項目數
-                currentCandPageCount = math.ceil(len(candidates) / cbTS.candPerPage)  # 目前的選字清單總頁數
-                currentCandPage = cbTS.currentCandPage  # 目前的選字清單頁數
-
-                # 候選清單分頁
-                pagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
-                cbTS.setCandidateList(pagecandidates[currentCandPage])
-                if not cbTS.isSelKeysChanged:
-                    cbTS.setShowCandidates(True)
-                cbTS.resetMenuCand = False
-                itemName = ""
-
-                # 選單按鍵處理
-                if keyCode == VK_UP:  # 游標上移
-                    if (candCursor - cbTS.candPerRow) < 0:
-                        if currentCandPage > 0:
-                            currentCandPage -= 1
-                            candCursor = 0
-                    else:
-                        if (candCursor - cbTS.candPerRow) >= 0:
-                            candCursor = candCursor - cbTS.candPerRow
-                elif keyCode == VK_DOWN:  # 游標下移
-                    if (candCursor + cbTS.candPerRow) >= cbTS.candPerPage:
-                        if (currentCandPage + 1) < currentCandPageCount:
-                            currentCandPage += 1
-                            candCursor = 0
-                    else:
-                        if (candCursor + cbTS.candPerRow) < len(pagecandidates[currentCandPage]):
-                            candCursor = candCursor + cbTS.candPerRow
-                elif keyCode == VK_LEFT:  # 游標左移
-                    if candCursor > 0:
-                        candCursor -= 1
-                    else:
-                        if currentCandPage > 0:
-                            currentCandPage -= 1
-                            candCursor = 0
-                elif keyCode == VK_RIGHT:  # 游標右移
-                    if (candCursor + 1) < candCount:
-                        candCursor += 1
-                    else:
-                        if (currentCandPage + 1) < currentCandPageCount:
-                            currentCandPage += 1
-                            candCursor = 0
-                elif keyCode == VK_HOME:  # Home 鍵
-                    candCursor = 0
-                elif keyCode == VK_END:  # End 鍵
-                    candCursor = len(pagecandidates[currentCandPage]) - 1
-                elif keyCode == VK_PRIOR:  # Page UP 鍵
-                    if currentCandPage > 0:
-                        currentCandPage -= 1
-                        candCursor = 0
-                elif keyCode == VK_NEXT:  # Page Down 鍵
-                    if (currentCandPage + 1) < currentCandPageCount:
-                        currentCandPage += 1
-                        candCursor = 0
-                elif keyCode == VK_ESCAPE:  # ESC 鍵
-                    candCursor = 0
-                    currentCandPage = 0
-                    cbTS.showmenu = False
-                    cbTS.menutype = 0
-                    cbTS.prevmenutypelist = []
-                    cbTS.prevmenucandlist = []
-                    self.resetComposition(cbTS)
-                elif self.isInSelKeys(cbTS, charCode) and not keyEvent.isKeyDown(VK_SHIFT):  # 使用選字鍵執行項目或輸出候選字
-                    if cbTS.selKeys.index(charStr) < cbTS.candPerPage and cbTS.selKeys.index(charStr) < len(
-                            cbTS.candidateList):
-                        candCursor = cbTS.selKeys.index(charStr)
-                        itemName = cbTS.candidateList[candCursor]
-                        cbTS.switchmenu = True
-                elif keyCode == VK_RETURN:  # 按下 Enter 鍵
-                    itemName = cbTS.candidateList[candCursor]
-                    cbTS.switchmenu = True
-                elif keyCode == VK_SPACE:  # 按下空白鍵
-                    if cbTS.switchPageWithSpace:
-                        if (currentCandPage + 1) < currentCandPageCount:
-                            currentCandPage += 1
-                            candCursor = 0
-                        else:
-                            currentCandPage = 0
-                            candCursor = 0
-                    else:
-                        itemName = cbTS.candidateList[candCursor]
-                        cbTS.switchmenu = True
-                elif keyCode == VK_BACK:
-                    if cbTS.prevmenutypelist:
-                        prevmenulist = []
-                        prevmenutype = len(cbTS.prevmenutypelist) - 1
-                        prevmenulist = cbTS.prevmenutypelist[prevmenutype].split(',', 2)
-                        cbTS.menutype = int(prevmenulist[0], 10)
-                        cbTS.prevmenucandlist = []
-                        cbTS.prevmenucandlist.append(int(prevmenulist[1], 10))
-                        cbTS.prevmenucandlist.append(int(prevmenulist[2], 10))
-                        cbTS.prevmenutypelist.remove(cbTS.prevmenutypelist[prevmenutype])
-                        pagecandidates = self.switchMenuCand(cbTS, cbTS.menutype)
-
-                # 選單切換及執行
-                if cbTS.switchmenu and not itemName == "":
-                    cbTS.switchmenu = False
-                    if cbTS.menutype == 0 and itemName == "功能開關":  # 切至功能開關頁面
-                        cbTS.menucandidates = cbTS.smenucandidates
-                        pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
-                        cbTS.resetMenuCand = self.switchMenuType(cbTS, 1,
-                                                                 ["0," + str(candCursor) + "," + str(currentCandPage)])
-                    elif cbTS.menutype == 0 and itemName == "特殊符號":  # 切至特殊符號頁面
-                        cbTS.menucandidates = cbTS.symbols.getKeyNames()
-                        pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
-                        cbTS.resetMenuCand = self.switchMenuType(cbTS, 2,
-                                                                 ["0," + str(candCursor) + "," + str(currentCandPage)])
-                    elif cbTS.menutype == 0:  # 執行主頁面其它項目
-                        menu = ["功能設定", "輸出簡體", "功能開關", "特殊符號", "注音符號", "外語文字"]
-                        i = menu.index(itemName)
-                        self.onMenuCommand(cbTS, i, 0)
-                        cbTS.resetMenuCand = self.closeMenuCand(cbTS)
-                    elif cbTS.menutype == 1:  # 執行功能開關頁面項目
-                        i = cbTS.smenucandidates.index(itemName)
-                        self.onMenuCommand(cbTS, i, 1)
-                        cbTS.resetMenuCand = self.closeMenuCand(cbTS)
-                    elif cbTS.menutype == 2:  # 切至特殊符號子頁面
-                        cbTS.menucandidates = cbTS.symbols.getCharDef(cbTS.candidateList[candCursor])
-                        pagecandidates = list(self.chunks(cbTS.menucandidates, cbTS.candPerPage))
-                        cbTS.resetMenuCand = self.switchMenuType(cbTS, 3,
-                                                                 ["2," + str(candCursor) + "," + str(currentCandPage)])
-                    elif cbTS.menutype == 3:  # 執行特殊符號子頁面項目
-                        cbTS.setCommitString(cbTS.candidateList[candCursor])
-                        cbTS.resetMenuCand = self.closeMenuCand(cbTS)
-                    elif cbTS.menutype == 6:  # 執行外語文字子頁面項目
-                        cbTS.setCommitString(cbTS.candidateList[candCursor])
-                        cbTS.resetMenuCand = self.closeMenuCand(cbTS)
-
-                if cbTS.prevmenucandlist:
-                    candCursor = cbTS.prevmenucandlist[0]
-                    currentCandPage = cbTS.prevmenucandlist[1]
-                    cbTS.prevmenucandlist = []
-
-                if cbTS.resetMenuCand:
-                    candCursor = 0
-                    currentCandPage = 0
-
-                # 更新選字視窗游標位置
-                cbTS.setCandidateCursor(candCursor)
-                cbTS.setCandidatePage(currentCandPage)
-                cbTS.setCandidateList(pagecandidates[currentCandPage])
 
         # 按鍵處理 ----------------------------------------------------------------
         # 某些狀況須要特別處理或忽略
@@ -752,16 +579,12 @@ class CinBase:
                         if not cbTS.client.isUiLess:
                             cbTS.isShowMessage = True
                             cbTS.showMessage("Check no group words 1...", cbTS.messageDurationTime)
-                        if cbTS.playSoundWhenNonCand:
-                            winsound.PlaySound('alert', winsound.SND_ASYNC)
                 elif cbTS.useEndKey and charStr in cbTS.endKeyList:
                     if len(candidates) == 0:
                         if not len(cbTS.compositionChar) == 1 and not cbTS.compositionChar == charStr:
                             if not cbTS.client.isUiLess:
                                 cbTS.isShowMessage = True
                                 cbTS.showMessage("Check no group words 2...", cbTS.messageDurationTime)
-                            if cbTS.playSoundWhenNonCand:
-                                winsound.PlaySound('alert', winsound.SND_ASYNC)
 
                 cbTS.setShowCandidates(False)
                 cbTS.isShowCandidates = False
@@ -948,13 +771,6 @@ class CinBase:
         if cbTS.client.isWindows8Above:  # windows 8 mode icon
             cbTS.changeButton("windows-mode-icon", icon=icon_path)
 
-    # 按下「`」鍵的選單命令
-    def onMenuCommand(self, cbTS, commandId, commandType):
-        if commandType == 1:  # 功能開關
-            commandItem = cbTS.smenuitems[commandId]
-            if commandItem == "playSoundWhenNonCand":
-                cbTS.playSoundWhenNonCand = not cbTS.playSoundWhenNonCand
-
     def switchMenuType(self, cbTS, menutype, prevmenutypelist):
         cbTS.menutype = menutype
         if menutype == 0:
@@ -1117,9 +933,6 @@ class CinBase:
 
         # 隱藏提示訊息?
         cbTS.hidePromptMessages = cfg.hidePromptMessages
-
-        # 拆錯字碼時發出警告嗶聲提示?
-        cbTS.playSoundWhenNonCand = cfg.playSoundWhenNonCand
 
         # Directly display the candidate list (no need to press the blank key)?
         cbTS.directShowCand = cfg.directShowCand

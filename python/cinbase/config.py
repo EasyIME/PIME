@@ -34,7 +34,6 @@ class CinBaseConfig:
         self.defaultLatin = False
         self.disableOnStartup = False
         self.switchLangWithShift = True
-        self.switchPageWithSpace = False
         self.messageDurationTime = 3
         self.hidePromptMessages = True
         self.directShowCand = False

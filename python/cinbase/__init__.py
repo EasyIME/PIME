@@ -59,7 +59,6 @@ class CinBase:
         cbTS.keyboardLayout = 0
         cbTS.selKeys = "1234567890"
         cbTS.langMode = -1
-        cbTS.switchPageWithSpace = False
         cbTS.hidePromptMessages = True
         cbTS.directShowCand = False
         cbTS.directCommitSymbol = False
@@ -518,8 +517,7 @@ class CinBase:
                         if (currentCandPage + 1) < currentCandPageCount:
                             currentCandPage += 1
                             candCursor = 0
-                    elif (keyCode == VK_RETURN or (
-                            keyCode == VK_SPACE and not cbTS.switchPageWithSpace)) and cbTS.canSetCommitString:  # 按下 Enter 鍵或空白鍵
+                    elif (keyCode == VK_RETURN or keyCode == VK_SPACE) and cbTS.canSetCommitString:  # 按下 Enter 鍵或空白鍵
                         commitStr = cbTS.candidateList[candCursor]
                         cbTS.lastCommitString = commitStr
                         self.setOutputString(cbTS, commitStr)
@@ -530,14 +528,6 @@ class CinBase:
                         if not cbTS.directShowCand:
                             cbTS.isShowCandidates = False
 
-                    elif keyCode == VK_SPACE and cbTS.switchPageWithSpace:  # 按下空白鍵
-                        if cbTS.canUseSpaceAsPageKey:
-                            if (currentCandPage + 1) < currentCandPageCount:
-                                currentCandPage += 1
-                                candCursor = 0
-                            else:
-                                currentCandPage = 0
-                                candCursor = 0
                     else:  # 按下其它鍵，先將候選字游標位址及目前頁數歸零
                         if not cbTS.ctrlsymbolsmode:
                             candCursor = 0
@@ -865,9 +855,6 @@ class CinBase:
         # Set word selection buttons (123456..., asdf.... etc.)
         # if cbTS.cin.getSelection():
         #     cbTS.setSelKeys(cbTS.cin.getSelection())
-
-        # 使用空白鍵作為候選清單換頁鍵?
-        cbTS.switchPageWithSpace = cfg.switchPageWithSpace
 
         # 提示訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime

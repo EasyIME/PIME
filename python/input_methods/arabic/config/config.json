@@ -5,7 +5,6 @@
     "candPerPage": 9,
     "selCinType": 0,
     "switchLangWithShift": true,
-    "switchPageWithSpace": false,
     "colorCandWnd": true,
     "fontSize": 12,
     "hidePromptMessages": true,

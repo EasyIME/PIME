@@ -102,7 +102,6 @@ class CinBase:
         cbTS.canUseSpaceAsPageKey = True
         cbTS.endKeyList = []
         cbTS.useEndKey = False
-        cbTS.autoShowCandWhenMaxChar = False
         cbTS.lastCommitString = ""
         cbTS.lastCompositionCharLength = 0
         cbTS.menutype = 0
@@ -445,18 +444,6 @@ class CinBase:
                         # EndKey 處理 (拼音、注音)
                         if cbTS.useEndKey:
                             if charStr in cbTS.endKeyList and len(cbTS.compositionChar) > 1:
-                                if not cbTS.isShowCandidates:
-                                    cbTS.isShowCandidates = True
-                                    cbTS.canUseSelKey = False
-                                else:
-                                    cbTS.canUseSelKey = True
-                            else:
-                                if cbTS.isShowCandidates:
-                                    cbTS.canUseSelKey = True
-
-                        # Word full and symbol processing (Zhuyin)
-                        if cbTS.autoShowCandWhenMaxChar:
-                            if len(cbTS.compositionChar) == cbTS.maxCharLength:
                                 if not cbTS.isShowCandidates:
                                     cbTS.isShowCandidates = True
                                     cbTS.canUseSelKey = False

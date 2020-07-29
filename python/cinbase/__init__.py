@@ -77,8 +77,6 @@ class CinBase:
         cbTS.selcandmode = False
 
         cbTS.initCinBaseState = False
-        cbTS.showmenu = False
-        cbTS.switchmenu = False
         cbTS.closemenu = True
         cbTS.tempEnglishMode = False
         cbTS.ctrlsymbolsmode = False
@@ -93,7 +91,6 @@ class CinBase:
         cbTS.useEndKey = False
         cbTS.lastCommitString = ""
         cbTS.lastCompositionCharLength = 0
-        cbTS.resetMenuCand = False
         cbTS.keepComposition = False
         cbTS.keepType = ""
 
@@ -262,13 +259,6 @@ class CinBase:
         else:
             cbTS.tempEnglishMode = False
 
-        # 鍵盤對映 (注音)
-        if not cbTS.keyboardLayout == 0 and charStr in cbTS.kbtypelist[
-            cbTS.keyboardLayout] and not cbTS.tempEnglishMode:
-            if not keyEvent.isKeyDown(VK_SHIFT) and not keyEvent.isKeyDown(VK_CONTROL):
-                charIndex = cbTS.kbtypelist[cbTS.keyboardLayout].index(charStr)
-                charStr = cbTS.kbtypelist[0][charIndex]
-
         cbTS.selKeys = "1234567890"
         if not self.candselKeys == "1234567890":
             self.candselKeys = "1234567890"
@@ -341,7 +331,6 @@ class CinBase:
                 cbTS.setCompositionCursor(len(cbTS.compositionString))
 
         if cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1:
-            cbTS.showmenu = False
             if not cbTS.directShowCand and not cbTS.selcandmode:
                 if not cbTS.lastCompositionCharLength == len(cbTS.compositionChar):
                     cbTS.lastCompositionCharLength = len(cbTS.compositionChar)
@@ -601,7 +590,6 @@ class CinBase:
         if cbTS.isLangModeChanged and keyCode == VK_SHIFT:
             self.toggleLanguageMode(cbTS)  # Switch between Arabic and Latin mode
             cbTS.isLangModeChanged = False
-            cbTS.showmenu = False
             if not cbTS.hidePromptMessages and not cbTS.client.isUiLess:
                 message = 'Arabic mode' if cbTS.langMode == ARABIC_MODE else 'Latin mode'
                 cbTS.isShowMessage = True
@@ -685,7 +673,7 @@ class CinBase:
     # 切換到其他應用程式或其他原因，導致我們的輸入法被強制關閉，此時
     # forced 參數會是 True，在這種狀況下，要清除一些 buffer
     def onCompositionTerminated(self, cbTS, forced):
-        if not cbTS.showmenu and not cbTS.keepComposition:
+        if not cbTS.keepComposition:
             self.resetComposition(cbTS)
 
         if cbTS.keepComposition:

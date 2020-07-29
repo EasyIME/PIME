@@ -22,7 +22,6 @@ import time
 
 from keycodes import *  # for VK_XXX constants
 from .cin import Cin
-from .msymbols import msymbols
 from .symbols import symbols
 
 ARABIC_MODE = 1
@@ -63,7 +62,6 @@ class CinBase:
         cbTS.directCommitSymbolList = ["，", "。", "、", "；", "？", "！"]
         cbTS.bracketSymbolList = ["「」", "『』", "［］", "【】", "〖〗", "〔〕", "﹝﹞", "（）", "﹙﹚", "〈〉", "《》", "＜＞", "﹤﹥", "｛｝",
                                   "﹛﹜"]
-        cbTS.directOutMSymbols = True
         cbTS.reLoadTable = False
         cbTS.messageDurationTime = 3
 
@@ -145,8 +143,6 @@ class CinBase:
 
         if hasattr(cbTS, 'symbols'):
             del cbTS.symbols
-        if hasattr(cbTS, 'msymbols'):
-            del cbTS.msymbols
 
     def getCandidates(self, cbTS, keys, step=1):
         candidates = []
@@ -284,35 +280,13 @@ class CinBase:
         if keyEvent.isKeyDown(VK_SHIFT) and not keyEvent.isPrintableChar():
             return False
 
-        # 若按下 Ctrl 鍵
-        if cbTS.langMode == ARABIC_MODE and keyEvent.isKeyDown(VK_CONTROL):
-            # If the specified symbol key is pressed, the input method needs to process this key
-            if self.isCtrlSymbolsChar(keyCode):
-                if cbTS.msymbols.isInCharDef(charStr) and cbTS.closemenu:
-                    if not cbTS.ctrlsymbolsmode:
-                        cbTS.ctrlsymbolsmode = True
-                        cbTS.compositionChar = charStr
-                    elif cbTS.msymbols.isInCharDef(cbTS.compositionChar + charStr):
-                        cbTS.compositionChar += charStr
-                    elif cbTS.ctrlsymbolsmode and cbTS.compositionChar != '':
-                        commitStr = cbTS.compositionString
-                        self.resetComposition(cbTS)
-                        if cbTS.directOutMSymbols:
-                            cbTS.setCommitString(commitStr)
-                            cbTS.keepComposition = True
-                            cbTS.keepType = "ctrlsymbols"
-                            cbTS.ctrlsymbolsmode = True
-                        cbTS.compositionChar = charStr
-                    candidates = cbTS.msymbols.getCharDef(cbTS.compositionChar)
-                    cbTS.setCompositionString(candidates[0])
-
         if cbTS.ctrlsymbolsmode and keyCode == VK_RETURN and cbTS.isComposing() and not cbTS.showCandidates:
             cbTS.setCommitString(cbTS.compositionString)
             self.resetComposition(cbTS)
 
         if cbTS.ctrlsymbolsmode and cbTS.directCommitSymbol and not keyEvent.isKeyDown(
                 VK_CONTROL) and keyEvent.isPrintableChar():
-            if not cbTS.msymbols.isInCharDef(cbTS.compositionChar + charStr) and cbTS.cin.isInKeyName(charStr):
+            if cbTS.cin.isInKeyName(charStr):
                 cbTS.setCommitString(cbTS.compositionString)
                 self.resetComposition(cbTS)
                 cbTS.keepComposition = True
@@ -377,8 +351,6 @@ class CinBase:
 
             if cbTS.cin.isCharactersInKeyName(cbTS.compositionChar) and cbTS.closemenu and not cbTS.ctrlsymbolsmode:
                 candidates = self.getCandidates(cbTS, cbTS.compositionChar)
-            elif cbTS.msymbols.isInCharDef(cbTS.compositionChar) and cbTS.closemenu and cbTS.ctrlsymbolsmode:
-                candidates = cbTS.msymbols.getCharDef(cbTS.compositionChar)
 
         if cbTS.selcandmode and cbTS.compositionChar != '':
             candidates = cbTS.tempengcandidates
@@ -680,11 +652,6 @@ class CinBase:
             cbTS.keepComposition = False
 
             if cbTS.keepType != "":
-                if cbTS.keepType == "ctrlsymbols":
-                    if cbTS.msymbols.isInCharDef(cbTS.compositionChar):
-                        ctrlSymbolsList = cbTS.msymbols.getCharDef(cbTS.compositionChar)
-                        cbTS.ctrlsymbolsmode = True
-                        cbTS.setCompositionString(ctrlSymbolsList[0])
                 cbTS.keepType = ""
             else:
                 for cStr in cbTS.compositionChar:
@@ -779,8 +746,6 @@ class CinBase:
 
         if hasattr(cbTS, 'symbols'):
             del cbTS.symbols
-        if hasattr(cbTS, 'msymbols'):
-            del cbTS.msymbols
 
         self.applyConfig(cbTS)  # 套用其餘的使用者設定
 
@@ -788,10 +753,6 @@ class CinBase:
         symbolsPath = cfg.findFile(datadirs, "symbols.dat")
         with io.open(symbolsPath, 'r', encoding='utf-8') as fs:
             cbTS.symbols = symbols(fs)
-
-        msymbolsPath = cfg.findFile(datadirs, "msymbols.json")
-        with io.open(msymbolsPath, 'r', encoding='utf-8') as fs:
-            cbTS.msymbols = msymbols(fs)
 
         cbTS.initCinBaseState = True
 
@@ -830,9 +791,6 @@ class CinBase:
 
         # 標點符號自動確認輸入?
         cbTS.directCommitSymbol = cfg.directCommitSymbol
-
-        # 允許內建符號輸入方式連續輸入?
-        cbTS.directOutMSymbols = cfg.directOutMSymbols
 
         # 最大候選字個數?
         cbTS.candMaxItems = cfg.candMaxItems

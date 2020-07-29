@@ -9,6 +9,5 @@
     "hidePromptMessages": true,
     "directShowCand": true,
     "directCommitSymbol": true,
-    "directOutMSymbols": true,
     "candMaxItems": 100
 }

@@ -43,7 +43,6 @@ class CinBaseConfig:
         self.selKeyType = 0
         self.candPerPage = 9
         self.cursorCandList = True
-        self.directOutMSymbols = True
         self.candMaxItems = 100
         self.messageDurationTime = 3
         self.keyboardType = 0

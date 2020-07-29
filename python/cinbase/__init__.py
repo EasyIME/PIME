@@ -22,7 +22,6 @@ import time
 
 from keycodes import *  # for VK_XXX constants
 from .cin import Cin
-from .symbols import symbols
 
 ARABIC_MODE = 1
 LATIN_MODE = 0
@@ -750,9 +749,6 @@ class CinBase:
         self.applyConfig(cbTS)  # 套用其餘的使用者設定
 
         datadirs = (cfg.getConfigDir(), cfg.getDataDir())
-        symbolsPath = cfg.findFile(datadirs, "symbols.dat")
-        with io.open(symbolsPath, 'r', encoding='utf-8') as fs:
-            cbTS.symbols = symbols(fs)
 
         cbTS.initCinBaseState = True
 

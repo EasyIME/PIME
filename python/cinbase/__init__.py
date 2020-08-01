@@ -162,14 +162,8 @@ class CinBase:
                 cbTS.hideMessageOnKeyUp = True
             return False
 
-        # Don't process the Alt key
-        if keyEvent.isKeyDown(VK_MENU):
-            if cbTS.isShowMessage:
-                cbTS.hideMessageOnKeyUp = True
-            return False
-
-        # Don't process the Ctrl key
-        if keyEvent.isKeyDown(VK_CONTROL):
+        # Don't process the Ctrl or Alt key
+        if keyEvent.isKeyDown(VK_CONTROL) or keyEvent.isKeyDown(VK_MENU):
             if cbTS.isShowMessage:
                 cbTS.hideMessageOnKeyUp = True
             return False
@@ -249,7 +243,7 @@ class CinBase:
 
         # The characters in charStr are defined in arabic.json
         if cbTS.cin.isCharactersInKeyName(charStr) and cbTS.closemenu and not keyEvent.isKeyDown(
-            VK_CONTROL) and not cbTS.selcandmode:
+                VK_CONTROL) and not cbTS.selcandmode:
             cbTS.compositionChar += charStr
             keyname = cbTS.cin.getKeyName(charStr)
             cbTS.setCompositionString(cbTS.compositionString + keyname)
@@ -270,7 +264,7 @@ class CinBase:
                 else:
                     self.resetComposition(cbTS)
 
-            # 刪掉一個字根
+            # Delete a letter
             if keyCode == VK_BACK:
                 if cbTS.compositionString != "":
                     if cbTS.cin.isInKeyName(cbTS.compositionChar[len(cbTS.compositionChar) - 1:]):
@@ -293,7 +287,7 @@ class CinBase:
 
             # Group word exceeds maximum
             if len(cbTS.compositionChar) > cbTS.maxCharLength:
-                if cbTS.cin.isInKeyName(cbTS.compositionChar[len(cbTS.compositionChar) - 1:]):
+                if cbTS.cin.isCharactersInKeyName(cbTS.compositionChar[len(cbTS.compositionChar) - 1:]):
                     keyLength = len(cbTS.cin.getKeyName(cbTS.compositionChar[len(cbTS.compositionChar) - 1:]))
                 else:
                     keyLength = 1
@@ -304,7 +298,7 @@ class CinBase:
                 candidates = self.getCandidates(cbTS, cbTS.compositionChar)
 
         # Candidate list processing
-        if (cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1):
+        if cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1:
             # If the first character is a symbol, output directly
             if cbTS.directCommitSymbol and not cbTS.selcandmode:
                 # If it is code table punctuation
@@ -637,7 +631,6 @@ class CinBase:
         cfg = cbTS.cfg  # 所有 TextService 共享一份設定物件
 
         if not cbTS.initCinBaseState:
-            # 預設英數 or 中文模式
             cbTS.langMode = LATIN_MODE if cfg.defaultLatin else ARABIC_MODE
 
             self.updateLangButtons(cbTS)
@@ -670,10 +663,6 @@ class CinBase:
                          candPerRow=cfg.candPerRow,
                          candUseCursor=cfg.cursorCandList)
 
-        # Set word selection buttons (123456..., asdf.... etc.)
-        # if cbTS.cin.getSelection():
-        #     cbTS.setSelKeys(cbTS.cin.getSelection())
-
         # 提示訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime
 
@@ -689,10 +678,10 @@ class CinBase:
         # 訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime
 
-    # 檢查設定檔是否有被更改，是否需要套i用新設定
+    # Check whether the configuration file has been changed and whether the new setting needs to be applied
     def checkConfigChange(self, cbTS, CinTable):
-        cfg = cbTS.cfg  # 所有 TextService 共享一份設定物件
-        cfg.update()  # 更新設定檔狀態
+        cfg = cbTS.cfg  # All TextServices share a configuration object
+        cfg.update()    # Update profile status
         reLoadCinTable = False
 
         # If the input method code table is changed, reload the code table data
@@ -701,7 +690,7 @@ class CinBase:
                 reLoadCinTable = True
 
         elif cfg.isConfigChanged(cbTS.configVersion):
-            # 只有偵測到設定檔變更，需要套用新設定
+            # Only when profile changes are detected, new settings need to be applied
             self.applyConfig(cbTS)
 
         if reLoadCinTable:

@@ -34,9 +34,7 @@ class CinBaseConfig:
         self.defaultLatin = False
         self.disableOnStartup = False
         self.messageDurationTime = 3
-        self.hidePromptMessages = True
         self.directShowCand = False
-        self.directCommitSymbol = False
         self.fontSize = DEF_FONT_SIZE
         self.selCinType = 0
         self.selKeyType = 0
@@ -44,7 +42,6 @@ class CinBaseConfig:
         self.cursorCandList = True
         self.candMaxItems = 100
         self.messageDurationTime = 3
-        self.keyboardType = 0
 
         self.ignoreSaveList = ["ignoreSaveList", "curdir", "cinFileList", "selCinFile", "imeDirName", "_version", "_lastUpdateTime"]
         self.curdir = os.path.abspath(os.path.dirname(__file__))
@@ -53,7 +50,7 @@ class CinBaseConfig:
         self.imeDirName = ""
 
         # version: last modified time of (config.json, symbols.dat)
-        self._version = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        self._version = 0.0
         self._lastUpdateTime = 0.0
 
     def getConfigDir(self):
@@ -136,17 +133,8 @@ class CinBaseConfig:
         except Exception:
             configTime = 0.0
 
-        datadirs = (self.getConfigDir(), self.getDataDir())
-        symbolsTime = 0.0
-        symbolsFile = self.findFile(datadirs, "symbols.dat")
-        if symbolsFile:
-            try:
-                symbolsTime = os.path.getmtime(symbolsFile)
-            except Exception:
-                pass
-
-        lastConfigTime = self._version[0]
-        self._version = (configTime, symbolsTime)
+        lastConfigTime = self._version
+        self._version = configTime
 
         # the main config file is changed, reload it
         if lastConfigTime != configTime:
@@ -161,7 +149,7 @@ class CinBaseConfig:
         return self._version
 
     def isConfigChanged(self, currentVersion):
-        return currentVersion[0] != self._version[0]
+        return currentVersion != self._version
 
 
 # globally shared config object

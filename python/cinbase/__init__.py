@@ -54,12 +54,7 @@ class CinBase:
 
         cbTS.selKeys = "1234567890"
         cbTS.langMode = -1
-        cbTS.hidePromptMessages = True
         cbTS.directShowCand = False
-        cbTS.directCommitSymbol = False
-        cbTS.directCommitSymbolList = ["，", "。", "、", "；", "？", "！"]
-        cbTS.bracketSymbolList = ["「」", "『』", "［］", "【】", "〖〗", "〔〕", "﹝﹞", "（）", "﹙﹚", "〈〉", "《》", "＜＞", "﹤﹥", "｛｝",
-                                  "﹛﹜"]
         cbTS.messageDurationTime = 3
 
         cbTS.lastKeyDownCode = 0
@@ -81,7 +76,6 @@ class CinBase:
         cbTS.lastCommitString = ""
         cbTS.lastCompositionCharLength = 0
         cbTS.keepComposition = False
-        cbTS.keepType = ""
 
         cbTS.showMessageOnKeyUp = False
         cbTS.hideMessageOnKeyUp = False
@@ -113,13 +107,6 @@ class CinBase:
 
             # Arabic input is enabled by default at startup
             cbTS.setKeyboardOpen(not cfg.disableOnStartup)
-
-        # Settings
-        cbTS.addButton("settings",
-                       icon=os.path.join(self.icondir, "config.ico"),
-                       tooltip="settings",
-                       type="menu"
-                       )
 
     # When the input method is deactivated by the user
     def onDeactivate(self, cbTS):
@@ -299,25 +286,6 @@ class CinBase:
 
         # Candidate list processing
         if cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1:
-            # If the first character is a symbol, output directly
-            if cbTS.directCommitSymbol and not cbTS.selcandmode:
-                # If it is code table punctuation
-                if cbTS.cin.isInKeyName(cbTS.compositionChar[0]):
-                    if cbTS.cin.getKeyName(cbTS.compositionChar[0]) in cbTS.directCommitSymbolList:
-                        if not cbTS.cin.isInCharDef(cbTS.compositionChar):
-                            if len(cbTS.compositionChar) >= 2 and not cbTS.cin.getKeyName(
-                                    cbTS.compositionChar[1]) in cbTS.directCommitSymbolList:
-                                cbTS.keepComposition = True
-                                commitStr = cbTS.cin.getKeyName(cbTS.compositionChar[:1])
-                                compositionStr = cbTS.compositionString[1:]
-                                compositionChar = cbTS.compositionChar[1:]
-                                cbTS.setCommitString(commitStr)
-                                cbTS.compositionChar = compositionChar
-                                cbTS.setCompositionString(compositionStr)
-                                cbTS.setCompositionCursor(len(cbTS.compositionString))
-                            if cbTS.cin.isInCharDef(cbTS.compositionChar):
-                                candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
-
             if candidates:
                 if not cbTS.selcandmode:
                     cbTS.isShowCandidates = True
@@ -461,10 +429,6 @@ class CinBase:
         if cbTS.isLangModeChanged and keyCode == VK_SHIFT:
             self.toggleLanguageMode(cbTS)  # Switch between Arabic and Latin mode
             cbTS.isLangModeChanged = False
-            if not cbTS.hidePromptMessages and not cbTS.client.isUiLess:
-                message = 'Arabic mode' if cbTS.langMode == ARABIC_MODE else 'Latin mode'
-                cbTS.isShowMessage = True
-                cbTS.showMessage(message, cbTS.messageDurationTime)
             if cbTS.showCandidates or len(cbTS.compositionChar) > 0:
                 self.resetComposition(cbTS)
 
@@ -550,12 +514,9 @@ class CinBase:
         if cbTS.keepComposition:
             cbTS.keepComposition = False
 
-            if cbTS.keepType != "":
-                cbTS.keepType = ""
-            else:
-                for cStr in cbTS.compositionChar:
-                    if cbTS.cin.isInKeyName(cStr):
-                        cbTS.compositionString += cbTS.cin.getKeyName(cStr)
+            for cStr in cbTS.compositionChar:
+                if cbTS.cin.isInKeyName(cStr):
+                    cbTS.compositionString += cbTS.cin.getKeyName(cStr)
             cbTS.setCompositionCursor(len(cbTS.compositionString))
 
     # 切換中英文模式
@@ -639,8 +600,6 @@ class CinBase:
 
         self.applyConfig(cbTS)  # 套用其餘的使用者設定
 
-        datadirs = (cfg.getConfigDir(), cfg.getDataDir())
-
         cbTS.initCinBaseState = True
 
     def applyConfig(self, cbTS):
@@ -666,14 +625,8 @@ class CinBase:
         # 提示訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime
 
-        # 隱藏提示訊息?
-        cbTS.hidePromptMessages = cfg.hidePromptMessages
-
         # Directly display the candidate list (no need to press the blank key)?
         cbTS.directShowCand = cfg.directShowCand
-
-        # 標點符號自動確認輸入?
-        cbTS.directCommitSymbol = cfg.directCommitSymbol
 
         # 訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime
@@ -681,7 +634,7 @@ class CinBase:
     # Check whether the configuration file has been changed and whether the new setting needs to be applied
     def checkConfigChange(self, cbTS, CinTable):
         cfg = cbTS.cfg  # All TextServices share a configuration object
-        cfg.update()    # Update profile status
+        cfg.update()  # Update profile status
         reLoadCinTable = False
 
         # If the input method code table is changed, reload the code table data
@@ -694,7 +647,6 @@ class CinBase:
             self.applyConfig(cbTS)
 
         if reLoadCinTable:
-            datadirs = (cfg.getConfigDir(), cfg.getDataDir())
             if reLoadCinTable:
                 cbTS.reLoadCinTable = True
             loadCinFile = LoadCinTable(cbTS, CinTable)

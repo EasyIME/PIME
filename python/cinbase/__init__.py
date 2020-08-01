@@ -52,7 +52,6 @@ class CinBase:
         cbTS.TextService = TextService
         cbTS.TextService.setSelKeys(cbTS, self.candselKeys)
 
-        cbTS.keyboardLayout = 0
         cbTS.selKeys = "1234567890"
         cbTS.langMode = -1
         cbTS.hidePromptMessages = True
@@ -69,23 +68,17 @@ class CinBase:
 
         cbTS.currentCandPage = 0
 
-        cbTS.tempengcandidates = []
         cbTS.keyUsedState = False
         cbTS.selcandmode = False
 
         cbTS.initCinBaseState = False
         cbTS.closemenu = True
-        cbTS.tempEnglishMode = False
-        cbTS.ctrlsymbolsmode = False
         cbTS.isSelKeysChanged = False
         cbTS.isLangModeChanged = False
         cbTS.isShowCandidates = False
         cbTS.isShowMessage = False
         cbTS.canSetCommitString = True
         cbTS.canUseSelKey = True
-        cbTS.canUseSpaceAsPageKey = True
-        cbTS.endKeyList = []
-        cbTS.useEndKey = False
         cbTS.lastCommitString = ""
         cbTS.lastCompositionCharLength = 0
         cbTS.keepComposition = False
@@ -140,9 +133,6 @@ class CinBase:
         if cbTS.client.isWindows8Above:
             cbTS.removeButton("windows-mode-icon")
 
-        if hasattr(cbTS, 'symbols'):
-            del cbTS.symbols
-
     def getCandidates(self, cbTS, keys, step=1):
         candidates = []
         for i in reversed(range(1, len(keys) + 1)):
@@ -167,6 +157,32 @@ class CinBase:
         if cbTS.lastKeyDownTime == 0.0:
             cbTS.lastKeyDownTime = time.time()
 
+        # Don't do any processing if in Latin mode, except for SHIFT, to change language
+        if cbTS.langMode == LATIN_MODE and not keyEvent.keyCode == VK_SHIFT:
+            if cbTS.isShowMessage:
+                cbTS.hideMessageOnKeyUp = True
+            return False
+
+        # Don't process the Alt key
+        if keyEvent.isKeyDown(VK_MENU):
+            if cbTS.isShowMessage:
+                cbTS.hideMessageOnKeyUp = True
+            return False
+
+        # Don't process the Ctrl key
+        if keyEvent.isKeyDown(VK_CONTROL):
+            if cbTS.isShowMessage:
+                cbTS.hideMessageOnKeyUp = True
+            return False
+
+        # If NumLock is on, don't process any of the NumPad input
+        if keyEvent.isKeyToggled(VK_NUMLOCK):  # NumLock is on
+            # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
+            if VK_NUMPAD0 <= keyEvent.keyCode <= VK_DIVIDE:
+                if cbTS.isShowMessage:
+                    cbTS.hideMessageOnKeyUp = True
+                return False  # bypass IME
+
         if CinTable.loading:
             return True
 
@@ -178,49 +194,14 @@ class CinBase:
         if cbTS.isComposing() or cbTS.showCandidates:
             return True
 
-        # --------------   The following are "no" Arabic input status   --------------
-
-        # 如果按下 Alt，可能是應用程式熱鍵，輸入法不做處理
-        if keyEvent.isKeyDown(VK_MENU):
+        # Process the Shift Key
+        if keyEvent.isKeyDown(VK_SHIFT):
             if cbTS.isShowMessage:
                 cbTS.hideMessageOnKeyUp = True
-            return False
-
-        # 如果按下 Ctrl 鍵
-        if keyEvent.isKeyDown(VK_CONTROL):
-            # 若按下的是指定的符號鍵，輸入法需要處理此按鍵
-            if self.isCtrlSymbolsChar(keyEvent.keyCode) and cbTS.langMode == ARABIC_MODE:
-                return True
-            else:
-                if cbTS.isShowMessage:
-                    cbTS.hideMessageOnKeyUp = True
-                return False
-
-        # 不論中英文模式，NumPad 都允許直接輸入數字，輸入法不處理
-        if keyEvent.isKeyToggled(VK_NUMLOCK):  # NumLock is on
-            # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
-            if VK_NUMPAD0 <= keyEvent.keyCode <= VK_DIVIDE:
-                if cbTS.isShowMessage:
-                    cbTS.hideMessageOnKeyUp = True
-                return False  # bypass IME
-
-        # 如果是英文半形模式，輸入法不做任何處理
-        if cbTS.langMode == LATIN_MODE:
-            if cbTS.isShowMessage and not keyEvent.isKeyDown(VK_SHIFT):
-                cbTS.hideMessageOnKeyUp = True
-            return False
-
-        # Check whether the pressed key is keyname list
-        if cbTS.cin.isInKeyName(chr(keyEvent.charCode)):
             return True
 
-        # Check whether the pressed key is defined by other keyboards
-        if not cbTS.keyboardLayout == 0:
-            if chr(keyEvent.charCode) in cbTS.kbtypelist[cbTS.keyboardLayout]:
-                return True
-
-        # In Chinese mode, if you press the `key, let the input method process
-        if keyEvent.isKeyDown(VK_OEM_3):
+        # Check whether the pressed key is keyName list
+        if cbTS.cin.isInKeyName(chr(keyEvent.charCode)):
             return True
 
         # The rest of the situation will not be processed,
@@ -230,9 +211,9 @@ class CinBase:
         return False
 
     def onKeyDown(self, cbTS, keyEvent, CinTable):
-        charCode = keyEvent.charCode
-        keyCode = keyEvent.keyCode
-        charStr = chr(charCode)
+        # If shift was last pressed, then move on
+        if cbTS.lastKeyDownCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
+            return True
 
         if CinTable.loading:
             if not cbTS.client.isUiLess:
@@ -241,18 +222,9 @@ class CinBase:
                 cbTS.showMessage(messagestr, cbTS.messageDurationTime)
             return True
 
-        # NumPad 某些狀況允許輸入法處理
-        if keyEvent.isKeyToggled(VK_NUMLOCK):  # NumLock is on
-            # if this key is Num pad 0-9, +, -, *, /, pass it back to the system
-            if VK_NUMPAD0 <= keyEvent.keyCode <= VK_DIVIDE:
-                if cbTS.showCandidates:
-                    return True  # bypass IME
-
-        if cbTS.langMode == LATIN_MODE:
-            if cbTS.isComposing() or cbTS.showCandidates:
-                cbTS.tempEnglishMode = True
-        else:
-            cbTS.tempEnglishMode = False
+        keyCode = keyEvent.keyCode
+        charCode = keyEvent.charCode
+        charStr = chr(charCode)
 
         cbTS.selKeys = "1234567890"
         if not self.candselKeys == "1234567890":
@@ -268,40 +240,21 @@ class CinBase:
             cbTS.isShowMessage = False
             cbTS.hideMessage()
 
-        # 按鍵處理 ----------------------------------------------------------------
-        # 某些狀況須要特別處理或忽略
-        # 如果輸入編輯區為空且選單未開啟過，不處理 Enter 及 Backspace 鍵
+        # Key processing------------------------------------------------ ----------------
+        # Certain situations require special treatment or neglect
+        # If the input editing area is empty and the menu has not been opened,
+        # the Enter and Backspace keys will not be processed
         if not cbTS.isComposing() and cbTS.closemenu:
             if keyCode == VK_RETURN or keyCode == VK_BACK:
                 return False
 
-        # 若按下 Shift 鍵,且沒有按下其它的按鍵
-        if keyEvent.isKeyDown(VK_SHIFT) and not keyEvent.isPrintableChar():
-            return False
-
-        if cbTS.ctrlsymbolsmode and keyCode == VK_RETURN and cbTS.isComposing() and not cbTS.showCandidates:
-            cbTS.setCommitString(cbTS.compositionString)
-            self.resetComposition(cbTS)
-
-        if cbTS.ctrlsymbolsmode and cbTS.directCommitSymbol and not keyEvent.isKeyDown(
-                VK_CONTROL) and keyEvent.isPrintableChar():
-            if cbTS.cin.isInKeyName(charStr):
-                cbTS.setCommitString(cbTS.compositionString)
-                self.resetComposition(cbTS)
-                cbTS.keepComposition = True
-
-        # 按下的鍵為 CIN 內有定義的字根
-        if cbTS.cin.isInKeyName(
-                charStr) and cbTS.closemenu and not keyEvent.isKeyDown(
-            VK_CONTROL) and not cbTS.ctrlsymbolsmode and not cbTS.selcandmode and not cbTS.tempEnglishMode:
-            if not cbTS.directShowCand and cbTS.showCandidates and self.isInSelKeys(cbTS, charCode):
-                # 不送出 CIN 所定義的字根
-                cbTS.compositionChar = cbTS.compositionChar
-            else:
-                cbTS.compositionChar += charStr
-                keyname = cbTS.cin.getKeyName(charStr)
-                cbTS.setCompositionString(cbTS.compositionString + keyname)
-                cbTS.setCompositionCursor(len(cbTS.compositionString))
+        # The characters in charStr are defined in arabic.json
+        if cbTS.cin.isCharactersInKeyName(charStr) and cbTS.closemenu and not keyEvent.isKeyDown(
+            VK_CONTROL) and not cbTS.selcandmode:
+            cbTS.compositionChar += charStr
+            keyname = cbTS.cin.getKeyName(charStr)
+            cbTS.setCompositionString(cbTS.compositionString + keyname)
+            cbTS.setCompositionCursor(len(cbTS.compositionString))
 
         if cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1:
             if not cbTS.directShowCand and not cbTS.selcandmode:
@@ -348,17 +301,13 @@ class CinBase:
                 cbTS.setCompositionString(cbTS.compositionString[:-keyLength])
                 cbTS.compositionChar = cbTS.compositionChar[:-1]
 
-            if cbTS.cin.isCharactersInKeyName(cbTS.compositionChar) and cbTS.closemenu and not cbTS.ctrlsymbolsmode:
+            if cbTS.cin.isCharactersInKeyName(cbTS.compositionChar) and cbTS.closemenu:
                 candidates = self.getCandidates(cbTS, cbTS.compositionChar)
 
-        if cbTS.selcandmode and cbTS.compositionChar != '':
-            candidates = cbTS.tempengcandidates
-
         # Candidate list processing
-        if (cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1) or (
-                cbTS.tempEnglishMode and cbTS.isComposing()):
+        if (cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1):
             # If the first character is a symbol, output directly
-            if cbTS.directCommitSymbol and not cbTS.tempEnglishMode and not cbTS.selcandmode:
+            if cbTS.directCommitSymbol and not cbTS.selcandmode:
                 # If it is code table punctuation
                 if cbTS.cin.isInKeyName(cbTS.compositionChar[0]):
                     if cbTS.cin.getKeyName(cbTS.compositionChar[0]) in cbTS.directCommitSymbolList:
@@ -378,25 +327,8 @@ class CinBase:
 
             if candidates:
                 if not cbTS.selcandmode:
-                    if not cbTS.directShowCand:
-                        # EndKey 處理 (拼音、注音)
-                        if cbTS.useEndKey:
-                            if charStr in cbTS.endKeyList and len(cbTS.compositionChar) > 1:
-                                if not cbTS.isShowCandidates:
-                                    cbTS.isShowCandidates = True
-                                    cbTS.canUseSelKey = False
-                                else:
-                                    cbTS.canUseSelKey = True
-                            else:
-                                if cbTS.isShowCandidates:
-                                    cbTS.canUseSelKey = True
-
-                        cbTS.isShowCandidates = True
-                        if keyCode == VK_SPACE:
-                            cbTS.canUseSpaceAsPageKey = False
-                    else:
-                        cbTS.isShowCandidates = True
-                        cbTS.canSetCommitString = True
+                    cbTS.isShowCandidates = True
+                    cbTS.canSetCommitString = True
 
                 if cbTS.isShowCandidates:
                     candCursor = cbTS.candidateCursor  # 目前的游標位置
@@ -411,7 +343,7 @@ class CinBase:
                         cbTS.setShowCandidates(True)
 
                 if cbTS.isShowCandidates:
-                    # 使用選字鍵執行項目或輸出候選字
+                    # Use the word selection keys to execute items or output candidates
                     if self.isInSelKeys(cbTS, charCode) and not keyEvent.isKeyDown(VK_SHIFT) and cbTS.canUseSelKey:
                         i = cbTS.selKeys.index(charStr)
                         if i < cbTS.candPerPage and i < len(cbTS.candidateList):
@@ -478,41 +410,18 @@ class CinBase:
                         if not cbTS.directShowCand:
                             cbTS.isShowCandidates = False
 
-                    else:  # 按下其它鍵，先將候選字游標位址及目前頁數歸零
-                        if not cbTS.ctrlsymbolsmode:
-                            candCursor = 0
-                            currentCandPage = 0
+                    # Press other keys to reset the cursor address of the candidate word
+                    # and the current page number to zero
+                    else:
+                        candCursor = 0
+                        currentCandPage = 0
                     # 更新選字視窗游標位置及頁數
                     cbTS.setCandidateCursor(candCursor)
                     cbTS.setCandidatePage(currentCandPage)
                     cbTS.setCandidateList(pagecandidates[currentCandPage])
             else:  # No candidates
-                # Pressed space or enter
-                if (keyCode == VK_SPACE or keyCode == VK_RETURN) and not cbTS.tempEnglishMode:
-                    if len(candidates) == 0:
-                        if not cbTS.client.isUiLess:
-                            cbTS.isShowMessage = True
-                            cbTS.showMessage("Check no group words 1...", cbTS.messageDurationTime)
-                elif cbTS.useEndKey and charStr in cbTS.endKeyList:
-                    if len(candidates) == 0:
-                        if not len(cbTS.compositionChar) == 1 and not cbTS.compositionChar == charStr:
-                            if not cbTS.client.isUiLess:
-                                cbTS.isShowMessage = True
-                                cbTS.showMessage("Check no group words 2...", cbTS.messageDurationTime)
-
                 cbTS.setShowCandidates(False)
                 cbTS.isShowCandidates = False
-
-        if cbTS.langMode == ARABIC_MODE and cbTS.isComposing() and not cbTS.showCandidates:
-            if cbTS.closemenu and not cbTS.selcandmode:
-                if keyCode == VK_RETURN:
-                    if cbTS.cin.isInKeyName(cbTS.compositionChar) and len(
-                            cbTS.compositionChar) == 1 and self.isSymbolsAndNumberChar(cbTS.compositionChar):
-                        cbTS.setCommitString(cbTS.compositionString)
-                        self.resetComposition(cbTS)
-
-        if not cbTS.canUseSpaceAsPageKey:
-            cbTS.canUseSpaceAsPageKey = True
 
         if not cbTS.closemenu:
             cbTS.closemenu = True
@@ -524,14 +433,13 @@ class CinBase:
     # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
     def filterKeyUp(self, cbTS, keyEvent):
         # 若啟用使用 Shift 鍵切換中英文模式
-        if cbTS.cfg.switchLangWithShift:
-            # 剛才最後一個按下的鍵，和現在放開的鍵，都是 Shift
-            if cbTS.lastKeyDownCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
-                pressedDuration = time.time() - cbTS.lastKeyDownTime
-                # 按下和放開的時間相隔 < 0.5 秒
-                if pressedDuration < 0.5:
-                    cbTS.isLangModeChanged = True
-                    return True
+        # 剛才最後一個按下的鍵，和現在放開的鍵，都是 Shift
+        if cbTS.lastKeyDownCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
+            pressedDuration = time.time() - cbTS.lastKeyDownTime
+            # 按下和放開的時間相隔 < 0.5 秒
+            if pressedDuration < 0.5:
+                cbTS.isLangModeChanged = True
+                return True
 
         # 不管中英文模式，只要放開 CapsLock 鍵，輸入法都須要處理
         if cbTS.lastKeyDownCode == VK_CAPITAL and keyEvent.keyCode == VK_CAPITAL:
@@ -556,7 +464,6 @@ class CinBase:
         cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
 
-        #
         # If you release the Shift key then trigger Switch language mode
         if cbTS.isLangModeChanged and keyCode == VK_SHIFT:
             self.toggleLanguageMode(cbTS)  # Switch between Arabic and Latin mode
@@ -627,16 +534,16 @@ class CinBase:
             ]
         return None
 
-    # 鍵盤開啟/關閉時會被呼叫 (在 Windows 10 Ctrl+Space 時)
+    # Called when the keyboard is turned on/off (in Windows 10 Ctrl+Space)
     def onKeyboardStatusChanged(self, cbTS, opened):
-        if opened:  # 鍵盤開啟
+        if opened:
             self.resetComposition(cbTS)
-        else:  # 鍵盤關閉，輸入法停用
+        else:
             self.resetComposition(cbTS)
 
         # Windows 8 systray IME mode icon
         if cbTS.client.isWindows8Above:
-            # 若鍵盤關閉，我們需要把 widnows 8 mode icon 設定為 disabled
+            # If the keyboard is turned off, we need to set the windows 8 mode icon to disabled
             cbTS.changeButton("windows-mode-icon", enable=opened)
         # FIXME: 是否需要同時 disable 其他語言列按鈕？
 
@@ -684,7 +591,6 @@ class CinBase:
         cbTS.setCandidatePage(0)
         cbTS.setCandidateList([])
         cbTS.setShowCandidates(False)
-        cbTS.ctrlsymbolsmode = False
         cbTS.keepComposition = False
         cbTS.selcandmode = False
         cbTS.lastCompositionCharLength = 0
@@ -696,10 +602,6 @@ class CinBase:
     # 判斷符號鍵?
     def isSymbolsChar(self, keyCode):
         return keyCode >= 0xBA and keyCode <= 0xDF
-
-    # 判斷 Ctrl 符號鍵?
-    def isCtrlSymbolsChar(self, keyCode):
-        return keyCode >= 0xBA and keyCode <= 0xDF and keyCode != 0xBB and keyCode != 0xBD and keyCode != 0xC0
 
     # 判斷字母鍵?
     def isLetterChar(self, keyCode):
@@ -742,9 +644,6 @@ class CinBase:
             self.updateLangButtons(cbTS)
 
         cbTS.selCinType = cfg.selCinType
-
-        if hasattr(cbTS, 'symbols'):
-            del cbTS.symbols
 
         self.applyConfig(cbTS)  # 套用其餘的使用者設定
 

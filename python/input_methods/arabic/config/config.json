@@ -1,10 +1,8 @@
 {
-    "keyboardLayout": 0,
     "defaultLatin": false,
     "candPerRow": 1,
     "candPerPage": 9,
     "selCinType": 0,
-    "switchLangWithShift": true,
     "fontSize": 12,
     "hidePromptMessages": true,
     "directShowCand": true,

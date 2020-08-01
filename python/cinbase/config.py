@@ -34,7 +34,6 @@ class CinBaseConfig:
         self.defaultLatin = False
         self.disableOnStartup = False
         self.messageDurationTime = 3
-        self.directShowCand = False
         self.fontSize = DEF_FONT_SIZE
         self.selCinType = 0
         self.selKeyType = 0

@@ -26,18 +26,18 @@ from .cin import Cin
 ARABIC_MODE = 1
 LATIN_MODE = 0
 
-# shift + space 熱鍵的 GUID
+# shift + space Hotkey GUID
 SHIFT_SPACE_GUID = "{f1dae0fb-8091-44a7-8a0c-3082a1515447}"
 TF_MOD_SHIFT = 0x0004
 
-# 選單項目和語言列按鈕的 command ID
+# command IDs for menu items and language bar buttons
 ID_SWITCH_LANG = 1
-ID_MODE_ICON = 3
-ID_WEBSITE = 4
-ID_BUGREPORT = 5
-ID_LEXILOGOS = 6
-ID_BAHETH = 7
-ID_ALMAANY = 8
+ID_MODE_ICON = 2
+ID_WEBSITE = 3
+ID_BUGREPORT = 4
+ID_LEXILOGOS = 5
+ID_BAHETH = 6
+ID_ALMAANY = 7
 
 
 class CinBase:
@@ -53,8 +53,7 @@ class CinBase:
         cbTS.TextService.setSelKeys(cbTS, self.candselKeys)
 
         cbTS.selKeys = "1234567890"
-        cbTS.langMode = -1
-        cbTS.directShowCand = False
+        cbTS.langMode = ARABIC_MODE
         cbTS.messageDurationTime = 3
 
         cbTS.lastKeyDownCode = 0
@@ -237,19 +236,10 @@ class CinBase:
             cbTS.setCompositionCursor(len(cbTS.compositionString))
 
         if cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1:
-            if not cbTS.directShowCand and not cbTS.selcandmode:
-                if not cbTS.lastCompositionCharLength == len(cbTS.compositionChar):
-                    cbTS.lastCompositionCharLength = len(cbTS.compositionChar)
-                    cbTS.isShowCandidates = False
-                    cbTS.setShowCandidates(False)
-
             # 按下 ESC 鍵
             if keyCode == VK_ESCAPE and (cbTS.showCandidates or len(cbTS.compositionChar) > 0):
                 cbTS.lastCompositionCharLength = 0
-                if not cbTS.directShowCand:
-                    cbTS.isShowCandidates = False
-                else:
-                    self.resetComposition(cbTS)
+                self.resetComposition(cbTS)
 
             # Delete a letter
             if keyCode == VK_BACK:
@@ -266,9 +256,6 @@ class CinBase:
                     cbTS.lastCompositionCharLength = cbTS.lastCompositionCharLength - 1
                     cbTS.setCandidateCursor(0)
                     cbTS.setCandidatePage(0)
-                    if not cbTS.directShowCand:
-                        cbTS.isShowCandidates = False
-                        cbTS.setShowCandidates(False)
                     if cbTS.compositionChar == '':
                         self.resetComposition(cbTS)
 
@@ -315,9 +302,6 @@ class CinBase:
                             candCursor = 0
                             currentCandPage = 0
 
-                            if not cbTS.directShowCand:
-                                cbTS.canSetCommitString = True
-                                cbTS.isShowCandidates = False
                     elif keyCode == VK_UP:  # 游標上移
                         if (candCursor - cbTS.candPerRow) < 0:
                             if currentCandPage > 0:
@@ -367,9 +351,6 @@ class CinBase:
                         self.resetComposition(cbTS)
                         candCursor = 0
                         currentCandPage = 0
-
-                        if not cbTS.directShowCand:
-                            cbTS.isShowCandidates = False
 
                     # Press other keys to reset the cursor address of the candidate word
                     # and the current page number to zero
@@ -624,9 +605,6 @@ class CinBase:
 
         # 提示訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime
-
-        # Directly display the candidate list (no need to press the blank key)?
-        cbTS.directShowCand = cfg.directShowCand
 
         # 訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime

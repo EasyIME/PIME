@@ -4,6 +4,5 @@
     "candPerPage": 9,
     "selCinType": 0,
     "fontSize": 12,
-    "directShowCand": true,
     "candMaxItems": 100
 }

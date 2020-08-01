@@ -177,17 +177,13 @@ class CinBase:
         if keyEvent.isKeyDown(VK_SHIFT):
             if cbTS.isShowMessage:
                 cbTS.hideMessageOnKeyUp = True
+            if self.isPunctuationChar(keyEvent.charCode):
+                return False
             return True
 
         # Check whether the pressed key is keyName list
         if cbTS.cin.isInKeyName(chr(keyEvent.charCode)):
             return True
-
-        # The rest of the situation will not be processed,
-        # the original key input will be directly returned to the application
-        if cbTS.isShowMessage and not keyEvent.isKeyDown(VK_SHIFT):
-            cbTS.hideMessageOnKeyUp = True
-        return False
 
     def onKeyDown(self, cbTS, keyEvent, CinTable):
         # If shift was last pressed, then move on
@@ -537,6 +533,9 @@ class CinBase:
     # 判斷符號鍵?
     def isSymbolsChar(self, keyCode):
         return keyCode >= 0xBA and keyCode <= 0xDF
+
+    def isPunctuationChar(self, keyCode):
+        return 32 <= keyCode <= 47 or 58 <= keyCode <= 64
 
     # 判斷字母鍵?
     def isLetterChar(self, keyCode):

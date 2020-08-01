@@ -60,7 +60,6 @@ class CinBase:
         cbTS.directCommitSymbolList = ["，", "。", "、", "；", "？", "！"]
         cbTS.bracketSymbolList = ["「」", "『』", "［］", "【】", "〖〗", "〔〕", "﹝﹞", "（）", "﹙﹚", "〈〉", "《》", "＜＞", "﹤﹥", "｛｝",
                                   "﹛﹜"]
-        cbTS.reLoadTable = False
         cbTS.messageDurationTime = 3
 
         cbTS.lastKeyDownCode = 0
@@ -687,16 +686,10 @@ class CinBase:
         # 標點符號自動確認輸入?
         cbTS.directCommitSymbol = cfg.directCommitSymbol
 
-        # 最大候選字個數?
-        cbTS.candMaxItems = cfg.candMaxItems
-
-        # 擴充碼表?
-        cbTS.reLoadTable = cfg.reLoadTable
-
         # 訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime
 
-    # 檢查設定檔是否有被更改，是否需要套用新設定
+    # 檢查設定檔是否有被更改，是否需要套i用新設定
     def checkConfigChange(self, cbTS, CinTable):
         cfg = cbTS.cfg  # 所有 TextService 共享一份設定物件
         cfg.update()  # 更新設定檔狀態
@@ -707,15 +700,6 @@ class CinBase:
             if not CinTable.curCinType == cfg.selCinType:
                 reLoadCinTable = True
 
-            if cfg.reLoadTable:
-                reLoadCinTable = True
-                cfg.reLoadTable = False
-                cfg.save()
-
-        # 比較我們先前存的版本號碼，和目前設定檔的版本號
-        if cfg.isFullReloadNeeded(cbTS.configVersion):
-            # 資料改變需整個 reload，重建一個新的 checj context
-            self.initCinBaseContext(cbTS)
         elif cfg.isConfigChanged(cbTS.configVersion):
             # 只有偵測到設定檔變更，需要套用新設定
             self.applyConfig(cbTS)

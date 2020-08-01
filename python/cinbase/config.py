@@ -163,13 +163,6 @@ class CinBaseConfig:
     def isConfigChanged(self, currentVersion):
         return currentVersion[0] != self._version[0]
 
-    # isFullReloadNeeded() checks whether you need to delete the
-    # existing chewing context and create a new one.
-    # This is often caused by change of data files, such as
-    # symbols.dat files.
-    def isFullReloadNeeded(self, currentVersion):
-        return currentVersion[1:] != self._version[1:]
-
 
 # globally shared config object
 # load configurations from a user-specific config file

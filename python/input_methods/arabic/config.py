@@ -34,10 +34,8 @@ class CinBaseConfig:
         self.defaultLatin = False
         self.messageDurationTime = 3
         self.fontSize = DEF_FONT_SIZE
-        self.selKeyType = 0
         self.candPerPage = 9
         self.cursorCandList = True
-        self.candMaxItems = 100
         self.messageDurationTime = 3
 
         self.ignoreSaveList = ["ignoreSaveList", "curdir", "cinFile", "selCinFile", "imeDirName", "_version", "_lastUpdateTime"]

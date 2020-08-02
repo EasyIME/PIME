@@ -57,10 +57,8 @@ class Cin(object):
                 return False
         return True
 
+    # Will return a list containing all possible result
     def getCharDef(self, key):
-        """
-        will return a list containing all possible result
-        """
         try:
             return self.chardefs[key]
         except:

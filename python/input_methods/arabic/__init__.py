@@ -224,8 +224,7 @@ class CinBase:
                 return False
 
         # The characters in charStr are defined in arabic.json
-        if cbTS.cin.isCharactersInKeyName(charStr) and cbTS.closemenu and not keyEvent.isKeyDown(
-                VK_CONTROL) and not cbTS.selcandmode:
+        if cbTS.cin.isCharactersInKeyName(charStr) and cbTS.closemenu and not cbTS.selcandmode:
             cbTS.compositionChar += charStr
             keyname = cbTS.cin.getKeyName(charStr)
             cbTS.setCompositionString(cbTS.compositionString + keyname)
@@ -275,10 +274,11 @@ class CinBase:
                     cbTS.canSetCommitString = True
 
                 if cbTS.isShowCandidates:
-                    candCursor = cbTS.candidateCursor  # 目前的游標位置
-                    candCount = len(cbTS.candidateList)  # 目前選字清單項目數
-                    currentCandPageCount = math.ceil(len(candidates) / cbTS.candPerPage)  # 目前的選字清單總頁數
-                    currentCandPage = cbTS.currentCandPage  # 目前的選字清單頁數
+                    candCursor = cbTS.candidateCursor  # Current cursor position
+                    candCount = len(cbTS.candidateList)  # Number of items in the current word selection list
+                    # The total number of pages of the current word selection list
+                    currentCandPageCount = math.ceil(len(candidates) / cbTS.candPerPage)
+                    currentCandPage = cbTS.currentCandPage  # Current number of pages in the word selection list
 
                     pagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
                     cbTS.setCandidateList(pagecandidates[currentCandPage])
@@ -298,7 +298,7 @@ class CinBase:
                             candCursor = 0
                             currentCandPage = 0
 
-                    elif keyCode == VK_UP:  # 游標上移
+                    elif keyCode == VK_UP:
                         if (candCursor - cbTS.candPerRow) < 0:
                             if currentCandPage > 0:
                                 currentCandPage -= 1
@@ -306,7 +306,7 @@ class CinBase:
                         else:
                             if (candCursor - cbTS.candPerRow) >= 0:
                                 candCursor = candCursor - cbTS.candPerRow
-                    elif keyCode == VK_DOWN and cbTS.canSetCommitString:  # 游標下移
+                    elif keyCode == VK_DOWN and cbTS.canSetCommitString:
                         if (candCursor + cbTS.candPerRow) >= cbTS.candPerPage:
                             if (currentCandPage + 1) < currentCandPageCount:
                                 currentCandPage += 1
@@ -314,33 +314,33 @@ class CinBase:
                         else:
                             if (candCursor + cbTS.candPerRow) < len(pagecandidates[currentCandPage]):
                                 candCursor = candCursor + cbTS.candPerRow
-                    elif keyCode == VK_LEFT:  # 游標左移
+                    elif keyCode == VK_LEFT:
                         if candCursor > 0:
                             candCursor -= 1
                         else:
                             if currentCandPage > 0:
                                 currentCandPage -= 1
                                 candCursor = 0
-                    elif keyCode == VK_RIGHT:  # 游標右移
+                    elif keyCode == VK_RIGHT:
                         if (candCursor + 1) < candCount:
                             candCursor += 1
                         else:
                             if (currentCandPage + 1) < currentCandPageCount:
                                 currentCandPage += 1
                                 candCursor = 0
-                    elif keyCode == VK_HOME:  # Home 鍵
+                    elif keyCode == VK_HOME:
                         candCursor = 0
-                    elif keyCode == VK_END:  # End 鍵
+                    elif keyCode == VK_END:
                         candCursor = len(pagecandidates[currentCandPage]) - 1
-                    elif keyCode == VK_PRIOR:  # Page UP 鍵
+                    elif keyCode == VK_PRIOR:
                         if currentCandPage > 0:
                             currentCandPage -= 1
                             candCursor = 0
-                    elif keyCode == VK_NEXT:  # Page Down 鍵
+                    elif keyCode == VK_NEXT:
                         if (currentCandPage + 1) < currentCandPageCount:
                             currentCandPage += 1
                             candCursor = 0
-                    elif (keyCode == VK_RETURN or keyCode == VK_SPACE) and cbTS.canSetCommitString:  # 按下 Enter 鍵或空白鍵
+                    elif (keyCode == VK_RETURN or keyCode == VK_SPACE) and cbTS.canSetCommitString:
                         commitStr = cbTS.candidateList[candCursor]
                         cbTS.lastCommitString = commitStr
                         self.setOutputString(cbTS, commitStr)
@@ -353,7 +353,7 @@ class CinBase:
                     else:
                         candCursor = 0
                         currentCandPage = 0
-                    # 更新選字視窗游標位置及頁數
+                    # Update the cursor position and page number of the word selection window
                     cbTS.setCandidateCursor(candCursor)
                     cbTS.setCandidatePage(currentCandPage)
                     cbTS.setCandidateList(pagecandidates[currentCandPage])
@@ -366,20 +366,18 @@ class CinBase:
 
         return True
 
-    # 使用者放開按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
-    # return True，系統會呼叫 onKeyUp() 進一步處理這個按鍵
-    # return False，表示我們不需要這個鍵，系統會原封不動把按鍵傳給應用程式
+    # The user releases the keys and filters those keys before the app receives them,
+    # which is required by the input method.
+    # return True, the system will call onKeyUp() to further process the key
+    # return False, means we don’t need this key, the system will pass the key to the application intact
     def filterKeyUp(self, cbTS, keyEvent):
-        # 若啟用使用 Shift 鍵切換中英文模式
-        # 剛才最後一個按下的鍵，和現在放開的鍵，都是 Shift
         if cbTS.lastKeyDownCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
-            pressedDuration = time.time() - cbTS.lastKeyDownTime
-            # 按下和放開的時間相隔 < 0.5 秒
-            if pressedDuration < 0.5:
+            if (time.time() - cbTS.lastKeyDownTime) < 0.5:
                 cbTS.isLangModeChanged = True
                 return True
 
-        # 不管中英文模式，只要放開 CapsLock 鍵，輸入法都須要處理
+        # Regardless of the Arabic or Latin mode, as long as you release the CapsLock key,
+        # the input method needs to be processed
         if cbTS.lastKeyDownCode == VK_CAPITAL and keyEvent.keyCode == VK_CAPITAL:
             return True
 
@@ -479,11 +477,11 @@ class CinBase:
         if cbTS.client.isWindows8Above:
             # If the keyboard is turned off, we need to set the windows 8 mode icon to disabled
             cbTS.changeButton("windows-mode-icon", enable=opened)
-        # FIXME: 是否需要同時 disable 其他語言列按鈕？
+        # FIXME: Do I need to disable other language column buttons at the same time?
 
-    # 當中文編輯結束時會被呼叫。若中文編輯不是正常結束，而是因為使用者
-    # 切換到其他應用程式或其他原因，導致我們的輸入法被強制關閉，此時
-    # forced 參數會是 True，在這種狀況下，要清除一些 buffer
+    # It will be called when the editing terminates. If the editing did not end normally
+    # because the user switched to other applications or other reasons, then
+    # the forced parameter will be True, in this case, some buffers need to be cleared
     def onCompositionTerminated(self, cbTS, forced):
         if not cbTS.keepComposition:
             self.resetComposition(cbTS)
@@ -496,7 +494,7 @@ class CinBase:
                     cbTS.compositionString += cbTS.cin.getKeyName(cStr)
             cbTS.setCompositionCursor(len(cbTS.compositionString))
 
-    # 切換中英文模式
+    # Switch between Arabic and Latin mode
     def toggleLanguageMode(self, cbTS):
         if cbTS.langMode == ARABIC_MODE:
             cbTS.langMode = LATIN_MODE
@@ -526,34 +524,16 @@ class CinBase:
         cbTS.selcandmode = False
         cbTS.lastCompositionCharLength = 0
 
-    # 判斷數字鍵?
-    def isNumberChar(self, keyCode):
-        return keyCode >= 0x30 and keyCode <= 0x39
-
-    # 判斷符號鍵?
-    def isSymbolsChar(self, keyCode):
-        return keyCode >= 0xBA and keyCode <= 0xDF
-
     def isPunctuationChar(self, keyCode):
         return 32 <= keyCode <= 47 or 58 <= keyCode <= 64
 
-    # 判斷字母鍵?
-    def isLetterChar(self, keyCode):
-        return keyCode >= 0x41 and keyCode <= 0x5A
-
-    # 判斷符號及數字字元?
-    def isSymbolsAndNumberChar(self, char):
-        return (ord(char) >= 33 and ord(char) <= 64) or (ord(char) >= 91 and ord(char) <= 96) or (
-                ord(char) >= 123 and ord(char) <= 126)
-
-    # 判斷選字鍵?
     def isInSelKeys(self, cbTS, charCode):
         for key in cbTS.selKeys:
             if ord(key) == charCode:
                 return True
         return False
 
-    # List 分段
+    # Page candidates
     def chunks(self, l, n):
         for i in range(0, len(l), n):
             yield l[i:i + n]
@@ -565,17 +545,17 @@ class CinBase:
         cbTS.setCommitString(commitStr)
 
     ################################################################
-    # config 相關
+    # config
     ################################################################
-    # 初始化 CinBase 輸入法引擎
+    # Initialize the CinBase input method engine
     def initCinBaseContext(self, cbTS):
-        cfg = cbTS.cfg  # 所有 TextService 共享一份設定物件
+        cfg = cbTS.cfg # All TextServices share a configuration object
 
         if not cbTS.initCinBaseState:
             cbTS.langMode = LATIN_MODE if cfg.defaultLatin else ARABIC_MODE
             self.updateLangButtons(cbTS)
 
-        self.applyConfig(cbTS)  # 套用其餘的使用者設定
+        self.applyConfig(cbTS)  # Apply the remaining user settings
 
         cbTS.initCinBaseState = True
 
@@ -599,10 +579,6 @@ class CinBase:
                          candPerRow=cfg.candPerRow,
                          candUseCursor=cfg.cursorCandList)
 
-        # 提示訊息顯示時間?
-        cbTS.messageDurationTime = cfg.messageDurationTime
-
-        # 訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime
 
     # Check whether the configuration file has been changed and whether the new setting needs to be applied

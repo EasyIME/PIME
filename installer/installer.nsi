@@ -101,7 +101,6 @@ var UPDATEX86DLL
 var UPDATEX64DLL
 
 var INST_PYTHON
-var INST_CINBASE
 
 ; Uninstall old versions
 Function uninstallOldVersion
@@ -164,7 +163,6 @@ Function uninstallOldVersion
 			RMDir /REBOOTOK /r "$INSTDIR\server"
 
 			; Delete shortcuts
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_ARABIC).lnk"
 			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
 			RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
 
@@ -255,7 +253,6 @@ Function .onInit
 	StrCpy $UPDATEX64DLL "True"
 
 	StrCpy $INST_PYTHON "False"
-	StrCpy $INST_CINBASE "False"
 
 	; check if old version is installed and uninstall it first
 	Call uninstallOldVersion
@@ -333,7 +330,6 @@ Section $(SECTION_MAIN) SecMain
 	SetOutPath "$INSTDIR\python\input_methods"
     File /r "..\python\input_methods\arabic"
     StrCpy $INST_PYTHON "True"
-    StrCpy $INST_CINBASE "True"
 SectionEnd
 
 SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
@@ -350,7 +346,7 @@ Section "" Register
 	; Install the python backend and input method modules along with an embeddable version of python 3.
 	${If} $INST_PYTHON == "True"
 		SetOutPath "$INSTDIR"
-		File /r /x "__pycache__" /x "input_methods" /x "cinbase" /x ".git" /x ".idea" "..\python"
+		File /r /x "__pycache__" /x "input_methods" /x ".git" /x ".idea" "..\python"
 		SetOutPath "$INSTDIR\python\input_methods"
 		File "..\python\input_methods\__init__.py"
 	${EndIf}
@@ -361,12 +357,6 @@ Section "" Register
     ${If} ${SectionIsSelected} ${us}
         	!insertmacro _ReplaceInFile "$INSTDIR\python\input_methods\arabic\ime.json" "%locale" "en-US"
     ${EndIf}
-
-	; Install the CinBase Class for all cin-based input method modules.
-	${If} $INST_CINBASE == "True"
-		SetOutPath "$INSTDIR\python"
-		File /r /x "__pycache__" /x "cin" "..\python\cinbase"
-	${EndIf}
 
 	; Install the text service dlls
 	${If} ${RunningX64} ; This is a 64-bit Windows system
@@ -416,8 +406,6 @@ Section "" Register
 
 	; Create shortcuts
 	CreateDirectory "$SMPROGRAMS\$(PRODUCT_NAME)"
-
-	CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_ARABIC).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\cinbase\configtool.py" config arabic' "$INSTDIR\python\input_methods\arabic\icon.ico" 0
 	CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
 
@@ -454,7 +442,6 @@ Section "Uninstall"
     Delete "$INSTDIR\backends.json"
 
 	; Delete shortcuts
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_ARABIC).lnk"
 	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
 	RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
 

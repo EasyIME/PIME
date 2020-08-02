@@ -32,6 +32,4 @@
 !insertmacro LANG_STRING french_DESC "Install French Keyboard Layout for the Arabic input method module."
 !insertmacro LANG_STRING us_DESC "Install US Keyboard Layout for the Arabic input method module."
 
-!insertmacro LANG_STRING SET_ARABIC "Setup Arabic input method"
-
 !insertmacro LANG_STRING UNINSTALL_PIME "Uninstall PIME"

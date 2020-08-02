@@ -60,7 +60,7 @@ class CinBaseConfig:
         return os.path.join(os.path.dirname(__file__), "json")
 
     def getDefaultConfigDir(self):
-        return os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, "input_methods", self.imeDirName, "config"))
+        return os.path.abspath(os.path.join(os.path.dirname(__file__), "config"))
 
     def findFile(self, dirs, name):
         for dirname in dirs:

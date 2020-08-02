@@ -17,9 +17,9 @@ import os.path
 
 import copy
 
-from cinbase import CinBase
-from cinbase import LoadCinTable
-from cinbase.config import CinBaseConfig
+from input_methods.arabic import CinBase
+from input_methods.arabic import LoadCinTable
+from input_methods.arabic.config import CinBaseConfig
 from textService import *
 
 

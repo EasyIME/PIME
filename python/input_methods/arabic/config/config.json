@@ -1,8 +1,7 @@
 {
-    "defaultLatin": false,
+    "defaultLatin": true,
     "candPerRow": 1,
     "candPerPage": 9,
-    "selCinType": 0,
     "fontSize": 12,
     "candMaxItems": 100
 }

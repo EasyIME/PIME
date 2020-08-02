@@ -13,8 +13,7 @@ class Cin(object):
         self.imeDirName = imeDirName
         self.curdir = os.path.abspath(os.path.dirname(__file__))
 
-        self.ename = ""
-        self.cname = ""
+        self.name = ""
         self.selkey = ""
         self.keynames = {}
         self.chardefs = {}
@@ -31,11 +30,8 @@ class Cin(object):
         self.chardefs = {}
         self.dupchardefs = {}
 
-    def getEname(self):
-        return self.ename
-
-    def getCname(self):
-        return self.cname
+    def getName(self):
+        return self.name
 
     def getSelection(self):
         return self.selkey

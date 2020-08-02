@@ -32,7 +32,7 @@ class ArabicTextService(TextService):
         # Input method module customization area
         self.imeDirName = "arabic"
         self.maxCharLength = 26  # Maximum number of encoding characters for input method
-        self.cinFileList = ["arabic.json"]
+        self.cinFile = "arabic.json"
 
         self.cinbase = CinBase
         self.curdir = os.path.abspath(os.path.dirname(__file__))
@@ -45,13 +45,13 @@ class ArabicTextService(TextService):
         self.configVersion = CinBaseConfig.getVersion()
         self.cfg = copy.deepcopy(CinBaseConfig)
         self.cfg.imeDirName = self.imeDirName
-        self.cfg.cinFileList = self.cinFileList
+        self.cfg.cinFile = self.cinFile
         self.cfg.load()
         self.jsondir = self.cfg.getJsonDir()
         self.cinbase.initCinBaseContext(self)
 
         # Load input method code table
-        if not CinTable.curCinType == self.cfg.selCinType and not CinTable.loading:
+        if not CinTable.loading:
             loadCinFile = LoadCinTable(self, CinTable)
             loadCinFile.start()
         else:

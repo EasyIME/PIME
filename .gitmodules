@@ -1,9 +1,6 @@
 [submodule "jsoncpp"]
 	path = jsoncpp
 	url = https://github.com/open-source-parsers/jsoncpp.git
-[submodule "python/input_methods/rime/brise"]
-	path = python/input_methods/rime/brise
-	url = https://github.com/rime/brise.git
 [submodule "libuv"]
 	path = libuv
 	url = https://github.com/EasyIME/libuv.git

@@ -100,12 +100,12 @@ class CinBase:
         if cbTS.client.isWindows8Above:
             cbTS.addButton("windows-mode-icon",
                            icon=os.path.join(self.icondir, icon_name),
-                           tooltip="Switch language mode",
+                           tooltip="Switch language mode (tap shift)",
                            commandId=ID_MODE_ICON
                            )
 
             # Arabic input is enabled by default at startup
-            cbTS.setKeyboardOpen(not cfg.disableOnStartup)
+            cbTS.setKeyboardOpen(True)
 
     # When the input method is deactivated by the user
     def onDeactivate(self, cbTS):
@@ -573,10 +573,7 @@ class CinBase:
 
         if not cbTS.initCinBaseState:
             cbTS.langMode = LATIN_MODE if cfg.defaultLatin else ARABIC_MODE
-
             self.updateLangButtons(cbTS)
-
-        cbTS.selCinType = cfg.selCinType
 
         self.applyConfig(cbTS)  # 套用其餘的使用者設定
 
@@ -614,12 +611,7 @@ class CinBase:
         cfg.update()  # Update profile status
         reLoadCinTable = False
 
-        # If the input method code table is changed, reload the code table data
-        if not CinTable.loading:
-            if not CinTable.curCinType == cfg.selCinType:
-                reLoadCinTable = True
-
-        elif cfg.isConfigChanged(cbTS.configVersion):
+        if cfg.isConfigChanged(cbTS.configVersion):
             # Only when profile changes are detected, new settings need to be applied
             self.applyConfig(cbTS)
 
@@ -644,9 +636,7 @@ class LoadCinTable(threading.Thread):
 
     def run(self):
         self.CinTable.loading = True
-        if self.cbTS.cfg.selCinType >= len(self.cbTS.cinFileList):
-            self.cbTS.cfg.selCinType = 0
-        selCinFile = self.cbTS.cinFileList[self.cbTS.cfg.selCinType]
+        selCinFile = self.cbTS.cinFile
         jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
 
         if self.cbTS.reLoadCinTable or not hasattr(self.cbTS, 'cin'):
@@ -663,6 +653,5 @@ class LoadCinTable(threading.Thread):
             with io.open(jsonPath, 'r', encoding='utf8') as fs:
                 self.cbTS.cin = Cin(fs, self.cbTS.imeDirName)
             self.CinTable.cin = self.cbTS.cin
-            self.CinTable.curCinType = self.cbTS.cfg.selCinType
 
         self.CinTable.loading = False

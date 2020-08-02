@@ -32,19 +32,17 @@ class CinBaseConfig:
     def __init__(self):
         self.candPerRow = 1
         self.defaultLatin = False
-        self.disableOnStartup = False
         self.messageDurationTime = 3
         self.fontSize = DEF_FONT_SIZE
-        self.selCinType = 0
         self.selKeyType = 0
         self.candPerPage = 9
         self.cursorCandList = True
         self.candMaxItems = 100
         self.messageDurationTime = 3
 
-        self.ignoreSaveList = ["ignoreSaveList", "curdir", "cinFileList", "selCinFile", "imeDirName", "_version", "_lastUpdateTime"]
+        self.ignoreSaveList = ["ignoreSaveList", "curdir", "cinFile", "selCinFile", "imeDirName", "_version", "_lastUpdateTime"]
         self.curdir = os.path.abspath(os.path.dirname(__file__))
-        self.cinFileList = []
+        self.cinFile = ""
         self.selCinFile = ""
         self.imeDirName = ""
 
@@ -52,52 +50,11 @@ class CinBaseConfig:
         self._version = 0.0
         self._lastUpdateTime = 0.0
 
-    def getConfigDir(self):
-        config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", self.imeDirName)
-        os.makedirs(config_dir, mode=0o700, exist_ok=True)
-        return config_dir
-
-    def getConfigFile(self, name="config.json"):
-        return os.path.join(self.getConfigDir(), name)
-
-    def getSelKeys(self):
-        return selKeys[self.selKeyType]
-
     def load(self):
-        filename = self.getConfigFile()
-        try:
-            if not os.path.exists(filename) or os.stat(filename).st_size == 0:
-                filename = os.path.join(os.path.expanduser("~"), "PIME", self.imeDirName, "config.json")
-
-                if not os.path.exists(filename) or os.stat(filename).st_size == 0:
-                    filename = os.path.join(self.getDefaultConfigDir(), "config.json")
-                else:
-                    src_dir = os.path.join(os.path.expanduser("~"), "PIME", self.imeDirName)
-                    dst_dir = self.getConfigDir()
-                    self.copytree(src_dir, dst_dir)
-                    filename = self.getConfigFile()
-
-            with open(filename, "r") as f:
-                self.__dict__.update(json.load(f))
-        except Exception:
-            self.save()
+        filename = os.path.join(self.getDefaultConfigDir(), "config.json")
+        with open(filename, "r") as f:
+            self.__dict__.update(json.load(f))
         self.update()
-
-    def toJson(self):
-        return {key: value for key, value in self.__dict__.items() if not key.startswith("_") and not key in self.ignoreSaveList}
-
-    def save(self):
-        filename = self.getConfigFile()
-        try:
-            with open(filename, "w") as f:
-                jsondata = {key: value for key, value in self.__dict__.items() if not key in self.ignoreSaveList}
-                js = json.dump(jsondata, f, sort_keys=True, indent=4)
-            self.update()
-        except Exception:
-            pass  # FIXME: handle I/O errors?
-
-    def getDataDir(self):
-        return os.path.join(os.path.dirname(__file__), "data")
 
     def getJsonDir(self):
         return os.path.join(os.path.dirname(__file__), "json")
@@ -128,7 +85,7 @@ class CinBaseConfig:
             return
 
         try:
-            configTime = os.path.getmtime(self.getConfigFile())
+            configTime = os.path.getmtime(self.getDefaultConfigDir())
         except Exception:
             configTime = 0.0
 

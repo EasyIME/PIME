@@ -39,6 +39,18 @@ ID_LEXILOGOS = 5
 ID_BAHETH = 6
 ID_ALMAANY = 7
 
+# Characters (or combinations) that can only be at the end of a word
+END_CHARS = ['ة', 'ى', 'ًا', 'ٍ', 'ٌ', 'ةً', 'ةٍ', 'ةٌ']
+START_CHARS = ['أ', 'إ']
+HAMZATED = ['أ', 'إ', 'ئ', 'ؤ', 'ء']
+HARAKAAT = ['َ', 'ِ', 'ُ']
+CONNECTIVES = ['وَ', 'فَ', 'ءَ']
+LETTERS = [
+    'ا', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ي',
+    'ك', 'ل', 'م', 'ن', 'س', 'ع', 'ف', 'ص', 'ق', 'ر',
+    'ش', 'ت', 'ث', 'خ', 'ذ', 'ض', 'ظ', 'غ'
+]
+
 
 class CinBase:
     def __init__(self):
@@ -118,13 +130,38 @@ class CinBase:
         if cbTS.client.isWindows8Above:
             cbTS.removeButton("windows-mode-icon")
 
-    def getCandidates(self, cbTS, keys, step=1):
+    def filterChar(self, char, previousChar, keys, step):
+        if previousChar in HARAKAAT or previousChar in CONNECTIVES:
+            if char in HARAKAAT:
+                return
+
+        if char == previousChar:    # For duplicates
+            if previousChar in LETTERS and previousChar != 'أ':    # shadda for letters
+                char = 'ّ'
+
+        if previousChar == '':      # At the beginning of a word
+            if char in HARAKAAT:
+                return
+
+        if step < len(keys):       # Not at the end of a word
+            if char in END_CHARS:
+                return
+            if char in START_CHARS and not (previousChar == '' or previousChar in CONNECTIVES):
+                return
+
+        return char
+
+    def getCandidates(self, cbTS, keys, previousChar='', step=1):
         candidates = []
         for i in reversed(range(1, len(keys) + 1)):
             charset = cbTS.cin.getCharDef(keys[0:i])
             if charset:
                 for char in charset:
-                    newCandidates = self.getCandidates(cbTS, keys[i:], i)
+                    char = self.filterChar(char, previousChar, keys, i)
+                    if not char:
+                        continue
+
+                    newCandidates = self.getCandidates(cbTS, keys[i:], char, i)
                     if newCandidates:
                         for newCandidate in newCandidates:
                             candidates.append(char + newCandidate)

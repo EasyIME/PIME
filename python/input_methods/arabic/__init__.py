@@ -40,11 +40,10 @@ ID_BAHETH = 6
 ID_ALMAANY = 7
 
 # Characters (or combinations) that can only be at the end of a word
-END_CHARS = ['ة', 'ى', 'ًا', 'ٍ', 'ٌ', 'ةً', 'ةٍ', 'ةٌ']
-START_CHARS = ['أ', 'إ']
-HAMZATED = ['أ', 'إ', 'ئ', 'ؤ', 'ء']
+END_CHARS = ['ة', 'ى', 'ًا', 'ٍ', 'ٌ', 'ةَ', 'ةً', 'ةِ', 'ةٍ', 'ةُ', 'ةٌ']
+START_CHARS = ['أَ', 'إِ', 'أُ', 'ال']
 HARAKAAT = ['َ', 'ِ', 'ُ']
-CONNECTIVES = ['وَ', 'فَ', 'ءَ']
+PREFIXES = ['وَ', 'فَ', 'ءَ', 'بِ', 'لَ', 'لِ']
 LETTERS = [
     'ا', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ي',
     'ك', 'ل', 'م', 'ن', 'س', 'ع', 'ف', 'ص', 'ق', 'ر',
@@ -130,38 +129,42 @@ class CinBase:
         if cbTS.client.isWindows8Above:
             cbTS.removeButton("windows-mode-icon")
 
-    def filterChar(self, char, previousChar, keys, step):
-        if previousChar in HARAKAAT or previousChar in CONNECTIVES:
+    def filterChar(self, char, previousChar, word, stepSize, position):
+        if previousChar in HARAKAAT or previousChar in PREFIXES:
             if char in HARAKAAT:
                 return
 
         if char == previousChar:    # For duplicates
-            if previousChar in LETTERS and previousChar != 'أ':    # shadda for letters
+            if previousChar in LETTERS:    # shadda for letters
                 char = 'ّ'
 
         if previousChar == '':      # At the beginning of a word
             if char in HARAKAAT:
                 return
-
-        if step < len(keys):       # Not at the end of a word
-            if char in END_CHARS:
+        else:                       # Not at the beginning of a word
+            if char in PREFIXES:
                 return
-            if char in START_CHARS and not (previousChar == '' or previousChar in CONNECTIVES):
+            if char in START_CHARS and not (position == 2 and previousChar in PREFIXES):
+                return
+
+        if stepSize < len(word):    # Not at the end of a word
+            if char in END_CHARS:
                 return
 
         return char
 
-    def getCandidates(self, cbTS, keys, previousChar='', step=1):
+    def getCandidates(self, cbTS, word, previousChar='', position=0):
         candidates = []
-        for i in reversed(range(1, len(keys) + 1)):
-            charset = cbTS.cin.getCharDef(keys[0:i])
+        position = position + 1
+        for stepSize in reversed(range(1, len(word) + 1)):
+            charset = cbTS.cin.getCharDef(word[0:stepSize])
             if charset:
                 for char in charset:
-                    char = self.filterChar(char, previousChar, keys, i)
+                    char = self.filterChar(char, previousChar, word, stepSize, position)
                     if not char:
                         continue
 
-                    newCandidates = self.getCandidates(cbTS, keys[i:], char, i)
+                    newCandidates = self.getCandidates(cbTS, word[stepSize:], char, position)
                     if newCandidates:
                         for newCandidate in newCandidates:
                             candidates.append(char + newCandidate)

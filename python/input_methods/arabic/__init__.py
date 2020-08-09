@@ -49,7 +49,14 @@ LETTERS = [
     'ك', 'ل', 'م', 'ن', 'س', 'ع', 'ف', 'ص', 'ق', 'ر',
     'ش', 'ت', 'ث', 'خ', 'ذ', 'ض', 'ظ', 'غ'
 ]
-
+PUNCTUATION_DICT = {
+    ' ': ' ',
+    '?': '؟',
+    '.': '.',
+    ';': '؛',
+    ':': ':',
+    ",": '،'
+}
 
 class CinBase:
     def __init__(self):
@@ -85,7 +92,6 @@ class CinBase:
         cbTS.canUseSelKey = True
         cbTS.lastCommitString = ""
         cbTS.lastCompositionCharLength = 0
-        cbTS.keepComposition = False
 
         cbTS.showMessageOnKeyUp = False
         cbTS.hideMessageOnKeyUp = False
@@ -266,33 +272,20 @@ class CinBase:
         # The characters in charStr are defined in arabic.json
         if cbTS.cin.isCharactersInKeyName(charStr) and cbTS.closemenu and not cbTS.selcandmode:
             cbTS.compositionChar += charStr
-            keyname = cbTS.cin.getKeyName(charStr)
-            cbTS.setCompositionString(cbTS.compositionString + keyname)
-            cbTS.setCompositionCursor(len(cbTS.compositionString))
 
         if cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1:
-            # 按下 ESC 鍵
             if keyCode == VK_ESCAPE and (cbTS.showCandidates or len(cbTS.compositionChar) > 0):
                 cbTS.lastCompositionCharLength = 0
                 self.resetComposition(cbTS)
 
             # Delete a letter
             if keyCode == VK_BACK:
-                if cbTS.compositionString != "":
-                    if cbTS.cin.isInKeyName(cbTS.compositionChar[len(cbTS.compositionChar) - 1:]):
-                        keyLength = len(cbTS.cin.getKeyName(cbTS.compositionChar[len(cbTS.compositionChar) - 1:]))
-                    else:
-                        keyLength = 1
-                    cbTS.setCompositionString(cbTS.compositionString[:-keyLength])
-                    cbTS.keyUsedState = True
-
-                if cbTS.keyUsedState:
-                    cbTS.compositionChar = cbTS.compositionChar[:-1]
-                    cbTS.lastCompositionCharLength = cbTS.lastCompositionCharLength - 1
-                    cbTS.setCandidateCursor(0)
-                    cbTS.setCandidatePage(0)
-                    if cbTS.compositionChar == '':
-                        self.resetComposition(cbTS)
+                cbTS.compositionChar = cbTS.compositionChar[:-1]
+                cbTS.lastCompositionCharLength = cbTS.lastCompositionCharLength - 1
+                cbTS.setCandidateCursor(0)
+                cbTS.setCandidatePage(0)
+                if cbTS.compositionChar == '':
+                    self.resetComposition(cbTS)
 
             # Group word exceeds maximum
             if len(cbTS.compositionChar) > cbTS.maxCharLength:
@@ -304,7 +297,8 @@ class CinBase:
                 cbTS.compositionChar = cbTS.compositionChar[:-1]
 
             if cbTS.cin.isCharactersInKeyName(cbTS.compositionChar) and cbTS.closemenu:
-                candidates = self.getCandidates(cbTS, cbTS.compositionChar)
+                candidates = [cbTS.compositionChar]
+                candidates.extend(self.getCandidates(cbTS, cbTS.compositionChar))
 
         # Candidate list processing
         if cbTS.langMode == ARABIC_MODE and len(cbTS.compositionChar) >= 1:
@@ -335,14 +329,14 @@ class CinBase:
                             cbTS.lastCommitString = commitStr
                             self.setOutputString(cbTS, commitStr)
                             self.resetComposition(cbTS)
-                            candCursor = 0
+                            candCursor = 1
                             currentCandPage = 0
 
                     elif keyCode == VK_UP:
                         if (candCursor - cbTS.candPerRow) < 0:
                             if currentCandPage > 0:
                                 currentCandPage -= 1
-                                candCursor = 0
+                                candCursor = 1
                         else:
                             if (candCursor - cbTS.candPerRow) >= 0:
                                 candCursor = candCursor - cbTS.candPerRow
@@ -350,7 +344,7 @@ class CinBase:
                         if (candCursor + cbTS.candPerRow) >= cbTS.candPerPage:
                             if (currentCandPage + 1) < currentCandPageCount:
                                 currentCandPage += 1
-                                candCursor = 0
+                                candCursor = 1
                         else:
                             if (candCursor + cbTS.candPerRow) < len(pagecandidates[currentCandPage]):
                                 candCursor = candCursor + cbTS.candPerRow
@@ -360,38 +354,40 @@ class CinBase:
                         else:
                             if currentCandPage > 0:
                                 currentCandPage -= 1
-                                candCursor = 0
+                                candCursor = 1
                     elif keyCode == VK_RIGHT:
                         if (candCursor + 1) < candCount:
                             candCursor += 1
                         else:
                             if (currentCandPage + 1) < currentCandPageCount:
                                 currentCandPage += 1
-                                candCursor = 0
+                                candCursor = 1
                     elif keyCode == VK_HOME:
-                        candCursor = 0
+                        candCursor = 1
                     elif keyCode == VK_END:
                         candCursor = len(pagecandidates[currentCandPage]) - 1
                     elif keyCode == VK_PRIOR:
                         if currentCandPage > 0:
                             currentCandPage -= 1
-                            candCursor = 0
+                            candCursor = 1
                     elif keyCode == VK_NEXT:
                         if (currentCandPage + 1) < currentCandPageCount:
                             currentCandPage += 1
-                            candCursor = 0
-                    elif (keyCode == VK_RETURN or keyCode == VK_SPACE) and cbTS.canSetCommitString:
+                            candCursor = 1
+                    elif (self.isPunctuationChar(keyEvent.charCode) or keyCode==VK_RETURN) and cbTS.canSetCommitString:
                         commitStr = cbTS.candidateList[candCursor]
+                        if self.isPunctuationChar(keyEvent.charCode):
+                            commitStr = commitStr + PUNCTUATION_DICT.get(chr(keyEvent.charCode),chr(keyEvent.charCode))
                         cbTS.lastCommitString = commitStr
                         self.setOutputString(cbTS, commitStr)
                         self.resetComposition(cbTS)
-                        candCursor = 0
+                        candCursor = 1
                         currentCandPage = 0
 
                     # Press other keys to reset the cursor address of the candidate word
                     # and the current page number to zero
                     else:
-                        candCursor = 0
+                        candCursor = 1
                         currentCandPage = 0
                     # Update the cursor position and page number of the word selection window
                     cbTS.setCandidateCursor(candCursor)
@@ -523,16 +519,7 @@ class CinBase:
     # because the user switched to other applications or other reasons, then
     # the forced parameter will be True, in this case, some buffers need to be cleared
     def onCompositionTerminated(self, cbTS, forced):
-        if not cbTS.keepComposition:
-            self.resetComposition(cbTS)
-
-        if cbTS.keepComposition:
-            cbTS.keepComposition = False
-
-            for cStr in cbTS.compositionChar:
-                if cbTS.cin.isInKeyName(cStr):
-                    cbTS.compositionString += cbTS.cin.getKeyName(cStr)
-            cbTS.setCompositionCursor(len(cbTS.compositionString))
+        self.resetComposition(cbTS)
 
     # Switch between Arabic and Latin mode
     def toggleLanguageMode(self, cbTS):
@@ -560,7 +547,6 @@ class CinBase:
         cbTS.setCandidatePage(0)
         cbTS.setCandidateList([])
         cbTS.setShowCandidates(False)
-        cbTS.keepComposition = False
         cbTS.selcandmode = False
         cbTS.lastCompositionCharLength = 0
 

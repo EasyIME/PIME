@@ -20,8 +20,8 @@ import os.path
 import threading
 import time
 
-from keycodes import *  # for VK_XXX constants
 from input_methods.arabic.cin import Cin
+from keycodes import *  # for VK_XXX constants
 
 ARABIC_MODE = 1
 LATIN_MODE = 0
@@ -40,7 +40,7 @@ ID_BAHETH = 6
 ID_ALMAANY = 7
 
 # Characters (or combinations) that can only be at the end of a word
-END_CHARS = ['ة', 'ى', 'ًا', 'ٍ', 'ٌ', 'ةَ', 'ةً', 'ةِ', 'ةٍ', 'ةُ', 'ةٌ']
+END_CHARS = ['ة', 'ى', 'ًا', 'ٍ', 'ٌ', 'ةَ', 'ةً', 'ةِ', 'ةٍ', 'ةُ', 'ةٌ', "وا"]
 START_CHARS = ['أَ', 'إِ', 'أُ', 'ال']
 HARAKAAT = ['َ', 'ِ', 'ُ']
 PREFIXES = ['وَ', 'فَ', 'ءَ', 'بِ', 'لَ', 'لِ']
@@ -57,6 +57,7 @@ PUNCTUATION_DICT = {
     ':': ':',
     ",": '،'
 }
+
 
 class CinBase:
     def __init__(self):
@@ -140,20 +141,20 @@ class CinBase:
             if char in HARAKAAT:
                 return
 
-        if char == previousChar:    # For duplicates
-            if previousChar in LETTERS:    # shadda for letters
+        if char == previousChar:  # For duplicates
+            if previousChar in LETTERS:  # shadda for letters
                 char = 'ّ'
 
-        if previousChar == '':      # At the beginning of a word
+        if previousChar == '':  # At the beginning of a word
             if char in HARAKAAT:
                 return
-        else:                       # Not at the beginning of a word
+        else:  # Not at the beginning of a word
             if char in PREFIXES:
                 return
             if char in START_CHARS and not (position == 2 and previousChar in PREFIXES):
                 return
 
-        if stepSize < len(word):    # Not at the end of a word
+        if stepSize < len(word):  # Not at the end of a word
             if char in END_CHARS:
                 return
 
@@ -374,10 +375,11 @@ class CinBase:
                         if (currentCandPage + 1) < currentCandPageCount:
                             currentCandPage += 1
                             candCursor = 1
-                    elif (self.isPunctuationChar(keyEvent.charCode) or keyCode==VK_RETURN) and cbTS.canSetCommitString:
+                    elif ((self.isPunctuationChar(charCode) or keyCode == VK_RETURN)
+                          and not cbTS.cin.isInKeyName(charStr)) and cbTS.canSetCommitString:
                         commitStr = cbTS.candidateList[candCursor]
                         if self.isPunctuationChar(keyEvent.charCode):
-                            commitStr = commitStr + PUNCTUATION_DICT.get(chr(keyEvent.charCode),chr(keyEvent.charCode))
+                            commitStr = commitStr + PUNCTUATION_DICT.get(chr(keyEvent.charCode), chr(keyEvent.charCode))
                         cbTS.lastCommitString = commitStr
                         self.setOutputString(cbTS, commitStr)
                         self.resetComposition(cbTS)
@@ -575,7 +577,7 @@ class CinBase:
     ################################################################
     # Initialize the CinBase input method engine
     def initCinBaseContext(self, cbTS):
-        cfg = cbTS.cfg # All TextServices share a configuration object
+        cfg = cbTS.cfg  # All TextServices share a configuration object
 
         if not cbTS.initCinBaseState:
             cbTS.langMode = LATIN_MODE if cfg.defaultLatin else ARABIC_MODE

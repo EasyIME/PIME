@@ -43,8 +43,10 @@
                             <h1>中英文切換</h1>
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="switchLangWithShift" name="switchLangWithShift">
-                                <label class="custom-control-label" for="switchLangWithShift" data-title="建議不要和〔使用左 Shift、右 Shift在打字時移動游標〕共用"
-                                    data-toggle="popover" data-placement="bottom" data-trigger="hover">使用<kbd>Shift</kbd>切換中英文模式 🛈</label>
+                                <label class="custom-control-label" for="switchLangWithShift"
+                                    data-content="不建議同時使用「<b>使用左 Shift、 右 Shift 在打字時移動游標</b>」設定"
+                                    data-html="true" data-toggle="popover"
+                                    data-placement="bottom" data-trigger="hover">使用<kbd>Shift</kbd>切換中英文模式 🛈</label>
                             </div>
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="enableCapsLock" name="enableCapsLock">
@@ -88,7 +90,8 @@
                             </div>
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="shiftMoveCursor" name="shiftMoveCursor">
-                                <label class="custom-control-label" for="shiftMoveCursor" data-title="建議不要和〔使用Shift切換中英文模式〕共用" data-toggle="popover"
+                                <label class="custom-control-label" for="shiftMoveCursor" data-content="不建議同時使用「<b>使用Shift切換中英文模式</b>」設定"
+                                    data-toggle="popover" data-html="true"
                                     data-placement="bottom" data-trigger="hover">使用<kbd>左 Shift</kbd>、 <kbd>右 Shift</kbd>
                                     在打字時移動游標 🛈</label>
                             </div>
@@ -159,8 +162,10 @@
 
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="easySymbolsWithCtrl" name="easySymbolsWithCtrl">
-                            <label class="custom-control-label" for="easySymbolsWithCtrl" data-html="true" data-title="容易產生熱鍵衝突，不建議使用"
-                                data-content="例如常用的複製貼上熱鍵Ctrl + C，Ctrl + V，會和這個功能衝突，需要切回英文模式才能使用" data-toggle="popover" data-placement="bottom"
+                            <label class="custom-control-label" for="easySymbolsWithCtrl"
+                                data-content="<span class='text-warning'>容易產生熱鍵衝突，不建議使用</span></br>
+                                例如常用的複製貼上熱鍵Ctrl + C，Ctrl + V，會和這個功能衝突，需要切回英文模式才能使用"
+                                data-html="true" data-toggle="popover" data-placement="bottom"
                                 data-trigger="hover">中文模式下按住<kbd>Ctrl</kbd> 快速輸入符號 🛈</label>
                         </div>
                         <p class="well">

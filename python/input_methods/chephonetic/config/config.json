@@ -14,6 +14,7 @@
     "colorCandWnd": true,
     "fontSize": 12,
     "outputSimpChinese": false,
+	"enableSwitchTCSC": true,
     "hidePromptMessages": true,
     "autoClearCompositionChar": false,
     "playSoundWhenNonCand": false,

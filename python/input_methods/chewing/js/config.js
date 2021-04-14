@@ -314,5 +314,10 @@ $(function() {
         });
     }, 20 * 1000);
 
+    // Bind test input auto select
+    $("#test_input").on("shown.bs.modal", function() {
+        $("#test_input_text").select();
+    })
+
     return false;
 });

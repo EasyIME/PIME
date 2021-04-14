@@ -18,24 +18,43 @@
             <div class="col-12">
                 <ul class="nav nav-tabs" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#typing_tab" aria-controls="typing_tab" role="tab" data-toggle="tab">打字行為</a>
+                        <a class="nav-link active" href="#typing_tab" aria-controls="typing_tab" role="tab" data-toggle="tab">✍️打字行為</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#ui_tab" aria-controls="ui_tab" role="tab" data-toggle="tab">選字視窗外觀</a>
+                        <a class="nav-link" href="#ui_tab" aria-controls="ui_tab" role="tab" data-toggle="tab">🏘️選字視窗外觀</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#keyboard_tab" aria-controls="keyboard_tab" role="tab" data-toggle="tab">鍵盤設定</a>
+                        <a class="nav-link" href="#keyboard_tab" aria-controls="keyboard_tab" role="tab" data-toggle="tab">⌨️鍵盤配置</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#symbols_tab" aria-controls="symbols_tab" role="tab" data-toggle="tab">特殊符號</a>
+                        <a class="nav-link" href="#symbols_tab" aria-controls="symbols_tab" role="tab" data-toggle="tab">💡特殊符號</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#ez_symbols_tab" aria-controls="ez_symbols_tab" role="tab" data-toggle="tab">簡易符號輸入</a>
+                        <a class="nav-link" href="#ez_symbols_tab" aria-controls="ez_symbols_tab" role="tab" data-toggle="tab">📜簡易符號輸入</a>
                     </li>
                     <li class="nav-item ml-auto">
-                        <a class="nav-link" href="#about_tab" aria-controls="about_tab" role="tab" data-toggle="tab">關於新酷音</a>
+                        <a class="nav-link" href="#test_input" aria-controls="test_input" role="tab" data-toggle="modal" data-target="#test_input">🛠️測試輸入法</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about_tab" aria-controls="about_tab" role="tab" data-toggle="tab">ℹ️關於新酷音</a>
                     </li>
                 </ul>
+
+                <div class="modal fade" id="test_input" tabindex="-1" role="dialog" aria-labelledby="test_input" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="test_input_label">測試輸入法，可按 Esc 離開</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="text" name="test_input_text" id="test_input_text" size="30">
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="tab-content">
                     <div role="tabpanel" class="tab-pane fade in show active form" id="typing_tab">
@@ -43,10 +62,8 @@
                             <h1>中英文切換</h1>
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="switchLangWithShift" name="switchLangWithShift">
-                                <label class="custom-control-label" for="switchLangWithShift"
-                                    data-content="不建議同時使用「<b>使用左 Shift、 右 Shift 在打字時移動游標</b>」設定"
-                                    data-html="true" data-toggle="popover"
-                                    data-placement="bottom" data-trigger="hover">使用<kbd>Shift</kbd>切換中英文模式 🛈</label>
+                                <label class="custom-control-label" for="switchLangWithShift" data-content="不建議同時使用「<b>使用左 Shift、 右 Shift 在打字時移動游標</b>」設定"
+                                    data-html="true" data-toggle="popover" data-placement="bottom" data-trigger="hover">使用<kbd>Shift</kbd>切換中英文模式 🛈</label>
                             </div>
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="enableCapsLock" name="enableCapsLock">
@@ -90,9 +107,8 @@
                             </div>
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="shiftMoveCursor" name="shiftMoveCursor">
-                                <label class="custom-control-label" for="shiftMoveCursor" data-content="不建議同時使用「<b>使用Shift切換中英文模式</b>」設定"
-                                    data-toggle="popover" data-html="true"
-                                    data-placement="bottom" data-trigger="hover">使用<kbd>左 Shift</kbd>、 <kbd>右 Shift</kbd>
+                                <label class="custom-control-label" for="shiftMoveCursor" data-content="不建議同時使用「<b>使用Shift切換中英文模式</b>」設定" data-toggle="popover"
+                                    data-html="true" data-placement="bottom" data-trigger="hover">使用<kbd>左 Shift</kbd>、 <kbd>右 Shift</kbd>
                                     在打字時移動游標 🛈</label>
                             </div>
                             使用<kbd>↑</kbd><kbd>↓</kbd>鍵：
@@ -140,9 +156,7 @@
                             <label for="selKeyType">選字視窗選字鍵：</label>
                             <select name="selKeyType" id="selKeyType"></select>
                         </div>
-
                         <div id="selExample"></div>
-
                     </div>
                     <div role="tabpanel" class="tab-pane fade" id="keyboard_tab">
                         <!-- keyboard layouts inserted here by javascript -->
@@ -162,10 +176,8 @@
 
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="easySymbolsWithCtrl" name="easySymbolsWithCtrl">
-                            <label class="custom-control-label" for="easySymbolsWithCtrl"
-                                data-content="<span class='text-warning'>容易產生熱鍵衝突，不建議使用</span></br>
-                                例如常用的複製貼上熱鍵Ctrl + C，Ctrl + V，會和這個功能衝突，需要切回英文模式才能使用"
-                                data-html="true" data-toggle="popover" data-placement="bottom"
+                            <label class="custom-control-label" for="easySymbolsWithCtrl" data-content="<span class='text-warning'>容易產生熱鍵衝突，不建議使用</span></br>
+                                例如常用的複製貼上熱鍵Ctrl + C，Ctrl + V，會和這個功能衝突，需要切回英文模式才能使用" data-html="true" data-toggle="popover" data-placement="bottom"
                                 data-trigger="hover">中文模式下按住<kbd>Ctrl</kbd> 快速輸入符號 🛈</label>
                         </div>
                         <p class="well">
@@ -179,7 +191,7 @@
                         <p>PIME 輸入法平台版本：<strong id="version"></strong></p>
                         <p>最早的「酷音輸入法」是<a href="http://www.csie.ntu.edu.tw/~b6506053/" target="_blank">龔律全</a>與<a
                                 href="https://plus.google.com/u/0/106631098488727416298/posts" target="_blank">陳康本</a>兩人的資訊專題
-                            (分別在兩人就讀台大資工系與台大電機系的時期)，由中央研究院資訊研究所的
+                            （分別在兩人就讀台大資工系與台大電機系的時期），由中央研究院資訊研究所的
                             <a href="http://www.iis.sinica.edu.tw/~tshsu" target="_blank">徐讚昇</a>博士提供技術指導與超過兩年的經濟及設備支援，最終的成果選擇以 GPL 授權釋出，可說是 XIM (X Input
                             Method)中最接近新注音或是自然輸入法的實作，詳情可參閱龔律全所撰寫的
                             <a href="http://chewing.im/doc/chewing-report.pdf" target="_blank">技術報告（PDF）</a>。</p>
@@ -199,7 +211,7 @@
         </div>
     </div>
 
-    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/jquery-3.6.0.min.js"></script>
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="js/bootstrap-select.min.js"></script>
     <script src="js/sweetalert2.min.js"></script>

@@ -707,17 +707,14 @@ class ChewingTextService(TextService):
             os.startfile("https://github.com/chewing/libchewing/issues")
         elif commandId == ID_MOEDICT:  # a very awesome online Chinese dictionary
             os.startfile("https://www.moedict.tw/")
-        elif commandId == ID_DICT:  # online Chinese dictonary
-            os.startfile("http://dict.revised.moe.edu.tw/cbdic/")
         elif commandId == ID_SIMPDICT:  # a simplified version of the online dictonary
             os.startfile("http://dict.concised.moe.edu.tw/jbdic/")
         elif commandId == ID_LITTLEDICT:  # a simplified dictionary for little children
             os.startfile(
                 "http://dict.mini.moe.edu.tw/cgi-bin/gdic/gsweb.cgi?o=ddictionary")
-        # a dictionary for proverbs (seems to be broken at the moment?)
-        elif commandId == ID_PROVERBDICT:
+        elif commandId == ID_PROVERBDICT:  # a dictionary for proverbs
             os.startfile(
-                "http://dict.idioms.moe.edu.tw/cgi-bin/cydic/gsweb.cgi?ccd=QyEDjP&o=e0&func=diccydicfunc.cydicdispatchpage&init=1&cache=1482805463369")
+                "https://dict.idioms.moe.edu.tw/")
         elif commandId == ID_CHEWING_HELP:
             pass
         elif commandId == ID_OUTPUT_SIMP_CHINESE:  # 切換簡體中文輸出
@@ -730,7 +727,7 @@ class ChewingTextService(TextService):
             # 用 json 語法表示選單結構
             return [
                 # {"text": "關於新酷音輸入法(&A)", "id": ID_ABOUT},
-                {"text": "參觀新酷音官方網站(&W)", "id": ID_WEBSITE},
+                {"text": "新酷音官方網站(&W)", "id": ID_WEBSITE},
                 {"text": "新酷音線上討論區(&G)", "id": ID_GROUP},
                 {},
                 {"text": "軟體本身的建議及錯誤回報(&B)", "id": ID_BUGREPORT},
@@ -743,7 +740,6 @@ class ChewingTextService(TextService):
                 {"text": "網路辭典 (&D)", "submenu": [
                     {"text": "萌典 (moedict)", "id": ID_MOEDICT},
                     {},
-                    {"text": "教育部國語辭典", "id": ID_DICT},
                     {"text": "教育部國語辭典簡編本", "id": ID_SIMPDICT},
                     {"text": "教育部國語小字典", "id": ID_LITTLEDICT},
                     {"text": "教育部成語典", "id": ID_PROVERBDICT},

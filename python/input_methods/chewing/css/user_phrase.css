@@ -4,10 +4,10 @@
 
 #user_phrase_buttons {
     position: fixed;
-    width: 15em;
-    height: 95%;
     margin: 4px;
     padding: 1em 1em 0 0;
+    width: 15em;
+    height: 95%;
     border-right: 2px solid grey;
 }
 
@@ -20,20 +20,27 @@
     width: 100%;
 }
 
-#phrase_table th,
-td {
-    padding: 8px;
-    text-align: left;
-    border-bottom: 1px solid #dddddd;
+#phrase_table th {
+    background-color: #E0E0E0;
 }
 
-#phrase_table #phrase,
-#phrase_table #delete_phrase {
+#phrase_table th,
+#phrase_table td {
+    padding: 8px;
+    border-bottom: 1px solid #dddddd;
+    text-align: left;
+}
+
+#phrase_table #phrase {
     width: 12em;
 }
 
 #phrase_table #bopomofo {
     width: 25em;
+}
+
+#table_content tr {
+    cursor: pointer;
 }
 
 #table_content tr:hover,

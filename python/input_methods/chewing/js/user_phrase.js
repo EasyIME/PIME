@@ -4,66 +4,73 @@ function loadUserPhrases() {
     $("#delete_count").html("");
 
     // Reload effect
-    var loading_message = $("<div>", {
-        id: "loading_message",
-        css: {
-            "font-size": "20px",
-            "background-color": "grey",
-            "padding": "10px",
-            "border-radius": "15px"
-        },
-        text: "載入詞彙中，請稍後..."
+    $("body").LoadingOverlay("show", {
+        color: "rgba(80, 80, 80, 0.8)",
+        fade: [0, 400],
+        custom: $("<div>", {
+            id: "loading_message",
+            css: {
+                "font-size": "20px",
+                "background-color": "grey",
+                "padding": "10px",
+                "border-radius": "15px"
+            },
+            text: "載入詞彙中，請稍後..."
+        })
     });
-    $("body").LoadingOverlay("show", { color: "rgba(80, 80, 80, 0.8)", fade: [0, 400], custom: loading_message });
 
     // Get user_phrases
-    $.get("/user_phrases", function (data, status) {
+    $.get("/user_phrases", function(data, status) {
         if (data.data != undefined) {
-            var table_content = data.data.map(function (user_phrase) {
-                return '<tr><td><input type="checkbox" data-phrase="' + user_phrase.phrase + '" data-bopomofo="' + user_phrase.bopomofo + '">' + user_phrase.phrase + '</td><td>' + user_phrase.bopomofo + '</td><td><button>刪除「' + user_phrase.phrase + '」</button></td></tr>';
+            let table_html = data.data.map(function(user_phrase) {
+                return `<tr>
+                <td><input type="checkbox" data-phrase="${user_phrase.phrase}" data-bopomofo="${user_phrase.bopomofo}">${user_phrase.phrase}</td>
+                <td>${user_phrase.bopomofo}</td>
+                </tr>`;
             }).join("");
-            $("#table_content").html(table_content);
+
+            // For performace reason, use DOM API to render content
+            document.querySelector("#table_content").innerHTML = table_html;
             $("#phrase_count").html("共&nbsp;" + data.data.length + "&nbsp;個詞彙");
         }
 
         // Reload complete effect
         $.LoadingOverlay("hide", true);
 
-        // Register remove phrase button click event
-        $("#table_content button").click(function () {
-            var delete_phrase = {
-                phrase: $(this).parent().prev().prev().children().data("phrase"),
-                bopomofo: $(this).parent().prev().prev().children().data("bopomofo")
-            };
-            onRemovePhrase(delete_phrase);
-        });
-
+        // Optimize next
         // Register click table row to select phrase
-        $("#table_content tr").click(function () {
-            $(this).find("input[type=checkbox]").prop("checked", !$(this).find("input[type=checkbox]").prop("checked"));
-            $(this).toggleClass("phrase_selected");
-            if ($("#table_content input[type=checkbox]:checked").length != 0) {
-                $("#delete_count").html("（" + $("#table_content input[type=checkbox]:checked").length + "）");
-            } else {
-                $("#delete_count").html("");
-            }
-        });
 
-        // Make the "#table_content tr" click event correct check checkbox
-        $("#table_content input[type=checkbox]").click(function () {
-            $(this).prop("checked", !$(this).prop("checked"));
+        $("#table_content").on("click", function(e) {
+            let targetObj = $(e.target);
+
+            // Register click table row to select phrase
+            if (targetObj.is("td")) {
+                targetObj.parent().find("input[type=checkbox]")
+                    .prop("checked", !targetObj.parent().find("input[type=checkbox]").prop("checked"));
+                targetObj.parent().toggleClass("phrase_selected");
+                if ($("#table_content input[type=checkbox]:checked").length != 0) {
+                    $("#delete_count").html("（" + $("#table_content input[type=checkbox]:checked").length + "）");
+                } else {
+                    $("#delete_count").html("");
+                }
+            }
+
+            // Checkbox hightlight phrase row
+            if (targetObj.is("input[type=checkbox]")) {
+                targetObj.parent().parent().toggleClass("phrase_selected");
+            }
         });
 
         // Register click to select all phrases
         $("input[type=checkbox][name='select_all']").prop("checked", false);
-        $("input[type=checkbox][name='select_all']").click(function () {
+        $("input[type=checkbox][name='select_all']").on("click", function() {
             if ($(this).prop("checked")) {
                 $("#table_content input[type=checkbox]").prop("checked", true);
-                $("#table_content input[type=checkbox]").parent().parent().addClass("phrase_selected");
-                $("#delete_count").html("（" + $("#table_content input[type=checkbox]:checked").length + "）");
+                $("#table_content tr").addClass("phrase_selected");
+                $("#delete_count").html(`（${$("#table_content input[type=checkbox]:checked").length}）`);
             } else {
                 $("#table_content input[type=checkbox]").prop("checked", false);
-                $("#table_content input[type=checkbox]").parent().parent().removeClass("phrase_selected");
+                $("#table_content tr").removeClass("phrase_selected");
                 $("#delete_count").html("");
             }
         });
@@ -72,8 +79,8 @@ function loadUserPhrases() {
 
 // called when the OK button of the "add phrase" dialog is clicked
 function onAddPhrase() {
-    var phrase = $("#phrase_input").val();
-    var bopomofo = $("#bopomofo_input").val();
+    let phrase = $("#phrase_input").val().trim();
+    let bopomofo = $("#bopomofo_input").val().replaceAll("_", " ").trim();
 
     // Check empty
     if (phrase.length < 1) {
@@ -89,7 +96,7 @@ function onAddPhrase() {
     }
 
     // Check bopomofo and phrase count is equal
-    var bopomofo_array = bopomofo.split(" ");
+    let bopomofo_array = bopomofo.split(" ");
     if (bopomofo_array.length != phrase.length && phrase.length > 1 && bopomofo.length > 1) {
         alert("注音符號跟詞彙字數不符");
         $("#phrase_input").select();
@@ -97,7 +104,7 @@ function onAddPhrase() {
     }
 
     // Check phrase is chinese
-    for (var i = 0; i < phrase.length; i++) {
+    for (let i = 0; i < phrase.length; i++) {
         if (phrase.charCodeAt(i) < 0x4E00 || phrase.charCodeAt(i) > 0x9FFF) {
             alert("詞彙錯誤，請輸入中文");
             $("#phrase_input").prop("selectionStart", i);
@@ -107,8 +114,8 @@ function onAddPhrase() {
     }
 
     // Check bopomofo is correct
-    var bopomofo_check_string = "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ ˊˇˋ˙";
-    for (var i = 0; i < bopomofo.length; i++) {
+    let bopomofo_check_string = "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ ˊˇˋ˙";
+    for (let i = 0; i < bopomofo.length; i++) {
         if (bopomofo_check_string.indexOf(bopomofo.substring(i, i + 1)) == -1) {
             alert("注音符號錯誤，請輸入正確的注音");
             $("#bopomofo_input").prop("selectionStart", i);
@@ -118,9 +125,9 @@ function onAddPhrase() {
     }
 
     // Check phrase has repeated
-    var phrase_repeated;
-    var phrase_repeated_index;
-    $("#table_content input[type=checkbox]").each(function (idx, item) {
+    let phrase_repeated;
+    let phrase_repeated_index;
+    $("#table_content input[type=checkbox]").each(function(idx, item) {
         if (phrase == $(item).data("phrase")) {
             phrase_repeated = true;
             phrase_repeated_index = idx;
@@ -129,9 +136,13 @@ function onAddPhrase() {
     });
 
     if (phrase_repeated == true) {
-        var phrase_repeated_item = $("#table_content input[type=checkbox]:eq(" + phrase_repeated_index + ")");
-        $('html, body').animate({ scrollTop: phrase_repeated_item.offset().top - 200 }, 200);
-        phrase_repeated_item.parent().effect("highlight", { color: '#f2f207' }, 5000);
+        let phrase_repeated_item = $("#table_content input[type=checkbox]:eq(" + phrase_repeated_index + ")");
+        $('html, body').animate({
+            scrollTop: phrase_repeated_item.offset().top - 200
+        }, 200);
+        phrase_repeated_item.parent().effect("highlight", {
+            color: '#f2f207'
+        }, 5000);
         $("#phrase_input").select();
         alert("詞彙已經重複，請重新輸入");
         return;
@@ -142,14 +153,19 @@ function onAddPhrase() {
         url: "/user_phrases",
         method: "POST",
         contentType: "application/json",
-        data: JSON.stringify({ add: [{ phrase: phrase, bopomofo: bopomofo }] }),
+        data: JSON.stringify({
+            add: [{
+                phrase: phrase,
+                bopomofo: bopomofo
+            }]
+        }),
         dataType: "json",
-        complete: function (response) {
+        complete: function(response) {
             if (response.responseJSON.add_result == 0) {
                 alert("新增失敗，請檢查詞彙跟注音格式是否正確");
             } else {
                 alert("新增詞彙成功");
-                loadUserPhrases();
+                location.reload();
                 $("#add_dialog").dialog("close");
             }
         }
@@ -159,13 +175,14 @@ function onAddPhrase() {
 // Execute remove phrase
 function onRemovePhrase(delete_phrase) {
     $("#add_dialog").dialog("close");
-    var phrases = [];
+    let phrases = [];
+    let confirm_text;
     if (delete_phrase.phrase == null) {
         if ($("#table_content input[type=checkbox]:checked").length == 0)
             return;
 
-        var confirm_text = "確定刪除以下" + $("#table_content input[type=checkbox]:checked").length + "個詞彙？（此動作無法復原）";
-        $("#table_content input[type=checkbox]:checked").each(function (phrase_index, item) {
+        confirm_text = "確定刪除以下" + $("#table_content input[type=checkbox]:checked").length + "個詞彙？（此動作無法復原）";
+        $("#table_content input[type=checkbox]:checked").each(function(phrase_index, item) {
             if (phrase_index < 25) {
                 confirm_text += "\n- " + $(item).data("phrase");
             } else if (phrase_index == 25) {
@@ -177,9 +194,6 @@ function onRemovePhrase(delete_phrase) {
                 bopomofo: $(item).data("bopomofo") // 注音
             });
         });
-    } else {
-        var confirm_text = "確定刪除詞彙「" + delete_phrase.phrase + "」？（此動作無法復原）";
-        phrases.push(delete_phrase);
     }
 
     if (!confirm(confirm_text)) {
@@ -190,11 +204,13 @@ function onRemovePhrase(delete_phrase) {
         url: "/user_phrases",
         method: "POST",
         contentType: "application/json",
-        data: JSON.stringify({ remove: phrases }),
+        data: JSON.stringify({
+            remove: phrases
+        }),
         dataType: "json",
-        complete: function () {
+        complete: function() {
             alert("刪除詞彙成功！");
-            loadUserPhrases();
+            location.reload();
         }
     });
 }
@@ -208,8 +224,8 @@ function onExportPhrase() {
 // AJAX file upload
 function onImportPhrase() {
     if (confirm("警告！匯入詞庫會\"清除現有詞庫\"，以匯入的詞庫取代，要繼續嗎？")) {
-        $("#import_user_phrase").change(function () {
-            var fileExtension = ["sqlite3"];
+        $("#import_user_phrase").change(function() {
+            let fileExtension = ["sqlite3"];
             if ($.inArray($(this).val().split('.').pop().toLowerCase(), fileExtension) == -1) {
                 alert("副檔名錯誤！只允許.sqlite3檔案上傳");
             } else {
@@ -221,7 +237,7 @@ function onImportPhrase() {
 }
 
 // jQuery ready
-$(function () {
+$(function() {
     // workaround the same origin policy of IE.
     // http://stackoverflow.com/questions/7852225/is-it-safe-to-use-support-cors-true-in-jquery
     $.support.cors = true;
@@ -237,32 +253,32 @@ $(function () {
         resizable: false,
         dialogClass: "fixed_dialog",
         width: 500,
-        buttons: [
-            {
-                text: "確定",
-                click: onAddPhrase
-            }, {
-                text: "取消",
-                click: function () {
-                    $(this).dialog("close");
-                }
+        buttons: [{
+            text: "確定",
+            click: onAddPhrase
+        }, {
+            text: "取消",
+            click: function() {
+                $(this).dialog("close");
             }
-        ]
+        }]
     });
 
-    $("#add").click(function () {
+    $("#add").on("click", function() {
         $("#phrase_input").val("");
         $("#bopomofo_input").val("");
         $("#add_dialog").dialog("open");
     });
-    $("#remove").click(onRemovePhrase);
-    $("#reload").click(loadUserPhrases);
-    $("#import").click(onImportPhrase);
-    $("#export").click(onExportPhrase);
+    $("#remove").on("click", onRemovePhrase);
+    $("#reload").on("click", function() {
+        location.reload();
+    });
+    $("#import").on("click", onImportPhrase);
+    $("#export").on("click", onExportPhrase);
 
     // Change input to bopomofo
-    $("#bopomofo_input").on("input", function (event) {
-        var keycode_to_bopomofo = {
+    $("#bopomofo_input").on("input", function(event) {
+        let keycode_to_bopomofo = {
             49: "ㄅ",
             81: "ㄆ",
             113: "ㄆ",
@@ -330,11 +346,12 @@ $(function () {
             54: "ˊ",
             51: "ˇ",
             52: "ˋ",
-            55: "˙"
+            55: "˙",
+            32: "_"
         };
-        var bopomofo_input = $("#bopomofo_input").val();
-        var bopomofo_string = "";
-        for (var i = 0; i < bopomofo_input.length; i++) {
+        let bopomofo_input = $("#bopomofo_input").val();
+        let bopomofo_string = "";
+        for (let i = 0; i < bopomofo_input.length; i++) {
             if (keycode_to_bopomofo[bopomofo_input.charCodeAt(i)] != undefined) {
                 bopomofo_string += keycode_to_bopomofo[bopomofo_input.charCodeAt(i)];
             } else {
@@ -347,7 +364,7 @@ $(function () {
     loadUserPhrases();
 
     // keep the server alive every 20 second
-    window.setInterval(function () {
+    window.setInterval(function() {
         $.ajax({
             url: "/keep_alive",
             cache: false // needs to turn off cache. otherwise the server will be requested only once.

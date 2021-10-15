@@ -13,12 +13,12 @@
 
 <body>
     <div id="user_phrase_buttons">
-        <button id="add">➕ 新增自訂詞彙</button>
+        <button id="add">📝 新增自訂詞彙</button>
         <button id="remove">⛔ 刪除選取詞彙<span id="delete_count"></span></button>
-        <button id="reload">🔃 重新載入</button>
+        <button id="reload">🔄 重新載入</button>
         <hr>
-        <button id="import">匯入詞庫</button>
-        <button id="export">匯出辭庫</button>
+        <button id="import">📥 匯入詞庫</button>
+        <button id="export">⬇️ 下載辭庫</button>
         <strong id="phrase_count"></strong>
     </div>
     <form action="/user_phrase_file" enctype="multipart/form-data" method="post" id="import_user_phrase_form">
@@ -28,8 +28,8 @@
         <table id="phrase_table">
             <thead>
                 <tr>
-                    <th id="phrase"><input name="select_all" type="checkbox">自訂詞彙</th>
-                    <th id="bopomofo">注音符號</th>
+                    <th id="phrase"><input name="select_all" type="checkbox">詞彙</th>
+                    <th id="bopomofo">注音</th>
                 </tr>
             </thead>
             <!-- Phrase table content inserted by javascript -->
@@ -47,7 +47,7 @@
     </div>
     <script src="js/jquery-3.6.0.min.js"></script>
     <script src="js/jquery-ui-1.12.1/jquery-ui.min.js"></script>
-    <script src="js/jquery-loading-overlay-1.5.3/loadingoverlay.min.js"></script>
+    <script src="js/jquery-loading-overlay-2.1.7/loadingoverlay.min.js"></script>
     <script src="js/user_phrase.js"></script>
 </body>
 

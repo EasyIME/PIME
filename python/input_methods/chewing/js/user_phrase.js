@@ -3,20 +3,11 @@ function loadUserPhrases() {
     $("#add_dialog").dialog("close");
     $("#delete_count").html("");
 
-    // Reload effect
-    $("body").LoadingOverlay("show", {
-        color: "rgba(80, 80, 80, 0.8)",
-        fade: [0, 400],
-        custom: $("<div>", {
-            id: "loading_message",
-            css: {
-                "font-size": "20px",
-                "background-color": "grey",
-                "padding": "10px",
-                "border-radius": "15px"
-            },
-            text: "載入詞彙中，請稍後..."
-        })
+    // Show loading overlay
+    $.LoadingOverlay("show", {
+        background: "rgba(80, 80, 80, 0.8)",
+        fade: [200, 500],
+        text: "載入詞彙中，請稍後..."
     });
 
     // Get user_phrases
@@ -34,12 +25,10 @@ function loadUserPhrases() {
             $("#phrase_count").html("共&nbsp;" + data.data.length + "&nbsp;個詞彙");
         }
 
-        // Reload complete effect
+        // Hide loading overlay
         $.LoadingOverlay("hide", true);
 
-        // Optimize next
         // Register click table row to select phrase
-
         $("#table_content").on("click", function(e) {
             let targetObj = $(e.target);
 
@@ -82,20 +71,21 @@ function onAddPhrase() {
     let phrase = $("#phrase_input").val().trim();
     let bopomofo = $("#bopomofo_input").val().replaceAll("_", " ").trim();
 
-    // Check empty
+    // Check phrase not empty
     if (phrase.length < 1) {
         alert("請輸入詞彙");
         $("#phrase_input").select();
         return;
     }
 
+    // Check bopomofo not empty
     if (bopomofo.length < 1) {
         alert("請輸入注音");
         $("#bopomofo_input").select();
         return;
     }
 
-    // Check bopomofo and phrase count is equal
+    // Check bopomofo and phrase count are equal
     let bopomofo_array = bopomofo.split(" ");
     if (bopomofo_array.length != phrase.length && phrase.length > 1 && bopomofo.length > 1) {
         alert("注音符號跟詞彙字數不符");
@@ -124,7 +114,7 @@ function onAddPhrase() {
         }
     }
 
-    // Check phrase has repeated
+    // Check phrase not exist
     let phrase_repeated;
     let phrase_repeated_index;
     $("#table_content input[type=checkbox]").each(function(idx, item) {

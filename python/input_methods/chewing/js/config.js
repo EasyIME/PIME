@@ -36,9 +36,9 @@ $(function() {
                 }
                 $("#ez_symbols").prop("selectionStart", selectionStart);
                 $("#ez_symbols").prop("selectionEnd", selectionStart + ez_symbols_array[i].length + 1);
-                swal(
+                swal.fire(
                     '輸入錯誤',
-                    `簡易符號輸入設定第 ${i + 1} 行 (${ez_symbols_array[i]})格式錯誤\n請使用「英文大寫 + 空格 + 字串」的格式，字串最多10個字元`,
+                    `第 ${i} 行格式錯誤：<br><b>${ez_symbols_array[i]}</b><br>請使用「英文大寫 + 空格 + 字串」的格式，字串最多10個字元`,
                     'error'
                 );
                 return false;
@@ -57,9 +57,9 @@ $(function() {
                 }
                 $("#symbols").prop("selectionStart", selectionStart);
                 $("#symbols").prop("selectionEnd", selectionStart + symbols_array[i].length);
-                swal(
+                swal.fire(
                     '輸入錯誤',
-                    `特殊符號設定第 ${i + 1} 行格式錯誤\n單行不能超過一個字元，或是沒有 = 符號區隔`,
+                    `特殊符號設定第 ${i + 1} 行格式錯誤：<br><b>${symbols_array[i]}</b><br>單行不能超過一個字元，或是沒有 = 符號區隔`,
                     'error'
                 );
                 return false;
@@ -295,7 +295,7 @@ $(function() {
     $("#ok").on('click', function() {
         updateConfig(); // update the config based on the state of UI elements
         saveConfig(function() {
-            swal(
+            swal.fire(
                 '好耶！',
                 '設定成功儲存！',
                 'success'

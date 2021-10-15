@@ -73,32 +73,52 @@ function onAddPhrase() {
 
     // Check phrase not empty
     if (phrase.length < 1) {
-        alert("請輸入詞彙");
-        $("#phrase_input").select();
+        swal.fire({
+            title: "請輸入詞彙",
+            icon: "error",
+            didClose: () => {
+                $("#phrase_input").select()
+            }
+        });
         return;
     }
 
     // Check bopomofo not empty
     if (bopomofo.length < 1) {
-        alert("請輸入注音");
-        $("#bopomofo_input").select();
+        swal.fire({
+            title: "請輸入注音",
+            icon: "error",
+            didClose: () => {
+                $("#bopomofo_input").select()
+            }
+        });
         return;
     }
 
     // Check bopomofo and phrase count are equal
     let bopomofo_array = bopomofo.split(" ");
     if (bopomofo_array.length != phrase.length && phrase.length > 1 && bopomofo.length > 1) {
-        alert("注音符號跟詞彙字數不符");
-        $("#phrase_input").select();
+        swal.fire({
+            title: "注音符號跟詞彙字數不符",
+            icon: "error",
+            didClose: () => {
+                $("#phrase_input").select();
+            }
+        });
         return;
     }
 
     // Check phrase is chinese
     for (let i = 0; i < phrase.length; i++) {
         if (phrase.charCodeAt(i) < 0x4E00 || phrase.charCodeAt(i) > 0x9FFF) {
-            alert("詞彙錯誤，請輸入中文");
-            $("#phrase_input").prop("selectionStart", i);
-            $("#phrase_input").prop("selectionEnd", i + 1);
+            swal.fire({
+                title: "詞彙錯誤，有不是中文的字",
+                icon: "error",
+                didClose: () => {
+                    $("#phrase_input").select();
+                    $("#phrase_input")[0].setSelectionRange(i, i + 1);
+                }
+            });
             return;
         }
     }
@@ -107,9 +127,14 @@ function onAddPhrase() {
     let bopomofo_check_string = "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ ˊˇˋ˙";
     for (let i = 0; i < bopomofo.length; i++) {
         if (bopomofo_check_string.indexOf(bopomofo.substring(i, i + 1)) == -1) {
-            alert("注音符號錯誤，請輸入正確的注音");
-            $("#bopomofo_input").prop("selectionStart", i);
-            $("#bopomofo_input").prop("selectionEnd", i + 1);
+            swal.fire({
+                title: "注音符號錯誤，請輸入正確的注音",
+                icon: "error",
+                didClose: () => {
+                    $("#bopomofo_input").select();
+                    $("#bopomofo_input")[0].setSelectionRange(i, i + 1);
+                }
+            });
             return;
         }
     }
@@ -127,14 +152,19 @@ function onAddPhrase() {
 
     if (phrase_repeated == true) {
         let phrase_repeated_item = $("#table_content input[type=checkbox]:eq(" + phrase_repeated_index + ")");
-        $('html, body').animate({
+        $("html, body").animate({
             scrollTop: phrase_repeated_item.offset().top - 200
         }, 200);
         phrase_repeated_item.parent().effect("highlight", {
-            color: '#f2f207'
+            color: "#f2f207"
         }, 5000);
-        $("#phrase_input").select();
-        alert("詞彙已經重複，請重新輸入");
+        swal.fire({
+            title: "詞彙已經存在，請重新輸入",
+            icon: "error",
+            didClose: () => {
+                $("#phrase_input").select();
+            }
+        });
         return;
     }
 
@@ -152,11 +182,18 @@ function onAddPhrase() {
         dataType: "json",
         complete: function(response) {
             if (response.responseJSON.add_result == 0) {
-                alert("新增失敗，請檢查詞彙跟注音格式是否正確");
+                swal.fire({
+                    title: "新增失敗，請檢查詞彙跟注音格式是否正確",
+                    icon: "error"
+                });
             } else {
-                alert("新增詞彙成功");
-                location.reload();
-                $("#add_dialog").dialog("close");
+                swal.fire({
+                    title: "新增詞彙成功！",
+                    icon: "success",
+                    didClose: () => {
+                        location.reload();
+                    }
+                });
             }
         }
     });
@@ -171,13 +208,14 @@ function onRemovePhrase(delete_phrase) {
         if ($("#table_content input[type=checkbox]:checked").length == 0)
             return;
 
-        confirm_text = "確定刪除以下" + $("#table_content input[type=checkbox]:checked").length + "個詞彙？（此動作無法復原）";
+        confirm_text = `確定刪除以下 ${$("#table_content input[type=checkbox]:checked").length} 個詞彙？此動作無法復原<br><ul>`;
         $("#table_content input[type=checkbox]:checked").each(function(phrase_index, item) {
             if (phrase_index < 25) {
-                confirm_text += "\n- " + $(item).data("phrase");
-            } else if (phrase_index == 25) {
-                confirm_text += "\n- ………（以下省略）";
+                confirm_text += `<li>${$(item).data("phrase")}`;
+            } else if (phrase_index === 25) {
+                confirm_text += "<li>………（以下省略）";
             }
+            confirm_text += "</ul>";
 
             phrases.push({
                 phrase: $(item).data("phrase"), // 詞彙
@@ -186,21 +224,33 @@ function onRemovePhrase(delete_phrase) {
         });
     }
 
-    if (!confirm(confirm_text)) {
-        return;
-    }
-
-    $.ajax({
-        url: "/user_phrases",
-        method: "POST",
-        contentType: "application/json",
-        data: JSON.stringify({
-            remove: phrases
-        }),
-        dataType: "json",
-        complete: function() {
-            alert("刪除詞彙成功！");
-            location.reload();
+    Swal.fire({
+        title: "確認刪除詞彙",
+        html: `<div style="text-align: left;">${confirm_text}</div>`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "確定",
+        cancelButtonText: "取消",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "/user_phrases",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    remove: phrases
+                }),
+                dataType: "json",
+                complete: function() {
+                    swal.fire({
+                        title: "刪除詞彙成功！",
+                        icon: "success",
+                        didClose: () => {
+                            location.reload();
+                        }
+                    });
+                }
+            });
         }
     });
 }
@@ -213,17 +263,29 @@ function onExportPhrase() {
 // Execute import user phrases
 // AJAX file upload
 function onImportPhrase() {
-    if (confirm("警告！匯入詞庫會\"清除現有詞庫\"，以匯入的詞庫取代，要繼續嗎？")) {
-        $("#import_user_phrase").change(function() {
-            let fileExtension = ["sqlite3"];
-            if ($.inArray($(this).val().split('.').pop().toLowerCase(), fileExtension) == -1) {
-                alert("副檔名錯誤！只允許.sqlite3檔案上傳");
-            } else {
-                $("#import_user_phrase_form").submit();
-            }
-        });
-        $("#import_user_phrase").click();
-    }
+    Swal.fire({
+        title: "確認匯入詞彙",
+        html: "警告！匯入詞庫會<b>清除現有詞庫</b>，以匯入的詞庫取代，要繼續嗎？",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "繼續",
+        cancelButtonText: "取消",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $("#import_user_phrase").change(function() {
+                let fileExtension = ["sqlite3"];
+                if ($.inArray($(this).val().split(".").pop().toLowerCase(), fileExtension) == -1) {
+                    swal.fire({
+                        title: "副檔名錯誤！只允許 .sqlite3 檔案上傳！",
+                        icon: "error"
+                    });
+                } else {
+                    $("#import_user_phrase_form").submit();
+                }
+            });
+            $("#import_user_phrase").click();
+        }
+    });
 }
 
 // jQuery ready

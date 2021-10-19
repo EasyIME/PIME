@@ -564,8 +564,8 @@ Section "" Register
 	; Create shortcuts
 	CreateDirectory "$SMPROGRAMS\$(PRODUCT_NAME)"
 	${If} ${SectionIsSelected} ${chewing}
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\input_methods\chewing\config_tool.py" config' "$INSTDIR\python\input_methods\chewing\icon.ico" 0
-		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING_PHRASES).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\input_methods\chewing\config_tool.py" user_phrase_editor' "$INSTDIR\python\input_methods\chewing\icon.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\input_methods\chewing\config_tool.py" config' "$INSTDIR\python\input_methods\chewing\images\setting.ico" 0
+		CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING_PHRASES).lnk" "$INSTDIR\python\python3\pythonw.exe" '"$INSTDIR\python\input_methods\chewing\config_tool.py" user_phrase_editor' "$INSTDIR\python\input_methods\chewing\images\phrase_editor.ico" 0
 	${EndIf}
 
 	${If} ${SectionIsSelected} ${checj}

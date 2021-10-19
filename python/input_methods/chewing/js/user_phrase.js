@@ -210,18 +210,17 @@ function onRemovePhrase(delete_phrase) {
 
         confirm_text = `確定刪除以下 ${$("#table_content input[type=checkbox]:checked").length} 個詞彙？此動作無法復原<br><ul>`;
         $("#table_content input[type=checkbox]:checked").each(function(phrase_index, item) {
-            if (phrase_index < 25) {
-                confirm_text += `<li>${$(item).data("phrase")}`;
-            } else if (phrase_index === 25) {
-                confirm_text += "<li>………（以下省略）";
+            if (phrase_index < 10) {
+                confirm_text += `<li>${$(item).data("phrase")}</li>`;
+            } else if (phrase_index === 10) {
+                confirm_text += "<li>………（以下省略）</li>";
             }
-            confirm_text += "</ul>";
-
             phrases.push({
                 phrase: $(item).data("phrase"), // 詞彙
                 bopomofo: $(item).data("bopomofo") // 注音
             });
         });
+        confirm_text += "</ul>";
     }
 
     Swal.fire({

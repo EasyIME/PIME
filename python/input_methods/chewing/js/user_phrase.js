@@ -21,8 +21,7 @@ function loadUserPhrases() {
             }).join("");
 
             // For performace reason, use DOM API to render content
-            $("#table_content").html(table_html);
-            //document.querySelector("#table_content").innerHTML = table_html;
+            document.querySelector("#table_content").innerHTML = table_html;
             $("#phrase_count").html("共&nbsp;" + data.data.length + "&nbsp;個詞彙");
         }
 

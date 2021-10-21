@@ -29,7 +29,8 @@
         <table id="phrase_table">
             <thead>
                 <tr>
-                    <th id="phrase"><input name="select_all" type="checkbox">詞彙</th>
+                    <th id="phrase">
+                        <input type="checkbox" name="select_all" id="select_all">詞彙</th>
                     <th id="bopomofo">注音</th>
                 </tr>
             </thead>
@@ -45,11 +46,13 @@
             <br>
             <input name="bopomofo_input" class="bopomofo_display" type="text" id="bopomofo_input" size="22" tabindex="2" placeholder="切換到英數模式可輸入注音" />
         </div>
+
+        <!-- jQuery UI alert-->
+        <div id="jquery_alert" style="display: none;"></div>
     </div>
     <script src="js/jquery-3.6.0.min.js"></script>
     <script src="js/jquery-ui-1.12.1/jquery-ui.min.js"></script>
     <script src="js/jquery-loading-overlay-2.1.7/loadingoverlay.min.js"></script>
-    <script src="js/sweetalert2.min.js"></script>
     <script src="js/user_phrase.js"></script>
 </body>
 

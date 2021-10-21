@@ -73,35 +73,10 @@ function onAddPhrase() {
 
     // Check phrase not empty
     if (phrase.length < 1) {
-        swal.fire({
-            title: "請輸入詞彙",
+        jQueryDialogAlert({
+            message: "請輸入詞彙",
             icon: "error",
-            didClose: () => {
-                $("#phrase_input").select()
-            }
-        });
-        return;
-    }
-
-    // Check bopomofo not empty
-    if (bopomofo.length < 1) {
-        swal.fire({
-            title: "請輸入注音",
-            icon: "error",
-            didClose: () => {
-                $("#bopomofo_input").select()
-            }
-        });
-        return;
-    }
-
-    // Check bopomofo and phrase count are equal
-    let bopomofo_array = bopomofo.split(" ");
-    if (bopomofo_array.length != phrase.length && phrase.length > 1 && bopomofo.length > 1) {
-        swal.fire({
-            title: "注音符號跟詞彙字數不符",
-            icon: "error",
-            didClose: () => {
+            close: () => {
                 $("#phrase_input").select();
             }
         });
@@ -111,10 +86,10 @@ function onAddPhrase() {
     // Check phrase is chinese
     for (let i = 0; i < phrase.length; i++) {
         if (phrase.charCodeAt(i) < 0x4E00 || phrase.charCodeAt(i) > 0x9FFF) {
-            swal.fire({
-                title: "詞彙錯誤，有不是中文的字",
+            jQueryDialogAlert({
+                message: "詞彙錯誤，有不是中文的字",
                 icon: "error",
-                didClose: () => {
+                close: () => {
                     $("#phrase_input").select();
                     $("#phrase_input")[0].setSelectionRange(i, i + 1);
                 }
@@ -123,20 +98,45 @@ function onAddPhrase() {
         }
     }
 
+    // Check bopomofo not empty
+    if (bopomofo.length < 1) {
+        jQueryDialogAlert({
+            message: "請輸入注音",
+            icon: "error",
+            close: () => {
+                $("#bopomofo_input").select()
+            }
+        });
+        return;
+    }
+
     // Check bopomofo is correct
     let bopomofo_check_string = "ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ ˊˇˋ˙";
     for (let i = 0; i < bopomofo.length; i++) {
         if (bopomofo_check_string.indexOf(bopomofo.substring(i, i + 1)) == -1) {
-            swal.fire({
-                title: "注音符號錯誤，請輸入正確的注音",
+            jQueryDialogAlert({
+                message: "注音符號錯誤，請輸入正確的注音",
                 icon: "error",
-                didClose: () => {
+                close: () => {
                     $("#bopomofo_input").select();
                     $("#bopomofo_input")[0].setSelectionRange(i, i + 1);
                 }
             });
             return;
         }
+    }
+
+    // Check bopomofo and phrase count are equal
+    let bopomofo_array = bopomofo.split(" ");
+    if (bopomofo_array.length != phrase.length && phrase.length > 1 && bopomofo.length > 1) {
+        jQueryDialogAlert({
+            message: "注音符號跟詞彙字數不符",
+            icon: "error",
+            close: () => {
+                $("#phrase_input").select();
+            }
+        });
+        return;
     }
 
     // Check phrase not exist
@@ -158,10 +158,10 @@ function onAddPhrase() {
         phrase_repeated_item.parent().effect("highlight", {
             color: "#f2f207"
         }, 5000);
-        swal.fire({
-            title: "詞彙已經存在，請重新輸入",
+        jQueryDialogAlert({
+            message: "詞彙已經存在，請重新輸入",
             icon: "error",
-            didClose: () => {
+            close: () => {
                 $("#phrase_input").select();
             }
         });
@@ -182,15 +182,15 @@ function onAddPhrase() {
         dataType: "json",
         complete: function(response) {
             if (response.responseJSON.add_result == 0) {
-                swal.fire({
-                    title: "新增失敗，請檢查詞彙跟注音格式是否正確",
+                jQueryDialogAlert({
+                    message: "新增失敗，請檢查詞彙跟注音格式是否正確",
                     icon: "error"
                 });
             } else {
-                swal.fire({
-                    title: "新增詞彙成功！",
+                jQueryDialogAlert({
+                    message: "新增詞彙成功！",
                     icon: "success",
-                    didClose: () => {
+                    close: () => {
                         location.reload();
                     }
                 });
@@ -200,13 +200,19 @@ function onAddPhrase() {
 }
 
 // Execute remove phrase
-function onRemovePhrase(delete_phrase) {
-    $("#add_dialog").dialog("close");
-    let phrases = [];
-    let confirm_text;
-    if (delete_phrase.phrase == null) {
-        if ($("#table_content input[type=checkbox]:checked").length == 0)
+function onRemovePhrase() {
+    if ($("#table_content input[type=checkbox]:checked").length === 0) {
+        jQueryDialogAlert({
+            message: "請先選擇要刪除的詞彙",
+            icon: "error"
+        });
+    } else {
+        let phrases = [];
+        let confirm_text;
+
+        if ($("#table_content input[type=checkbox]:checked").length === 0) {
             return;
+        }
 
         confirm_text = `確定刪除以下 ${$("#table_content input[type=checkbox]:checked").length} 個詞彙？此動作無法復原<br><ul>`;
         $("#table_content input[type=checkbox]:checked").each(function(phrase_index, item) {
@@ -221,37 +227,38 @@ function onRemovePhrase(delete_phrase) {
             });
         });
         confirm_text += "</ul>";
-    }
 
-    Swal.fire({
-        title: "確認刪除詞彙",
-        html: `<div style="text-align: left;">${confirm_text}</div>`,
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "確定",
-        cancelButtonText: "取消",
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: "/user_phrases",
-                method: "POST",
-                contentType: "application/json",
-                data: JSON.stringify({
-                    remove: phrases
-                }),
-                dataType: "json",
-                complete: function() {
-                    swal.fire({
-                        title: "刪除詞彙成功！",
-                        icon: "success",
-                        didClose: () => {
-                            location.reload();
+        jQueryDialogAlert({
+            title: "確認刪除詞彙",
+            message: `<div style="text-align: left;">${confirm_text}</div>`,
+            icon: "warning",
+            buttons: {
+                "繼續": function() {
+                    $.ajax({
+                        url: "/user_phrases",
+                        method: "POST",
+                        contentType: "application/json",
+                        data: JSON.stringify({
+                            remove: phrases
+                        }),
+                        dataType: "json",
+                        complete: function() {
+                            jQueryDialogAlert({
+                                message: "刪除詞彙成功！",
+                                icon: "success",
+                                close: () => {
+                                    location.reload();
+                                }
+                            });
                         }
                     });
+                },
+                "取消": function() {
+                    $(this).dialog('close');
                 }
-            });
-        }
-    });
+            }
+        });
+    }
 }
 
 // Execute export user phrases
@@ -262,28 +269,66 @@ function onExportPhrase() {
 // Execute import user phrases
 // AJAX file upload
 function onImportPhrase() {
-    Swal.fire({
+    jQueryDialogAlert({
         title: "確認匯入詞彙",
-        html: "警告！匯入詞庫會<b>清除現有詞庫</b>，以匯入的詞庫取代，要繼續嗎？",
+        message: "警告！匯入詞庫會<b>清除現有詞庫</b>，以匯入的詞庫取代，要繼續嗎？",
         icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "繼續",
-        cancelButtonText: "取消",
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $("#import_user_phrase").change(function() {
-                let fileExtension = ["sqlite3"];
-                if ($.inArray($(this).val().split(".").pop().toLowerCase(), fileExtension) == -1) {
-                    swal.fire({
-                        title: "副檔名錯誤！只允許 .sqlite3 檔案上傳！",
-                        icon: "error"
-                    });
-                } else {
-                    $("#import_user_phrase_form").submit();
-                }
-            });
-            $("#import_user_phrase").click();
+        buttons: {
+            "繼續": function() {
+                $("#import_user_phrase").on("change", function() {
+                    if (this.files[0].name.split(".").pop() === "sqlite3") {
+                        $("#import_user_phrase_form").submit();
+                    } else {
+                        jQueryDialogAlert({
+                            message: "副檔名錯誤！只允許 .sqlite3 檔案上傳！",
+                            icon: "error"
+                        });
+                    }
+                });
+                $("#import_user_phrase").click();
+            },
+            "取消": function() {
+                $(this).dialog('close');
+            }
         }
+    });
+}
+
+function jQueryDialogAlert(options) {
+    let title = (options.title !== undefined) ? options.title : "";
+    switch (options.icon) {
+        case "error":
+            options.title = `❌ ${title}`;
+            break;
+        case "warning":
+            options.title = `⚠️ ${title}`;
+            break;
+        case "success":
+            options.title = `✔️ ${title}`;
+            break;
+        default:
+            options.title = `📘 ${title}`;
+            break;
+    }
+    $("#jquery_alert").html(options.message).dialog({
+        show: {
+            effect: "scale",
+            duration: 400
+        },
+        hide: {
+            effect: "scale",
+            duration: 400
+        },
+        width: 600,
+        resizable: false,
+        modal: true,
+        title: title,
+        buttons: {
+            'Ok': function() {
+                $(this).dialog('close');
+            }
+        },
+        ...options
     });
 }
 
@@ -300,8 +345,17 @@ $(function() {
 
     // add phrase dialog
     $("#add_dialog").dialog({
+        show: {
+            effect: "scale",
+            duration: 400
+        },
+        hide: {
+            effect: "scale",
+            duration: 400
+        },
         autoOpen: false,
         resizable: false,
+        modal: true,
         dialogClass: "fixed_dialog",
         width: 500,
         buttons: [{

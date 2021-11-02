@@ -13,7 +13,7 @@ function loadUserPhrases() {
     // Get user_phrases
     $.get("/user_phrases", function(data, status) {
         if (data.data != undefined) {
-            let table_html = data.data.map(function(user_phrase) {
+            let user_phrase_html = data.data.map(function(user_phrase) {
                 return `<tr>
                 <td><input type="checkbox" data-phrase="${user_phrase.phrase}" data-bopomofo="${user_phrase.bopomofo}">${user_phrase.phrase}</td>
                 <td>${user_phrase.bopomofo}</td>
@@ -21,8 +21,8 @@ function loadUserPhrases() {
             }).join("");
 
             // For performace reason, use DOM API to render content
-            document.querySelector("#table_content").innerHTML = table_html;
-            $("#phrase_count").html("共&nbsp;" + data.data.length + "&nbsp;個詞彙");
+            document.querySelector("#table_content").innerHTML = user_phrase_html;
+            $("#phrase_count").html(`共&nbsp;${data.data.length}&nbsp;個詞彙`);
         }
 
         // Hide loading overlay
@@ -37,16 +37,18 @@ function loadUserPhrases() {
                 targetObj.parent().find("input[type=checkbox]")
                     .prop("checked", !targetObj.parent().find("input[type=checkbox]").prop("checked"));
                 targetObj.parent().toggleClass("phrase_selected");
-                if ($("#table_content input[type=checkbox]:checked").length != 0) {
-                    $("#delete_count").html("（" + $("#table_content input[type=checkbox]:checked").length + "）");
-                } else {
-                    $("#delete_count").html("");
-                }
             }
 
             // Checkbox hightlight phrase row
             if (targetObj.is("input[type=checkbox]")) {
                 targetObj.parent().parent().toggleClass("phrase_selected");
+            }
+
+            // Update delete phrases count
+            if ($("#table_content input[type=checkbox]:checked").length !== 0) {
+                $("#delete_count").html(`（${$("#table_content input[type=checkbox]:checked").length}）`);
+            } else {
+                $("#delete_count").html("");
             }
         });
 
@@ -151,7 +153,7 @@ function onAddPhrase() {
     });
 
     if (phrase_repeated == true) {
-        let phrase_repeated_item = $("#table_content input[type=checkbox]:eq(" + phrase_repeated_index + ")");
+        let phrase_repeated_item = $(`#table_content input[type=checkbox]:eq(${phrase_repeated_index})`);
         $("html, body").animate({
             scrollTop: phrase_repeated_item.offset().top - 200
         }, 200);
@@ -313,11 +315,11 @@ function jQueryDialogAlert(options) {
     $("#jquery_alert").html(options.message).dialog({
         show: {
             effect: "scale",
-            duration: 400
+            duration: 300
         },
         hide: {
             effect: "scale",
-            duration: 400
+            duration: 300
         },
         width: 600,
         resizable: false,

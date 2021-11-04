@@ -27,6 +27,7 @@ import sys
 from ctypes import windll  # for ShellExecuteW()
 
 from .chewing_config import chewingConfig
+import sqlite3
 
 
 # 按鍵內碼和名稱的對應
@@ -477,6 +478,26 @@ class ChewingTextService(TextService):
             if self.showCandidates:
                 candCursor = self.candidateCursor  # 目前的游標位置
                 candCount = len(self.candidateList)  # 目前選字清單項目數
+
+                if keyEvent.isKeyDown(VK_CONTROL) and keyCode == VK_DELETE:  # 處理刪除詞彙
+                    delete_phrase = self.candidateList[candCursor]
+                    try:
+                        phraseConnect = sqlite3.connect(chewingConfig.getUserPhrase())
+                        cursor = phraseConnect.cursor()
+                        cursor.execute("SELECT * FROM userphrase_v1 WHERE phrase=:delete_phrase", {"delete_phrase": delete_phrase})
+                        result = cursor.fetchone()
+                        if (result is None):
+                            phraseConnect.close()
+                            self.showMessage("詞彙「" + delete_phrase + "」不存在，無法刪除", 2)
+                        else:
+                            cursor.execute("DELETE FROM userphrase_v1 WHERE phrase=:delete_phrase", {"delete_phrase": delete_phrase})
+                            phraseConnect.commit()
+                            phraseConnect.close()
+                            self.showMessage("刪除：" + delete_phrase + "", 2)
+                    except Exception as err:
+                        self.showMessage(str(err), 2)
+
+
                 if keyCode == VK_HOME:  # 處理Home、End鍵，移到選字視窗的第一和最後一個字
                     candCursor = 0
                     ignoreKey = keyHandled = True

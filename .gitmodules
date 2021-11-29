@@ -10,3 +10,6 @@
 [submodule "libIME2"]
 	path = libIME2
 	url = https://github.com/EasyIME/libIME2.git
+[submodule "libchewing"]
+	path = libchewing
+	url = https://github.com/chewing/libchewing.git

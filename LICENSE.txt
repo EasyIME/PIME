@@ -1,5 +1,7 @@
 PIME is composed of several parts with different licenses.
 
+Original author: Hong Jen-Yee <pcman.tw@gmail.com>
+
 Code in these directories are licensed under LGPL 2.0:
   cmake
   installer

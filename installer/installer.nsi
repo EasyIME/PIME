@@ -355,15 +355,15 @@ SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
 	SectionGroup /e $(PYTHON_CHT_SECTION_GROUP) python_cht_section_group
 		Section $(CHEWING) chewing
 			SectionIn 1 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\chewing"
+			SetOutPath "$INSTDIR\python\input_methods\chewing"
+			File /r "..\python\input_methods\chewing\*.*"
 			StrCpy $INST_PYTHON "True"
 		SectionEnd
 
 		Section $(CHECJ) checj
 			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\checj"
+			SetOutPath "$INSTDIR\python\input_methods\checj"
+			File /r "..\python\input_methods\checj\*.*"
 			StrCpy $INST_PYTHON "True"
 			StrCpy $INST_CINBASE "True"
 		SectionEnd
@@ -375,8 +375,8 @@ SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
             nsDialogs::SelectFileDialog open "" "liu-uni.tab file|liu-uni.tab"
             Pop $LIU_UNI_TAB_FILE
 			${If} ${FileExists} "$LIU_UNI_TAB_FILE"
-				SetOutPath "$INSTDIR\python\input_methods"
-				File /r "..\python\input_methods\cheliu"
+				SetOutPath "$INSTDIR\python\input_methods\cheliu"
+				File /r "..\python\input_methods\cheliu\*.*"
 				SetOutPath "$INSTDIR\python\cinbase\cin"
 				StrCpy $INST_PYTHON "True"
 				StrCpy $INST_CINBASE "True"
@@ -388,48 +388,48 @@ SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
 
 		Section $(CHEARRAY) chearray
 			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\chearray"
+			SetOutPath "$INSTDIR\python\input_methods\chearray"
+			File /r "..\python\input_methods\chearray\*.*"
 			StrCpy $INST_PYTHON "True"
 			StrCpy $INST_CINBASE "True"
 		SectionEnd
 
 		Section $(CHEDAYI) chedayi
 			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\chedayi"
+			SetOutPath "$INSTDIR\python\input_methods\chedayi"
+			File /r "..\python\input_methods\chedayi\*.*"
 			StrCpy $INST_PYTHON "True"
 			StrCpy $INST_CINBASE "True"
 		SectionEnd
 
 		Section $(CHEPINYIN) chepinyin
 			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\chepinyin"
+			SetOutPath "$INSTDIR\python\input_methods\chepinyin"
+			File /r "..\python\input_methods\chepinyin\*.*"
 			StrCpy $INST_PYTHON "True"
 			StrCpy $INST_CINBASE "True"
 		SectionEnd
 
 		Section $(CHESIMPLEX) chesimplex
 			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\chesimplex"
+			SetOutPath "$INSTDIR\python\input_methods\chesimplex"
+			File /r "..\python\input_methods\chesimplex\*.*"
 			StrCpy $INST_PYTHON "True"
 			StrCpy $INST_CINBASE "True"
 		SectionEnd
 
 		Section $(CHEPHONETIC) chephonetic
 			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\chephonetic"
+			SetOutPath "$INSTDIR\python\input_methods\chephonetic"
+			File /r "..\python\input_methods\chephonetic\*.*"
 			StrCpy $INST_PYTHON "True"
 			StrCpy $INST_CINBASE "True"
 		SectionEnd
 
 		Section $(CHEEZ) cheez
 			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r "..\python\input_methods\cheez"
+			SetOutPath "$INSTDIR\python\input_methods\cheez"
+			File /r "..\python\input_methods\cheez\*.*"
 			StrCpy $INST_PYTHON "True"
 			StrCpy $INST_CINBASE "True"
 		SectionEnd
@@ -437,16 +437,16 @@ SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
 		Section $(CHEENG) cheeng
 			${If} ${AtLeastWin8}
 				SectionIn 2
-				SetOutPath "$INSTDIR\python\input_methods"
-				File /r "..\python\input_methods\cheeng"
+				SetOutPath "$INSTDIR\python\input_methods\cheeng"
+				File /r "..\python\input_methods\cheeng\*.*"
 				StrCpy $INST_PYTHON "True"
 			${EndIf}
 		SectionEnd
 
 		Section $(BRAILLE_CHEWING) braille_chewing
             SectionIn 2
-            SetOutPath "$INSTDIR\python\input_methods"
-            File /r "..\python\input_methods\braille_chewing"
+            SetOutPath "$INSTDIR\python\input_methods\braille_chewing"
+            File /r "..\python\input_methods\braille_chewing\*.*"
             StrCpy $INST_PYTHON "True"
 		SectionEnd
 
@@ -455,8 +455,8 @@ SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
 	SectionGroup /e $(PYTHON_CHS_SECTION_GROUP) python_chs_section_group
 		Section $(RIME) rime
 			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods"
-			File /r /x "brise" "..\python\input_methods\rime"
+			SetOutPath "$INSTDIR\python\input_methods\rime"
+			File /r /x "brise" "..\python\input_methods\rime\*.*"
 			SetOutPath "$INSTDIR\python\input_methods\rime\data"
 			File "..\python\input_methods\rime\brise\*.txt"
 			File "..\python\input_methods\rime\brise\*.yaml"
@@ -474,8 +474,8 @@ SectionGroup /e $(NODE_SECTION_GROUP) node_section_group
 	SectionGroup /e $(NODE_CHT_SECTION_GROUP) node_cht_section_group
 		Section $(EMOJIME) emojime
 				SectionIn 2
-				SetOutPath "$INSTDIR\node\input_methods"
-				File /r "..\node\input_methods\emojime"
+				SetOutPath "$INSTDIR\node\input_methods\emojime"
+				File /r "..\node\input_methods\emojime\*.*"
 				StrCpy $INST_NODE "True"
 		SectionEnd
 	SectionGroupEnd
@@ -491,8 +491,8 @@ Section "" Register
 	SectionIn 1 2
 	; Install the python backend and input method modules along with an embedable version of python 3.
 	${If} $INST_PYTHON == "True"
-		SetOutPath "$INSTDIR"
-		File /r /x "__pycache__" /x "input_methods" /x "cinbase" /x ".git" /x ".idea" "..\python"
+		SetOutPath "$INSTDIR\python"
+		File /r /x "__pycache__" /x "input_methods" /x "cinbase" /x ".git" /x ".idea" "..\python\*.*"
 		SetOutPath "$INSTDIR\python\input_methods"
 		File "..\python\input_methods\__init__.py"
 	${EndIf}
@@ -511,8 +511,8 @@ Section "" Register
 
 	; Install the node.js backend and input method modules along with an embedable version of node v6.
 	${If} $INST_NODE == "True"
-		SetOutPath "$INSTDIR"
-		File /r /x "input_methods" "..\node"
+		SetOutPath "$INSTDIR\node"
+		File /r /x "input_methods" "..\node\*.*"
 	${EndIf}
 
 	; Install the text service dlls

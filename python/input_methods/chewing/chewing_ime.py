@@ -70,6 +70,10 @@ ID_PROVERBDICT = 17
 ID_OUTPUT_SIMP_CHINESE = 18
 ID_USER_PHRASE_EDITOR = 19
 
+# from libchewing/include/global.h
+AUTOLEARN_ENABLED = 0
+AUTOLEARN_DISABLED = 1
+
 
 class ChewingTextService(TextService):
     def __init__(self, client):
@@ -141,6 +145,9 @@ class ChewingTextService(TextService):
                          candFontSize=cfg.fontSize,
                          candPerRow=cfg.candPerRow,
                          candUseCursor=not(cfg.leftRightAction and cfg.upDownAction))
+
+        # 設定是否啟用自動學習功能
+        self.setAutoLearn(cfg.autoLearn)
 
         # 設定選字按鍵 (123456..., asdf.... 等)
         self.setSelKeys(cfg.getSelKeys())
@@ -277,6 +284,13 @@ class ChewingTextService(TextService):
 
         if self.client.isWindows8Above:
             self.removeButton("windows-mode-icon")
+
+    # 設定是否啟用自動學習功能
+    def setAutoLearn(self, autoLearn):
+        if autoLearn:
+            self.chewingContext.set_autoLearn(AUTOLEARN_ENABLED)
+        else:
+            self.chewingContext.set_autoLearn(AUTOLEARN_DISABLED)
 
     # 設定選字按鍵 (123456..., asdf....等等)
     def setSelKeys(self, selKeys):

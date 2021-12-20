@@ -40,6 +40,7 @@ class ChewingConfig:
     def __init__(self):
         self.addPhraseForward = True
         self.advanceAfterSelection = True
+        self.autoLearn = True
         self.candPerPage = 9
         self.candPerRow = 3
         self.defaultEnglish = False

@@ -22,6 +22,10 @@ import shutil
 
 DEF_FONT_SIZE = 16
 
+SWITCH_LANG_WITH_BOTH_SHIFT = 0
+SWITCH_LANG_WITH_LEFT_SHIFT = 1
+SWITCH_LANG_WITH_RIGHT_SHIFT = 2
+
 # from libchewing/include/internal/userphrase-private.h
 DB_NAME = "chewing.sqlite3"
 
@@ -62,6 +66,7 @@ class ChewingConfig:
         self.spaceKeyAction = 1
         self.spaceKeyCandidatesAction = 0
         self.switchLangWithShift = True
+        self.switchLangWithWhichShift = SWITCH_LANG_WITH_BOTH_SHIFT
         self.upDownAction = 0
         self.upperCaseWithShift = True
         self.disableOnStartup = False

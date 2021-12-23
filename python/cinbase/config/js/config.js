@@ -451,6 +451,19 @@ function pageReady() {
     $("#candMaxItems").TouchSpin({min:100, max:10000});
     $("#fontSize").TouchSpin({min:6, max:200});
 
+    var selWhichShift = [
+        "左右兩邊都使用",
+        "僅使用左 Shift",
+        "僅使用右 Shift"
+    ];
+    var switchLangWithWhichShift = $("#switchLangWithWhichShift");
+    for(var i = 0; i < selWhichShift.length; ++i) {
+        var selWhichShiftOption = selWhichShift[i];
+        var item = '<option value="' + i + '">' + selWhichShiftOption + '</option>';
+        switchLangWithWhichShift.append(item);
+    }
+    switchLangWithWhichShift.children().eq(checjConfig.switchLangWithWhichShift).prop("selected", true);
+
     var selMessageTimes=[
         "０　",
         "１　",
@@ -590,6 +603,14 @@ function pageReady() {
             item.val(value);
             break;
         }
+    });
+
+    // setup switchLangWithWhichShift default disabled property
+    $("#switchLangWithWhichShift").prop("disabled", !checjConfig["switchLangWithShift"]);
+
+    // when switchLangWithShift changes, update switchLangWithWhichShift disabled property
+    $("#switchLangWithShift").on("click", function() {
+        $("#switchLangWithWhichShift").prop("disabled", !this.checked);
     });
 
     // use for select example

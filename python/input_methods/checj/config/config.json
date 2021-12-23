@@ -1,5 +1,6 @@
 {
   "switchLangWithShift": true,
+  "switchLangWithWhichShift": 0,
   "selRCinType": 0,
   "selCinType": 0,
   "selWildcardType": 1,

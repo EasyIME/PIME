@@ -39,6 +39,7 @@ from .phrase import phrase
 from .userphrase import userphrase
 from .emoji import emoji
 from .extendtable import extendtable
+from .config import SWITCH_LANG_WITH_BOTH_SHIFT, SWITCH_LANG_WITH_LEFT_SHIFT, SWITCH_LANG_WITH_RIGHT_SHIFT
 
 from .debug import Debug
 
@@ -2271,11 +2272,22 @@ class CinBase:
         if cbTS.cfg.switchLangWithShift:
             # 剛才最後一個按下的鍵，和現在放開的鍵，都是 Shift
             if cbTS.lastKeyDownCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
+                # 檢查使用者當前的設定，是使用哪一邊的 Shift 來切換中英文模式
+                if cbTS.cfg.switchLangWithWhichShift == SWITCH_LANG_WITH_BOTH_SHIFT:
+                    pass
+                elif cbTS.cfg.switchLangWithWhichShift == SWITCH_LANG_WITH_LEFT_SHIFT and not self.isPressed(VK_LSHIFT):
+                    cbTS.lastKeyDownCode = 0
+                    cbTS.lastKeyDownTime = 0.0
+                    return False
+                elif cbTS.cfg.switchLangWithWhichShift == SWITCH_LANG_WITH_RIGHT_SHIFT and not self.isPressed(VK_RSHIFT):
+                    cbTS.lastKeyDownCode = 0
+                    cbTS.lastKeyDownTime = 0.0
+                    return False
+
                 pressedDuration = time.time() - cbTS.lastKeyDownTime
                 # 按下和放開的時間相隔 < 0.5 秒
                 if pressedDuration < 0.5:
                     cbTS.isLangModeChanged = True
-                    return True
 
         # 不管中英文模式，只要放開 CapsLock 鍵，輸入法都須要處理
         if cbTS.lastKeyDownCode == VK_CAPITAL and keyEvent.keyCode == VK_CAPITAL:
@@ -2289,6 +2301,10 @@ class CinBase:
         cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
 
+
+        # 若切換中英文模式
+        if cbTS.isLangModeChanged:
+            return True
 
         # 若切換全形/半形模式
         if cbTS.isShapeModeChanged:
@@ -2782,6 +2798,11 @@ class CinBase:
 
     def getKeyState(self, keyCode):
         return ctypes.WinDLL("User32.dll").GetKeyState(keyCode)
+
+    # https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getasynckeystate
+    # 當 keyCode 對應的按鍵、曾被按下觸發過，GetAsyncKeyState() 的回傳值會 >= 1
+    def isPressed(self, keyCode):
+        return windll.user32.GetAsyncKeyState(keyCode) >= 1
 
     def setCompositionBufferString(self, cbTS, compositionString, removeStringLength):
         compPos1 = cbTS.compositionBufferCursor - removeStringLength

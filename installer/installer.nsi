@@ -30,6 +30,10 @@
 ; We need the MD5 plugin
 !addplugindir /x86-unicode "md5dll\UNICODE"
 
+; We need the INetC (internet client) plugin
+; https://nsis.sourceforge.io/Inetc_plug-in
+!addplugindir /x86-unicode "inetc\Plugins\x86-unicode"
+
 Unicode true ; turn on Unicode (This requires NSIS 3.0)
 SetCompressor /SOLID lzma ; use LZMA for best compression ratio
 SetCompressorDictSize 16 ; larger dictionary size for better compression ratio
@@ -303,9 +307,9 @@ Function ensureVCRedist
         MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VC2015_QUESTION) IDYES +2
             Abort ; this is skipped if the user select Yes
         ; Download VC++ 2015 redistibutable (x86 version)
-        nsisdl::download "http://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe" "$TEMP\vc2015_redist.x86.exe"
+        inetc::get "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe" "$TEMP\vc2015_redist.x86.exe"
         Pop $R0 ;Get the return value
-        ${If} $R0 != "success"
+        ${If} $R0 != "OK"
             MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VC2015_FAILED_MESSAGE)
             Abort
         ${EndIf}

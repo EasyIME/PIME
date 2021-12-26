@@ -553,14 +553,6 @@ Section "" Register
 	; Launch the python server as current user (non-elevated process)
 	${StdUtils.ExecShellAsUser} $0 "$INSTDIR\PIMELauncher.exe" "open" ""
 
-	; Custom IE Protected Mode
-	ReadINIStr $0 "$PLUGINSDIR\ieprotectedpage.ini" "Field 2" State
-	${If} $0 == "1"
-		WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" "2500" 0x00000003
-	${Else}
-		WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" "2500" 0x00000000
-	${EndIf}
-
 	; Create shortcuts
 	CreateDirectory "$SMPROGRAMS\$(PRODUCT_NAME)"
 	${If} ${SectionIsSelected} ${chewing}

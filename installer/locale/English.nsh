@@ -19,9 +19,6 @@
 !insertmacro LANG_STRING DOWNLOAD_VC2015_FAILED_MESSAGE "Failed to download VC++ 2015 Runtime (x86). Please try again later, or install it manually"
 !insertmacro LANG_STRING INST_VC2015_FAILED_MESSAGE "VC++ 2015 runtime (x86) was not installed correctly. Refer to the relevant Microsoft documentation for updates."
 
-!insertmacro LANG_STRING IEProtectedPage_TITLE "Change IE settings"
-!insertmacro LANG_STRING IEProtectedPage_MESSAGE "PIME needs to change the IE settings in order to be used in IE."
-
 !insertmacro LANG_STRING SECTION_MAIN "PIME input method platform"
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP "Input method modules with Python"
 !insertmacro LANG_STRING PYTHON_CHT_SECTION_GROUP "Traditional Chinese"

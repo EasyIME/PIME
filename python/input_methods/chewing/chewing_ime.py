@@ -24,9 +24,9 @@ from libchewing import ChewingContext, CHEWING_DATA_DIR, CHINESE_MODE, \
 
 import opencc  # OpenCC 繁體簡體中文轉換
 import sys
-from ctypes import windll  # for ShellExecuteW()
+from ctypes import windll  # for ShellExecuteW() and GetAsyncKeyState()
 
-from .chewing_config import chewingConfig
+from .chewing_config import chewingConfig, SWITCH_LANG_WITH_BOTH_SHIFT, SWITCH_LANG_WITH_LEFT_SHIFT, SWITCH_LANG_WITH_RIGHT_SHIFT
 import sqlite3
 
 
@@ -668,6 +668,16 @@ class ChewingTextService(TextService):
 
             # 若啟用使用 Shift 鍵切換中英文模式
             if chewingConfig.switchLangWithShift:
+                # 檢查使用者當前的設定，是使用哪一邊的 Shift 來切換中英文模式
+                if chewingConfig.switchLangWithWhichShift == SWITCH_LANG_WITH_BOTH_SHIFT:
+                    pass
+                elif chewingConfig.switchLangWithWhichShift == SWITCH_LANG_WITH_LEFT_SHIFT and not self.isPressed(VK_LSHIFT):
+                    self.lastKeyDownTime = 0.0
+                    return False
+                elif chewingConfig.switchLangWithWhichShift == SWITCH_LANG_WITH_RIGHT_SHIFT and not self.isPressed(VK_RSHIFT):
+                    self.lastKeyDownTime = 0.0
+                    return False
+
                 pressedDuration = time.time() - self.lastKeyDownTime
                 # 按下和放開的時間相隔 < 0.5 秒
                 if pressedDuration < 0.5:
@@ -680,6 +690,11 @@ class ChewingTextService(TextService):
 
         self.lastKeyDownTime = 0.0
         return False
+
+    # https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getasynckeystate
+    # 當 keyCode 對應的按鍵、曾被按下觸發過，GetAsyncKeyState() 的回傳值會 >= 1
+    def isPressed(self, keyCode):
+        return windll.user32.GetAsyncKeyState(keyCode) >= 1
 
     def onKeyUp(self, keyEvent):
         pressedDuration = time.time() - self.lastKeyDownTime

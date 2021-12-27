@@ -8,6 +8,7 @@
     "defaultFullSpace": false,
     "selCinType": 0,
     "switchLangWithShift": true,
+    "switchLangWithWhichShift": 0,
     "outputSmallLetterWithShift": false,
     "switchPageWithSpace": false,
     "fullShapeSymbols": false,

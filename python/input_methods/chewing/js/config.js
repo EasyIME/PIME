@@ -142,6 +142,11 @@ $(function() {
 
         // Setup select options and values
         let selectOptions = {
+            "switchLangWithWhichShift": [
+                "左右兩邊都使用",
+                "僅使用左 Shift",
+                "僅使用右 Shift"
+            ],
             "upDownAction": [
                 "移動游標選字",
                 "在選字時翻頁"
@@ -181,9 +186,17 @@ $(function() {
             });
         });
 
+        // Setup switchLangWithWhichShift's default disabled property
+        $("#switchLangWithWhichShift").prop("disabled", !chewingConfig["switchLangWithShift"])
+
         // Bind Bootstrap
         $(".container select").selectpicker();
         $('[data-toggle="popover"]').popover();
+
+        // When switchLangWithShift's value changed, update switchLangWithWhichShift's disabled property
+        $("#switchLangWithShift").on("click", function() {
+            $("#switchLangWithWhichShift").prop("disabled", !this.checked).selectpicker('refresh');
+        });
 
         // Bind shift action event
         $("#switchLangWithShift").on("click", function() {
@@ -194,6 +207,7 @@ $(function() {
         $("#shiftMoveCursor").on("click", function() {
             if (this.checked) {
                 $("#switchLangWithShift").prop("checked", false)
+                $("#switchLangWithWhichShift").prop("disabled", true).selectpicker('refresh');
             };
         });
 

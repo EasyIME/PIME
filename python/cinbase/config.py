@@ -23,6 +23,10 @@ import shutil
 
 DEF_FONT_SIZE = 12
 
+SWITCH_LANG_WITH_BOTH_SHIFT = 0
+SWITCH_LANG_WITH_LEFT_SHIFT = 1
+SWITCH_LANG_WITH_RIGHT_SHIFT = 2
+
 selKeys=(
     "1234567890"
 )
@@ -35,6 +39,7 @@ class CinBaseConfig:
         self.defaultFullSpace = False
         self.disableOnStartup = False
         self.switchLangWithShift = True
+        self.switchLangWithWhichShift = SWITCH_LANG_WITH_BOTH_SHIFT
         self.outputSmallLetterWithShift = False
         self.switchPageWithSpace = False
         self.outputSimpChinese = False

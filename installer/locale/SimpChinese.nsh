@@ -19,9 +19,6 @@
 !insertmacro LANG_STRING DOWNLOAD_VC2015_FAILED_MESSAGE "无法正确下载，请稍后再试，或手动安装 VC++ 2015 runtime (x86)"
 !insertmacro LANG_STRING INST_VC2015_FAILED_MESSAGE "VC++ 2015 runtime (x86) 并未正确安装，请参阅相关微软文档进行更新。"
 
-!insertmacro LANG_STRING IEProtectedPage_TITLE "变更 IE 设置"
-!insertmacro LANG_STRING IEProtectedPage_MESSAGE "PIME 输入法须要变更 IE 设置，才能在 IE 里使用。"
-
 !insertmacro LANG_STRING SECTION_MAIN "PIME 输入法平台"
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP "Python 输入法模块"
 !insertmacro LANG_STRING PYTHON_CHT_SECTION_GROUP "中文繁体"

@@ -167,20 +167,8 @@ Function uninstallOldVersion
 			; Only exist in earlier versions, but need to delete it.
 			RMDir /REBOOTOK /r "$INSTDIR\server"
 
-			; Delete shortcuts
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING).lnk"
-            Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING_PHRASES).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHECJ).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHELIU).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEARRAY).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEDAYI).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPINYIN).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk"
-            ; Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_BRAILLE_CHEWING).lnk"
-			Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
-			RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
+			; Delete shortcuts in Start Menu
+			RMDir /r "$SMPROGRAMS\$(PRODUCT_NAME)"
 
 			Delete "$INSTDIR\version.txt"
 			Delete "$INSTDIR\Uninstall.exe"
@@ -644,19 +632,8 @@ Section "Uninstall"
 	RMDir /REBOOTOK /r "$INSTDIR\node"
     Delete "$INSTDIR\backends.json"
 
-	; Delete shortcuts
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEWING).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHECJ).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHELIU).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEARRAY).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEDAYI).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPINYIN).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHESIMPLEX).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEPHONETIC).lnk"
-    Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_CHEEZ).lnk"
-	; Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(SET_BRAILLE_CHEWING).lnk"
-	Delete "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk"
-	RMDir "$SMPROGRAMS\$(PRODUCT_NAME)"
+	; Delete shortcuts in Start Menu
+	RMDir /r "$SMPROGRAMS\$(PRODUCT_NAME)"
 
 	Delete "$INSTDIR\version.txt"
 	Delete "$INSTDIR\Uninstall.exe"

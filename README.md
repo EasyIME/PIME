@@ -63,7 +63,7 @@ All parts are licensed under GNU LGPL v2.1 license.
 *   In Windows 8, if you put the dlls in places other than C:\Windows or C:\Program Files, they will not be accessible in metro apps.
 
 # Uninstall
-*   Use `regsvr32` to unregister `PIMETextService.dll`. 64-bit system need to register both 32-bit and 64-bit `PIMETextService.dll`
+*   Use `regsvr32` to unregister `PIMETextService.dll`. 64-bit system need to unregister both 32-bit and 64-bit `PIMETextService.dll`
 
         regsvr32 /u "C:\Program Files (X86)\PIME\x86\PIMETextService.dll" (run as administrator)
         regsvr32 /u "C:\Program Files (X86)\PIME\x64\PIMETextService.dll" (run as administrator)

@@ -124,7 +124,7 @@ Function uninstallOldVersion
 			; Remove the launcher from auto-start
 			DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 			DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
-			DeleteRegKey /ifempty HKLM "Software\PIME"
+			DeleteRegKey HKLM "Software\PIME"
 
 			; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 			ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'
@@ -620,7 +620,7 @@ Section "Uninstall"
 	; Remove the launcher from auto-start
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
-	DeleteRegKey /ifempty HKLM "Software\PIME"
+	DeleteRegKey HKLM "Software\PIME"
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 	ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'

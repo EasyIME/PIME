@@ -613,6 +613,10 @@ SectionEnd
 
 ;Uninstaller Section
 Section "Uninstall"
+	${If} ${RunningX64}
+		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
+	${EndIf}
+
 	; Remove the launcher from auto-start
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
@@ -621,7 +625,6 @@ Section "Uninstall"
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 	ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'
 	${If} ${RunningX64}
-		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 		ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x64\PIMETextService.dll"'
 		RMDir /REBOOTOK /r "$INSTDIR\x64"
 	${EndIf}

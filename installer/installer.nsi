@@ -161,7 +161,7 @@ Function uninstallOldVersion
 			; Try to terminate running PIMELauncher and the server process
 			; Otherwise we cannot replace it.
 			ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
-
+			Sleep 1000
 			Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
 
             Delete "$INSTDIR\backends.json"
@@ -632,6 +632,7 @@ Section "Uninstall"
 	; Try to terminate running PIMELauncher and the server process
 	; Otherwise we cannot replace it.
 	ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
+	Sleep 1000
 	Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
 
 	RMDir /REBOOTOK /r "$INSTDIR\x86"

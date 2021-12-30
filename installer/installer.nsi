@@ -176,7 +176,7 @@ Function uninstallOldVersion
 
 			Delete "$INSTDIR\version.txt"
 			Delete "$INSTDIR\Uninstall.exe"
-			RMDir "$INSTDIR"
+			RMDir /REBOOTOK "$INSTDIR"
 
 			${If} ${RebootFlag}
 				MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +3
@@ -645,7 +645,7 @@ Section "Uninstall"
 
 	Delete "$INSTDIR\version.txt"
 	Delete "$INSTDIR\Uninstall.exe"
-	RMDir "$INSTDIR"
+	RMDir /REBOOTOK "$INSTDIR"
 
 	${If} ${RebootFlag}
 		MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +3

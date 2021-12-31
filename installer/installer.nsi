@@ -1,4 +1,4 @@
-﻿;
+;
 ;	Copyright (C) 2013 - 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 ;
 ;	This library is free software; you can redistribute it and/or
@@ -287,32 +287,74 @@ Function .onInstFailed
 FunctionEnd
 
 Function ensureVCRedist
-    ; Check if we have Universal CRT (provided by VC++ 2015 runtime)
+    ; Check if we have VC++ 2015 Redistributable
     ; Reference: https://blogs.msdn.microsoft.com/vcblog/2015/03/03/introducing-the-universal-crt/
     ;            https://docs.python.org/3/using/windows.html#embedded-distribution
-    ${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+	${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
 	${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-        MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VC2015_QUESTION) IDYES +2
-            Abort ; this is skipped if the user select Yes
-        ; Download VC++ 2015 redistibutable (x86 version)
-        inetc::get "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe" "$TEMP\vc2015_redist.x86.exe"
-        Pop $R0 ;Get the return value
-        ${If} $R0 != "OK"
-            MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VC2015_FAILED_MESSAGE)
-            Abort
-        ${EndIf}
+		${If} ${RunningX64}
+			; In 64-bit environment, we need to check both x86 and x64 version of dlls,
+			; because we only need at least one of the x86 or x64 version is available,
+			; which means we need to check both these 2 directory:
+			;   1. C:\Windows\System32 (x64 64-bit version dlls are in here)
+			;   2. C:\Windows\SysWOW64 (x86 32-bit version dlls are in here) (already checked)
 
-        ; Run vcredist installer
-        ExecWait "$TEMP\vc2015_redist.x86.exe" $0
+			; Because X64 FS Redirection is enabled by default ($SYSDIR is pointed to C:\Windows\SysWOW64),
+			; now we just need to disable X64 FS Redirection (let $SYSDIR point to C:\Windows\System32)
+			; in order to check if we have x64 64-bit version of Universal CRT
+			${DisableX64FSRedirection}
+			${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+			${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
+				MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VC2015_QUESTION) IDYES +2
+					Abort ; this is skipped if the user select Yes
+				; Download VC++ 2015 Redistributable (x86 version)
+				inetc::get "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe" "$TEMP\vc2015_redist.x86.exe"
+				Pop $R0 ;Get the return value
+				${If} $R0 != "OK"
+					MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VC2015_FAILED_MESSAGE)
+					Abort
+				${EndIf}
 
-        ; check again if ucrtbase.dll or msvcp140.dll is available
-        ${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
-		${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-            MessageBox MB_ICONSTOP|MB_OK $(INST_VC2015_FAILED_MESSAGE)
-            ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
-            Abort
-        ${EndIf}
-    ${EndIf}
+				; Run vcredist installer
+				ExecWait "$TEMP\vc2015_redist.x86.exe" $0
+
+				; Enable X64 FS Redirection to let $SYSDIR point to C:\Windows\SysWOW64
+				${EnableX64FSRedirection}
+
+				; Check again if we have VC++ 2015 Redistributable
+				${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+				${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
+					MessageBox MB_ICONSTOP|MB_OK $(INST_VC2015_FAILED_MESSAGE)
+					ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
+					Abort
+				${EndIf}
+			${EndIf}
+
+			; Change X64 FS Redirection back to default state
+			${EnableX64FSRedirection}
+		${Else}
+			MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VC2015_QUESTION) IDYES +2
+				Abort ; this is skipped if the user select Yes
+			; Download VC++ 2015 Redistributable (x86 version)
+			inetc::get "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe" "$TEMP\vc2015_redist.x86.exe"
+			Pop $R0 ;Get the return value
+			${If} $R0 != "OK"
+				MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VC2015_FAILED_MESSAGE)
+				Abort
+			${EndIf}
+
+			; Run vcredist installer
+			ExecWait "$TEMP\vc2015_redist.x86.exe" $0
+
+			; Check again if we have VC++ 2015 Redistributable
+			${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+			${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
+				MessageBox MB_ICONSTOP|MB_OK $(INST_VC2015_FAILED_MESSAGE)
+				ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
+				Abort
+			${EndIf}
+		${EndIf}
+	${EndIf}
 FunctionEnd
 
 ;Installer Type

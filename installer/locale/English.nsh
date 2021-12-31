@@ -17,7 +17,7 @@
 !insertmacro LANG_STRING UNINSTALL_OLD "An older version of PIME has been detected. Do you want to remove the old version and continue installing the new version?"
 !insertmacro LANG_STRING DOWNLOAD_VCREDIST_QUESTION "This program requires the VC++ Redistributable to run. Would you like to automatically download and install it?"
 !insertmacro LANG_STRING DOWNLOAD_VCREDIST_FAILED_MESSAGE "Failed to download VC++ Redistributable try again later, or install it manually"
-!insertmacro LANG_STRING INST_VCREDIST_FAILED_MESSAGE "VC++ Redistributable (x86) was not installed correctly. Refer to the relevant Microsoft documentation for updates."
+!insertmacro LANG_STRING INST_VCREDIST_FAILED_MESSAGE "VC++ Redistributable was not installed correctly. Refer to the relevant Microsoft documentation for updates."
 
 !insertmacro LANG_STRING SECTION_MAIN "PIME input method platform"
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP "Input method modules with Python"

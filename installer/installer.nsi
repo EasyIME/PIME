@@ -307,8 +307,8 @@ Function ensureVCRedist
 			${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
 				MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
 					Abort ; this is skipped if the user select Yes
-				; Download latest VC++ Redistributable (x86 version)
-				inetc::get "https://aka.ms/vs/17/release/vc_redist.x86.exe" "$TEMP\vc_redist.x86.exe"
+				; Download latest VC++ Redistributable (x64 version)
+				inetc::get "https://aka.ms/vs/17/release/vc_redist.x64.exe" "$TEMP\vc_redist.x64.exe"
 				Pop $R0 ; Get the return value
 				${If} $R0 != "OK"
 					MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VCREDIST_FAILED_MESSAGE)
@@ -316,10 +316,7 @@ Function ensureVCRedist
 				${EndIf}
 
 				; Run vcredist installer
-				ExecWait "$TEMP\vc_redist.x86.exe" $0
-
-				; Enable X64 FS Redirection to let $SYSDIR point to C:\Windows\SysWOW64
-				${EnableX64FSRedirection}
+				ExecWait "$TEMP\vc_redist.x64.exe" $0
 
 				; Check again if we have latest VC++ Redistributable
 				${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"

@@ -15,9 +15,9 @@
 !insertmacro LANG_STRING REBOOT_QUESTION "安裝發生錯誤，無法完成。$\r$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)"
 !insertmacro LANG_STRING INST_FAILED_MESSAGE "安裝發生錯誤，無法完成。$\n$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。"
 !insertmacro LANG_STRING UNINSTALL_OLD "偵測到已安裝舊版，是否要移除舊版後繼續安裝新版？"
-!insertmacro LANG_STRING DOWNLOAD_VC2015_QUESTION "這個程式需要微軟 VC++ 2015 runtime 更新才能運作，要自動下載安裝？"
-!insertmacro LANG_STRING DOWNLOAD_VC2015_FAILED_MESSAGE "無法正確下載，請稍後再試，或手動安裝 VC++ 2015 runtime (x86)"
-!insertmacro LANG_STRING INST_VC2015_FAILED_MESSAGE "VC++ 2015 runtime (x86) 並未正確安裝，請參閱相關微軟文件進行更新。"
+!insertmacro LANG_STRING DOWNLOAD_VCREDIST_QUESTION "這個程式需要 微軟 VC++ Redistributable 更新才能運作，要自動下載安裝？"
+!insertmacro LANG_STRING DOWNLOAD_VCREDIST_FAILED_MESSAGE "無法正確下載，請稍後再試，或手動安裝 VC++ Redistributable (x86)"
+!insertmacro LANG_STRING INST_VCREDIST_FAILED_MESSAGE "VC++ Redistributable (x86) 並未正確安裝，請參閱相關微軟文件進行更新。"
 
 !insertmacro LANG_STRING SECTION_MAIN "PIME 輸入法平台"
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP "Python 輸入法模組"

@@ -1,4 +1,4 @@
-;
+﻿;
 ;	Copyright (C) 2013 - 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 ;
 ;	This library is free software; you can redistribute it and/or
@@ -287,9 +287,9 @@ Function .onInstFailed
 FunctionEnd
 
 Function ensureVCRedist
-    ; Check if we have VC++ 2015 Redistributable
-    ; Reference: https://blogs.msdn.microsoft.com/vcblog/2015/03/03/introducing-the-universal-crt/
-    ;            https://docs.python.org/3/using/windows.html#embedded-distribution
+	; Check if we have latest VC++ Redistributable
+	; Reference: https://blogs.msdn.microsoft.com/vcblog/2015/03/03/introducing-the-universal-crt/
+	;            https://docs.python.org/3/using/windows.html#embedded-distribution
 	${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
 	${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
 		${If} ${RunningX64}
@@ -305,26 +305,26 @@ Function ensureVCRedist
 			${DisableX64FSRedirection}
 			${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
 			${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-				MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VC2015_QUESTION) IDYES +2
+				MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
 					Abort ; this is skipped if the user select Yes
-				; Download VC++ 2015 Redistributable (x86 version)
-				inetc::get "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe" "$TEMP\vc2015_redist.x86.exe"
-				Pop $R0 ;Get the return value
+				; Download latest VC++ Redistributable (x86 version)
+				inetc::get "https://aka.ms/vs/17/release/vc_redist.x86.exe" "$TEMP\vc_redist.x86.exe"
+				Pop $R0 ; Get the return value
 				${If} $R0 != "OK"
-					MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VC2015_FAILED_MESSAGE)
+					MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VCREDIST_FAILED_MESSAGE)
 					Abort
 				${EndIf}
 
 				; Run vcredist installer
-				ExecWait "$TEMP\vc2015_redist.x86.exe" $0
+				ExecWait "$TEMP\vc_redist.x86.exe" $0
 
 				; Enable X64 FS Redirection to let $SYSDIR point to C:\Windows\SysWOW64
 				${EnableX64FSRedirection}
 
-				; Check again if we have VC++ 2015 Redistributable
+				; Check again if we have latest VC++ Redistributable
 				${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
 				${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-					MessageBox MB_ICONSTOP|MB_OK $(INST_VC2015_FAILED_MESSAGE)
+					MessageBox MB_ICONSTOP|MB_OK $(INST_VCREDIST_FAILED_MESSAGE)
 					ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
 					Abort
 				${EndIf}
@@ -333,23 +333,23 @@ Function ensureVCRedist
 			; Change X64 FS Redirection back to default state
 			${EnableX64FSRedirection}
 		${Else}
-			MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VC2015_QUESTION) IDYES +2
+			MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
 				Abort ; this is skipped if the user select Yes
-			; Download VC++ 2015 Redistributable (x86 version)
-			inetc::get "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe" "$TEMP\vc2015_redist.x86.exe"
-			Pop $R0 ;Get the return value
+			; Download latest VC++ Redistributable (x86 version)
+			inetc::get "https://aka.ms/vs/17/release/vc_redist.x86.exe" "$TEMP\vc_redist.x86.exe"
+			Pop $R0 ; Get the return value
 			${If} $R0 != "OK"
-				MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VC2015_FAILED_MESSAGE)
+				MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VCREDIST_FAILED_MESSAGE)
 				Abort
 			${EndIf}
 
 			; Run vcredist installer
-			ExecWait "$TEMP\vc2015_redist.x86.exe" $0
+			ExecWait "$TEMP\vc_redist.x86.exe" $0
 
-			; Check again if we have VC++ 2015 Redistributable
+			; Check again if we have latest VC++ Redistributable
 			${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
 			${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-				MessageBox MB_ICONSTOP|MB_OK $(INST_VC2015_FAILED_MESSAGE)
+				MessageBox MB_ICONSTOP|MB_OK $(INST_VCREDIST_FAILED_MESSAGE)
 				ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
 				Abort
 			${EndIf}
@@ -364,8 +364,8 @@ InstType "$(INST_TYPE_FULL)"
 ;Installer Sections
 Section $(SECTION_MAIN) SecMain
 	SectionIn 1 2 RO
-    ; Ensure that we have VC++ 2015 runtime (for python 3.5)
-    Call ensureVCRedist
+	; Ensure that we have latest VC++ runtime (for python)
+	Call ensureVCRedist
 
 	; TODO: may be we can automatically rebuild the dlls here.
 	; http://stackoverflow.com/questions/24580/how-do-you-automate-a-visual-studio-build

@@ -124,7 +124,7 @@ Function uninstallOldVersion
 			; Remove the launcher from auto-start
 			DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 			DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
-			DeleteRegKey /ifempty HKLM "Software\PIME"
+			DeleteRegKey HKLM "Software\PIME"
 
 			; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 			ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'
@@ -161,7 +161,7 @@ Function uninstallOldVersion
 			; Try to terminate running PIMELauncher and the server process
 			; Otherwise we cannot replace it.
 			ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
-
+			Sleep 1000
 			Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
 
             Delete "$INSTDIR\backends.json"
@@ -176,7 +176,7 @@ Function uninstallOldVersion
 
 			Delete "$INSTDIR\version.txt"
 			Delete "$INSTDIR\Uninstall.exe"
-			RMDir "$INSTDIR"
+			RMDir /REBOOTOK "$INSTDIR"
 
 			${If} ${RebootFlag}
 				MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +3
@@ -613,15 +613,18 @@ SectionEnd
 
 ;Uninstaller Section
 Section "Uninstall"
+	${If} ${RunningX64}
+		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
+	${EndIf}
+
 	; Remove the launcher from auto-start
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
-	DeleteRegKey /ifempty HKLM "Software\PIME"
+	DeleteRegKey HKLM "Software\PIME"
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 	ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x86\PIMETextService.dll"'
 	${If} ${RunningX64}
-		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 		ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x64\PIMETextService.dll"'
 		RMDir /REBOOTOK /r "$INSTDIR\x64"
 	${EndIf}
@@ -629,6 +632,7 @@ Section "Uninstall"
 	; Try to terminate running PIMELauncher and the server process
 	; Otherwise we cannot replace it.
 	ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
+	Sleep 1000
 	Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
 
 	RMDir /REBOOTOK /r "$INSTDIR\x86"
@@ -641,7 +645,7 @@ Section "Uninstall"
 
 	Delete "$INSTDIR\version.txt"
 	Delete "$INSTDIR\Uninstall.exe"
-	RMDir "$INSTDIR"
+	RMDir /REBOOTOK "$INSTDIR"
 
 	${If} ${RebootFlag}
 		MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +3

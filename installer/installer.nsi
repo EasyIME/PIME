@@ -287,32 +287,71 @@ Function .onInstFailed
 FunctionEnd
 
 Function ensureVCRedist
-    ; Check if we have Universal CRT (provided by VC++ 2015 runtime)
-    ; Reference: https://blogs.msdn.microsoft.com/vcblog/2015/03/03/introducing-the-universal-crt/
-    ;            https://docs.python.org/3/using/windows.html#embedded-distribution
-    ${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+	; Check if we have latest VC++ Redistributable
+	; Reference: https://blogs.msdn.microsoft.com/vcblog/2015/03/03/introducing-the-universal-crt/
+	;            https://docs.python.org/3/using/windows.html#embedded-distribution
+	${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
 	${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-        MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VC2015_QUESTION) IDYES +2
-            Abort ; this is skipped if the user select Yes
-        ; Download VC++ 2015 redistibutable (x86 version)
-        inetc::get "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe" "$TEMP\vc2015_redist.x86.exe"
-        Pop $R0 ;Get the return value
-        ${If} $R0 != "OK"
-            MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VC2015_FAILED_MESSAGE)
-            Abort
-        ${EndIf}
+		${If} ${RunningX64}
+			; In 64-bit environment, we need to check both x86 and x64 version of dlls,
+			; because we only need at least one of the x86 or x64 version is available,
+			; which means we need to check both these 2 directory:
+			;   1. C:\Windows\System32 (x64 64-bit version dlls are in here)
+			;   2. C:\Windows\SysWOW64 (x86 32-bit version dlls are in here) (already checked)
 
-        ; Run vcredist installer
-        ExecWait "$TEMP\vc2015_redist.x86.exe" $0
+			; Because X64 FS Redirection is enabled by default ($SYSDIR is pointed to C:\Windows\SysWOW64),
+			; now we just need to disable X64 FS Redirection (let $SYSDIR point to C:\Windows\System32)
+			; in order to check if we have x64 64-bit version of Universal CRT
+			${DisableX64FSRedirection}
+			${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+			${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
+				MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
+					Abort ; this is skipped if the user select Yes
+				; Download latest VC++ Redistributable (x64 version)
+				inetc::get "https://aka.ms/vs/17/release/vc_redist.x64.exe" "$TEMP\vc_redist.x64.exe"
+				Pop $R0 ; Get the return value
+				${If} $R0 != "OK"
+					MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VCREDIST_FAILED_MESSAGE)
+					Abort
+				${EndIf}
 
-        ; check again if ucrtbase.dll or msvcp140.dll is available
-        ${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
-		${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-            MessageBox MB_ICONSTOP|MB_OK $(INST_VC2015_FAILED_MESSAGE)
-            ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
-            Abort
-        ${EndIf}
-    ${EndIf}
+				; Run vcredist installer
+				ExecWait "$TEMP\vc_redist.x64.exe" $0
+
+				; Check again if we have latest VC++ Redistributable
+				${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+				${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
+					MessageBox MB_ICONSTOP|MB_OK $(INST_VCREDIST_FAILED_MESSAGE)
+					ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
+					Abort
+				${EndIf}
+			${EndIf}
+
+			; Change X64 FS Redirection back to default state
+			${EnableX64FSRedirection}
+		${Else}
+			MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
+				Abort ; this is skipped if the user select Yes
+			; Download latest VC++ Redistributable (x86 version)
+			inetc::get "https://aka.ms/vs/17/release/vc_redist.x86.exe" "$TEMP\vc_redist.x86.exe"
+			Pop $R0 ; Get the return value
+			${If} $R0 != "OK"
+				MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VCREDIST_FAILED_MESSAGE)
+				Abort
+			${EndIf}
+
+			; Run vcredist installer
+			ExecWait "$TEMP\vc_redist.x86.exe" $0
+
+			; Check again if we have latest VC++ Redistributable
+			${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+			${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
+				MessageBox MB_ICONSTOP|MB_OK $(INST_VCREDIST_FAILED_MESSAGE)
+				ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
+				Abort
+			${EndIf}
+		${EndIf}
+	${EndIf}
 FunctionEnd
 
 ;Installer Type
@@ -322,8 +361,8 @@ InstType "$(INST_TYPE_FULL)"
 ;Installer Sections
 Section $(SECTION_MAIN) SecMain
 	SectionIn 1 2 RO
-    ; Ensure that we have VC++ 2015 runtime (for python 3.5)
-    Call ensureVCRedist
+	; Ensure that we have latest VC++ runtime (for python)
+	Call ensureVCRedist
 
 	; TODO: may be we can automatically rebuild the dlls here.
 	; http://stackoverflow.com/questions/24580/how-do-you-automate-a-visual-studio-build

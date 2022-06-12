@@ -495,7 +495,7 @@ SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
 			File "..\python\input_methods\rime\brise\supplement\*.yaml"
 			File "..\python\input_methods\rime\brise\extra\*.yaml"
 			SetOutPath "$INSTDIR\python\input_methods\rime\data\opencc"
-			File "..\python\opencc\*.json" "..\python\opencc\*.ocd2"
+			File "..\python\opencc\*.json" "..\python\opencc\*.ocd"
 			StrCpy $INST_PYTHON "True"
 		SectionEnd
 	SectionGroupEnd

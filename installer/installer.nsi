@@ -118,7 +118,7 @@ Function uninstallOldVersion
 	${If} $R0 != ""
 		ClearErrors
 		${If} ${FileExists} "$INSTDIR\Uninstall.exe"
-			MessageBox MB_OKCANCEL|MB_ICONQUESTION $(UNINSTALL_OLD) IDOK +2
+			MessageBox MB_OKCANCEL|MB_ICONQUESTION $(UNINSTALL_OLD) /SD IDOK IDOK +2
 			Abort ; this is skipped if the user select OK
 
 			; Remove the launcher from auto-start
@@ -179,7 +179,7 @@ Function uninstallOldVersion
 			RMDir /REBOOTOK "$INSTDIR"
 
 			${If} ${RebootFlag}
-				MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +3
+				MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" /SD IDNO IDNO +3
 				Reboot
 				Quit
 				Abort
@@ -234,20 +234,23 @@ FunctionEnd
 Function .onInit
 	;Language selection dialog
 
-	Push ""
-	Push ${LANG_TRADCHINESE}
-	Push "繁體中文"
-	Push ${LANG_SIMPCHINESE}
-	Push "简体中文"
-	Push ${LANG_ENGLISH}
-	Push "English"
-	Push A ; A means auto count languages
-	       ; for the auto count to work the first empty push (Push "") must remain
-	LangDLL::LangDialog $(INSTALLER_LANGUAGE_TITLE) $(INSTALL_LANGUAGE_MESSAGE)
+	${IfNot} ${Silent}
+		Push ""
+		Push ${LANG_TRADCHINESE}
+		Push "繁體中文"
+		Push ${LANG_SIMPCHINESE}
+		Push "简体中文"
+		Push ${LANG_ENGLISH}
+		Push "English"
+		Push A ; A means auto count languages
+			   ; for the auto count to work the first empty push (Push "") must remain
+		LangDLL::LangDialog $(INSTALLER_LANGUAGE_TITLE) $(INSTALL_LANGUAGE_MESSAGE)
 
-	Pop $LANGUAGE
-	StrCmp $LANGUAGE "cancel" 0 +2
-		Abort
+		Pop $LANGUAGE
+		StrCmp $LANGUAGE "cancel" 0 +2
+			Abort
+	${EndIf}
+
 	; Currently, we're not able to support Windows xp since it has an incomplete TSF.
 	${IfNot} ${AtLeastWinVista}
 		MessageBox MB_ICONSTOP|MB_OK $(AtLeastWinVista_MESSAGE)
@@ -687,7 +690,7 @@ Section "Uninstall"
 	RMDir /REBOOTOK "$INSTDIR"
 
 	${If} ${RebootFlag}
-		MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" IDNO +3
+		MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" /SD IDNO IDNO +3
 		Reboot
 		Quit
 		Abort

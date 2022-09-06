@@ -216,7 +216,7 @@ class ChewingTextService(TextService):
             # 切換中英文、簡繁體圖示
             if self.langMode == CHINESE_MODE:
                 if self.getCapslockState() == True:
-                   icon_name = "capsEng.ico"
+                    icon_name = "capsEng.ico"
                 else:
                     if self.outputSimpChinese:
                         icon_name = "simC.ico"

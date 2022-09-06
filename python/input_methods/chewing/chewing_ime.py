@@ -215,10 +215,13 @@ class ChewingTextService(TextService):
         if self.client.isWindows8Above:
             # 切換中英文、簡繁體圖示
             if self.langMode == CHINESE_MODE:
-                if self.outputSimpChinese:
-                    icon_name = "simC.ico"
+                if self.getCapslockState() == True:
+                   icon_name = "capsEng.ico"
                 else:
-                    icon_name = "traC.ico"
+                    if self.outputSimpChinese:
+                        icon_name = "simC.ico"
+                    else:
+                        icon_name = "traC.ico"
             else:
                 icon_name = "eng.ico"
             self.addButton("windows-mode-icon",
@@ -232,10 +235,13 @@ class ChewingTextService(TextService):
             return
         # 切換中英文、簡繁體
         if self.langMode == CHINESE_MODE:
-            if self.outputSimpChinese:
-                icon_name = "simC.ico"
+            if self.getCapslockState() == True:
+                icon_name = "capsEng.ico"
             else:
-                icon_name = "traC.ico"
+                if self.outputSimpChinese:
+                    icon_name = "simC.ico"
+                else:
+                    icon_name = "traC.ico"
         else:
             icon_name = "eng.ico"
         self.addButton("switch-lang",
@@ -688,6 +694,12 @@ class ChewingTextService(TextService):
             if keyEvent.isKeyDown(VK_CONTROL) and self.lastKeyEvent.keyCode == VK_F12 and keyEvent.keyCode == VK_F12:
                 self.setOutputSimplifiedChinese(not self.outputSimpChinese)
 
+        # 按下 Capslcok 會切換圖示
+        if chewingConfig.enableCapsLock and self.lastKeyEvent:
+            if self.isPressed(VK_CAPITAL):
+                self.updateSwitchLangIcon = True
+                self.updateLangButtons()
+
         self.lastKeyDownTime = 0.0
         return False
 
@@ -695,6 +707,13 @@ class ChewingTextService(TextService):
     # 當 keyCode 對應的按鍵、曾被按下觸發過，GetAsyncKeyState() 的回傳值會 >= 1
     def isPressed(self, keyCode):
         return windll.user32.GetAsyncKeyState(keyCode) >= 1
+
+    # 取得 Capslock 按鍵狀態
+    def getCapslockState(self):
+        if ((windll.user32.GetKeyState(VK_CAPITAL) & 0x0001) != 0):
+            return True
+        else:
+            return False
 
     def onKeyUp(self, keyEvent):
         pressedDuration = time.time() - self.lastKeyDownTime
@@ -811,10 +830,13 @@ class ChewingTextService(TextService):
             self.updateSwitchLangIcon = False
             self.langMode = langMode
             if langMode == CHINESE_MODE:
-                if self.outputSimpChinese:
-                    icon_name = "simC.ico"
+                if self.getCapslockState() == True:
+                   icon_name = "capsEng.ico"
                 else:
-                    icon_name = "traC.ico"
+                    if self.outputSimpChinese:
+                        icon_name = "simC.ico"
+                    else:
+                        icon_name = "traC.ico"
             else:
                 icon_name = "eng.ico"
             icon_path = os.path.join(self.icon_dir, icon_name)

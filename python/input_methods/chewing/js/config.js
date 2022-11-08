@@ -39,10 +39,7 @@ $(function () {
                     selectionStart += ez_symbols_array[j].length + 1;
                 }
                 $("#ez_symbols").prop("selectionStart", selectionStart);
-                $("#ez_symbols").prop(
-                    "selectionEnd",
-                    selectionStart + ez_symbols_array[i].length + 1
-                );
+                $("#ez_symbols").prop("selectionEnd", selectionStart + ez_symbols_array[i].length + 1);
                 swal.fire(
                     "輸入錯誤",
                     `第 ${i} 行格式錯誤：<br><b>${ez_symbols_array[i]}</b><br>請使用「英文大寫 + 空格 + 字串」的格式，字串最多10個字元`,
@@ -55,10 +52,7 @@ $(function () {
         // Check symbols format
         let symbols_array = $("#symbols").val().split("\n");
         for (let i = 0; i < symbols_array.length; i++) {
-            if (
-                symbols_array[i].length > 1 &&
-                symbols_array[i].search("=") === -1
-            ) {
+            if (symbols_array[i].length > 1 && symbols_array[i].search("=") === -1) {
                 // Select error range
                 $("#symbols").select();
                 let selectionStart = 1;
@@ -66,15 +60,10 @@ $(function () {
                     selectionStart += symbols_array[j].length;
                 }
                 $("#symbols").prop("selectionStart", selectionStart);
-                $("#symbols").prop(
-                    "selectionEnd",
-                    selectionStart + symbols_array[i].length
-                );
+                $("#symbols").prop("selectionEnd", selectionStart + symbols_array[i].length);
                 swal.fire(
                     "輸入錯誤",
-                    `特殊符號設定第 ${i + 1} 行格式錯誤：<br><b>${
-                        symbols_array[i]
-                    }</b><br>單行不能超過一個字元，或是沒有 = 符號區隔`,
+                    `特殊符號設定第 ${i + 1} 行格式錯誤：<br><b>${symbols_array[i]}</b><br>單行不能超過一個字元，或是沒有 = 符號區隔`,
                     "error"
                 );
                 return false;
@@ -128,9 +117,7 @@ $(function () {
                     break;
                 case "radio":
                     if (inputItem.checked === true) {
-                        chewingConfig[inputItem.name] = parseInt(
-                            inputItem.value
-                        );
+                        chewingConfig[inputItem.name] = parseInt(inputItem.value);
                     }
                     break;
             }
@@ -161,37 +148,25 @@ $(function () {
 
         // Setup select options and values
         let selectOptions = {
-            switchLangWithWhichShift: [
-                "左右兩邊都使用",
-                "僅使用左 Shift",
-                "僅使用右 Shift",
-            ],
+            switchLangWithWhichShift: ["左右兩邊都使用", "僅使用左 Shift", "僅使用右 Shift"],
             upDownAction: ["移動游標選字", "在選字時翻頁"],
             leftRightAction: ["移動游標選字（循環）", "在選字時翻頁"],
             spaceKeyAction: {
                 1: "叫出選字視窗",
                 0: "輸出空格",
+                2: "移動到選字頂端"
             },
             spaceKeyCandidatesAction: {
                 1: "移動游標（循環）",
                 0: "翻頁",
             },
-            selKeyType: [
-                "1234567890",
-                "asdfghjkl;",
-                "asdfzxcv89",
-                "asdfjkl789",
-                "aoeuhtn789",
-                "1234qweras",
-            ],
+            selKeyType: ["1234567890", "asdfghjkl;", "asdfzxcv89", "asdfjkl789", "aoeuhtn789", "1234qweras"],
             addPhraseForward: ["後方的詞", "前方的詞"],
         };
 
         $.each(selectOptions, function (id, options) {
             $.each(options, function (value, optionName) {
-                $("#" + id).append(
-                    '<option value="' + value + '">' + optionName + "</option>"
-                );
+                $("#" + id).append('<option value="' + value + '">' + optionName + "</option>");
                 if (value == chewingConfig[id]) {
                     $(`#${id} option:last-child`).prop("selected", true);
                 }
@@ -199,10 +174,7 @@ $(function () {
         });
 
         // Setup switchLangWithWhichShift's default disabled property
-        $("#switchLangWithWhichShift").prop(
-            "disabled",
-            !chewingConfig["switchLangWithShift"]
-        );
+        $("#switchLangWithWhichShift").prop("disabled", !chewingConfig["switchLangWithShift"]);
 
         // Bind Bootstrap
         $(".container select").selectpicker();
@@ -210,9 +182,7 @@ $(function () {
 
         // When switchLangWithShift's value changed, update switchLangWithWhichShift's disabled property
         $("#switchLangWithShift").on("click", function () {
-            $("#switchLangWithWhichShift")
-                .prop("disabled", !this.checked)
-                .selectpicker("refresh");
+            $("#switchLangWithWhichShift").prop("disabled", !this.checked).selectpicker("refresh");
         });
 
         // Bind shift action event
@@ -224,9 +194,7 @@ $(function () {
         $("#shiftMoveCursor").on("click", function () {
             if (this.checked) {
                 $("#switchLangWithShift").prop("checked", false);
-                $("#switchLangWithWhichShift")
-                    .prop("disabled", true)
-                    .selectpicker("refresh");
+                $("#switchLangWithWhichShift").prop("disabled", true).selectpicker("refresh");
             }
         });
 
@@ -251,8 +219,7 @@ $(function () {
             ["CARPALX", "carpalx"],
         ];
 
-        let item =
-            '<img id="keyboard_layouts" src="images\\keyborad_layouts\\pinyin.png" alt="pinyin">';
+        let item = '<img id="keyboard_layouts" src="images\\keyborad_layouts\\pinyin.png" alt="pinyin">';
 
         for (let i = 0; i < keyboardNames.length; ++i) {
             let id = `kb${i}`;
@@ -277,29 +244,16 @@ $(function () {
         $("#keyboard_tab").html(item);
 
         // Checked keyboard layout radio
-        let checkedKetboardLayoutRadio = $(
-            `#kb${chewingConfig.keyboardLayout}`
-        );
+        let checkedKetboardLayoutRadio = $(`#kb${chewingConfig.keyboardLayout}`);
         checkedKetboardLayoutRadio.prop("checked", true);
-        $("#keyboard_layouts").prop(
-            "src",
-            `images/keyborad_layouts/${checkedKetboardLayoutRadio.data(
-                "layout"
-            )}.png`
-        );
-        $("#keyboard_layouts").prop(
-            "alt",
-            checkedKetboardLayoutRadio.data("layout")
-        );
+        $("#keyboard_layouts").prop("src", `images/keyborad_layouts/${checkedKetboardLayoutRadio.data("layout")}.png`);
+        $("#keyboard_layouts").prop("alt", checkedKetboardLayoutRadio.data("layout"));
 
         // Bind change keyboard_layouts event
         $("#keyboard_tab input:radio").on("click", function () {
             let layout_file_name = $(this).data("layout");
             $("#keyboard_layouts").fadeOut(200, function () {
-                $("#keyboard_layouts").prop(
-                    "src",
-                    `images/keyborad_layouts/${layout_file_name}.png`
-                );
+                $("#keyboard_layouts").prop("src", `images/keyborad_layouts/${layout_file_name}.png`);
                 $("#keyboard_layouts").prop("alt", layout_file_name);
             });
 
@@ -310,16 +264,10 @@ $(function () {
     // Use for select phrase example
     function updateSelExample() {
         let example = ["選", "字", "大", "小", "範", "例"];
-        let selectItems = $("#selKeyType option")
-            .eq($("#selKeyType").val())
-            .html();
+        let selectItems = $("#selKeyType option").eq($("#selKeyType").val()).html();
         let html = "";
 
-        for (
-            let number = 0, i = 0, row = 0;
-            number < $("#candPerPage").val();
-            number++, i++, row++
-        ) {
+        for (let number = 0, i = 0, row = 0; number < $("#candPerPage").val(); number++, i++, row++) {
             if (example[i] == null) {
                 i = 0;
             }
@@ -329,9 +277,7 @@ $(function () {
                 html += "<br>";
             }
 
-            html += `<span>${selectItems.substr(number, 1)}.</span>${
-                example[i]
-            }`;
+            html += `<span>${selectItems.substr(number, 1)}.</span>${example[i]}`;
         }
 
         $("#selExample").html(html);
@@ -375,7 +321,7 @@ $(function () {
 
     // Bind test input auto select
     $("#test_input").on("shown.bs.modal", function () {
-        $("#test_input_text").select();
+        $("#test_input_text").val("").select();
     });
 
     return false;

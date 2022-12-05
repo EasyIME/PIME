@@ -183,7 +183,7 @@ function onAddPhrase() {
         }),
         dataType: "json",
         complete: function(response) {
-            if (response.responseJSON.add_result == 0) {
+            if (response.responseJSON.result == 0) {
                 jQueryDialogAlert({
                     message: "新增失敗，請檢查詞彙跟注音格式是否正確",
                     icon: "error"

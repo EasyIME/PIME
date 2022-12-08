@@ -156,17 +156,21 @@ class UserPhraseHandler(BaseHandler):
         added = data.get("add", [])
         removed = data.get("remove", [])
         print("add", added, "remove", removed)
+
+        # 0: error, 1: success, default to success
+        result = 1
+
         for item in added:  # add new phrases
             phrase = item["phrase"].encode("utf8")
             bopomofo = item["bopomofo"].encode("utf8")
-            add_result = chewing_ctx.userphrase_add(phrase, bopomofo)
+            result = chewing_ctx.userphrase_add(phrase, bopomofo)
 
         for item in removed:  # remove existing phrases
             phrase = item["phrase"].encode("utf8")
             bopomofo = item["bopomofo"].encode("utf8")
-            chewing_ctx.userphrase_remove(phrase, bopomofo)
+            result = chewing_ctx.userphrase_remove(phrase, bopomofo)
 
-        self.write({"add_result": add_result})
+        self.write({"result": result})
 
 
 class UserPhraseFileHandler(BaseHandler):

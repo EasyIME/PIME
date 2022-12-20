@@ -7,7 +7,7 @@ function loadUserPhrases() {
     $.LoadingOverlay("show", {
         background: "rgba(80, 80, 80, 0.8)",
         fade: [200, 500],
-        text: "載入詞彙中，請稍後..."
+        text: "載入詞彙中，請稍候..."
     });
 
     // Get user_phrases

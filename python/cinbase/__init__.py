@@ -427,7 +427,7 @@ class CinBase:
 
         if CinTable.loading:
             if not cbTS.client.isUiLess:
-                messagestr = '正在載入輸入法碼表，請稍後...'
+                messagestr = '正在載入輸入法碼表，請稍候...'
                 cbTS.isShowMessage = True
                 cbTS.showMessage(messagestr, cbTS.messageDurationTime)
             return True

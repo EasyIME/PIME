@@ -1,0 +1,7 @@
+LIBRARY libpipe.dll
+
+EXPORTS
+    connect_pipe
+    close_pipe
+    read_pipe
+    write_pipe

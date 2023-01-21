@@ -1,3 +1,4 @@
+#include "..\libpipe\PipeServer.h"
 //
 //	Copyright (C) 2015 - 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 //
@@ -85,6 +86,7 @@ PipeServer::PipeServer() :
 	loadConfig();
 	initLogger();
 }
+
 
 PipeServer::~PipeServer() {
     singleton_ = nullptr;

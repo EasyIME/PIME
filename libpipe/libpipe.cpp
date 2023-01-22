@@ -25,6 +25,8 @@
 #include <string>
 #include <iostream>
 
+#include "Server.h"
+
 using namespace std;
 
 static PSECURITY_DESCRIPTOR g_securittyDescriptor = NULL;
@@ -165,20 +167,12 @@ typedef void (*EventHandlerType)(int client_id, const char* data, int len);
 
 void run_pime_server(const char* name, EventHandlerType event_callback) {
     // receive event from client.
-
+    pime::Server server;
+    server.run();
     // event_callback(client_id, data, len);
 }
 
-int read_request(char* buffer, int buffer_size) {
-    // block waiting for read event.
 
-    // read from the input queue.
-}
-
-int write_reply(char* buffer, int buffer_size) {
-    // put into the write queue.
-    // signal output writer.
-}
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
 	switch (ul_reason_for_call) {

@@ -18,9 +18,13 @@
 import json
 import sys
 import traceback
+import os
 
 if __name__ == "__main__":
     sys.path.append('python3')
+
+sys.path.append(os.path.dirname(__file__))    
+
 
 from serviceManager import textServiceMgr
 

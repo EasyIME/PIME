@@ -36,7 +36,8 @@
                         <a class="nav-link" href="#test_input" aria-controls="test_input" role="tab" data-toggle="modal" data-target="#test_input">🛠️測試輸入法</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#about_modal" aria-controls="about_modal" role="tab" data-toggle="modal" data-target="#about_modal">ℹ️關於新酷音</a>
+                        <a class="nav-link" href="#about_modal" aria-controls="about_modal" role="tab" data-toggle="modal"
+                            data-target="#about_modal">ℹ️關於新酷音</a>
                     </li>
                 </ul>
 
@@ -92,7 +93,7 @@
                                 <p>
                                     本 Windows 版本是由<a href="https://github.com/PCMan" target="_blank">洪任諭（PCMan）</a>
                                     移植到 <a href="https://github.com/EasyIME/PIME" target="_blank">PIME 輸入法平台</a>上
-                                    Copyright &copy; 2015 - 2016
+                                    Copyright &copy; 2015 - 2023
                                 </p>
                             </div>
                         </div>
@@ -105,7 +106,7 @@
                             <h1>中英文切換</h1>
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="switchLangWithShift" name="switchLangWithShift">
-                                <label class="custom-control-label" for="switchLangWithShift" data-content="不建議同時使用「<b>使用左 Shift、 右 Shift 在打字時移動游標</b>」設定"
+                                <label class="custom-control-label" for="switchLangWithShift" data-content="不建議同時勾選「<b>使用左 Shift、 右 Shift 在打字時移動游標</b>」設定"
                                     data-html="true" data-toggle="popover" data-placement="bottom" data-trigger="hover">使用<kbd>Shift</kbd>切換中英文模式 🛈</label>
                             </div>
                             <div class="custom-control position-static">
@@ -118,10 +119,11 @@
                             </div>
                         </div>
                         <div class="config_section">
-                            <h1>中文模式輸入設定</h1>
+                            <h1>中文模式打字設定</h1>
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="fullShapeSymbols" name="fullShapeSymbols">
-                                <label class="custom-control-label" for="fullShapeSymbols">非注音符號對應鍵輸出全形標點符號（例如預設注音鍵盤配置下的"＝「」＼、"鍵，會輸出全形標點符號）</label>
+                                <label class="custom-control-label"
+                                    for="fullShapeSymbols">非注音符號對應鍵輸出全形標點符號（預設注音鍵盤配置下的<kbd>=</kbd><kbd>[</kbd><kbd>]</kbd><kbd>\</kbd><kbd>'</kbd>鍵，輸出全形標點符號）</label>
                             </div>
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="fullShapeSymbolsWithShift" name="fullShapeSymbolsWithShift">
@@ -143,7 +145,13 @@
                                 <input type="checkbox" class="custom-control-input" id="enableSwitchTCSC" name="enableSwitchTCSC">
                                 <label class="custom-control-label" for="enableSwitchTCSC">使用<kbd>Ctrl</kbd>+<kbd>F12</kbd>切換繁體/簡體</label>
                             </div>
-                            使用<kbd>Ctrl</kbd>+<kbd>1 ~ 9數字鍵</kbd>加入游標
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="shiftMoveCursor" name="shiftMoveCursor">
+                                <label class="custom-control-label" for="shiftMoveCursor" data-content="不建議同時勾選「<b>使用Shift切換中英文模式</b>」設定" data-toggle="popover"
+                                    data-html="true" data-placement="bottom" data-trigger="hover">使用<kbd>左 Shift</kbd>、 <kbd>右 Shift</kbd>
+                                    在打字時移動游標 🛈</label>
+                            </div>
+                            使用<kbd>Ctrl</kbd>+<kbd>數字鍵 2 ~ 9</kbd>加入游標
                             <select name="addPhraseForward" id="addPhraseForward"></select>
                         </div>
                         <div class="config_section">
@@ -151,12 +159,6 @@
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="advanceAfterSelection" name="advanceAfterSelection">
                                 <label class="custom-control-label" for="advanceAfterSelection">選字完畢自動跳到下一個字</label>
-                            </div>
-                            <div class="custom-control custom-checkbox">
-                                <input type="checkbox" class="custom-control-input" id="shiftMoveCursor" name="shiftMoveCursor">
-                                <label class="custom-control-label" for="shiftMoveCursor" data-content="不建議同時使用「<b>使用Shift切換中英文模式</b>」設定" data-toggle="popover"
-                                    data-html="true" data-placement="bottom" data-trigger="hover">使用<kbd>左 Shift</kbd>、 <kbd>右 Shift</kbd>
-                                    在打字時移動游標 🛈</label>
                             </div>
                             使用<kbd>↑</kbd><kbd>↓</kbd>鍵：
                             <select name="upDownAction" id="upDownAction"></select><br>

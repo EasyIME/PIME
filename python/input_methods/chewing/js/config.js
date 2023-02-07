@@ -154,7 +154,7 @@ $(function () {
             spaceKeyAction: {
                 1: "叫出選字視窗",
                 0: "輸出空格",
-                2: "移動到選字頂端"
+                2: "移動到選字頂端",
             },
             spaceKeyCandidatesAction: {
                 1: "移動游標（循環）",
@@ -263,7 +263,7 @@ $(function () {
 
     // Use for select phrase example
     function updateSelExample() {
-        let example = ["選", "字", "大", "小", "範", "例"];
+        let example = ["選", "字", "視", "窗", "大", "小", "範", "例"];
         let selectItems = $("#selKeyType option").eq($("#selKeyType").val()).html();
         let html = "";
 

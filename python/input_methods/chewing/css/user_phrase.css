@@ -3,17 +3,17 @@
 }
 
 #user_phrase_buttons {
-    position: fixed;
+    border-right: 2px solid grey;
+    height: 95%;
     margin: 4px;
     padding: 1em 1em 0 0;
+    position: fixed;
     width: 15em;
-    height: 95%;
-    border-right: 2px solid grey;
 }
 
 #user_phrase_buttons #phrase_count {
-    position: absolute;
     padding: 1em;
+    position: absolute;
 }
 
 #phrase_table {
@@ -21,13 +21,13 @@
 }
 
 #phrase_table th {
-    background-color: #E0E0E0;
+    background-color: #e0e0e0;
 }
 
 #phrase_table th,
 #phrase_table td {
-    padding: 8px;
     border-bottom: 1px solid #dddddd;
+    padding: 8px;
     text-align: left;
 }
 

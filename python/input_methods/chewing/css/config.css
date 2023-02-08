@@ -4,15 +4,15 @@ a[target="_blank"]::after {
 }
 
 kbd {
-    line-height: 1.3;
+    background-color: #e1e3e5;
+    border: 1px solid #adb3b9;
+    border-radius: 3px;
+    color: #242729;
     display: inline-block;
+    line-height: 1.3;
     margin: 0 0.3em;
     padding: 0.1em 0.6em;
     white-space: nowrap;
-    color: #242729;
-    border: 1px solid #adb3b9;
-    border-radius: 3px;
-    background-color: #e1e3e5;
 }
 
 .btn-group {
@@ -24,8 +24,8 @@ textarea {
 }
 
 .tab-content {
-    min-height: 400px;
     margin-top: 1em;
+    min-height: 400px;
 }
 
 .nav {
@@ -49,11 +49,11 @@ textarea {
 }
 
 .config_section h1 {
+    border-bottom: 1px solid #aaaaaa;
     font-size: 120%;
     font-weight: bold;
     margin-left: -1em;
     padding: 0 0 0.3em 0;
-    border-bottom: 1px solid #aaaaaa;
 }
 
 #ui_tab input[type="number"] {
@@ -61,29 +61,29 @@ textarea {
 }
 
 #selExample {
-    font-family: serif;
-    line-height: 110%;
-    display: inline-block;
-    min-width: 2.3em;
-    padding: 4px;
-    border-top: 1px solid grey;
-    border-right: 2px solid black;
+    background-color: white;
     border-bottom: 1px solid black;
     border-left: 1px solid grey;
-    background-color: white;
+    border-right: 2px solid black;
+    border-top: 1px solid grey;
+    display: inline-block;
+    font-family: serif;
+    line-height: 110%;
+    min-width: 2.3em;
+    padding: 4px;
 }
 
 #selExample span {
-    font-family: monospace;
     color: blue;
+    font-family: monospace;
 }
 
 #keyboard_tab #keyboard_layouts {
+    box-shadow: 5px 6px #888888;
     display: block;
     float: right;
-    width: 70%;
     margin: 2em 5em 0 0;
-    box-shadow: 5px 6px #888888;
+    width: 70%;
 }
 
 #ui_tab .btn {

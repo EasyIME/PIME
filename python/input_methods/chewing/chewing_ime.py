@@ -152,7 +152,7 @@ class ChewingTextService(TextService):
         # 設定選字按鍵 (123456..., asdf.... 等)
         self.setSelKeys(cfg.getSelKeys())
 
-        # 轉換輸出成簡體中文?
+        # 轉換輸出成簡體中文
         self.setOutputSimplifiedChinese(cfg.outputSimpChinese)
 
     # 初始化新酷音輸入法引擎
@@ -171,7 +171,7 @@ class ChewingTextService(TextService):
             chewingContext = ChewingContext(
                 syspath=search_paths, userpath=user_phrase)
             self.chewingContext = chewingContext
-            chewingContext.set_maxChiSymbolLen(50)  # 編輯區長度: 50 bytes
+            chewingContext.set_maxChiSymbolLen(50)  # 編輯區長度：50 bytes
 
             # 預設英數 or 中文模式
             if self.lastLangMode is not None:
@@ -361,7 +361,7 @@ class ChewingTextService(TextService):
             if keyEvent.keyCode >= VK_NUMPAD0 and keyEvent.keyCode <= VK_DIVIDE:
                 return False  # bypass IME
 
-        # 不管中英文模式，只要是全形可見字元或空白，輸入法都需要進一步處理(半形轉為全形)
+        # 不管中英文模式，只要是全形可見字元或空白，輸入法都需要進一步處理 (半形轉為全形)
         if self.shapeMode == FULLSHAPE_MODE:
             return (keyEvent.isPrintableChar() or keyEvent.keyCode == VK_SPACE)
 
@@ -383,7 +383,7 @@ class ChewingTextService(TextService):
 
         # 中文模式下，當中文編輯區是空的，輸入法只需處理注音符號和標點
         # 大略可用是否為 printable char 來檢查
-        # 注意: 此處不能直接寫死檢查按鍵是否為注音或標點，因為在不同 keyboard layout，例如
+        # 注意：此處不能直接寫死檢查按鍵是否為注音或標點，因為在不同 keyboard layout，例如
         # 倚天鍵盤或許氏...等，代表注音符號的按鍵全都不同
         if keyEvent.isPrintableChar() and keyEvent.keyCode != VK_SPACE:
             return True
@@ -485,81 +485,102 @@ class ChewingTextService(TextService):
                         chewingContext.handle_Space()
                     else:
                         chewingContext.handle_Default(charCode)
-                # Ctrl + 數字(0-9)
+                # Ctrl + 數字 (0-9)
                 elif keyEvent.isKeyDown(VK_CONTROL) and charStr.isdigit():
                     chewingContext.handle_CtrlNum(charCode)
                 elif keyEvent.isKeyToggled(VK_NUMLOCK) and keyCode >= VK_NUMPAD0 and keyCode <= VK_DIVIDE:
-                    # numlock 開啟，處理 NumPad 按鍵
+                    # NumLock 開啟，處理 NumPad 按鍵
                     chewingContext.handle_Numlock(charCode)
                 else:  # 其他按鍵不需要特殊處理
                     chewingContext.handle_Default(charCode)
-        else:  # 不可見字元 (方向鍵, Enter, Page Down...等等)
-            # 如果有啟用在選字視窗內移動游標選字，而且目前正在選字
+        else:  # 不可見字元 (方向鍵、Enter、PageDown...等等)
+            # 如果有啟用選字視窗
             if self.showCandidates:
                 candCursor = self.candidateCursor  # 目前的游標位置
                 candCount = len(self.candidateList)  # 目前選字清單項目數
 
-                if keyEvent.isKeyDown(VK_CONTROL) and keyCode == VK_DELETE:  # 處理刪除詞彙
-                    delete_phrase = self.candidateList[candCursor]
+                # 處理詞彙 Ctrl + Del、刪除詞彙、Ctrl + F11 提昇/ Ctrl + F10 降低詞頻
+                if keyEvent.isKeyDown(VK_CONTROL) and (keyCode == VK_DELETE or keyCode == VK_F10 or keyCode == VK_F11):
+                    target_phrase = self.candidateList[candCursor]
                     try:
                         phraseConnect = sqlite3.connect(chewingConfig.getUserPhrase())
                         cursor = phraseConnect.cursor()
-                        cursor.execute("SELECT * FROM userphrase_v1 WHERE phrase=:delete_phrase", {"delete_phrase": delete_phrase})
+                        cursor.execute("SELECT * FROM userphrase_v1 WHERE phrase=:target_phrase", {"target_phrase": target_phrase})
                         result = cursor.fetchone()
                         if (result is None):
                             phraseConnect.close()
-                            self.showMessage("詞彙「" + delete_phrase + "」不存在，無法刪除", 2)
+                            if keyCode == VK_DELETE:
+                                self.showMessage("詞彙「" + target_phrase + "」不存在，無法刪除", 2)
+                            elif keyCode == VK_F10:
+                                self.showMessage("詞彙「" + target_phrase + "」不存在，無法降低詞頻", 2)
+                            elif keyCode == VK_F11:
+                                self.showMessage("詞彙「" + target_phrase + "」不存在，無法提昇詞頻", 2)
                         else:
-                            cursor.execute("DELETE FROM userphrase_v1 WHERE phrase=:delete_phrase", {"delete_phrase": delete_phrase})
-                            phraseConnect.commit()
-                            phraseConnect.close()
-                            self.showMessage("刪除：" + delete_phrase + "", 2)
+                            if keyCode == VK_DELETE:
+                                cursor.execute("DELETE FROM userphrase_v1 WHERE phrase=:target_phrase", {"target_phrase": target_phrase})
+                                phraseConnect.commit()
+                                phraseConnect.close()
+                                self.showMessage("刪除「" + target_phrase + "」成功", 2)
+                            elif keyCode == VK_F10:
+                                cursor.execute("UPDATE userphrase_v1 SET user_freq = 0 WHERE phrase=:target_phrase", {"target_phrase": target_phrase})
+                                phraseConnect.commit()
+                                phraseConnect.close()
+                                self.showMessage("↓降低「" + target_phrase + "」詞頻成功", 2)
+                            elif keyCode == VK_F11:
+                                cursor.execute("UPDATE userphrase_v1 SET user_freq = 5000 WHERE phrase=:target_phrase", {"target_phrase": target_phrase})
+                                phraseConnect.commit()
+                                phraseConnect.close()
+                                self.showMessage("↑提昇「" + target_phrase + "」詞頻成功", 2)
                     except Exception as err:
                         self.showMessage(str(err), 2)
 
-
-                if keyCode == VK_HOME:  # 處理Home、End鍵，移到選字視窗的第一和最後一個字
+                # 處理 Home、End 鍵，移到選字視窗的第一和最後一個字
+                if keyCode == VK_HOME:
                     candCursor = 0
                     ignoreKey = keyHandled = True
                 elif keyCode == VK_END:
                     candCursor = candCount - 1
                     ignoreKey = keyHandled = True
 
-                if cfg.leftRightAction == 0:    # 使用左右鍵游標選字
-                    if keyCode == VK_LEFT:  # 游標左移
+                # 使用左右鍵移動游標選字
+                if cfg.leftRightAction == 0:
+                    if keyCode == VK_LEFT:
                         if candCursor > 0:
                             candCursor -= 1
                             ignoreKey = keyHandled = True
                         else:  # 如果選字清單沒有下一頁，重設游標為最後一個，讓左右鍵可以循環移動游標
                             candCursor = candCount - 1
 
-                    elif keyCode == VK_RIGHT:  # 游標右移
+                    elif keyCode == VK_RIGHT:
                         if (candCursor + 1) < candCount:
                             candCursor += 1
                             ignoreKey = keyHandled = True
                         else:  # 如果選字清單沒有下一頁，重設游標為第一個，讓左右鍵可以循環移動游標
                             candCursor = 0
 
-                if cfg.upDownAction == 0:   # 使用上下鍵游標選字，因上下鍵需要作為組字模式切換，所以不設定循環
-                    if keyCode == VK_UP:  # 游標上移
+                # 使用上下鍵游標選字，因上下鍵需要作為組字模式切換，所以不設定循環
+                if cfg.upDownAction == 0:
+                    if keyCode == VK_UP:
                         if candCursor >= cfg.candPerRow:
                             candCursor -= cfg.candPerRow
                             ignoreKey = keyHandled = True
-                    elif keyCode == VK_DOWN:  # 游標下移
+                    elif keyCode == VK_DOWN:
                         if (candCursor + cfg.candPerRow) < candCount:
                             candCursor += cfg.candPerRow
                             ignoreKey = keyHandled = True
 
-                if cfg.upDownAction == 1:   # 使用上下鍵翻頁，左右鍵新酷音預設為翻頁動作
-                    if keyCode == VK_UP:    # 向上翻頁
+                # 使用上下鍵翻頁，左右鍵新酷音預設為翻頁動作
+                if cfg.upDownAction == 1:
+                    if keyCode == VK_UP:
                         chewingContext.handle_PageUp()
                         keyHandled = True
-                    elif keyCode == VK_DOWN:  # 如果還有字詞可以選擇，向下翻頁
+                    elif keyCode == VK_DOWN:
                         if chewingContext.cand_hasNext():
                             chewingContext.handle_PageDown()
                             keyHandled = True
 
-                if keyCode == VK_RETURN:  # 按下 Enter 鍵
+                # 按下 Enter 鍵
+                if keyCode == VK_RETURN:
                     # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                     selKey = cfg.getSelKeys()[self.candidateCursor]
                     # 代替使用者送出選字鍵給新酷音引擎，進行選字
@@ -568,11 +589,12 @@ class ChewingTextService(TextService):
                 # 更新選字視窗游標位置
                 self.setCandidateCursor(candCursor)
 
-            if not keyHandled:  # 按鍵還沒被處理過
+            # 按鍵還沒被處理過
+            if not keyHandled:
                 # the candidate window does not need the key. pass it to libchewing.
                 keyName = keyNames.get(keyCode)  # 取得按鍵的名稱
                 if keyName:  # call libchewing method for the key
-                    # 依照按鍵名稱，找 libchewing 對應的 handle_按鍵() method 呼叫
+                    # 依照按鍵名稱，找 libchewing 對應的 handle_按鍵 () method 呼叫
                     methodName = "handle_" + keyName
                     method = getattr(chewingContext, methodName)
                     method()
@@ -615,7 +637,7 @@ class ChewingTextService(TextService):
                     self.setShowCandidates(False)  # 隱藏選字視窗
                     self.setCandidateList([])  # 更新候選字清單
 
-            # 有輸入完成的中文字串要送出(commit)到應用程式
+            # 有輸入完成的中文字串要送出 (commit) 到應用程式
             if chewingContext.commit_Check():
                 commitStr = chewingContext.commit_String().decode("UTF-8")
 
@@ -646,7 +668,7 @@ class ChewingTextService(TextService):
             # 更新編輯區內容 (composition string)
             self.setCompositionString(compStr)
 
-            # 顯示額外提示訊息 (例如：Ctrl+數字加入自訂詞之後，會顯示提示)
+            # 顯示額外提示訊息 (例如：Ctrl+ 數字加入自訂詞之後，會顯示提示)
             if chewingContext.aux_Check():
                 message = chewingContext.aux_String().decode("UTF-8")
                 # FIXME: sometimes libchewing shows the same aux info
@@ -668,7 +690,7 @@ class ChewingTextService(TextService):
     def filterKeyUp(self, keyEvent):
         # 最後按下和放開都是 Shift 鍵
         if self.lastKeyEvent and self.lastKeyEvent.keyCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
-            # 若啟用使用 Shift 在打字時移動游標，呼叫onKeyUp()
+            # 若啟用使用 Shift 在打字時移動游標，呼叫 onKeyUp()
             if chewingConfig.shiftMoveCursor:
                 return True
 
@@ -795,16 +817,16 @@ class ChewingTextService(TextService):
         if buttonId == "settings" or buttonId == "windows-mode-icon":
             # 用 json 語法表示選單結構
             return [
-                # {"text": "關於新酷音輸入法(&A)", "id": ID_ABOUT},
-                {"text": "新酷音官方網站(&W)", "id": ID_WEBSITE},
-                {"text": "新酷音線上討論區(&G)", "id": ID_GROUP},
+                # {"text": "關於新酷音輸入法 (&A)", "id": ID_ABOUT},
+                {"text": "新酷音官方網站 (&W)", "id": ID_WEBSITE},
+                {"text": "新酷音線上討論區 (&G)", "id": ID_GROUP},
                 {},
-                {"text": "軟體本身的建議及錯誤回報(&B)", "id": ID_BUGREPORT},
+                {"text": "軟體本身的建議及錯誤回報 (&B)", "id": ID_BUGREPORT},
                 {"text": "注音及選字選詞錯誤回報 (&P)", "id": ID_DICT_BUGREPORT},
                 {},
                 # {"text": "新酷音使用說明 (&H)", "id": ID_CHEWING_HELP},
                 {"text": "編輯使用者詞庫 (&E)", "id": ID_USER_PHRASE_EDITOR},
-                {"text": "設定新酷音輸入法(&C)", "id": ID_SETTINGS},
+                {"text": "設定新酷音輸入法 (&C)", "id": ID_SETTINGS},
                 {},
                 {"text": "網路辭典 (&D)", "submenu": [
                     {"text": "萌典 (moedict)", "id": ID_MOEDICT},

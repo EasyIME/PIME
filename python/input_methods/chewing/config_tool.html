@@ -75,7 +75,7 @@
                                     兩人的資訊專題（分別在兩人就讀台大資工系與台大電機系的時期），由中央研究院資訊研究所的
                                     <a href="http://www.iis.sinica.edu.tw/~tshsu" target="_blank">徐讚昇</a>
                                     博士提供技術指導與超過兩年的經濟及設備支援，最終的成果選擇以 GPL 授權釋出，可說是 XIM (X Input
-                                    Method)中最接近新注音或是自然輸入法的實作，詳情可參閱龔律全所撰寫的
+                                    Method) 中最接近新注音或是自然輸入法的實作，詳情可參閱龔律全所撰寫的
                                     <a href="http://chewing.im/doc/chewing-report.pdf" target="_blank">技術報告（PDF）</a>。
                                 </p>
                                 <p>
@@ -93,7 +93,7 @@
                                 <p>
                                     本 Windows 版本是由<a href="https://github.com/PCMan" target="_blank">洪任諭（PCMan）</a>
                                     移植到 <a href="https://github.com/EasyIME/PIME" target="_blank">PIME 輸入法平台</a>上
-                                    Copyright &copy; 2015 - 2023
+                                    Copyright &copy; 2015 - 2024
                                 </p>
                             </div>
                         </div>
@@ -167,6 +167,13 @@
                             使用<kbd>空白鍵</kbd>在打字時：
                             <select name="spaceKeyAction" id="spaceKeyAction"></select>，在選字時：<select name="spaceKeyCandidatesAction"
                                 id="spaceKeyCandidatesAction"></select><br>
+                            <div class="info">
+                                <ul>
+                                    <li>使用<kbd>Ctrl</kbd>+<kbd>Del</kbd>刪除詞彙</li>
+                                    <li>使用<kbd>Ctrl</kbd>+<kbd>F11</kbd>提昇詞彙優先度</li>
+                                    <li>使用<kbd>Ctrl</kbd>+<kbd>F10</kbd>降低詞彙優先度</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="config_section">
                             <h1>其他</h1>
@@ -236,7 +243,7 @@
                         </div>
                         <p class="well">
                             以下是使用<kbd>Ctrl</kbd>或<kbd>Shift</kbd>快速輸入符號的設定，每一行表示一個鍵所對應的字串，格式為<strong>「英文大寫」+「半形空白」+「字串」</strong><br>例如「M
-                            新酷音」或是「L orz」，字串的長度為1-10個字元。
+                            新酷音」或是「L orz」，字串的長度為 1-10 個字元。
                         </p>
                         <textarea id="ez_symbols" class="form-control"></textarea>
                     </div>
@@ -248,7 +255,7 @@
         </div>
     </div>
 
-    <script src="js/jquery-3.6.1.min.js"></script>
+    <script src="js/jquery-3.7.1.min.js"></script>
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="js/bootstrap-select.min.js"></script>
     <script src="js/sweetalert2.min.js"></script>

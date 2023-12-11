@@ -44,10 +44,10 @@ if hasattr(ssl, "OP_NO_COMPRESSION"):
 # module-import time, the import lock is already held by the main thread,
 # leading to deadlock. Avoid it by caching the idna encoder on the main
 # thread now.
-u"foo".encode("idna")
+"foo".encode("idna")
 
 # For undiagnosed reasons, 'latin1' codec may also need to be preloaded.
-u"foo".encode("latin1")
+"foo".encode("latin1")
 
 # Default backlog used when calling sock.listen()
 _DEFAULT_BACKLOG = 128
@@ -115,7 +115,7 @@ def bind_sockets(
             sys.platform == "darwin"
             and address == "localhost"
             and af == socket.AF_INET6
-            and sockaddr[3] != 0
+            and sockaddr[3] != 0  # type: ignore
         ):
             # Mac OS X includes a link-local address fe80::1%lo0 in the
             # getaddrinfo results for 'localhost'.  However, the firewall
@@ -594,7 +594,7 @@ def ssl_options_to_context(
     `~ssl.SSLContext` object.
 
     The ``ssl_options`` dictionary contains keywords to be passed to
-    `ssl.wrap_socket`.  In Python 2.7.9+, `ssl.SSLContext` objects can
+    ``ssl.SSLContext.wrap_socket``.  In Python 2.7.9+, `ssl.SSLContext` objects can
     be used instead.  This function converts the dict form to its
     `~ssl.SSLContext` equivalent, and may be used when a component which
     accepts both forms needs to upgrade to the `~ssl.SSLContext` version
@@ -652,9 +652,7 @@ def ssl_wrap_socket(
 
     ``ssl_options`` may be either an `ssl.SSLContext` object or a
     dictionary (as accepted by `ssl_options_to_context`).  Additional
-    keyword arguments are passed to ``wrap_socket`` (either the
-    `~ssl.SSLContext` method or the `ssl` module function as
-    appropriate).
+    keyword arguments are passed to `ssl.SSLContext.wrap_socket`.
 
     .. versionchanged:: 6.2
 
@@ -664,14 +662,10 @@ def ssl_wrap_socket(
     context = ssl_options_to_context(ssl_options, server_side=server_side)
     if server_side is None:
         server_side = False
-    if ssl.HAS_SNI:
-        # In python 3.4, wrap_socket only accepts the server_hostname
-        # argument if HAS_SNI is true.
-        # TODO: add a unittest (python added server-side SNI support in 3.4)
-        # In the meantime it can be manually tested with
-        # python3 -m tornado.httpclient https://sni.velox.ch
-        return context.wrap_socket(
-            socket, server_hostname=server_hostname, server_side=server_side, **kwargs
-        )
-    else:
-        return context.wrap_socket(socket, server_side=server_side, **kwargs)
+    assert ssl.HAS_SNI
+    # TODO: add a unittest for hostname validation (python added server-side SNI support in 3.4)
+    # In the meantime it can be manually tested with
+    # python3 -m tornado.httpclient https://sni.velox.ch
+    return context.wrap_socket(
+        socket, server_hostname=server_hostname, server_side=server_side, **kwargs
+    )

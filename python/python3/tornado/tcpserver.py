@@ -61,7 +61,7 @@ class TCPServer(object):
     To make this server serve SSL traffic, send the ``ssl_options`` keyword
     argument with an `ssl.SSLContext` object. For compatibility with older
     versions of Python ``ssl_options`` may also be a dictionary of keyword
-    arguments for the `ssl.wrap_socket` method.::
+    arguments for the `ssl.SSLContext.wrap_socket` method.::
 
        ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
        ssl_ctx.load_cert_chain(os.path.join(data_dir, "mydomain.crt"),
@@ -246,9 +246,7 @@ class TCPServer(object):
 
         .. deprecated:: 6.2
            Use either ``listen()`` or ``add_sockets()`` instead of ``bind()``
-           and ``start()``. The ``bind()/start()`` pattern depends on
-           interfaces that have been deprecated in Python 3.10 and will be
-           removed in future versions of Python.
+           and ``start()``.
         """
         sockets = bind_sockets(
             port,
@@ -295,9 +293,7 @@ class TCPServer(object):
 
         .. deprecated:: 6.2
            Use either ``listen()`` or ``add_sockets()`` instead of ``bind()``
-           and ``start()``. The ``bind()/start()`` pattern depends on
-           interfaces that have been deprecated in Python 3.10 and will be
-           removed in future versions of Python.
+           and ``start()``.
         """
         assert not self._started
         self._started = True

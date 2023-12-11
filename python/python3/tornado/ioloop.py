@@ -50,7 +50,7 @@ import typing
 from typing import Union, Any, Type, Optional, Callable, TypeVar, Tuple, Awaitable
 
 if typing.TYPE_CHECKING:
-    from typing import Dict, List  # noqa: F401
+    from typing import Dict, List, Set  # noqa: F401
 
     from typing_extensions import Protocol
 else:
@@ -83,7 +83,7 @@ class IOLoop(Configurable):
         import functools
         import socket
 
-        import tornado.ioloop
+        import tornado
         from tornado.iostream import IOStream
 
         async def handle_connection(connection, address):
@@ -123,8 +123,7 @@ class IOLoop(Configurable):
     and instead initialize the `asyncio` event loop and use `IOLoop.current()`.
     In some cases, such as in test frameworks when initializing an `IOLoop`
     to be run in a secondary thread, it may be appropriate to construct
-    an `IOLoop` with ``IOLoop(make_current=False)``. Constructing an `IOLoop`
-    without the ``make_current=False`` argument is deprecated since Tornado 6.2.
+    an `IOLoop` with ``IOLoop(make_current=False)``.
 
     In general, an `IOLoop` cannot survive a fork or be shared across processes
     in any way. When multiple processes are being used, each process should
@@ -145,12 +144,10 @@ class IOLoop(Configurable):
        cannot be used on Python 3 except to redundantly specify the `asyncio`
        event loop.
 
-    .. deprecated:: 6.2
-       It is deprecated to create an event loop that is "current" but not
-       running. This means it is deprecated to pass
-       ``make_current=True`` to the ``IOLoop`` constructor, or to create
-       an ``IOLoop`` while no asyncio event loop is running unless
-       ``make_current=False`` is used.
+    .. versionchanged:: 6.3
+       ``make_current=True`` is now the default when creating an IOLoop -
+       previously the default was to make the event loop current if there wasn't
+       already a current one.
     """
 
     # These constants were originally based on constants from the epoll module.
@@ -161,6 +158,18 @@ class IOLoop(Configurable):
 
     # In Python 3, _ioloop_for_asyncio maps from asyncio loops to IOLoops.
     _ioloop_for_asyncio = dict()  # type: Dict[asyncio.AbstractEventLoop, IOLoop]
+
+    # Maintain a set of all pending tasks to follow the warning in the docs
+    # of asyncio.create_tasks:
+    # https://docs.python.org/3.11/library/asyncio-task.html#asyncio.create_task
+    # This ensures that all pending tasks have a strong reference so they
+    # will not be garbage collected before they are finished.
+    # (Thus avoiding "task was destroyed but it is pending" warnings)
+    # An analogous change has been proposed in cpython for 3.13:
+    # https://github.com/python/cpython/issues/91887
+    # If that change is accepted, this can eventually be removed.
+    # If it is not, we will consider the rationale and may remove this.
+    _pending_tasks = set()  # type: Set[Future]
 
     @classmethod
     def configure(
@@ -263,17 +272,20 @@ class IOLoop(Configurable):
         """
         try:
             loop = asyncio.get_event_loop()
-        except (RuntimeError, AssertionError):
+        except RuntimeError:
             if not instance:
                 return None
-            raise
+            # Create a new asyncio event loop for this thread.
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
         try:
             return IOLoop._ioloop_for_asyncio[loop]
         except KeyError:
             if instance:
                 from tornado.platform.asyncio import AsyncIOMainLoop
 
-                current = AsyncIOMainLoop(make_current=True)  # type: Optional[IOLoop]
+                current = AsyncIOMainLoop()  # type: Optional[IOLoop]
             else:
                 current = None
         return current
@@ -295,12 +307,17 @@ class IOLoop(Configurable):
            This method also sets the current `asyncio` event loop.
 
         .. deprecated:: 6.2
-           The concept of an event loop that is "current" without
-           currently running is deprecated in asyncio since Python
-           3.10. All related functionality in Tornado is also
-           deprecated. Instead, start the event loop with `asyncio.run`
-           before interacting with it.
+           Setting and clearing the current event loop through Tornado is
+           deprecated. Use ``asyncio.set_event_loop`` instead if you need this.
         """
+        warnings.warn(
+            "make_current is deprecated; start the event loop first",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self._make_current()
+
+    def _make_current(self) -> None:
         # The asyncio event loops override this method.
         raise NotImplementedError()
 
@@ -344,16 +361,9 @@ class IOLoop(Configurable):
 
         return AsyncIOLoop
 
-    def initialize(self, make_current: Optional[bool] = None) -> None:
-        if make_current is None:
-            if IOLoop.current(instance=False) is None:
-                self.make_current()
-        elif make_current:
-            current = IOLoop.current(instance=False)
-            # AsyncIO loops can already be current by this point.
-            if current is not None and current is not self:
-                raise RuntimeError("current IOLoop already exists")
-            self.make_current()
+    def initialize(self, make_current: bool = True) -> None:
+        if make_current:
+            self._make_current()
 
     def close(self, all_fds: bool = False) -> None:
         """Closes the `IOLoop`, freeing any resources used.
@@ -634,9 +644,6 @@ class IOLoop(Configurable):
         other interaction with the `IOLoop` must be done from that
         `IOLoop`'s thread.  `add_callback()` may be used to transfer
         control from other threads to the `IOLoop`'s thread.
-
-        To add a callback from a signal handler, see
-        `add_callback_from_signal`.
         """
         raise NotImplementedError()
 
@@ -645,8 +652,13 @@ class IOLoop(Configurable):
     ) -> None:
         """Calls the given callback on the next I/O loop iteration.
 
-        Safe for use from a Python signal handler; should not be used
-        otherwise.
+        Intended to be afe for use from a Python signal handler; should not be
+        used otherwise.
+
+        .. deprecated:: 6.4
+           Use ``asyncio.AbstractEventLoop.add_signal_handler`` instead.
+           This method is suspected to have been broken since Tornado 5.0 and
+           will be removed in version 7.0.
         """
         raise NotImplementedError()
 
@@ -684,22 +696,20 @@ class IOLoop(Configurable):
             # the error logging (i.e. it goes to tornado.log.app_log
             # instead of asyncio's log).
             future.add_done_callback(
-                lambda f: self._run_callback(functools.partial(callback, future))
+                lambda f: self._run_callback(functools.partial(callback, f))
             )
         else:
             assert is_future(future)
             # For concurrent futures, we use self.add_callback, so
             # it's fine if future_add_done_callback inlines that call.
-            future_add_done_callback(
-                future, lambda f: self.add_callback(callback, future)
-            )
+            future_add_done_callback(future, lambda f: self.add_callback(callback, f))
 
     def run_in_executor(
         self,
         executor: Optional[concurrent.futures.Executor],
         func: Callable[..., _T],
         *args: Any
-    ) -> Awaitable[_T]:
+    ) -> "Future[_T]":
         """Runs a function in a ``concurrent.futures.Executor``. If
         ``executor`` is ``None``, the IO loop's default executor will be used.
 
@@ -804,6 +814,12 @@ class IOLoop(Configurable):
                 fd.close()
         except OSError:
             pass
+
+    def _register_task(self, f: Future) -> None:
+        self._pending_tasks.add(f)
+
+    def _unregister_task(self, f: Future) -> None:
+        self._pending_tasks.discard(f)
 
 
 class _Timeout(object):

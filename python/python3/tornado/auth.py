@@ -33,23 +33,39 @@ See the individual service classes below for complete documentation.
 
 Example usage for Google OAuth:
 
+.. testsetup::
+
+    import urllib
+
 .. testcode::
 
     class GoogleOAuth2LoginHandler(tornado.web.RequestHandler,
-                                   tornado.auth.GoogleOAuth2Mixin):
+                                    tornado.auth.GoogleOAuth2Mixin):
         async def get(self):
-            if self.get_argument('code', False):
-                user = await self.get_authenticated_user(
-                    redirect_uri='http://your.site.com/auth/google',
-                    code=self.get_argument('code'))
-                # Save the user with e.g. set_secure_cookie
-            else:
-                self.authorize_redirect(
-                    redirect_uri='http://your.site.com/auth/google',
-                    client_id=self.settings['google_oauth']['key'],
-                    scope=['profile', 'email'],
-                    response_type='code',
-                    extra_params={'approval_prompt': 'auto'})
+            # Google requires an exact match for redirect_uri, so it's
+            # best to get it from your app configuration instead of from
+            # self.request.full_uri().
+            redirect_uri = urllib.parse.urljoin(self.application.settings['redirect_base_uri'],
+                self.reverse_url('google_oauth'))
+            async def get(self):
+                if self.get_argument('code', False):
+                    access = await self.get_authenticated_user(
+                        redirect_uri=redirect_uri,
+                        code=self.get_argument('code'))
+                    user = await self.oauth2_request(
+                        "https://www.googleapis.com/oauth2/v1/userinfo",
+                        access_token=access["access_token"])
+                    # Save the user and access token. For example:
+                    user_cookie = dict(id=user["id"], access_token=access["access_token"])
+                    self.set_signed_cookie("user", json.dumps(user_cookie))
+                    self.redirect("/")
+                else:
+                    self.authorize_redirect(
+                        redirect_uri=redirect_uri,
+                        client_id=self.get_google_oauth_settings()['key'],
+                        scope=['profile', 'email'],
+                        response_type='code',
+                        extra_params={'approval_prompt': 'auto'})
 
 .. testoutput::
    :hide:
@@ -63,6 +79,7 @@ import hmac
 import time
 import urllib.parse
 import uuid
+import warnings
 
 from tornado import httpclient
 from tornado import escape
@@ -136,7 +153,7 @@ class OpenIdMixin(object):
         args = dict(
             (k, v[-1]) for k, v in handler.request.arguments.items()
         )  # type: Dict[str, Union[str, bytes]]
-        args["openid.mode"] = u"check_authentication"
+        args["openid.mode"] = "check_authentication"
         url = self._OPENID_ENDPOINT  # type: ignore
         if http_client is None:
             http_client = self.get_auth_http_client()
@@ -211,14 +228,14 @@ class OpenIdMixin(object):
         for key in handler.request.arguments:
             if (
                 key.startswith("openid.ns.")
-                and handler.get_argument(key) == u"http://openid.net/srv/ax/1.0"
+                and handler.get_argument(key) == "http://openid.net/srv/ax/1.0"
             ):
                 ax_ns = key[10:]
                 break
 
         def get_ax_arg(uri: str) -> str:
             if not ax_ns:
-                return u""
+                return ""
             prefix = "openid." + ax_ns + ".type."
             ax_name = None
             for name in handler.request.arguments.keys():
@@ -227,8 +244,8 @@ class OpenIdMixin(object):
                     ax_name = "openid." + ax_ns + ".value." + part
                     break
             if not ax_name:
-                return u""
-            return handler.get_argument(ax_name, u"")
+                return ""
+            return handler.get_argument(ax_name, "")
 
         email = get_ax_arg("http://axschema.org/contact/email")
         name = get_ax_arg("http://axschema.org/namePerson")
@@ -247,7 +264,7 @@ class OpenIdMixin(object):
         if name:
             user["name"] = name
         elif name_parts:
-            user["name"] = u" ".join(name_parts)
+            user["name"] = " ".join(name_parts)
         elif email:
             user["name"] = email.split("@")[0]
         if email:
@@ -571,7 +588,13 @@ class OAuth2Mixin(object):
 
            The ``callback`` argument and returned awaitable were removed;
            this is now an ordinary synchronous function.
+
+        .. deprecated:: 6.4
+           The ``client_secret`` argument (which has never had any effect)
+           is deprecated and will be removed in Tornado 7.0.
         """
+        if client_secret is not None:
+            warnings.warn("client_secret argument is deprecated", DeprecationWarning)
         handler = cast(RequestHandler, self)
         args = {"response_type": response_type}
         if redirect_uri is not None:
@@ -694,7 +717,7 @@ class TwitterMixin(OAuthMixin):
             async def get(self):
                 if self.get_argument("oauth_token", None):
                     user = await self.get_authenticated_user()
-                    # Save the user using e.g. set_secure_cookie()
+                    # Save the user using e.g. set_signed_cookie()
                 else:
                     await self.authorize_redirect()
 
@@ -705,6 +728,12 @@ class TwitterMixin(OAuthMixin):
     includes the attributes ``username``, ``name``, ``access_token``,
     and all of the custom Twitter user attributes described at
     https://dev.twitter.com/docs/api/1.1/get/users/show
+
+    .. deprecated:: 6.3
+       This class refers to version 1.1 of the Twitter API, which has been
+       deprecated by Twitter. Since Twitter has begun to limit access to its
+       API, this class will no longer be updated and will be removed in the
+       future.
     """
 
     _OAUTH_REQUEST_TOKEN_URL = "https://api.twitter.com/oauth/request_token"
@@ -839,12 +868,18 @@ class GoogleOAuth2Mixin(OAuth2Mixin):
 
     * Go to the Google Dev Console at http://console.developers.google.com
     * Select a project, or create a new one.
+    * Depending on permissions required, you may need to set your app to
+      "testing" mode and add your account as a test user, or go through
+      a verfication process. You may also need to use the "Enable
+      APIs and Services" command to enable specific services.
     * In the sidebar on the left, select Credentials.
     * Click CREATE CREDENTIALS and click OAuth client ID.
     * Under Application type, select Web application.
     * Name OAuth 2.0 client and click Create.
     * Copy the "Client secret" and "Client ID" to the application settings as
       ``{"google_oauth": {"key": CLIENT_ID, "secret": CLIENT_SECRET}}``
+    * You must register the ``redirect_uri`` you plan to use with this class
+      on the Credentials page.
 
     .. versionadded:: 3.2
     """
@@ -855,8 +890,28 @@ class GoogleOAuth2Mixin(OAuth2Mixin):
     _OAUTH_NO_CALLBACKS = False
     _OAUTH_SETTINGS_KEY = "google_oauth"
 
+    def get_google_oauth_settings(self) -> Dict[str, str]:
+        """Return the Google OAuth 2.0 credentials that you created with
+        [Google Cloud
+        Platform](https://console.cloud.google.com/apis/credentials). The dict
+        format is::
+
+            {
+                "key": "your_client_id", "secret": "your_client_secret"
+            }
+
+        If your credentials are stored differently (e.g. in a db) you can
+        override this method for custom provision.
+        """
+        handler = cast(RequestHandler, self)
+        return handler.settings[self._OAUTH_SETTINGS_KEY]
+
     async def get_authenticated_user(
-        self, redirect_uri: str, code: str
+        self,
+        redirect_uri: str,
+        code: str,
+        client_id: Optional[str] = None,
+        client_secret: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Handles the login for the Google user, returning an access token.
 
@@ -870,27 +925,39 @@ class GoogleOAuth2Mixin(OAuth2Mixin):
 
         Example usage:
 
+        .. testsetup::
+
+            import urllib
+
         .. testcode::
 
             class GoogleOAuth2LoginHandler(tornado.web.RequestHandler,
                                            tornado.auth.GoogleOAuth2Mixin):
                 async def get(self):
-                    if self.get_argument('code', False):
-                        access = await self.get_authenticated_user(
-                            redirect_uri='http://your.site.com/auth/google',
-                            code=self.get_argument('code'))
-                        user = await self.oauth2_request(
-                            "https://www.googleapis.com/oauth2/v1/userinfo",
-                            access_token=access["access_token"])
-                        # Save the user and access token with
-                        # e.g. set_secure_cookie.
-                    else:
-                        self.authorize_redirect(
-                            redirect_uri='http://your.site.com/auth/google',
-                            client_id=self.settings['google_oauth']['key'],
-                            scope=['profile', 'email'],
-                            response_type='code',
-                            extra_params={'approval_prompt': 'auto'})
+                    # Google requires an exact match for redirect_uri, so it's
+                    # best to get it from your app configuration instead of from
+                    # self.request.full_uri().
+                    redirect_uri = urllib.parse.urljoin(self.application.settings['redirect_base_uri'],
+                        self.reverse_url('google_oauth'))
+                    async def get(self):
+                        if self.get_argument('code', False):
+                            access = await self.get_authenticated_user(
+                                redirect_uri=redirect_uri,
+                                code=self.get_argument('code'))
+                            user = await self.oauth2_request(
+                                "https://www.googleapis.com/oauth2/v1/userinfo",
+                                access_token=access["access_token"])
+                            # Save the user and access token. For example:
+                            user_cookie = dict(id=user["id"], access_token=access["access_token"])
+                            self.set_signed_cookie("user", json.dumps(user_cookie))
+                            self.redirect("/")
+                        else:
+                            self.authorize_redirect(
+                                redirect_uri=redirect_uri,
+                                client_id=self.get_google_oauth_settings()['key'],
+                                scope=['profile', 'email'],
+                                response_type='code',
+                                extra_params={'approval_prompt': 'auto'})
 
         .. testoutput::
            :hide:
@@ -899,14 +966,20 @@ class GoogleOAuth2Mixin(OAuth2Mixin):
 
            The ``callback`` argument was removed. Use the returned awaitable object instead.
         """  # noqa: E501
-        handler = cast(RequestHandler, self)
+
+        if client_id is None or client_secret is None:
+            settings = self.get_google_oauth_settings()
+            if client_id is None:
+                client_id = settings["key"]
+            if client_secret is None:
+                client_secret = settings["secret"]
         http = self.get_auth_http_client()
         body = urllib.parse.urlencode(
             {
                 "redirect_uri": redirect_uri,
                 "code": code,
-                "client_id": handler.settings[self._OAUTH_SETTINGS_KEY]["key"],
-                "client_secret": handler.settings[self._OAUTH_SETTINGS_KEY]["secret"],
+                "client_id": client_id,
+                "client_secret": client_secret,
                 "grant_type": "authorization_code",
             }
         )
@@ -945,18 +1018,21 @@ class FacebookGraphMixin(OAuth2Mixin):
             class FacebookGraphLoginHandler(tornado.web.RequestHandler,
                                             tornado.auth.FacebookGraphMixin):
               async def get(self):
-                  if self.get_argument("code", False):
-                      user = await self.get_authenticated_user(
-                          redirect_uri='/auth/facebookgraph/',
-                          client_id=self.settings["facebook_api_key"],
-                          client_secret=self.settings["facebook_secret"],
-                          code=self.get_argument("code"))
-                      # Save the user with e.g. set_secure_cookie
-                  else:
-                      self.authorize_redirect(
-                          redirect_uri='/auth/facebookgraph/',
-                          client_id=self.settings["facebook_api_key"],
-                          extra_params={"scope": "read_stream,offline_access"})
+                redirect_uri = urllib.parse.urljoin(
+                    self.application.settings['redirect_base_uri'],
+                    self.reverse_url('facebook_oauth'))
+                if self.get_argument("code", False):
+                    user = await self.get_authenticated_user(
+                        redirect_uri=redirect_uri,
+                        client_id=self.settings["facebook_api_key"],
+                        client_secret=self.settings["facebook_secret"],
+                        code=self.get_argument("code"))
+                    # Save the user with e.g. set_signed_cookie
+                else:
+                    self.authorize_redirect(
+                        redirect_uri=redirect_uri,
+                        client_id=self.settings["facebook_api_key"],
+                        extra_params={"scope": "user_posts"})
 
         .. testoutput::
            :hide:

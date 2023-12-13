@@ -119,19 +119,27 @@
                             </div>
                         </div>
                         <div class="config_section">
-                            <h1>中文模式打字設定</h1>
+                            <h1>中文模式打字時設定</h1>
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="fullShapeSymbols" name="fullShapeSymbols">
                                 <label class="custom-control-label"
                                     for="fullShapeSymbols">非注音符號對應鍵輸出全形標點符號（預設注音鍵盤配置下的<kbd>=</kbd><kbd>[</kbd><kbd>]</kbd><kbd>\</kbd><kbd>'</kbd>鍵，輸出全形標點符號）</label>
                             </div>
-                            <div class="custom-control custom-checkbox">
-                                <input type="checkbox" class="custom-control-input" id="fullShapeSymbolsWithShift" name="fullShapeSymbolsWithShift">
-                                <label class="custom-control-label" for="fullShapeSymbolsWithShift">按住<kbd>Shift</kbd>輸出全形標點符號</label>
+                            ● 按住<kbd>Shift</kbd>：
+                            <div class="indent">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="fullShapeSymbolsWithShift" name="fullShapeSymbolsWithShift">
+                                    <label class="custom-control-label" for="fullShapeSymbolsWithShift">輸出全形標點符號</label>
+                                </div>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="upperCaseWithShift" name="upperCaseWithShift">
+                                    <label class="custom-control-label" for="upperCaseWithShift">輸出英文大寫字母</label>
+                                </div>
                             </div>
                             <div class="custom-control custom-checkbox">
-                                <input type="checkbox" class="custom-control-input" id="upperCaseWithShift" name="upperCaseWithShift">
-                                <label class="custom-control-label" for="upperCaseWithShift">按住<kbd>Shift</kbd>輸出英文大寫字母</label>
+                                <input type="checkbox" class="custom-control-input" id="phraseChoiceRearward" name="phraseChoiceRearward">
+                                <label class="custom-control-label" for="phraseChoiceRearward" data-content="類似自然輸入法，在詞彙的最後一字按下選字鍵會叫出選字視窗" data-toggle="popover"
+                                    data-html="true" data-placement="bottom" data-trigger="hover">啟用向後詞彙選詞模式 🛈</label>
                             </div>
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="escCleanAllBuf" name="escCleanAllBuf">
@@ -148,14 +156,14 @@
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="shiftMoveCursor" name="shiftMoveCursor">
                                 <label class="custom-control-label" for="shiftMoveCursor" data-content="不建議同時勾選「<b>使用Shift切換中英文模式</b>」設定" data-toggle="popover"
-                                    data-html="true" data-placement="bottom" data-trigger="hover">使用<kbd>左 Shift</kbd>、 <kbd>右 Shift</kbd>
+                                    data-html="true" data-placement="bottom" data-trigger="hover">使用<kbd>左 Shift</kbd>、<kbd>右 Shift</kbd>
                                     在打字時移動游標 🛈</label>
                             </div>
                             使用<kbd>Ctrl</kbd>+<kbd>數字鍵 2 ~ 9</kbd>加入游標
                             <select name="addPhraseForward" id="addPhraseForward"></select>
                         </div>
                         <div class="config_section">
-                            <h1>選字視窗動作</h1>
+                            <h1>叫出選字視窗時設定</h1>
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="advanceAfterSelection" name="advanceAfterSelection">
                                 <label class="custom-control-label" for="advanceAfterSelection">選字完畢自動跳到下一個字</label>
@@ -170,8 +178,8 @@
                             <div class="info">
                                 <ul>
                                     <li>使用<kbd>Ctrl</kbd>+<kbd>Del</kbd>刪除詞彙</li>
-                                    <li>使用<kbd>Ctrl</kbd>+<kbd>F11</kbd>提昇詞彙優先度</li>
-                                    <li>使用<kbd>Ctrl</kbd>+<kbd>F10</kbd>降低詞彙優先度</li>
+                                    <li>使用<kbd>Ctrl</kbd>+<kbd>PageUp</kbd>提昇詞彙優先度</li>
+                                    <li>使用<kbd>Ctrl</kbd>+<kbd>PageDown</kbd>降低詞彙優先度</li>
                                 </ul>
                             </div>
                         </div>

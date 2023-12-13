@@ -49,6 +49,7 @@ class ChewingConfig:
         self.candPerRow = 3
         self.defaultEnglish = False
         self.defaultFullSpace = False
+        self.disableOnStartup = False
         self.easySymbolsWithCtrl = False
         self.easySymbolsWithShift = True
         self.enableCapsLock = True
@@ -61,6 +62,7 @@ class ChewingConfig:
         self.keyboardLayout = 0
         self.leftRightAction = 0
         self.outputSimpChinese = False
+        self.phraseChoiceRearward = False
         self.selKeyType = 0
         self.shiftMoveCursor = 0
         self.spaceKeyAction = 1
@@ -69,7 +71,6 @@ class ChewingConfig:
         self.switchLangWithWhichShift = SWITCH_LANG_WITH_BOTH_SHIFT
         self.upDownAction = 0
         self.upperCaseWithShift = True
-        self.disableOnStartup = False
 
         # version: last modified time of (config.json, symbols.dat, swkb.dat)
         self._version = (0.0, 0.0, 0.0)

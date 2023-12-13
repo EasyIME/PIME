@@ -97,3 +97,7 @@ textarea {
 .info {
     font-size: small;
 }
+
+.indent {
+    margin-left: 2em;
+}

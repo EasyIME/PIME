@@ -499,8 +499,8 @@ class ChewingTextService(TextService):
                 candCursor = self.candidateCursor  # 目前的游標位置
                 candCount = len(self.candidateList)  # 目前選字清單項目數
 
-                # 處理詞彙 Ctrl + Del、刪除詞彙、Ctrl + F11 提昇/ Ctrl + F10 降低詞頻
-                if keyEvent.isKeyDown(VK_CONTROL) and (keyCode == VK_DELETE or keyCode == VK_F10 or keyCode == VK_F11):
+                # 處理詞彙 Ctrl + Del、刪除詞彙、Ctrl + PageUp 提昇/ Ctrl + PageDown 降低詞頻
+                if keyEvent.isKeyDown(VK_CONTROL) and (keyCode == VK_DELETE or keyCode == VK_NEXT or keyCode == VK_PRIOR):
                     target_phrase = self.candidateList[candCursor]
                     try:
                         phraseConnect = sqlite3.connect(chewingConfig.getUserPhrase())
@@ -511,9 +511,9 @@ class ChewingTextService(TextService):
                             phraseConnect.close()
                             if keyCode == VK_DELETE:
                                 self.showMessage("詞彙「" + target_phrase + "」不存在，無法刪除", 2)
-                            elif keyCode == VK_F10:
+                            elif keyCode == VK_NEXT:
                                 self.showMessage("詞彙「" + target_phrase + "」不存在，無法降低詞頻", 2)
-                            elif keyCode == VK_F11:
+                            elif keyCode == VK_PRIOR:
                                 self.showMessage("詞彙「" + target_phrase + "」不存在，無法提昇詞頻", 2)
                         else:
                             if keyCode == VK_DELETE:
@@ -521,16 +521,17 @@ class ChewingTextService(TextService):
                                 phraseConnect.commit()
                                 phraseConnect.close()
                                 self.showMessage("刪除「" + target_phrase + "」成功", 2)
-                            elif keyCode == VK_F10:
+                            elif keyCode == VK_NEXT:
                                 cursor.execute("UPDATE userphrase_v1 SET user_freq = 0 WHERE phrase=:target_phrase", {"target_phrase": target_phrase})
                                 phraseConnect.commit()
                                 phraseConnect.close()
                                 self.showMessage("↓降低「" + target_phrase + "」詞頻成功", 2)
-                            elif keyCode == VK_F11:
+                            elif keyCode == VK_PRIOR:
                                 cursor.execute("UPDATE userphrase_v1 SET user_freq = 5000 WHERE phrase=:target_phrase", {"target_phrase": target_phrase})
                                 phraseConnect.commit()
                                 phraseConnect.close()
                                 self.showMessage("↑提昇「" + target_phrase + "」詞頻成功", 2)
+                        ignoreKey = keyHandled = True
                     except Exception as err:
                         self.showMessage(str(err), 2)
 

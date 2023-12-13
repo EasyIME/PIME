@@ -122,7 +122,7 @@ class ChewingTextService(TextService):
         self.configVersion = cfg.getVersion()
         chewingContext = self.chewingContext
 
-        # 按下 Ctrl+ 數字加入游標"前方"的詞 (或是後方)
+        # 按下 Ctrl+ 數字加入游標前方/後方的詞
         chewingContext.set_addPhraseDirection(cfg.addPhraseForward)
 
         # 選字後自動把游標往後移一個字
@@ -154,6 +154,9 @@ class ChewingTextService(TextService):
 
         # 轉換輸出成簡體中文
         self.setOutputSimplifiedChinese(cfg.outputSimpChinese)
+
+        # 設定向後詞彙選字模式
+        chewingContext.set_phraseChoiceRearward(cfg.phraseChoiceRearward)
 
     # 初始化新酷音輸入法引擎
     def initChewingContext(self):

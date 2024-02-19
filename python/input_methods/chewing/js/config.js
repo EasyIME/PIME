@@ -109,15 +109,11 @@ $(function () {
                     break;
                 case "text":
                 case "number":
-                    let inputValue = inputItem.value;
-                    if ($.isNumeric(inputValue)) {
-                        inputValue = parseInt(inputValue);
-                    }
-                    chewingConfig[inputItem.name] = inputValue;
+                    chewingConfig[inputItem.name] = Number.parseInt(inputItem.value);
                     break;
                 case "radio":
                     if (inputItem.checked === true) {
-                        chewingConfig[inputItem.name] = parseInt(inputItem.value);
+                        chewingConfig[inputItem.name] = Number.parseInt(inputItem.value);
                     }
                     break;
             }
@@ -126,7 +122,7 @@ $(function () {
         // Get values from select
         $(".container select").each(function (index, selectItem) {
             if (selectItem.value) {
-                chewingConfig[selectItem.name] = parseInt(selectItem.value);
+                chewingConfig[selectItem.name] = Number.parseInt(selectItem.value);
             }
         });
     }

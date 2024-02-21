@@ -15,6 +15,11 @@ kbd {
     white-space: nowrap;
 }
 
+kbd.pressed {
+    border-left: 3px solid #8f9192;
+    border-top: 3px solid #8f9192;
+}
+
 .btn-group {
     width: 12em !important;
 }

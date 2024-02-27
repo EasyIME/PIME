@@ -434,13 +434,16 @@ class ChewingTextService(TextService):
 
                 # 若按下 Shift 鍵
                 if keyEvent.isKeyDown(VK_SHIFT):
-                    if charStr.isalpha():  # 如果是英文字母
+                    # 如果是英文字母
+                    if charStr.isalpha():
                         # 如果不使用快速輸入符號功能，則暫時切成英文模式
                         if not cfg.easySymbolsWithShift:
                             temporaryEnglishMode = True  # 暫時切換成英文模式
                             if not cfg.upperCaseWithShift:  # 如果沒有開啟 Shift 輸入大寫英文
                                 invertCase = True  # 大寫字母轉成小寫
-                    else:  # 如果不是英文字母
+
+                    # 如果不是英文字母
+                    else:
                         # 如果不使用 Shift 輸入全形標點，則暫時切成英文模式
                         if not cfg.fullShapeSymbolsWithShift:
                             temporaryEnglishMode = True
@@ -463,7 +466,7 @@ class ChewingTextService(TextService):
                         charCode = ord(charStr.lower())
                     chewingContext.handle_Default(charCode)
                 elif keyEvent.keyCode == VK_SPACE:  # 空白鍵
-                    # 使用空白鍵移動游標選字
+                    # 選字時接收到空白鍵
                     if self.showCandidates and cfg.spaceKeyCandidatesAction == 1:
                         candCursor = self.candidateCursor  # 目前的游標位置
                         candCount = len(self.candidateList)  # 目前選字清單項目數
@@ -481,6 +484,10 @@ class ChewingTextService(TextService):
                                 chewingContext.handle_Down()
 
                         self.setCandidateCursor(candCursor)
+                    # 設定使用空白鍵輸出空格，在選字時直接處理空白才能翻頁
+                    elif self.showCandidates and cfg.spaceKeyAction == 0:
+                        chewingContext.handle_Space()
+
                     # NOTE: libchewing 有 bug: 當啟用 "使用空白鍵選字" 時，chewing_handle_Space()
                     # 會忽略空白鍵，造成打不出空白。因此在此只有當 composition string 有內容
                     # 有需要選字時，才呼叫 handle_Space()，否則改用 handle_Default()，以免空白鍵被吃掉

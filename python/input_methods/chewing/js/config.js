@@ -150,7 +150,6 @@ $(function () {
             spaceKeyAction: {
                 1: "叫出選字視窗",
                 0: "輸出空格",
-                2: "移動到選字頂端",
             },
             spaceKeyCandidatesAction: {
                 1: "移動游標（循環）",

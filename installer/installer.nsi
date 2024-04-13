@@ -506,6 +506,13 @@ SectionGroupEnd
 
 SectionGroup /e $(NODE_SECTION_GROUP) node_section_group
 	SectionGroup /e $(NODE_CHT_SECTION_GROUP) node_cht_section_group
+		Section $(MCBOPOMOFO) McBopomofo
+				SectionIn 2
+				SetOutPath "$INSTDIR\node\input_methods\McBopomofo"
+				File /r "..\node\input_methods\McBopomofo\*.*"
+				StrCpy $INST_NODE "True"
+		SectionEnd
+
 		Section $(EMOJIME) emojime
 				SectionIn 2
 				SetOutPath "$INSTDIR\node\input_methods\emojime"
@@ -648,6 +655,7 @@ SectionEnd
 	!insertmacro MUI_DESCRIPTION_TEXT ${chephonetic} $(chephonetic_DESC)
     !insertmacro MUI_DESCRIPTION_TEXT ${cheez} $(cheez_DESC)
     !insertmacro MUI_DESCRIPTION_TEXT ${rime} $(rime_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${mcbopomofo} $(mcbopomofo_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${emojime} $(emojime_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${cheeng} $(cheeng_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${braille_chewing} $(braille_chewing_DESC)

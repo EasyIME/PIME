@@ -1,0 +1,5 @@
+.vs
+build
+build64
+node/input_methods/McBopomofo
+installer/*.exe

@@ -15,4 +15,4 @@
 	url = https://github.com/chewing/libchewing.git
 [submodule "McBopomofoWeb"]
 	path = McBopomofoWeb
-	url = git@github.com:openvanilla/McBopomofoWeb.git
+	url = https://github.com/openvanilla/McBopomofoWeb.git

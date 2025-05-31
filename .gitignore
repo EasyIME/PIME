@@ -1,5 +1,6 @@
 .vs
 build
 build64
+build_arm64/
 node/input_methods/McBopomofo
 installer/*.exe

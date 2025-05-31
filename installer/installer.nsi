@@ -171,7 +171,7 @@ Function uninstallOldVersion
 				md5dll::GetMD5File "$2"
 				Pop $3
 				${If} $1 == $3
-					StrCpy $UPDATEXARM64DLL "False"
+					StrCpy $UPDATEARM64DLL "False"
 				${Else}
 					RMDir /REBOOTOK /r "$INSTDIR\arm64"
 				${EndIf}
@@ -237,7 +237,7 @@ Function uninstallOldVersion
 			md5dll::GetMD5File "$2"
 			Pop $3
 			${If} $1 == $3
-				StrCpy $UPDATEXARM64DLL "False"
+				StrCpy $UPDATEARM64DLL "False"
 			${Else}
 				Delete /REBOOTOK "$INSTDIR\arm64\PIMETextService.dll"
 				IfErrors 0 +2
@@ -635,7 +635,7 @@ Section "" Register
 
 	${If} ${IsNativeARM64} ; This is a native ARM64 Windows system
 		SetOutPath "$INSTDIR\arm64"
-		${If} $UPDATEXARM64DLL == "True"
+		${If} $UPDATEARM64DLL == "True"
 			File "..\build_arm64\PIMETextService\Release\PIMETextService.dll" ; put ARM64 PIMETextService.dll in arm64 folder
 		${EndIf}
 		; Register COM objects (NSIS RegDLL command is broken and cannot be used)

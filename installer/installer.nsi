@@ -160,7 +160,7 @@ Function uninstallOldVersion
 			${EndIf}
 
 			; Handle ARM64 version of PIMETextService.dll
-			${If} ${RunningOnARM64}
+			${If} ${IsNativeARM64}
 				SetRegView 64 ; For ARM64, use native 64-bit registry view
 				ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\arm64\PIMETextService.dll"'
 				; Verify MD5 checksum to determine if update is needed
@@ -227,7 +227,7 @@ Function uninstallOldVersion
 		${EndIf}
 	${EndIf}
 
-	${If} ${RunningOnARM64}
+	${If} ${IsNativeARM64}
 		${If} ${FileExists} "$INSTDIR\arm64\PIMETextService.dll"
 			; Verify the MD5 checksum of ARM64 PIMETextService.dll
 			StrCpy $0 "$INSTDIR\arm64\PIMETextService.dll"
@@ -299,7 +299,7 @@ Function .onInit
 		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 	${EndIf}
 
-	${If} ${RunningOnARM64}
+	${If} ${IsNativeARM64}
 		SetRegView 64 ; disable registry redirection for ARM64 (also uses 64-bit view)
 	${EndIf}
 
@@ -377,7 +377,7 @@ Function ensureVCRedist
 			; Change X64 FS Redirection back to default state
 			${EnableX64FSRedirection}
 
-		${ElseIf} ${RunningOnARM64}
+		${ElseIf} ${IsNativeARM64}
 			${DisableX64FSRedirection}
 			${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
 			${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
@@ -633,7 +633,7 @@ Section "" Register
 		ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x64\PIMETextService.dll"'
 	${EndIf}
 
-	${If} ${RunningOnARM64} ; This is a native ARM64 Windows system
+	${If} ${IsNativeARM64} ; This is a native ARM64 Windows system
 		SetOutPath "$INSTDIR\arm64"
 		${If} $UPDATEXARM64DLL == "True"
 			File "..\build_arm64\PIMETextService\Release\PIMETextService.dll" ; put ARM64 PIMETextService.dll in arm64 folder
@@ -744,7 +744,7 @@ Section "Uninstall"
 		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 	${EndIf}
 
-	${If} ${RunningOnARM64}
+	${If} ${IsNativeARM64}
 		SetRegView 64 ; disable registry redirection on ARM64 systems
 	${EndIf}
 
@@ -760,7 +760,7 @@ Section "Uninstall"
 		RMDir /REBOOTOK /r "$INSTDIR\x64"
 	${EndIf}
 
-	${If} ${RunningOnARM64}
+	${If} ${IsNativeARM64}
 		ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\arm64\PIMETextService.dll"'
 		RMDir /REBOOTOK /r "$INSTDIR\arm64"
 	${EndIf}

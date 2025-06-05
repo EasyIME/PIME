@@ -102,6 +102,7 @@ RequestExecutionLevel admin
 
 var UPDATEX86DLL
 var UPDATEX64DLL
+var UPDATEARM64DLL
 
 var INST_PYTHON
 var INST_CINBASE
@@ -158,6 +159,24 @@ Function uninstallOldVersion
 				${EndIf}
 			${EndIf}
 
+			; Handle ARM64 version of PIMETextService.dll
+			${If} ${IsNativeARM64}
+				SetRegView 64 ; For ARM64, use native 64-bit registry view
+				ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\arm64\PIMETextService.dll"'
+				; Verify MD5 checksum to determine if update is needed
+				StrCpy $0 "$INSTDIR\arm64\PIMETextService.dll"
+				md5dll::GetMD5File "$0"
+				Pop $1
+				StrCpy $2 "$PLUGINSDIR\PIMETextService_arm64.dll"
+				md5dll::GetMD5File "$2"
+				Pop $3
+				${If} $1 == $3
+					StrCpy $UPDATEARM64DLL "False"
+				${Else}
+					RMDir /REBOOTOK /r "$INSTDIR\arm64"
+				${EndIf}
+			${EndIf}
+
 			; Try to terminate running PIMELauncher and the server process
 			; Otherwise we cannot replace it.
 			ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
@@ -202,6 +221,25 @@ Function uninstallOldVersion
 				StrCpy $UPDATEX64DLL "False"
 			${Else}
 				Delete /REBOOTOK "$INSTDIR\x64\PIMETextService.dll"
+				IfErrors 0 +2
+					Call .onInstFailed
+			${EndIf}
+		${EndIf}
+	${EndIf}
+
+	${If} ${IsNativeARM64}
+		${If} ${FileExists} "$INSTDIR\arm64\PIMETextService.dll"
+			; Verify the MD5 checksum of ARM64 PIMETextService.dll
+			StrCpy $0 "$INSTDIR\arm64\PIMETextService.dll"
+			md5dll::GetMD5File "$0"
+			Pop $1
+			StrCpy $2 "$PLUGINSDIR\PIMETextService_arm64.dll"
+			md5dll::GetMD5File "$2"
+			Pop $3
+			${If} $1 == $3
+				StrCpy $UPDATEARM64DLL "False"
+			${Else}
+				Delete /REBOOTOK "$INSTDIR\arm64\PIMETextService.dll"
 				IfErrors 0 +2
 					Call .onInstFailed
 			${EndIf}
@@ -261,11 +299,17 @@ Function .onInit
 		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 	${EndIf}
 
+	${If} ${IsNativeARM64}
+		SetRegView 64 ; disable registry redirection for ARM64 (also uses 64-bit view)
+	${EndIf}
+
 	File "/oname=$PLUGINSDIR\PIMETextService_x86.dll" "..\build\PIMETextService\Release\PIMETextService.dll"
 	File "/oname=$PLUGINSDIR\PIMETextService_x64.dll" "..\build64\PIMETextService\Release\PIMETextService.dll"
+	File "/oname=$PLUGINSDIR\PIMETextService_arm64.dll" "..\build_arm64\PIMETextService\Release\PIMETextService.dll"
 
 	StrCpy $UPDATEX86DLL "True"
 	StrCpy $UPDATEX64DLL "True"
+	StrCpy $UPDATEARM64DLL "True"
 
 	StrCpy $INST_PYTHON "False"
 	StrCpy $INST_CINBASE "False"
@@ -332,6 +376,29 @@ Function ensureVCRedist
 
 			; Change X64 FS Redirection back to default state
 			${EnableX64FSRedirection}
+
+		${ElseIf} ${IsNativeARM64}
+			${DisableX64FSRedirection}
+			${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+			${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
+				MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
+					Abort
+				inetc::get "https://aka.ms/vs/17/release/vc_redist.arm64.exe" "$TEMP\vc_redist.arm64.exe"
+				Pop $R0
+				${If} $R0 != "OK"
+					MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VCREDIST_FAILED_MESSAGE)
+					Abort
+				${EndIf}
+				ExecWait "$TEMP\vc_redist.arm64.exe" $0
+				${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+				${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
+					MessageBox MB_ICONSTOP|MB_OK $(INST_VCREDIST_FAILED_MESSAGE)
+					ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
+					Abort
+				${EndIf}
+			${EndIf}
+			${EnableX64FSRedirection}
+
 		${Else}
 			MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
 				Abort ; this is skipped if the user select Yes
@@ -565,6 +632,16 @@ Section "" Register
 		; Register COM objects (NSIS RegDLL command is broken and cannot be used)
 		ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x64\PIMETextService.dll"'
 	${EndIf}
+
+	${If} ${IsNativeARM64} ; This is a native ARM64 Windows system
+		SetOutPath "$INSTDIR\arm64"
+		${If} $UPDATEARM64DLL == "True"
+			File "..\build_arm64\PIMETextService\Release\PIMETextService.dll" ; put ARM64 PIMETextService.dll in arm64 folder
+		${EndIf}
+		; Register COM objects (NSIS RegDLL command is broken and cannot be used)
+		ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\arm64\PIMETextService.dll"'
+	${EndIf}
+
 	SetOutPath "$INSTDIR\x86"
 	${If} $UPDATEX86DLL == "True"
 		File "..\build\PIMETextService\Release\PIMETextService.dll" ; put 32-bit PIMETextService.dll in x86 folder
@@ -667,6 +744,10 @@ Section "Uninstall"
 		SetRegView 64 ; disable registry redirection and use 64 bit Windows registry directly
 	${EndIf}
 
+	${If} ${IsNativeARM64}
+		SetRegView 64 ; disable registry redirection on ARM64 systems
+	${EndIf}
+
 	; Remove the launcher from auto-start
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
@@ -677,6 +758,11 @@ Section "Uninstall"
 	${If} ${RunningX64}
 		ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\x64\PIMETextService.dll"'
 		RMDir /REBOOTOK /r "$INSTDIR\x64"
+	${EndIf}
+
+	${If} ${IsNativeARM64}
+		ExecWait '"$SYSDIR\regsvr32.exe" /u /s "$INSTDIR\arm64\PIMETextService.dll"'
+		RMDir /REBOOTOK /r "$INSTDIR\arm64"
 	${EndIf}
 
 	; Try to terminate running PIMELauncher and the server process

@@ -1,21 +1,21 @@
 skip_tags: true
 pull_requests:
-  do_not_increment_build_number: true
+    do_not_increment_build_number: true
 
-version: '{branch} build {build}'
-image: Visual Studio 2019
+version: "{branch} build {build}"
+image: Visual Studio 2022
 
 init:
-  - git --version
-  - git config --global core.autocrlf true
+    - git --version
+    - git config --global core.autocrlf true
 
 install:
-  - git submodule init
-  - git submodule update
+    - git submodule init
+    - git submodule update
 
 build_script:
-  - .\build.bat
+    - .\build.bat
 
 after_build:
-  - appveyor.after_build.bat
-  - ps: .\appveyor.artifacts.ps1
+    - appveyor.after_build.bat
+    - ps: .\appveyor.artifacts.ps1

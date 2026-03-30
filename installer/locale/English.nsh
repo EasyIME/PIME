@@ -65,6 +65,7 @@
 !insertmacro LANG_STRING rime_DESC "Install Rime input method engine, 内含拼音、注音、仓颉、五笔、粤拼、吴语等数种输入方案。"
 !insertmacro LANG_STRING mcbopomofo_DESC "Install McBopomofo input method module."
 !insertmacro LANG_STRING mcfoxim_DESC "Install McFoxIM input method module."
+!insertmacro LANG_STRING mctabim_DESC "Install McTabIM input method module."
 !insertmacro LANG_STRING emojime_DESC "Install emojime input method module."
 !insertmacro LANG_STRING cheeng_DESC "Install Eng-Num input method module."
 !insertmacro LANG_STRING braille_chewing_DESC "Install Braille Chewing input method module."

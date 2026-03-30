@@ -4,4 +4,5 @@ build64
 build_arm64/
 node/input_methods/McBopomofo
 node/input_methods/McFoxim
+node/input_methods/McTabim
 installer/*.exe

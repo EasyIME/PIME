@@ -65,6 +65,7 @@
 !insertmacro LANG_STRING rime_DESC "安裝中州韻輸入法引擎，內含拼音、注音、倉頡、五筆、粵拼、吳語等數種輸入方案。"
 !insertmacro LANG_STRING mcbopomofo_DESC "安裝小麥注音輸入法模組。"
 !insertmacro LANG_STRING mcfoxim_DESC "安裝小麥族語輸入法模組。"
+!insertmacro LANG_STRING mctabim_DESC "安裝小麥他命輸入法模組。"
 !insertmacro LANG_STRING emojime_DESC "安裝 emojime 輸入法模組。"
 !insertmacro LANG_STRING cheeng_DESC "安裝英數輸入法模組。"
 !insertmacro LANG_STRING braille_chewing_DESC "安裝點字酷音輸入法模組。"

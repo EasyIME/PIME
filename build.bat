@@ -30,3 +30,14 @@ echo "Copy McFoximWeb to node\input_methods\McFoxim"
 cmd /C rd /s /q node\input_methods\McFoxim
 cmd /C mkdir node\input_methods\McFoxim
 cmd /C xcopy /s /q /y /f McFoximWeb\output\pime node\input_methods\McFoxim\.
+
+echo "Start building McTabimWeb"
+cd McTabimWeb
+cmd /C npm install
+cmd /C npm run build:pime
+cd ..
+
+echo "Copy McTabimWeb to node\input_methods\McTabim"
+cmd /C rd /s /q node\input_methods\McTabim
+cmd /C mkdir node\input_methods\McTabim
+cmd /C xcopy /s /q /y /f McTabimWeb\output\pime node\input_methods\McTabim\.

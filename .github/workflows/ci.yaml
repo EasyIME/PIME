@@ -9,15 +9,15 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'true'
       - name: Use Node.js 21.x
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 21.x
       - name: Use Install NSIS
-        uses: repolevedavaj/install-nsis@v1.0.2
+        uses: repolevedavaj/install-nsis@v1.1.0
         with:
           nsis-version: 3.08
       - name: Run build.bat
@@ -25,7 +25,8 @@ jobs:
           .\build.bat
       - name: Build the installer
         run: |
-          cmd /C "C:\Program Files (x86)\NSIS\Bin\makensis.exe" ".\installer\installer.nsi"
+          "C:\Program Files (x86)\NSIS\Bin\makensis.exe" ".\installer\installer.nsi"
+        shell: cmd
       - uses: actions/upload-artifact@v4
         with:
           name: Installer

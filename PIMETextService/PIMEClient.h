@@ -20,14 +20,14 @@
 #ifndef _PIME_CLIENT_H_
 #define _PIME_CLIENT_H_
 #define NDEBUG
-#include <libIME2/src/TextService.h>
-#include <libIME2/src/KeyEvent.h>
-#include <libIME2/src/EditSession.h>
 #include "PIMELangBarButton.h"
+#include <libIME2/src/EditSession.h>
+#include <libIME2/src/KeyEvent.h>
+#include <libIME2/src/TextService.h>
 
-#include <unordered_map>
-#include <string>
 #include <nlohmann/json.hpp>
+#include <string>
+#include <unordered_map>
 
 namespace PIME {
 
@@ -84,6 +84,7 @@ private:
 	bool isPipeCreatedByPIMEServer(HANDLE pipe);
 	bool waitForRpcConnection();
 	bool callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply);
+	bool callPipeIO(bool isRead, void *buffer, DWORD size, DWORD *rlen, int timeoutMs);
 	void closeRpcConnection();
 
 	bool init();
@@ -113,7 +114,9 @@ private:
 	std::unordered_map<std::string, Ime::ComPtr<PIME::LangBarButton>> buttons_; // map buttons to string IDs
 	unsigned int nextSeqNum_;
 	bool isActivated_;
-    bool shouldWaitConnection_;
+	bool shouldWaitConnection_;
+	std::string readBuffer_;
+	HANDLE ioEvent_;
 };
 
 }

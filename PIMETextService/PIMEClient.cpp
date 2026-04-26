@@ -23,14 +23,14 @@
 #include <nlohmann/json.hpp>
 
 #include "PIMETextService.h"
+#include <VersionHelpers.h> // Provided by Windows SDK >= 8.1
+#include <Winnls.h> // for IS_HIGH_SURROGATE() macro for checking UTF16 surrogate pairs
+#include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <ctime>
-#include <memory>
 #include <fstream>
-#include <cctype>
-#include <algorithm>
-#include <Winnls.h>  // for IS_HIGH_SURROGATE() macro for checking UTF16 surrogate pairs
-#include <VersionHelpers.h>  // Provided by Windows SDK >= 8.1
+#include <memory>
 
 using namespace std;
 using json = nlohmann::json;
@@ -60,7 +60,8 @@ Client::Client(TextService* service, REFIID langProfileGuid):
 	nextSeqNum_(0),
 	isActivated_(false),
 	guid_{ uuidToString(langProfileGuid) },
-	shouldWaitConnection_{ true } {
+	shouldWaitConnection_{ true },
+	ioEvent_{ CreateEvent(NULL, TRUE, FALSE, NULL) } {
 }
 
 Client::~Client(void) {
@@ -632,30 +633,66 @@ json Client::createRpcRequest(const char* methodName) {
 	return request;
 }
 
+bool Client::callPipeIO(bool isRead, void *buffer, DWORD size, DWORD *rlen, int timeoutMs) {
+	if (!ioEvent_) {
+		return false;
+	}
+
+	OVERLAPPED overlapped = { 0 };
+	overlapped.hEvent = ioEvent_;
+	ResetEvent(ioEvent_);
+
+	BOOL ok;
+	if (isRead)
+		ok = ReadFile(pipe_, buffer, size, rlen, &overlapped);
+	else
+		ok = WriteFile(pipe_, buffer, size, rlen, &overlapped);
+
+	if (!ok && GetLastError() != ERROR_IO_PENDING) {
+		return false;
+	}
+
+	DWORD wait = WaitForSingleObject(ioEvent_, timeoutMs);
+	if (wait == WAIT_OBJECT_0) {
+		ok = GetOverlappedResult(pipe_, &overlapped, rlen, FALSE);
+	}
+	else {
+		// timeout or error
+		CancelIo(pipe_);
+		ok = FALSE;
+	}
+
+	return ok;
+}
+
 bool Client::callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply) {
+	std::string request = serializedRequest;
+	if (request.empty() || request.back() != '\n') {
+		request += '\n';
+	}
+
+	const int timeoutMs = 2000;
+	DWORD wlen = 0;
+	if (!callPipeIO(false, (void*)request.data(), (DWORD)request.size(), &wlen, timeoutMs)) {
+		return false;
+	}
+
 	char buf[1024];
 	DWORD rlen = 0;
-	bool hasMoreData = false;
-	if (!TransactNamedPipe(pipe, (void*)serializedRequest.data(), serializedRequest.size(), buf, sizeof(buf), &rlen, NULL)) {
-		if (GetLastError() == ERROR_MORE_DATA) {
-			hasMoreData = true;
+	while (true) {
+		// Check if we already have a full line in the buffer
+		size_t pos = readBuffer_.find('\n');
+		if (pos != std::string::npos) {
+			serializedReply = readBuffer_.substr(0, pos); // exclude the newline for easier parsing
+			readBuffer_.erase(0, pos + 1);
+			return true;
 		}
-		else {  // unknown error
-			return false;
-		}
-	}
-	serializedReply.append(buf, rlen);
 
-	while (hasMoreData) {
-		if (ReadFile(pipe, buf, sizeof(buf), &rlen, NULL)) {
-			hasMoreData = false;
-		}
-		else if (::GetLastError() != ERROR_MORE_DATA) {  // unknown error
+		if (!callPipeIO(true, buf, sizeof(buf), &rlen, timeoutMs) || rlen == 0) {
 			return false;
 		}
-		serializedReply.append(buf, rlen);
+		readBuffer_.append(buf, rlen);
 	}
-	return true;
 }
 
 // send the request to the server
@@ -711,14 +748,12 @@ bool Client::isPipeCreatedByPIMEServer(HANDLE pipe) {
 HANDLE Client::connectPipe(const wchar_t* pipeName, int timeoutMs) {
 	HANDLE pipe = INVALID_HANDLE_VALUE;
 	if (WaitNamedPipe(pipeName, timeoutMs)) {
-		pipe = CreateFile(pipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+		pipe = CreateFile(pipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
 	}
 
 	if (pipe != INVALID_HANDLE_VALUE) {
-		DWORD mode = PIPE_READMODE_MESSAGE;
-		// The pipe is connected; change to message-read mode.
-		if (!isPipeCreatedByPIMEServer(pipe) || !::SetNamedPipeHandleState(pipe, &mode, NULL, NULL)) {
-			DisconnectNamedPipe(pipe);
+		// The pipe is connected; check if it's created by our server.
+		if (!isPipeCreatedByPIMEServer(pipe)) {
 			CloseHandle(pipe);
 			pipe = INVALID_HANDLE_VALUE;
 		}
@@ -780,10 +815,14 @@ void Client::resetTextServiceState() {
 
 void Client::closeRpcConnection() {
 	if (pipe_ != INVALID_HANDLE_VALUE) {
-		DisconnectNamedPipe(pipe_);
 		CloseHandle(pipe_);
 		pipe_ = INVALID_HANDLE_VALUE;
 	}
+	if (ioEvent_ != INVALID_HANDLE_VALUE) {
+		CloseHandle(ioEvent_);
+		ioEvent_ = INVALID_HANDLE_VALUE;
+	}
+	readBuffer_.clear();
 }
 
 wstring Client::getPipeName(const wchar_t* base_name) {

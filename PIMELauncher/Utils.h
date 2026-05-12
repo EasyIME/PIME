@@ -1,14 +1,14 @@
 #ifndef _PIME_LAUNCHER_UTILS_H_
 #define _PIME_LAUNCHER_UTILS_H_
 
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 #include <string>
 
 namespace PIME {
 
-bool loadJsonFile(const std::wstring filename, Json::Value& result);
+bool loadJsonFile(const std::wstring filename, nlohmann::json& result);
 
-bool saveJsonFile(const std::wstring filename, Json::Value& data);
+bool saveJsonFile(const std::wstring filename, const nlohmann::json& data);
 
 std::wstring getCurrentExecutableDir();
 

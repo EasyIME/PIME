@@ -27,6 +27,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <nlohmann/json.hpp>
 #include <UvPipe.h>
 
 
@@ -61,7 +62,7 @@ public:
         pipe_.write(data, len);
     }
 
-	bool initBackend(const Json::Value& params);
+	bool initBackend(const nlohmann::json& params);
 
 	void disconnectFromBackend();
 

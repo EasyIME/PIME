@@ -31,7 +31,7 @@
 #include <sstream>
 #include <memory>
 
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
 #include "UvPipe.h"
@@ -45,7 +45,7 @@ class BackendServer {
 public:
 	friend class PipeServer;
 
-	BackendServer(PipeServer* pipeServer, const Json::Value& info);
+	BackendServer(PipeServer* pipeServer, const nlohmann::json& info);
 
 	~BackendServer();
 

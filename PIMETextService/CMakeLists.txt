@@ -11,7 +11,7 @@ configure_file("PIMETextService.rc.in" "PIMETextService.rc" @ONLY)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/jsoncpp/include
+    ${CMAKE_SOURCE_DIR}/json/single_include
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
@@ -33,5 +33,4 @@ add_library(PIMETextService SHARED
 
 target_link_libraries(PIMETextService
     libIME2_static
-    jsoncpp_lib_static
 )

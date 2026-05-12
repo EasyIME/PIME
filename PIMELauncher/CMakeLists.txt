@@ -24,6 +24,7 @@ add_definitions(
 
 include_directories(
     ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/json/single_include
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
     ${LIBUV_INCLUDE_DIRS}
@@ -48,7 +49,6 @@ add_executable(PIMELauncher WIN32
 )
 
 target_link_libraries(PIMELauncher 
-    jsoncpp_lib_static
     Rpcrt4 # for uuid stuff
     libuv
 )

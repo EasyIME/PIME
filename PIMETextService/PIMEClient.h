@@ -92,19 +92,19 @@ private:
 	void addKeyEventToRpcRequest(nlohmann::json& request, Ime::KeyEvent& keyEvent);
 	bool sendOnMenu(std::string button_id, nlohmann::json& result);
 
-	bool handleRpcResponse(const nlohmann::json& msg, Ime::EditSession* session = nullptr);
+	bool handleRpcResponse(nlohmann::json& msg, Ime::EditSession* session = nullptr);
 
 	// Update text service and UI status based on RPC responses.
-	void updateSelectionKeys(const nlohmann::json& msg);
-	void updateMessageWindow(const nlohmann::json& msg, Ime::EditSession* session, bool& endComposition);
-	void updateCommitString(const nlohmann::json& msg, Ime::EditSession* session);
-	void updateComposition(const nlohmann::json& msg, Ime::EditSession* session, bool& endComposition);
-	void updateLanguageButtons(const nlohmann::json& msg);
-	void updatePreservedKeys(const nlohmann::json& msg);
-	void updateKeyboardStatus(const nlohmann::json& msg);
-	void updateCandidateList(const nlohmann::json& msg, Ime::EditSession* session);
-	void updateUI(const nlohmann::json& data);
-	void updateStatus(const nlohmann::json& msg, Ime::EditSession* session = nullptr);
+	void updateSelectionKeys(nlohmann::json& msg);
+	void updateMessageWindow(nlohmann::json& msg, Ime::EditSession* session, bool& endComposition);
+	void updateCommitString(nlohmann::json& msg, Ime::EditSession* session);
+	void updateComposition(nlohmann::json& msg, Ime::EditSession* session, bool& endComposition);
+	void updateLanguageButtons(nlohmann::json& msg);
+	void updatePreservedKeys(nlohmann::json& msg);
+	void updateKeyboardStatus(nlohmann::json& msg);
+	void updateCandidateList(nlohmann::json& msg, Ime::EditSession* session);
+	void updateUI(nlohmann::json& data);
+	void updateStatus(nlohmann::json& msg, Ime::EditSession* session = nullptr);
 
 private:
 	TextService* textService_;

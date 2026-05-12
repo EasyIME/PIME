@@ -44,12 +44,12 @@ LangBarButton::LangBarButton(TextService* service, const std::string& id, const 
 LangBarButton::~LangBarButton() {
 }
 
-LangBarButton* LangBarButton::fromJson(TextService* service, const json& info) {
+LangBarButton* LangBarButton::fromJson(TextService* service, json& info) {
 	if (info.is_object()) {
 		std::string id = info.value("id", "");
 
 		DWORD style = TF_LBI_STYLE_BTN_BUTTON;
-		const json& styleValue = info["style"];
+		auto& styleValue = info["style"];
 		if (styleValue.is_number_unsigned())
 			style = styleValue.get<unsigned int>();
 
@@ -90,32 +90,32 @@ void LangBarButton::setIconFile(std::wstring filePath) {
 	}
 }
 
-void LangBarButton::updateFromJson(const json& info) {
-	const json& iconValue = info["icon"];
+void LangBarButton::updateFromJson(json& info) {
+	auto& iconValue = info["icon"];
 	if (iconValue.is_string()) {
 		setIconFile(utf8ToUtf16(iconValue.get<std::string>().c_str()));
 	}
 
-	const json& cmdValue = info["commandId"];
+	auto& cmdValue = info["commandId"];
 	if (cmdValue.is_number_unsigned()) {
 		UINT cmd = cmdValue.get<unsigned int>();
 		setCommandId(cmd);
 	}
 
-	const json& textValue = info["text"];
+	auto& textValue = info["text"];
 	if (textValue.is_string()) {
 		std::wstring text = utf8ToUtf16(textValue.get<std::string>().c_str());
 		setText(text.c_str());
 	}
 
-	const json& tooltipValue = info["tooltip"];
+	auto& tooltipValue = info["tooltip"];
 	if (tooltipValue.is_string()) {
 		std::wstring tooltip = utf8ToUtf16(tooltipValue.get<std::string>().c_str());
 		setTooltip(tooltip.c_str());
 	}
 
 	// update style of the button
-	const json& typeValue = info["type"];
+	auto& typeValue = info["type"];
 	if (typeValue.is_string()) {
 		DWORD newStyle = style() & ~(TF_LBI_STYLE_BTN_BUTTON | TF_LBI_STYLE_BTN_MENU | TF_LBI_STYLE_BTN_TOGGLE);
 		std::string type = typeValue.get<std::string>();
@@ -128,12 +128,12 @@ void LangBarButton::updateFromJson(const json& info) {
 		setStyle(newStyle);
 	}
 
-	const json& enableValue = info["enable"];
+	auto& enableValue = info["enable"];
 	if (enableValue.is_boolean()) {
 		setEnabled(enableValue.get<bool>());
 	}
 
-	const json& toggledValue = info["toggled"];
+	auto& toggledValue = info["toggled"];
 	if (toggledValue.is_boolean()) {
 		setToggled(toggledValue.get<bool>());
 	}

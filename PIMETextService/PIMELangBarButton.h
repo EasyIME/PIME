@@ -33,8 +33,8 @@ class LangBarButton : public Ime::LangBarButton {
 public:
 	LangBarButton(TextService* service, const std::string& id, const GUID& guid, UINT commandId = 0, const wchar_t* text = NULL, DWORD style = TF_LBI_STYLE_BTN_BUTTON);
 
-	static LangBarButton* fromJson(TextService* service, const nlohmann::json& info);
-	void updateFromJson(const nlohmann::json& info);
+	static LangBarButton* fromJson(TextService* service, nlohmann::json& info);
+	void updateFromJson(nlohmann::json& info);
 
 	const std::string& id() const {
 		return id_;

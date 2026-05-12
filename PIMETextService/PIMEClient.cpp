@@ -85,7 +85,7 @@ void Client::addKeyEventToRpcRequest(json& request, Ime::KeyEvent& keyEvent) {
 	request["keyStates"] = keyStates;
 }
 
-bool Client::handleRpcResponse(const json& msg, Ime::EditSession* session) {
+bool Client::handleRpcResponse(json& msg, Ime::EditSession* session) {
 	bool success = msg.value("success", false);
 	if (success) {
 		updateStatus(msg, session);
@@ -93,7 +93,7 @@ bool Client::handleRpcResponse(const json& msg, Ime::EditSession* session) {
 	return success;
 }
 
-void Client::updateUI(const json& data) {
+void Client::updateUI(json& data) {
 	for (auto it = data.begin(); it != data.end(); ++it) {
 		const std::string& name = it.key();
 		const json& value = it.value();
@@ -113,9 +113,9 @@ void Client::updateUI(const json& data) {
 	}
 }
 
-void Client::updateSelectionKeys(const json& msg) {
+void Client::updateSelectionKeys(json& msg) {
 	// set sel keys before update candidates
-	const auto& setSelKeysVal = msg["setSelKeys"];
+	auto& setSelKeysVal = msg["setSelKeys"];
 	if (setSelKeysVal.is_string()) {
 		// keys used to select candidates
 		std::wstring selKeys = utf8ToUtf16(setSelKeysVal.get<string>().c_str());
@@ -123,11 +123,11 @@ void Client::updateSelectionKeys(const json& msg) {
 	}
 }
 
-void Client::updateMessageWindow(const json& msg, Ime::EditSession* session, bool& endComposition) {
-	const auto& showMessageVal = msg["showMessage"];
+void Client::updateMessageWindow(json& msg, Ime::EditSession* session, bool& endComposition) {
+	auto& showMessageVal = msg["showMessage"];
 	if (showMessageVal.is_object()) {
-		const json& message = showMessageVal["message"];
-		const json& duration = showMessageVal["duration"];
+		auto& message = showMessageVal["message"];
+		auto& duration = showMessageVal["duration"];
 		if (message.is_string() && duration.is_number_integer()) {
 			if (!textService_->isComposing()) {
 				textService_->startComposition(session->context());
@@ -138,15 +138,15 @@ void Client::updateMessageWindow(const json& msg, Ime::EditSession* session, boo
 	}
 
 	// hide message
-	const auto& hideMessageVal = msg["hideMessage"];
+	auto& hideMessageVal = msg["hideMessage"];
 	if (hideMessageVal.is_boolean() && hideMessageVal.get<bool>()) {
 		textService_->hideMessage();
 	}
 }
 
-void Client::updateCommitString(const json& msg, Ime::EditSession* session) {
+void Client::updateCommitString(json& msg, Ime::EditSession* session) {
 	// handle comosition and commit strings
-	const auto& commitStringVal = msg["commitString"];
+	auto& commitStringVal = msg["commitString"];
 	if (commitStringVal.is_string()) {
 		std::wstring commitString = utf8ToUtf16(commitStringVal.get<string>().c_str());
 		if (!commitString.empty()) {
@@ -166,8 +166,8 @@ void Client::updateCommitString(const json& msg, Ime::EditSession* session) {
 	}
 }
 
-void Client::updateComposition(const json& msg, Ime::EditSession* session, bool& endComposition) {
-	const auto& compositionStringVal = msg["compositionString"];
+void Client::updateComposition(json& msg, Ime::EditSession* session, bool& endComposition) {
+	auto& compositionStringVal = msg["compositionString"];
 	bool emptyComposition = false;
 	bool hasCompositionString = false;
 	std::wstring compositionString;
@@ -198,7 +198,7 @@ void Client::updateComposition(const json& msg, Ime::EditSession* session, bool&
 		}
 	}
 
-	const auto& compositionCursorVal = msg["compositionCursor"];
+	auto& compositionCursorVal = msg["compositionCursor"];
 	if (compositionCursorVal.is_number_integer()) {
 		// composition cursor
 		if (!emptyComposition) {
@@ -228,11 +228,11 @@ void Client::updateComposition(const json& msg, Ime::EditSession* session, bool&
 	}
 }
 
-void Client::updateLanguageButtons(const json& msg) {
+void Client::updateLanguageButtons(json& msg) {
 	// language buttons
-	const auto& addButtonVal = msg["addButton"];
+	auto& addButtonVal = msg["addButton"];
 	if (addButtonVal.is_array()) {
-		for (const auto& btn : addButtonVal) {
+		for (auto& btn : addButtonVal) {
 			// FIXME: when to clear the id <=> button map??
 			auto langBtn = Ime::ComPtr<PIME::LangBarButton>::takeover(PIME::LangBarButton::fromJson(textService_, btn));
 			if (langBtn != nullptr) {
@@ -256,10 +256,10 @@ void Client::updateLanguageButtons(const json& msg) {
 			}
 		}
 	}
-	const auto& changeButtonVal = msg["changeButton"];
+	auto& changeButtonVal = msg["changeButton"];
 	if (changeButtonVal.is_array()) {
 		// FIXME: handle windows-mode-icon
-		for (const auto& btn : changeButtonVal) {
+		for (auto& btn : changeButtonVal) {
 			if (btn.is_object()) {
 				string id = btn["id"].get<string>();
 				auto map_it = buttons_.find(id);
@@ -271,8 +271,8 @@ void Client::updateLanguageButtons(const json& msg) {
 	}
 }
 
-void Client::updatePreservedKeys(const json& msg) {
-	const auto& addPreservedKeyVal = msg["addPreservedKey"];
+void Client::updatePreservedKeys(json& msg) {
+	auto& addPreservedKeyVal = msg["addPreservedKey"];
 	if (addPreservedKeyVal.is_array()) {
 		// preserved keys
 		for (auto& key : addPreservedKeyVal) {
@@ -300,14 +300,14 @@ void Client::updatePreservedKeys(const json& msg) {
 	}
 }
 
-void Client::updateKeyboardStatus(const json& msg) {
+void Client::updateKeyboardStatus(json& msg) {
 	const auto& openKeyboardVal = msg["openKeyboard"];
 	if (openKeyboardVal.is_boolean()) {
 		textService_->setKeyboardOpen(openKeyboardVal.get<bool>());
 	}
 }
 
-void Client::updateStatus(const json& msg, Ime::EditSession* session) {
+void Client::updateStatus(json& msg, Ime::EditSession* session) {
 	// We need to handle ordering of some types of the requests.
 	// For example, setCompositionCursor() should happen after setCompositionCursor().
 	updateSelectionKeys(msg);
@@ -334,14 +334,14 @@ void Client::updateStatus(const json& msg, Ime::EditSession* session) {
 	updateKeyboardStatus(msg);
 
 	// other configurations
-	const auto& customizeUIVal = msg["customizeUI"];
+	auto& customizeUIVal = msg["customizeUI"];
 	if (customizeUIVal.is_object()) {
 		// customize the UI
 		updateUI(customizeUIVal);
 	}
 }
 
-void Client::updateCandidateList(const json& msg, Ime::EditSession* session) {
+void Client::updateCandidateList(json& msg, Ime::EditSession* session) {
 	// handle candidate list
 	const auto& showCandidatesVal = msg["showCandidates"];
 	if (showCandidatesVal.is_boolean()) {
@@ -491,9 +491,9 @@ bool Client::sendOnMenu(std::string button_id, json& result) {
 	return false;
 }
 
-static bool menuFromJson(ITfMenu* pMenu, const json& menuInfo) {
+static bool menuFromJson(ITfMenu* pMenu, json& menuInfo) {
 	if (pMenu != nullptr && menuInfo.is_array()) {
-		for (const auto& item : menuInfo) {
+		for (auto& item : menuInfo) {
 			UINT id = item.value("id", 0);
 			std::wstring text = utf8ToUtf16(item.value("text", "").c_str());
 
@@ -534,10 +534,10 @@ bool Client::onMenu(LangBarButton* btn, ITfMenu* pMenu) {
 	return false;
 }
 
-static HMENU menuFromJson(const json& menuInfo) {
+static HMENU menuFromJson(json& menuInfo) {
 	if (menuInfo.is_array()) {
 		HMENU menu = ::CreatePopupMenu();
-		for (const auto& item : menuInfo) {
+		for (auto& item : menuInfo) {
 			UINT id = item.value("id", 0);
 			std::wstring text = utf8ToUtf16(item.value("text", "").c_str());
 
@@ -551,7 +551,7 @@ static HMENU menuFromJson(const json& menuInfo) {
 					flags |= MF_GRAYED;
 
 				if (item.contains("submenu") && item["submenu"].is_array()) {
-					const json& subMenuValue = item["submenu"];
+					json& subMenuValue = item["submenu"];
 					HMENU submenu = menuFromJson(subMenuValue);
 					flags |= MF_POPUP;
 					id = UINT_PTR(submenu);

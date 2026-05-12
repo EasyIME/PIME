@@ -23,7 +23,7 @@
 #include <LibIME2/src/ImeModule.h>
 #include <string>
 #include <vector>
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 
 namespace PIME {
 
@@ -45,7 +45,7 @@ public:
 	// called when config dialog needs to be launched
 	virtual bool onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile);
 
-	bool loadImeInfo(const std::string&, std::wstring& filePath, Json::Value& content);
+	bool loadImeInfo(const std::string&, std::wstring& filePath, nlohmann::json& content);
 
 	const std::vector<std::wstring>& backendDirs() {
 		return backendDirs_;

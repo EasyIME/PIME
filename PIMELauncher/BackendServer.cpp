@@ -34,13 +34,14 @@
 #include <locale>  // for wstring_convert
 #include <sstream>
 
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 
 #include "BackendServer.h"
 #include "PipeServer.h"
 #include "PipeClient.h"
 
 using namespace std;
+using json = nlohmann::json;
 
 namespace PIME {
 
@@ -48,33 +49,33 @@ static wstring_convert<codecvt_utf8<wchar_t>> utf8Codec;
 static constexpr auto MAX_RESPONSE_WAITING_TIME = 30;  // if a backend is non-responsive for 30 seconds, it's considered dead
 
 static std::string getUtf8CurrentDir() {
-    char dirPath[MAX_PATH];
-    size_t len = MAX_PATH;
-    uv_cwd(dirPath, &len);
-    return dirPath;
+	char dirPath[MAX_PATH];
+	size_t len = MAX_PATH;
+	uv_cwd(dirPath, &len);
+	return dirPath;
 }
 
 static std::vector<std::string> getUtf8EnvironmentVariables() {
-    // build our own new environments
-    auto env_strs = GetEnvironmentStringsW();
-    vector<string> utf8Environ;
-    for (auto penv = env_strs; *penv; penv += wcslen(penv) + 1) {
-        utf8Environ.emplace_back(utf8Codec.to_bytes(penv));
-    }
-    FreeEnvironmentStringsW(env_strs);
-    return utf8Environ;
+	// build our own new environments
+	auto env_strs = GetEnvironmentStringsW();
+	vector<string> utf8Environ;
+	for (auto penv = env_strs; *penv; penv += wcslen(penv) + 1) {
+		utf8Environ.emplace_back(utf8Codec.to_bytes(penv));
+	}
+	FreeEnvironmentStringsW(env_strs);
+	return utf8Environ;
 }
 
-BackendServer::BackendServer(PipeServer* pipeServer, const Json::Value& info) :
+BackendServer::BackendServer(PipeServer* pipeServer, const json& info) :
 	pipeServer_{pipeServer},
 	process_{ nullptr },
 	stdinPipe_{nullptr},
 	stdoutPipe_{nullptr},
 	stderrPipe_{nullptr},
-	name_(info["name"].asString()),
-	command_(info["command"].asString()),
-	workingDir_(info["workingDir"].asString()),
-	params_(info["params"].asString()) {
+	name_(info.value("name", "")),
+	command_(info.value("command", "")),
+	workingDir_(info.value("workingDir", "")),
+	params_(info.value("params", "")) {
 }
 
 BackendServer::~BackendServer() {

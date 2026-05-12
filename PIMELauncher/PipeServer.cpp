@@ -38,7 +38,7 @@
 #include <locale>  // for wstring_convert
 #include <sstream>
 
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 #include <uv.h>
 
 #include <spdlog/spdlog.h>
@@ -49,6 +49,7 @@
 #include "Utils.h"
 
 using namespace std;
+using json = nlohmann::json;
 
 namespace PIME {
 
@@ -118,16 +119,16 @@ void PipeServer::initLogger() {
 
 void PipeServer::loadConfig() {
 	auto configFile = dataDirPath_ + CONFIG_FILE_REL_PATH;
-	Json::Value config;
+	json config;
 	if (loadJsonFile(configFile, config)) {
-		auto levelName = config["logLevel"].asString();
+		auto levelName = config.value("logLevel", "");
 		logLevel_ = spdlog::level::from_str(levelName);
 	}
 }
 
 void PipeServer::saveConfig() {
 	auto configFile = dataDirPath_ + CONFIG_FILE_REL_PATH;
-	Json::Value config;
+	json config;
 	config["logLevel"] = spdlog::level::to_c_str(logLevel_);
 	if (!saveJsonFile(configFile, config)) {
 		logger_->error("fail to write config file");
@@ -136,8 +137,8 @@ void PipeServer::saveConfig() {
 
 void PipeServer::initBackendServers(const std::wstring & topDirPath) {
 	// load known backend implementations
-	Json::Value backends;
-	if (loadJsonFile(topDirPath + L"\\backends.json", backends) && backends.isArray()) {
+	json backends;
+	if (loadJsonFile(topDirPath + L"\\backends.json", backends) && backends.is_array()) {
         for(auto& backendInfo: backends) {
 			backends_.emplace_back(
                 std::make_unique<BackendServer>(this, backendInfo)
@@ -171,9 +172,9 @@ void PipeServer::initInputMethods(const std::wstring& topDirPath) {
 					DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
 					if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
 						// load the json file to get the info of input method
-						Json::Value json;
-						if (loadJsonFile(imejson, json)) {
-							std::string guid = json["guid"].asString();
+						json j;
+						if (loadJsonFile(imejson, j)) {
+							std::string guid = j.value("guid", "");
 							transform(guid.begin(), guid.end(), guid.begin(), tolower);  // convert GUID to lwoer case
 																							// map text service GUID to its backend server
 							backendMap_.insert(std::make_pair(guid, backendFromName(backend->name_.c_str())));

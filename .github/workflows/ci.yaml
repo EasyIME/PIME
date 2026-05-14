@@ -29,6 +29,8 @@ jobs:
         with:
           nsis-version: 3.08
       - name: Run build.bat
+        env:
+          Rust_COMPILER: ${{ env.CARGO_HOME }}\bin\rustc.exe
         run: |
           .\build.bat
       - name: Build the installer

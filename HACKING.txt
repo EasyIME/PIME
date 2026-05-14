@@ -24,11 +24,20 @@ The IPC (Inter-Process Communication) Architecture
            |
     PIMELauncher.exe (middleware)
            |
-      (via http REST api)
+      (via stdin/stdout)
            |
-    backend web services (python or node.js)
+    backend services (python or node.js)
 
 ------------------------------------------------------------------------------
+
+Debugging
+
+If you encounter issues, you can run PIMELauncher.exe with the /console argument:
+
+    PIMELauncher.exe /console
+
+This opens a console window which displays debug logs, making it easier to
+troubleshoot backend communication and other internal events.
 
 Directory structure
 * PIME:

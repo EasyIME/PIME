@@ -83,3 +83,11 @@ All parts are licensed under GNU LGPL v2.1 license.
 
 # Bug Report
 Please report any issue to [here](https://github.com/EasyIME/PIME/issues).
+
+# Debugging
+If you encounter issues, you can run PIMELauncher.exe with the /console argument:
+
+    PIMELauncher.exe /console
+
+This opens a console window which displays debug logs, making it easier to
+troubleshoot backend communication and other internal events.

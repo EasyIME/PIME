@@ -10,6 +10,9 @@ init:
     - git config --global core.autocrlf true
 
 install:
+    - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+    - rustup-init.exe -y --default-toolchain stable --default-host i686-pc-windows-msvc
+    - set PATH=%PATH%;%USERPROFILE%\.cargo\bin
     - git submodule init
     - git submodule update
 

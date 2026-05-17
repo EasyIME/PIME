@@ -27,18 +27,32 @@
 #include <Shlwapi.h>
 #include <nlohmann/json.hpp>
 #include "../libIME2/src/Utils.h"
+#include "../libIME2/src/DisplayAttributeInfo.h"
 
 using json = nlohmann::json;
 
 namespace PIME {
 
+namespace {
 // CLSID of our Text service
 // {35F67E9D-A54D-4177-9697-8B0AB71A9E04}
 const GUID g_textServiceClsid = 
 { 0x35f67e9d, 0xa54d, 0x4177, { 0x96, 0x97, 0x8b, 0xa, 0xb7, 0x1a, 0x9e, 0x4 } };
 
+// {53BCC437-ED0E-4D7D-9B46-57CAB8A9F255}
+static const GUID g_inputDisplayAttributeGuid = 
+{ 0x53bcc437, 0xed0e, 0x4d7d, { 0x9b, 0x46, 0x57, 0xca, 0xb8, 0xa9, 0xf2, 0x55 } };
+
+static std::vector<Ime::ComPtr<Ime::DisplayAttributeInfo>> createDisplayAttrInfos() {
+    auto inputAttrib = Ime::ComPtr<Ime::DisplayAttributeInfo>::make(g_inputDisplayAttributeGuid);
+    inputAttrib->setLineStyle(TF_LS_DOT);
+	return {std::move(inputAttrib)};
+}
+
+}
+
 ImeModule::ImeModule(HMODULE module):
-	Ime::ImeModule(module, g_textServiceClsid) {
+	Ime::ImeModule(module, g_textServiceClsid, createDisplayAttrInfos()) {
 	wchar_t path[MAX_PATH];
 	HRESULT result;
 	// get the program data directory

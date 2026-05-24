@@ -22,32 +22,24 @@ add_definitions(
 	/D_UNICODE=1 /DUNICODE=1 # do Unicode build
 	/D_CRT_SECURE_NO_WARNINGS # disable warnings about old libc functions
 	/GR- # turn off C++ RTTI
-)
-
-# These definitions are required for using libuv
-# Reference: https://github.com/dacap/libuv-cmake/blob/master/CMakeLists.txt
-# Windows version: https://msdn.microsoft.com/zh-tw/library/windows/desktop/aa383745(v=vs.85).aspx
-add_definitions(
-    -DWIN32_LEAN_AND_MEAN  # Avoid including unnecessary Windows header files
-    -D_WIN32_WINNT=0x0600  # 0x0600 is Windows Vista
+    -DWIN32_LEAN_AND_MEAN
+    -D_WIN32_WINNT=0x0600
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/libIME2)
-
-# turn of some unnecessary build options for jsoncpp
-# Reference: http://stackoverflow.com/questions/3766740/overriding-a-default-option-value-in-cmake-from-a-parent-cmakelists-txt
-set(JSONCPP_WITH_TESTS OFF CACHE BOOL "")
-set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF CACHE BOOL "")
-set(JSONCPP_WITH_PKGCONFIG_SUPPORT OFF CACHE BOOL "")
-add_subdirectory(${PROJECT_SOURCE_DIR}/jsoncpp)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/PIMETextService)
 
 # only build the following components for 32-bit x86 platform
 if("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")
+    include(FetchContent)
 
-    # build our own forked version of libuv (used by PIMELauncher)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/libuv)
+    FetchContent_Declare(
+        Corrosion
+        GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
+        GIT_TAG v0.6 # Optionally specify a commit hash, version tag or branch here
+    )
+    FetchContent_MakeAvailable(Corrosion)
 
     add_subdirectory(${PROJECT_SOURCE_DIR}/PIMELauncher)
 endif("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")

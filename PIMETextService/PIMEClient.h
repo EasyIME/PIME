@@ -20,14 +20,14 @@
 #ifndef _PIME_CLIENT_H_
 #define _PIME_CLIENT_H_
 #define NDEBUG
-#include <libIME2/src/TextService.h>
-#include <libIME2/src/KeyEvent.h>
-#include <libIME2/src/EditSession.h>
 #include "PIMELangBarButton.h"
+#include <libIME2/src/EditSession.h>
+#include <libIME2/src/KeyEvent.h>
+#include <libIME2/src/TextService.h>
 
-#include <unordered_map>
+#include <nlohmann/json.hpp>
 #include <string>
-#include <json/json.h>
+#include <unordered_map>
 
 namespace PIME {
 
@@ -75,36 +75,37 @@ public:
 	void onCompositionTerminated(bool forced);
 
 private:
-    static std::wstring getPipeName(const wchar_t* base_name);
-    HANDLE connectPipe(const wchar_t* pipeName, int timeoutMs);
+	static std::wstring getPipeName(const wchar_t* base_name);
+	HANDLE connectPipe(const wchar_t* pipeName, int timeoutMs);
 
-    Json::Value createRpcRequest(const char* methodName);
-	bool callRpcMethod(Json::Value& request, Json::Value& response);
+	nlohmann::json createRpcRequest(const char* methodName);
+	bool callRpcMethod(nlohmann::json& request, nlohmann::json& response);
 
-    bool isPipeCreatedByPIMEServer(HANDLE pipe);
-    bool waitForRpcConnection();
-    bool callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply);
-    void closeRpcConnection();
+	bool isPipeCreatedByPIMEServer(HANDLE pipe);
+	bool waitForRpcConnection();
+	bool callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply);
+	bool callPipeIO(bool isRead, void *buffer, DWORD size, DWORD *rlen, int timeoutMs);
+	void closeRpcConnection();
 
 	bool init();
-    void resetTextServiceState();
+	void resetTextServiceState();
 
-	void addKeyEventToRpcRequest(Json::Value& request, Ime::KeyEvent& keyEvent);
-    bool sendOnMenu(std::string button_id, Json::Value& result);
+	void addKeyEventToRpcRequest(nlohmann::json& request, Ime::KeyEvent& keyEvent);
+	bool sendOnMenu(std::string button_id, nlohmann::json& result);
 
-    bool handleRpcResponse(Json::Value& msg, Ime::EditSession* session = nullptr);
+	bool handleRpcResponse(nlohmann::json& msg, Ime::EditSession* session = nullptr);
 
-    // Update text service and UI status based on RPC responses.
-    void updateSelectionKeys(Json::Value& msg);
-    void updateMessageWindow(Json::Value& msg, Ime::EditSession* session, bool& endComposition);
-	void updateCommitString(Json::Value& msg, Ime::EditSession* session);
-	void updateComposition(Json::Value& msg, Ime::EditSession* session, bool& endComposition);
-	void updateLanguageButtons(Json::Value& msg);
-	void updatePreservedKeys(Json::Value& msg);
-	void updateKeyboardStatus(Json::Value& msg);
-    void updateCandidateList(Json::Value& msg, Ime::EditSession* session);
-    void updateUI(const Json::Value& data);
-    void updateStatus(Json::Value& msg, Ime::EditSession* session = nullptr);
+	// Update text service and UI status based on RPC responses.
+	void updateSelectionKeys(nlohmann::json& msg);
+	void updateMessageWindow(nlohmann::json& msg, Ime::EditSession* session, bool& endComposition);
+	void updateCommitString(nlohmann::json& msg, Ime::EditSession* session);
+	void updateComposition(nlohmann::json& msg, Ime::EditSession* session, bool& endComposition);
+	void updateLanguageButtons(nlohmann::json& msg);
+	void updatePreservedKeys(nlohmann::json& msg);
+	void updateKeyboardStatus(nlohmann::json& msg);
+	void updateCandidateList(nlohmann::json& msg, Ime::EditSession* session);
+	void updateUI(nlohmann::json& data);
+	void updateStatus(nlohmann::json& msg, Ime::EditSession* session = nullptr);
 
 private:
 	TextService* textService_;
@@ -113,7 +114,9 @@ private:
 	std::unordered_map<std::string, Ime::ComPtr<PIME::LangBarButton>> buttons_; // map buttons to string IDs
 	unsigned int nextSeqNum_;
 	bool isActivated_;
-    bool shouldWaitConnection_;
+	bool shouldWaitConnection_;
+	std::string readBuffer_;
+	HANDLE ioEvent_;
 };
 
 }

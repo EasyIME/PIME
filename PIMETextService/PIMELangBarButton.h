@@ -21,7 +21,7 @@
 #define PIME_LANGUAGE_BAR_BUTTON_H
 
 #include <libIME2/src/LangBarButton.h>
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
 
@@ -33,8 +33,8 @@ class LangBarButton : public Ime::LangBarButton {
 public:
 	LangBarButton(TextService* service, const std::string& id, const GUID& guid, UINT commandId = 0, const wchar_t* text = NULL, DWORD style = TF_LBI_STYLE_BTN_BUTTON);
 
-	static LangBarButton* fromJson(TextService* service, const Json::Value& info);
-	void updateFromJson(const Json::Value& info);
+	static LangBarButton* fromJson(TextService* service, nlohmann::json& info);
+	void updateFromJson(nlohmann::json& info);
 
 	const std::string& id() const {
 		return id_;

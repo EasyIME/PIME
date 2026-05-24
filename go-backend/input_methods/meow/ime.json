@@ -1,0 +1,11 @@
+{
+	"name": "喵喵輸入法 (Go版)",
+	"version": "0.1",
+	"guid": "{7A1C2E93-5B64-4F88-AE21-3D9C6B70F145}",
+	"locale": "zh-Hans-CN",
+	"fallbackLocale": "zh-CN",
+	"icon": "",
+	"win8_icon": "",
+	"moduleName": "",
+	"serviceName": ""
+}

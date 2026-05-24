@@ -1,0 +1,32 @@
+[package]
+name = "pimelauncher"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "PIMELauncher"
+path = "src/main.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "io-util", "process", "time", "net", "sync"] }
+uuid = { version = "1", features = ["v4"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+futures = "0.3"
+tokio-util = { version = "0.7", features = ["codec"] }
+windows = { version = "0.52", features = ["Win32_Foundation", "Win32_Security", "Win32_Security_Authorization", "Win32_System_Threading", "Win32_System_Console", "Win32_System_Diagnostics_Debug"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+[dev-dependencies]
+tempfile = "3"
+tokio-test = "0.4"
+
+[profile.release]
+opt-level = "z"     # Optimize for size
+lto = true          # Enable Link Time Optimization
+codegen-units = 1   # Better optimization at the cost of compile time
+panic = "abort"     # Remove unwinding code
+strip = true        # Automatically strip symbols from the binary

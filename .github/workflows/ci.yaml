@@ -16,11 +16,21 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 21.x
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: i686-pc-windows-msvc
+      - name: Run Rust tests
+        run: |
+          cd PIMELauncher
+          cargo test --verbose
       - name: Use Install NSIS
-        uses: repolevedavaj/install-nsis@v1.1.0
+        uses: repolevedavaj/install-nsis@v1.2.0
         with:
           nsis-version: 3.08
       - name: Run build.bat
+        env:
+          Rust_COMPILER: ${{ env.CARGO_HOME }}\bin\rustc.exe
         run: |
           .\build.bat
       - name: Build the installer

@@ -10,5 +10,11 @@
         "command": "node\\node.exe",
         "workingDir": "node",
         "params": "server.js"
+    },
+    {
+        "name": "go-backend",
+        "command": "go-backend\\server.exe",
+        "workingDir": "go-backend",
+        "params": ""
     }
 ]

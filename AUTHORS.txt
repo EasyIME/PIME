@@ -18,3 +18,13 @@ Ahbong Chang (cwahbong) <cw.ahbong@gmail.com>:
 
 Osfans <waxaca@163.com>:
 * RIME support
+
+AI Assistance:
+Gemini (Google DeepMind):
+* Assisted in the implementation and refactoring of PIMELauncher2.
+* Wrote the test suite based on system designs and test cases defined by PCMan.
+* Note: The modular architecture and structural decoupling were designed by
+  Hong Jen Yee (PCMan). The AI assistant learned the core project architecture
+  by referencing the original PIMELauncher C++ implementation (also by PCMan).
+  The human author significantly modified and audited all code to ensure
+  correctness and maintain full copyright.

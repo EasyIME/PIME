@@ -449,7 +449,7 @@ Section $(SECTION_MAIN) SecMain
     File "..\backends.json"
 
 	; Install the launcher responsible to launch the backends
-	File "..\build\PIMELauncher\Release\PIMELauncher.exe"
+	File "..\build\PIMELauncher\PIMELauncher.exe"
 SectionEnd
 
 SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group

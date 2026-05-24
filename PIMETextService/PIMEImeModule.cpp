@@ -25,18 +25,34 @@
 #include <ShlObj.h>
 #include <Shellapi.h>
 #include <Shlwapi.h>
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 #include "../libIME2/src/Utils.h"
+#include "../libIME2/src/DisplayAttributeInfo.h"
+
+using json = nlohmann::json;
 
 namespace PIME {
 
+namespace {
 // CLSID of our Text service
 // {35F67E9D-A54D-4177-9697-8B0AB71A9E04}
 const GUID g_textServiceClsid = 
 { 0x35f67e9d, 0xa54d, 0x4177, { 0x96, 0x97, 0x8b, 0xa, 0xb7, 0x1a, 0x9e, 0x4 } };
 
+// {53BCC437-ED0E-4D7D-9B46-57CAB8A9F255}
+static const GUID g_inputDisplayAttributeGuid = 
+{ 0x53bcc437, 0xed0e, 0x4d7d, { 0x9b, 0x46, 0x57, 0xca, 0xb8, 0xa9, 0xf2, 0x55 } };
+
+static std::vector<Ime::ComPtr<Ime::DisplayAttributeInfo>> createDisplayAttrInfos() {
+    auto inputAttrib = Ime::ComPtr<Ime::DisplayAttributeInfo>::make(g_inputDisplayAttributeGuid);
+    inputAttrib->setLineStyle(TF_LS_DOT);
+	return {std::move(inputAttrib)};
+}
+
+}
+
 ImeModule::ImeModule(HMODULE module):
-	Ime::ImeModule(module, g_textServiceClsid) {
+	Ime::ImeModule(module, g_textServiceClsid, createDisplayAttrInfos()) {
 	wchar_t path[MAX_PATH];
 	HRESULT result;
 	// get the program data directory
@@ -51,11 +67,14 @@ ImeModule::ImeModule(HMODULE module):
 		// load backend information
 		std::ifstream fp(programDir_ + L"\\backends.json", std::ifstream::binary);
 		if (fp) {
-			Json::Value backendsInfo;
-			fp >> backendsInfo;
-			if (backendsInfo.isArray()) {
+			json backendsInfo;
+			try {
+				fp >> backendsInfo;
+			} catch (...) {
+			}
+			if (backendsInfo.is_array()) {
 				for (const auto& backend: backendsInfo) {
-					std::wstring name = utf8ToUtf16(backend["name"].asCString());
+					std::wstring name = utf8ToUtf16(backend.value("name", "").c_str());
 					backendDirs_.push_back(name);
 				}
 			}
@@ -72,7 +91,7 @@ Ime::TextService* ImeModule::createTextService() {
 	return service;
 }
 
-bool ImeModule::loadImeInfo(const std::string& guid, std::wstring& filePath, Json::Value& content) {
+bool ImeModule::loadImeInfo(const std::string& guid, std::wstring& filePath, json& content) {
 	bool found = false;
 	// find the input method module
 	for (const auto backendDir : backendDirs_) {
@@ -94,8 +113,12 @@ bool ImeModule::loadImeInfo(const std::string& guid, std::wstring& filePath, Jso
 						std::ifstream fp(imejson, std::ifstream::binary);
 						if (fp) {
 							content.clear();
-							fp >> content;
-							if (stricmp(guid.c_str(), content["guid"].asCString()) == 0) {
+							try {
+								fp >> content;
+							} catch (...) {
+								continue;
+							}
+							if (stricmp(guid.c_str(), content.value("guid", "").c_str()) == 0) {
 								// found the language profile
 								found = true;
 								filePath = imejson;
@@ -128,12 +151,12 @@ bool ImeModule::onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile
 
 	// find the input method module
 	std::wstring infoFilePath;
-	Json::Value info;
+	json info;
 	if (loadImeInfo(guidStr, infoFilePath, info)) {
 		std::wstring currentDir = infoFilePath.substr(0, infoFilePath.length() - 8); // remove "ime.json" from file path
-		configCommand = utf8ToUtf16(info.get("configTool", "").asCString());
-		configParams = utf8ToUtf16(info.get("configToolParams", "").asCString());
-		configDir = utf8ToUtf16(info.get("configToolDir", "").asCString());
+		configCommand = utf8ToUtf16(info.value("configTool", "").c_str());
+		configParams = utf8ToUtf16(info.value("configToolParams", "").c_str());
+		configDir = utf8ToUtf16(info.value("configToolDir", "").c_str());
 		// for some mysterious reasons, relative paths do not work here (according to Win32 API doc it should work).
 		if (PathIsRelative(configCommand.c_str())) {  // convert it to an absolute path
 			wchar_t absPath[MAX_PATH];

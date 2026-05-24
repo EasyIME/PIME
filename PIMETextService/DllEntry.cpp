@@ -7,8 +7,10 @@
 #include <Shlwapi.h> // for PathIsRelative
 #include <VersionHelpers.h>  // Provided by Windows SDK >= 8.1
 
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 #include "../libIME2/src/Utils.h"
+
+using json = nlohmann::json;
 
 
 PIME::ImeModule* g_imeModule = NULL;
@@ -46,18 +48,22 @@ static inline Ime::LangProfileInfo langProfileFromJson(std::wstring file, std::s
 	// load the json file to get the info of input method
 	std::ifstream fp(file, std::ifstream::binary);
 	if(fp) {
-		Json::Value json;
-		fp >> json;
-		auto name = utf8ToUtf16(json["name"].asCString());
-		guid = json["guid"].asCString();
+		json j;
+		try {
+			fp >> j;
+		} catch (...) {
+			return Ime::LangProfileInfo();
+		}
+		auto name = utf8ToUtf16(j.value("name", "").c_str());
+		guid = j.value("guid", "");
 		auto guidStr = utf8ToUtf16(guid.c_str());
-		CLSID guid = {0};
-		CLSIDFromString (guidStr.c_str(), &guid);
+		CLSID clsidGuid = {0};
+		CLSIDFromString (guidStr.c_str(), &clsidGuid);
 		// convert locale name to lanid
-		auto locale = utf8ToUtf16(json["locale"].asCString());
-		auto fallbackLocale = utf8ToUtf16(json["fallbackLocale"].asCString());
+		auto locale = utf8ToUtf16(j.value("locale", "").c_str());
+		auto fallbackLocale = utf8ToUtf16(j.value("fallbackLocale", "").c_str());
 		// ::MessageBox(0, name.c_str(), 0, 0);
-		auto iconFile = utf8ToUtf16(json["icon"].asCString());
+		auto iconFile = utf8ToUtf16(j.value("icon", "").c_str());
 		if (!iconFile.empty() && PathIsRelative(iconFile.c_str())) {
 			int p = file.rfind('\\');
 			if (p != file.npos) {
@@ -67,7 +73,7 @@ static inline Ime::LangProfileInfo langProfileFromJson(std::wstring file, std::s
 		// ::MessageBox(0, iconFile.c_str(), 0, 0);
 		Ime::LangProfileInfo langProfile = {
 			name,
-			guid,
+			clsidGuid,
 			locale,
 			fallbackLocale,
 			iconFile
@@ -81,7 +87,7 @@ STDAPI DllRegisterServer(void) {
 	int iconIndex = 0; // use classic icon
 	if(::IsWindows8OrGreater()) {
 		iconIndex = 1; // use Windows 8 style IME icon
-    }
+	}
 	std::vector<Ime::LangProfileInfo> langProfiles;
 	std::wstring dirPath;
 	for (const auto backendDir: g_imeModule->backendDirs()) {

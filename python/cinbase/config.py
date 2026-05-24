@@ -77,6 +77,9 @@ class CinBaseConfig:
         self.messageDurationTime = 3
         self.keyboardType = 0
         self.selDayiSymbolCharType = 0
+        self.intelligentSelect = True
+        self.intelligentSelectRecent = True
+        self.intelligentSelectContext = True
 
         self.ignoreSaveList = ["ignoreSaveList", "curdir", "cinFileList", "selCinFile", "imeDirName", "_version", "_lastUpdateTime"]
         self.curdir = os.path.abspath(os.path.dirname(__file__))

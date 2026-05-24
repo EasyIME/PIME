@@ -9,11 +9,11 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'true'
       - name: Use Node.js 21.x
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 21.x
       - name: Install Rust
@@ -35,7 +35,8 @@ jobs:
           .\build.bat
       - name: Build the installer
         run: |
-          cmd /C "C:\Program Files (x86)\NSIS\Bin\makensis.exe" ".\installer\installer.nsi"
+          "C:\Program Files (x86)\NSIS\Bin\makensis.exe" ".\installer\installer.nsi"
+        shell: cmd
       - uses: actions/upload-artifact@v4
         with:
           name: Installer

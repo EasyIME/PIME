@@ -25,6 +25,10 @@ import random
 import json
 import threading
 
+current_dir = os.path.abspath(os.path.dirname(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
 from config import CinBaseConfig
 from cin import Cin
 from ctypes import c_uint, byref, create_string_buffer
@@ -32,7 +36,6 @@ from ctypes import c_uint, byref, create_string_buffer
 cfg = CinBaseConfig
 cfg.imeDirName = sys.argv[2]
 config_dir = os.path.join(cfg.getConfigDir())
-current_dir = os.path.abspath(os.path.dirname(__file__))
 current_ime_dir = os.path.join(cfg.getDefaultConfigDir(), os.path.pardir)
 current_ime_config_dir = os.path.join(cfg.getDefaultConfigDir())
 data_dir = os.path.join(current_dir, "data")
@@ -192,13 +195,19 @@ class ConfigHandler(BaseHandler):
 
 class LoginHandler(BaseHandler):
 
-    def post(self, page_name):
+    def login(self, page_name):
         token = self.get_argument("token", "")
         if token == self.settings["access_token"]:
             self.set_cookie(COOKIE_ID, token)
             if page_name != "user_phrase_editor":
                 page_name = "config"
             self.redirect("/{}.html?v={}".format(page_name, self.settings["access_token"][:8]))
+
+    def get(self, page_name):
+        self.login(page_name)
+
+    def post(self, page_name):
+        self.login(page_name)
 
 
 
@@ -227,6 +236,14 @@ class ConfigApp(tornado.web.Application):
         self.port = 0
 
     def launch_browser(self, tool_name):
+        url = "http://127.0.0.1:{PORT}/login/{PAGE_NAME}?token={TOKEN}".format(
+            PORT=self.port, PAGE_NAME=tool_name, TOKEN=self.access_token)
+        try:
+            os.startfile(url)
+            return
+        except Exception:
+            pass
+
         user_html = """<html>
     <form id="auth" action="http://127.0.0.1:{PORT}/login/{PAGE_NAME}" method="POST">
         <input type="hidden" name="token" value="{TOKEN}">

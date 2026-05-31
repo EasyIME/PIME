@@ -30,6 +30,27 @@
   "reLoadTable": false,
   "directCommitString": false,
   "directShowCand": true,
+  "autoCommitSingleCandidate": false,
   "showPhrase": false,
-  "outputSmallLetterWithShift": false
+  "outputSmallLetterWithShift": false,
+  "hideCompositionLabel": "酷倉",
+  "imeDisplayName": "酷倉",
+  "candidateModernStyle": true,
+  "candidateLayout": "horizontal",
+  "candidatePerRow": 6,
+  "candidateEdgeAvoidance": true,
+  "candidateTheme": "Night Comfort",
+  "candidateKeyStyle": "keycap",
+  "candidateMessageStyle": "badge",
+  "candidateMessageBehavior": "progressive",
+  "candidateStableWidth": true,
+  "candidateMinWidth": 286,
+  "candidateWrapToMaxWidth": true,
+  "candidateMaxWidth": 300,
+  "candidateColors": {},
+  "candidateStyle": {
+    "contentMargin": 6,
+    "textMargin": 4,
+    "borderRadius": 6
+  }
 }

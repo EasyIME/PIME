@@ -129,12 +129,20 @@ class ConfigHandler(BaseHandler):
             return ""
 
     def save_file(self, filename, data):
+        target = os.path.join(config_dir, filename)
+        tmp_target = target + ".tmp"
         try:
-            with open(os.path.join(config_dir, filename), "w", encoding="UTF-8") as f:
+            with open(tmp_target, "w", encoding="UTF-8") as f:
                 f.write(data)
-                if filename == "symbols":
+                if filename == "symbols.dat":
                     f.write("\n")
+            os.replace(tmp_target, target)
         except Exception:
+            try:
+                if os.path.exists(tmp_target):
+                    os.remove(tmp_target)
+            except Exception:
+                pass
             pass
 
 
@@ -232,13 +240,19 @@ class UserPhraseFileHandler(BaseHandler):
 
 class LoginHandler(BaseHandler):
 
-    def post(self, page_name):
+    def login(self, page_name):
         token = self.get_argument("token", "")
         if token == self.settings["access_token"]:
             self.set_cookie(COOKIE_ID, token)
             if page_name != "user_phrase_editor":
                 page_name = "config_tool"
             self.redirect("/{}.html?v={}".format(page_name, token[:8]))
+
+    def get(self, page_name):
+        self.login(page_name)
+
+    def post(self, page_name):
+        self.login(page_name)
 
 
 class ConfigApp(tornado.web.Application):
@@ -266,6 +280,14 @@ class ConfigApp(tornado.web.Application):
         self.port = 0
 
     def launch_browser(self, tool_name):
+        url = "http://127.0.0.1:{PORT}/login/{PAGE_NAME}?token={TOKEN}".format(
+            PORT=self.port, PAGE_NAME=tool_name, TOKEN=self.access_token)
+        try:
+            os.startfile(url)
+            return
+        except Exception:
+            pass
+
         user_html = """<html>
     <form id="auth" action="http://127.0.0.1:{PORT}/login/{PAGE_NAME}" method="POST">
         <input type="hidden" name="token" value="{TOKEN}">

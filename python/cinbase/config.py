@@ -49,6 +49,7 @@ class CinBaseConfig:
         self.autoClearCompositionChar = False
         self.playSoundWhenNonCand = False
         self.directShowCand = False
+        self.autoCommitSingleCandidate = False
         self.directCommitSymbol = False
         self.fontSize = DEF_FONT_SIZE
         self.selCinType = 0
@@ -77,6 +78,27 @@ class CinBaseConfig:
         self.messageDurationTime = 3
         self.keyboardType = 0
         self.selDayiSymbolCharType = 0
+        self.hideComposition = False
+        self.hideCompositionLabel = ""
+        self.imeDisplayName = ""
+        self.candidateModernStyle = False
+        self.candidateLayout = "horizontal"
+        self.candidatePerRow = 6
+        self.candidateEdgeAvoidance = True
+        self.candidateTheme = "Night Comfort"
+        self.candidateKeyStyle = "keycap"
+        self.candidateMessageStyle = "badge"
+        self.candidateMessageBehavior = "progressive"
+        self.candidateStableWidth = False
+        self.candidateMinWidth = 0
+        self.candidateWrapToMaxWidth = True
+        self.candidateMaxWidth = 300
+        self.candidateColors = {}
+        self.candidateStyle = {
+            "contentMargin": 6,
+            "textMargin": 4,
+            "borderRadius": 6,
+        }
 
         self.ignoreSaveList = ["ignoreSaveList", "curdir", "cinFileList", "selCinFile", "imeDirName", "_version", "_lastUpdateTime"]
         self.curdir = os.path.abspath(os.path.dirname(__file__))

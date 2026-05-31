@@ -59,6 +59,14 @@ class BaseHandler(tornado.web.RequestHandler):
         self.application.reset_timeout()  # reset the quit server timeout
 
 
+class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
+
+    def set_extra_headers(self, path):
+        self.set_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.set_header("Pragma", "no-cache")
+        self.set_header("Expires", "0")
+
+
 class KeepAliveHandler(BaseHandler):
 
     @tornado.web.authenticated
@@ -89,13 +97,13 @@ class ConfigHandler(BaseHandler):
         os.makedirs(config_dir, exist_ok=True)
         # write the config to files
         config = data.get("config", None)
-        if config:
+        if config is not None:
             self.save_file("config.json", json.dumps(config, indent=2))
         symbols = data.get("symbols", None)
-        if symbols:
+        if symbols is not None:
             self.save_file("symbols.dat", symbols)
         swkb = data.get("swkb", None)
-        if swkb:
+        if swkb is not None:
             self.save_file("swkb.dat", swkb)
         self.write('{"return":true}')
 
@@ -121,12 +129,20 @@ class ConfigHandler(BaseHandler):
             return ""
 
     def save_file(self, filename, data):
+        target = os.path.join(config_dir, filename)
+        tmp_target = target + ".tmp"
         try:
-            with open(os.path.join(config_dir, filename), "w", encoding="UTF-8") as f:
+            with open(tmp_target, "w", encoding="UTF-8") as f:
                 f.write(data)
-                if filename == "symbols":
+                if filename == "symbols.dat":
                     f.write("\n")
+            os.replace(tmp_target, target)
         except Exception:
+            try:
+                if os.path.exists(tmp_target):
+                    os.remove(tmp_target)
+            except Exception:
+                pass
             pass
 
 
@@ -224,13 +240,19 @@ class UserPhraseFileHandler(BaseHandler):
 
 class LoginHandler(BaseHandler):
 
-    def post(self, page_name):
+    def login(self, page_name):
         token = self.get_argument("token", "")
         if token == self.settings["access_token"]:
             self.set_cookie(COOKIE_ID, token)
             if page_name != "user_phrase_editor":
                 page_name = "config_tool"
-            self.redirect("/{}.html".format(page_name))
+            self.redirect("/{}.html?v={}".format(page_name, token[:8]))
+
+    def get(self, page_name):
+        self.login(page_name)
+
+    def post(self, page_name):
+        self.login(page_name)
 
 
 class ConfigApp(tornado.web.Application):
@@ -244,9 +266,9 @@ class ConfigApp(tornado.web.Application):
             "debug": True
         }
         handlers = [
-            (r"/(.*\.html)", tornado.web.StaticFileHandler, {"path": current_dir}),
-            (r"/((css|images|js|fonts)/.*)", tornado.web.StaticFileHandler, {"path": current_dir}),
-            (r"/(version.txt)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "../../../")}),
+            (r"/(.*\.html)", NoCacheStaticFileHandler, {"path": current_dir}),
+            (r"/((css|images|js|fonts)/.*)", NoCacheStaticFileHandler, {"path": current_dir}),
+            (r"/(version.txt)", NoCacheStaticFileHandler, {"path": os.path.join(current_dir, "../../../")}),
             (r"/config", ConfigHandler),  # main configuration handler
             (r"/user_phrases", UserPhraseHandler),  # user phrase editor
             (r"/user_phrase_file", UserPhraseFileHandler),  # export user phrase
@@ -258,6 +280,14 @@ class ConfigApp(tornado.web.Application):
         self.port = 0
 
     def launch_browser(self, tool_name):
+        url = "http://127.0.0.1:{PORT}/login/{PAGE_NAME}?token={TOKEN}".format(
+            PORT=self.port, PAGE_NAME=tool_name, TOKEN=self.access_token)
+        try:
+            os.startfile(url)
+            return
+        except Exception:
+            pass
+
         user_html = """<html>
     <form id="auth" action="http://127.0.0.1:{PORT}/login/{PAGE_NAME}" method="POST">
         <input type="hidden" name="token" value="{TOKEN}">

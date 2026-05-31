@@ -123,6 +123,16 @@ class Cin(object):
         return chardefslist
 
 
+    def hasLongerCharDefPrefix(self, key):
+        if not key:
+            return False
+        key_length = len(key)
+        for chardef in self.chardefs:
+            if len(chardef) > key_length and chardef.startswith(key):
+                return True
+        return False
+
+
     def getWildcardCharDefs(self, CompositionChar, WildcardChar, candMaxItems):
         wildcardchardefs = []
         matchchardefs = {}

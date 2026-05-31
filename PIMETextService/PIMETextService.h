@@ -122,6 +122,88 @@ public:
 		return showingCandidates_;
 	}
 
+	const std::wstring& candidateHeader() const {
+		return candidateHeader_;
+	}
+
+	void setCandidateHeader(const std::wstring& header) {
+		candidateHeader_ = header;
+	}
+
+	void setCandidatePageInfo(const std::wstring& info) {
+		candidatePageInfo_ = info;
+	}
+
+	void setCandidateMessage(const std::wstring& message) {
+		candidateMessage_ = message;
+	}
+
+	void setCandidateTheme(COLORREF panelBackground,
+		COLORREF panelBorder,
+		COLORREF textPrimary,
+		COLORREF textSecondary,
+		COLORREF highlightBackground,
+		COLORREF highlightBorder,
+		COLORREF highlightText);
+
+	void setCandidateSpacing(int contentMargin, int textMargin, int borderRadius);
+
+	void setCandidateKeyStyle(int keyStyle) {
+		if (candidateKeyStyle_ == keyStyle)
+			return;
+		candidateKeyStyle_ = keyStyle;
+		applyCandidateWindowStyle();
+	}
+
+	void setCandidateMessageStyle(int messageStyle) {
+		if (candidateMessageStyle_ == messageStyle && candidateMessageDisplayStyle_ == messageStyle)
+			return;
+		candidateMessageStyle_ = messageStyle;
+		candidateMessageDisplayStyle_ = messageStyle;
+		applyCandidateWindowStyle();
+	}
+
+	void setCandidateMessageDisplayStyle(int messageStyle) {
+		if (candidateMessageDisplayStyle_ == messageStyle)
+			return;
+		candidateMessageDisplayStyle_ = messageStyle;
+		if (candidateWindow_)
+			candidateWindow_->setMessageStyle(candidateMessageDisplayStyle_);
+	}
+
+	void resetCandidateMessageDisplayStyle() {
+		setCandidateMessageDisplayStyle(candidateMessageStyle_);
+	}
+
+	void setCandidateStableWidth(bool enabled, int minWidth) {
+		if (candidateStableWidth_ == enabled && candidateMinWidth_ == minWidth)
+			return;
+		candidateStableWidth_ = enabled;
+		candidateMinWidth_ = minWidth;
+		applyCandidateWindowStyle();
+	}
+
+	void setCandidateMaxWidth(bool wrapToMaxWidth, int maxWidth) {
+		if (candidateWrapToMaxWidth_ == wrapToMaxWidth && candidateMaxWidth_ == maxWidth)
+			return;
+		candidateWrapToMaxWidth_ = wrapToMaxWidth;
+		candidateMaxWidth_ = maxWidth;
+		applyCandidateWindowStyle();
+	}
+
+	void setCandidateEdgeAvoidance(bool enabled) {
+		candidateEdgeAvoidance_ = enabled;
+	}
+
+	void setCandidateModernStyle(bool enabled) {
+		candidateModernStyle_ = enabled;
+		applyCandidateWindowStyle();
+	}
+
+	bool candidateModernStyle() const {
+		return candidateModernStyle_;
+	}
+
 	// candidate window
 	void showCandidates(Ime::EditSession* session);
 	void updateCandidates(Ime::EditSession* session);
@@ -144,6 +226,8 @@ private:
 	void updateLangButtons(); // update status of language bar buttons
 
 	void createCandidateWindow(Ime::EditSession* session);
+	void applyCandidateWindowStyle();
+	void moveCandidateWindow(Ime::EditSession* session);
 	int candFontHeight();
 
 	void closeClient();
@@ -162,7 +246,29 @@ private:
 	std::wstring selKeys_;
 	bool candUseCursor_;
 	std::wstring candFontName_;
+	std::wstring candidateHeader_;
+	std::wstring candidatePageInfo_;
+	std::wstring candidateMessage_;
 	int candFontSize_;
+	bool candidateModernStyle_;
+	bool candidateEdgeAvoidance_;
+	COLORREF candidatePanelBackground_;
+	COLORREF candidatePanelBorder_;
+	COLORREF candidateTextPrimary_;
+	COLORREF candidateTextSecondary_;
+	COLORREF candidateHighlightBackground_;
+	COLORREF candidateHighlightBorder_;
+	COLORREF candidateHighlightText_;
+	int candidateContentMargin_;
+	int candidateTextMargin_;
+	int candidateBorderRadius_;
+	int candidateKeyStyle_;
+	int candidateMessageStyle_;
+	int candidateMessageDisplayStyle_;
+	bool candidateStableWidth_;
+	int candidateMinWidth_;
+	bool candidateWrapToMaxWidth_;
+	int candidateMaxWidth_;
 
 	HMENU popupMenu_;
 

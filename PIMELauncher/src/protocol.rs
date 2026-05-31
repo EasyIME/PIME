@@ -26,15 +26,9 @@ pub fn parse_client_handshake(first_line: &str) -> Result<String, String> {
 /// Expects the format `PIME_MSG|<client_id>|<payload>`.
 /// Returns `Some((client_id, payload))` if valid.
 pub fn parse_backend_output(line: &str) -> Option<(String, String)> {
-    if line.starts_with("PIME_MSG|") {
-        let parts: Vec<&str> = line.splitn(3, '|').collect();
-        if parts.len() == 3 {
-            let client_id = parts[1].to_string();
-            let payload = parts[2].to_string();
-            return Some((client_id, payload));
-        }
-    }
-    None
+    let rest = line.strip_prefix("PIME_MSG|")?;
+    let sep = rest.find('|')?;
+    Some((rest[..sep].to_string(), rest[sep + 1..].to_string()))
 }
 
 /// Formats a message to be sent to a backend process.

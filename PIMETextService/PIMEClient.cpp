@@ -37,6 +37,11 @@ using json = nlohmann::json;
 
 namespace PIME {
 
+static constexpr const char* kDayiProfileGuid = "{e6943374-70f5-4540-aa0f-3205c7dcca84}";
+static constexpr const char* kChewingProfileGuid = "{f80736aa-28db-423a-92c9-5540f501c939}";
+static constexpr const char* kChecjProfileGuid = "{f828d2dc-81be-466e-9cfe-24bb03172693}";
+static constexpr const char* kCheliuProfileGuid = "{72844b94-5908-4674-8626-4353755bc5db}";
+
 static std::string uuidToString(const UUID& uuid) {
 	std::string result;
 	LPOLESTR buf = nullptr;
@@ -54,6 +59,209 @@ bool uuidFromString(const char* uuidStr, UUID& result) {
 	return SUCCEEDED(CLSIDFromString(utf16UuidStr.c_str(), &result));
 }
 
+static bool parseHexColor(const json& value, COLORREF& color) {
+	if (!value.is_string())
+		return false;
+	std::string text = value.get<std::string>();
+	if (text.size() != 7 || text[0] != '#')
+		return false;
+	char* end = nullptr;
+	unsigned long rgb = std::strtoul(text.c_str() + 1, &end, 16);
+	if (end == nullptr || *end != '\0')
+		return false;
+	color = RGB((rgb >> 16) & 0xff, (rgb >> 8) & 0xff, rgb & 0xff);
+	return true;
+}
+
+static void parseHexColorMember(const json& object, const char* name, COLORREF& color) {
+	auto it = object.find(name);
+	if (it != object.end())
+		parseHexColor(*it, color);
+}
+
+static std::string normalizedThemeName(const std::string& theme) {
+	std::string normalized;
+	for (unsigned char ch : theme) {
+		if (std::isalnum(ch))
+			normalized.push_back((char)std::tolower(ch));
+	}
+	return normalized;
+}
+
+static int candidateKeyStyleValue(const std::string& style) {
+	const std::string name = normalizedThemeName(style);
+	if (name == "divider" || name == "dividerslim")
+		return Ime::CandidateWindow::KeyStyleDivider;
+	if (name == "quiet" || name == "quietkey")
+		return Ime::CandidateWindow::KeyStyleQuiet;
+	if (name == "badge" || name == "badgeminimal")
+		return Ime::CandidateWindow::KeyStyleBadgeMinimal;
+	if (name == "accentdot")
+		return Ime::CandidateWindow::KeyStyleAccentDot;
+	if (name == "rail" || name == "railmarker")
+		return Ime::CandidateWindow::KeyStyleRail;
+	if (name == "monospace" || name == "monospaceslot")
+		return Ime::CandidateWindow::KeyStyleMonospaceSlot;
+	if (name == "wordfirst")
+		return Ime::CandidateWindow::KeyStyleWordFirst;
+	if (name == "softcapsule")
+		return Ime::CandidateWindow::KeyStyleSoftCapsule;
+	if (name == "lefttag")
+		return Ime::CandidateWindow::KeyStyleLeftTag;
+	if (name == "glow" || name == "glowkey")
+		return Ime::CandidateWindow::KeyStyleGlowKey;
+	if (name == "microtab")
+		return Ime::CandidateWindow::KeyStyleMicroTab;
+	if (name == "wordanchor" || name == "underline" || name == "rule" || name == "rulekey")
+		return Ime::CandidateWindow::KeyStyleWordAnchor;
+	return Ime::CandidateWindow::KeyStyleKeycap;
+}
+
+static int candidateMessageStyleValue(const std::string& style) {
+	const std::string name = normalizedThemeName(style);
+	if (name == "bar")
+		return Ime::CandidateWindow::MessageStyleBar;
+	if (name == "dot")
+		return Ime::CandidateWindow::MessageStyleDot;
+	return Ime::CandidateWindow::MessageStyleBadge;
+}
+
+static void candidateThemeColors(const std::string& theme,
+	COLORREF& panelBackground,
+	COLORREF& panelBorder,
+	COLORREF& textPrimary,
+	COLORREF& textSecondary,
+	COLORREF& highlightBackground,
+	COLORREF& highlightBorder,
+	COLORREF& highlightText) {
+	const std::string name = normalizedThemeName(theme);
+	if (name == "nightcomfort" || name == "night" || name == "dark") {
+		panelBackground = RGB(27, 28, 32);
+		panelBorder = RGB(74, 77, 87);
+		textPrimary = RGB(229, 232, 238);
+		textSecondary = RGB(169, 175, 186);
+		highlightBackground = RGB(64, 95, 138);
+		highlightBorder = RGB(94, 126, 167);
+		highlightText = RGB(238, 244, 255);
+	}
+	else if (name == "softfocus" || name == "soft") {
+		panelBackground = RGB(25, 29, 33);
+		panelBorder = RGB(68, 82, 90);
+		textPrimary = RGB(228, 235, 238);
+		textSecondary = RGB(168, 181, 186);
+		highlightBackground = RGB(63, 111, 107);
+		highlightBorder = RGB(106, 153, 147);
+		highlightText = RGB(236, 251, 248);
+	}
+	else if (name == "warmgray" || name == "warmgrey") {
+		panelBackground = RGB(32, 32, 29);
+		panelBorder = RGB(88, 85, 75);
+		textPrimary = RGB(235, 231, 220);
+		textSecondary = RGB(183, 177, 163);
+		highlightBackground = RGB(95, 104, 77);
+		highlightBorder = RGB(135, 147, 111);
+		highlightText = RGB(247, 243, 231);
+	}
+	else if (name == "graphite") {
+		panelBackground = RGB(18, 20, 26);
+		panelBorder = RGB(68, 74, 87);
+		textPrimary = RGB(243, 245, 250);
+		textSecondary = RGB(174, 181, 196);
+		highlightBackground = RGB(65, 105, 215);
+		highlightBorder = RGB(111, 146, 235);
+		highlightText = RGB(237, 243, 255);
+	}
+	else if (name == "slateteal" || name == "teal") {
+		panelBackground = RGB(21, 32, 39);
+		panelBorder = RGB(63, 90, 100);
+		textPrimary = RGB(240, 248, 251);
+		textSecondary = RGB(165, 186, 194);
+		highlightBackground = RGB(47, 127, 159);
+		highlightBorder = RGB(96, 173, 200);
+		highlightText = RGB(233, 251, 255);
+	}
+	else if (name == "olive") {
+		panelBackground = RGB(23, 27, 22);
+		panelBorder = RGB(75, 89, 65);
+		textPrimary = RGB(244, 247, 239);
+		textSecondary = RGB(180, 189, 167);
+		highlightBackground = RGB(93, 127, 54);
+		highlightBorder = RGB(145, 185, 98);
+		highlightText = RGB(244, 255, 232);
+	}
+	else if (name == "plum") {
+		panelBackground = RGB(29, 23, 33);
+		panelBorder = RGB(96, 75, 102);
+		textPrimary = RGB(251, 244, 255);
+		textSecondary = RGB(192, 173, 202);
+		highlightBackground = RGB(122, 85, 184);
+		highlightBorder = RGB(170, 131, 230);
+		highlightText = RGB(251, 243, 255);
+	}
+	else if (name == "amber") {
+		panelBackground = RGB(33, 26, 18);
+		panelBorder = RGB(104, 83, 58);
+		textPrimary = RGB(255, 248, 237);
+		textSecondary = RGB(207, 189, 164);
+		highlightBackground = RGB(154, 103, 48);
+		highlightBorder = RGB(213, 154, 88);
+		highlightText = RGB(255, 243, 222);
+	}
+	else if (name == "paper") {
+		panelBackground = RGB(251, 250, 246);
+		panelBorder = RGB(183, 172, 156);
+		textPrimary = RGB(39, 33, 25);
+		textSecondary = RGB(120, 107, 93);
+		highlightBackground = RGB(49, 95, 135);
+		highlightBorder = RGB(36, 73, 103);
+		highlightText = RGB(247, 251, 255);
+	}
+	else if (name == "mistlight" || name == "mist") {
+		panelBackground = RGB(233, 237, 240);
+		panelBorder = RGB(168, 179, 188);
+		textPrimary = RGB(36, 48, 58);
+		textSecondary = RGB(102, 114, 125);
+		highlightBackground = RGB(95, 127, 148);
+		highlightBorder = RGB(75, 104, 123);
+		highlightText = RGB(247, 251, 253);
+	}
+	else if (name == "sepiadim" || name == "sepia") {
+		panelBackground = RGB(40, 37, 31);
+		panelBorder = RGB(93, 86, 74);
+		textPrimary = RGB(235, 226, 211);
+		textSecondary = RGB(185, 173, 154);
+		highlightBackground = RGB(109, 101, 71);
+		highlightBorder = RGB(149, 138, 99);
+		highlightText = RGB(248, 239, 217);
+	}
+	else {
+		panelBackground = RGB(247, 249, 252);
+		panelBorder = RGB(174, 184, 203);
+		textPrimary = RGB(24, 34, 53);
+		textSecondary = RGB(101, 113, 135);
+		highlightBackground = RGB(47, 110, 234);
+		highlightBorder = RGB(29, 86, 196);
+		highlightText = RGB(255, 255, 255);
+	}
+}
+
+static bool usesModernCandidateDefault(const std::string& guid) {
+	return guid == kDayiProfileGuid ||
+		guid == kChewingProfileGuid ||
+		guid == kChecjProfileGuid ||
+		guid == kCheliuProfileGuid;
+}
+
+static bool shouldHoldKeyWhenBackendUnavailable(const std::string& guid, Ime::KeyEvent& keyEvent) {
+	if (!usesModernCandidateDefault(guid))
+		return false;
+
+	if (keyEvent.isKeyDown(VK_CONTROL) || keyEvent.isKeyDown(VK_MENU))
+		return false;
+
+	return keyEvent.charCode() >= 0x20;
+}
+
 Client::Client(TextService* service, REFIID langProfileGuid):
 	textService_(service),
 	pipe_(INVALID_HANDLE_VALUE),
@@ -62,6 +270,22 @@ Client::Client(TextService* service, REFIID langProfileGuid):
 	guid_{ uuidToString(langProfileGuid) },
 	shouldWaitConnection_{ true },
 	ioEvent_{ CreateEvent(NULL, TRUE, FALSE, NULL) } {
+	if (usesModernCandidateDefault(guid_)) {
+		textService_->setCandPerRow(6);
+		textService_->setCandidateEdgeAvoidance(true);
+		textService_->setCandidateTheme(
+			RGB(27, 28, 32),
+			RGB(74, 77, 87),
+			RGB(229, 232, 238),
+			RGB(169, 175, 186),
+			RGB(64, 95, 138),
+			RGB(94, 126, 167),
+			RGB(238, 244, 255));
+		textService_->setCandidateSpacing(6, 4, 6);
+		textService_->setCandidateStableWidth(true, 286);
+		textService_->setCandidateMaxWidth(true, 300);
+		textService_->setCandidateModernStyle(true);
+	}
 }
 
 Client::~Client(void) {
@@ -95,6 +319,9 @@ bool Client::handleRpcResponse(json& msg, Ime::EditSession* session) {
 }
 
 void Client::updateUI(json& data) {
+	bool pendingModernStyle = false;
+	bool hasModernStyle = false;
+
 	for (auto it = data.begin(); it != data.end(); ++it) {
 		const std::string& name = it.key();
 		const json& value = it.value();
@@ -111,6 +338,74 @@ void Client::updateUI(json& data) {
 		else if (value.is_boolean() && name == "candUseCursor") {
 			textService_->setCandUseCursor(value.get<bool>());
 		}
+		else if (value.is_boolean() && name == "candidateModernStyle") {
+			// Defer until theme/spacing are applied so applyCandidateWindowStyle()
+			// runs once with the final state instead of triggering early with stale colors.
+			pendingModernStyle = value.get<bool>();
+			hasModernStyle = true;
+		}
+		else if (value.is_boolean() && name == "candidateEdgeAvoidance") {
+			textService_->setCandidateEdgeAvoidance(value.get<bool>());
+		}
+		else if (value.is_string() && name == "candidateKeyStyle") {
+			textService_->setCandidateKeyStyle(candidateKeyStyleValue(value.get<string>()));
+		}
+		else if (value.is_string() && name == "candidateMessageStyle") {
+			textService_->setCandidateMessageStyle(candidateMessageStyleValue(value.get<string>()));
+		}
+	}
+
+	// Apply theme colors (preset) with optional per-key overrides from candidateColors
+	auto themeIt = data.find("candidateTheme");
+	auto colorsIt = data.find("candidateColors");
+	if ((themeIt != data.end() && themeIt->is_string()) ||
+	    (colorsIt != data.end() && colorsIt->is_object())) {
+		COLORREF panelBg, panelBorder, textPrimary, textSecondary, highlightBg, highlightBorder, highlightText;
+		std::string theme = (themeIt != data.end() && themeIt->is_string()) ? themeIt->get<std::string>() : "light";
+		candidateThemeColors(theme, panelBg, panelBorder, textPrimary, textSecondary, highlightBg, highlightBorder, highlightText);
+		if (colorsIt != data.end() && colorsIt->is_object()) {
+			parseHexColorMember(*colorsIt, "panelBackground", panelBg);
+			parseHexColorMember(*colorsIt, "panelBorder", panelBorder);
+			parseHexColorMember(*colorsIt, "textPrimary", textPrimary);
+			parseHexColorMember(*colorsIt, "textSecondary", textSecondary);
+			parseHexColorMember(*colorsIt, "highlightBackground", highlightBg);
+			parseHexColorMember(*colorsIt, "highlightBorder", highlightBorder);
+			parseHexColorMember(*colorsIt, "highlightText", highlightText);
+		}
+		textService_->setCandidateTheme(panelBg, panelBorder, textPrimary, textSecondary, highlightBg, highlightBorder, highlightText);
+	}
+
+	// Apply spacing style
+	auto styleIt = data.find("candidateStyle");
+	if (styleIt != data.end() && styleIt->is_object()) {
+		int contentMargin = styleIt->value("contentMargin", 8);
+		int textMargin = styleIt->value("textMargin", 6);
+		int borderRadius = styleIt->value("borderRadius", 8);
+		textService_->setCandidateSpacing(contentMargin, textMargin, borderRadius);
+	}
+
+	auto stableIt = data.find("candidateStableWidth");
+	auto minWidthIt = data.find("candidateMinWidth");
+	if ((stableIt != data.end() && stableIt->is_boolean()) ||
+	    (minWidthIt != data.end() && minWidthIt->is_number_integer())) {
+		bool stableWidth = stableIt != data.end() && stableIt->is_boolean() ? stableIt->get<bool>() : false;
+		int minWidth = minWidthIt != data.end() && minWidthIt->is_number_integer() ? minWidthIt->get<int>() : 0;
+		textService_->setCandidateStableWidth(stableWidth, minWidth);
+	}
+
+	auto wrapIt = data.find("candidateWrapToMaxWidth");
+	auto maxWidthIt = data.find("candidateMaxWidth");
+	if ((wrapIt != data.end() && wrapIt->is_boolean()) ||
+	    (maxWidthIt != data.end() && maxWidthIt->is_number_integer())) {
+		bool wrapToMaxWidth = wrapIt != data.end() && wrapIt->is_boolean() ? wrapIt->get<bool>() : false;
+		int maxWidth = maxWidthIt != data.end() && maxWidthIt->is_number_integer() ? maxWidthIt->get<int>() : 0;
+		textService_->setCandidateMaxWidth(wrapToMaxWidth, maxWidth);
+	}
+
+	// Apply modernStyle last: triggers the final applyCandidateWindowStyle() with
+	// theme and spacing already in their new state.
+	if (hasModernStyle) {
+		textService_->setCandidateModernStyle(pendingModernStyle);
 	}
 }
 
@@ -130,6 +425,12 @@ void Client::updateMessageWindow(json& msg, Ime::EditSession* session, bool& end
 		auto& message = showMessageVal["message"];
 		auto& duration = showMessageVal["duration"];
 		if (message.is_string() && duration.is_number_integer()) {
+			if (textService_->candidateModernStyle()) {
+				textService_->hideMessage();
+				msg["candidateMessage"] = message.get<string>();
+				msg["showCandidates"] = true;
+				return;
+			}
 			if (!textService_->isComposing()) {
 				textService_->startComposition(session->context());
 				endComposition = true;
@@ -178,9 +479,11 @@ void Client::updateComposition(json& msg, Ime::EditSession* session, bool& endCo
 		hasCompositionString = true;
 		if (compositionString.empty()) {
 			emptyComposition = true;
+			if (textService_->isComposing()) {
+				textService_->setCompositionString(session, L"", 0);
+			}
 			if (textService_->isComposing() && !textService_->showingCandidates()) {
 				// when the composition buffer is empty and we are not showing the candidate list, end composition.
-				textService_->setCompositionString(session, L"", 0);
 				endComposition = true;
 			}
 		}
@@ -311,6 +614,13 @@ void Client::updateKeyboardStatus(json& msg) {
 void Client::updateStatus(json& msg, Ime::EditSession* session) {
 	// We need to handle ordering of some types of the requests.
 	// For example, setCompositionCursor() should happen after setCompositionCursor().
+	// UI customization must be applied before candidateList creates or refreshes
+	// the candidate window; otherwise the first rendered window keeps the old UI.
+	auto& customizeUIVal = msg["customizeUI"];
+	if (customizeUIVal.is_object()) {
+		updateUI(customizeUIVal);
+	}
+
 	updateSelectionKeys(msg);
 
 	// show message
@@ -333,20 +643,32 @@ void Client::updateStatus(json& msg, Ime::EditSession* session) {
 
 	// keyboard status
 	updateKeyboardStatus(msg);
-
-	// other configurations
-	auto& customizeUIVal = msg["customizeUI"];
-	if (customizeUIVal.is_object()) {
-		// customize the UI
-		updateUI(customizeUIVal);
-	}
 }
 
 void Client::updateCandidateList(json& msg, Ime::EditSession* session) {
 	// handle candidate list
 	const auto& showCandidatesVal = msg["showCandidates"];
+	const auto& candidateMessageVal = msg["candidateMessage"];
+	const auto& candidateMessageStyleVal = msg["candidateMessageStyle"];
+	bool hasCandidateMessage = false;
+	if (candidateMessageVal.is_string()) {
+		std::wstring message = utf8ToUtf16(candidateMessageVal.get<std::string>().c_str());
+		hasCandidateMessage = !message.empty();
+		if (candidateMessageStyleVal.is_string()) {
+			textService_->setCandidateMessageDisplayStyle(candidateMessageStyleValue(candidateMessageStyleVal.get<std::string>()));
+		}
+		else {
+			textService_->resetCandidateMessageDisplayStyle();
+		}
+		textService_->setCandidateMessage(message);
+	}
+	else if (showCandidatesVal.is_boolean()) {
+		textService_->resetCandidateMessageDisplayStyle();
+		textService_->setCandidateMessage(L"");
+	}
+
 	if (showCandidatesVal.is_boolean()) {
-		if (showCandidatesVal.get<bool>()) {
+		if (showCandidatesVal.get<bool>() || hasCandidateMessage) {
 			// start composition if we are not composing.
 			// this is required to get correctly position the candidate window
 			if (!textService_->isComposing()) {
@@ -355,23 +677,59 @@ void Client::updateCandidateList(json& msg, Ime::EditSession* session) {
 			textService_->showCandidates(session);
 		}
 		else {
+			textService_->setCandidateMessage(L"");
 			textService_->hideCandidates();
 		}
+	}
+	else if (hasCandidateMessage) {
+		if (!textService_->isComposing()) {
+			textService_->startComposition(session->context());
+		}
+		textService_->showCandidates(session);
+	}
+
+	// parse candidateHeader before candidateList so candidateHeader_ is correct
+	// when updateCandidates() calls setHeader(candidateHeader_)
+	const auto& candidateHeaderVal = msg["candidateHeader"];
+	if (candidateHeaderVal.is_string()) {
+		std::wstring header = utf8ToUtf16(candidateHeaderVal.get<std::string>().c_str());
+		textService_->setCandidateHeader(header);
+	}
+	else if (showCandidatesVal.is_boolean() && !showCandidatesVal.get<bool>() && !hasCandidateMessage) {
+		textService_->setCandidateHeader(L"");
+	}
+
+	const auto& candidatePageInfoVal = msg["candidatePageInfo"];
+	if (candidatePageInfoVal.is_string()) {
+		std::wstring info = utf8ToUtf16(candidatePageInfoVal.get<std::string>().c_str());
+		textService_->setCandidatePageInfo(info);
+	}
+	else if (showCandidatesVal.is_boolean() && !showCandidatesVal.get<bool>() && !hasCandidateMessage) {
+		textService_->setCandidatePageInfo(L"");
 	}
 
 	const auto& candidateListVal = msg["candidateList"];
 	if (candidateListVal.is_array()) {
+		if (!hasCandidateMessage) {
+			textService_->setCandidateMessage(L"");
+		}
 		// handle candidates
 		// FIXME: directly access private member is dirty!!!
 		vector<wstring>& candidates = textService_->candidates_;
 		candidates.clear();
 		for (const auto& candidate : candidateListVal) {
-			candidates.emplace_back(utf8ToUtf16(candidate.get<string>().c_str()));
+			if (candidate.is_string()) {
+				candidates.emplace_back(utf8ToUtf16(candidate.get<string>().c_str()));
+			}
 		}
 		textService_->updateCandidates(session);
-		if (!showCandidatesVal.get<bool>()) {
+		if (showCandidatesVal.is_boolean() && !showCandidatesVal.get<bool>() && !hasCandidateMessage) {
 			textService_->hideCandidates();
 		}
+	}
+	else if (hasCandidateMessage) {
+		textService_->candidates_.clear();
+		textService_->updateCandidates(session);
 	}
 
 	const auto& candidateCursorVal = msg["candidateCursor"];
@@ -410,11 +768,11 @@ bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
 	addKeyEventToRpcRequest(req, keyEvent);
 
 	json ret;
-	callRpcMethod(req, ret);
+	callRpcMethod(req, ret, 250);
 	if (handleRpcResponse(ret)) {
-		return ret["return"].get<bool>();
+		return ret.value("return", false);
 	}
-	return false;
+	return shouldHoldKeyWhenBackendUnavailable(guid_, keyEvent);
 }
 
 bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
@@ -422,11 +780,11 @@ bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	addKeyEventToRpcRequest(req, keyEvent);
 
 	json ret;
-	callRpcMethod(req, ret);
+	callRpcMethod(req, ret, 250);
 	if (handleRpcResponse(ret, session)) {
-		return ret["return"].get<bool>();
+		return ret.value("return", false);
 	}
-	return false;
+	return shouldHoldKeyWhenBackendUnavailable(guid_, keyEvent);
 }
 
 bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
@@ -434,9 +792,9 @@ bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
 	addKeyEventToRpcRequest(req, keyEvent);
 
 	json ret;
-	callRpcMethod(req, ret);
+	callRpcMethod(req, ret, 250);
 	if (handleRpcResponse(ret)) {
-		return ret["return"].get<bool>();
+		return ret.value("return", false);
 	}
 	return false;
 }
@@ -446,9 +804,9 @@ bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	addKeyEventToRpcRequest(req, keyEvent);
 
 	json ret;
-	callRpcMethod(req, ret);
+	callRpcMethod(req, ret, 250);
 	if (handleRpcResponse(ret, session)) {
-		return ret["return"].get<bool>();
+		return ret.value("return", false);
 	}
 	return false;
 }
@@ -462,7 +820,7 @@ bool Client::onPreservedKey(const GUID& guid) {
 		json ret;
 		callRpcMethod(req, ret);
 		if (handleRpcResponse(ret)) {
-			return ret["return"].get<bool>();
+			return ret.value("return", false);
 		}
 	}
 	return false;
@@ -476,7 +834,7 @@ bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret)) {
-		return ret["return"].get<bool>();
+		return ret.value("return", false);
 	}
 	return false;
 }
@@ -634,7 +992,10 @@ json Client::createRpcRequest(const char* methodName) {
 }
 
 bool Client::callPipeIO(bool isRead, void *buffer, DWORD size, DWORD *rlen, int timeoutMs) {
-	if (!ioEvent_) {
+	if (!ioEvent_ || ioEvent_ == INVALID_HANDLE_VALUE) {
+		ioEvent_ = CreateEvent(NULL, TRUE, FALSE, NULL);
+	}
+	if (!ioEvent_ || ioEvent_ == INVALID_HANDLE_VALUE) {
 		return false;
 	}
 
@@ -665,19 +1026,18 @@ bool Client::callPipeIO(bool isRead, void *buffer, DWORD size, DWORD *rlen, int 
 	return ok;
 }
 
-bool Client::callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply) {
+bool Client::callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply, int timeoutMs) {
 	std::string request = serializedRequest;
 	if (request.empty() || request.back() != '\n') {
 		request += '\n';
 	}
 
-	const int timeoutMs = 2000;
 	DWORD wlen = 0;
 	if (!callPipeIO(false, (void*)request.data(), (DWORD)request.size(), &wlen, timeoutMs)) {
 		return false;
 	}
 
-	char buf[1024];
+	char buf[8192];
 	DWORD rlen = 0;
 	while (true) {
 		// Check if we already have a full line in the buffer
@@ -697,7 +1057,7 @@ bool Client::callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std:
 
 // send the request to the server
 // a sequence number will be added to the req object automatically.
-bool Client::callRpcMethod(json& request, json & response) {
+bool Client::callRpcMethod(json& request, json & response, int timeoutMs) {
 	if (shouldWaitConnection_ && !waitForRpcConnection()) {
 		return false;
 	}
@@ -710,7 +1070,7 @@ bool Client::callRpcMethod(json& request, json & response) {
 
 	std::string serializedResponse;
 	bool success = false;
-	if (callRpcPipe(pipe_, serializedRequest, serializedResponse)) {
+	if (callRpcPipe(pipe_, serializedRequest, serializedResponse, timeoutMs)) {
 		try {
 			response = json::parse(serializedResponse);
 			success = true;
@@ -771,9 +1131,9 @@ bool Client::waitForRpcConnection() {
 	}
 
 	wstring serverPipeName = getPipeName(L"Launcher");
-	for (int attempt = 0; pipe_ == INVALID_HANDLE_VALUE && attempt < 5; ++attempt) {
+	for (int attempt = 0; pipe_ == INVALID_HANDLE_VALUE && attempt < 3; ++attempt) {
 		// try to connect to the server
-		pipe_ = connectPipe(serverPipeName.c_str(), 30000);
+		pipe_ = connectPipe(serverPipeName.c_str(), 3000);
 	}
 
 	if (pipe_ != INVALID_HANDLE_VALUE) {
@@ -818,9 +1178,9 @@ void Client::closeRpcConnection() {
 		CloseHandle(pipe_);
 		pipe_ = INVALID_HANDLE_VALUE;
 	}
-	if (ioEvent_ != INVALID_HANDLE_VALUE) {
+	if (ioEvent_ && ioEvent_ != INVALID_HANDLE_VALUE) {
 		CloseHandle(ioEvent_);
-		ioEvent_ = INVALID_HANDLE_VALUE;
+		ioEvent_ = NULL;
 	}
 	readBuffer_.clear();
 }

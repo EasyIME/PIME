@@ -134,6 +134,9 @@
 
                             <input type="checkbox" id="directShowCand" name="directShowCand" />
                             <label for="directShowCand">直接顯示候選字清單 (不須按空白鍵)</label><br />
+
+                            <input type="checkbox" id="autoCommitSingleCandidate" name="autoCommitSingleCandidate" />
+                            <label for="autoCommitSingleCandidate">只有一個候選字時自動送出</label><br />
                         </div>
                     </div>
                 </div>
@@ -254,37 +257,72 @@
                 <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <h3 class="panel-title">介面設定</h3>
+                            <h3 class="panel-title">候選窗外觀</h3>
                         </div>
-                        <div class="panel-body">
-                            <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
-                                <label for="candPerRow">每列顯示候選字個數: </label>
-                                <input type="text" id="candPerRow" name="candPerRow" /><br />
-                            </div>
-                            <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
-                                <label for="candPerPage">每頁顯示候選字個數: </label>
-                                <input type="text" id="candPerPage" name="candPerPage" /><br />
-                            </div>
-                            <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
-                                <label for="candMaxItems">最大候選字個數: </label>
-                                <input type="text" id="candMaxItems" name="candMaxItems" /><br />
-                            </div>
-                            <div class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
-                                <label for="fontSize">選字及訊息視窗文字大小: </label>
-                                <input type="text" id="fontSize" name="fontSize" /><br />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">介面預覽</h3>
-                        </div>
-                        <div class="panel-body">
-                            <div id="selExample">
+                        <div class="panel-body candidate-window-settings">
+                            <div class="candidate-appearance-shell">
+                                <select name="candidateTheme" id="candidateTheme" class="candidate-theme-select" data-value-type="string"></select>
+                                <div class="candidate-toolbar">
+                                    <div class="candidate-option-row">
+                                        <div class="candidate-config-field candidate-config-check">
+                                            <input type="checkbox" id="candidateModernStyle" name="candidateModernStyle" />
+                                            <label for="candidateModernStyle">使用新版候選窗 UI</label>
+                                        </div>
+                                        <div class="candidate-config-field candidate-config-check">
+                                            <input type="checkbox" id="candidateStableWidth" name="candidateStableWidth" />
+                                            <label for="candidateStableWidth">固定候選窗最小寬度</label>
+                                        </div>
+                                        <div class="candidate-config-field candidate-config-check">
+                                            <input type="checkbox" id="candidateEdgeAvoidance" name="candidateEdgeAvoidance" />
+                                            <label for="candidateEdgeAvoidance">自動避開螢幕邊緣</label>
+                                        </div>
+                                        <div class="candidate-config-field candidate-config-check">
+                                            <input type="checkbox" id="candidateWrapToMaxWidth" name="candidateWrapToMaxWidth" />
+                                            <label for="candidateWrapToMaxWidth">超過最大寬度自動換行</label>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="candidateKeyStyle" name="candidateKeyStyle" data-value-type="string" />
+                                    <div class="candidate-number-row">
+                                        <div class="candidate-config-field">
+                                            <label for="candidatePerRow">每列候選字數</label>
+                                            <input type="text" id="candidatePerRow" name="candidatePerRow" />
+                                        </div>
+                                        <div class="candidate-config-field">
+                                            <label for="fontSize">候選窗字體大小</label>
+                                            <input type="text" id="fontSize" name="fontSize" />
+                                        </div>
+                                        <div class="candidate-config-field">
+                                            <label for="candidateMinWidth">候選窗最小寬度</label>
+                                            <input type="text" id="candidateMinWidth" name="candidateMinWidth" />
+                                        </div>
+                                        <div class="candidate-config-field">
+                                            <label for="candidateMaxWidth">候選窗最大寬度</label>
+                                            <input type="text" id="candidateMaxWidth" name="candidateMaxWidth" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="candidate-theme-heading">
+                                    <span>候選窗配色</span>
+                                    <span id="candidateThemeCurrent" class="candidate-theme-current"></span>
+                                </div>
+                                <div id="candidateThemeGrid" class="candidate-theme-grid"></div>
+                                <div class="candidate-theme-heading candidate-theme-heading-spaced">
+                                    <span>選字符樣式</span>
+                                    <span id="candidateKeyStyleCurrent" class="candidate-theme-current"></span>
+                                </div>
+                                <div id="candidateKeyStyleGrid" class="candidate-style-grid"></div>
+                                <input type="hidden" id="candidateMessageStyle" name="candidateMessageStyle" data-value-type="string" />
+                                <div class="candidate-theme-heading candidate-theme-heading-spaced">
+                                    <span>提示訊息樣式</span>
+                                    <span id="candidateMessageStyleCurrent" class="candidate-theme-current"></span>
+                                </div>
+                                <div id="candidateMessageStyleGrid" class="candidate-style-grid"></div>
+                                <input type="hidden" id="candidateMessageBehavior" name="candidateMessageBehavior" data-value-type="string" />
+                                <div class="candidate-theme-heading candidate-theme-heading-spaced">
+                                    <span>提示強度行為</span>
+                                    <span id="candidateMessageBehaviorCurrent" class="candidate-theme-current"></span>
+                                </div>
+                                <div id="candidateMessageBehaviorGrid" class="candidate-style-grid"></div>
                             </div>
                         </div>
                     </div>

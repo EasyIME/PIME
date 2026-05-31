@@ -26,6 +26,7 @@
 #include "PIMEImeModule.h"
 #include "resource.h"
 #include <Shellapi.h>
+#include <algorithm>
 #include <sys/stat.h>
 
 using namespace std;
@@ -45,7 +46,26 @@ TextService::TextService(ImeModule* module):
 	candPerRow_(10),
 	selKeys_(L"1234567890"),
 	candUseCursor_(false),
-	candFontSize_(12) {
+	candFontSize_(12),
+	candidateModernStyle_(false),
+	candidateEdgeAvoidance_(true),
+	candidatePanelBackground_(RGB(255, 255, 255)),
+	candidatePanelBorder_(RGB(218, 221, 227)),
+	candidateTextPrimary_(RGB(32, 36, 42)),
+	candidateTextSecondary_(RGB(107, 114, 128)),
+	candidateHighlightBackground_(RGB(220, 235, 255)),
+	candidateHighlightBorder_(RGB(156, 199, 255)),
+	candidateHighlightText_(RGB(11, 58, 117)),
+	candidateContentMargin_(8),
+	candidateTextMargin_(6),
+	candidateBorderRadius_(8),
+	candidateKeyStyle_(Ime::CandidateWindow::KeyStyleKeycap),
+	candidateMessageStyle_(Ime::CandidateWindow::MessageStyleBadge),
+	candidateMessageDisplayStyle_(Ime::CandidateWindow::MessageStyleBadge),
+	candidateStableWidth_(false),
+	candidateMinWidth_(0),
+	candidateWrapToMaxWidth_(false),
+	candidateMaxWidth_(0) {
 
 	// font for candidate and mesasge windows
 	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
@@ -232,12 +252,13 @@ void TextService::createCandidateWindow(Ime::EditSession* session) {
 		candidateWindow_->Release();  // decrease ref count caused by new
 
 		candidateWindow_->setFont(font_);
+		applyCandidateWindowStyle();
 		auto elementMgr = Ime::ComPtr<ITfUIElementMgr>::queryFrom(threadMgr());
 		if (elementMgr) {
 			BOOL pbShow = false;
 			if (validCandidateListElementId_ =
 				(elementMgr->BeginUIElement(candidateWindow_, &pbShow, &candidateListElementId_) == S_OK)) {
-				candidateWindow_->Show(pbShow);
+				candidateWindow_->Show(TRUE);
 			}
 		}
 	}
@@ -246,6 +267,7 @@ void TextService::createCandidateWindow(Ime::EditSession* session) {
 void TextService::updateCandidates(Ime::EditSession* session) {
 	createCandidateWindow(session);
 	candidateWindow_->clear();
+	candidateWindow_->setTextRows(candidateMessage_, candidateHeader_, candidatePageInfo_);
 
 	// FIXME: is this the right place to do it?
 	if (updateFont_) {
@@ -277,12 +299,7 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 	candidateWindow_->recalculateSize();
 	candidateWindow_->refresh();
 
-	RECT textRect;
-	// get the position of composition area from TSF
-	if (selectionRect(session, &textRect)) {
-		// FIXME: where should we put the candidate window?
-		candidateWindow_->move(textRect.left, textRect.bottom);
-	}
+	moveCandidateWindow(session);
 
 	if (validCandidateListElementId_) {
 		auto elementMgr = Ime::ComPtr<ITfUIElementMgr>::queryFrom(threadMgr());
@@ -301,6 +318,102 @@ void TextService::updateCandidatesWindow(Ime::EditSession* session) {
             candidateWindow_->move(textRect.left, textRect.bottom);
         }
     }
+}
+
+void TextService::setCandidateTheme(COLORREF panelBackground,
+	COLORREF panelBorder,
+	COLORREF textPrimary,
+	COLORREF textSecondary,
+	COLORREF highlightBackground,
+	COLORREF highlightBorder,
+	COLORREF highlightText) {
+	if (
+		candidatePanelBackground_ == panelBackground &&
+		candidatePanelBorder_ == panelBorder &&
+		candidateTextPrimary_ == textPrimary &&
+		candidateTextSecondary_ == textSecondary &&
+		candidateHighlightBackground_ == highlightBackground &&
+		candidateHighlightBorder_ == highlightBorder &&
+		candidateHighlightText_ == highlightText
+	)
+		return;
+	candidatePanelBackground_ = panelBackground;
+	candidatePanelBorder_ = panelBorder;
+	candidateTextPrimary_ = textPrimary;
+	candidateTextSecondary_ = textSecondary;
+	candidateHighlightBackground_ = highlightBackground;
+	candidateHighlightBorder_ = highlightBorder;
+	candidateHighlightText_ = highlightText;
+	applyCandidateWindowStyle();
+}
+
+void TextService::setCandidateSpacing(int contentMargin, int textMargin, int borderRadius) {
+	if (
+		candidateContentMargin_ == contentMargin &&
+		candidateTextMargin_ == textMargin &&
+		candidateBorderRadius_ == borderRadius
+	)
+		return;
+	candidateContentMargin_ = contentMargin;
+	candidateTextMargin_ = textMargin;
+	candidateBorderRadius_ = borderRadius;
+	applyCandidateWindowStyle();
+}
+
+void TextService::applyCandidateWindowStyle() {
+	if (!candidateWindow_)
+		return;
+	candidateWindow_->setModernStyle(candidateModernStyle_);
+	candidateWindow_->setTheme(candidatePanelBackground_,
+		candidatePanelBorder_,
+		candidateTextPrimary_,
+		candidateTextSecondary_,
+		candidateHighlightBackground_,
+		candidateHighlightBorder_,
+		candidateHighlightText_);
+	candidateWindow_->setSpacing(candidateContentMargin_, candidateTextMargin_, candidateBorderRadius_);
+	candidateWindow_->setKeyStyle(candidateKeyStyle_);
+	candidateWindow_->setMessageStyle(candidateMessageDisplayStyle_);
+	candidateWindow_->setStableWidth(candidateStableWidth_, candidateMinWidth_);
+	candidateWindow_->setMaxWidth(candidateWrapToMaxWidth_, candidateMaxWidth_);
+}
+
+void TextService::moveCandidateWindow(Ime::EditSession* session) {
+	if (!candidateWindow_)
+		return;
+
+	RECT textRect;
+	if (!selectionRect(session, &textRect))
+		return;
+
+	int width = 0;
+	int height = 0;
+	candidateWindow_->size(&width, &height);
+
+	int x = textRect.left;
+	int y = textRect.bottom;
+	if (candidateEdgeAvoidance_) {
+		RECT desired = { textRect.left, textRect.bottom, textRect.left + width, textRect.bottom + height };
+		HMONITOR monitor = ::MonitorFromRect(&desired, MONITOR_DEFAULTTONEAREST);
+		MONITORINFO mi;
+		mi.cbSize = sizeof(mi);
+		if (::GetMonitorInfo(monitor, &mi)) {
+			const RECT& work = mi.rcWork;
+			if (x + width > work.right)
+				x = work.right - width;
+			if (x < work.left)
+				x = work.left;
+
+			if (y + height > work.bottom && textRect.top - height >= work.top)
+				y = textRect.top - height;
+			else if (y + height > work.bottom)
+				y = work.bottom - height;
+			if (y < work.top)
+				y = work.top;
+		}
+	}
+
+	candidateWindow_->move(x, y);
 }
 
 void TextService::refreshCandidates() {

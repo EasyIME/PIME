@@ -25,6 +25,10 @@ import random
 import json
 import threading
 
+current_dir = os.path.abspath(os.path.dirname(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
 from config import CinBaseConfig
 from cin import Cin
 from ctypes import c_uint, byref, create_string_buffer
@@ -32,7 +36,6 @@ from ctypes import c_uint, byref, create_string_buffer
 cfg = CinBaseConfig
 cfg.imeDirName = sys.argv[2]
 config_dir = os.path.join(cfg.getConfigDir())
-current_dir = os.path.abspath(os.path.dirname(__file__))
 current_ime_dir = os.path.join(cfg.getDefaultConfigDir(), os.path.pardir)
 current_ime_config_dir = os.path.join(cfg.getDefaultConfigDir())
 data_dir = os.path.join(current_dir, "data")
@@ -60,6 +63,14 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def prepare(self):  # called before every request
         self.application.reset_timeout()  # reset the quit server timeout
+
+
+class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
+
+    def set_extra_headers(self, path):
+        self.set_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.set_header("Pragma", "no-cache")
+        self.set_header("Expires", "0")
 
 
 class KeepAliveHandler(BaseHandler):
@@ -98,36 +109,33 @@ class ConfigHandler(BaseHandler):
         os.makedirs(config_dir, exist_ok=True)
         # write the config to files
         config = data.get("config", None)
-        if config:
+        if config is not None:
             self.save_file("config.json", json.dumps(config, sort_keys=True, indent=4))
 
         symbols = data.get("symbols", None)
-        if symbols:
+        if symbols is not None:
             self.save_file("symbols.dat", symbols)
 
         swkb = data.get("swkb", None)
-        if swkb:
+        if swkb is not None:
             self.save_file("swkb.dat", swkb)
-        self.write('{"return":true}')
 
         fsymbols = data.get("fsymbols", None)
-        if fsymbols:
+        if fsymbols is not None:
             self.save_file("fsymbols.dat", fsymbols)
-        self.write('{"return":true}')
 
         phrase = data.get("phrase", None)
-        if phrase:
+        if phrase is not None:
             self.save_file("userphrase.dat", phrase)
-        self.write('{"return":true}')
 
         flangs = data.get("flangs", None)
-        if flangs:
+        if flangs is not None:
             self.save_file("flangs.dat", flangs)
-        self.write('{"return":true}')
 
         extendtable = data.get("extendtable", None)
-        if extendtable:
+        if extendtable is not None:
             self.save_file("extendtable.dat", extendtable)
+
         self.write('{"return":true}')
 
     def load_config(self):
@@ -169,23 +177,37 @@ class ConfigHandler(BaseHandler):
             return ""
 
     def save_file(self, filename, data):
+        target = os.path.join(config_dir, filename)
+        tmp_target = target + ".tmp"
         try:
-            with open(os.path.join(config_dir, filename), "w", encoding="UTF-8") as f:
+            with open(tmp_target, "w", encoding="UTF-8") as f:
                 f.write(data)
+            os.replace(tmp_target, target)
         except Exception:
+            try:
+                if os.path.exists(tmp_target):
+                    os.remove(tmp_target)
+            except Exception:
+                pass
             pass
 
 
 
 class LoginHandler(BaseHandler):
 
-    def post(self, page_name):
+    def login(self, page_name):
         token = self.get_argument("token", "")
         if token == self.settings["access_token"]:
             self.set_cookie(COOKIE_ID, token)
             if page_name != "user_phrase_editor":
                 page_name = "config"
-            self.redirect("/{}.html".format(page_name))
+            self.redirect("/{}.html?v={}".format(page_name, self.settings["access_token"][:8]))
+
+    def get(self, page_name):
+        self.login(page_name)
+
+    def post(self, page_name):
+        self.login(page_name)
 
 
 
@@ -200,11 +222,11 @@ class ConfigApp(tornado.web.Application):
             "debug": True
         }
         handlers = [
-            (r"/(.*\.html|config.js)", tornado.web.StaticFileHandler, {"path": current_ime_config_dir}),
-            (r"/(.*\.htm)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "config")}),
-            (r"/((css|fonts|images|js)/.*)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "config")}),
-            (r"/(icon.ico)", tornado.web.StaticFileHandler, {"path": current_ime_dir}),
-            (r"/(version.txt)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "../../")}),
+            (r"/(.*\.html|config.js)", NoCacheStaticFileHandler, {"path": current_ime_config_dir}),
+            (r"/(.*\.htm)", NoCacheStaticFileHandler, {"path": os.path.join(current_dir, "config")}),
+            (r"/((css|fonts|images|js)/.*)", NoCacheStaticFileHandler, {"path": os.path.join(current_dir, "config")}),
+            (r"/(icon.ico)", NoCacheStaticFileHandler, {"path": current_ime_dir}),
+            (r"/(version.txt)", NoCacheStaticFileHandler, {"path": os.path.join(current_dir, "../../")}),
             (r"/config", ConfigHandler),  # main configuration handler
             (r"/keep_alive", KeepAliveHandler),  # keep the api server alive
             (r"/login/(.*)", LoginHandler)  # authentication
@@ -214,6 +236,14 @@ class ConfigApp(tornado.web.Application):
         self.port = 0
 
     def launch_browser(self, tool_name):
+        url = "http://127.0.0.1:{PORT}/login/{PAGE_NAME}?token={TOKEN}".format(
+            PORT=self.port, PAGE_NAME=tool_name, TOKEN=self.access_token)
+        try:
+            os.startfile(url)
+            return
+        except Exception:
+            pass
+
         user_html = """<html>
     <form id="auth" action="http://127.0.0.1:{PORT}/login/{PAGE_NAME}" method="POST">
         <input type="hidden" name="token" value="{TOKEN}">

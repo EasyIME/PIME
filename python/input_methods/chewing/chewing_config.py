@@ -71,6 +71,24 @@ class ChewingConfig:
         self.switchLangWithWhichShift = SWITCH_LANG_WITH_BOTH_SHIFT
         self.upDownAction = 0
         self.upperCaseWithShift = True
+        self.candidateModernStyle = True
+        self.candidateLayout = "horizontal"
+        self.candidatePerRow = 6
+        self.candidateEdgeAvoidance = True
+        self.candidateTheme = "Night Comfort"
+        self.candidateKeyStyle = "keycap"
+        self.candidateMessageStyle = "badge"
+        self.candidateMessageBehavior = "progressive"
+        self.candidateStableWidth = True
+        self.candidateMinWidth = 286
+        self.candidateWrapToMaxWidth = True
+        self.candidateMaxWidth = 300
+        self.candidateColors = {}
+        self.candidateStyle = {
+            "contentMargin": 6,
+            "textMargin": 4,
+            "borderRadius": 6,
+        }
 
         # version: last modified time of (config.json, symbols.dat, swkb.dat)
         self._version = (0.0, 0.0, 0.0)
@@ -98,8 +116,8 @@ class ChewingConfig:
     def load(self):
         filename = self.getConfigFile()
         try:
-            if os.path.exists(filename):
-                with open(filename, "r") as f:
+            if os.path.exists(filename) and os.stat(filename).st_size > 0:
+                with open(filename, "r", encoding="UTF-8") as f:
                     self.__dict__.update(json.load(f))
             else:
                 filename = os.path.join(os.path.expanduser(
@@ -122,12 +140,19 @@ class ChewingConfig:
 
     def save(self):
         filename = self.getConfigFile()
+        tmp_filename = filename + ".tmp"
         try:
-            with open(filename, "w") as f:
-                json = self.toJson()
-                js = json.dump(json, f, indent=4)
+            with open(tmp_filename, "w", encoding="UTF-8") as f:
+                json.dump(self.toJson(), f, ensure_ascii=False, indent=4)
+                f.write("\n")
+            os.replace(tmp_filename, filename)
             self.update()
         except Exception:
+            try:
+                if os.path.exists(tmp_filename):
+                    os.remove(tmp_filename)
+            except Exception:
+                pass
             pass  # FIXME: handle I/O errors?
 
     def getDataDir(self):

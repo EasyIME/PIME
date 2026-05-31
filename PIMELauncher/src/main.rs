@@ -117,6 +117,7 @@ async fn main() {
         // Writing to a non-existent stdout in a GUI subsystem app can cause hangs.
         tracing_subscriber::fmt()
             .with_ansi(false)
+            .with_max_level(tracing::Level::WARN)
             .with_writer(std::io::sink)
             .init();
     }

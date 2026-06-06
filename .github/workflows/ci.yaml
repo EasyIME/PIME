@@ -2,12 +2,18 @@ name: Build
 
 on:
   push:
+    branches:
+      - '**'
+    tags:
+      - 'v*'
   pull_request:
-    branches: [main]
 
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      id-token: write
+      contents: write
     steps:
       - uses: actions/checkout@v3
         with:
@@ -33,10 +39,65 @@ jobs:
           Rust_COMPILER: ${{ env.CARGO_HOME }}\bin\rustc.exe
         run: |
           .\build.bat
+   
+      - name: Upload unsigned binaries
+        id: upload-unsigned-binaries
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-binaries
+          path: |
+            build/PIMELauncher/PIMELauncher.exe
+            build/PIMETextService/Release/PIMETextService.dll
+            build64/PIMETextService/Release/PIMETextService.dll
+            build_arm64/PIMETextService/Release/PIMETextService.dll
+
+      - name: Sign binaries
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '44e7ac31-01b7-47df-8a58-44125a7d21b0'
+          project-slug: 'PIME'
+          signing-policy-slug: ${{ startsWith(github.ref, 'refs/tags/') && 'release-signing' || 'test-signing' }}
+          artifact-configuration-slug: 'binaries-zip'
+          github-artifact-id: '${{ steps.upload-unsigned-binaries.outputs.artifact-id }}'
+          wait-for-completion: true
+          output-artifact-directory: 'signed-binaries'
+
+      - name: Replace binaries with signed versions
+        run: |
+          copy signed-binaries\build\PIMELauncher\PIMELauncher.exe build\PIMELauncher\PIMELauncher.exe
+          copy signed-binaries\build\PIMETextService\Release\PIMETextService.dll build\PIMETextService\Release\PIMETextService.dll
+          copy signed-binaries\build64\PIMETextService\Release\PIMETextService.dll build64\PIMETextService\Release\PIMETextService.dll
+          copy signed-binaries\build_arm64\PIMETextService\Release\PIMETextService.dll build_arm64\PIMETextService\Release\PIMETextService.dll
+
       - name: Build the installer
         run: |
           cmd /C "C:\Program Files (x86)\NSIS\Bin\makensis.exe" ".\installer\installer.nsi"
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload unsigned installer
+        id: upload-unsigned-installer
+        uses: actions/upload-artifact@v7
         with:
-          name: Installer
+          name: unsigned-installer
           path: installer/*.exe
+          archive: false  # Do not zip the NSIS installer.
+
+      - name: Sign installer
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '44e7ac31-01b7-47df-8a58-44125a7d21b0'
+          project-slug: 'PIME'
+          signing-policy-slug: ${{ startsWith(github.ref, 'refs/tags/') && 'release-signing' || 'test-signing' }}
+          artifact-configuration-slug: 'initial'  # The default one for single .exe files.
+          github-artifact-id: '${{ steps.upload-unsigned-installer.outputs.artifact-id }}'
+          wait-for-completion: true
+          output-artifact-directory: 'signed-installer'
+          skip-decompress: true  # The installer exe is not a zip file.
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: signed-installer/**/*.exe
+          generate_release_notes: true

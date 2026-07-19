@@ -1,14 +1,23 @@
+# CI workflow for PIME
+# This workflow is split into two jobs:
+#   1️⃣ **build** – runs on every push / PR. It builds the project, runs tests,
+#      uploads unsigned artifacts, and performs test‑only signing (no manual approval).
+#   2️⃣ **release** – runs only for tag pushes. It requires the `production`
+#      environment (manual approval in GitHub) and performs the production signing
+#      of both binaries and the installer, then creates a GitHub Release.
+
 name: Build
 
 on:
   push:
-    branches:
-      - '**'
-    tags:
-      - 'v*'
+    branches: ['**']
+    tags: ['v*']
   pull_request:
 
 jobs:
+  # ---------------------------------------------------------------------
+  # Build job – runs on every push/PR. Includes test signing only.
+  # ---------------------------------------------------------------------
   build:
     runs-on: windows-latest
     permissions:
@@ -18,28 +27,36 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'true'
+
       - name: Use Node.js 21.x
         uses: actions/setup-node@v4
         with:
           node-version: 21.x
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: i686-pc-windows-msvc
+
       - name: Run Rust tests
         run: |
           cd PIMELauncher
           cargo test --verbose
+
       - name: Use Install NSIS
         uses: repolevedavaj/install-nsis@v1.2.0
         with:
           nsis-version: 3.08
+
       - name: Run build.bat
         env:
-          Rust_COMPILER: ${{ env.CARGO_HOME }}\bin\rustc.exe
+          Rust_COMPILER: ${{ env.CARGO_HOME }}\\bin\\rustc.exe
         run: |
-          .\build.bat
-   
+          .\\build.bat
+
+      # ---------------------------------------------------------------
+      # Upload unsigned binaries – needed for both test and release signing.
+      # ---------------------------------------------------------------
       - name: Upload unsigned binaries
         id: upload-unsigned-binaries
         uses: actions/upload-artifact@v7
@@ -51,29 +68,57 @@ jobs:
             build64/PIMETextService/Release/PIMETextService.dll
             build_arm64/PIMETextService/Release/PIMETextService.dll
 
-      - name: Sign binaries
+      # ---------------------------------------------------------------
+      # ----- Test signing (runs on every non‑tag commit) -----
+      # Uses the test certificate and does NOT require manual approval.
+      # ---------------------------------------------------------------
+      - name: Sign binaries (test)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         uses: signpath/github-action-submit-signing-request@v2
         with:
           api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
           organization-id: '44e7ac31-01b7-47df-8a58-44125a7d21b0'
           project-slug: 'PIME'
-          signing-policy-slug: ${{ startsWith(github.ref, 'refs/tags/') && 'release-signing' || 'test-signing' }}
+          signing-policy-slug: 'test-signing'
           artifact-configuration-slug: 'binaries-zip'
           github-artifact-id: '${{ steps.upload-unsigned-binaries.outputs.artifact-id }}'
           wait-for-completion: true
           output-artifact-directory: 'signed-binaries'
 
+      # ---------------------------------------------------------------
+      # Upload the signed binaries as an artifact so the release job can use them.
+      # This step runs on every build (both test and release paths) because the
+      # `signpath` action always writes to the `signed-binaries` directory.
+      # ---------------------------------------------------------------
+      - name: Upload signed binaries
+        if: always()  # ensure the artifact exists even if signing was skipped
+        uses: actions/upload-artifact@v7
+        with:
+          name: signed-binaries
+          path: signed-binaries/**
+
+      # ---------------------------------------------------------------
+      # Replace binaries with the signed versions (test‑signing case).
+      # This step runs only when we have signed binaries (i.e., after test signing).
+      # ---------------------------------------------------------------
       - name: Replace binaries with signed versions
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         run: |
           copy signed-binaries\build\PIMELauncher\PIMELauncher.exe build\PIMELauncher\PIMELauncher.exe
           copy signed-binaries\build\PIMETextService\Release\PIMETextService.dll build\PIMETextService\Release\PIMETextService.dll
           copy signed-binaries\build64\PIMETextService\Release\PIMETextService.dll build64\PIMETextService\Release\PIMETextService.dll
           copy signed-binaries\build_arm64\PIMETextService\Release\PIMETextService.dll build_arm64\PIMETextService\Release\PIMETextService.dll
 
+      # ---------------------------------------------------------------
+      # Build the installer (used for both test and release builds).
+      # ---------------------------------------------------------------
       - name: Build the installer
         run: |
           cmd /C "C:\Program Files (x86)\NSIS\Bin\makensis.exe" ".\installer\installer.nsi"
 
+      # ---------------------------------------------------------------
+      # Upload the unsigned installer – the release job will sign it.
+      # ---------------------------------------------------------------
       - name: Upload unsigned installer
         id: upload-unsigned-installer
         uses: actions/upload-artifact@v7
@@ -82,22 +127,79 @@ jobs:
           path: installer/*.exe
           archive: false  # Do not zip the NSIS installer.
 
+  # ---------------------------------------------------------------------
+  # Release job – runs _only_ for tag pushes and requires manual approval.
+  # ---------------------------------------------------------------------
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: windows-latest
+    environment: production   # <-- manual approval point
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      # Download the signed binaries produced by the build job.
+      - name: Download signed binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: signed-binaries
+          path: signed-binaries
+
+      # ---------------------------------------------------------------
+      # ----- Release signing for binaries (tag only) -----
+      # Requires the production environment approval.
+      # ---------------------------------------------------------------
+      - name: Sign binaries (release)
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '44e7ac31-01b7-47df-8a58-44125a7d21b0'
+          project-slug: 'PIME'
+          signing-policy-slug: 'release-signing'
+          artifact-configuration-slug: 'binaries-zip'
+          github-artifact-id: '${{ steps.upload-unsigned-binaries.outputs.artifact-id }}'
+          wait-for-completion: true
+          output-artifact-directory: 'signed-binaries'
+
+      # Replace binaries with the newly signed versions.
+      - name: Replace binaries with signed versions
+        run: |
+          copy signed-binaries\build\PIMELauncher\PIMELauncher.exe build\PIMELauncher\PIMELauncher.exe
+          copy signed-binaries\build\PIMETextService\Release\PIMETextService.dll build\PIMETextService\Release\PIMETextService.dll
+          copy signed-binaries\build64\PIMETextService\Release\PIMETextService.dll build64\PIMETextService\Release\PIMETextService.dll
+          copy signed-binaries\build_arm64\PIMETextService\Release\PIMETextService.dll build_arm64\PIMETextService\Release\PIMETextService.dll
+
+      # ---------------------------------------------------------------
+      # Download the unsigned installer uploaded by the build job.
+      # ---------------------------------------------------------------
+      - name: Download unsigned installer
+        uses: actions/download-artifact@v4
+        with:
+          name: unsigned-installer
+          path: unsigned-installer
+
+      # ----- Release installer signing (tag only) -----
       - name: Sign installer
         uses: signpath/github-action-submit-signing-request@v2
         with:
           api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
           organization-id: '44e7ac31-01b7-47df-8a58-44125a7d21b0'
           project-slug: 'PIME'
-          signing-policy-slug: ${{ startsWith(github.ref, 'refs/tags/') && 'release-signing' || 'test-signing' }}
-          artifact-configuration-slug: 'initial'  # The default one for single .exe files.
+          signing-policy-slug: 'release-signing'
+          artifact-configuration-slug: 'initial'  # single .exe file
           github-artifact-id: '${{ steps.upload-unsigned-installer.outputs.artifact-id }}'
           wait-for-completion: true
           output-artifact-directory: 'signed-installer'
-          skip-decompress: true  # The installer exe is not a zip file.
+          skip-decompress: true  # installer exe is not a zip file.
 
+      # ----- Create GitHub Release (tag only) -----
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: signed-installer/**/*.exe
           generate_release_notes: true

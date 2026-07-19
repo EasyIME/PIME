@@ -19,7 +19,7 @@ jobs:
   # Build job – runs on every push/PR. Includes test signing only.
   # ---------------------------------------------------------------------
   build:
-    runs-on: windows-latest
+    runs-on: windows-2025
     permissions:
       id-token: write
       contents: write
@@ -133,7 +133,7 @@ jobs:
   release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
-    runs-on: windows-latest
+    runs-on: windows-2025
     environment: production   # <-- manual approval point
     permissions:
       id-token: write

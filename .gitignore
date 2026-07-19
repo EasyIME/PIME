@@ -4,3 +4,7 @@ build64
 build_arm64/
 node/input_methods/McBopomofo
 installer/*.exe
+PIMELauncher/target/
+.claude/
+cleanup_x64.ps1
+replace_x64_dll.ps1

@@ -369,7 +369,7 @@ void Client::updateCandidateList(json& msg, Ime::EditSession* session) {
 			candidates.emplace_back(utf8ToUtf16(candidate.get<string>().c_str()));
 		}
 		textService_->updateCandidates(session);
-		if (!showCandidatesVal.get<bool>()) {
+		if (showCandidatesVal.is_boolean() && !showCandidatesVal.get<bool>()) {
 			textService_->hideCandidates();
 		}
 	}
@@ -412,7 +412,7 @@ bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret)) {
-		return ret["return"].get<bool>();
+		return ret.value("return", false);
 	}
 	return false;
 }
@@ -424,7 +424,7 @@ bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret, session)) {
-		return ret["return"].get<bool>();
+		return ret.value("return", false);
 	}
 	return false;
 }
@@ -436,7 +436,7 @@ bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret)) {
-		return ret["return"].get<bool>();
+		return ret.value("return", false);
 	}
 	return false;
 }
@@ -448,7 +448,7 @@ bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret, session)) {
-		return ret["return"].get<bool>();
+		return ret.value("return", false);
 	}
 	return false;
 }
@@ -462,7 +462,7 @@ bool Client::onPreservedKey(const GUID& guid) {
 		json ret;
 		callRpcMethod(req, ret);
 		if (handleRpcResponse(ret)) {
-			return ret["return"].get<bool>();
+			return ret.value("return", false);
 		}
 	}
 	return false;
@@ -476,7 +476,7 @@ bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret)) {
-		return ret["return"].get<bool>();
+		return ret.value("return", false);
 	}
 	return false;
 }
@@ -634,7 +634,10 @@ json Client::createRpcRequest(const char* methodName) {
 }
 
 bool Client::callPipeIO(bool isRead, void *buffer, DWORD size, DWORD *rlen, int timeoutMs) {
-	if (!ioEvent_) {
+	if (!ioEvent_ || ioEvent_ == INVALID_HANDLE_VALUE) {
+		ioEvent_ = CreateEvent(NULL, TRUE, FALSE, NULL);
+	}
+	if (!ioEvent_ || ioEvent_ == INVALID_HANDLE_VALUE) {
 		return false;
 	}
 
@@ -677,7 +680,7 @@ bool Client::callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std:
 		return false;
 	}
 
-	char buf[1024];
+	char buf[8192];
 	DWORD rlen = 0;
 	while (true) {
 		// Check if we already have a full line in the buffer
@@ -771,9 +774,9 @@ bool Client::waitForRpcConnection() {
 	}
 
 	wstring serverPipeName = getPipeName(L"Launcher");
-	for (int attempt = 0; pipe_ == INVALID_HANDLE_VALUE && attempt < 5; ++attempt) {
+	for (int attempt = 0; pipe_ == INVALID_HANDLE_VALUE && attempt < 3; ++attempt) {
 		// try to connect to the server
-		pipe_ = connectPipe(serverPipeName.c_str(), 30000);
+		pipe_ = connectPipe(serverPipeName.c_str(), 3000);
 	}
 
 	if (pipe_ != INVALID_HANDLE_VALUE) {
@@ -818,9 +821,9 @@ void Client::closeRpcConnection() {
 		CloseHandle(pipe_);
 		pipe_ = INVALID_HANDLE_VALUE;
 	}
-	if (ioEvent_ != INVALID_HANDLE_VALUE) {
+	if (ioEvent_ && ioEvent_ != INVALID_HANDLE_VALUE) {
 		CloseHandle(ioEvent_);
-		ioEvent_ = INVALID_HANDLE_VALUE;
+		ioEvent_ = NULL;
 	}
 	readBuffer_.clear();
 }

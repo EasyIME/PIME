@@ -3,7 +3,7 @@ pull_requests:
     do_not_increment_build_number: true
 
 version: "{branch} build {build}"
-image: Visual Studio 2022
+image: Visual Studio 2026
 
 init:
     - git --version
@@ -15,6 +15,13 @@ install:
     - set PATH=%PATH%;%USERPROFILE%\.cargo\bin
     - git submodule init
     - git submodule update
+
+    # The appveyor image contains cmake 4.1 only, which doesn't support VS 2016.
+    # Download cmake 4.3.0 and add it to the PATH.
+    - appveyor DownloadFile https://cmake.org/files/v4.3/cmake-4.3.0-windows-x86_64.zip -FileName cmake43.zip
+    - 7z x cmake43.zip -oC:\cmake43
+    - set "PATH=C:\cmake43\cmake-4.3.0-windows-x86_64\bin;%PATH%"
+    - cmake --version   # should print 4.3.0
 
 build_script:
     - .\build.bat

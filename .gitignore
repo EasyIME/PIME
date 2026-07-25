@@ -6,3 +6,7 @@ node/input_methods/McBopomofo
 node/input_methods/McFoxim
 node/input_methods/McTabim
 installer/*.exe
+PIMELauncher/target/
+.claude/
+cleanup_x64.ps1
+replace_x64_dll.ps1

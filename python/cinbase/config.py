@@ -77,6 +77,9 @@ class CinBaseConfig:
         self.messageDurationTime = 3
         self.keyboardType = 0
         self.selDayiSymbolCharType = 0
+        self.intelligentSelect = True
+        self.intelligentSelectRecent = True
+        self.intelligentSelectContext = True
 
         self.ignoreSaveList = ["ignoreSaveList", "curdir", "cinFileList", "selCinFile", "imeDirName", "_version", "_lastUpdateTime"]
         self.curdir = os.path.abspath(os.path.dirname(__file__))
@@ -103,21 +106,33 @@ class CinBaseConfig:
         return self._lastTime
 
     def load(self):
+        # Layer 1: apply shipped defaults so new keys reach all users regardless of
+        # whether they already have an APPDATA config from a previous install.
+        default_config = os.path.join(self.getDefaultConfigDir(), "config.json")
+        try:
+            if os.path.exists(default_config) and os.stat(default_config).st_size > 0:
+                with open(default_config, "r") as f:
+                    self.__dict__.update(json.load(f))
+        except Exception:
+            pass
+
+        # Layer 2: overlay with the user's personal config (APPDATA or legacy home-dir path).
         filename = self.getConfigFile()
         try:
             if not os.path.exists(filename) or os.stat(filename).st_size == 0:
                 filename = os.path.join(os.path.expanduser("~"), "PIME", self.imeDirName, "config.json")
 
                 if not os.path.exists(filename) or os.stat(filename).st_size == 0:
-                    filename = os.path.join(self.getDefaultConfigDir(), "config.json")
+                    filename = None
                 else:
                     src_dir = os.path.join(os.path.expanduser("~"), "PIME", self.imeDirName)
                     dst_dir = self.getConfigDir()
                     self.copytree(src_dir, dst_dir)
                     filename = self.getConfigFile()
 
-            with open(filename, "r") as f:
-                self.__dict__.update(json.load(f))
+            if filename:
+                with open(filename, "r") as f:
+                    self.__dict__.update(json.load(f))
         except Exception:
             self.save()
         self.update()
@@ -129,8 +144,7 @@ class CinBaseConfig:
         filename = self.getConfigFile()
         try:
             with open(filename, "w") as f:
-                jsondata = {key: value for key, value in self.__dict__.items() if not key in self.ignoreSaveList}
-                js = json.dump(jsondata, f, sort_keys=True, indent=4)
+                json.dump(self.toJson(), f, sort_keys=True, indent=4)
             self.update()
         except Exception:
             pass # FIXME: handle I/O errors?

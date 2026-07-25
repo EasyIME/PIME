@@ -62,6 +62,14 @@ class BaseHandler(tornado.web.RequestHandler):
         self.application.reset_timeout()  # reset the quit server timeout
 
 
+class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
+
+    def set_extra_headers(self, path):
+        self.set_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.set_header("Pragma", "no-cache")
+        self.set_header("Expires", "0")
+
+
 class KeepAliveHandler(BaseHandler):
 
     @tornado.web.authenticated
@@ -98,36 +106,33 @@ class ConfigHandler(BaseHandler):
         os.makedirs(config_dir, exist_ok=True)
         # write the config to files
         config = data.get("config", None)
-        if config:
+        if config is not None:
             self.save_file("config.json", json.dumps(config, sort_keys=True, indent=4))
 
         symbols = data.get("symbols", None)
-        if symbols:
+        if symbols is not None:
             self.save_file("symbols.dat", symbols)
 
         swkb = data.get("swkb", None)
-        if swkb:
+        if swkb is not None:
             self.save_file("swkb.dat", swkb)
-        self.write('{"return":true}')
 
         fsymbols = data.get("fsymbols", None)
-        if fsymbols:
+        if fsymbols is not None:
             self.save_file("fsymbols.dat", fsymbols)
-        self.write('{"return":true}')
 
         phrase = data.get("phrase", None)
-        if phrase:
+        if phrase is not None:
             self.save_file("userphrase.dat", phrase)
-        self.write('{"return":true}')
 
         flangs = data.get("flangs", None)
-        if flangs:
+        if flangs is not None:
             self.save_file("flangs.dat", flangs)
-        self.write('{"return":true}')
 
         extendtable = data.get("extendtable", None)
-        if extendtable:
+        if extendtable is not None:
             self.save_file("extendtable.dat", extendtable)
+
         self.write('{"return":true}')
 
     def load_config(self):
@@ -169,10 +174,18 @@ class ConfigHandler(BaseHandler):
             return ""
 
     def save_file(self, filename, data):
+        target = os.path.join(config_dir, filename)
+        tmp_target = target + ".tmp"
         try:
-            with open(os.path.join(config_dir, filename), "w", encoding="UTF-8") as f:
+            with open(tmp_target, "w", encoding="UTF-8") as f:
                 f.write(data)
+            os.replace(tmp_target, target)
         except Exception:
+            try:
+                if os.path.exists(tmp_target):
+                    os.remove(tmp_target)
+            except Exception:
+                pass
             pass
 
 
@@ -185,7 +198,7 @@ class LoginHandler(BaseHandler):
             self.set_cookie(COOKIE_ID, token)
             if page_name != "user_phrase_editor":
                 page_name = "config"
-            self.redirect("/{}.html".format(page_name))
+            self.redirect("/{}.html?v={}".format(page_name, self.settings["access_token"][:8]))
 
 
 
@@ -200,11 +213,11 @@ class ConfigApp(tornado.web.Application):
             "debug": True
         }
         handlers = [
-            (r"/(.*\.html|config.js)", tornado.web.StaticFileHandler, {"path": current_ime_config_dir}),
-            (r"/(.*\.htm)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "config")}),
-            (r"/((css|fonts|images|js)/.*)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "config")}),
-            (r"/(icon.ico)", tornado.web.StaticFileHandler, {"path": current_ime_dir}),
-            (r"/(version.txt)", tornado.web.StaticFileHandler, {"path": os.path.join(current_dir, "../../")}),
+            (r"/(.*\.html|config.js)", NoCacheStaticFileHandler, {"path": current_ime_config_dir}),
+            (r"/(.*\.htm)", NoCacheStaticFileHandler, {"path": os.path.join(current_dir, "config")}),
+            (r"/((css|fonts|images|js)/.*)", NoCacheStaticFileHandler, {"path": os.path.join(current_dir, "config")}),
+            (r"/(icon.ico)", NoCacheStaticFileHandler, {"path": current_ime_dir}),
+            (r"/(version.txt)", NoCacheStaticFileHandler, {"path": os.path.join(current_dir, "../../")}),
             (r"/config", ConfigHandler),  # main configuration handler
             (r"/keep_alive", KeepAliveHandler),  # keep the api server alive
             (r"/login/(.*)", LoginHandler)  # authentication

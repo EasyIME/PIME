@@ -110,6 +110,9 @@ class CinBase:
         cbTS.easySymbolsWithShift = False
         cbTS.showPhrase = False
         cbTS.sortByPhrase = False
+        cbTS.intelligentSelect = False
+        cbTS.intelligentSelectRecent = False
+        cbTS.intelligentSelectContext = False
         cbTS.compositionBufferMode = False
         cbTS.autoMoveCursorInBrackets = False
         cbTS.imeReverseLookup = False
@@ -297,6 +300,9 @@ class CinBase:
         if hasattr(cbTS, 'dsymbols'):
             del cbTS.dsymbols
 
+        if hasattr(cbTS, 'cin'):
+            cbTS.cin.saveCountFile(force=True)
+
 
     # 使用者按下按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
     # return True，系統會呼叫 onKeyDown() 進一步處理這個按鍵
@@ -311,7 +317,7 @@ class CinBase:
         if cbTS.lastKeyDownTime == 0.0:
             cbTS.lastKeyDownTime = time.time()
 
-        if CinTable.loading:
+        if CinTable.loading or not getattr(cbTS, 'cin', None):
             return True
 
         # 使用者開始輸入，還沒送出前的編輯區內容稱 composition string
@@ -425,7 +431,7 @@ class CinBase:
         charStr = chr(charCode)
         charStrLow = charStr.lower()
 
-        if CinTable.loading:
+        if CinTable.loading or not getattr(cbTS, 'cin', None):
             if not cbTS.client.isUiLess:
                 messagestr = '正在載入輸入法碼表，請稍候...'
                 cbTS.isShowMessage = True
@@ -691,6 +697,9 @@ class CinBase:
             menu_playSoundWhenNonCand = "☑ 拆錯字碼時發出警告嗶聲提示" if cbTS.playSoundWhenNonCand else "☐ 拆錯字碼時發出警告嗶聲提示"
             menu_showPhrase = "☑ 輸出字串後顯示聯想字詞" if cbTS.showPhrase else "☐ 輸出字串後顯示聯想字詞"
             menu_sortByPhrase = "☑ 優先以聯想字詞排序候選清單" if cbTS.sortByPhrase else "☐ 優先以聯想字詞排序候選清單"
+            menu_intelligentSelect = "☑ 智慧選字" if cbTS.intelligentSelect else "☐ 智慧選字"
+            menu_intelligentSelectRecent = "☑ 智慧選字：近期選字優先" if cbTS.intelligentSelectRecent else "☐ 智慧選字：近期選字優先"
+            menu_intelligentSelectContext = "☑ 智慧選字：前一字上下文" if cbTS.intelligentSelectContext else "☐ 智慧選字：前一字上下文"
             menu_supportWildcard = "☑ 萬用字元查詢" if cbTS.supportWildcard else "☐ 萬用字元查詢"
             menu_imeReverseLookup = "☑ 反查輸入字根" if cbTS.imeReverseLookup else "☐ 反查輸入字根"
             menu_homophoneQuery = "☑ 同音字查詢" if cbTS.homophoneQuery else "☐ 同音字查詢"
@@ -701,9 +710,9 @@ class CinBase:
             elif cbTS.imeDirName == "cheez":
                 cbTS.smenucandidates = [menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase, menu_supportWildcard, menu_imeReverseLookup]
                 cbTS.smenuitems = ["autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "supportWildcard", "imeReverseLookup"]
-            elif cbTS.imeDirName == "chearray" or cbTS.imeDirName == "chedayi":
-                cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase, menu_supportWildcard, menu_imeReverseLookup, menu_homophoneQuery]
-                cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "supportWildcard", "imeReverseLookup", "homophoneQuery"]
+            elif cbTS.imeDirName == "chedayi":
+                cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase, menu_intelligentSelect, menu_intelligentSelectRecent, menu_intelligentSelectContext, menu_supportWildcard, menu_imeReverseLookup, menu_homophoneQuery]
+                cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "intelligentSelect", "intelligentSelectRecent", "intelligentSelectContext", "supportWildcard", "imeReverseLookup", "homophoneQuery"]
             else:
                 cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase, menu_supportWildcard, menu_imeReverseLookup, menu_homophoneQuery]
                 cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "supportWildcard", "imeReverseLookup", "homophoneQuery"]
@@ -1445,6 +1454,7 @@ class CinBase:
                 candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
                 if cbTS.sortByPhrase and candidates:
                     candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
+                candidates = self.sortByIntelligentSelect(cbTS, cbTS.compositionChar, candidates)
                 if cbTS.compositionBufferMode and not cbTS.selcandmode:
                     cbTS.compositionBufferType = "default"
             elif cbTS.imeDirName == "chepinyin" and cbTS.cinFileList[cbTS.cfg.selCinType] == "thpinyin.json" and not cbTS.ctrlsymbolsmode:
@@ -1452,6 +1462,7 @@ class CinBase:
                     candidates = cbTS.cin.getCharDef(cbTS.compositionChar + '1')
                     if cbTS.sortByPhrase and candidates:
                         candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
+                    candidates = self.sortByIntelligentSelect(cbTS, cbTS.compositionChar + "1", candidates)
                     if cbTS.compositionBufferMode and not cbTS.selcandmode:
                         cbTS.compositionBufferType = "default"
             elif cbTS.fullShapeSymbols and cbTS.fsymbols.isInCharDef(cbTS.compositionChar) and cbTS.closemenu:
@@ -1488,6 +1499,7 @@ class CinBase:
                 cbTS.isWildcardChardefs = True
                 if cbTS.sortByPhrase and candidates:
                     candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
+                candidates = self.sortByIntelligentSelect(cbTS, cbTS.compositionChar, candidates)
 
         # 組字編輯模式
         if cbTS.compositionBufferMode and cbTS.isComposing() and cbTS.compositionChar == "" and cbTS.closemenu and not cbTS.multifunctionmode and not cbTS.phrasemode and not cbTS.selcandmode:
@@ -1590,6 +1602,7 @@ class CinBase:
                             candidates = cbTS.cin.getCharDef(sellist[1])
                             if cbTS.sortByPhrase and candidates:
                                 candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
+                            candidates = self.sortByIntelligentSelect(cbTS, cbTS.compositionChar, candidates)
                             cbTS.selcandmode = True
                     else:
                         if cbTS.cin.isHaveKey(cbTS.compositionBufferString[cbTS.compositionBufferCursor]):
@@ -1597,6 +1610,7 @@ class CinBase:
                             candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
                             if cbTS.sortByPhrase and candidates:
                                 candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
+                            candidates = self.sortByIntelligentSelect(cbTS, cbTS.compositionChar, candidates)
                             cbTS.selcandmode = True
                         else:
                             cbTS.selcandmode = False
@@ -1641,6 +1655,7 @@ class CinBase:
                                 candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
                                 if cbTS.sortByPhrase and candidates:
                                     candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
+                                candidates = self.sortByIntelligentSelect(cbTS, cbTS.compositionChar, candidates)
                 # 如果是碼表標點
                 if cbTS.cin.isInKeyName(cbTS.compositionChar[0]):
                     if cbTS.cin.getKeyName(cbTS.compositionChar[0]) in cbTS.directCommitSymbolList:
@@ -1666,6 +1681,7 @@ class CinBase:
                                 candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
                                 if cbTS.sortByPhrase and candidates:
                                     candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
+                                candidates = self.sortByIntelligentSelect(cbTS, cbTS.compositionChar, candidates)
 
             if cbTS.langMode == CHINESE_MODE and cbTS.dayisymbolsmode and len(cbTS.compositionChar) == 1 and (keyCode == VK_SPACE or keyCode == VK_RETURN):
                 candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
@@ -1846,6 +1862,7 @@ class CinBase:
                                 i = cbTS.selKeys.index(charStr)
                             if i < cbTS.candPerPage and i < len(cbTS.candidateList):
                                 commitStr = cbTS.candidateList[i]
+                                self.addIntelligentSelectCount(cbTS, cbTS.compositionChar, commitStr)
                                 cbTS.lastCommitString = commitStr
                                 self.setOutputString(cbTS, RCinTable, commitStr)
                                 if cbTS.showPhrase and not cbTS.selcandmode:
@@ -1935,6 +1952,7 @@ class CinBase:
                         if not cbTS.homophoneselpinyinmode:
                             # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                             commitStr = cbTS.candidateList[candCursor]
+                            self.addIntelligentSelectCount(cbTS, cbTS.compositionChar, commitStr)
                             cbTS.lastCommitString = commitStr
                             self.setOutputString(cbTS, RCinTable, commitStr)
                             if cbTS.showPhrase and not cbTS.selcandmode:
@@ -2200,6 +2218,7 @@ class CinBase:
                                     candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
                                     if cbTS.sortByPhrase and candidates:
                                         candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
+                                    candidates = self.sortByIntelligentSelect(cbTS, cbTS.compositionChar, candidates)
                                 if candidates:
                                     pagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
                                     cbTS.setCandidateList(pagecandidates[currentCandPage])
@@ -2603,6 +2622,12 @@ class CinBase:
                 cbTS.showPhrase = not cbTS.showPhrase
             elif commandItem == "sortByPhrase":
                 cbTS.sortByPhrase = not cbTS.sortByPhrase
+            elif commandItem == "intelligentSelect":
+                cbTS.intelligentSelect = not cbTS.intelligentSelect
+            elif commandItem == "intelligentSelectRecent":
+                cbTS.intelligentSelectRecent = not cbTS.intelligentSelectRecent
+            elif commandItem == "intelligentSelectContext":
+                cbTS.intelligentSelectContext = not cbTS.intelligentSelectContext
             elif commandItem == "imeReverseLookup":
                 cbTS.imeReverseLookup = not cbTS.imeReverseLookup
             elif commandItem == "homophoneQuery":
@@ -2768,6 +2793,27 @@ class CinBase:
             charCode += 0xfee0
             charStr = chr(charCode)
         return charStr
+
+    def getIntelligentSelectPreviousChar(self, cbTS):
+        lastCommitString = getattr(cbTS, 'lastCommitString', '')
+        if not isinstance(lastCommitString, str) or not lastCommitString:
+            return ''
+        return lastCommitString[-1:]
+
+    def sortByIntelligentSelect(self, cbTS, key, candidates):
+        if cbTS.imeDirName != "chedayi" or not getattr(cbTS, 'intelligentSelect', False) or not candidates:
+            return candidates
+        return cbTS.cin.sortByCount(
+            key,
+            candidates,
+            self.getIntelligentSelectPreviousChar(cbTS),
+            getattr(cbTS, 'intelligentSelectRecent', True),
+            getattr(cbTS, 'intelligentSelectContext', True)
+        )
+
+    def addIntelligentSelectCount(self, cbTS, key, commitStr):
+        if cbTS.imeDirName == "chedayi" and getattr(cbTS, 'intelligentSelect', False) and key:
+            cbTS.cin.addCount(key, commitStr, self.getIntelligentSelectPreviousChar(cbTS))
 
     def sortByPhrase(self, cbTS, candidates):
         sortbyphraselist = []
@@ -3127,6 +3173,11 @@ class CinBase:
         # 優先以聯想字詞排序候選清單?
         cbTS.sortByPhrase = cfg.sortByPhrase
 
+        # 智慧選字 (依使用者選字頻率自動排序候選清單)?
+        cbTS.intelligentSelect = getattr(cfg, 'intelligentSelect', True)
+        cbTS.intelligentSelectRecent = getattr(cfg, 'intelligentSelectRecent', True)
+        cbTS.intelligentSelectContext = getattr(cfg, 'intelligentSelectContext', True)
+
         # 拆錯字碼時自動清除輸入字串?
         cbTS.autoClearCompositionChar = cfg.autoClearCompositionChar
 
@@ -3192,8 +3243,7 @@ class CinBase:
 
         if hasattr(cbTS, 'cin'):
             if hasattr(cbTS.cin, 'cincount'):
-                if not os.path.exists(cbTS.cin.getCountFile()):
-                    cbTS.cin.saveCountFile()
+                cbTS.cin.saveCountFile()
 
         # 如果有更換輸入法碼表，就重新載入碼表資料
         if not CinTable.loading:
@@ -3278,18 +3328,22 @@ class LoadPhraseData(threading.Thread):
 
     def run(self):
         self.PhraseData.loading = True
-        cfg = self.cbTS.cfg
-        datadirs = (cfg.getConfigDir(), cfg.getDataDir())
+        try:
+            cfg = self.cbTS.cfg
+            datadirs = (cfg.getConfigDir(), cfg.getDataDir())
 
-        if hasattr(self.PhraseData.phrase, '__del__'):
-            self.PhraseData.phrase.__del__()
+            if hasattr(self.PhraseData.phrase, '__del__'):
+                self.PhraseData.phrase.__del__()
 
-        self.PhraseData.phrase = None
+            self.PhraseData.phrase = None
 
-        phrasePath = cfg.findFile(datadirs, "phrase.json")
-        with io.open(phrasePath, 'r', encoding='utf8') as fs:
-            self.PhraseData.phrase = phrase(fs)
-        self.PhraseData.loading = False
+            phrasePath = cfg.findFile(datadirs, "phrase.json")
+            with io.open(phrasePath, 'r', encoding='utf8') as fs:
+                self.PhraseData.phrase = phrase(fs)
+        except Exception:
+            pass
+        finally:
+            self.PhraseData.loading = False
 
 
 class LoadCinTable(threading.Thread):
@@ -3303,42 +3357,47 @@ class LoadCinTable(threading.Thread):
             self.cbTS.debug.setStartTimer("LoadCinTable")
 
         self.CinTable.loading = True
-        if self.cbTS.cfg.selCinType >= len(self.cbTS.cinFileList):
-            self.cbTS.cfg.selCinType = 0
-        selCinFile = self.cbTS.cinFileList[self.cbTS.cfg.selCinType]
-        jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
+        selCinFile = None
+        try:
+            if self.cbTS.cfg.selCinType >= len(self.cbTS.cinFileList):
+                self.cbTS.cfg.selCinType = 0
+            selCinFile = self.cbTS.cinFileList[self.cbTS.cfg.selCinType]
+            jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
 
-        if self.cbTS.reLoadCinTable or not hasattr(self.cbTS, 'cin'):
-            self.cbTS.reLoadCinTable = False
+            if self.cbTS.reLoadCinTable or not hasattr(self.cbTS, 'cin'):
+                self.cbTS.reLoadCinTable = False
 
-            if hasattr(self.cbTS, 'cin'):
-                self.cbTS.cin.__del__()
-            if hasattr(self.CinTable.cin, '__del__'):
-                self.CinTable.cin.__del__()
+                if hasattr(self.cbTS, 'cin'):
+                    self.cbTS.cin.__del__()
+                if hasattr(self.CinTable.cin, '__del__'):
+                    self.CinTable.cin.__del__()
 
-            self.cbTS.cin = None
-            self.CinTable.cin = None
+                self.cbTS.cin = None
+                self.CinTable.cin = None
 
-            with io.open(jsonPath, 'r', encoding='utf8') as fs:
-                self.cbTS.cin = Cin(fs, self.cbTS.imeDirName, self.cbTS.ignorePrivateUseArea)
-            self.CinTable.cin = self.cbTS.cin
-            self.CinTable.curCinType = self.cbTS.cfg.selCinType
+                with io.open(jsonPath, 'r', encoding='utf8') as fs:
+                    self.cbTS.cin = Cin(fs, self.cbTS.imeDirName, self.cbTS.ignorePrivateUseArea)
+                self.CinTable.cin = self.cbTS.cin
+                self.CinTable.curCinType = self.cbTS.cfg.selCinType
 
-        if not hasattr(self.cbTS, 'extendtable'):
-            if self.cbTS.cfg.userExtendTable:
-                datadirs = (self.cbTS.cfg.getConfigDir(), self.cbTS.cfg.getDataDir())
-                extendtablePath = self.cbTS.cfg.findFile(datadirs, "extendtable.dat")
-                with io.open(extendtablePath, encoding='utf-8') as fs:
-                    self.cbTS.extendtable = extendtable(fs)
-            else:
-                self.cbTS.extendtable = {}
-        self.cbTS.cin.updateCinTable(self.cbTS.cfg.userExtendTable, self.cbTS.cfg.priorityExtendTable, self.cbTS.extendtable, self.cbTS.cfg.ignorePrivateUseArea)
-        self.CinTable.userExtendTable = self.cbTS.cfg.userExtendTable
-        self.CinTable.priorityExtendTable = self.cbTS.cfg.priorityExtendTable
-        self.CinTable.ignorePrivateUseArea = self.cbTS.cfg.ignorePrivateUseArea
-        self.CinTable.loading = False
+            if not hasattr(self.cbTS, 'extendtable'):
+                if self.cbTS.cfg.userExtendTable:
+                    datadirs = (self.cbTS.cfg.getConfigDir(), self.cbTS.cfg.getDataDir())
+                    extendtablePath = self.cbTS.cfg.findFile(datadirs, "extendtable.dat")
+                    with io.open(extendtablePath, encoding='utf-8') as fs:
+                        self.cbTS.extendtable = extendtable(fs)
+                else:
+                    self.cbTS.extendtable = {}
+            self.cbTS.cin.updateCinTable(self.cbTS.cfg.userExtendTable, self.cbTS.cfg.priorityExtendTable, self.cbTS.extendtable, self.cbTS.cfg.ignorePrivateUseArea)
+            self.CinTable.userExtendTable = self.cbTS.cfg.userExtendTable
+            self.CinTable.priorityExtendTable = self.cbTS.cfg.priorityExtendTable
+            self.CinTable.ignorePrivateUseArea = self.cbTS.cfg.ignorePrivateUseArea
+        except Exception:
+            pass
+        finally:
+            self.CinTable.loading = False
 
-        if DEBUG_MODE:
+        if DEBUG_MODE and selCinFile:
             self.cbTS.debug.setEndTimer("LoadCinTable")
             self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [C]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.jsonNameDict[selCinFile] + "」碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadCinTable") + " 秒"
 
@@ -3364,25 +3423,30 @@ class LoadRCinTable(threading.Thread):
             self.cbTS.debug.setStartTimer("LoadRCinTable")
 
         self.RCinTable.loading = True
-        selCinFile = self.rcinFileList[self.cbTS.cfg.selRCinType]
-        jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
+        selCinFile = None
+        try:
+            selCinFile = self.rcinFileList[self.cbTS.cfg.selRCinType]
+            jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
 
-        if self.RCinTable.cin is not None and hasattr(self.RCinTable.cin, '__del__'):
-            self.RCinTable.cin.__del__()
+            if self.RCinTable.cin is not None and hasattr(self.RCinTable.cin, '__del__'):
+                self.RCinTable.cin.__del__()
 
-        self.RCinTable.cin = None
+            self.RCinTable.cin = None
 
-        if os.path.exists(jsonPath):
-            self.cbTS.RCinFileNotExist = False
-            with io.open(jsonPath, 'r', encoding='utf8') as fs:
-                self.RCinTable.cin = RCin(fs, self.cbTS.imeDirName)
-        else:
-            self.cbTS.RCinFileNotExist = True
-            
-        self.RCinTable.curCinType = self.cbTS.cfg.selRCinType
-        self.RCinTable.loading = False
+            if os.path.exists(jsonPath):
+                self.cbTS.RCinFileNotExist = False
+                with io.open(jsonPath, 'r', encoding='utf8') as fs:
+                    self.RCinTable.cin = RCin(fs, self.cbTS.imeDirName)
+            else:
+                self.cbTS.RCinFileNotExist = True
 
-        if DEBUG_MODE:
+            self.RCinTable.curCinType = self.cbTS.cfg.selRCinType
+        except Exception:
+            pass
+        finally:
+            self.RCinTable.loading = False
+
+        if DEBUG_MODE and selCinFile:
             self.cbTS.debug.setEndTimer("LoadRCinTable")
             self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [R]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.jsonNameDict[selCinFile] + "」反查碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadRCinTable") + " 秒"
 
@@ -3398,19 +3462,24 @@ class LoadHCinTable(threading.Thread):
             self.cbTS.debug.setStartTimer("LoadHCinTable")
 
         self.HCinTable.loading = True
-        selCinFile = CinBase.hcinFileList[self.cbTS.cfg.selHCinType]
-        jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
+        selCinFile = None
+        try:
+            selCinFile = CinBase.hcinFileList[self.cbTS.cfg.selHCinType]
+            jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
 
-        if self.HCinTable.cin is not None and hasattr(self.HCinTable.cin, '__del__'):
-            self.HCinTable.cin.__del__()
+            if self.HCinTable.cin is not None and hasattr(self.HCinTable.cin, '__del__'):
+                self.HCinTable.cin.__del__()
 
-        self.HCinTable.cin = None
+            self.HCinTable.cin = None
 
-        with io.open(jsonPath, 'r', encoding='utf8') as fs:
-            self.HCinTable.cin = HCin(fs, self.cbTS.imeDirName)
-        self.HCinTable.curCinType = self.cbTS.cfg.selHCinType
-        self.HCinTable.loading = False
+            with io.open(jsonPath, 'r', encoding='utf8') as fs:
+                self.HCinTable.cin = HCin(fs, self.cbTS.imeDirName)
+            self.HCinTable.curCinType = self.cbTS.cfg.selHCinType
+        except Exception:
+            pass
+        finally:
+            self.HCinTable.loading = False
 
-        if DEBUG_MODE:
+        if DEBUG_MODE and selCinFile:
             self.cbTS.debug.setEndTimer("LoadHCinTable")
             self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [H]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.jsonNameDict[selCinFile] + "」同音字碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadHCinTable") + " 秒"

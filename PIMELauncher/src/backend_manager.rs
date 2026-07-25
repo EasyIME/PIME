@@ -72,17 +72,31 @@ impl BackendManager {
 
     /// Retrieves a channel to send messages directly to the backend.
     pub async fn get_backend_input(&self, backend_name: &str) -> Option<mpsc::Sender<String>> {
-        let mut state = self.state.lock().await;
-        if !state.backends.contains_key(backend_name) {
-            // Dynamically look up the backend configuration
-            if let Some(config) = self.registry.get_backend(backend_name) {
-                let backend = self.spawn_backend_process(config).await;
-                state.backends.insert(backend_name.to_string(), backend);
-            } else {
+        // Fast path: backend already running — take and release the lock immediately.
+        {
+            let state = self.state.lock().await;
+            if let Some(b) = state.backends.get(backend_name) {
+                return Some(b.stdin_tx.clone());
+            }
+        }
+
+        // Slow path: spawn the backend without holding the lock, so other clients
+        // are not blocked during the (potentially multi-second) process startup.
+        let config = match self.registry.get_backend(backend_name) {
+            Some(c) => c.clone(),
+            None => {
                 error!("Unknown backend requested: {}", backend_name);
                 return None;
             }
-        }
+        };
+        let backend = self.spawn_backend_process(&config).await;
+
+        // Re-acquire lock to insert; use entry() so a concurrent spawn doesn't overwrite.
+        let mut state = self.state.lock().await;
+        state
+            .backends
+            .entry(backend_name.to_string())
+            .or_insert(backend);
         state.backends.get(backend_name).map(|b| b.stdin_tx.clone())
     }
 
@@ -213,6 +227,7 @@ impl BackendManager {
             .current_dir(&working_dir)
             .creation_flags(CREATE_NO_WINDOW)
             .env("PYTHONIOENCODING", "utf-8:ignore")
+            .env("PYTHONUNBUFFERED", "1")
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
@@ -289,14 +304,14 @@ impl BackendManager {
         loop {
             tokio::select! {
                 msg = stdin_rx.recv() => {
-                    let Some(data) = msg else { 
+                    let Some(data) = msg else {
                         info!("Backend {} stdin channel closed. Exiting input loop.", backend_name);
-                        break; 
+                        break;
                     };
                     let now = Self::current_ms();
                     last_request_time = Some(now);
                     info!("Backend {} received request from channel. Data len: {}. req_t={}", backend_name, data.len(), now);
-                    
+
                     // LinesCodec expects data without the newline, it will add it for us.
                     let write_res = tokio::time::timeout(Duration::from_secs(5), stdin_writer.send(data)).await;
                     if let Err(_) = write_res {
@@ -315,12 +330,12 @@ impl BackendManager {
                     if let Some(req_t) = last_request_time {
                         let last_out = last_output_time.load(Ordering::SeqCst);
                         // Log tick status occasionally or at least for debugging
-                        info!("Watchdog tick for {}: last_out={}, req_t={}, now={}, delta={}", 
+                        debug!("Watchdog tick for {}: last_out={}, req_t={}, now={}, delta={}",
                             backend_name, last_out, req_t, now, now as i64 - req_t as i64);
-                        
+
                         // If no output has been received since the last request and it's been more than 15 seconds
                         if last_out < req_t && (now - req_t) > 15000 {
-                            error!("Backend {} seems to be hung (no output for 15s after request). last_out={}, req_t={}, now={}. Forcing restart.", 
+                            error!("Backend {} seems to be hung (no output for 15s after request). last_out={}, req_t={}, now={}. Forcing restart.",
                                 backend_name, last_out, req_t, now);
                             let _ = child_process.kill().await;
                             break;

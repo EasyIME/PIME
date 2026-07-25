@@ -580,6 +580,20 @@ SectionGroup /e $(NODE_SECTION_GROUP) node_section_group
 				StrCpy $INST_NODE "True"
 		SectionEnd
 
+		Section $(MCFOXIM) McFoxim
+				SectionIn 2
+				SetOutPath "$INSTDIR\node\input_methods\McFoxim"
+				File /r "..\node\input_methods\McFoxim\*.*"
+				StrCpy $INST_NODE "True"
+		SectionEnd
+
+		Section $(MCTABIM) McTabim
+				SectionIn 2
+				SetOutPath "$INSTDIR\node\input_methods\McTabim"
+				File /r "..\node\input_methods\McTabim\*.*"
+				StrCpy $INST_NODE "True"
+		SectionEnd
+
 		Section $(EMOJIME) emojime
 				SectionIn 2
 				SetOutPath "$INSTDIR\node\input_methods\emojime"
@@ -733,6 +747,8 @@ SectionEnd
     !insertmacro MUI_DESCRIPTION_TEXT ${cheez} $(cheez_DESC)
     !insertmacro MUI_DESCRIPTION_TEXT ${rime} $(rime_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${mcbopomofo} $(mcbopomofo_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${mcfoxim} $(mcfoxim_DESC)
+	!insertmacro MUI_DESCRIPTION_TEXT ${mctabim} $(mctabim_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${emojime} $(emojime_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${cheeng} $(cheeng_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${braille_chewing} $(braille_chewing_DESC)

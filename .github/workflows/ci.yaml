@@ -24,12 +24,12 @@ jobs:
       id-token: write
       contents: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: 'true'
 
       - name: Use Node.js 21.x
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 21.x
 
@@ -114,7 +114,7 @@ jobs:
       # ---------------------------------------------------------------
       - name: Build the installer
         run: |
-          cmd /C "C:\Program Files (x86)\NSIS\Bin\makensis.exe" ".\installer\installer.nsi"
+          "C:\Program Files (x86)\NSIS\Bin\makensis.exe" ".\installer\installer.nsi"
 
       # ---------------------------------------------------------------
       # Upload the unsigned installer – the release job will sign it.

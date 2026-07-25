@@ -113,6 +113,7 @@ jobs:
       # Build the installer (used for both test and release builds).
       # ---------------------------------------------------------------
       - name: Build the installer
+        shell: cmd
         run: |
           "C:\Program Files (x86)\NSIS\Bin\makensis.exe" ".\installer\installer.nsi"
 

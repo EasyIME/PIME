@@ -12,6 +12,7 @@ use futures::{SinkExt, StreamExt};
 use tokio_util::codec::{FramedRead, FramedWrite, LinesCodec};
 
 /// Manages the lifecycle of backend processes and routes messages between clients and backends.
+
 #[derive(Clone)]
 pub struct BackendManager {
     state: Arc<Mutex<BackendManagerState>>,
@@ -177,7 +178,10 @@ impl BackendManager {
                 stderr_task.abort();
 
                 if exit_reason == BackendExitReason::Normal {
-                    info!("Backend {} input channel closed permanently. Stopping manager loop.", backend_name_clone);
+                    info!(
+                        "Backend {} input channel closed permanently. Stopping manager loop.",
+                        backend_name_clone
+                    );
                     break; // Exit the loop entirely to prevent infinite restarts!
                 }
 
@@ -249,9 +253,12 @@ impl BackendManager {
     ) {
         // TODO: Need to detect if the backend process hangs and is not responsive.
         // When a backend process hangs, reading from its stdout may blocks forever.
-        let mut stdout_reader = FramedRead::new(stdout, LinesCodec::new_with_max_length(1048576));
+        let mut stdout_reader = FramedRead::new(
+            stdout,
+            LinesCodec::new_with_max_length(protocol::MAX_MESSAGE_LINE_LENGTH),
+        );
         while let Some(result) = stdout_reader.next().await {
-            last_output_time.store(Self::current_ms(), Ordering::SeqCst);
+            last_output_time.store(Self::current_ms(), Ordering::Relaxed);
             let line = match result {
                 Ok(l) => l,
                 Err(e) => {
@@ -301,7 +308,10 @@ impl BackendManager {
         backend_name: &str,
         last_output_time: Arc<AtomicU64>,
     ) -> BackendExitReason {
-        let mut stdin_writer = FramedWrite::new(stdin, LinesCodec::new_with_max_length(1048576));
+        let mut stdin_writer = FramedWrite::new(
+            stdin,
+            LinesCodec::new_with_max_length(protocol::MAX_MESSAGE_LINE_LENGTH),
+        );
         let mut last_request_time: Option<u64> = None;
 
         let mut watchdog_interval = tokio::time::interval(Duration::from_secs(1));
@@ -310,15 +320,18 @@ impl BackendManager {
             tokio::select! {
                 msg = stdin_rx.recv() => {
                     let Some(data) = msg else {
+                        // mpsc::Receiver returns None when all Senders are dropped (e.g., Launcher shutdown
+                        // or explicit backend removal from BackendManager). In that case, no further input
+                        // will ever arrive. Thus, we exit normally without restarting the process.
                         info!("Backend {} stdin channel closed. Exiting input loop.", backend_name);
                         return BackendExitReason::Normal;
                     };
                     let now = Self::current_ms();
                     last_request_time = Some(now);
-                    info!("Backend {} received request from channel. Data len: {}. req_t={}", backend_name, data.len(), now);
+                    info!("Backend {} received request from channel. Data len: {}.", backend_name, data.len());
 
                     // LinesCodec expects data without the newline, it will add it for us.
-                    let write_res = tokio::time::timeout(Duration::from_secs(5), stdin_writer.send(data)).await;
+                    let write_res = tokio::time::timeout(protocol::BACKEND_WRITE_TIMEOUT, stdin_writer.send(data)).await;
                     if let Err(_) = write_res {
                         error!("Timeout writing to backend {}. Forcing restart.", backend_name);
                         let _ = child_process.kill().await;
@@ -333,15 +346,13 @@ impl BackendManager {
                 _ = watchdog_interval.tick() => {
                     let now = Self::current_ms();
                     if let Some(req_t) = last_request_time {
-                        let last_out = last_output_time.load(Ordering::SeqCst);
-                        // Log tick status occasionally or at least for debugging
-                        debug!("Watchdog tick for {}: last_out={}, req_t={}, now={}, delta={}",
-                            backend_name, last_out, req_t, now, now as i64 - req_t as i64);
+                        let last_out = last_output_time.load(Ordering::Relaxed);
+                        debug!("Watchdog tick for {}: last_out={}, req_t={}, now={}, delta={}ms",
+                        backend_name, last_out, req_t, now, now.saturating_sub(req_t));
 
-                        // If no output has been received since the last request and it's been more than 15 seconds
-                        if last_out < req_t && (now - req_t) > 15000 {
-                            error!("Backend {} seems to be hung (no output for 15s after request). last_out={}, req_t={}, now={}. Forcing restart.",
-                                backend_name, last_out, req_t, now);
+                        if last_out < req_t && now - req_t > protocol::HANG_TIMEOUT.as_millis() as u64 {
+                            error!("Backend {} seems to be hung (no output for {}ms after request). Forcing restart.",
+                                backend_name, protocol::HANG_TIMEOUT.as_millis());
                             let _ = child_process.kill().await;
                             return BackendExitReason::Error;
                         }

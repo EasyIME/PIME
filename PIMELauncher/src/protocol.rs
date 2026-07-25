@@ -1,7 +1,14 @@
 use serde_json::Value;
+use std::time::Duration;
 
 /// Maximum allowed length (in bytes) for a single message line.
 pub const MAX_MESSAGE_LINE_LENGTH: usize = 1048576;
+
+/// Timeout for backend output hang detection.
+pub const HANG_TIMEOUT: Duration = Duration::from_secs(15);
+
+/// Timeout for backend write operations.
+pub const BACKEND_WRITE_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// Parses the first line received from a client to determine which backend to use.
 ///

@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::process::Command;
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
 
 use crate::backend_registry::{BackendConfig, BackendRegistry};
@@ -21,6 +21,15 @@ pub struct BackendManager {
 struct BackendManagerState {
     backends: HashMap<String, BackendProcess>,
     clients: HashMap<String, mpsc::Sender<String>>,
+}
+
+/// The reason why the backend process was terminated.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum BackendExitReason {
+    /// Normal shutdown. The input channel was closed because the launcher is shutting down.
+    Normal,
+    /// An error occurred (e.g., process crashed, write timeout, watchdog timeout). The process should be restarted.
+    Error,
 }
 
 struct BackendProcess {
@@ -54,7 +63,7 @@ impl BackendManager {
 
     /// Registers a client with its response channel.
     pub async fn register_client(&self, client_id: String) -> mpsc::Receiver<String> {
-        let mut state = self.state.lock().await;
+        let mut state = self.state.lock().unwrap();
         let (tx, rx) = tokio::sync::mpsc::channel::<String>(1024);
         state.clients.insert(client_id, tx);
         rx
@@ -66,22 +75,17 @@ impl BackendManager {
         self.send_to_backend(backend_name, client_id, r#"{"method":"close"}"#)
             .await;
 
-        let mut state = self.state.lock().await;
+        let mut state = self.state.lock().unwrap();
         state.clients.remove(client_id);
     }
 
     /// Retrieves a channel to send messages directly to the backend.
     pub async fn get_backend_input(&self, backend_name: &str) -> Option<mpsc::Sender<String>> {
-        // Fast path: backend already running — take and release the lock immediately.
-        {
-            let state = self.state.lock().await;
-            if let Some(b) = state.backends.get(backend_name) {
-                return Some(b.stdin_tx.clone());
-            }
+        let mut state = self.state.lock().unwrap();
+        if let Some(b) = state.backends.get(backend_name) {
+            return Some(b.stdin_tx.clone());
         }
 
-        // Slow path: spawn the backend without holding the lock, so other clients
-        // are not blocked during the (potentially multi-second) process startup.
         let config = match self.registry.get_backend(backend_name) {
             Some(c) => c.clone(),
             None => {
@@ -89,15 +93,10 @@ impl BackendManager {
                 return None;
             }
         };
-        let backend = self.spawn_backend_process(&config).await;
-
-        // Re-acquire lock to insert; use entry() so a concurrent spawn doesn't overwrite.
-        let mut state = self.state.lock().await;
-        state
-            .backends
-            .entry(backend_name.to_string())
-            .or_insert(backend);
-        state.backends.get(backend_name).map(|b| b.stdin_tx.clone())
+        let backend = self.spawn_backend_process(&config);
+        let stdin_tx = backend.stdin_tx.clone();
+        state.backends.insert(backend_name.to_string(), backend);
+        Some(stdin_tx)
     }
 
     /// Sends a message to a specific backend, spawning it if necessary.
@@ -117,15 +116,15 @@ impl BackendManager {
                     "Failed to send to internal channel for backend {}: {}",
                     backend_name, e
                 );
-                // The backend task seems to be dead.
-                let mut state = self.state.lock().await;
-                state.backends.remove(backend_name);
+                // The backend task seems to be dead. The background loop will auto-recover it.
+                // The backend_stdin is an MPSC channel, not the stdin of the crashed process,
+                // so it will remain valid after the backend crashes.
             }
         }
     }
 
     /// Spawns a backend process and maintains its lifetime in a background task.
-    async fn spawn_backend_process(&self, config: &BackendConfig) -> BackendProcess {
+    fn spawn_backend_process(&self, config: &BackendConfig) -> BackendProcess {
         let backend_name = config.name.clone();
         let (stdin_tx, mut stdin_rx) = mpsc::channel::<String>(1024);
         let backend_name_clone = backend_name.to_string();
@@ -165,7 +164,7 @@ impl BackendManager {
                     Self::log_backend_stderr(stderr, backend_name_for_stderr).await;
                 });
 
-                Self::forward_inputs_to_backend(
+                let exit_reason = Self::forward_inputs_to_backend(
                     &mut stdin_rx,       // Inputs received from client connections.
                     stdin,               // Backend stdin.
                     &mut child_process,  // Backend process.
@@ -176,6 +175,12 @@ impl BackendManager {
 
                 stdout_task.abort();
                 stderr_task.abort();
+
+                if exit_reason == BackendExitReason::Normal {
+                    info!("Backend {} input channel closed permanently. Stopping manager loop.", backend_name_clone);
+                    break; // Exit the loop entirely to prevent infinite restarts!
+                }
+
                 warn!("Restarting backend {}", backend_name_clone);
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
@@ -263,7 +268,7 @@ impl BackendManager {
             debug!("Routing to client {}: {:?}", client_id, payload);
 
             let tx = {
-                let state = self.state.lock().await;
+                let state = self.state.lock().unwrap();
                 state.clients.get(&client_id).cloned()
             };
 
@@ -275,7 +280,7 @@ impl BackendManager {
                     tokio::time::timeout(Duration::from_millis(500), tx.send(payload)).await
                 {
                     warn!("Client {} buffer full for 500ms. Force disconnecting to prevent backend stall.", client_id);
-                    let mut state = self.state.lock().await;
+                    let mut state = self.state.lock().unwrap();
                     state.clients.remove(&client_id);
                 }
             } else {
@@ -295,7 +300,7 @@ impl BackendManager {
         child_process: &mut tokio::process::Child,
         backend_name: &str,
         last_output_time: Arc<AtomicU64>,
-    ) {
+    ) -> BackendExitReason {
         let mut stdin_writer = FramedWrite::new(stdin, LinesCodec::new_with_max_length(1048576));
         let mut last_request_time: Option<u64> = None;
 
@@ -306,7 +311,7 @@ impl BackendManager {
                 msg = stdin_rx.recv() => {
                     let Some(data) = msg else {
                         info!("Backend {} stdin channel closed. Exiting input loop.", backend_name);
-                        break;
+                        return BackendExitReason::Normal;
                     };
                     let now = Self::current_ms();
                     last_request_time = Some(now);
@@ -317,12 +322,12 @@ impl BackendManager {
                     if let Err(_) = write_res {
                         error!("Timeout writing to backend {}. Forcing restart.", backend_name);
                         let _ = child_process.kill().await;
-                        break;
+                        return BackendExitReason::Error;
                     }
                     if let Err(e) = write_res.unwrap() {
                         error!("Failed to write to backend {}: {}", backend_name, e);
                         let _ = child_process.kill().await;
-                        break;
+                        return BackendExitReason::Error;
                     }
                 }
                 _ = watchdog_interval.tick() => {
@@ -338,13 +343,13 @@ impl BackendManager {
                             error!("Backend {} seems to be hung (no output for 15s after request). last_out={}, req_t={}, now={}. Forcing restart.",
                                 backend_name, last_out, req_t, now);
                             let _ = child_process.kill().await;
-                            break;
+                            return BackendExitReason::Error;
                         }
                     }
                 }
                 status = child_process.wait() => {
                     warn!("Backend {} exited with status {:?}", backend_name, status);
-                    break;
+                    return BackendExitReason::Error;
                 }
             }
         }
@@ -371,13 +376,13 @@ mod tests {
         let _ = manager.register_client("client1".to_string()).await;
 
         {
-            let state = manager.state.lock().await;
+            let state = manager.state.lock().unwrap();
             assert!(state.clients.contains_key("client1"));
         }
 
         manager.unregister_client("client1", "dummy").await;
         {
-            let state = manager.state.lock().await;
+            let state = manager.state.lock().unwrap();
             assert!(!state.clients.contains_key("client1"));
         }
     }

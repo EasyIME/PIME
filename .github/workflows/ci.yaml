@@ -169,18 +169,7 @@ jobs:
           wait-for-completion: true
           output-artifact-directory: 'signed-binaries'
 
-      # Replace binaries with the newly signed versions.
-      - name: Replace binaries with signed versions
-        run: |
-          # Ensure destination directories exist
-          New-Item -ItemType Directory -Force -Path build\PIMELauncher
-          New-Item -ItemType Directory -Force -Path build\PIMETextService\Release
-          New-Item -ItemType Directory -Force -Path build64\PIMETextService\Release
-          New-Item -ItemType Directory -Force -Path build_arm64\PIMETextService\Release
-          copy signed-binaries\build\PIMELauncher\PIMELauncher.exe build\PIMELauncher\PIMELauncher.exe
-          copy signed-binaries\build\PIMETextService\Release\PIMETextService.dll build\PIMETextService\Release\PIMETextService.dll
-          copy signed-binaries\build64\PIMETextService\Release\PIMETextService.dll build64\PIMETextService\Release\PIMETextService.dll
-          copy signed-binaries\build_arm64\PIMETextService\Release\PIMETextService.dll build_arm64\PIMETextService\Release\PIMETextService.dll
+
 
       # ---------------------------------------------------------------
       # Build installer from signed binaries

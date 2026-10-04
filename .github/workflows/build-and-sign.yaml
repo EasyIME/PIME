@@ -1,0 +1,140 @@
+# Reusable build-and-sign workflow for PIME
+# Called by ci.yaml with different signing policies for CI vs release builds.
+
+on:
+  workflow_call:
+    inputs:
+      signing-policy:
+        description: 'SignPath signing policy slug (test-signing or release-signing)'
+        type: string
+        required: true
+      environment:
+        description: 'GitHub environment for approval gates (empty = no approval)'
+        type: string
+        default: ''
+      create-release:
+        description: 'Whether to create a GitHub Release with the signed installer'
+        type: boolean
+        default: false
+
+jobs:
+  build-and-sign:
+    runs-on: windows-2025
+    environment: ${{ inputs.environment || null }}
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'true'
+
+      - name: Use Node.js 21.x
+        uses: actions/setup-node@v6
+        with:
+          node-version: 21.x
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: i686-pc-windows-msvc
+
+      - name: Run Rust tests
+        run: |
+          cd PIMELauncher
+          cargo test --verbose
+
+      - name: Install NSIS
+        uses: repolevedavaj/install-nsis@v1.2.0
+        with:
+          nsis-version: 3.08
+
+      - name: Run build.bat
+        env:
+          Rust_COMPILER: ${{ env.CARGO_HOME }}\\bin\\rustc.exe
+        run: |
+          .\\build.bat
+
+      # ---------------------------------------------------------------
+      # Upload unsigned binaries for signing.
+      # ---------------------------------------------------------------
+      - name: Upload unsigned binaries
+        id: upload-unsigned-binaries
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-binaries
+          path: |
+            build/PIMELauncher/PIMELauncher.exe
+            build/PIMETextService/Release/PIMETextService.dll
+            build64/PIMETextService/Release/PIMETextService.dll
+            build_arm64/PIMETextService/Release/PIMETextService.dll
+
+      # ---------------------------------------------------------------
+      # Sign binaries with the specified signing policy.
+      # ---------------------------------------------------------------
+      - name: Sign binaries
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '44e7ac31-01b7-47df-8a58-44125a7d21b0'
+          project-slug: 'PIME'
+          signing-policy-slug: '${{ inputs.signing-policy }}'
+          artifact-configuration-slug: 'binaries-zip'
+          github-artifact-id: '${{ steps.upload-unsigned-binaries.outputs.artifact-id }}'
+          wait-for-completion: true
+          output-artifact-directory: 'signed-binaries'
+
+      # ---------------------------------------------------------------
+      # Replace binaries with signed versions before building installer.
+      # ---------------------------------------------------------------
+      - name: Replace binaries with signed versions
+        run: |
+          copy signed-binaries\build\PIMELauncher\PIMELauncher.exe build\PIMELauncher\PIMELauncher.exe
+          copy signed-binaries\build\PIMETextService\Release\PIMETextService.dll build\PIMETextService\Release\PIMETextService.dll
+          copy signed-binaries\build64\PIMETextService\Release\PIMETextService.dll build64\PIMETextService\Release\PIMETextService.dll
+          copy signed-binaries\build_arm64\PIMETextService\Release\PIMETextService.dll build_arm64\PIMETextService\Release\PIMETextService.dll
+
+      # ---------------------------------------------------------------
+      # Build installer with signed binaries.
+      # ---------------------------------------------------------------
+      - name: Build the installer
+        shell: cmd
+        run: |
+          "C:\Program Files (x86)\NSIS\Bin\makensis.exe" ".\installer\installer.nsi"
+
+      # ---------------------------------------------------------------
+      # Upload installer for signing.
+      # ---------------------------------------------------------------
+      - name: Upload unsigned installer
+        id: upload-unsigned-installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-installer
+          path: installer/*.exe
+          archive: false
+
+      # ---------------------------------------------------------------
+      # Sign the installer with the specified signing policy.
+      # ---------------------------------------------------------------
+      - name: Sign installer
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '44e7ac31-01b7-47df-8a58-44125a7d21b0'
+          project-slug: 'PIME'
+          signing-policy-slug: '${{ inputs.signing-policy }}'
+          artifact-configuration-slug: 'initial'
+          github-artifact-id: '${{ steps.upload-unsigned-installer.outputs.artifact-id }}'
+          wait-for-completion: true
+          output-artifact-directory: 'signed-installer'
+          skip-decompress: true  # installer exe is not a zip file.
+
+      # ---------------------------------------------------------------
+      # Create GitHub Release (only for release builds).
+      # ---------------------------------------------------------------
+      - name: Create GitHub Release
+        if: ${{ inputs.create-release }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: signed-installer/**/*.exe
+          generate_release_notes: true

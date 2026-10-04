@@ -144,12 +144,12 @@ jobs:
         with:
           submodules: true
 
-      # Download the signed binaries produced by the build job.
-      - name: Download signed binaries
+      # Download the unsigned binaries produced by the build job.
+      - name: Download unsigned binaries
         uses: actions/download-artifact@v4
         with:
-          name: signed-binaries
-          path: signed-binaries
+          name: unsigned-binaries
+          path: unsigned-binaries
 
       # ---------------------------------------------------------------
       # ----- Release signing for binaries (tag only) -----
@@ -163,7 +163,7 @@ jobs:
           project-slug: 'PIME'
           signing-policy-slug: 'release-signing'
           artifact-configuration-slug: 'binaries-zip'
-          github-artifact-id: '${{ steps.upload-unsigned-binaries.outputs.artifact-id }}'
+          local-artifact-path: unsigned-binaries
           wait-for-completion: true
           output-artifact-directory: 'signed-binaries'
 

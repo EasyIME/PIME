@@ -183,13 +183,26 @@ jobs:
           copy signed-binaries\build_arm64\PIMETextService\Release\PIMETextService.dll build_arm64\PIMETextService\Release\PIMETextService.dll
 
       # ---------------------------------------------------------------
-      # Download the unsigned installer uploaded by the build job.
-      # ---------------------------------------------------------------
-      - name: Download unsigned installer
-        uses: actions/download-artifact@v4
+      # Build installer from signed binaries
+      - name: Build installer from signed binaries
+        run: |
+          # Ensure output directory exists
+          New-Item -ItemType Directory -Force -Path installer-output
+          # Copy signed binaries
+          copy signed-binaries\build\PIMELauncher\PIMELauncher.exe installer-output\PIMELauncher.exe
+          copy signed-binaries\build\PIMETextService\Release\PIMETextService.dll installer-output\PIMETextService.dll
+          copy signed-binaries\build64\PIMETextService\Release\PIMETextService.dll installer-output\PIMETextService64.dll
+          copy signed-binaries\build_arm64\PIMETextService\Release\PIMETextService.dll installer-output\PIMETextServiceArm64.dll
+          # Build NSIS installer (assumes script at installer\pime.nsi)
+          makensis installer\pime.nsi
+
+      # Upload installer for signing
+      - name: Upload installer for signing
+        id: upload-installer
+        uses: actions/upload-artifact@v4
         with:
           name: unsigned-installer
-          path: unsigned-installer
+          path: installer-output\*.exe
 
       # ----- Release installer signing (tag only) -----
       - name: Sign installer
@@ -200,7 +213,7 @@ jobs:
           project-slug: 'PIME'
           signing-policy-slug: 'release-signing'
           artifact-configuration-slug: 'initial'  # single .exe file
-          github-artifact-id: '${{ steps.upload-unsigned-installer.outputs.artifact-id }}'
+          github-artifact-id: '${{ steps.upload-installer.outputs.artifact-id }}'
           wait-for-completion: true
           output-artifact-directory: 'signed-installer'
           skip-decompress: true  # installer exe is not a zip file.

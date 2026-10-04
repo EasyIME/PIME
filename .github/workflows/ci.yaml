@@ -186,7 +186,7 @@ jobs:
           copy signed-binaries\build64\PIMETextService\Release\PIMETextService.dll installer-output\PIMETextService64.dll
           copy signed-binaries\build_arm64\PIMETextService\Release\PIMETextService.dll installer-output\PIMETextServiceArm64.dll
           # Build NSIS installer (assumes script at installer\pime.nsi)
-          makensis installer\pime.nsi
+          "C:\Program Files (x86)\NSIS\Bin\makensis.exe" installer\pime.nsi
 
       # Upload installer for signing
       - name: Upload installer for signing

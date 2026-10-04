@@ -173,6 +173,9 @@ jobs:
 
       # ---------------------------------------------------------------
       # Build installer from signed binaries
+      - name: Install NSIS
+        run: choco install nsis -y
+
       - name: Build installer from signed binaries
         run: |
           # Ensure output directory exists

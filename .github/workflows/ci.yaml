@@ -23,6 +23,8 @@ jobs:
     permissions:
       id-token: write
       contents: write
+    outputs:
+      unsigned-artifact-id: ${{ steps.upload-unsigned-binaries.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -163,7 +165,7 @@ jobs:
           project-slug: 'PIME'
           signing-policy-slug: 'release-signing'
           artifact-configuration-slug: 'binaries-zip'
-          local-artifact-path: unsigned-binaries
+          github-artifact-id: ${{ needs.build.outputs.unsigned-artifact-id }}
           wait-for-completion: true
           output-artifact-directory: 'signed-binaries'
 

@@ -4,21 +4,31 @@
 
 debug@^2.2.0, debug@^2.6.9:
   version "2.6.9"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.9.tgz#5d128515df134ff327e90a4c93f4e077a536341f"
+  resolved "https://registry.npmjs.org/debug/-/debug-2.6.9.tgz"
+  integrity sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==
   dependencies:
     ms "2.0.0"
 
 ms@2.0.0:
   version "2.0.0"
-  resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
+  resolved "https://registry.npmjs.org/ms/-/ms-2.0.0.tgz"
+  integrity sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==
+
+"nime-server@file:":
+  version "0.2.0"
+  resolved "file:"
+  dependencies:
+    debug "^2.6.9"
+    nime "0.5.0"
+    nime-server "file:"
 
 nime@0.5.0:
   version "0.5.0"
-  resolved "https://registry.yarnpkg.com/nime/-/nime-0.5.0.tgz#72d6d880f333e6cfeeaee61fbce0e4089d94b251"
+  resolved "https://registry.npmjs.org/nime/-/nime-0.5.0.tgz"
   dependencies:
     debug "^2.2.0"
     stdio "^0.2.7"
 
 stdio@^0.2.7:
   version "0.2.7"
-  resolved "https://registry.yarnpkg.com/stdio/-/stdio-0.2.7.tgz#a1c57da10fe1cfaa0c3bf683c9d0743d1b660839"
+  resolved "https://registry.npmjs.org/stdio/-/stdio-0.2.7.tgz"

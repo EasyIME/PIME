@@ -250,7 +250,25 @@ impl BackendManager {
             config.name, executable_path, working_dir, params
         );
 
-        let args_vec: Vec<&str> = params.split_whitespace().collect();
+        let mut args_vec = Vec::new();
+        let mut current_arg = String::new();
+        let mut in_quotes = false;
+        for c in params.chars() {
+            match c {
+                '"' => in_quotes = !in_quotes,
+                ' ' | '\t' if !in_quotes => {
+                    if !current_arg.is_empty() {
+                        args_vec.push(current_arg.clone());
+                        current_arg.clear();
+                    }
+                }
+                _ => current_arg.push(c),
+            }
+        }
+        if !current_arg.is_empty() {
+            args_vec.push(current_arg);
+        }
+
         debug!(
             "Execution Details: {:?} with args {:?}",
             executable_path, args_vec

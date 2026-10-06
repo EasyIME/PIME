@@ -137,12 +137,12 @@ Scope: Focus primarily on **`PIMELauncher`**, **`PIMETextService`**, and **`libI
 - [x] **3A.1 (CRITICAL):** Fix tight busy-wait spin loop (`while CinTable.loading: continue`) and thread-unsafe shared `CinTable`
 - [x] **3A.2 (CRITICAL):** Fix `ChewingConfig.save()` shadowing the `json` module, which truncates `config.json` to 0 bytes
 - [x] **3A.3 (CRITICAL):** Fix exception fallback in `server.py` omitting `"seqNum"` and leaving dirty `self.currentReply` state
-- [ ] **3A.4 (HIGH):** Fix process-wide `rime.finalize()` killing active Rime sessions in other apps and blocking module import
-- [ ] **3A.5 (HIGH):** Fix out-of-bounds `IndexError` and unclosed SQLite connections in `ChewingTextService`
-- [ ] **3A.6 (HIGH):** Fix broken `GetAsyncKeyState`/`GetKeyState` in headless `python.exe` and `CinBaseConfig` singleton bug
+- [x] **3A.4 (HIGH):** Fix process-wide `rime.finalize()` killing active Rime sessions in other apps and blocking module import
+- [x] **3A.5 (HIGH):** Fix out-of-bounds `IndexError` and unclosed SQLite connections in `ChewingTextService`
+- [x] **3A.6 (HIGH):** Fix broken `GetAsyncKeyState`/`GetKeyState` in headless `python.exe` and `CinBaseConfig` singleton bug
 
 ### 3B: Node.js Backend
-- [ ] **3B.1 (CRITICAL):** Fix `line.split('|', 2)` truncating JSON payloads containing pipe characters, crashing `node.exe`
-- [ ] **3B.2 (CRITICAL):** Fix JavaScript default parameter pitfall in `requestHandler.js` crashing when `service === null`
-- [ ] **3B.3 (HIGH):** Fix unprotected synchronous file I/O (`fs.readFileSync`, `JSON.parse`) in `loadServices.js` crashing on startup
-- [ ] **3B.4 (MEDIUM):** Fix stale `candidateCursor` out-of-bounds crash and broken selection key logic in `emojime`
+- [x] **3B.1 (CRITICAL):** Fix `line.split('|', 2)` truncating JSON payloads containing pipe characters, crashing `node.exe`
+- [x] **3B.2 (CRITICAL):** Fix JavaScript default parameter pitfall in `requestHandler.js` crashing when `service === null`
+- [x] **3B.3 (HIGH):** Fix unprotected synchronous file I/O (`fs.readFileSync`, `JSON.parse`) in `loadServices.js` crashing on startup
+- [x] **3B.4 (MEDIUM):** Fix stale `candidateCursor` out-of-bounds crash and broken selection key logic in `emojime`

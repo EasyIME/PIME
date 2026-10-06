@@ -11,13 +11,17 @@ function loadServices() {
   imeDir.forEach((dir) => {
 
     if (fs.lstatSync(path.join(process.cwd(), 'input_methods', dir)).isDirectory()) {
-      let configFile = fs.readFileSync(path.join(process.cwd(), 'input_methods', dir, 'ime.json'), 'utf8');
-      let config = JSON.parse(configFile);
-      let textService = require(`./input_methods/${dir}/${config.moduleName}`);
+      try {
+        let configFile = fs.readFileSync(path.join(process.cwd(), 'input_methods', dir, 'ime.json'), 'utf8');
+        let config = JSON.parse(configFile);
+        let textService = require(`./input_methods/${dir}/${config.moduleName}`);
 
-      config['textService'] = textService;
+        config['textService'] = textService;
 
-      services.push(config);
+        services.push(config);
+      } catch (e) {
+        console.error('Error loading service', dir, e);
+      }
     }
   });
 
@@ -31,11 +35,15 @@ function loadServiceById(id) {
   imeDir.forEach((dir) => {
 
     if (fs.lstatSync(path.join(process.cwd(), 'input_methods', dir)).isDirectory()) {
-      let configFile = fs.readFileSync(path.join(process.cwd(), 'input_methods', dir, 'ime.json'), 'utf8');
-      let config = JSON.parse(configFile);
+      try {
+        let configFile = fs.readFileSync(path.join(process.cwd(), 'input_methods', dir, 'ime.json'), 'utf8');
+        let config = JSON.parse(configFile);
 
-      if (config['guid'].toLowerCase() === id.toLowerCase()) {
-        service = require(`./input_methods/${dir}/${config.moduleName}`);
+        if (config['guid'].toLowerCase() === id.toLowerCase()) {
+          service = require(`./input_methods/${dir}/${config.moduleName}`);
+        }
+      } catch (e) {
+        console.error('Error loading service by id', dir, e);
       }
     }
   });

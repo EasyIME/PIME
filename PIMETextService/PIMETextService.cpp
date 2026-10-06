@@ -271,7 +271,10 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 	// the items in the candidate list should not exist the
 	// number of available keys used to select them.
 	assert(candidates_.size() <= selKeys_.size());
-	for (int i = 0; i < candidates_.size(); ++i) {
+	size_t count = candidates_.size();
+	if (count > selKeys_.size())
+		count = selKeys_.size();
+	for (size_t i = 0; i < count; ++i) {
 		candidateWindow_->add(candidates_[i], selKeys_[i]);
 	}
 	candidateWindow_->recalculateSize();

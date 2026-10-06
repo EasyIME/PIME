@@ -127,7 +127,6 @@ jobs:
           github-artifact-id: '${{ steps.upload-unsigned-installer.outputs.artifact-id }}'
           wait-for-completion: true
           output-artifact-directory: 'signed-installer'
-          skip-decompress: true  # installer exe is not a zip file.
 
       # ---------------------------------------------------------------
       # Create GitHub Release (only for release builds).

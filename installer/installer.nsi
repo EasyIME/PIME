@@ -1,4 +1,4 @@
-﻿;
+;
 ;	Copyright (C) 2013 - 2016 Hong Jen Yee (PCMan) <pcman.tw@gmail.com>
 ;
 ;	This library is free software; you can redistribute it and/or
@@ -181,6 +181,8 @@ Function uninstallOldVersion
 			; Otherwise we cannot replace it.
 			ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
 			Sleep 1000
+			; Forcefully kill PIMELauncher and its child processes (python/node) if they didn't quit
+			nsExec::ExecToStack 'taskkill /F /T /IM PIMELauncher.exe'
 			Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
 
             Delete "$INSTDIR\backends.json"
@@ -195,14 +197,8 @@ Function uninstallOldVersion
 
 			Delete "$INSTDIR\version.txt"
 			Delete "$INSTDIR\Uninstall.exe"
-			RMDir /REBOOTOK "$INSTDIR"
-
-			${If} ${RebootFlag}
-				MessageBox MB_YESNO "$(MB_REBOOT_REQUIRED)" /SD IDNO IDNO +3
-				Reboot
-				Quit
-				Abort
-			${EndIf}
+			; We intentionally DO NOT abort here if RebootFlag is set.
+			; If old files are locked, NSIS will replace them on reboot.
 		${EndIf}
 	${EndIf}
 
@@ -263,9 +259,8 @@ Function uninstallOldVersion
 		${EndIf}
 	${EndIf}
 
-	${If} ${RebootFlag}
-		Call .onInstFailed
-	${EndIf}
+	; We intentionally DO NOT abort here if RebootFlag is set.
+	; If old files are locked, NSIS will replace them on reboot.
 FunctionEnd
 
 ; Called during installer initialization
@@ -334,86 +329,40 @@ Function .onInstFailed
 FunctionEnd
 
 Function ensureVCRedist
-	; Check if we have latest VC++ Redistributable
-	; Reference: https://blogs.msdn.microsoft.com/vcblog/2015/03/03/introducing-the-universal-crt/
-	;            https://docs.python.org/3/using/windows.html#embedded-distribution
+	; Always ensure 32-bit (x86) VC++ Redistributable is installed (used by python, node, PIMELauncher)
 	${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
 	${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-		${If} ${RunningX64}
-			; In 64-bit environment, we need to check both x86 and x64 version of dlls,
-			; because we only need at least one of the x86 or x64 version is available,
-			; which means we need to check both these 2 directory:
-			;   1. C:\Windows\System32 (x64 64-bit version dlls are in here)
-			;   2. C:\Windows\SysWOW64 (x86 32-bit version dlls are in here) (already checked)
+		MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
+			Abort ; this is skipped if the user select Yes
+		inetc::get "https://aka.ms/vs/17/release/vc_redist.x86.exe" "$TEMP\vc_redist.x86.exe"
+		Pop $R0 ; Get the return value
+		${If} $R0 != "OK"
+			MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VCREDIST_FAILED_MESSAGE)
+			Abort
+		${EndIf}
+		ExecWait "$TEMP\vc_redist.x86.exe" $0
+		${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+		${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
+			MessageBox MB_ICONSTOP|MB_OK $(INST_VCREDIST_FAILED_MESSAGE)
+			ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
+			Abort
+		${EndIf}
+	${EndIf}
 
-			; Because X64 FS Redirection is enabled by default ($SYSDIR is pointed to C:\Windows\SysWOW64),
-			; now we just need to disable X64 FS Redirection (let $SYSDIR point to C:\Windows\System32)
-			; in order to check if we have x64 64-bit version of Universal CRT
-			${DisableX64FSRedirection}
-			${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
-			${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-				MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
-					Abort ; this is skipped if the user select Yes
-				; Download latest VC++ Redistributable (x64 version)
-				inetc::get "https://aka.ms/vs/17/release/vc_redist.x64.exe" "$TEMP\vc_redist.x64.exe"
-				Pop $R0 ; Get the return value
-				${If} $R0 != "OK"
-					MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VCREDIST_FAILED_MESSAGE)
-					Abort
-				${EndIf}
-
-				; Run vcredist installer
-				ExecWait "$TEMP\vc_redist.x64.exe" $0
-
-				; Check again if we have latest VC++ Redistributable
-				${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
-				${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-					MessageBox MB_ICONSTOP|MB_OK $(INST_VCREDIST_FAILED_MESSAGE)
-					ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
-					Abort
-				${EndIf}
-			${EndIf}
-
-			; Change X64 FS Redirection back to default state
-			${EnableX64FSRedirection}
-
-		${ElseIf} ${IsNativeARM64}
-			${DisableX64FSRedirection}
-			${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
-			${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-				MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
-					Abort
-				inetc::get "https://aka.ms/vs/17/release/vc_redist.arm64.exe" "$TEMP\vc_redist.arm64.exe"
-				Pop $R0
-				${If} $R0 != "OK"
-					MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VCREDIST_FAILED_MESSAGE)
-					Abort
-				${EndIf}
-				ExecWait "$TEMP\vc_redist.arm64.exe" $0
-				${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
-				${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-					MessageBox MB_ICONSTOP|MB_OK $(INST_VCREDIST_FAILED_MESSAGE)
-					ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
-					Abort
-				${EndIf}
-			${EndIf}
-			${EnableX64FSRedirection}
-
-		${Else}
+	; Check 64-bit or ARM64 if applicable
+	${If} ${IsNativeARM64}
+		${DisableX64FSRedirection}
+		${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+		${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
 			MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
-				Abort ; this is skipped if the user select Yes
-			; Download latest VC++ Redistributable (x86 version)
-			inetc::get "https://aka.ms/vs/17/release/vc_redist.x86.exe" "$TEMP\vc_redist.x86.exe"
-			Pop $R0 ; Get the return value
+				Abort
+			inetc::get "https://aka.ms/vs/17/release/vc_redist.arm64.exe" "$TEMP\vc_redist.arm64.exe"
+			Pop $R0
 			${If} $R0 != "OK"
 				MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VCREDIST_FAILED_MESSAGE)
 				Abort
 			${EndIf}
-
-			; Run vcredist installer
-			ExecWait "$TEMP\vc_redist.x86.exe" $0
-
-			; Check again if we have latest VC++ Redistributable
+			ExecWait "$TEMP\vc_redist.arm64.exe" $0
 			${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
 			${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
 				MessageBox MB_ICONSTOP|MB_OK $(INST_VCREDIST_FAILED_MESSAGE)
@@ -421,6 +370,28 @@ Function ensureVCRedist
 				Abort
 			${EndIf}
 		${EndIf}
+		${EnableX64FSRedirection}
+	${ElseIf} ${RunningX64}
+		${DisableX64FSRedirection}
+		${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+		${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
+			MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
+				Abort ; this is skipped if the user select Yes
+			inetc::get "https://aka.ms/vs/17/release/vc_redist.x64.exe" "$TEMP\vc_redist.x64.exe"
+			Pop $R0 ; Get the return value
+			${If} $R0 != "OK"
+				MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VCREDIST_FAILED_MESSAGE)
+				Abort
+			${EndIf}
+			ExecWait "$TEMP\vc_redist.x64.exe" $0
+			${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
+			${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
+				MessageBox MB_ICONSTOP|MB_OK $(INST_VCREDIST_FAILED_MESSAGE)
+				ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
+				Abort
+			${EndIf}
+		${EndIf}
+		${EnableX64FSRedirection}
 	${EndIf}
 FunctionEnd
 
@@ -785,6 +756,8 @@ Section "Uninstall"
 	; Otherwise we cannot replace it.
 	ExecWait '"$INSTDIR\PIMELauncher.exe" /quit'
 	Sleep 1000
+	; Forcefully kill PIMELauncher and its child processes (python/node) if they didn't quit
+	nsExec::ExecToStack 'taskkill /F /T /IM PIMELauncher.exe'
 	Delete /REBOOTOK "$INSTDIR\PIMELauncher.exe"
 
 	RMDir /REBOOTOK /r "$INSTDIR\x86"

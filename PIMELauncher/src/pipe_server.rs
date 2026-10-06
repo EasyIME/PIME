@@ -25,49 +25,57 @@ impl PipeServer {
     /// This function creates the pipe instances, applies security attributes,
     /// and spawns a handler for each connected client.
     pub async fn run(&self) {
-        let sa = PipeSecurityAttributes::new().expect("Failed to create PipeSecurityAttributes");
-        let mut is_first_instance = true;
+        let mut tasks = vec![];
+        
+        // Spawn 4 concurrent listener tasks to prevent the zero-listening-instance race window
+        for _ in 0..4 {
+            let pipe_name = self.pipe_name.clone();
+            let manager = self.manager.clone();
+            
+            tasks.push(tokio::spawn(async move {
+                let sa = PipeSecurityAttributes::new().expect("Failed to create PipeSecurityAttributes");
+                
+                loop {
+                    let mut options = ServerOptions::new();
+                    // By not enforcing first_pipe_instance, we avoid permanently bricking the new worker 
+                    // if an old worker or a hung client process still holds a handle to the pipe.
+                    options.first_pipe_instance(false);
+                    options.max_instances(254);
+                    options.pipe_mode(PipeMode::Byte);
 
-        loop {
-            let mut options = ServerOptions::new();
-            options.first_pipe_instance(is_first_instance);
-            options.max_instances(254);
-            options.pipe_mode(PipeMode::Byte);
+                    let server = match unsafe {
+                        options.create_with_security_attributes_raw(
+                            &pipe_name,
+                            &sa.sa as *const _ as *mut std::ffi::c_void,
+                        )
+                    } {
+                        Ok(server) => server,
+                        Err(e) => {
+                            error!("Failed to create named pipe server: {}", e);
+                            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                            continue;
+                        }
+                    };
 
-            // Tokio 1.x allows creating with raw security attributes
-            let server = match unsafe {
-                options.create_with_security_attributes_raw(
-                    &self.pipe_name,
-                    &sa.sa as *const _ as *mut std::ffi::c_void,
-                )
-            } {
-                Ok(server) => server,
-                Err(e) => {
-                    error!("Failed to create named pipe server: {}", e);
-                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-                    continue;
+                    match server.connect().await {
+                        Ok(_) => {
+                            info!("Client connection accepted on pipe instance.");
+                            let manager = manager.clone();
+                            tokio::spawn(async move {
+                                let (reader, writer) = tokio::io::split(server);
+                                Self::handle_client(manager, reader, writer).await;
+                            });
+                        }
+                        Err(e) => {
+                            error!("Failed to accept client connection: {}", e);
+                            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                        }
+                    }
                 }
-            };
-
-            match server.connect().await {
-                Ok(_) => {
-                    info!(
-                        "Client connection accepted on pipe instance (first_instance={}).",
-                        is_first_instance
-                    );
-                    is_first_instance = false;
-                    let manager = self.manager.clone();
-                    tokio::spawn(async move {
-                        let (reader, writer) = tokio::io::split(server);
-                        Self::handle_client(manager, reader, writer).await;
-                    });
-                }
-                Err(e) => {
-                    error!("Failed to accept client connection: {}", e);
-                    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-                }
-            }
+            }));
         }
+        
+        futures::future::join_all(tasks).await;
     }
     /// Generic implementation of the client handler to allow unit testing with mocked I/O.
     pub async fn handle_client<R, W>(manager: BackendManager, pipe_reader: R, pipe_writer: W)

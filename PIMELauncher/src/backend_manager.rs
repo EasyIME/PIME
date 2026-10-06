@@ -1,7 +1,6 @@
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 use tokio::process::Command;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
@@ -175,13 +174,13 @@ impl BackendManager {
                 let stdout = child_process.stdout.take().unwrap();
                 let stderr = child_process.stderr.take().unwrap();
 
-                let last_output_time = Arc::new(AtomicU64::new(Self::current_ms()));
-                let last_output_time_clone = last_output_time.clone();
+                let pending_requests = Arc::new(Mutex::new(HashMap::<i64, tokio::time::Instant>::new()));
+                let pending_requests_clone = pending_requests.clone();
 
                 let manager_for_reader = manager_clone.clone();
                 let stdout_task = tokio::spawn(async move {
                     manager_for_reader
-                        .forward_outputs_to_client(stdout, last_output_time_clone)
+                        .forward_outputs_to_client(stdout, pending_requests_clone)
                         .await;
                 });
 
@@ -195,7 +194,7 @@ impl BackendManager {
                     stdin,               // Backend stdin.
                     &mut child_process,  // Backend process.
                     &backend_name_clone, // Backend name.
-                    last_output_time,    // Output tracker.
+                    pending_requests,    // Output tracker.
                 )
                 .await;
 
@@ -278,7 +277,7 @@ impl BackendManager {
     async fn forward_outputs_to_client(
         self,
         stdout: tokio::process::ChildStdout,
-        last_output_time: Arc<AtomicU64>,
+        pending_requests: Arc<Mutex<HashMap<i64, tokio::time::Instant>>>,
     ) {
         // TODO: Need to detect if the backend process hangs and is not responsive.
         // When a backend process hangs, reading from its stdout may blocks forever.
@@ -287,7 +286,6 @@ impl BackendManager {
             LinesCodec::new_with_max_length(protocol::MAX_MESSAGE_LINE_LENGTH),
         );
         while let Some(result) = stdout_reader.next().await {
-            last_output_time.store(Self::current_ms(), Ordering::Relaxed);
             let line = match result {
                 Ok(l) => l,
                 Err(e) => {
@@ -300,6 +298,11 @@ impl BackendManager {
             let Some((client_id, payload)) = protocol::parse_backend_output(&line) else {
                 continue;
             };
+            
+            if let Some(seq_num) = protocol::extract_seq_num(&payload) {
+                let mut map = pending_requests.lock().unwrap();
+                map.remove(&seq_num);
+            }
 
             debug!("Routing to client {}: {:?}", client_id, payload);
 
@@ -335,13 +338,12 @@ impl BackendManager {
         stdin: tokio::process::ChildStdin,
         child_process: &mut tokio::process::Child,
         backend_name: &str,
-        last_output_time: Arc<AtomicU64>,
+        pending_requests: Arc<Mutex<HashMap<i64, tokio::time::Instant>>>,
     ) -> BackendExitReason {
         let mut stdin_writer = FramedWrite::new(
             stdin,
             LinesCodec::new_with_max_length(protocol::MAX_MESSAGE_LINE_LENGTH),
         );
-        let mut last_request_time: Option<u64> = None;
 
         let mut watchdog_interval = tokio::time::interval(Duration::from_secs(1));
 
@@ -355,9 +357,11 @@ impl BackendManager {
                         info!("Backend {} stdin channel closed. Exiting input loop.", backend_name);
                         return BackendExitReason::Normal;
                     };
-                    let now = Self::current_ms();
                     if !protocol::is_notification_message(&data) {
-                        last_request_time = Some(now);
+                        if let Some(seq_num) = protocol::extract_seq_num(&data) {
+                            let mut map = pending_requests.lock().unwrap();
+                            map.insert(seq_num, tokio::time::Instant::now());
+                        }
                     }
                     info!("Backend {} received request from channel. Data len: {}.", backend_name, data.len());
 
@@ -375,18 +379,23 @@ impl BackendManager {
                     }
                 }
                 _ = watchdog_interval.tick() => {
-                    let now = Self::current_ms();
-                    if let Some(req_t) = last_request_time {
-                        let last_out = last_output_time.load(Ordering::Relaxed);
-                        debug!("Watchdog tick for {}: last_out={}, req_t={}, now={}, delta={}ms",
-                        backend_name, last_out, req_t, now, now.saturating_sub(req_t));
-
-                        if last_out < req_t && now - req_t > protocol::HANG_TIMEOUT.as_millis() as u64 {
-                            error!("Backend {} seems to be hung (no output for {}ms after request). Forcing restart.",
-                                backend_name, protocol::HANG_TIMEOUT.as_millis());
-                            let _ = child_process.kill().await;
-                            return BackendExitReason::Error;
+                    let mut hung = false;
+                    {
+                        let map = pending_requests.lock().unwrap();
+                        let now = tokio::time::Instant::now();
+                        for (&seq_num, &req_t) in map.iter() {
+                            let elapsed = now.saturating_duration_since(req_t);
+                            if elapsed > protocol::HANG_TIMEOUT {
+                                debug!("Watchdog detected hung request {}: elapsed {}ms", seq_num, elapsed.as_millis());
+                                hung = true;
+                                break;
+                            }
                         }
+                    }
+                    if hung {
+                        error!("Backend {} seems to be hung. Forcing restart.", backend_name);
+                        let _ = child_process.kill().await;
+                        return BackendExitReason::Error;
                     }
                 }
                 status = child_process.wait() => {
@@ -395,13 +404,6 @@ impl BackendManager {
                 }
             }
         }
-    }
-
-    fn current_ms() -> u64 {
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis() as u64
     }
 }
 

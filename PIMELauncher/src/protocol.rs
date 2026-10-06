@@ -56,6 +56,24 @@ pub fn is_notification_message(message: &str) -> bool {
     false
 }
 
+/// Extracts the `seqNum` from a JSON payload if present.
+pub fn extract_seq_num(payload: &str) -> Option<i64> {
+    // If the message is wrapped (e.g. `client_id|{...}`), extract the JSON part.
+    let json_str = payload.split_once('|').map(|(_, p)| p).unwrap_or(payload);
+    
+    // Quick fast-path check to avoid parsing non-JSON or messages without seqNum
+    if !json_str.contains("\"seqNum\"") {
+        return None;
+    }
+    
+    if let Ok(json) = serde_json::from_str::<serde_json::Value>(json_str) {
+        if let Some(seq_num) = json.get("seqNum").and_then(|v| v.as_i64()) {
+            return Some(seq_num);
+        }
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -45,6 +45,17 @@ pub fn format_backend_input(client_id: &str, message: &str) -> String {
     format!("{}|{}", client_id, message)
 }
 
+/// Checks if an input message sent to the backend is a notification (e.g. "close")
+/// that does not generate a response on stdout.
+pub fn is_notification_message(message: &str) -> bool {
+    if let Some(payload) = message.split_once('|').map(|(_, p)| p) {
+        if payload.contains(r#""method":"close""#) || payload.contains(r#""method": "close""#) {
+            return true;
+        }
+    }
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -88,5 +99,13 @@ mod tests {
         let message = "{\"method\": \"test\"}";
         let formatted = format_backend_input(client_id, message);
         assert_eq!(formatted, "client123|{\"method\": \"test\"}");
+    }
+
+    #[test]
+    fn test_is_notification_message() {
+        assert!(is_notification_message(r#"c1|{"method":"close"}"#));
+        assert!(is_notification_message(r#"c1|{"method": "close"}"#));
+        assert!(!is_notification_message(r#"c1|{"method":"onKeyDown"}"#));
+        assert!(!is_notification_message("invalid"));
     }
 }

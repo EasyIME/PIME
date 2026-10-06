@@ -327,7 +327,9 @@ impl BackendManager {
                         return BackendExitReason::Normal;
                     };
                     let now = Self::current_ms();
-                    last_request_time = Some(now);
+                    if !protocol::is_notification_message(&data) {
+                        last_request_time = Some(now);
+                    }
                     info!("Backend {} received request from channel. Data len: {}.", backend_name, data.len());
 
                     // LinesCodec expects data without the newline, it will add it for us.

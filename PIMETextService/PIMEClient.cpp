@@ -806,6 +806,9 @@ bool Client::waitForRpcConnection() {
 	for (int attempt = 0; pipe_ == INVALID_HANDLE_VALUE && attempt < 3; ++attempt) {
 		// try to connect to the server
 		pipe_ = connectPipe(serverPipeName.c_str(), 3000);
+		if (pipe_ == INVALID_HANDLE_VALUE) {
+			Sleep(500); // Wait for PIMELauncher to start up
+		}
 	}
 
 	if (pipe_ != INVALID_HANDLE_VALUE) {

@@ -33,6 +33,9 @@ using json = nlohmann::json;
 
 namespace PIME {
 
+#include <mutex>
+static std::mutex g_iconCacheMutex;
+
 // static
 std::unordered_map<std::wstring, HICON> LangBarButton::iconCache_; // cache loaded icons
 
@@ -76,13 +79,16 @@ void LangBarButton::setIconFile(std::wstring filePath) {
 		iconFile_ = std::move(filePath);
 
 		HICON icon = NULL;
-		auto icon_it = iconCache_.find(iconFile_);
-		if (icon_it != iconCache_.end()) { // found in the cache
-			icon = icon_it->second;
-		}
-		else { // not in the cache
-			icon = (HICON)LoadImageW(NULL, iconFile_.c_str(), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_LOADFROMFILE);
-			iconCache_[iconFile_] = icon; // cache the icon
+		{
+			std::lock_guard<std::mutex> lock(g_iconCacheMutex);
+			auto icon_it = iconCache_.find(iconFile_);
+			if (icon_it != iconCache_.end()) { // found in the cache
+				icon = icon_it->second;
+			}
+			else { // not in the cache
+				icon = (HICON)LoadImageW(NULL, iconFile_.c_str(), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_LOADFROMFILE);
+				iconCache_[iconFile_] = icon; // cache the icon
+			}
 		}
 		if (icon) {
 			setIcon(icon);
@@ -140,6 +146,7 @@ void LangBarButton::updateFromJson(json& info) {
 }
 
 void LangBarButton::clearIconCache() {
+	std::lock_guard<std::mutex> lock(g_iconCacheMutex);
 	for (auto it = iconCache_.begin(); it != iconCache_.end(); ++it) {
 		DestroyIcon(it->second);
 	}

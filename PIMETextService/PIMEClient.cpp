@@ -216,10 +216,14 @@ void Client::updateComposition(json& msg, Ime::EditSession* session, bool& endCo
 			if (!hasCompositionString)
 				compositionString = textService_->compositionString(session);
 			int fixedCursorPos = 0;
-			for (int i = 0; i < compositionCursor; ++i) {
-				++fixedCursorPos;
-				if (IS_HIGH_SURROGATE(compositionString[i])) // this is the first part of a UTF16 surrogate pair (Windows uses UTF16-LE)
-					++fixedCursorPos;
+			int charCount = 0;
+			while (fixedCursorPos < (int)compositionString.size() && charCount < compositionCursor) {
+				if (IS_HIGH_SURROGATE(compositionString[fixedCursorPos])) {
+					fixedCursorPos += 2; // skip the low surrogate
+				} else {
+					fixedCursorPos += 1;
+				}
+				charCount++;
 			}
 			textService_->setCompositionCursor(session, fixedCursorPos);
 		}

@@ -118,8 +118,16 @@ class Server(object):
                 # print the exception traceback for ease of debugging
                 traceback.print_exc()
                 append_error_log("ERROR: {0}\nREQUEST: {1}\n{2}\n".format(e, line, traceback.format_exc()))
-                # generate an empty output containing {success: False} to prevent the client from being blocked
-                reply_line = '|'.join(["PIME_MSG", client_id, '{"success":false}'])
+                
+                seqNum = 0
+                if 'msg' in locals() and isinstance(msg, dict):
+                    seqNum = msg.get("seqNum", 0)
+                if 'client' in locals() and client and client.service:
+                    client.service.currentReply = {}
+                
+                # generate an output containing {success: False} and the seqNum to prevent the client from being blocked
+                reply_dict = {"success": False, "seqNum": seqNum}
+                reply_line = '|'.join(["PIME_MSG", client_id, json.dumps(reply_dict)])
                 print(reply_line, flush=True)
                 # Keep the backend alive after one bad request; tearing down an
                 # active TSF session can destabilize the foreground application.

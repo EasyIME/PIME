@@ -181,7 +181,7 @@ impl PipeServer {
                 ));
             }
         };
-        let backend_reader = manager.register_client(client_id.clone()).await;
+        let backend_reader = manager.register_client(client_id.clone(), backend_name.clone()).await;
 
         // Phase 2: Construct the fully authenticated session and run it
         let session = ClientSession::new(

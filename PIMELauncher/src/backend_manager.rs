@@ -22,6 +22,7 @@ pub struct BackendManager {
 struct BackendManagerState {
     backends: HashMap<String, BackendProcess>,
     clients: HashMap<String, mpsc::Sender<String>>,
+    client_backends: HashMap<String, String>,
 }
 
 /// The reason why the backend process was terminated.
@@ -44,6 +45,7 @@ impl BackendManager {
             state: Arc::new(Mutex::new(BackendManagerState {
                 backends: HashMap::new(),
                 clients: HashMap::new(),
+                client_backends: HashMap::new(),
             })),
             registry: Arc::new(registry),
         }
@@ -63,9 +65,14 @@ impl BackendManager {
     }
 
     /// Registers a client with its response channel.
-    pub async fn register_client(&self, client_id: String) -> mpsc::Receiver<String> {
+    pub async fn register_client(
+        &self,
+        client_id: String,
+        backend_name: String,
+    ) -> mpsc::Receiver<String> {
         let mut state = self.state.lock().unwrap();
         let (tx, rx) = tokio::sync::mpsc::channel::<String>(1024);
+        state.client_backends.insert(client_id.clone(), backend_name);
         state.clients.insert(client_id, tx);
         rx
     }
@@ -78,6 +85,24 @@ impl BackendManager {
 
         let mut state = self.state.lock().unwrap();
         state.clients.remove(client_id);
+        state.client_backends.remove(client_id);
+    }
+
+    /// Disconnects all clients associated with a specific backend (e.g., when it crashes).
+    pub fn disconnect_clients_for_backend(&self, backend_name: &str) {
+        let mut state = self.state.lock().unwrap();
+        let clients_to_remove: Vec<String> = state
+            .client_backends
+            .iter()
+            .filter(|(_, b)| *b == backend_name)
+            .map(|(c, _)| c.clone())
+            .collect();
+
+        for client_id in clients_to_remove {
+            state.clients.remove(&client_id);
+            state.client_backends.remove(&client_id);
+            info!("Forcibly disconnected client {} because backend {} crashed.", client_id, backend_name);
+        }
     }
 
     /// Retrieves a channel to send messages directly to the backend.
@@ -182,10 +207,14 @@ impl BackendManager {
                         "Backend {} input channel closed permanently. Stopping manager loop.",
                         backend_name_clone
                     );
+                    manager_clone.disconnect_clients_for_backend(&backend_name_clone);
                     break; // Exit the loop entirely to prevent infinite restarts!
                 }
 
                 warn!("Restarting backend {}", backend_name_clone);
+                // Disconnect all existing clients so they are forced to reconnect and re-initialize
+                // with the new backend process instance.
+                manager_clone.disconnect_clients_for_backend(&backend_name_clone);
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
         });
@@ -386,17 +415,21 @@ mod tests {
         let registry = BackendRegistry::new();
         let manager = BackendManager::new(registry);
 
-        let _ = manager.register_client("client1".to_string()).await;
+        let _ = manager
+            .register_client("client1".to_string(), "dummy".to_string())
+            .await;
 
         {
             let state = manager.state.lock().unwrap();
             assert!(state.clients.contains_key("client1"));
+            assert!(state.client_backends.contains_key("client1"));
         }
 
         manager.unregister_client("client1", "dummy").await;
         {
             let state = manager.state.lock().unwrap();
             assert!(!state.clients.contains_key("client1"));
+            assert!(!state.client_backends.contains_key("client1"));
         }
     }
 }

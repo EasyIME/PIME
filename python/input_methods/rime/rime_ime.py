@@ -184,7 +184,7 @@ class RimeTextService(TextService):
         #self.style = None
 
     def getKeyState(self, keyCode):
-        return WinDLL("User32.dll").GetKeyState(keyCode)
+        return (WinDLL("User32.dll").GetKeyState(keyCode) & 0x0001) != 0
 
     # 依照目前輸入法狀態，更新語言列顯示
     def updateLangStatus(self):
@@ -299,7 +299,7 @@ class RimeTextService(TextService):
             rime.sync_user_data()
         elif commandId == ID_DEPLOY:
             self.destroySession()
-            rime.finalize()
+            #rime.finalize()  # Do not finalize process-wide Rime state when deploying
             #rime.set_notification_handler(None, None)
             rime.initialize(None)
             if rime.start_maintenance(True):
@@ -326,7 +326,7 @@ class RimeTextService(TextService):
         else: # 鍵盤關閉，輸入法停用
             # self.hideMessage() # hide message window, if there's any
             self.destroySession()
-            rime.finalize()
+            #rime.finalize()
         if not self.style.display_tray_icon: return
         # Windows 8 systray IME mode icon
         if self.client.isWindows8Above:

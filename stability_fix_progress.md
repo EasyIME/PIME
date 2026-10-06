@@ -134,9 +134,9 @@ Scope: Focus primarily on **`PIMELauncher`**, **`PIMETextService`**, and **`libI
 ## Stage 3 - Python & Node.js Backends (P1/P2)
 
 ### 3A: Python Backend
-- [ ] **3A.1 (CRITICAL):** Fix tight busy-wait spin loop (`while CinTable.loading: continue`) and thread-unsafe shared `CinTable`
-- [ ] **3A.2 (CRITICAL):** Fix `ChewingConfig.save()` shadowing the `json` module, which truncates `config.json` to 0 bytes
-- [ ] **3A.3 (CRITICAL):** Fix exception fallback in `server.py` omitting `"seqNum"` and leaving dirty `self.currentReply` state
+- [x] **3A.1 (CRITICAL):** Fix tight busy-wait spin loop (`while CinTable.loading: continue`) and thread-unsafe shared `CinTable`
+- [x] **3A.2 (CRITICAL):** Fix `ChewingConfig.save()` shadowing the `json` module, which truncates `config.json` to 0 bytes
+- [x] **3A.3 (CRITICAL):** Fix exception fallback in `server.py` omitting `"seqNum"` and leaving dirty `self.currentReply` state
 - [ ] **3A.4 (HIGH):** Fix process-wide `rime.finalize()` killing active Rime sessions in other apps and blocking module import
 - [ ] **3A.5 (HIGH):** Fix out-of-bounds `IndexError` and unclosed SQLite connections in `ChewingTextService`
 - [ ] **3A.6 (HIGH):** Fix broken `GetAsyncKeyState`/`GetKeyState` in headless `python.exe` and `CinBaseConfig` singleton bug

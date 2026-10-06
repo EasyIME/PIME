@@ -511,6 +511,8 @@ class ChewingTextService(TextService):
 
                 # 處理詞彙 Ctrl + Del、刪除詞彙、Ctrl + PageUp 提昇/ Ctrl + PageDown 降低詞頻
                 if keyEvent.isKeyDown(VK_CONTROL) and (keyCode == VK_DELETE or keyCode == VK_NEXT or keyCode == VK_PRIOR):
+                    if candCount == 0 or candCursor >= candCount:
+                        return False
                     target_phrase = self.candidateList[candCursor]
                     try:
                         phraseConnect = sqlite3.connect(chewingConfig.getUserPhrase())
@@ -544,6 +546,10 @@ class ChewingTextService(TextService):
                         ignoreKey = keyHandled = True
                     except Exception as err:
                         self.showMessage(str(err), 2)
+                    finally:
+                        if 'phraseConnect' in locals() and phraseConnect:
+                            try: phraseConnect.close()
+                            except Exception: pass
 
                 # 處理 Home、End 鍵，移到選字視窗的第一和最後一個字
                 if keyCode == VK_HOME:
@@ -737,9 +743,8 @@ class ChewingTextService(TextService):
         return False
 
     # https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getasynckeystate
-    # 當 keyCode 對應的按鍵、曾被按下觸發過，GetAsyncKeyState() 的回傳值會 >= 1
     def isPressed(self, keyCode):
-        return windll.user32.GetAsyncKeyState(keyCode) >= 1
+        return (windll.user32.GetAsyncKeyState(keyCode) & 0x8000) != 0
 
     # 取得 Capslock 按鍵狀態
     def getCapslockState(self):

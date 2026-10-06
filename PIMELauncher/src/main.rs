@@ -97,6 +97,7 @@ async fn wait_for_quit_event() {
 
 #[tokio::main]
 async fn main() {
+    assign_process_to_job_object();
     setup_error_mode();
 
     let args: Vec<String> = std::env::args().collect();
@@ -140,6 +141,35 @@ async fn main() {
         run_watchdog(&args).await;
     } else {
         run_worker().await;
+    }
+}
+
+/// Creates a Windows Job Object with KILL_ON_JOB_CLOSE and assigns the current process to it.
+/// This ensures that when the process exits or is forcefully killed, the OS automatically
+/// terminates all of its descendant child processes (workers, backends).
+fn assign_process_to_job_object() {
+    use windows::Win32::System::JobObjects::{
+        AssignProcessToJobObject, CreateJobObjectW, SetInformationJobObject,
+        JobObjectExtendedLimitInformation, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+        JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+    };
+    use windows::Win32::System::Threading::GetCurrentProcess;
+
+    unsafe {
+        if let Ok(job) = CreateJobObjectW(None, None) {
+            let mut limit_info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION::default();
+            limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+
+            let _ = SetInformationJobObject(
+                job,
+                JobObjectExtendedLimitInformation,
+                &limit_info as *const _ as *const std::ffi::c_void,
+                std::mem::size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
+            );
+
+            let _ = AssignProcessToJobObject(job, GetCurrentProcess());
+            // Intentionally leak the `job` handle. It will be closed by the OS when this process exits.
+        }
     }
 }
 

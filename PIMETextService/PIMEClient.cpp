@@ -661,7 +661,9 @@ bool Client::callPipeIO(bool isRead, void *buffer, DWORD size, DWORD *rlen, int 
 	}
 	else {
 		// timeout or error
-		CancelIo(pipe_);
+		CancelIoEx(pipe_, &overlapped);
+		// Wait for the cancellation to finish so the kernel stops writing to our stack buffer and OVERLAPPED struct!
+		GetOverlappedResult(pipe_, &overlapped, rlen, TRUE);
 		ok = FALSE;
 	}
 

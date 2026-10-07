@@ -1,0 +1,273 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_RIME">
+      <Directory Id="dir_IM_Rime_2969ca8e70427487" Name="brise">
+        <Directory Id="dir_IM_Rime_46e783d4b16b9e8a" Name="extra" />
+        <Directory Id="dir_IM_Rime_7c0c1cb232cf1ca8" Name="opencc" />
+        <Directory Id="dir_IM_Rime_3334fc0d62f922f6" Name="preset" />
+        <Directory Id="dir_IM_Rime_58a800b2653c8158" Name="supplement" />
+      </Directory>
+      <Directory Id="dir_IM_Rime_8d777f385d3dfec8" Name="data" />
+      <Directory Id="dir_IM_Rime_bd21190449b7e88d" Name="icons" />
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="IM_Rime">
+      <Component Id="cmp_IM_Rime_c4d3523ea2db9d4e" Directory="INSTALLFOLDER_RIME" Guid="*">
+        <File Id="fil_IM_Rime_c4d3523ea2db9d4e" KeyPath="yes" Source="$(var.RimeDir)\icon.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_6b646d3c105145aa" Directory="INSTALLFOLDER_RIME" Guid="*">
+        <File Id="fil_IM_Rime_6b646d3c105145aa" KeyPath="yes" Source="$(var.RimeDir)\ime.json" />
+      </Component>
+      <Component Id="cmp_IM_Rime_cf27c55fca4be313" Directory="INSTALLFOLDER_RIME" Guid="*">
+        <File Id="fil_IM_Rime_cf27c55fca4be313" KeyPath="yes" Source="$(var.RimeDir)\librime.py" />
+      </Component>
+      <Component Id="cmp_IM_Rime_2dfa6f73e80d8a15" Directory="INSTALLFOLDER_RIME" Guid="*">
+        <File Id="fil_IM_Rime_2dfa6f73e80d8a15" KeyPath="yes" Source="$(var.RimeDir)\rime.dll" />
+      </Component>
+      <Component Id="cmp_IM_Rime_7f8c266f6692599d" Directory="INSTALLFOLDER_RIME" Guid="*">
+        <File Id="fil_IM_Rime_7f8c266f6692599d" KeyPath="yes" Source="$(var.RimeDir)\rime_ime.py" />
+      </Component>
+      <Component Id="cmp_IM_Rime_d325289cdd659832" Directory="INSTALLFOLDER_RIME" Guid="*">
+        <File Id="fil_IM_Rime_d325289cdd659832" KeyPath="yes" Source="$(var.RimeDir)\rime_keyevent.py" />
+      </Component>
+      <Component Id="cmp_IM_Rime_f824e70730bffc60" Directory="dir_IM_Rime_2969ca8e70427487" Guid="*">
+        <File Id="fil_IM_Rime_f824e70730bffc60" KeyPath="yes" Source="$(var.RimeDir)\brise\AUTHORS" />
+      </Component>
+      <Component Id="cmp_IM_Rime_a7b7e4ebb79f34e1" Directory="dir_IM_Rime_2969ca8e70427487" Guid="*">
+        <File Id="fil_IM_Rime_a7b7e4ebb79f34e1" KeyPath="yes" Source="$(var.RimeDir)\brise\ChangeLog" />
+      </Component>
+      <Component Id="cmp_IM_Rime_a61d0dc4ab98f865" Directory="dir_IM_Rime_2969ca8e70427487" Guid="*">
+        <File Id="fil_IM_Rime_a61d0dc4ab98f865" KeyPath="yes" Source="$(var.RimeDir)\brise\LICENSE" />
+      </Component>
+      <Component Id="cmp_IM_Rime_a02d68dcbbb943bf" Directory="dir_IM_Rime_2969ca8e70427487" Guid="*">
+        <File Id="fil_IM_Rime_a02d68dcbbb943bf" KeyPath="yes" Source="$(var.RimeDir)\brise\Makefile" />
+      </Component>
+      <Component Id="cmp_IM_Rime_4cbb46048a5eb801" Directory="dir_IM_Rime_2969ca8e70427487" Guid="*">
+        <File Id="fil_IM_Rime_4cbb46048a5eb801" KeyPath="yes" Source="$(var.RimeDir)\brise\README.md" />
+      </Component>
+      <Component Id="cmp_IM_Rime_27c71a04f336c27a" Directory="dir_IM_Rime_2969ca8e70427487" Guid="*">
+        <File Id="fil_IM_Rime_27c71a04f336c27a" KeyPath="yes" Source="$(var.RimeDir)\brise\default.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_7d1888795e198fb6" Directory="dir_IM_Rime_2969ca8e70427487" Guid="*">
+        <File Id="fil_IM_Rime_7d1888795e198fb6" KeyPath="yes" Source="$(var.RimeDir)\brise\essay.txt" />
+      </Component>
+      <Component Id="cmp_IM_Rime_36e5c05985893818" Directory="dir_IM_Rime_2969ca8e70427487" Guid="*">
+        <File Id="fil_IM_Rime_36e5c05985893818" KeyPath="yes" Source="$(var.RimeDir)\brise\make_essay.bat" />
+      </Component>
+      <Component Id="cmp_IM_Rime_37c83568371d05cd" Directory="dir_IM_Rime_2969ca8e70427487" Guid="*">
+        <File Id="fil_IM_Rime_37c83568371d05cd" KeyPath="yes" Source="$(var.RimeDir)\brise\make_essay.sh" />
+      </Component>
+      <Component Id="cmp_IM_Rime_1528dc906291055e" Directory="dir_IM_Rime_2969ca8e70427487" Guid="*">
+        <File Id="fil_IM_Rime_1528dc906291055e" KeyPath="yes" Source="$(var.RimeDir)\brise\symbols.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_9ca8094d7541dd4a" Directory="dir_IM_Rime_46e783d4b16b9e8a" Guid="*">
+        <File Id="fil_IM_Rime_9ca8094d7541dd4a" KeyPath="yes" Source="$(var.RimeDir)\brise\extra\array30.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_95d1e7e6fdc3fe81" Directory="dir_IM_Rime_46e783d4b16b9e8a" Guid="*">
+        <File Id="fil_IM_Rime_95d1e7e6fdc3fe81" KeyPath="yes" Source="$(var.RimeDir)\brise\extra\array30.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_b16c4e971205b57e" Directory="dir_IM_Rime_46e783d4b16b9e8a" Guid="*">
+        <File Id="fil_IM_Rime_b16c4e971205b57e" KeyPath="yes" Source="$(var.RimeDir)\brise\extra\scj6.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_4197b5ac91980313" Directory="dir_IM_Rime_46e783d4b16b9e8a" Guid="*">
+        <File Id="fil_IM_Rime_4197b5ac91980313" KeyPath="yes" Source="$(var.RimeDir)\brise\extra\scj6.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_dbb697b2bbad17e5" Directory="dir_IM_Rime_46e783d4b16b9e8a" Guid="*">
+        <File Id="fil_IM_Rime_dbb697b2bbad17e5" KeyPath="yes" Source="$(var.RimeDir)\brise\extra\soutzoe.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_dc1d709cd912c6f6" Directory="dir_IM_Rime_46e783d4b16b9e8a" Guid="*">
+        <File Id="fil_IM_Rime_dc1d709cd912c6f6" KeyPath="yes" Source="$(var.RimeDir)\brise\extra\soutzoe.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_79e1519c3377a82c" Directory="dir_IM_Rime_46e783d4b16b9e8a" Guid="*">
+        <File Id="fil_IM_Rime_79e1519c3377a82c" KeyPath="yes" Source="$(var.RimeDir)\brise\extra\stenotype.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_2498a115384a5c05" Directory="dir_IM_Rime_7c0c1cb232cf1ca8" Guid="*">
+        <File Id="fil_IM_Rime_2498a115384a5c05" KeyPath="yes" Source="$(var.RimeDir)\brise\opencc\s2t.json" />
+      </Component>
+      <Component Id="cmp_IM_Rime_c057b7314141c645" Directory="dir_IM_Rime_7c0c1cb232cf1ca8" Guid="*">
+        <File Id="fil_IM_Rime_c057b7314141c645" KeyPath="yes" Source="$(var.RimeDir)\brise\opencc\t2hk.json" />
+      </Component>
+      <Component Id="cmp_IM_Rime_c3b3e1d8d09590e4" Directory="dir_IM_Rime_7c0c1cb232cf1ca8" Guid="*">
+        <File Id="fil_IM_Rime_c3b3e1d8d09590e4" KeyPath="yes" Source="$(var.RimeDir)\brise\opencc\t2s.json" />
+      </Component>
+      <Component Id="cmp_IM_Rime_0f1a12c01ac5ffff" Directory="dir_IM_Rime_7c0c1cb232cf1ca8" Guid="*">
+        <File Id="fil_IM_Rime_0f1a12c01ac5ffff" KeyPath="yes" Source="$(var.RimeDir)\brise\opencc\t2tw.json" />
+      </Component>
+      <Component Id="cmp_IM_Rime_f88f02b5464621e0" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_f88f02b5464621e0" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\bopomofo.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_b12ddb4015b1bbf9" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_b12ddb4015b1bbf9" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\bopomofo_express.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_40a54a211a02698a" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_40a54a211a02698a" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\bopomofo_tw.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_dcf6fb06a4e45aaa" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_dcf6fb06a4e45aaa" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\cangjie5.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_9fbb76561b090506" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_9fbb76561b090506" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\cangjie5.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_5193ab37d9a5b55e" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_5193ab37d9a5b55e" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\cangjie5_express.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_adaee01820444edf" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_adaee01820444edf" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\luna_pinyin.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_aa3500bb359461ec" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_aa3500bb359461ec" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\luna_pinyin.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_b94320934e7e4413" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_b94320934e7e4413" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\luna_pinyin_fluency.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_bd6cc167c8752d01" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_bd6cc167c8752d01" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\luna_pinyin_simp.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_ede31b8816c95c5f" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_ede31b8816c95c5f" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\luna_pinyin_tw.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_becdfd400f0621f3" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_becdfd400f0621f3" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\luna_quanpin.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_5c208ee30db2fdd2" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_5c208ee30db2fdd2" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\stroke.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_f10f4c9c49728468" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_f10f4c9c49728468" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\stroke.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_11212108083fb51f" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_11212108083fb51f" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\terra_pinyin.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_f7f710a467b349d5" Directory="dir_IM_Rime_3334fc0d62f922f6" Guid="*">
+        <File Id="fil_IM_Rime_f7f710a467b349d5" KeyPath="yes" Source="$(var.RimeDir)\brise\preset\terra_pinyin.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_9b1be5753f9776a5" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_9b1be5753f9776a5" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\combo_pinyin.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_9d032280be68fbff" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_9d032280be68fbff" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\double_pinyin.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_f7ad28c7d00c0127" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_f7ad28c7d00c0127" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\double_pinyin_abc.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_399dabf13e884058" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_399dabf13e884058" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\double_pinyin_flypy.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_a7495c953d520b7c" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_a7495c953d520b7c" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\double_pinyin_mspy.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_ed35e42183c1b939" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_ed35e42183c1b939" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\double_pinyin_pyjj.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_a8597dd6a26d28af" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_a8597dd6a26d28af" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\emoji.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_a78482ae700f5304" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_a78482ae700f5304" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\emoji.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_5ccfb9e7bccb369c" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_5ccfb9e7bccb369c" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\ipa_xsampa.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_53610cde0973cdd5" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_53610cde0973cdd5" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\ipa_xsampa.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_3b5a680aa3f4af26" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_3b5a680aa3f4af26" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\jyutping.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_5c49870bf49d4f4a" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_5c49870bf49d4f4a" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\jyutping.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_4d077b542f9da6a4" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_4d077b542f9da6a4" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\pinyin_simp.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_b0e6a4dc37ecae40" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_b0e6a4dc37ecae40" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\pinyin_simp.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_a1c2a48724e21780" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_a1c2a48724e21780" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\quick5.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_f95ab95408eaac7b" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_f95ab95408eaac7b" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\quick5.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_00f6182b342a9dca" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_00f6182b342a9dca" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\sampheng.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_90771bc95e3cb701" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_90771bc95e3cb701" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\wubi86.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_c9df0f11d6c7d6fb" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_c9df0f11d6c7d6fb" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\wubi86.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_d5498f453cbac882" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_d5498f453cbac882" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\wubi_pinyin.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_b119ad0bee80cd4e" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_b119ad0bee80cd4e" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\wubi_trad.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_f721084545ce2f8b" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_f721084545ce2f8b" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\wugniu.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_6683f126158a1b1f" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_6683f126158a1b1f" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\wugniu_lopha.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_7d8623886ac382f9" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_7d8623886ac382f9" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\wugniu_lopha.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_706979cc4df2447b" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_706979cc4df2447b" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\yale.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_31b70d250d4803ff" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_31b70d250d4803ff" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\zyenpheng.dict.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_9d199c9c081bc176" Directory="dir_IM_Rime_58a800b2653c8158" Guid="*">
+        <File Id="fil_IM_Rime_9d199c9c081bc176" KeyPath="yes" Source="$(var.RimeDir)\brise\supplement\zyenpheng.schema.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_ffc022bf8e556a10" Directory="dir_IM_Rime_8d777f385d3dfec8" Guid="*">
+        <File Id="fil_IM_Rime_ffc022bf8e556a10" KeyPath="yes" Source="$(var.RimeDir)\data\PIME.yaml" />
+      </Component>
+      <Component Id="cmp_IM_Rime_015359adb96b46ee" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_015359adb96b46ee" KeyPath="yes" Source="$(var.RimeDir)\icons\chi.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_e3ae3a388dd101f2" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_e3ae3a388dd101f2" KeyPath="yes" Source="$(var.RimeDir)\icons\chi_full_capsoff.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_27d9e4559d1664a6" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_27d9e4559d1664a6" KeyPath="yes" Source="$(var.RimeDir)\icons\chi_full_capson.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_0afc521b975d7646" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_0afc521b975d7646" KeyPath="yes" Source="$(var.RimeDir)\icons\chi_half_capsoff.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_6a852e721beda6a5" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_6a852e721beda6a5" KeyPath="yes" Source="$(var.RimeDir)\icons\chi_half_capson.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_73702c7be5fbe333" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_73702c7be5fbe333" KeyPath="yes" Source="$(var.RimeDir)\icons\config.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_f78871efb1ca65df" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_f78871efb1ca65df" KeyPath="yes" Source="$(var.RimeDir)\icons\eng.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_d69c557bb61046b7" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_d69c557bb61046b7" KeyPath="yes" Source="$(var.RimeDir)\icons\eng_full_capsoff.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_77c7064e155869c2" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_77c7064e155869c2" KeyPath="yes" Source="$(var.RimeDir)\icons\eng_full_capson.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_deb5464a6fca9288" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_deb5464a6fca9288" KeyPath="yes" Source="$(var.RimeDir)\icons\eng_half_capsoff.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_59aa2763febef030" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_59aa2763febef030" KeyPath="yes" Source="$(var.RimeDir)\icons\eng_half_capson.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_1c4b8b1502885fc2" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_1c4b8b1502885fc2" KeyPath="yes" Source="$(var.RimeDir)\icons\full.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_27c4b3e353324460" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_27c4b3e353324460" KeyPath="yes" Source="$(var.RimeDir)\icons\half.ico" />
+      </Component>
+      <Component Id="cmp_IM_Rime_8e880ab133a57470" Directory="dir_IM_Rime_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Rime_8e880ab133a57470" KeyPath="yes" Source="$(var.RimeDir)\icons\zh.ico" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

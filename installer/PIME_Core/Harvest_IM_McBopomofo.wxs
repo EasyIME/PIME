@@ -1,0 +1,104 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_MCBOPOMOFO">
+      <Directory Id="dir_IM_McBopomofo_c7a628cba22e28eb" Name="css" />
+      <Directory Id="dir_IM_McBopomofo_bd21190449b7e88d" Name="icons" />
+      <Directory Id="dir_IM_McBopomofo_59b514174bffe4ae" Name="images" />
+      <Directory Id="dir_IM_McBopomofo_32981a13284db7a0" Name="js" />
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="IM_McBopomofo">
+      <Component Id="cmp_IM_McBopomofo_04c6e90faac2675a" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_04c6e90faac2675a" KeyPath="yes" Source="$(var.McBopomofoDir)\README.md" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_fa546fe8734e90eb" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_fa546fe8734e90eb" KeyPath="yes" Source="$(var.McBopomofoDir)\config_tool.py" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_90e676a305578fcf" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_90e676a305578fcf" KeyPath="yes" Source="$(var.McBopomofoDir)\help.html" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_c4d3523ea2db9d4e" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_c4d3523ea2db9d4e" KeyPath="yes" Source="$(var.McBopomofoDir)\icon.ico" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_6b646d3c105145aa" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_6b646d3c105145aa" KeyPath="yes" Source="$(var.McBopomofoDir)\ime.json" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_168726dbe96b3ce4" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_168726dbe96b3ce4" KeyPath="yes" Source="$(var.McBopomofoDir)\index.js" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_be46067d375a129c" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_be46067d375a129c" KeyPath="yes" Source="$(var.McBopomofoDir)\index.js.LICENSE.txt" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_523e1fab8c682414" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_523e1fab8c682414" KeyPath="yes" Source="$(var.McBopomofoDir)\options.html" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_8b1e46a37a5c4b21" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_8b1e46a37a5c4b21" KeyPath="yes" Source="$(var.McBopomofoDir)\run_config_tool.bat" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_b69437057ad7faca" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_b69437057ad7faca" KeyPath="yes" Source="$(var.McBopomofoDir)\run_get_log.bat" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_60ae86a62790101c" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_60ae86a62790101c" KeyPath="yes" Source="$(var.McBopomofoDir)\run_register_ime.bat" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_78c12f5adc1848d1" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_78c12f5adc1848d1" KeyPath="yes" Source="$(var.McBopomofoDir)\server.js" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_0d42a74f8faa0f7e" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_0d42a74f8faa0f7e" KeyPath="yes" Source="$(var.McBopomofoDir)\user_phrases.html" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_54d365d4962dd435" Directory="INSTALLFOLDER_MCBOPOMOFO" Guid="*">
+        <File Id="fil_IM_McBopomofo_54d365d4962dd435" KeyPath="yes" Source="$(var.McBopomofoDir)\webpack_check.js" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_81844aaaeda66ab2" Directory="dir_IM_McBopomofo_c7a628cba22e28eb" Guid="*">
+        <File Id="fil_IM_McBopomofo_81844aaaeda66ab2" KeyPath="yes" Source="$(var.McBopomofoDir)\css\help.css" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_02597b8ee65b85b0" Directory="dir_IM_McBopomofo_c7a628cba22e28eb" Guid="*">
+        <File Id="fil_IM_McBopomofo_02597b8ee65b85b0" KeyPath="yes" Source="$(var.McBopomofoDir)\css\options.css" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_362e5bc18d8a2e31" Directory="dir_IM_McBopomofo_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McBopomofo_362e5bc18d8a2e31" KeyPath="yes" Source="$(var.McBopomofoDir)\icons\capsEng.ico" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_b8554056825383bf" Directory="dir_IM_McBopomofo_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McBopomofo_b8554056825383bf" KeyPath="yes" Source="$(var.McBopomofoDir)\icons\close.ico" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_73702c7be5fbe333" Directory="dir_IM_McBopomofo_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McBopomofo_73702c7be5fbe333" KeyPath="yes" Source="$(var.McBopomofoDir)\icons\config.ico" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_f78871efb1ca65df" Directory="dir_IM_McBopomofo_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McBopomofo_f78871efb1ca65df" KeyPath="yes" Source="$(var.McBopomofoDir)\icons\eng.ico" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_1c4b8b1502885fc2" Directory="dir_IM_McBopomofo_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McBopomofo_1c4b8b1502885fc2" KeyPath="yes" Source="$(var.McBopomofoDir)\icons\full.ico" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_27c4b3e353324460" Directory="dir_IM_McBopomofo_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McBopomofo_27c4b3e353324460" KeyPath="yes" Source="$(var.McBopomofoDir)\icons\half.ico" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_3aacc4aa4ec3b46b" Directory="dir_IM_McBopomofo_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McBopomofo_3aacc4aa4ec3b46b" KeyPath="yes" Source="$(var.McBopomofoDir)\icons\simC.ico" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_1f0c42bfc849548e" Directory="dir_IM_McBopomofo_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McBopomofo_1f0c42bfc849548e" KeyPath="yes" Source="$(var.McBopomofoDir)\icons\traC.ico" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_302fb34964b993c4" Directory="dir_IM_McBopomofo_59b514174bffe4ae" Guid="*">
+        <File Id="fil_IM_McBopomofo_302fb34964b993c4" KeyPath="yes" Source="$(var.McBopomofoDir)\images\icon128.png" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_2a26e6e465f3141a" Directory="dir_IM_McBopomofo_59b514174bffe4ae" Guid="*">
+        <File Id="fil_IM_McBopomofo_2a26e6e465f3141a" KeyPath="yes" Source="$(var.McBopomofoDir)\images\icon16.png" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_9aa865392fbb371e" Directory="dir_IM_McBopomofo_59b514174bffe4ae" Guid="*">
+        <File Id="fil_IM_McBopomofo_9aa865392fbb371e" KeyPath="yes" Source="$(var.McBopomofoDir)\images\icon48.png" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_ce15fe2a7fbb33a8" Directory="dir_IM_McBopomofo_59b514174bffe4ae" Guid="*">
+        <File Id="fil_IM_McBopomofo_ce15fe2a7fbb33a8" KeyPath="yes" Source="$(var.McBopomofoDir)\images\icon64.png" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_9ac008c7e2c4d3a6" Directory="dir_IM_McBopomofo_32981a13284db7a0" Guid="*">
+        <File Id="fil_IM_McBopomofo_9ac008c7e2c4d3a6" KeyPath="yes" Source="$(var.McBopomofoDir)\js\options.js" />
+      </Component>
+      <Component Id="cmp_IM_McBopomofo_2ce5bba4c4682e91" Directory="dir_IM_McBopomofo_32981a13284db7a0" Guid="*">
+        <File Id="fil_IM_McBopomofo_2ce5bba4c4682e91" KeyPath="yes" Source="$(var.McBopomofoDir)\js\user_phrases.js" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

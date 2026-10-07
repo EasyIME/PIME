@@ -1,0 +1,162 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_NODE">
+      <Directory Id="dir_NodeBaseComponents_3ec03583f8eaec27" Name="node_modules">
+        <Directory Id="dir_NodeBaseComponents_813314d636cc543b" Name="debug">
+          <Directory Id="dir_NodeBaseComponents_495962ea9c8c697f" Name="src" />
+        </Directory>
+        <Directory Id="dir_NodeBaseComponents_51edce7dffdc5367" Name="ms" />
+        <Directory Id="dir_NodeBaseComponents_d36b24748f6b17b8" Name="nime">
+          <Directory Id="dir_NodeBaseComponents_2a17403dba8eae45" Name="lib" />
+          <Directory Id="dir_NodeBaseComponents_cb01532243bde7dc" Name="src" />
+        </Directory>
+        <Directory Id="dir_NodeBaseComponents_36157ddddf6c3d25" Name="stdio">
+          <Directory Id="dir_NodeBaseComponents_97b00e6074d440f9" Name="lib" />
+          <Directory Id="dir_NodeBaseComponents_7176f298cb7e2447" Name="tests" />
+        </Directory>
+      </Directory>
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="NodeBaseComponents">
+      <Component Id="cmp_NodeBaseComponents_a4f7b80f7bcacec4" Directory="INSTALLFOLDER_NODE" Guid="*">
+        <File Id="fil_NodeBaseComponents_a4f7b80f7bcacec4" KeyPath="yes" Source="$(var.NodeDir)\loadServices.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_d0098f6b877c84e3" Directory="INSTALLFOLDER_NODE" Guid="*">
+        <File Id="fil_NodeBaseComponents_d0098f6b877c84e3" KeyPath="yes" Source="$(var.NodeDir)\node.exe" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_32607347f8126e65" Directory="INSTALLFOLDER_NODE" Guid="*">
+        <File Id="fil_NodeBaseComponents_32607347f8126e65" KeyPath="yes" Source="$(var.NodeDir)\package-lock.json" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_b9cfc7f2cdf78a7f" Directory="INSTALLFOLDER_NODE" Guid="*">
+        <File Id="fil_NodeBaseComponents_b9cfc7f2cdf78a7f" KeyPath="yes" Source="$(var.NodeDir)\package.json" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_78c12f5adc1848d1" Directory="INSTALLFOLDER_NODE" Guid="*">
+        <File Id="fil_NodeBaseComponents_78c12f5adc1848d1" KeyPath="yes" Source="$(var.NodeDir)\server.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_8ee2343978836a77" Directory="INSTALLFOLDER_NODE" Guid="*">
+        <File Id="fil_NodeBaseComponents_8ee2343978836a77" KeyPath="yes" Source="$(var.NodeDir)\yarn.lock" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_137345953edf5975" Directory="dir_NodeBaseComponents_813314d636cc543b" Guid="*">
+        <File Id="fil_NodeBaseComponents_137345953edf5975" KeyPath="yes" Source="$(var.NodeDir)\node_modules\debug\CHANGELOG.md" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_927d67318727385f" Directory="dir_NodeBaseComponents_813314d636cc543b" Guid="*">
+        <File Id="fil_NodeBaseComponents_927d67318727385f" KeyPath="yes" Source="$(var.NodeDir)\node_modules\debug\LICENSE" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_1be55c717a558181" Directory="dir_NodeBaseComponents_813314d636cc543b" Guid="*">
+        <File Id="fil_NodeBaseComponents_1be55c717a558181" KeyPath="yes" Source="$(var.NodeDir)\node_modules\debug\Makefile" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_ac98b11c53f2bc89" Directory="dir_NodeBaseComponents_813314d636cc543b" Guid="*">
+        <File Id="fil_NodeBaseComponents_ac98b11c53f2bc89" KeyPath="yes" Source="$(var.NodeDir)\node_modules\debug\Readme.md" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_1f8690f5bbb2af9f" Directory="dir_NodeBaseComponents_813314d636cc543b" Guid="*">
+        <File Id="fil_NodeBaseComponents_1f8690f5bbb2af9f" KeyPath="yes" Source="$(var.NodeDir)\node_modules\debug\component.json" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_3a5b4d2ef16de140" Directory="dir_NodeBaseComponents_813314d636cc543b" Guid="*">
+        <File Id="fil_NodeBaseComponents_3a5b4d2ef16de140" KeyPath="yes" Source="$(var.NodeDir)\node_modules\debug\karma.conf.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_71c4e063c4765cfc" Directory="dir_NodeBaseComponents_813314d636cc543b" Guid="*">
+        <File Id="fil_NodeBaseComponents_71c4e063c4765cfc" KeyPath="yes" Source="$(var.NodeDir)\node_modules\debug\node.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_ddb87a12a872a955" Directory="dir_NodeBaseComponents_813314d636cc543b" Guid="*">
+        <File Id="fil_NodeBaseComponents_ddb87a12a872a955" KeyPath="yes" Source="$(var.NodeDir)\node_modules\debug\package.json" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_8fe0fd60efb095e5" Directory="dir_NodeBaseComponents_495962ea9c8c697f" Guid="*">
+        <File Id="fil_NodeBaseComponents_8fe0fd60efb095e5" KeyPath="yes" Source="$(var.NodeDir)\node_modules\debug\src\browser.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_6ed3cdfadda8961e" Directory="dir_NodeBaseComponents_495962ea9c8c697f" Guid="*">
+        <File Id="fil_NodeBaseComponents_6ed3cdfadda8961e" KeyPath="yes" Source="$(var.NodeDir)\node_modules\debug\src\debug.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_ec4cf48d4eb3329a" Directory="dir_NodeBaseComponents_495962ea9c8c697f" Guid="*">
+        <File Id="fil_NodeBaseComponents_ec4cf48d4eb3329a" KeyPath="yes" Source="$(var.NodeDir)\node_modules\debug\src\index.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_a3765c70df294530" Directory="dir_NodeBaseComponents_495962ea9c8c697f" Guid="*">
+        <File Id="fil_NodeBaseComponents_a3765c70df294530" KeyPath="yes" Source="$(var.NodeDir)\node_modules\debug\src\inspector-log.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_90fb9ebd75c73568" Directory="dir_NodeBaseComponents_495962ea9c8c697f" Guid="*">
+        <File Id="fil_NodeBaseComponents_90fb9ebd75c73568" KeyPath="yes" Source="$(var.NodeDir)\node_modules\debug\src\node.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_45b2f5e83c0c56a4" Directory="dir_NodeBaseComponents_51edce7dffdc5367" Guid="*">
+        <File Id="fil_NodeBaseComponents_45b2f5e83c0c56a4" KeyPath="yes" Source="$(var.NodeDir)\node_modules\ms\README.md" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_2d59197d48d057f9" Directory="dir_NodeBaseComponents_51edce7dffdc5367" Guid="*">
+        <File Id="fil_NodeBaseComponents_2d59197d48d057f9" KeyPath="yes" Source="$(var.NodeDir)\node_modules\ms\index.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_f3225fe4b2e86fe8" Directory="dir_NodeBaseComponents_51edce7dffdc5367" Guid="*">
+        <File Id="fil_NodeBaseComponents_f3225fe4b2e86fe8" KeyPath="yes" Source="$(var.NodeDir)\node_modules\ms\license.md" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_ead1e3d219cddfde" Directory="dir_NodeBaseComponents_51edce7dffdc5367" Guid="*">
+        <File Id="fil_NodeBaseComponents_ead1e3d219cddfde" KeyPath="yes" Source="$(var.NodeDir)\node_modules\ms\package.json" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_e18cf8c3f3c7d44b" Directory="dir_NodeBaseComponents_d36b24748f6b17b8" Guid="*">
+        <File Id="fil_NodeBaseComponents_e18cf8c3f3c7d44b" KeyPath="yes" Source="$(var.NodeDir)\node_modules\nime\CHANGELOG.md" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_5525f025f71f279c" Directory="dir_NodeBaseComponents_d36b24748f6b17b8" Guid="*">
+        <File Id="fil_NodeBaseComponents_5525f025f71f279c" KeyPath="yes" Source="$(var.NodeDir)\node_modules\nime\README.md" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_bfb100889607fbfd" Directory="dir_NodeBaseComponents_d36b24748f6b17b8" Guid="*">
+        <File Id="fil_NodeBaseComponents_bfb100889607fbfd" KeyPath="yes" Source="$(var.NodeDir)\node_modules\nime\index.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_8f3a0dc933bce2eb" Directory="dir_NodeBaseComponents_d36b24748f6b17b8" Guid="*">
+        <File Id="fil_NodeBaseComponents_8f3a0dc933bce2eb" KeyPath="yes" Source="$(var.NodeDir)\node_modules\nime\package.json" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_fa58a58a70ad091c" Directory="dir_NodeBaseComponents_d36b24748f6b17b8" Guid="*">
+        <File Id="fil_NodeBaseComponents_fa58a58a70ad091c" KeyPath="yes" Source="$(var.NodeDir)\node_modules\nime\yarn.lock" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_62a5b7ce71c9593d" Directory="dir_NodeBaseComponents_2a17403dba8eae45" Guid="*">
+        <File Id="fil_NodeBaseComponents_62a5b7ce71c9593d" KeyPath="yes" Source="$(var.NodeDir)\node_modules\nime\lib\keyCodes.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_9f0803dedcee1ee6" Directory="dir_NodeBaseComponents_2a17403dba8eae45" Guid="*">
+        <File Id="fil_NodeBaseComponents_9f0803dedcee1ee6" KeyPath="yes" Source="$(var.NodeDir)\node_modules\nime\lib\keyHandler.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_788ee1ddcdfcf9f3" Directory="dir_NodeBaseComponents_cb01532243bde7dc" Guid="*">
+        <File Id="fil_NodeBaseComponents_788ee1ddcdfcf9f3" KeyPath="yes" Source="$(var.NodeDir)\node_modules\nime\src\nimeServer.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_173873f1c2643022" Directory="dir_NodeBaseComponents_cb01532243bde7dc" Guid="*">
+        <File Id="fil_NodeBaseComponents_173873f1c2643022" KeyPath="yes" Source="$(var.NodeDir)\node_modules\nime\src\requestHandler.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_1a4f97c0c4ebabbd" Directory="dir_NodeBaseComponents_cb01532243bde7dc" Guid="*">
+        <File Id="fil_NodeBaseComponents_1a4f97c0c4ebabbd" KeyPath="yes" Source="$(var.NodeDir)\node_modules\nime\src\textService.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_657dc09a63a23372" Directory="dir_NodeBaseComponents_36157ddddf6c3d25" Guid="*">
+        <File Id="fil_NodeBaseComponents_657dc09a63a23372" KeyPath="yes" Source="$(var.NodeDir)\node_modules\stdio\CHANGES.md" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_d7d24279239e8644" Directory="dir_NodeBaseComponents_36157ddddf6c3d25" Guid="*">
+        <File Id="fil_NodeBaseComponents_d7d24279239e8644" KeyPath="yes" Source="$(var.NodeDir)\node_modules\stdio\README.md" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_baf22f05fb0ce11d" Directory="dir_NodeBaseComponents_36157ddddf6c3d25" Guid="*">
+        <File Id="fil_NodeBaseComponents_baf22f05fb0ce11d" KeyPath="yes" Source="$(var.NodeDir)\node_modules\stdio\TODO.txt" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_9ab2ea1a95fc5fb2" Directory="dir_NodeBaseComponents_36157ddddf6c3d25" Guid="*">
+        <File Id="fil_NodeBaseComponents_9ab2ea1a95fc5fb2" KeyPath="yes" Source="$(var.NodeDir)\node_modules\stdio\license" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_b32867aa753adad9" Directory="dir_NodeBaseComponents_36157ddddf6c3d25" Guid="*">
+        <File Id="fil_NodeBaseComponents_b32867aa753adad9" KeyPath="yes" Source="$(var.NodeDir)\node_modules\stdio\main.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_1f08305e15965351" Directory="dir_NodeBaseComponents_36157ddddf6c3d25" Guid="*">
+        <File Id="fil_NodeBaseComponents_1f08305e15965351" KeyPath="yes" Source="$(var.NodeDir)\node_modules\stdio\package.json" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_6ab14ed2a2f77ecf" Directory="dir_NodeBaseComponents_97b00e6074d440f9" Guid="*">
+        <File Id="fil_NodeBaseComponents_6ab14ed2a2f77ecf" KeyPath="yes" Source="$(var.NodeDir)\node_modules\stdio\lib\getopt.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_2f318d1d6a3a317e" Directory="dir_NodeBaseComponents_97b00e6074d440f9" Guid="*">
+        <File Id="fil_NodeBaseComponents_2f318d1d6a3a317e" KeyPath="yes" Source="$(var.NodeDir)\node_modules\stdio\lib\progress.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_ef4a6e18242b9fa2" Directory="dir_NodeBaseComponents_97b00e6074d440f9" Guid="*">
+        <File Id="fil_NodeBaseComponents_ef4a6e18242b9fa2" KeyPath="yes" Source="$(var.NodeDir)\node_modules\stdio\lib\question.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_dc82fd43fd14e740" Directory="dir_NodeBaseComponents_97b00e6074d440f9" Guid="*">
+        <File Id="fil_NodeBaseComponents_dc82fd43fd14e740" KeyPath="yes" Source="$(var.NodeDir)\node_modules\stdio\lib\reading.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_a5bff2a1355bafad" Directory="dir_NodeBaseComponents_97b00e6074d440f9" Guid="*">
+        <File Id="fil_NodeBaseComponents_a5bff2a1355bafad" KeyPath="yes" Source="$(var.NodeDir)\node_modules\stdio\lib\util.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_3bd945b21d0daabe" Directory="dir_NodeBaseComponents_7176f298cb7e2447" Guid="*">
+        <File Id="fil_NodeBaseComponents_3bd945b21d0daabe" KeyPath="yes" Source="$(var.NodeDir)\node_modules\stdio\tests\00-stupid.js" />
+      </Component>
+      <Component Id="cmp_NodeBaseComponents_e48305582318e96f" Directory="dir_NodeBaseComponents_7176f298cb7e2447" Guid="*">
+        <File Id="fil_NodeBaseComponents_e48305582318e96f" KeyPath="yes" Source="$(var.NodeDir)\node_modules\stdio\tests\01-command-line-arguments.js" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

@@ -1,0 +1,50 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="PIME Text Service (x86)" 
+           Manufacturer="EasyIME" 
+           Version="2.0.0.0" 
+           UpgradeCode="57C76F4B-6A34-453B-983C-1F033B423235"
+           Scope="perMachine">
+    
+    <MediaTemplate EmbedCab="yes" CabinetTemplate="tsx86_{0}.cab" />
+
+    <StandardDirectory Id="ProgramFilesFolder">
+      <Directory Id="INSTALLFOLDER" Name="PIME">
+        <Directory Id="X86DIR" Name="x86" />
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="Main">
+      <ComponentGroupRef Id="TextServiceComponents_x86" />
+    </Feature>
+
+
+
+  <!-- Register COM / Text Service via regsvr32 during deferred commit/install -->
+  <CustomAction Id="CA_RegisterTextService_x86"
+                Directory="SystemFolder"
+                ExeCommand="&quot;[SystemFolder]regsvr32.exe&quot; /s &quot;[X86DIR]PIMETextService.dll&quot;"
+                Execute="deferred"
+                Impersonate="no"
+                Return="check" />
+
+  <CustomAction Id="CA_UnregisterTextService_x86"
+                Directory="SystemFolder"
+                ExeCommand="&quot;[SystemFolder]regsvr32.exe&quot; /u /s &quot;[X86DIR]PIMETextService.dll&quot;"
+                Execute="deferred"
+                Impersonate="no"
+                Return="ignore" />
+
+  <InstallExecuteSequence>
+    <Custom Action="CA_UnregisterTextService_x86" Before="RemoveFiles" Condition="(NOT UPGRADINGPRODUCTCODE) AND (REMOVE=&quot;ALL&quot;)" />
+    <Custom Action="CA_RegisterTextService_x86" After="InstallFiles" Condition="NOT (REMOVE=&quot;ALL&quot;)" />
+  </InstallExecuteSequence>
+</Package>
+
+  <Fragment>
+    <ComponentGroup Id="TextServiceComponents_x86" Directory="X86DIR">
+      <Component Id="cmp_PIMETextService_x86" Guid="0A82FE1D-3C62-4D39-BA8F-835A3DB72752" Bitness="always32">
+        <File Id="fil_PIMETextService_x86" Source="..\..\build\PIMETextService\Release\PIMETextService.dll" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

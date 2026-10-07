@@ -1,0 +1,374 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_PYTHON">
+      <Directory Id="dir_PythonBaseComponents_6f6c500dca955281" Name="libchewing">
+        <Directory Id="dir_PythonBaseComponents_20ad4efc8ca86d6e" Name="data" />
+      </Directory>
+      <Directory Id="dir_PythonBaseComponents_b4131c5cee1d6e8e" Name="opencc" />
+      <Directory Id="dir_PythonBaseComponents_6e8efbe3a442748b" Name="python3">
+        <Directory Id="dir_PythonBaseComponents_c4ecc6a06df2c646" Name="Lib">
+          <Directory Id="dir_PythonBaseComponents_e8d09f01068b2a54" Name="site-packages">
+            <Directory Id="dir_PythonBaseComponents_ca5bc4d0becb379f" Name="tornado">
+              <Directory Id="dir_PythonBaseComponents_b96079c19b3893d2" Name="platform" />
+            </Directory>
+          </Directory>
+        </Directory>
+      </Directory>
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="PythonBaseComponents">
+      <Component Id="cmp_PythonBaseComponents_683787f0f9612c3d" Directory="INSTALLFOLDER_PYTHON" Guid="*">
+        <File Id="fil_PythonBaseComponents_683787f0f9612c3d" KeyPath="yes" Source="$(var.PythonDir)\keycodes.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_d355af669766ee35" Directory="INSTALLFOLDER_PYTHON" Guid="*">
+        <File Id="fil_PythonBaseComponents_d355af669766ee35" KeyPath="yes" Source="$(var.PythonDir)\server.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_daabcf70b2949320" Directory="INSTALLFOLDER_PYTHON" Guid="*">
+        <File Id="fil_PythonBaseComponents_daabcf70b2949320" KeyPath="yes" Source="$(var.PythonDir)\serviceManager.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_cbcd9a405260ee22" Directory="INSTALLFOLDER_PYTHON" Guid="*">
+        <File Id="fil_PythonBaseComponents_cbcd9a405260ee22" KeyPath="yes" Source="$(var.PythonDir)\textService.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_ad181c097fd30a78" Directory="dir_PythonBaseComponents_6f6c500dca955281" Guid="*">
+        <File Id="fil_PythonBaseComponents_ad181c097fd30a78" KeyPath="yes" Source="$(var.PythonDir)\libchewing\__init__.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_9cda381629e9d734" Directory="dir_PythonBaseComponents_6f6c500dca955281" Guid="*">
+        <File Id="fil_PythonBaseComponents_9cda381629e9d734" KeyPath="yes" Source="$(var.PythonDir)\libchewing\chewing.dll" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_4be9396c800257df" Directory="dir_PythonBaseComponents_6f6c500dca955281" Guid="*">
+        <File Id="fil_PythonBaseComponents_4be9396c800257df" KeyPath="yes" Source="$(var.PythonDir)\libchewing\libchewing.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_ef0a7394068ef24a" Directory="dir_PythonBaseComponents_20ad4efc8ca86d6e" Guid="*">
+        <File Id="fil_PythonBaseComponents_ef0a7394068ef24a" KeyPath="yes" Source="$(var.PythonDir)\libchewing\data\dictionary.dat" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_808210c9e1d0d2a4" Directory="dir_PythonBaseComponents_20ad4efc8ca86d6e" Guid="*">
+        <File Id="fil_PythonBaseComponents_808210c9e1d0d2a4" KeyPath="yes" Source="$(var.PythonDir)\libchewing\data\index_tree.dat" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_dcf5fcd2a02642db" Directory="dir_PythonBaseComponents_20ad4efc8ca86d6e" Guid="*">
+        <File Id="fil_PythonBaseComponents_dcf5fcd2a02642db" KeyPath="yes" Source="$(var.PythonDir)\libchewing\data\pinyin.tab" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_a6be655408ae9198" Directory="dir_PythonBaseComponents_20ad4efc8ca86d6e" Guid="*">
+        <File Id="fil_PythonBaseComponents_a6be655408ae9198" KeyPath="yes" Source="$(var.PythonDir)\libchewing\data\swkb.dat" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_da24727773c0fe14" Directory="dir_PythonBaseComponents_20ad4efc8ca86d6e" Guid="*">
+        <File Id="fil_PythonBaseComponents_da24727773c0fe14" KeyPath="yes" Source="$(var.PythonDir)\libchewing\data\symbols.dat" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_917d2154c9d96913" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_917d2154c9d96913" KeyPath="yes" Source="$(var.PythonDir)\opencc\AUTHORS" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_b1d1284af2c7b9ca" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_b1d1284af2c7b9ca" KeyPath="yes" Source="$(var.PythonDir)\opencc\HKVariants.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_77272c339201e4e3" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_77272c339201e4e3" KeyPath="yes" Source="$(var.PythonDir)\opencc\HKVariantsPhrases.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_89ca447d67e91d0c" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_89ca447d67e91d0c" KeyPath="yes" Source="$(var.PythonDir)\opencc\HKVariantsRev.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_89e400085703a5e7" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_89e400085703a5e7" KeyPath="yes" Source="$(var.PythonDir)\opencc\HKVariantsRevPhrases.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_cc69af6f68bbbb08" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_cc69af6f68bbbb08" KeyPath="yes" Source="$(var.PythonDir)\opencc\JPVariants.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_3519fcaab7e01d37" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_3519fcaab7e01d37" KeyPath="yes" Source="$(var.PythonDir)\opencc\LICENSE" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_4c4eb6e84d8ec466" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_4c4eb6e84d8ec466" KeyPath="yes" Source="$(var.PythonDir)\opencc\NEWS.md" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_4bafb67377455f88" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_4bafb67377455f88" KeyPath="yes" Source="$(var.PythonDir)\opencc\README.md" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_e1540cd5d00ad897" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_e1540cd5d00ad897" KeyPath="yes" Source="$(var.PythonDir)\opencc\STCharacters.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_3ea48a1ecba0f60d" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_3ea48a1ecba0f60d" KeyPath="yes" Source="$(var.PythonDir)\opencc\STPhrases.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_a9d0817bd4c5400a" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_a9d0817bd4c5400a" KeyPath="yes" Source="$(var.PythonDir)\opencc\TSCharacters.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_1ead044170ab266d" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_1ead044170ab266d" KeyPath="yes" Source="$(var.PythonDir)\opencc\TSPhrases.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_ec8a8c908932759f" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_ec8a8c908932759f" KeyPath="yes" Source="$(var.PythonDir)\opencc\TWPhrases.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_4b693d08c050d3ac" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_4b693d08c050d3ac" KeyPath="yes" Source="$(var.PythonDir)\opencc\TWPhrasesRev.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_ee3ea1e608aa4158" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_ee3ea1e608aa4158" KeyPath="yes" Source="$(var.PythonDir)\opencc\TWVariants.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_afdb1990bf4ab78c" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_afdb1990bf4ab78c" KeyPath="yes" Source="$(var.PythonDir)\opencc\TWVariantsRev.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_bfbb9e57be74370a" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_bfbb9e57be74370a" KeyPath="yes" Source="$(var.PythonDir)\opencc\TWVariantsRevPhrases.ocd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_94592e2f288aa676" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_94592e2f288aa676" KeyPath="yes" Source="$(var.PythonDir)\opencc\__init__.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_bf23f7a5e8a7e1d7" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_bf23f7a5e8a7e1d7" KeyPath="yes" Source="$(var.PythonDir)\opencc\hk2s.json" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_6f4a213ee5f96ffc" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_6f4a213ee5f96ffc" KeyPath="yes" Source="$(var.PythonDir)\opencc\opencc.dll" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_f018c980cd404fda" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_f018c980cd404fda" KeyPath="yes" Source="$(var.PythonDir)\opencc\s2hk.json" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_ae86da1fe5589144" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_ae86da1fe5589144" KeyPath="yes" Source="$(var.PythonDir)\opencc\s2t.json" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_5a242337b3f27a9a" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_5a242337b3f27a9a" KeyPath="yes" Source="$(var.PythonDir)\opencc\s2tw.json" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_8ba16220068d63df" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_8ba16220068d63df" KeyPath="yes" Source="$(var.PythonDir)\opencc\s2twp.json" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_48eb5918609bfdd4" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_48eb5918609bfdd4" KeyPath="yes" Source="$(var.PythonDir)\opencc\t2hk.json" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_823ab77883262a8a" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_823ab77883262a8a" KeyPath="yes" Source="$(var.PythonDir)\opencc\t2s.json" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_387f7020cf520255" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_387f7020cf520255" KeyPath="yes" Source="$(var.PythonDir)\opencc\t2tw.json" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_dbbee39ecaa48cef" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_dbbee39ecaa48cef" KeyPath="yes" Source="$(var.PythonDir)\opencc\tw2s.json" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_d0942cbc881a64e3" Directory="dir_PythonBaseComponents_b4131c5cee1d6e8e" Guid="*">
+        <File Id="fil_PythonBaseComponents_d0942cbc881a64e3" KeyPath="yes" Source="$(var.PythonDir)\opencc\tw2sp.json" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_a9ba8e2637abd28a" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_a9ba8e2637abd28a" KeyPath="yes" Source="$(var.PythonDir)\python3\LICENSE.txt" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_aef43ecb72880915" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_aef43ecb72880915" KeyPath="yes" Source="$(var.PythonDir)\python3\_asyncio.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_e000ec2389da66e1" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_e000ec2389da66e1" KeyPath="yes" Source="$(var.PythonDir)\python3\_bz2.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_602b44126bfa0e20" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_602b44126bfa0e20" KeyPath="yes" Source="$(var.PythonDir)\python3\_ctypes.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_1190c51210732240" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_1190c51210732240" KeyPath="yes" Source="$(var.PythonDir)\python3\_decimal.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_abb8b28fa0b91c6c" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_abb8b28fa0b91c6c" KeyPath="yes" Source="$(var.PythonDir)\python3\_elementtree.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_8998d96f3d2b6b7d" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_8998d96f3d2b6b7d" KeyPath="yes" Source="$(var.PythonDir)\python3\_hashlib.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_e8e59e04e2972ed3" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_e8e59e04e2972ed3" KeyPath="yes" Source="$(var.PythonDir)\python3\_lzma.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_e44d8d498c6d5bd7" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_e44d8d498c6d5bd7" KeyPath="yes" Source="$(var.PythonDir)\python3\_msi.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_10b36d1af06ea5a6" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_10b36d1af06ea5a6" KeyPath="yes" Source="$(var.PythonDir)\python3\_multiprocessing.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_a55c0c6df90817a1" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_a55c0c6df90817a1" KeyPath="yes" Source="$(var.PythonDir)\python3\_overlapped.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_7d429c8e83a2fb8c" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_7d429c8e83a2fb8c" KeyPath="yes" Source="$(var.PythonDir)\python3\_queue.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_15bd983babd3d0ba" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_15bd983babd3d0ba" KeyPath="yes" Source="$(var.PythonDir)\python3\_socket.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_ac3e55a71ce41b97" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_ac3e55a71ce41b97" KeyPath="yes" Source="$(var.PythonDir)\python3\_sqlite3.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_af508bbf602f95e3" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_af508bbf602f95e3" KeyPath="yes" Source="$(var.PythonDir)\python3\_ssl.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_bab20ce275396198" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_bab20ce275396198" KeyPath="yes" Source="$(var.PythonDir)\python3\_uuid.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_07f5a858753dca86" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_07f5a858753dca86" KeyPath="yes" Source="$(var.PythonDir)\python3\_wmi.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_94de4eb1e8aa8492" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_94de4eb1e8aa8492" KeyPath="yes" Source="$(var.PythonDir)\python3\_zoneinfo.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_c4640e43d25b57a7" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_c4640e43d25b57a7" KeyPath="yes" Source="$(var.PythonDir)\python3\libcrypto-3.dll" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_955f653a5b8675ef" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_955f653a5b8675ef" KeyPath="yes" Source="$(var.PythonDir)\python3\libffi-8.dll" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_865dc5d4320aaa7f" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_865dc5d4320aaa7f" KeyPath="yes" Source="$(var.PythonDir)\python3\libssl-3.dll" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_2ac9488f4c35845b" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_2ac9488f4c35845b" KeyPath="yes" Source="$(var.PythonDir)\python3\pyexpat.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_43dfe23522697183" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_43dfe23522697183" KeyPath="yes" Source="$(var.PythonDir)\python3\python.cat" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_de405e500a8faec6" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_de405e500a8faec6" KeyPath="yes" Source="$(var.PythonDir)\python3\python.exe" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_95e2b47c7842306f" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_95e2b47c7842306f" KeyPath="yes" Source="$(var.PythonDir)\python3\python3.dll" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_228855e72fb27048" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_228855e72fb27048" KeyPath="yes" Source="$(var.PythonDir)\python3\python312._pth" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_9ddc8aae58f2d289" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_9ddc8aae58f2d289" KeyPath="yes" Source="$(var.PythonDir)\python3\python312.dll" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_efea53d9672078e6" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_efea53d9672078e6" KeyPath="yes" Source="$(var.PythonDir)\python3\python312.zip" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_b4acd77ee8c45340" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_b4acd77ee8c45340" KeyPath="yes" Source="$(var.PythonDir)\python3\pythonw.exe" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_2e843e09fca95fda" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_2e843e09fca95fda" KeyPath="yes" Source="$(var.PythonDir)\python3\requirements.txt" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_0275ccf13f6c96b5" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_0275ccf13f6c96b5" KeyPath="yes" Source="$(var.PythonDir)\python3\select.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_87d9f382a2bbaa77" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_87d9f382a2bbaa77" KeyPath="yes" Source="$(var.PythonDir)\python3\sqlite3.dll" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_915faa9ddbfaef95" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_915faa9ddbfaef95" KeyPath="yes" Source="$(var.PythonDir)\python3\unicodedata.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_6275604126d2af21" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_6275604126d2af21" KeyPath="yes" Source="$(var.PythonDir)\python3\vcruntime140.dll" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_4a41f1f7540ab5e7" Directory="dir_PythonBaseComponents_6e8efbe3a442748b" Guid="*">
+        <File Id="fil_PythonBaseComponents_4a41f1f7540ab5e7" KeyPath="yes" Source="$(var.PythonDir)\python3\winsound.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_0d932fe3af7032ea" Directory="dir_PythonBaseComponents_e8d09f01068b2a54" Guid="*">
+        <File Id="fil_PythonBaseComponents_0d932fe3af7032ea" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\PIME.pth" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_a637b7c10eefb6ea" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_a637b7c10eefb6ea" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\__init__.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_08f1e952cfba4a19" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_08f1e952cfba4a19" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\__init__.pyi" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_a36a0a1a1057c9d2" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_a36a0a1a1057c9d2" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\_locale_data.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_44e1dd120873cef4" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_44e1dd120873cef4" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\auth.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_8d50b5379fed8f92" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_8d50b5379fed8f92" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\autoreload.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_33907014faa7e964" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_33907014faa7e964" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\concurrent.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_404e2a4a75498b03" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_404e2a4a75498b03" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\curl_httpclient.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_1cc4ba68a6bbfad9" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_1cc4ba68a6bbfad9" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\escape.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_0b8154bc1783c2ff" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_0b8154bc1783c2ff" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\gen.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_4146954df0927b90" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_4146954df0927b90" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\http1connection.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_76d99cd556d6e4db" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_76d99cd556d6e4db" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\httpclient.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_738718833d7dba4e" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_738718833d7dba4e" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\httpserver.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_b5e6547de0599a27" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_b5e6547de0599a27" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\httputil.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_2174fa9972b4a730" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_2174fa9972b4a730" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\ioloop.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_d8099846fb9e7231" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_d8099846fb9e7231" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\iostream.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_781609f0c3d1eee9" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_781609f0c3d1eee9" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\locale.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_f4e7bf0b3fee7a4e" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_f4e7bf0b3fee7a4e" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\locks.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_bf54b268abce08ea" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_bf54b268abce08ea" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\log.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_782a4b69bc11a32a" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_782a4b69bc11a32a" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\netutil.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_b9ee6fca02b084f0" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_b9ee6fca02b084f0" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\options.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_b679c90a69d297c6" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_b679c90a69d297c6" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\process.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_ee6df73e0a313f40" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_ee6df73e0a313f40" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\py.typed" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_b424655b16b69b77" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_b424655b16b69b77" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\queues.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_3efda9e5c13bf2e8" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_3efda9e5c13bf2e8" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\routing.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_eb4a84fbb2d402b1" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_eb4a84fbb2d402b1" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\simple_httpclient.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_36b43effad3ffdb3" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_36b43effad3ffdb3" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\speedups.pyd" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_b9456f6ec1e0315e" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_b9456f6ec1e0315e" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\speedups.pyi" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_11ef4468adfa2c02" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_11ef4468adfa2c02" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\tcpclient.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_c4d2d3966791c335" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_c4d2d3966791c335" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\tcpserver.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_42a874bd1354296e" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_42a874bd1354296e" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\template.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_8a5490afeb89f12f" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_8a5490afeb89f12f" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\testing.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_00db11b3bca19cd9" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_00db11b3bca19cd9" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\util.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_0152327f2d6121be" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_0152327f2d6121be" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\web.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_e03fb23063f01233" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_e03fb23063f01233" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\websocket.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_890333e80cbcfc27" Directory="dir_PythonBaseComponents_ca5bc4d0becb379f" Guid="*">
+        <File Id="fil_PythonBaseComponents_890333e80cbcfc27" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\wsgi.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_4672bdcac117a2f2" Directory="dir_PythonBaseComponents_b96079c19b3893d2" Guid="*">
+        <File Id="fil_PythonBaseComponents_4672bdcac117a2f2" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\platform\__init__.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_6f71ad136f8643a3" Directory="dir_PythonBaseComponents_b96079c19b3893d2" Guid="*">
+        <File Id="fil_PythonBaseComponents_6f71ad136f8643a3" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\platform\asyncio.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_fcbed7c2e5f3da8b" Directory="dir_PythonBaseComponents_b96079c19b3893d2" Guid="*">
+        <File Id="fil_PythonBaseComponents_fcbed7c2e5f3da8b" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\platform\caresresolver.py" />
+      </Component>
+      <Component Id="cmp_PythonBaseComponents_72b8fc05cfd56924" Directory="dir_PythonBaseComponents_b96079c19b3893d2" Guid="*">
+        <File Id="fil_PythonBaseComponents_72b8fc05cfd56924" KeyPath="yes" Source="$(var.PythonDir)\python3\Lib\site-packages\tornado\platform\twisted.py" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

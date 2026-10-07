@@ -1,0 +1,52 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "PIME_Core", "PIME_Core\PIME_Core.wixproj", "{E0239A16-7A60-4F4D-97C6-84AB89DFC496}"
+EndProject
+Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "PIME_TextService_x86", "PIME_TextService_x86\PIME_TextService_x86.wixproj", "{43D415B5-BF8C-41F4-BEBC-B61BC1324A54}"
+EndProject
+Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "PIME_TextService_x64", "PIME_TextService_x64\PIME_TextService_x64.wixproj", "{15411C1A-62C9-4EE9-8F4A-75D020A6F60E}"
+EndProject
+Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "PIME_TextService_arm64", "PIME_TextService_arm64\PIME_TextService_arm64.wixproj", "{92751274-F41F-4D11-B2D0-B92F1827AABE}"
+EndProject
+Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "PIME_Setup", "PIME_Setup\PIME_Setup.wixproj", "{68BAC061-8799-43AE-9ADE-316780750528}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E0239A16-7A60-4F4D-97C6-84AB89DFC496} = {E0239A16-7A60-4F4D-97C6-84AB89DFC496}
+		{43D415B5-BF8C-41F4-BEBC-B61BC1324A54} = {43D415B5-BF8C-41F4-BEBC-B61BC1324A54}
+		{15411C1A-62C9-4EE9-8F4A-75D020A6F60E} = {15411C1A-62C9-4EE9-8F4A-75D020A6F60E}
+		{92751274-F41F-4D11-B2D0-B92F1827AABE} = {92751274-F41F-4D11-B2D0-B92F1827AABE}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E0239A16-7A60-4F4D-97C6-84AB89DFC496}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{E0239A16-7A60-4F4D-97C6-84AB89DFC496}.Debug|Any CPU.Build.0 = Debug|x86
+		{E0239A16-7A60-4F4D-97C6-84AB89DFC496}.Release|Any CPU.ActiveCfg = Release|x86
+		{E0239A16-7A60-4F4D-97C6-84AB89DFC496}.Release|Any CPU.Build.0 = Release|x86
+		{43D415B5-BF8C-41F4-BEBC-B61BC1324A54}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{43D415B5-BF8C-41F4-BEBC-B61BC1324A54}.Debug|Any CPU.Build.0 = Debug|x86
+		{43D415B5-BF8C-41F4-BEBC-B61BC1324A54}.Release|Any CPU.ActiveCfg = Release|x86
+		{43D415B5-BF8C-41F4-BEBC-B61BC1324A54}.Release|Any CPU.Build.0 = Release|x86
+		{15411C1A-62C9-4EE9-8F4A-75D020A6F60E}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{15411C1A-62C9-4EE9-8F4A-75D020A6F60E}.Debug|Any CPU.Build.0 = Debug|x64
+		{15411C1A-62C9-4EE9-8F4A-75D020A6F60E}.Release|Any CPU.ActiveCfg = Release|x64
+		{15411C1A-62C9-4EE9-8F4A-75D020A6F60E}.Release|Any CPU.Build.0 = Release|x64
+		{92751274-F41F-4D11-B2D0-B92F1827AABE}.Debug|Any CPU.ActiveCfg = Debug|ARM64
+		{92751274-F41F-4D11-B2D0-B92F1827AABE}.Debug|Any CPU.Build.0 = Debug|ARM64
+		{92751274-F41F-4D11-B2D0-B92F1827AABE}.Release|Any CPU.ActiveCfg = Release|ARM64
+		{92751274-F41F-4D11-B2D0-B92F1827AABE}.Release|Any CPU.Build.0 = Release|ARM64
+		{68BAC061-8799-43AE-9ADE-316780750528}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{68BAC061-8799-43AE-9ADE-316780750528}.Debug|Any CPU.Build.0 = Debug|x86
+		{68BAC061-8799-43AE-9ADE-316780750528}.Release|Any CPU.ActiveCfg = Release|x86
+		{68BAC061-8799-43AE-9ADE-316780750528}.Release|Any CPU.Build.0 = Release|x86
+	EndGlobalSection
+EndGlobal

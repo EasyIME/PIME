@@ -1,0 +1,50 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_EMOJIME">
+      <Directory Id="dir_IM_Emojime_25d902c24283ab8c" Name="src">
+        <Directory Id="dir_IM_Emojime_370244701348720a" Name="reducer" />
+        <Directory Id="dir_IM_Emojime_9bb10509710cc275" Name="response" />
+      </Directory>
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="IM_Emojime">
+      <Component Id="cmp_IM_Emojime_4ac32a78649ca5bd" Directory="INSTALLFOLDER_EMOJIME" Guid="*">
+        <File Id="fil_IM_Emojime_4ac32a78649ca5bd" KeyPath="yes" Source="$(var.EmojimeDir)\CHANGELOG.md" />
+      </Component>
+      <Component Id="cmp_IM_Emojime_04c6e90faac2675a" Directory="INSTALLFOLDER_EMOJIME" Guid="*">
+        <File Id="fil_IM_Emojime_04c6e90faac2675a" KeyPath="yes" Source="$(var.EmojimeDir)\README.md" />
+      </Component>
+      <Component Id="cmp_IM_Emojime_c4d3523ea2db9d4e" Directory="INSTALLFOLDER_EMOJIME" Guid="*">
+        <File Id="fil_IM_Emojime_c4d3523ea2db9d4e" KeyPath="yes" Source="$(var.EmojimeDir)\icon.ico" />
+      </Component>
+      <Component Id="cmp_IM_Emojime_6b646d3c105145aa" Directory="INSTALLFOLDER_EMOJIME" Guid="*">
+        <File Id="fil_IM_Emojime_6b646d3c105145aa" KeyPath="yes" Source="$(var.EmojimeDir)\ime.json" />
+      </Component>
+      <Component Id="cmp_IM_Emojime_168726dbe96b3ce4" Directory="INSTALLFOLDER_EMOJIME" Guid="*">
+        <File Id="fil_IM_Emojime_168726dbe96b3ce4" KeyPath="yes" Source="$(var.EmojimeDir)\index.js" />
+      </Component>
+      <Component Id="cmp_IM_Emojime_b9cfc7f2cdf78a7f" Directory="INSTALLFOLDER_EMOJIME" Guid="*">
+        <File Id="fil_IM_Emojime_b9cfc7f2cdf78a7f" KeyPath="yes" Source="$(var.EmojimeDir)\package.json" />
+      </Component>
+      <Component Id="cmp_IM_Emojime_78c12f5adc1848d1" Directory="INSTALLFOLDER_EMOJIME" Guid="*">
+        <File Id="fil_IM_Emojime_78c12f5adc1848d1" KeyPath="yes" Source="$(var.EmojimeDir)\server.js" />
+      </Component>
+      <Component Id="cmp_IM_Emojime_1fdf421c05c1140f" Directory="dir_IM_Emojime_25d902c24283ab8c" Guid="*">
+        <File Id="fil_IM_Emojime_1fdf421c05c1140f" KeyPath="yes" Source="$(var.EmojimeDir)\src\index.js" />
+      </Component>
+      <Component Id="cmp_IM_Emojime_b8c7805458616574" Directory="dir_IM_Emojime_370244701348720a" Guid="*">
+        <File Id="fil_IM_Emojime_b8c7805458616574" KeyPath="yes" Source="$(var.EmojimeDir)\src\reducer\candidateMode.js" />
+      </Component>
+      <Component Id="cmp_IM_Emojime_147795e4a194ffff" Directory="dir_IM_Emojime_370244701348720a" Guid="*">
+        <File Id="fil_IM_Emojime_147795e4a194ffff" KeyPath="yes" Source="$(var.EmojimeDir)\src\reducer\compositionMode.js" />
+      </Component>
+      <Component Id="cmp_IM_Emojime_f024b4dbe368da72" Directory="dir_IM_Emojime_370244701348720a" Guid="*">
+        <File Id="fil_IM_Emojime_f024b4dbe368da72" KeyPath="yes" Source="$(var.EmojimeDir)\src\reducer\index.js" />
+      </Component>
+      <Component Id="cmp_IM_Emojime_1baebfa178859878" Directory="dir_IM_Emojime_9bb10509710cc275" Guid="*">
+        <File Id="fil_IM_Emojime_1baebfa178859878" KeyPath="yes" Source="$(var.EmojimeDir)\src\response\index.js" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

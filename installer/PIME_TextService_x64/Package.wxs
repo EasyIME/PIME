@@ -1,0 +1,47 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="PIME Text Service (x64)" 
+           Manufacturer="EasyIME" 
+           Version="2.0.0.0" 
+           UpgradeCode="46A9E721-DFB6-4BAE-8BD1-678C30C99BC8"
+           Scope="perMachine">
+    
+    <MediaTemplate EmbedCab="yes" CabinetTemplate="tsx64_{0}.cab" />
+    <StandardDirectory Id="ProgramFilesFolder">
+      <Directory Id="INSTALLFOLDER" Name="PIME">
+        <Directory Id="X64DIR" Name="x64" />
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="Main">
+      <ComponentGroupRef Id="TextServiceComponents_x64" />
+    </Feature>
+
+    <!-- Register COM / Text Service via 64-bit regsvr32 during deferred commit/install -->
+    <CustomAction Id="CA_RegisterTextService_x64"
+                  Directory="System64Folder"
+                  ExeCommand="&quot;[System64Folder]regsvr32.exe&quot; /s &quot;[X64DIR]PIMETextService.dll&quot;"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="check" />
+
+    <CustomAction Id="CA_UnregisterTextService_x64"
+                  Directory="System64Folder"
+                  ExeCommand="&quot;[System64Folder]regsvr32.exe&quot; /u /s &quot;[X64DIR]PIMETextService.dll&quot;"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore" />
+
+    <InstallExecuteSequence>
+      <Custom Action="CA_UnregisterTextService_x64" Before="RemoveFiles" Condition="(NOT UPGRADINGPRODUCTCODE) AND (REMOVE=&quot;ALL&quot;)" />
+      <Custom Action="CA_RegisterTextService_x64" After="InstallFiles" Condition="NOT (REMOVE=&quot;ALL&quot;)" />
+    </InstallExecuteSequence>
+  </Package>
+
+  <Fragment>
+    <ComponentGroup Id="TextServiceComponents_x64" Directory="X64DIR">
+      <Component Id="cmp_PIMETextService_x64" Guid="D2BC8E45-8B24-4B2E-80AC-371465BE81F9" Bitness="always64">
+        <File Id="fil_PIMETextService_x64" Source="..\..\build64\PIMETextService\Release\PIMETextService.dll" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

@@ -44,10 +44,13 @@ jobs:
           cd PIMELauncher
           cargo test --verbose
 
-      - name: Install NSIS
-        uses: repolevedavaj/install-nsis@v1.2.0
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
         with:
-          nsis-version: 3.08
+          dotnet-version: '8.0.x'
+
+      - name: Install WiX Toolset
+        run: dotnet tool install --global wix
 
       - name: Run build.bat
         env:
@@ -95,12 +98,10 @@ jobs:
           copy signed-binaries\build_arm64\PIMETextService\Release\PIMETextService.dll build_arm64\PIMETextService\Release\PIMETextService.dll
 
       # ---------------------------------------------------------------
-      # Build installer with signed binaries.
+      # Build MSI installers and bootstrapper with signed binaries.
       # ---------------------------------------------------------------
-      - name: Build the installer
-        shell: cmd
-        run: |
-          "C:\Program Files (x86)\NSIS\Bin\makensis.exe" ".\installer\installer.nsi"
+      - name: Build the installer (WiX)
+        run: dotnet build installer/PIME_WiX.sln -c Release
 
       # ---------------------------------------------------------------
       # Upload installer for signing.
@@ -110,7 +111,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: unsigned-installer
-          path: installer/*.exe
+          path: installer/PIME_Setup/bin/Release/**/*.exe
           archive: false
 
       # ---------------------------------------------------------------

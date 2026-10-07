@@ -1,0 +1,44 @@
+<Project Sdk="WixToolset.Sdk/4.0.6">
+  <PropertyGroup>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <Platform>x86</Platform>
+    <Cultures>zh-TW;zh-CN;en-US</Cultures>
+    <SuppressValidation>true</SuppressValidation>
+    <ReuseCabinetCache>true</ReuseCabinetCache>
+    <CabinetCachePath>obj\cab_cache</CabinetCachePath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="4.0.6" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="4.0.6" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <DefineConstants>
+      LauncherDir=..\..\build\PIMELauncher;
+      PythonDir=..\..\python;
+      CinbaseDir=..\..\python\cinbase;
+      NodeDir=..\..\node;
+      ChewingDir=..\..\python\input_methods\chewing;
+      ChecjDir=..\..\python\input_methods\checj;
+      CheliuDir=..\..\python\input_methods\cheliu;
+      ChearrayDir=..\..\python\input_methods\chearray;
+      ChedayiDir=..\..\python\input_methods\chedayi;
+      ChepinyinDir=..\..\python\input_methods\chepinyin;
+      ChesimplexDir=..\..\python\input_methods\chesimplex;
+      ChephoneticDir=..\..\python\input_methods\chephonetic;
+      CheezDir=..\..\python\input_methods\cheez;
+      CheengDir=..\..\python\input_methods\cheeng;
+      BrailleChewingDir=..\..\python\input_methods\braille_chewing;
+      RimeDir=..\..\python\input_methods\rime;
+      McBopomofoDir=..\..\node\input_methods\McBopomofo;
+      McFoximDir=..\..\node\input_methods\McFoxim;
+      McTabimDir=..\..\node\input_methods\McTabim;
+      EmojimeDir=..\..\node\input_methods\emojime;
+    </DefineConstants>
+  </PropertyGroup>
+
+  <Target Name="GenerateMultiLangMsi" AfterTargets="Build">
+    <Exec Command="..\..\python\python3\python.exe ..\build_multilang_msi.py" />
+  </Target>
+</Project>

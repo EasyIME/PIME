@@ -1,0 +1,58 @@
+<!-- English Localization -->
+<WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="en-US" Language="1033">
+  <String Id="LanguageId" Value="1033" />
+  <String Id="ProductName" Value="PIME Input Method Platform" />
+  <String Id="DowngradeError" Value="A newer version of [ProductName] is already installed." />
+
+  <String Id="Feat_Main_Title" Value="PIME Platform" />
+  <String Id="Feat_PythonGroup_Title" Value="Python Input Methods" />
+  <String Id="Feat_Chewing_Title" Value="Chewing (新酷音)" />
+  <String Id="Feat_Chewing_Desc" Value="Install Chewing input method module." />
+
+  <String Id="Feat_CinGroup_Title" Value="Cin-based Input Methods (Traditional Chinese)" />
+  <String Id="Feat_Checj_Title" Value="Cangjie (酷倉)" />
+  <String Id="Feat_Checj_Desc" Value="Install Cangjie input method module." />
+  <String Id="Feat_Cheliu_Title" Value="Shiamy (蝦米 - Requires liu-uni.tab)" />
+  <String Id="Feat_Cheliu_Desc" Value="Install Shiamy input method module." />
+  <String Id="Feat_Chearray_Title" Value="Array (行列)" />
+  <String Id="Feat_Chearray_Desc" Value="Install Array input method module." />
+  <String Id="Feat_Chedayi_Title" Value="Dayi (大易)" />
+  <String Id="Feat_Chedayi_Desc" Value="Install Dayi input method module." />
+  <String Id="Feat_Chepinyin_Title" Value="Pinyin (拼音)" />
+  <String Id="Feat_Chepinyin_Desc" Value="Install Pinyin input method module." />
+  <String Id="Feat_Chesimplex_Title" Value="Quick (速成)" />
+  <String Id="Feat_Chesimplex_Desc" Value="Install Quick input method module." />
+  <String Id="Feat_Chephonetic_Title" Value="Phonetic (注音)" />
+  <String Id="Feat_Chephonetic_Desc" Value="Install Phonetic input method module." />
+  <String Id="Feat_Cheez_Title" Value="EZ Input (輕鬆)" />
+  <String Id="Feat_Cheez_Desc" Value="Install EZ input method module." />
+  <String Id="Feat_Cheeng_Title" Value="Eng-Num (英數)" />
+  <String Id="Feat_Cheeng_Desc" Value="Install Eng-Num input method module." />
+  <String Id="Feat_BrailleChewing_Title" Value="Braille Chewing (點字酷音)" />
+  <String Id="Feat_BrailleChewing_Desc" Value="Install Braille Chewing input method module." />
+  <String Id="Feat_Rime_Title" Value="Rime (中州韻)" />
+  <String Id="Feat_Rime_Desc" Value="Install Rime input method engine." />
+
+  <String Id="Feat_NodeGroup_Title" Value="Node.js Input Methods" />
+  <String Id="Feat_McBopomofo_Title" Value="McBopomofo (小麥注音)" />
+  <String Id="Feat_McBopomofo_Desc" Value="Install McBopomofo input method module." />
+  <String Id="Feat_McFoxim_Title" Value="McFoxim (小麥族語)" />
+  <String Id="Feat_McFoxim_Desc" Value="Install McFoxim input method module." />
+  <String Id="Feat_McTabim_Title" Value="McTabim (小麥他命)" />
+  <String Id="Feat_McTabim_Desc" Value="Install McTabim input method module." />
+  <String Id="Feat_Emojime_Title" Value="emojime" />
+  <String Id="Feat_Emojime_Desc" Value="Install emojime input method module." />
+
+  <String Id="Shortcut_Chewing_Config" Value="Setup Chewing input method" />
+  <String Id="Shortcut_Chewing_Phrases" Value="Edit Chewing phrases" />
+  <String Id="Shortcut_Checj" Value="Setup Cangjie input method" />
+  <String Id="Shortcut_Cheliu" Value="Setup Shiamy input method" />
+  <String Id="Shortcut_Cheliu_Import" Value="Import Shiamy Table (liu-uni.tab)" />
+  <String Id="Shortcut_Chearray" Value="Setup Array input method" />
+  <String Id="Shortcut_Chedayi" Value="Setup Dayi input method" />
+  <String Id="Shortcut_Chepinyin" Value="Setup Pinyin input method" />
+  <String Id="Shortcut_Chesimplex" Value="Setup Quick input method" />
+  <String Id="Shortcut_Chephonetic" Value="Setup Phonetic input method" />
+  <String Id="Shortcut_Cheez" Value="Setup EZ Input method" />
+  <String Id="Shortcut_BrailleChewing" Value="Setup Braille Chewing input method" />
+</WixLocalization>

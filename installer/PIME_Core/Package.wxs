@@ -1,0 +1,394 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+  <Package Name="!(loc.ProductName)"
+           Manufacturer="EasyIME"
+           Version="2.0.0.0"
+           UpgradeCode="679BCFE7-E923-40D9-9051-5E4DF83EF12A"
+           Scope="perMachine"
+           Codepage="65001"
+           Language="!(loc.LanguageId)">
+
+    <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
+    <MediaTemplate EmbedCab="yes" />
+
+    <WixVariable Id="WixUILicenseRtf" Value="..\License.rtf" />
+    <ui:WixUI Id="WixUI_FeatureTree" />
+
+    <!-- Bypass LicenseAgreementDlg in the MSI (since Burn already shows it) -->
+    <UI>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="CustomizeDlg" Order="99" Condition="NOT Installed" />
+      <Publish Dialog="CustomizeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="99" Condition="NOT Installed" />
+    </UI>
+
+    <!-- Directory Structure -->
+    <StandardDirectory Id="ProgramFilesFolder">
+      <Directory Id="INSTALLFOLDER" Name="PIME">
+        <Directory Id="INSTALLFOLDER_PYTHON" Name="python">
+          <Directory Id="INSTALLFOLDER_CINBASE" Name="cinbase" />
+          <Directory Id="INSTALLFOLDER_PYTHON_IM" Name="input_methods">
+            <Directory Id="INSTALLFOLDER_CHEWING" Name="chewing" />
+            <Directory Id="INSTALLFOLDER_CHECJ" Name="checj" />
+            <Directory Id="INSTALLFOLDER_CHELIU" Name="cheliu" />
+            <Directory Id="INSTALLFOLDER_CHEARRAY" Name="chearray" />
+            <Directory Id="INSTALLFOLDER_CHEDAYI" Name="chedayi" />
+            <Directory Id="INSTALLFOLDER_CHEPINYIN" Name="chepinyin" />
+            <Directory Id="INSTALLFOLDER_CHESIMPLEX" Name="chesimplex" />
+            <Directory Id="INSTALLFOLDER_CHEPHONETIC" Name="chephonetic" />
+            <Directory Id="INSTALLFOLDER_CHEEZ" Name="cheez" />
+            <Directory Id="INSTALLFOLDER_CHEENG" Name="cheeng" />
+            <Directory Id="INSTALLFOLDER_BRAILLE_CHEWING" Name="braille_chewing" />
+            <Directory Id="INSTALLFOLDER_RIME" Name="rime" />
+          </Directory>
+        </Directory>
+        
+        <Directory Id="INSTALLFOLDER_NODE" Name="node">
+          <Directory Id="INSTALLFOLDER_NODE_IM" Name="input_methods">
+            <Directory Id="INSTALLFOLDER_MCBOPOMOFO" Name="McBopomofo" />
+            <Directory Id="INSTALLFOLDER_MCFOXIM" Name="McFoxim" />
+            <Directory Id="INSTALLFOLDER_MCTABIM" Name="McTabim" />
+            <Directory Id="INSTALLFOLDER_EMOJIME" Name="emojime" />
+          </Directory>
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+
+    <!-- Start Menu Shortcuts Directory -->
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="PIME" />
+    </StandardDirectory>
+
+    <!-- Features -->
+    <Feature Id="Main" Title="!(loc.Feat_Main_Title)" Level="1" AllowAbsent="no" Display="expand">
+      <ComponentGroupRef Id="CoreBaseComponents" />
+      <ComponentGroupRef Id="PythonBaseComponents" />
+      <ComponentGroupRef Id="NodeBaseComponents" />
+      <ComponentGroupRef Id="StartMenuComponents" />
+
+      <!-- Python Input Methods Group -->
+      <Feature Id="Feat_PythonGroup" Title="!(loc.Feat_PythonGroup_Title)" Level="1">
+        <Feature Id="Feat_Chewing" Title="!(loc.Feat_Chewing_Title)" Level="1" Description="!(loc.Feat_Chewing_Desc)">
+          <ComponentGroupRef Id="IM_Chewing" />
+          <ComponentGroupRef Id="Shortcuts_Chewing" />
+        </Feature>
+
+        <Feature Id="Feat_CinGroup" Title="!(loc.Feat_CinGroup_Title)" Level="1">
+          <ComponentGroupRef Id="CinbaseBaseComponents" />
+
+          <Feature Id="Feat_Checj" Title="!(loc.Feat_Checj_Title)" Level="1" Description="!(loc.Feat_Checj_Desc)">
+            <ComponentGroupRef Id="IM_Checj" />
+            <ComponentGroupRef Id="Shortcuts_Checj" />
+          </Feature>
+
+          <Feature Id="Feat_Cheliu" Title="!(loc.Feat_Cheliu_Title)" Level="2" Description="!(loc.Feat_Cheliu_Desc)">
+            <ComponentGroupRef Id="IM_Cheliu" />
+            <ComponentGroupRef Id="Shortcuts_Cheliu" />
+          </Feature>
+
+          <Feature Id="Feat_Chearray" Title="!(loc.Feat_Chearray_Title)" Level="2" Description="!(loc.Feat_Chearray_Desc)">
+            <ComponentGroupRef Id="IM_Chearray" />
+            <ComponentGroupRef Id="Shortcuts_Chearray" />
+          </Feature>
+
+          <Feature Id="Feat_Chedayi" Title="!(loc.Feat_Chedayi_Title)" Level="2" Description="!(loc.Feat_Chedayi_Desc)">
+            <ComponentGroupRef Id="IM_Chedayi" />
+            <ComponentGroupRef Id="Shortcuts_Chedayi" />
+          </Feature>
+
+          <Feature Id="Feat_Chepinyin" Title="!(loc.Feat_Chepinyin_Title)" Level="2" Description="!(loc.Feat_Chepinyin_Desc)">
+            <ComponentGroupRef Id="IM_Chepinyin" />
+            <ComponentGroupRef Id="Shortcuts_Chepinyin" />
+          </Feature>
+
+          <Feature Id="Feat_Chesimplex" Title="!(loc.Feat_Chesimplex_Title)" Level="2" Description="!(loc.Feat_Chesimplex_Desc)">
+            <ComponentGroupRef Id="IM_Chesimplex" />
+            <ComponentGroupRef Id="Shortcuts_Chesimplex" />
+          </Feature>
+
+          <Feature Id="Feat_Chephonetic" Title="!(loc.Feat_Chephonetic_Title)" Level="2" Description="!(loc.Feat_Chephonetic_Desc)">
+            <ComponentGroupRef Id="IM_Chephonetic" />
+            <ComponentGroupRef Id="Shortcuts_Chephonetic" />
+          </Feature>
+
+          <Feature Id="Feat_Cheez" Title="!(loc.Feat_Cheez_Title)" Level="2" Description="!(loc.Feat_Cheez_Desc)">
+            <ComponentGroupRef Id="IM_Cheez" />
+            <ComponentGroupRef Id="Shortcuts_Cheez" />
+          </Feature>
+        </Feature>
+
+        <Feature Id="Feat_Cheeng" Title="!(loc.Feat_Cheeng_Title)" Level="2" Description="!(loc.Feat_Cheeng_Desc)">
+          <ComponentGroupRef Id="IM_Cheeng" />
+        </Feature>
+
+        <Feature Id="Feat_BrailleChewing" Title="!(loc.Feat_BrailleChewing_Title)" Level="2" Description="!(loc.Feat_BrailleChewing_Desc)">
+          <ComponentGroupRef Id="IM_BrailleChewing" />
+          <ComponentGroupRef Id="Shortcuts_BrailleChewing" />
+        </Feature>
+
+        <Feature Id="Feat_Rime" Title="!(loc.Feat_Rime_Title)" Level="2" Description="!(loc.Feat_Rime_Desc)">
+          <ComponentGroupRef Id="IM_Rime" />
+        </Feature>
+      </Feature>
+
+      <!-- Node Input Methods Group -->
+      <Feature Id="Feat_NodeGroup" Title="!(loc.Feat_NodeGroup_Title)" Level="1">
+        <Feature Id="Feat_McBopomofo" Title="!(loc.Feat_McBopomofo_Title)" Level="1" Description="!(loc.Feat_McBopomofo_Desc)">
+          <ComponentGroupRef Id="IM_McBopomofo" />
+        </Feature>
+
+        <Feature Id="Feat_McFoxim" Title="!(loc.Feat_McFoxim_Title)" Level="2" Description="!(loc.Feat_McFoxim_Desc)">
+          <ComponentGroupRef Id="IM_McFoxim" />
+        </Feature>
+
+        <Feature Id="Feat_McTabim" Title="!(loc.Feat_McTabim_Title)" Level="2" Description="!(loc.Feat_McTabim_Desc)">
+          <ComponentGroupRef Id="IM_McTabim" />
+        </Feature>
+
+        <Feature Id="Feat_Emojime" Title="!(loc.Feat_Emojime_Title)" Level="2" Description="!(loc.Feat_Emojime_Desc)">
+          <ComponentGroupRef Id="IM_Emojime" />
+        </Feature>
+      </Feature>
+    </Feature>
+
+    <!-- Custom Actions: Python compileall, Task scheduler, Process termination, Launch on exit -->
+    <!-- 1. Close/Kill PIMELauncher before removing or updating files -->
+    <CustomAction Id="CA_StopPIMELauncher"
+                  Directory="SystemFolder"
+                  ExeCommand="&quot;[SystemFolder]taskkill.exe&quot; /F /T /IM PIMELauncher.exe"
+                  Execute="immediate"
+                  Return="ignore" />
+
+    <!-- 2. Python compileall deferred action -->
+    <CustomAction Id="CA_PythonCompileAll"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand="&quot;[INSTALLFOLDER_PYTHON]python3\python.exe&quot; -m compileall &quot;[INSTALLFOLDER_PYTHON]&quot;"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore" />
+
+    <!-- 3. Configure and register Scheduled Task -->
+    <!-- Substitute {{INSTDIR}} in XML -->
+    <CustomAction Id="CA_ConfigureTaskXml"
+                  Directory="SystemFolder"
+                  ExeCommand="powershell.exe -NoProfile -ExecutionPolicy Bypass -Command &quot;(Get-Content '[INSTALLFOLDER]PIMELauncher_Task.xml').Replace('{{INSTDIR}}', '[INSTALLFOLDER]').TrimEnd('\') | Set-Content '[INSTALLFOLDER]PIMELauncher_Task.xml' -Encoding Unicode&quot;"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore" />
+
+    <CustomAction Id="CA_RegisterTask"
+                  Directory="SystemFolder"
+                  ExeCommand="&quot;[SystemFolder]schtasks.exe&quot; /Create /TN &quot;\PIME\PIMELauncher&quot; /XML &quot;[INSTALLFOLDER]PIMELauncher_Task.xml&quot; /F"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore" />
+
+    <CustomAction Id="CA_DeleteTask"
+                  Directory="SystemFolder"
+                  ExeCommand="&quot;[SystemFolder]schtasks.exe&quot; /Delete /TN &quot;\PIME\PIMELauncher&quot; /F"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore" />
+
+    <!-- 4. Launch PIMELauncher at user logon / end of install -->
+    <CustomAction Id="CA_StartLauncher"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand="&quot;[INSTALLFOLDER]PIMELauncher.exe&quot;"
+                  Execute="immediate"
+                  Return="asyncNoWait" />
+
+    <InstallExecuteSequence>
+      <!-- Stop running launcher early on uninstall or upgrade -->
+      <Custom Action="CA_StopPIMELauncher" Before="InstallValidate" />
+      <Custom Action="CA_DeleteTask" Before="RemoveFiles" Condition="(NOT UPGRADINGPRODUCTCODE) AND (REMOVE=&quot;ALL&quot;)" />
+      
+      <Custom Action="CA_ConfigureTaskXml" After="InstallFiles" Condition="NOT (REMOVE=&quot;ALL&quot;)" />
+      <Custom Action="CA_RegisterTask" After="CA_ConfigureTaskXml" Condition="NOT (REMOVE=&quot;ALL&quot;)" />
+      <Custom Action="CA_PythonCompileAll" After="CA_RegisterTask" Condition="NOT (REMOVE=&quot;ALL&quot;)" />
+      <Custom Action="CA_StartLauncher" After="InstallFinalize" Condition="NOT (REMOVE=&quot;ALL&quot;) AND (&amp;Main=3)" />
+    </InstallExecuteSequence>
+  </Package>
+
+  <!-- Core Base Components -->
+  <Fragment>
+    <ComponentGroup Id="CoreBaseComponents" Directory="INSTALLFOLDER">
+      <Component Id="cmp_version_txt" Guid="A2B11CD1-213E-4DF7-9E11-20739BF01314">
+        <File Id="fil_version_txt" Source="..\..\version.txt" KeyPath="yes" />
+      </Component>
+      <Component Id="cmp_Cleanup_PIME_Folder" Guid="DAB2F1FE-5D12-4217-9102-13FA10915B3C">
+        <util:RemoveFolderEx On="uninstall" Property="INSTALLFOLDER" />
+      </Component>
+      <Component Id="cmp_backends_json" Guid="524B0223-956A-4FE4-BD21-6A79F9C07538">
+        <File Id="fil_backends_json" Source="..\..\backends.json" KeyPath="yes" />
+      </Component>
+      <Component Id="cmp_PIMELauncher_exe" Guid="C41BF65D-E87F-4B7C-A586-71A3770D5A38">
+        <File Id="fil_PIMELauncher_exe" Source="..\..\build\PIMELauncher\PIMELauncher.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="cmp_PIMELauncher_Task_xml" Guid="1E0A2726-0D34-40DE-BD4F-08B500C81F08">
+        <File Id="fil_PIMELauncher_Task_xml" Source="..\PIMELauncher_Task.xml" KeyPath="yes" />
+      </Component>
+      <Component Id="cmp_PIME_Registry" Guid="870EEA01-C03C-4384-9BAA-4CFB7110C489">
+        <RegistryValue Root="HKLM" Key="Software\PIME" Value="[INSTALLFOLDER]" Type="string" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Start Menu Directory and Shortcuts -->
+    <ComponentGroup Id="StartMenuComponents" Directory="ApplicationProgramsFolder">
+      <Component Id="cmp_StartMenuFolder" Guid="CE646A9E-3BA5-4A37-9759-4089947849D9">
+        <RemoveFolder Id="CleanUpStartMenuFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\PIME\StartMenu" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Input Method Shortcuts -->
+    <ComponentGroup Id="Shortcuts_Chewing" Directory="ApplicationProgramsFolder">
+      <Component Id="cmp_Shortcut_Chewing_Config" Guid="D6BF6100-84E3-4B94-A1FD-15D84A478C37">
+        <Shortcut Id="sc_Chewing_Config"
+                  Name="!(loc.Shortcut_Chewing_Config)"
+                  Target="[INSTALLFOLDER_PYTHON]python3\pythonw.exe"
+                  Arguments="&quot;[INSTALLFOLDER_CHEWING]config_tool.py&quot; config"
+                  WorkingDirectory="INSTALLFOLDER_CHEWING"
+                  Icon="ico_ch_set.ico" />
+        <RegistryValue Root="HKCU" Key="Software\PIME\Shortcuts\Chewing" Name="Config" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+      <Component Id="cmp_Shortcut_Chewing_Phrases" Guid="41870B1F-5079-4A73-BE94-0E812F96CE28">
+        <Shortcut Id="sc_Chewing_Phrases"
+                  Name="!(loc.Shortcut_Chewing_Phrases)"
+                  Target="[INSTALLFOLDER_PYTHON]python3\pythonw.exe"
+                  Arguments="&quot;[INSTALLFOLDER_CHEWING]config_tool.py&quot; user_phrase_editor"
+                  WorkingDirectory="INSTALLFOLDER_CHEWING"
+                  Icon="ico_ch_phr.ico" />
+        <RegistryValue Root="HKCU" Key="Software\PIME\Shortcuts\Chewing" Name="Phrases" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="Shortcuts_Checj" Directory="ApplicationProgramsFolder">
+      <Component Id="cmp_Shortcut_Checj" Guid="3F8DE165-226D-44FD-A3DC-D6995646EB0F">
+        <Shortcut Id="sc_Checj"
+                  Name="!(loc.Shortcut_Checj)"
+                  Target="[INSTALLFOLDER_PYTHON]python3\pythonw.exe"
+                  Arguments="&quot;[INSTALLFOLDER_CINBASE]configtool.py&quot; config checj"
+                  WorkingDirectory="INSTALLFOLDER_CINBASE"
+                  Icon="ico_checj.ico" />
+        <RegistryValue Root="HKCU" Key="Software\PIME\Shortcuts\Checj" Name="Config" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="Shortcuts_Cheliu" Directory="ApplicationProgramsFolder">
+      <Component Id="cmp_Shortcut_Cheliu" Guid="72449753-A444-4BC8-9FA6-56040FDF2749">
+        <Shortcut Id="sc_Cheliu"
+                  Name="!(loc.Shortcut_Cheliu)"
+                  Target="[INSTALLFOLDER_PYTHON]python3\pythonw.exe"
+                  Arguments="&quot;[INSTALLFOLDER_CINBASE]configtool.py&quot; config cheliu"
+                  WorkingDirectory="INSTALLFOLDER_CINBASE"
+                  Icon="ico_cheliu.ico" />
+        <Shortcut Id="sc_Cheliu_Import"
+                  Name="!(loc.Shortcut_Cheliu_Import)"
+                  Target="[INSTALLFOLDER_PYTHON]python3\pythonw.exe"
+                  Arguments="&quot;[INSTALLFOLDER_CINBASE]tools\import_liu.py&quot;"
+                  WorkingDirectory="INSTALLFOLDER_CINBASE"
+                  Icon="ico_cheliu.ico" />
+        <RegistryValue Root="HKCU" Key="Software\PIME\Shortcuts\Cheliu" Name="Config" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="Shortcuts_Chearray" Directory="ApplicationProgramsFolder">
+      <Component Id="cmp_Shortcut_Chearray" Guid="EA581895-B33D-4A2F-8097-4FF2C149C03C">
+        <Shortcut Id="sc_Chearray"
+                  Name="!(loc.Shortcut_Chearray)"
+                  Target="[INSTALLFOLDER_PYTHON]python3\pythonw.exe"
+                  Arguments="&quot;[INSTALLFOLDER_CINBASE]configtool.py&quot; config chearray"
+                  WorkingDirectory="INSTALLFOLDER_CINBASE"
+                  Icon="ico_chearray.ico" />
+        <RegistryValue Root="HKCU" Key="Software\PIME\Shortcuts\Chearray" Name="Config" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="Shortcuts_Chedayi" Directory="ApplicationProgramsFolder">
+      <Component Id="cmp_Shortcut_Chedayi" Guid="C2EF9F2C-693D-42A9-AC9D-66779836AA51">
+        <Shortcut Id="sc_Chedayi"
+                  Name="!(loc.Shortcut_Chedayi)"
+                  Target="[INSTALLFOLDER_PYTHON]python3\pythonw.exe"
+                  Arguments="&quot;[INSTALLFOLDER_CINBASE]configtool.py&quot; config chedayi"
+                  WorkingDirectory="INSTALLFOLDER_CINBASE"
+                  Icon="ico_chedayi.ico" />
+        <RegistryValue Root="HKCU" Key="Software\PIME\Shortcuts\Chedayi" Name="Config" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="Shortcuts_Chepinyin" Directory="ApplicationProgramsFolder">
+      <Component Id="cmp_Shortcut_Chepinyin" Guid="72445EAA-53D2-4A73-A33D-FBCA8A26A18D">
+        <Shortcut Id="sc_Chepinyin"
+                  Name="!(loc.Shortcut_Chepinyin)"
+                  Target="[INSTALLFOLDER_PYTHON]python3\pythonw.exe"
+                  Arguments="&quot;[INSTALLFOLDER_CINBASE]configtool.py&quot; config chepinyin"
+                  WorkingDirectory="INSTALLFOLDER_CINBASE"
+                  Icon="ico_chepin.ico" />
+        <RegistryValue Root="HKCU" Key="Software\PIME\Shortcuts\Chepinyin" Name="Config" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="Shortcuts_Chesimplex" Directory="ApplicationProgramsFolder">
+      <Component Id="cmp_Shortcut_Chesimplex" Guid="21696D29-5777-49D6-BCB2-6120E30CA04D">
+        <Shortcut Id="sc_Chesimplex"
+                  Name="!(loc.Shortcut_Chesimplex)"
+                  Target="[INSTALLFOLDER_PYTHON]python3\pythonw.exe"
+                  Arguments="&quot;[INSTALLFOLDER_CINBASE]configtool.py&quot; config chesimplex"
+                  WorkingDirectory="INSTALLFOLDER_CINBASE"
+                  Icon="ico_chesimp.ico" />
+        <RegistryValue Root="HKCU" Key="Software\PIME\Shortcuts\Chesimplex" Name="Config" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="Shortcuts_Chephonetic" Directory="ApplicationProgramsFolder">
+      <Component Id="cmp_Shortcut_Chephonetic" Guid="3F808770-DE9C-4CD6-9E49-74BC128EE858">
+        <Shortcut Id="sc_Chephonetic"
+                  Name="!(loc.Shortcut_Chephonetic)"
+                  Target="[INSTALLFOLDER_PYTHON]python3\pythonw.exe"
+                  Arguments="&quot;[INSTALLFOLDER_CINBASE]configtool.py&quot; config chephonetic"
+                  WorkingDirectory="INSTALLFOLDER_CINBASE"
+                  Icon="ico_chephon.ico" />
+        <RegistryValue Root="HKCU" Key="Software\PIME\Shortcuts\Chephonetic" Name="Config" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="Shortcuts_Cheez" Directory="ApplicationProgramsFolder">
+      <Component Id="cmp_Shortcut_Cheez" Guid="A58444FA-BBAF-48E8-A936-39E4647C9BA0">
+        <Shortcut Id="sc_Cheez"
+                  Name="!(loc.Shortcut_Cheez)"
+                  Target="[INSTALLFOLDER_PYTHON]python3\pythonw.exe"
+                  Arguments="&quot;[INSTALLFOLDER_CINBASE]configtool.py&quot; config cheez"
+                  WorkingDirectory="INSTALLFOLDER_CINBASE"
+                  Icon="ico_cheez.ico" />
+        <RegistryValue Root="HKCU" Key="Software\PIME\Shortcuts\Cheez" Name="Config" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="Shortcuts_BrailleChewing" Directory="ApplicationProgramsFolder">
+      <Component Id="cmp_Shortcut_BrailleChewing" Guid="66C72EBA-3E3B-4ED1-A195-2DC076CF37FF">
+        <Shortcut Id="sc_BrailleChewing"
+                  Name="!(loc.Shortcut_BrailleChewing)"
+                  Target="[INSTALLFOLDER_PYTHON]python3\pythonw.exe"
+                  Arguments="&quot;[INSTALLFOLDER_BRAILLE_CHEWING]config_tool.py&quot; config"
+                  WorkingDirectory="INSTALLFOLDER_BRAILLE_CHEWING"
+                  Icon="ico_b_chew.ico" />
+        <RegistryValue Root="HKCU" Key="Software\PIME\Shortcuts\BrailleChewing" Name="Config" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <!-- Icons Fragment -->
+  <Fragment>
+    <Icon Id="ico_ch_set.ico" SourceFile="$(var.ChewingDir)\images\setting.ico" />
+    <Icon Id="ico_ch_phr.ico" SourceFile="$(var.ChewingDir)\images\phrase_editor.ico" />
+    <Icon Id="ico_checj.ico" SourceFile="$(var.ChecjDir)\icon.ico" />
+    <Icon Id="ico_cheliu.ico" SourceFile="$(var.CheliuDir)\icon.ico" />
+    <Icon Id="ico_chearray.ico" SourceFile="$(var.ChearrayDir)\icon.ico" />
+    <Icon Id="ico_chedayi.ico" SourceFile="$(var.ChedayiDir)\icon.ico" />
+    <Icon Id="ico_chepin.ico" SourceFile="$(var.ChepinyinDir)\icon.ico" />
+    <Icon Id="ico_chesimp.ico" SourceFile="$(var.ChesimplexDir)\icon.ico" />
+    <Icon Id="ico_chephon.ico" SourceFile="$(var.ChephoneticDir)\icon.ico" />
+    <Icon Id="ico_cheez.ico" SourceFile="$(var.CheezDir)\icon.ico" />
+    <Icon Id="ico_b_chew.ico" SourceFile="$(var.BrailleChewingDir)\icon.ico" />
+  </Fragment>
+
+</Wix>

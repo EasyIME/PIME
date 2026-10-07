@@ -1,0 +1,35 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_CHELIU">
+      <Directory Id="dir_IM_Cheliu_2245023265ae4cf8" Name="config" />
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="IM_Cheliu">
+      <Component Id="cmp_IM_Cheliu_743b1adbf37db12e" Directory="INSTALLFOLDER_CHELIU" Guid="*">
+        <File Id="fil_IM_Cheliu_743b1adbf37db12e" KeyPath="yes" Source="$(var.CheliuDir)\__init__.py" />
+      </Component>
+      <Component Id="cmp_IM_Cheliu_39e3216587a886c4" Directory="INSTALLFOLDER_CHELIU" Guid="*">
+        <File Id="fil_IM_Cheliu_39e3216587a886c4" KeyPath="yes" Source="$(var.CheliuDir)\cheliu_ime.py" />
+      </Component>
+      <Component Id="cmp_IM_Cheliu_c4d3523ea2db9d4e" Directory="INSTALLFOLDER_CHELIU" Guid="*">
+        <File Id="fil_IM_Cheliu_c4d3523ea2db9d4e" KeyPath="yes" Source="$(var.CheliuDir)\icon.ico" />
+      </Component>
+      <Component Id="cmp_IM_Cheliu_cc35d4b8e796c869" Directory="INSTALLFOLDER_CHELIU" Guid="*">
+        <File Id="fil_IM_Cheliu_cc35d4b8e796c869" KeyPath="yes" Source="$(var.CheliuDir)\icon.png" />
+      </Component>
+      <Component Id="cmp_IM_Cheliu_6b646d3c105145aa" Directory="INSTALLFOLDER_CHELIU" Guid="*">
+        <File Id="fil_IM_Cheliu_6b646d3c105145aa" KeyPath="yes" Source="$(var.CheliuDir)\ime.json" />
+      </Component>
+      <Component Id="cmp_IM_Cheliu_03df4b552ccaaaab" Directory="dir_IM_Cheliu_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Cheliu_03df4b552ccaaaab" KeyPath="yes" Source="$(var.CheliuDir)\config\config.html" />
+      </Component>
+      <Component Id="cmp_IM_Cheliu_ff1772f82f619339" Directory="dir_IM_Cheliu_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Cheliu_ff1772f82f619339" KeyPath="yes" Source="$(var.CheliuDir)\config\config.js" />
+      </Component>
+      <Component Id="cmp_IM_Cheliu_6a02156604c06bec" Directory="dir_IM_Cheliu_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Cheliu_6a02156604c06bec" KeyPath="yes" Source="$(var.CheliuDir)\config\config.json" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

@@ -1,3 +1,7 @@
 $version = Get-Content version.txt
 $filename = "PIME-$version-setup.exe"
-Push-AppveyorArtifact "installer\$filename" -FileName $filename
+$sourcePath = "installer\PIME_Setup\bin\x86\Release\PIME_Setup.exe"
+if (Test-Path $sourcePath) {
+    Copy-Item $sourcePath "installer\$filename"
+    Push-AppveyorArtifact "installer\$filename" -FileName $filename
+}

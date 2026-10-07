@@ -1,0 +1,35 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_CHECJ">
+      <Directory Id="dir_IM_Checj_2245023265ae4cf8" Name="config" />
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="IM_Checj">
+      <Component Id="cmp_IM_Checj_743b1adbf37db12e" Directory="INSTALLFOLDER_CHECJ" Guid="*">
+        <File Id="fil_IM_Checj_743b1adbf37db12e" KeyPath="yes" Source="$(var.ChecjDir)\__init__.py" />
+      </Component>
+      <Component Id="cmp_IM_Checj_6e41afe973474853" Directory="INSTALLFOLDER_CHECJ" Guid="*">
+        <File Id="fil_IM_Checj_6e41afe973474853" KeyPath="yes" Source="$(var.ChecjDir)\checj_ime.py" />
+      </Component>
+      <Component Id="cmp_IM_Checj_c4d3523ea2db9d4e" Directory="INSTALLFOLDER_CHECJ" Guid="*">
+        <File Id="fil_IM_Checj_c4d3523ea2db9d4e" KeyPath="yes" Source="$(var.ChecjDir)\icon.ico" />
+      </Component>
+      <Component Id="cmp_IM_Checj_cc35d4b8e796c869" Directory="INSTALLFOLDER_CHECJ" Guid="*">
+        <File Id="fil_IM_Checj_cc35d4b8e796c869" KeyPath="yes" Source="$(var.ChecjDir)\icon.png" />
+      </Component>
+      <Component Id="cmp_IM_Checj_6b646d3c105145aa" Directory="INSTALLFOLDER_CHECJ" Guid="*">
+        <File Id="fil_IM_Checj_6b646d3c105145aa" KeyPath="yes" Source="$(var.ChecjDir)\ime.json" />
+      </Component>
+      <Component Id="cmp_IM_Checj_03df4b552ccaaaab" Directory="dir_IM_Checj_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Checj_03df4b552ccaaaab" KeyPath="yes" Source="$(var.ChecjDir)\config\config.html" />
+      </Component>
+      <Component Id="cmp_IM_Checj_ff1772f82f619339" Directory="dir_IM_Checj_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Checj_ff1772f82f619339" KeyPath="yes" Source="$(var.ChecjDir)\config\config.js" />
+      </Component>
+      <Component Id="cmp_IM_Checj_6a02156604c06bec" Directory="dir_IM_Checj_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Checj_6a02156604c06bec" KeyPath="yes" Source="$(var.ChecjDir)\config\config.json" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

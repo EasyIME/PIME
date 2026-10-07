@@ -1,0 +1,27 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <ComponentGroup Id="IM_Cheeng">
+      <Component Id="cmp_IM_Cheeng_743b1adbf37db12e" Directory="INSTALLFOLDER_CHEENG" Guid="*">
+        <File Id="fil_IM_Cheeng_743b1adbf37db12e" KeyPath="yes" Source="$(var.CheengDir)\__init__.py" />
+      </Component>
+      <Component Id="cmp_IM_Cheeng_87b3f54906f2b6f0" Directory="INSTALLFOLDER_CHEENG" Guid="*">
+        <File Id="fil_IM_Cheeng_87b3f54906f2b6f0" KeyPath="yes" Source="$(var.CheengDir)\cheeng_ime.py" />
+      </Component>
+      <Component Id="cmp_IM_Cheeng_a034666ae6b01892" Directory="INSTALLFOLDER_CHEENG" Guid="*">
+        <File Id="fil_IM_Cheeng_a034666ae6b01892" KeyPath="yes" Source="$(var.CheengDir)\chi.ico" />
+      </Component>
+      <Component Id="cmp_IM_Cheeng_8527f6be6bd8bacf" Directory="INSTALLFOLDER_CHEENG" Guid="*">
+        <File Id="fil_IM_Cheeng_8527f6be6bd8bacf" KeyPath="yes" Source="$(var.CheengDir)\eng.ico" />
+      </Component>
+      <Component Id="cmp_IM_Cheeng_c4d3523ea2db9d4e" Directory="INSTALLFOLDER_CHEENG" Guid="*">
+        <File Id="fil_IM_Cheeng_c4d3523ea2db9d4e" KeyPath="yes" Source="$(var.CheengDir)\icon.ico" />
+      </Component>
+      <Component Id="cmp_IM_Cheeng_cc35d4b8e796c869" Directory="INSTALLFOLDER_CHEENG" Guid="*">
+        <File Id="fil_IM_Cheeng_cc35d4b8e796c869" KeyPath="yes" Source="$(var.CheengDir)\icon.png" />
+      </Component>
+      <Component Id="cmp_IM_Cheeng_6b646d3c105145aa" Directory="INSTALLFOLDER_CHEENG" Guid="*">
+        <File Id="fil_IM_Cheeng_6b646d3c105145aa" KeyPath="yes" Source="$(var.CheengDir)\ime.json" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

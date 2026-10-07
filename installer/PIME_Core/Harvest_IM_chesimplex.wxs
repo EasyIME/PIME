@@ -1,0 +1,35 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_CHESIMPLEX">
+      <Directory Id="dir_IM_Chesimplex_2245023265ae4cf8" Name="config" />
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="IM_Chesimplex">
+      <Component Id="cmp_IM_Chesimplex_743b1adbf37db12e" Directory="INSTALLFOLDER_CHESIMPLEX" Guid="*">
+        <File Id="fil_IM_Chesimplex_743b1adbf37db12e" KeyPath="yes" Source="$(var.ChesimplexDir)\__init__.py" />
+      </Component>
+      <Component Id="cmp_IM_Chesimplex_d060d12ddbf56837" Directory="INSTALLFOLDER_CHESIMPLEX" Guid="*">
+        <File Id="fil_IM_Chesimplex_d060d12ddbf56837" KeyPath="yes" Source="$(var.ChesimplexDir)\chesimplex_ime.py" />
+      </Component>
+      <Component Id="cmp_IM_Chesimplex_c4d3523ea2db9d4e" Directory="INSTALLFOLDER_CHESIMPLEX" Guid="*">
+        <File Id="fil_IM_Chesimplex_c4d3523ea2db9d4e" KeyPath="yes" Source="$(var.ChesimplexDir)\icon.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chesimplex_cc35d4b8e796c869" Directory="INSTALLFOLDER_CHESIMPLEX" Guid="*">
+        <File Id="fil_IM_Chesimplex_cc35d4b8e796c869" KeyPath="yes" Source="$(var.ChesimplexDir)\icon.png" />
+      </Component>
+      <Component Id="cmp_IM_Chesimplex_6b646d3c105145aa" Directory="INSTALLFOLDER_CHESIMPLEX" Guid="*">
+        <File Id="fil_IM_Chesimplex_6b646d3c105145aa" KeyPath="yes" Source="$(var.ChesimplexDir)\ime.json" />
+      </Component>
+      <Component Id="cmp_IM_Chesimplex_03df4b552ccaaaab" Directory="dir_IM_Chesimplex_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Chesimplex_03df4b552ccaaaab" KeyPath="yes" Source="$(var.ChesimplexDir)\config\config.html" />
+      </Component>
+      <Component Id="cmp_IM_Chesimplex_ff1772f82f619339" Directory="dir_IM_Chesimplex_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Chesimplex_ff1772f82f619339" KeyPath="yes" Source="$(var.ChesimplexDir)\config\config.js" />
+      </Component>
+      <Component Id="cmp_IM_Chesimplex_6a02156604c06bec" Directory="dir_IM_Chesimplex_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Chesimplex_6a02156604c06bec" KeyPath="yes" Source="$(var.ChesimplexDir)\config\config.json" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

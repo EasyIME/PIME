@@ -1,0 +1,430 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_CINBASE">
+      <Directory Id="dir_CinbaseBaseComponents_2245023265ae4cf8" Name="config">
+        <Directory Id="dir_CinbaseBaseComponents_9d341481a28e4709" Name="css" />
+        <Directory Id="dir_CinbaseBaseComponents_b1fa5e1a46e05134" Name="fonts" />
+        <Directory Id="dir_CinbaseBaseComponents_371ecc544d4b5bc0" Name="info">
+          <Directory Id="dir_CinbaseBaseComponents_3a3dcb8d736e8509" Name="bootstrap" />
+          <Directory Id="dir_CinbaseBaseComponents_3f4f88e5ef5bbfa7" Name="html5shiv" />
+          <Directory Id="dir_CinbaseBaseComponents_40e3c78681a3a102" Name="jquery" />
+          <Directory Id="dir_CinbaseBaseComponents_4df738fa0c7257db" Name="respond" />
+          <Directory Id="dir_CinbaseBaseComponents_152addf4967adb66" Name="touchspin" />
+        </Directory>
+        <Directory Id="dir_CinbaseBaseComponents_0d94d97f6a3d8b73" Name="js">
+          <Directory Id="dir_CinbaseBaseComponents_e61bb1ea6ddea55c" Name="jAlert" />
+        </Directory>
+      </Directory>
+      <Directory Id="dir_CinbaseBaseComponents_8d777f385d3dfec8" Name="data" />
+      <Directory Id="dir_CinbaseBaseComponents_bd21190449b7e88d" Name="icons" />
+      <Directory Id="dir_CinbaseBaseComponents_466deec76ecdf5fc" Name="json" />
+      <Directory Id="dir_CinbaseBaseComponents_4a931512ce65bdc9" Name="tools" />
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="CinbaseBaseComponents">
+      <Component Id="cmp_CinbaseBaseComponents_743b1adbf37db12e" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_743b1adbf37db12e" KeyPath="yes" Source="$(var.CinbaseDir)\__init__.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_23b8dd9f392d5228" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_23b8dd9f392d5228" KeyPath="yes" Source="$(var.CinbaseDir)\cin.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_fdf313ed2303059c" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_fdf313ed2303059c" KeyPath="yes" Source="$(var.CinbaseDir)\config.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_cbafdc7a0759a718" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_cbafdc7a0759a718" KeyPath="yes" Source="$(var.CinbaseDir)\configtool.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_07402a73141c5d15" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_07402a73141c5d15" KeyPath="yes" Source="$(var.CinbaseDir)\debug.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_06dbf10ea60f5511" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_06dbf10ea60f5511" KeyPath="yes" Source="$(var.CinbaseDir)\dsymbols.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_62a13cf039f8da16" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_62a13cf039f8da16" KeyPath="yes" Source="$(var.CinbaseDir)\emoji.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_4566bf741cb852c1" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_4566bf741cb852c1" KeyPath="yes" Source="$(var.CinbaseDir)\extendtable.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_150409b7b1bfbf37" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_150409b7b1bfbf37" KeyPath="yes" Source="$(var.CinbaseDir)\flangs.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_edce486186a82c51" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_edce486186a82c51" KeyPath="yes" Source="$(var.CinbaseDir)\fsymbols.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_87a8a7fd9bbdc733" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_87a8a7fd9bbdc733" KeyPath="yes" Source="$(var.CinbaseDir)\hcin.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_02aca3817aab5420" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_02aca3817aab5420" KeyPath="yes" Source="$(var.CinbaseDir)\msymbols.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_2a91d3c3d562543d" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_2a91d3c3d562543d" KeyPath="yes" Source="$(var.CinbaseDir)\phrase.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_1da88bc13f7a6f05" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_1da88bc13f7a6f05" KeyPath="yes" Source="$(var.CinbaseDir)\rcin.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_042a8a69081905fb" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_042a8a69081905fb" KeyPath="yes" Source="$(var.CinbaseDir)\swkb.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_aac8ebe0ba97c132" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_aac8ebe0ba97c132" KeyPath="yes" Source="$(var.CinbaseDir)\symbols.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_178d1adf24421b11" Directory="INSTALLFOLDER_CINBASE" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_178d1adf24421b11" KeyPath="yes" Source="$(var.CinbaseDir)\userphrase.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_525eeef9ae57dcf0" Directory="dir_CinbaseBaseComponents_2245023265ae4cf8" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_525eeef9ae57dcf0" KeyPath="yes" Source="$(var.CinbaseDir)\config\config.htm" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_a5df995ff16f47d0" Directory="dir_CinbaseBaseComponents_2245023265ae4cf8" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_a5df995ff16f47d0" KeyPath="yes" Source="$(var.CinbaseDir)\config\help.htm" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_fa1a1d4c6432c058" Directory="dir_CinbaseBaseComponents_2245023265ae4cf8" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_fa1a1d4c6432c058" KeyPath="yes" Source="$(var.CinbaseDir)\config\kblayout.htm" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_e38a675e1c7cc611" Directory="dir_CinbaseBaseComponents_9d341481a28e4709" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_e38a675e1c7cc611" KeyPath="yes" Source="$(var.CinbaseDir)\config\css\bootstrap-theme.css" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_88f43c05af80f1a7" Directory="dir_CinbaseBaseComponents_9d341481a28e4709" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_88f43c05af80f1a7" KeyPath="yes" Source="$(var.CinbaseDir)\config\css\bootstrap-theme.css.map" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_81abcd88b0d52181" Directory="dir_CinbaseBaseComponents_9d341481a28e4709" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_81abcd88b0d52181" KeyPath="yes" Source="$(var.CinbaseDir)\config\css\bootstrap-theme.min.css" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_db9856a65e12957d" Directory="dir_CinbaseBaseComponents_9d341481a28e4709" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_db9856a65e12957d" KeyPath="yes" Source="$(var.CinbaseDir)\config\css\bootstrap-theme.min.css.map" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_a2acd19b43aa70be" Directory="dir_CinbaseBaseComponents_9d341481a28e4709" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_a2acd19b43aa70be" KeyPath="yes" Source="$(var.CinbaseDir)\config\css\bootstrap.css" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_8f5e1ddbbdd986fb" Directory="dir_CinbaseBaseComponents_9d341481a28e4709" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_8f5e1ddbbdd986fb" KeyPath="yes" Source="$(var.CinbaseDir)\config\css\bootstrap.css.map" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_acb2e8915f974205" Directory="dir_CinbaseBaseComponents_9d341481a28e4709" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_acb2e8915f974205" KeyPath="yes" Source="$(var.CinbaseDir)\config\css\bootstrap.min.css" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_ea06de317aaf3b42" Directory="dir_CinbaseBaseComponents_9d341481a28e4709" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_ea06de317aaf3b42" KeyPath="yes" Source="$(var.CinbaseDir)\config\css\bootstrap.min.css.map" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_8061326e46e1061d" Directory="dir_CinbaseBaseComponents_9d341481a28e4709" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_8061326e46e1061d" KeyPath="yes" Source="$(var.CinbaseDir)\config\css\config.css" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_a87cee71b79cd4fe" Directory="dir_CinbaseBaseComponents_9d341481a28e4709" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_a87cee71b79cd4fe" KeyPath="yes" Source="$(var.CinbaseDir)\config\css\jquery.bootstrap-touchspin.css" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_32b80ddfd9cd6b9e" Directory="dir_CinbaseBaseComponents_9d341481a28e4709" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_32b80ddfd9cd6b9e" KeyPath="yes" Source="$(var.CinbaseDir)\config\css\jquery.bootstrap-touchspin.min.css" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_2246f41fa118a0be" Directory="dir_CinbaseBaseComponents_b1fa5e1a46e05134" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_2246f41fa118a0be" KeyPath="yes" Source="$(var.CinbaseDir)\config\fonts\glyphicons-halflings-regular.eot" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_94f052943f715260" Directory="dir_CinbaseBaseComponents_b1fa5e1a46e05134" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_94f052943f715260" KeyPath="yes" Source="$(var.CinbaseDir)\config\fonts\glyphicons-halflings-regular.svg" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_211a30ab01b4270e" Directory="dir_CinbaseBaseComponents_b1fa5e1a46e05134" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_211a30ab01b4270e" KeyPath="yes" Source="$(var.CinbaseDir)\config\fonts\glyphicons-halflings-regular.ttf" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_585c73f0bcc8fc26" Directory="dir_CinbaseBaseComponents_b1fa5e1a46e05134" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_585c73f0bcc8fc26" KeyPath="yes" Source="$(var.CinbaseDir)\config\fonts\glyphicons-halflings-regular.woff" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_9cda1087d204c1c9" Directory="dir_CinbaseBaseComponents_b1fa5e1a46e05134" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_9cda1087d204c1c9" KeyPath="yes" Source="$(var.CinbaseDir)\config\fonts\glyphicons-halflings-regular.woff2" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_0a590fc70db426bd" Directory="dir_CinbaseBaseComponents_3a3dcb8d736e8509" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_0a590fc70db426bd" KeyPath="yes" Source="$(var.CinbaseDir)\config\info\bootstrap\LICENSE" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_16bf122fe8752752" Directory="dir_CinbaseBaseComponents_3a3dcb8d736e8509" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_16bf122fe8752752" KeyPath="yes" Source="$(var.CinbaseDir)\config\info\bootstrap\README.md" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_9cf40dfbf11cdcd6" Directory="dir_CinbaseBaseComponents_3f4f88e5ef5bbfa7" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_9cf40dfbf11cdcd6" KeyPath="yes" Source="$(var.CinbaseDir)\config\info\html5shiv\MIT and GPL2 licenses.md" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_2e90e07248c4ebc9" Directory="dir_CinbaseBaseComponents_3f4f88e5ef5bbfa7" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_2e90e07248c4ebc9" KeyPath="yes" Source="$(var.CinbaseDir)\config\info\html5shiv\readme.md" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_cc7487c51efec94c" Directory="dir_CinbaseBaseComponents_40e3c78681a3a102" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_cc7487c51efec94c" KeyPath="yes" Source="$(var.CinbaseDir)\config\info\jquery\AUTHORS.txt" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_cefbbcedde05ed74" Directory="dir_CinbaseBaseComponents_40e3c78681a3a102" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_cefbbcedde05ed74" KeyPath="yes" Source="$(var.CinbaseDir)\config\info\jquery\LICENSE.txt" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_ab4e895f4ed89746" Directory="dir_CinbaseBaseComponents_40e3c78681a3a102" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_ab4e895f4ed89746" KeyPath="yes" Source="$(var.CinbaseDir)\config\info\jquery\README.md" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_1e33475307c0eb6c" Directory="dir_CinbaseBaseComponents_4df738fa0c7257db" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_1e33475307c0eb6c" KeyPath="yes" Source="$(var.CinbaseDir)\config\info\respond\LICENSE-MIT" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_16d247dd2911be70" Directory="dir_CinbaseBaseComponents_4df738fa0c7257db" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_16d247dd2911be70" KeyPath="yes" Source="$(var.CinbaseDir)\config\info\respond\README.md" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_191a943e1250f4cf" Directory="dir_CinbaseBaseComponents_152addf4967adb66" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_191a943e1250f4cf" KeyPath="yes" Source="$(var.CinbaseDir)\config\info\touchspin\LICENSE.md" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_e6d94e9fed123574" Directory="dir_CinbaseBaseComponents_152addf4967adb66" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_e6d94e9fed123574" KeyPath="yes" Source="$(var.CinbaseDir)\config\info\touchspin\README.md" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_ff647b4c36be4a06" Directory="dir_CinbaseBaseComponents_0d94d97f6a3d8b73" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_ff647b4c36be4a06" KeyPath="yes" Source="$(var.CinbaseDir)\config\js\bootstrap.js" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_2cfa2a3665028471" Directory="dir_CinbaseBaseComponents_0d94d97f6a3d8b73" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_2cfa2a3665028471" KeyPath="yes" Source="$(var.CinbaseDir)\config\js\bootstrap.min.js" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_3fa260380bc4a469" Directory="dir_CinbaseBaseComponents_0d94d97f6a3d8b73" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_3fa260380bc4a469" KeyPath="yes" Source="$(var.CinbaseDir)\config\js\config.js" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_9da876b686467744" Directory="dir_CinbaseBaseComponents_0d94d97f6a3d8b73" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_9da876b686467744" KeyPath="yes" Source="$(var.CinbaseDir)\config\js\html5shiv.min.js" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_30e270cbec3ef96a" Directory="dir_CinbaseBaseComponents_0d94d97f6a3d8b73" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_30e270cbec3ef96a" KeyPath="yes" Source="$(var.CinbaseDir)\config\js\jquery-1.12.4.min.js" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_70d9f17c684c26dd" Directory="dir_CinbaseBaseComponents_0d94d97f6a3d8b73" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_70d9f17c684c26dd" KeyPath="yes" Source="$(var.CinbaseDir)\config\js\jquery.bootstrap-touchspin.js" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_1c2177435a393d5b" Directory="dir_CinbaseBaseComponents_0d94d97f6a3d8b73" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_1c2177435a393d5b" KeyPath="yes" Source="$(var.CinbaseDir)\config\js\jquery.bootstrap-touchspin.min.js" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_49309dc548fa7602" Directory="dir_CinbaseBaseComponents_0d94d97f6a3d8b73" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_49309dc548fa7602" KeyPath="yes" Source="$(var.CinbaseDir)\config\js\respond.min.js" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_8ab3c9c7db41cee9" Directory="dir_CinbaseBaseComponents_e61bb1ea6ddea55c" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_8ab3c9c7db41cee9" KeyPath="yes" Source="$(var.CinbaseDir)\config\js\jAlert\LICENSE" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_d51435b8590d6a4f" Directory="dir_CinbaseBaseComponents_e61bb1ea6ddea55c" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_d51435b8590d6a4f" KeyPath="yes" Source="$(var.CinbaseDir)\config\js\jAlert\jAlert-functions.min.js" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_3887f61367019811" Directory="dir_CinbaseBaseComponents_e61bb1ea6ddea55c" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_3887f61367019811" KeyPath="yes" Source="$(var.CinbaseDir)\config\js\jAlert\jAlert-ie8.min.js" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_ab4be026ebe03dea" Directory="dir_CinbaseBaseComponents_e61bb1ea6ddea55c" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_ab4be026ebe03dea" KeyPath="yes" Source="$(var.CinbaseDir)\config\js\jAlert\jAlert.css" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_cde561d790347819" Directory="dir_CinbaseBaseComponents_e61bb1ea6ddea55c" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_cde561d790347819" KeyPath="yes" Source="$(var.CinbaseDir)\config\js\jAlert\jAlert.min.js" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_885bc9f5c2dd9f4e" Directory="dir_CinbaseBaseComponents_8d777f385d3dfec8" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_885bc9f5c2dd9f4e" KeyPath="yes" Source="$(var.CinbaseDir)\data\dsymbols.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_86c703558f3ff722" Directory="dir_CinbaseBaseComponents_8d777f385d3dfec8" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_86c703558f3ff722" KeyPath="yes" Source="$(var.CinbaseDir)\data\emoji.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_62f2c16553ad00ad" Directory="dir_CinbaseBaseComponents_8d777f385d3dfec8" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_62f2c16553ad00ad" KeyPath="yes" Source="$(var.CinbaseDir)\data\extendtable.dat" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_6548db5a68632ebd" Directory="dir_CinbaseBaseComponents_8d777f385d3dfec8" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_6548db5a68632ebd" KeyPath="yes" Source="$(var.CinbaseDir)\data\flangs.dat" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_ddbbca5a8d0df530" Directory="dir_CinbaseBaseComponents_8d777f385d3dfec8" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_ddbbca5a8d0df530" KeyPath="yes" Source="$(var.CinbaseDir)\data\fsymbols.dat" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_5bb665b50c118a54" Directory="dir_CinbaseBaseComponents_8d777f385d3dfec8" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_5bb665b50c118a54" KeyPath="yes" Source="$(var.CinbaseDir)\data\msymbols.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_1a0e2e784d4da13f" Directory="dir_CinbaseBaseComponents_8d777f385d3dfec8" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_1a0e2e784d4da13f" KeyPath="yes" Source="$(var.CinbaseDir)\data\phrase.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_87d12b98216ebb6a" Directory="dir_CinbaseBaseComponents_8d777f385d3dfec8" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_87d12b98216ebb6a" KeyPath="yes" Source="$(var.CinbaseDir)\data\swkb.dat" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_bfb3359f270b15d3" Directory="dir_CinbaseBaseComponents_8d777f385d3dfec8" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_bfb3359f270b15d3" KeyPath="yes" Source="$(var.CinbaseDir)\data\symbols.dat" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_f90a353c47243d43" Directory="dir_CinbaseBaseComponents_8d777f385d3dfec8" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_f90a353c47243d43" KeyPath="yes" Source="$(var.CinbaseDir)\data\userphrase.dat" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_015359adb96b46ee" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_015359adb96b46ee" KeyPath="yes" Source="$(var.CinbaseDir)\icons\chi.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_23dfff9e9eabfd50" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_23dfff9e9eabfd50" KeyPath="yes" Source="$(var.CinbaseDir)\icons\chi.pdn" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_e3ae3a388dd101f2" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_e3ae3a388dd101f2" KeyPath="yes" Source="$(var.CinbaseDir)\icons\chi_full_capsoff.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_27d9e4559d1664a6" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_27d9e4559d1664a6" KeyPath="yes" Source="$(var.CinbaseDir)\icons\chi_full_capson.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_0afc521b975d7646" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_0afc521b975d7646" KeyPath="yes" Source="$(var.CinbaseDir)\icons\chi_half_capsoff.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_6a852e721beda6a5" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_6a852e721beda6a5" KeyPath="yes" Source="$(var.CinbaseDir)\icons\chi_half_capson.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_73702c7be5fbe333" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_73702c7be5fbe333" KeyPath="yes" Source="$(var.CinbaseDir)\icons\config.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_f78871efb1ca65df" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_f78871efb1ca65df" KeyPath="yes" Source="$(var.CinbaseDir)\icons\eng.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_c0cfacbd271e82be" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_c0cfacbd271e82be" KeyPath="yes" Source="$(var.CinbaseDir)\icons\eng.pdn" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_d69c557bb61046b7" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_d69c557bb61046b7" KeyPath="yes" Source="$(var.CinbaseDir)\icons\eng_full_capsoff.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_77c7064e155869c2" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_77c7064e155869c2" KeyPath="yes" Source="$(var.CinbaseDir)\icons\eng_full_capson.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_deb5464a6fca9288" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_deb5464a6fca9288" KeyPath="yes" Source="$(var.CinbaseDir)\icons\eng_half_capsoff.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_59aa2763febef030" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_59aa2763febef030" KeyPath="yes" Source="$(var.CinbaseDir)\icons\eng_half_capson.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_1c4b8b1502885fc2" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_1c4b8b1502885fc2" KeyPath="yes" Source="$(var.CinbaseDir)\icons\full.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_27c4b3e353324460" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_27c4b3e353324460" KeyPath="yes" Source="$(var.CinbaseDir)\icons\half.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_caf3c432134609ff" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_caf3c432134609ff" KeyPath="yes" Source="$(var.CinbaseDir)\icons\sim_full_capsoff.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_6884b9b1256a6ed3" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_6884b9b1256a6ed3" KeyPath="yes" Source="$(var.CinbaseDir)\icons\sim_full_capson.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_e76ee04c67a36443" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_e76ee04c67a36443" KeyPath="yes" Source="$(var.CinbaseDir)\icons\sim_half_capsoff.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_8345c8f1b94886d7" Directory="dir_CinbaseBaseComponents_bd21190449b7e88d" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_8345c8f1b94886d7" KeyPath="yes" Source="$(var.CinbaseDir)\icons\sim_half_capson.ico" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_0816edde752a4ff2" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_0816edde752a4ff2" KeyPath="yes" Source="$(var.CinbaseDir)\json\CnsPhonetic.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_7cc2d429a4916c35" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_7cc2d429a4916c35" KeyPath="yes" Source="$(var.CinbaseDir)\json\ar30-big.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_828daa5dd096967f" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_828daa5dd096967f" KeyPath="yes" Source="$(var.CinbaseDir)\json\array30.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_a41aae994e9210dd" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_a41aae994e9210dd" KeyPath="yes" Source="$(var.CinbaseDir)\json\array40.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_086eb03b006ee6f4" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_086eb03b006ee6f4" KeyPath="yes" Source="$(var.CinbaseDir)\json\bpmf.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_95010b5163a99c4e" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_95010b5163a99c4e" KeyPath="yes" Source="$(var.CinbaseDir)\json\checj.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_f3f7390d21c5ba5b" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_f3f7390d21c5ba5b" KeyPath="yes" Source="$(var.CinbaseDir)\json\cj-ext.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_992a28cbff9f2b0d" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_992a28cbff9f2b0d" KeyPath="yes" Source="$(var.CinbaseDir)\json\cj-fast.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_d99a4b2af86efb56" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_d99a4b2af86efb56" KeyPath="yes" Source="$(var.CinbaseDir)\json\cj5.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_17da8a7eb7df1091" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_17da8a7eb7df1091" KeyPath="yes" Source="$(var.CinbaseDir)\json\cnscj.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_4cb817453107f689" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_4cb817453107f689" KeyPath="yes" Source="$(var.CinbaseDir)\json\dayi3.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_bc17792dc5feee55" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_bc17792dc5feee55" KeyPath="yes" Source="$(var.CinbaseDir)\json\dayi4.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_20e124d051ec4ba3" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_20e124d051ec4ba3" KeyPath="yes" Source="$(var.CinbaseDir)\json\ez.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_57ecc82cffdd03f5" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_57ecc82cffdd03f5" KeyPath="yes" Source="$(var.CinbaseDir)\json\ezbig.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_f69f6edd523830d5" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_f69f6edd523830d5" KeyPath="yes" Source="$(var.CinbaseDir)\json\ezmid.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_b09f8865a694136e" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_b09f8865a694136e" KeyPath="yes" Source="$(var.CinbaseDir)\json\ezphrase.txt" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_a065c5f33ab302a9" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_a065c5f33ab302a9" KeyPath="yes" Source="$(var.CinbaseDir)\json\ezsmall.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_40f1f152abce1d4f" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_40f1f152abce1d4f" KeyPath="yes" Source="$(var.CinbaseDir)\json\gpl.txt" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_75526c52935983a2" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_75526c52935983a2" KeyPath="yes" Source="$(var.CinbaseDir)\json\mscj3-ext.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_69b9498e6c6bc4dd" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_69b9498e6c6bc4dd" KeyPath="yes" Source="$(var.CinbaseDir)\json\mscj3.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_312d3c0797182998" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_312d3c0797182998" KeyPath="yes" Source="$(var.CinbaseDir)\json\newcj.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_00d1462cfd1264f3" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_00d1462cfd1264f3" KeyPath="yes" Source="$(var.CinbaseDir)\json\newcj3.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_15bd326cb6e20990" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_15bd326cb6e20990" KeyPath="yes" Source="$(var.CinbaseDir)\json\pinyin.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_b634409f548ec855" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_b634409f548ec855" KeyPath="yes" Source="$(var.CinbaseDir)\json\roman.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_49e66bcff4a7cb7d" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_49e66bcff4a7cb7d" KeyPath="yes" Source="$(var.CinbaseDir)\json\scj6.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_a65f9cc0c16c3ffa" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_a65f9cc0c16c3ffa" KeyPath="yes" Source="$(var.CinbaseDir)\json\simplecj.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_946c48c80600d39d" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_946c48c80600d39d" KeyPath="yes" Source="$(var.CinbaseDir)\json\simplex.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_9dc6350c2d59e6c3" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_9dc6350c2d59e6c3" KeyPath="yes" Source="$(var.CinbaseDir)\json\simplex5.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_945f4f2cd72fc48b" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_945f4f2cd72fc48b" KeyPath="yes" Source="$(var.CinbaseDir)\json\tharray.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_ba3f68c1e80e08a8" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_ba3f68c1e80e08a8" KeyPath="yes" Source="$(var.CinbaseDir)\json\tharray.txt" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_6c5a7f8e11f90494" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_6c5a7f8e11f90494" KeyPath="yes" Source="$(var.CinbaseDir)\json\thcj.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_bbde6a599b20b464" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_bbde6a599b20b464" KeyPath="yes" Source="$(var.CinbaseDir)\json\thcj.txt" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_d9deef6f6bdf50dc" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_d9deef6f6bdf50dc" KeyPath="yes" Source="$(var.CinbaseDir)\json\thdayi.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_ec52d820b4611681" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_ec52d820b4611681" KeyPath="yes" Source="$(var.CinbaseDir)\json\thdayi.txt" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_00b523c02f102fb7" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_00b523c02f102fb7" KeyPath="yes" Source="$(var.CinbaseDir)\json\thphonetic.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_15f44e02aca154c6" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_15f44e02aca154c6" KeyPath="yes" Source="$(var.CinbaseDir)\json\thphonetic.txt" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_ff8ff483772934a3" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_ff8ff483772934a3" KeyPath="yes" Source="$(var.CinbaseDir)\json\thpinyin.json" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_520ce235e5b99805" Directory="dir_CinbaseBaseComponents_466deec76ecdf5fc" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_520ce235e5b99805" KeyPath="yes" Source="$(var.CinbaseDir)\json\thpinyin.txt" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_6a04dfef70376f02" Directory="dir_CinbaseBaseComponents_4a931512ce65bdc9" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_6a04dfef70376f02" KeyPath="yes" Source="$(var.CinbaseDir)\tools\__init__.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_b7630110e8551363" Directory="dir_CinbaseBaseComponents_4a931512ce65bdc9" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_b7630110e8551363" KeyPath="yes" Source="$(var.CinbaseDir)\tools\cintojson.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_6bb3d37ab2880ef7" Directory="dir_CinbaseBaseComponents_4a931512ce65bdc9" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_6bb3d37ab2880ef7" KeyPath="yes" Source="$(var.CinbaseDir)\tools\cpuinfo.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_cd969c21d52b04f4" Directory="dir_CinbaseBaseComponents_4a931512ce65bdc9" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_cd969c21d52b04f4" KeyPath="yes" Source="$(var.CinbaseDir)\tools\emojitojson.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_b6ff2c07a657ea11" Directory="dir_CinbaseBaseComponents_4a931512ce65bdc9" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_b6ff2c07a657ea11" KeyPath="yes" Source="$(var.CinbaseDir)\tools\import_liu.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_aba3d2295d032604" Directory="dir_CinbaseBaseComponents_4a931512ce65bdc9" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_aba3d2295d032604" KeyPath="yes" Source="$(var.CinbaseDir)\tools\liu_unitab2cin.py" />
+      </Component>
+      <Component Id="cmp_CinbaseBaseComponents_959620fd83c87b4e" Directory="dir_CinbaseBaseComponents_4a931512ce65bdc9" Guid="*">
+        <File Id="fil_CinbaseBaseComponents_959620fd83c87b4e" KeyPath="yes" Source="$(var.CinbaseDir)\tools\phrasetojson.py" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

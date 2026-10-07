@@ -1,0 +1,98 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_MCFOXIM">
+      <Directory Id="dir_IM_McFoxim_c7a628cba22e28eb" Name="css" />
+      <Directory Id="dir_IM_McFoxim_bd21190449b7e88d" Name="icons" />
+      <Directory Id="dir_IM_McFoxim_59b514174bffe4ae" Name="images" />
+      <Directory Id="dir_IM_McFoxim_32981a13284db7a0" Name="js" />
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="IM_McFoxim">
+      <Component Id="cmp_IM_McFoxim_04c6e90faac2675a" Directory="INSTALLFOLDER_MCFOXIM" Guid="*">
+        <File Id="fil_IM_McFoxim_04c6e90faac2675a" KeyPath="yes" Source="$(var.McFoximDir)\README.md" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_fa546fe8734e90eb" Directory="INSTALLFOLDER_MCFOXIM" Guid="*">
+        <File Id="fil_IM_McFoxim_fa546fe8734e90eb" KeyPath="yes" Source="$(var.McFoximDir)\config_tool.py" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_90e676a305578fcf" Directory="INSTALLFOLDER_MCFOXIM" Guid="*">
+        <File Id="fil_IM_McFoxim_90e676a305578fcf" KeyPath="yes" Source="$(var.McFoximDir)\help.html" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_c4d3523ea2db9d4e" Directory="INSTALLFOLDER_MCFOXIM" Guid="*">
+        <File Id="fil_IM_McFoxim_c4d3523ea2db9d4e" KeyPath="yes" Source="$(var.McFoximDir)\icon.ico" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_6b646d3c105145aa" Directory="INSTALLFOLDER_MCFOXIM" Guid="*">
+        <File Id="fil_IM_McFoxim_6b646d3c105145aa" KeyPath="yes" Source="$(var.McFoximDir)\ime.json" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_168726dbe96b3ce4" Directory="INSTALLFOLDER_MCFOXIM" Guid="*">
+        <File Id="fil_IM_McFoxim_168726dbe96b3ce4" KeyPath="yes" Source="$(var.McFoximDir)\index.js" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_be46067d375a129c" Directory="INSTALLFOLDER_MCFOXIM" Guid="*">
+        <File Id="fil_IM_McFoxim_be46067d375a129c" KeyPath="yes" Source="$(var.McFoximDir)\index.js.LICENSE.txt" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_523e1fab8c682414" Directory="INSTALLFOLDER_MCFOXIM" Guid="*">
+        <File Id="fil_IM_McFoxim_523e1fab8c682414" KeyPath="yes" Source="$(var.McFoximDir)\options.html" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_8b1e46a37a5c4b21" Directory="INSTALLFOLDER_MCFOXIM" Guid="*">
+        <File Id="fil_IM_McFoxim_8b1e46a37a5c4b21" KeyPath="yes" Source="$(var.McFoximDir)\run_config_tool.bat" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_b69437057ad7faca" Directory="INSTALLFOLDER_MCFOXIM" Guid="*">
+        <File Id="fil_IM_McFoxim_b69437057ad7faca" KeyPath="yes" Source="$(var.McFoximDir)\run_get_log.bat" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_60ae86a62790101c" Directory="INSTALLFOLDER_MCFOXIM" Guid="*">
+        <File Id="fil_IM_McFoxim_60ae86a62790101c" KeyPath="yes" Source="$(var.McFoximDir)\run_register_ime.bat" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_78c12f5adc1848d1" Directory="INSTALLFOLDER_MCFOXIM" Guid="*">
+        <File Id="fil_IM_McFoxim_78c12f5adc1848d1" KeyPath="yes" Source="$(var.McFoximDir)\server.js" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_54d365d4962dd435" Directory="INSTALLFOLDER_MCFOXIM" Guid="*">
+        <File Id="fil_IM_McFoxim_54d365d4962dd435" KeyPath="yes" Source="$(var.McFoximDir)\webpack_check.js" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_81844aaaeda66ab2" Directory="dir_IM_McFoxim_c7a628cba22e28eb" Guid="*">
+        <File Id="fil_IM_McFoxim_81844aaaeda66ab2" KeyPath="yes" Source="$(var.McFoximDir)\css\help.css" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_02597b8ee65b85b0" Directory="dir_IM_McFoxim_c7a628cba22e28eb" Guid="*">
+        <File Id="fil_IM_McFoxim_02597b8ee65b85b0" KeyPath="yes" Source="$(var.McFoximDir)\css\options.css" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_362e5bc18d8a2e31" Directory="dir_IM_McFoxim_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McFoxim_362e5bc18d8a2e31" KeyPath="yes" Source="$(var.McFoximDir)\icons\capsEng.ico" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_b8554056825383bf" Directory="dir_IM_McFoxim_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McFoxim_b8554056825383bf" KeyPath="yes" Source="$(var.McFoximDir)\icons\close.ico" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_73702c7be5fbe333" Directory="dir_IM_McFoxim_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McFoxim_73702c7be5fbe333" KeyPath="yes" Source="$(var.McFoximDir)\icons\config.ico" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_f78871efb1ca65df" Directory="dir_IM_McFoxim_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McFoxim_f78871efb1ca65df" KeyPath="yes" Source="$(var.McFoximDir)\icons\eng.ico" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_1c4b8b1502885fc2" Directory="dir_IM_McFoxim_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McFoxim_1c4b8b1502885fc2" KeyPath="yes" Source="$(var.McFoximDir)\icons\full.ico" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_27c4b3e353324460" Directory="dir_IM_McFoxim_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McFoxim_27c4b3e353324460" KeyPath="yes" Source="$(var.McFoximDir)\icons\half.ico" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_3aacc4aa4ec3b46b" Directory="dir_IM_McFoxim_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McFoxim_3aacc4aa4ec3b46b" KeyPath="yes" Source="$(var.McFoximDir)\icons\simC.ico" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_1f0c42bfc849548e" Directory="dir_IM_McFoxim_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_McFoxim_1f0c42bfc849548e" KeyPath="yes" Source="$(var.McFoximDir)\icons\traC.ico" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_302fb34964b993c4" Directory="dir_IM_McFoxim_59b514174bffe4ae" Guid="*">
+        <File Id="fil_IM_McFoxim_302fb34964b993c4" KeyPath="yes" Source="$(var.McFoximDir)\images\icon128.png" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_2a26e6e465f3141a" Directory="dir_IM_McFoxim_59b514174bffe4ae" Guid="*">
+        <File Id="fil_IM_McFoxim_2a26e6e465f3141a" KeyPath="yes" Source="$(var.McFoximDir)\images\icon16.png" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_9aa865392fbb371e" Directory="dir_IM_McFoxim_59b514174bffe4ae" Guid="*">
+        <File Id="fil_IM_McFoxim_9aa865392fbb371e" KeyPath="yes" Source="$(var.McFoximDir)\images\icon48.png" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_ce15fe2a7fbb33a8" Directory="dir_IM_McFoxim_59b514174bffe4ae" Guid="*">
+        <File Id="fil_IM_McFoxim_ce15fe2a7fbb33a8" KeyPath="yes" Source="$(var.McFoximDir)\images\icon64.png" />
+      </Component>
+      <Component Id="cmp_IM_McFoxim_9ac008c7e2c4d3a6" Directory="dir_IM_McFoxim_32981a13284db7a0" Guid="*">
+        <File Id="fil_IM_McFoxim_9ac008c7e2c4d3a6" KeyPath="yes" Source="$(var.McFoximDir)\js\options.js" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

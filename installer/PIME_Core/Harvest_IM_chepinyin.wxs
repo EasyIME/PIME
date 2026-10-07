@@ -1,0 +1,35 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_CHEPINYIN">
+      <Directory Id="dir_IM_Chepinyin_2245023265ae4cf8" Name="config" />
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="IM_Chepinyin">
+      <Component Id="cmp_IM_Chepinyin_743b1adbf37db12e" Directory="INSTALLFOLDER_CHEPINYIN" Guid="*">
+        <File Id="fil_IM_Chepinyin_743b1adbf37db12e" KeyPath="yes" Source="$(var.ChepinyinDir)\__init__.py" />
+      </Component>
+      <Component Id="cmp_IM_Chepinyin_1591ed529c246de2" Directory="INSTALLFOLDER_CHEPINYIN" Guid="*">
+        <File Id="fil_IM_Chepinyin_1591ed529c246de2" KeyPath="yes" Source="$(var.ChepinyinDir)\chepinyin_ime.py" />
+      </Component>
+      <Component Id="cmp_IM_Chepinyin_c4d3523ea2db9d4e" Directory="INSTALLFOLDER_CHEPINYIN" Guid="*">
+        <File Id="fil_IM_Chepinyin_c4d3523ea2db9d4e" KeyPath="yes" Source="$(var.ChepinyinDir)\icon.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chepinyin_cc35d4b8e796c869" Directory="INSTALLFOLDER_CHEPINYIN" Guid="*">
+        <File Id="fil_IM_Chepinyin_cc35d4b8e796c869" KeyPath="yes" Source="$(var.ChepinyinDir)\icon.png" />
+      </Component>
+      <Component Id="cmp_IM_Chepinyin_6b646d3c105145aa" Directory="INSTALLFOLDER_CHEPINYIN" Guid="*">
+        <File Id="fil_IM_Chepinyin_6b646d3c105145aa" KeyPath="yes" Source="$(var.ChepinyinDir)\ime.json" />
+      </Component>
+      <Component Id="cmp_IM_Chepinyin_03df4b552ccaaaab" Directory="dir_IM_Chepinyin_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Chepinyin_03df4b552ccaaaab" KeyPath="yes" Source="$(var.ChepinyinDir)\config\config.html" />
+      </Component>
+      <Component Id="cmp_IM_Chepinyin_ff1772f82f619339" Directory="dir_IM_Chepinyin_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Chepinyin_ff1772f82f619339" KeyPath="yes" Source="$(var.ChepinyinDir)\config\config.js" />
+      </Component>
+      <Component Id="cmp_IM_Chepinyin_6a02156604c06bec" Directory="dir_IM_Chepinyin_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Chepinyin_6a02156604c06bec" KeyPath="yes" Source="$(var.ChepinyinDir)\config\config.json" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

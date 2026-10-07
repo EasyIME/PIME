@@ -9,25 +9,58 @@ import sys
 import subprocess
 import ctypes
 
+import ctypes.wintypes
+
 def browse_for_file():
-    # Use PowerShell to show OpenFileDialog without external dependencies
-    ps_cmd = (
-        "Add-Type -AssemblyName System.Windows.Forms; "
-        "$f = New-Object System.Windows.Forms.OpenFileDialog; "
-        "$f.Filter = 'liu-uni.tab (*.tab)|*.tab|All Files (*.*)|*.*'; "
-        "$f.Title = 'Select Boshiamy (liu-uni.tab) Table File'; "
-        "if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $f.FileName }"
-    )
-    try:
-        res = subprocess.check_output(
-            ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_cmd],
-            text=True,
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
-        )
-        return res.strip()
-    except Exception as e:
-        print(f"File dialog failed: {e}")
-        return None
+    class OPENFILENAMEW(ctypes.Structure):
+        _fields_ = [
+            ("lStructSize", ctypes.wintypes.DWORD),
+            ("hwndOwner", ctypes.wintypes.HWND),
+            ("hInstance", ctypes.wintypes.HINSTANCE),
+            ("lpstrFilter", ctypes.c_wchar_p),
+            ("lpstrCustomFilter", ctypes.c_wchar_p),
+            ("nMaxCustFilter", ctypes.wintypes.DWORD),
+            ("nFilterIndex", ctypes.wintypes.DWORD),
+            ("lpstrFile", ctypes.c_wchar_p),
+            ("nMaxFile", ctypes.wintypes.DWORD),
+            ("lpstrFileTitle", ctypes.c_wchar_p),
+            ("nMaxFileTitle", ctypes.wintypes.DWORD),
+            ("lpstrInitialDir", ctypes.c_wchar_p),
+            ("lpstrTitle", ctypes.c_wchar_p),
+            ("Flags", ctypes.wintypes.DWORD),
+            ("nFileOffset", ctypes.wintypes.WORD),
+            ("nFileExtension", ctypes.wintypes.WORD),
+            ("lpstrDefExt", ctypes.c_wchar_p),
+            ("lCustData", ctypes.wintypes.LPARAM),
+            ("lpfnHook", ctypes.c_void_p),
+            ("lpTemplateName", ctypes.c_wchar_p),
+            ("pvReserved", ctypes.c_void_p),
+            ("dwReserved", ctypes.wintypes.DWORD),
+            ("FlagsEx", ctypes.wintypes.DWORD)
+        ]
+
+    MAX_PATH = 260
+    OFN_FILEMUSTEXIST = 0x00001000
+    OFN_PATHMUSTEXIST = 0x00000800
+
+    ofn = OPENFILENAMEW()
+    ofn.lStructSize = ctypes.sizeof(OPENFILENAMEW)
+    ofn.hwndOwner = 0
+    
+    filter_str = "liu-uni.tab (*.tab)\0*.tab\0All Files (*.*)\0*.*\0\0"
+    ofn.lpstrFilter = filter_str
+    
+    file_buffer = ctypes.create_unicode_buffer(MAX_PATH)
+    ofn.lpstrFile = ctypes.cast(file_buffer, ctypes.c_wchar_p)
+    ofn.nMaxFile = MAX_PATH
+    
+    ofn.lpstrTitle = "Select Boshiamy (liu-uni.tab) Table File"
+    ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST
+
+    comdlg32 = ctypes.windll.comdlg32
+    if comdlg32.GetOpenFileNameW(ctypes.byref(ofn)):
+        return file_buffer.value
+    return None
 
 def main():
     tools_dir = os.path.dirname(os.path.abspath(__file__))

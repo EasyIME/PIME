@@ -80,52 +80,52 @@
             <ComponentGroupRef Id="Shortcuts_Checj" />
           </Feature>
 
-          <Feature Id="Feat_Cheliu" Title="!(loc.Feat_Cheliu_Title)" Level="2" Description="!(loc.Feat_Cheliu_Desc)">
+          <Feature Id="Feat_Cheliu" Title="!(loc.Feat_Cheliu_Title)" Level="1" Description="!(loc.Feat_Cheliu_Desc)">
             <ComponentGroupRef Id="IM_Cheliu" />
             <ComponentGroupRef Id="Shortcuts_Cheliu" />
           </Feature>
 
-          <Feature Id="Feat_Chearray" Title="!(loc.Feat_Chearray_Title)" Level="2" Description="!(loc.Feat_Chearray_Desc)">
+          <Feature Id="Feat_Chearray" Title="!(loc.Feat_Chearray_Title)" Level="1" Description="!(loc.Feat_Chearray_Desc)">
             <ComponentGroupRef Id="IM_Chearray" />
             <ComponentGroupRef Id="Shortcuts_Chearray" />
           </Feature>
 
-          <Feature Id="Feat_Chedayi" Title="!(loc.Feat_Chedayi_Title)" Level="2" Description="!(loc.Feat_Chedayi_Desc)">
+          <Feature Id="Feat_Chedayi" Title="!(loc.Feat_Chedayi_Title)" Level="1" Description="!(loc.Feat_Chedayi_Desc)">
             <ComponentGroupRef Id="IM_Chedayi" />
             <ComponentGroupRef Id="Shortcuts_Chedayi" />
           </Feature>
 
-          <Feature Id="Feat_Chepinyin" Title="!(loc.Feat_Chepinyin_Title)" Level="2" Description="!(loc.Feat_Chepinyin_Desc)">
+          <Feature Id="Feat_Chepinyin" Title="!(loc.Feat_Chepinyin_Title)" Level="1" Description="!(loc.Feat_Chepinyin_Desc)">
             <ComponentGroupRef Id="IM_Chepinyin" />
             <ComponentGroupRef Id="Shortcuts_Chepinyin" />
           </Feature>
 
-          <Feature Id="Feat_Chesimplex" Title="!(loc.Feat_Chesimplex_Title)" Level="2" Description="!(loc.Feat_Chesimplex_Desc)">
+          <Feature Id="Feat_Chesimplex" Title="!(loc.Feat_Chesimplex_Title)" Level="1" Description="!(loc.Feat_Chesimplex_Desc)">
             <ComponentGroupRef Id="IM_Chesimplex" />
             <ComponentGroupRef Id="Shortcuts_Chesimplex" />
           </Feature>
 
-          <Feature Id="Feat_Chephonetic" Title="!(loc.Feat_Chephonetic_Title)" Level="2" Description="!(loc.Feat_Chephonetic_Desc)">
+          <Feature Id="Feat_Chephonetic" Title="!(loc.Feat_Chephonetic_Title)" Level="1" Description="!(loc.Feat_Chephonetic_Desc)">
             <ComponentGroupRef Id="IM_Chephonetic" />
             <ComponentGroupRef Id="Shortcuts_Chephonetic" />
           </Feature>
 
-          <Feature Id="Feat_Cheez" Title="!(loc.Feat_Cheez_Title)" Level="2" Description="!(loc.Feat_Cheez_Desc)">
+          <Feature Id="Feat_Cheez" Title="!(loc.Feat_Cheez_Title)" Level="1" Description="!(loc.Feat_Cheez_Desc)">
             <ComponentGroupRef Id="IM_Cheez" />
             <ComponentGroupRef Id="Shortcuts_Cheez" />
           </Feature>
         </Feature>
 
-        <Feature Id="Feat_Cheeng" Title="!(loc.Feat_Cheeng_Title)" Level="2" Description="!(loc.Feat_Cheeng_Desc)">
+        <Feature Id="Feat_Cheeng" Title="!(loc.Feat_Cheeng_Title)" Level="1" Description="!(loc.Feat_Cheeng_Desc)">
           <ComponentGroupRef Id="IM_Cheeng" />
         </Feature>
 
-        <Feature Id="Feat_BrailleChewing" Title="!(loc.Feat_BrailleChewing_Title)" Level="2" Description="!(loc.Feat_BrailleChewing_Desc)">
+        <Feature Id="Feat_BrailleChewing" Title="!(loc.Feat_BrailleChewing_Title)" Level="1" Description="!(loc.Feat_BrailleChewing_Desc)">
           <ComponentGroupRef Id="IM_BrailleChewing" />
           <ComponentGroupRef Id="Shortcuts_BrailleChewing" />
         </Feature>
 
-        <Feature Id="Feat_Rime" Title="!(loc.Feat_Rime_Title)" Level="2" Description="!(loc.Feat_Rime_Desc)">
+        <Feature Id="Feat_Rime" Title="!(loc.Feat_Rime_Title)" Level="1" Description="!(loc.Feat_Rime_Desc)">
           <ComponentGroupRef Id="IM_Rime" />
         </Feature>
       </Feature>
@@ -136,15 +136,15 @@
           <ComponentGroupRef Id="IM_McBopomofo" />
         </Feature>
 
-        <Feature Id="Feat_McFoxim" Title="!(loc.Feat_McFoxim_Title)" Level="2" Description="!(loc.Feat_McFoxim_Desc)">
+        <Feature Id="Feat_McFoxim" Title="!(loc.Feat_McFoxim_Title)" Level="1" Description="!(loc.Feat_McFoxim_Desc)">
           <ComponentGroupRef Id="IM_McFoxim" />
         </Feature>
 
-        <Feature Id="Feat_McTabim" Title="!(loc.Feat_McTabim_Title)" Level="2" Description="!(loc.Feat_McTabim_Desc)">
+        <Feature Id="Feat_McTabim" Title="!(loc.Feat_McTabim_Title)" Level="1" Description="!(loc.Feat_McTabim_Desc)">
           <ComponentGroupRef Id="IM_McTabim" />
         </Feature>
 
-        <Feature Id="Feat_Emojime" Title="!(loc.Feat_Emojime_Title)" Level="2" Description="!(loc.Feat_Emojime_Desc)">
+        <Feature Id="Feat_Emojime" Title="!(loc.Feat_Emojime_Title)" Level="1" Description="!(loc.Feat_Emojime_Desc)">
           <ComponentGroupRef Id="IM_Emojime" />
         </Feature>
       </Feature>
@@ -196,6 +196,14 @@
                   Execute="immediate"
                   Return="asyncNoWait" />
 
+    <!-- 5. Run Liu Importer if Cheliu feature is selected -->
+    <CustomAction Id="CA_ImportLiu"
+                  Directory="INSTALLFOLDER_CINBASE"
+                  ExeCommand="&quot;[INSTALLFOLDER_PYTHON]python3\pythonw.exe&quot; &quot;[INSTALLFOLDER_CINBASE]tools\import_liu.py&quot;"
+                  Execute="immediate"
+                  Impersonate="yes"
+                  Return="asyncNoWait" />
+
     <InstallExecuteSequence>
       <!-- Stop running launcher early on uninstall or upgrade -->
       <Custom Action="CA_StopPIMELauncher" Before="InstallValidate" />
@@ -204,6 +212,7 @@
       <Custom Action="CA_ConfigureTaskXml" After="InstallFiles" Condition="NOT (REMOVE=&quot;ALL&quot;)" />
       <Custom Action="CA_RegisterTask" After="CA_ConfigureTaskXml" Condition="NOT (REMOVE=&quot;ALL&quot;)" />
       <Custom Action="CA_PythonCompileAll" After="CA_RegisterTask" Condition="NOT (REMOVE=&quot;ALL&quot;)" />
+      <Custom Action="CA_ImportLiu" After="InstallFinalize" Condition="NOT (REMOVE=&quot;ALL&quot;) AND (&amp;Feat_Cheliu=3)" />
       <Custom Action="CA_StartLauncher" After="InstallFinalize" Condition="NOT (REMOVE=&quot;ALL&quot;) AND (&amp;Main=3)" />
     </InstallExecuteSequence>
   </Package>

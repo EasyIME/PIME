@@ -125,6 +125,7 @@ Function uninstallOldVersion
 			; Remove the launcher from auto-start
 			DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 			DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
+			nsExec::ExecToLog 'schtasks /Delete /TN "\PIME\PIMELauncher" /F'
 			DeleteRegKey HKLM "Software\PIME"
 
 			; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
@@ -634,8 +635,10 @@ Section "" Register
 	; Register COM objects (NSIS RegDLL command is broken and cannot be used)
 	ExecWait '"$SYSDIR\regsvr32.exe" /s "$INSTDIR\x86\PIMETextService.dll"'
 
-	; Launch the python server on startup
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher" "$INSTDIR\PIMELauncher.exe"
+	; Launch the python server on startup using Scheduled Task
+	File "PIMELauncher_Task.xml"
+	nsExec::ExecToLog 'powershell -ExecutionPolicy Bypass -Command "(Get-Content ''$INSTDIR\PIMELauncher_Task.xml'').Replace(''{{INSTDIR}}'', ''$INSTDIR'') | Set-Content ''$INSTDIR\PIMELauncher_Task.xml'' -Encoding Unicode"'
+	nsExec::ExecToLog 'schtasks /Create /TN "\PIME\PIMELauncher" /XML "$INSTDIR\PIMELauncher_Task.xml" /F'
 
 	;Store installation folder in the registry
 	WriteRegStr HKLM "Software\PIME" "" $INSTDIR
@@ -738,6 +741,8 @@ Section "Uninstall"
 	; Remove the launcher from auto-start
 	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\PIME"
 	DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "PIMELauncher"
+	; Remove the Scheduled Task
+	nsExec::ExecToLog 'schtasks /Delete /TN "\PIME\PIMELauncher" /F'
 	DeleteRegKey HKLM "Software\PIME"
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)

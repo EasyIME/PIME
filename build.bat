@@ -41,3 +41,12 @@ echo "Copy McTabimWeb to node\input_methods\McTabim"
 cmd /C rd /s /q node\input_methods\McTabim
 cmd /C mkdir node\input_methods\McTabim
 cmd /C xcopy /s /q /y /f McTabimWeb\output\pime node\input_methods\McTabim\.
+
+echo "Start building PIME Installer"
+cd installer
+..\python\python3\python.exe generate_harvest_wxs.py
+if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+dotnet build PIME_WiX.sln -c Release
+if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+cd ..
+

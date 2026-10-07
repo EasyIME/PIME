@@ -1,0 +1,35 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_CHEPHONETIC">
+      <Directory Id="dir_IM_Chephonetic_2245023265ae4cf8" Name="config" />
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="IM_Chephonetic">
+      <Component Id="cmp_IM_Chephonetic_743b1adbf37db12e" Directory="INSTALLFOLDER_CHEPHONETIC" Guid="*">
+        <File Id="fil_IM_Chephonetic_743b1adbf37db12e" KeyPath="yes" Source="$(var.ChephoneticDir)\__init__.py" />
+      </Component>
+      <Component Id="cmp_IM_Chephonetic_fb89116d2c2c27a8" Directory="INSTALLFOLDER_CHEPHONETIC" Guid="*">
+        <File Id="fil_IM_Chephonetic_fb89116d2c2c27a8" KeyPath="yes" Source="$(var.ChephoneticDir)\chephonetic_ime.py" />
+      </Component>
+      <Component Id="cmp_IM_Chephonetic_c4d3523ea2db9d4e" Directory="INSTALLFOLDER_CHEPHONETIC" Guid="*">
+        <File Id="fil_IM_Chephonetic_c4d3523ea2db9d4e" KeyPath="yes" Source="$(var.ChephoneticDir)\icon.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chephonetic_cc35d4b8e796c869" Directory="INSTALLFOLDER_CHEPHONETIC" Guid="*">
+        <File Id="fil_IM_Chephonetic_cc35d4b8e796c869" KeyPath="yes" Source="$(var.ChephoneticDir)\icon.png" />
+      </Component>
+      <Component Id="cmp_IM_Chephonetic_6b646d3c105145aa" Directory="INSTALLFOLDER_CHEPHONETIC" Guid="*">
+        <File Id="fil_IM_Chephonetic_6b646d3c105145aa" KeyPath="yes" Source="$(var.ChephoneticDir)\ime.json" />
+      </Component>
+      <Component Id="cmp_IM_Chephonetic_03df4b552ccaaaab" Directory="dir_IM_Chephonetic_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Chephonetic_03df4b552ccaaaab" KeyPath="yes" Source="$(var.ChephoneticDir)\config\config.html" />
+      </Component>
+      <Component Id="cmp_IM_Chephonetic_ff1772f82f619339" Directory="dir_IM_Chephonetic_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Chephonetic_ff1772f82f619339" KeyPath="yes" Source="$(var.ChephoneticDir)\config\config.js" />
+      </Component>
+      <Component Id="cmp_IM_Chephonetic_6a02156604c06bec" Directory="dir_IM_Chephonetic_2245023265ae4cf8" Guid="*">
+        <File Id="fil_IM_Chephonetic_6a02156604c06bec" KeyPath="yes" Source="$(var.ChephoneticDir)\config\config.json" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

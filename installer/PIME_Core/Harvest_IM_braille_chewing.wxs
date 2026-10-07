@@ -1,0 +1,38 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_BRAILLE_CHEWING">
+      <Directory Id="dir_IM_BrailleChewing_ad1588d76517dd34" Name="sounds" />
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="IM_BrailleChewing">
+      <Component Id="cmp_IM_BrailleChewing_743b1adbf37db12e" Directory="INSTALLFOLDER_BRAILLE_CHEWING" Guid="*">
+        <File Id="fil_IM_BrailleChewing_743b1adbf37db12e" KeyPath="yes" Source="$(var.BrailleChewingDir)\__init__.py" />
+      </Component>
+      <Component Id="cmp_IM_BrailleChewing_21157412319b9b86" Directory="INSTALLFOLDER_BRAILLE_CHEWING" Guid="*">
+        <File Id="fil_IM_BrailleChewing_21157412319b9b86" KeyPath="yes" Source="$(var.BrailleChewingDir)\braille_chewing_ime.py" />
+      </Component>
+      <Component Id="cmp_IM_BrailleChewing_108ad0567a1e4788" Directory="INSTALLFOLDER_BRAILLE_CHEWING" Guid="*">
+        <File Id="fil_IM_BrailleChewing_108ad0567a1e4788" KeyPath="yes" Source="$(var.BrailleChewingDir)\brl_tables.py" />
+      </Component>
+      <Component Id="cmp_IM_BrailleChewing_c4d3523ea2db9d4e" Directory="INSTALLFOLDER_BRAILLE_CHEWING" Guid="*">
+        <File Id="fil_IM_BrailleChewing_c4d3523ea2db9d4e" KeyPath="yes" Source="$(var.BrailleChewingDir)\icon.ico" />
+      </Component>
+      <Component Id="cmp_IM_BrailleChewing_6b646d3c105145aa" Directory="INSTALLFOLDER_BRAILLE_CHEWING" Guid="*">
+        <File Id="fil_IM_BrailleChewing_6b646d3c105145aa" KeyPath="yes" Source="$(var.BrailleChewingDir)\ime.json" />
+      </Component>
+      <Component Id="cmp_IM_BrailleChewing_1b3e0effa587ea6e" Directory="dir_IM_BrailleChewing_ad1588d76517dd34" Guid="*">
+        <File Id="fil_IM_BrailleChewing_1b3e0effa587ea6e" KeyPath="yes" Source="$(var.BrailleChewingDir)\sounds\chi.wav" />
+      </Component>
+      <Component Id="cmp_IM_BrailleChewing_4e6903b9fe58c7fd" Directory="dir_IM_BrailleChewing_ad1588d76517dd34" Guid="*">
+        <File Id="fil_IM_BrailleChewing_4e6903b9fe58c7fd" KeyPath="yes" Source="$(var.BrailleChewingDir)\sounds\eng.wav" />
+      </Component>
+      <Component Id="cmp_IM_BrailleChewing_212b7ee119e6c7fc" Directory="dir_IM_BrailleChewing_ad1588d76517dd34" Guid="*">
+        <File Id="fil_IM_BrailleChewing_212b7ee119e6c7fc" KeyPath="yes" Source="$(var.BrailleChewingDir)\sounds\full.wav" />
+      </Component>
+      <Component Id="cmp_IM_BrailleChewing_c7243ce1336c7274" Directory="dir_IM_BrailleChewing_ad1588d76517dd34" Guid="*">
+        <File Id="fil_IM_BrailleChewing_c7243ce1336c7274" KeyPath="yes" Source="$(var.BrailleChewingDir)\sounds\half.wav" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

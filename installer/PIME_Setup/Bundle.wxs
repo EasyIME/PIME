@@ -1,0 +1,51 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+  <Bundle Name="PIME" Manufacturer="EasyIME" Version="2.0.0.0" UpgradeCode="E24F75BB-7BA2-46A2-8F55-1E063B9B744A">
+    <BootstrapperApplication>
+      <bal:WixStandardBootstrapperApplication LicenseFile="..\License.rtf"
+                                              Theme="rtfLicense"
+                                              LocalizationFile="thm.zh-TW.wxl"
+                                              SuppressOptionsUI="yes" />
+      <Payload Id="PayZhTW_1028" Name="1028\thm.wxl" SourceFile="thm.zh-TW.wxl" />
+      <Payload Id="PayZhTW_3076" Name="3076\thm.wxl" SourceFile="thm.zh-TW.wxl" />
+      <Payload Id="PayZhTW_5124" Name="5124\thm.wxl" SourceFile="thm.zh-TW.wxl" />
+      <Payload Id="PayZhCN_2052" Name="2052\thm.wxl" SourceFile="thm.zh-CN.wxl" />
+      <Payload Id="PayZhCN_4100" Name="4100\thm.wxl" SourceFile="thm.zh-CN.wxl" />
+      <Payload Id="PayEnUS_1033" Name="1033\thm.wxl" SourceFile="thm.en-US.wxl" />
+    </BootstrapperApplication>
+
+    <!-- Block installation on Windows 7 and 8 (Windows 10+ only) -->
+    <bal:Condition Message="This application requires Windows 10 or later because the Python and Node.js backends do not support older Windows versions."
+                   Condition="VersionNT &gt;= v10.0" />
+
+    <Variable Name="MsiTransforms" Type="string" Value="" />
+    <!-- Base MSI is zh-TW (1028), so transform is only applied for zh-CN (:2052) and English (:1033) -->
+    <SetVariable Id="SetZhCN" Variable="MsiTransforms" Value=":2052"
+                 Condition="(WixStdBALanguageId = 2052) OR (WixStdBALanguageId = 4100)" />
+    <SetVariable Id="SetEnUS" Variable="MsiTransforms" Value=":1033"
+                 Condition="NOT ((WixStdBALanguageId = 1028) OR (WixStdBALanguageId = 3076) OR (WixStdBALanguageId = 5124) OR (WixStdBALanguageId = 2052) OR (WixStdBALanguageId = 4100))" />
+
+    <Chain>
+      <!-- Single monolithic PIME_Core.msi with embedded transforms for zh-TW (:1028) and zh-CN (:2052) -->
+      <MsiPackage Id="PIMECore"
+                  Name="PIME_Core.msi"
+                  SourceFile="..\PIME_Core\bin\x86\Release\PIME_Core.msi"
+                  bal:DisplayInternalUICondition="WixBundleAction = 6"
+                  Vital="yes">
+        <MsiProperty Name="TRANSFORMS" Value="[MsiTransforms]" Condition="MsiTransforms" />
+      </MsiPackage>
+
+      <!-- TextService DLLs (Background / Silent) -->
+      <MsiPackage Id="PIMETextService_x86"
+                  SourceFile="..\PIME_TextService_x86\bin\x86\Release\PIME_TextService_x86.msi"
+                  Vital="yes" />
+      <MsiPackage Id="PIMETextService_x64"
+                  SourceFile="..\PIME_TextService_x64\bin\x64\Release\PIME_TextService_x64.msi"
+                  InstallCondition="VersionNT64 AND NOT (NativeMachine = 43620)"
+                  Vital="yes" />
+      <MsiPackage Id="PIMETextService_arm64"
+                  SourceFile="..\PIME_TextService_arm64\bin\ARM64\Release\PIME_TextService_arm64.msi"
+                  InstallCondition="NativeMachine = 43620"
+                  Vital="yes" />
+    </Chain>
+  </Bundle>
+</Wix>

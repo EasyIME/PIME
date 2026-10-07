@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WixLocalization Culture="zh-tw" Language="1028" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <String Id="Caption" Value="[WixBundleName] 安裝程式" />
+  <String Id="Title" Value="[WixBundleName]" />
+  <String Id="CheckingForUpdatesLabel" Value="正在檢查更新" />
+  <String Id="UpdateButton" Value="更新至版本 [WixStdBAUpdateAvailable](&amp;U)" />
+  <String Id="InstallVersion" Value="版本 [WixBundleVersion]" />
+  <String Id="ConfirmCancelMessage" Value="您確定要取消嗎？" />
+  <String Id="ExecuteUpgradeRelatedBundleMessage" Value="舊版本" />
+  <String Id="HelpHeader" Value="安裝程式說明" />
+  <String Id="HelpText" Value="/install | /repair | /uninstall | /layout [directory] - 安裝、修復、解除安裝或在指定目錄建立完整離線安裝複本。預設為安裝。&#xA;&#xA;/passive | /quiet - 顯示精簡使用者介面或完全不顯示介面與提示。預設會顯示所有介面。&#xA;&#xA;/norestart - 抑制重新啟動。預設在需要時會提示重新啟動。&#xA;/log log.txt - 記錄至特定檔案。預設會在 %TEMP% 建立記錄檔。" />
+  <String Id="HelpCloseButton" Value="關閉(&amp;C)" />
+  <String Id="InstallAcceptCheckbox" Value="我同意授權條款(&amp;A)" />
+  <String Id="InstallOptionsButton" Value="選項(&amp;O)" />
+  <String Id="InstallInstallButton" Value="安裝(&amp;I)" />
+  <String Id="InstallCancelButton" Value="取消(&amp;C)" />
+  <String Id="OptionsHeader" Value="安裝選項" />
+  <String Id="OptionsLocationLabel" Value="安裝路徑：" />
+  <String Id="OptionsBrowseButton" Value="瀏覽(&amp;B)" />
+  <String Id="OptionsOkButton" Value="確定(&amp;O)" />
+  <String Id="OptionsCancelButton" Value="取消(&amp;C)" />
+  <String Id="ProgressHeader" Value="安裝進度" />
+  <String Id="ProgressLabel" Value="處理中：" />
+  <String Id="OverallProgressPackageText" Value="正在初始化..." />
+  <String Id="ProgressCancelButton" Value="取消(&amp;C)" />
+  <String Id="ModifyHeader" Value="修改安裝" />
+  <String Id="ModifyRepairButton" Value="修復(&amp;R)" />
+  <String Id="ModifyUninstallButton" Value="解除安裝(&amp;U)" />
+  <String Id="ModifyCancelButton" Value="取消(&amp;C)" />
+  <String Id="SuccessHeader" Value="安裝成功" />
+  <String Id="SuccessCacheHeader" Value="快取已順利完成" />
+  <String Id="SuccessInstallHeader" Value="已成功安裝" />
+  <String Id="SuccessLayoutHeader" Value="已順利完成配置" />
+  <String Id="SuccessModifyHeader" Value="修改已順利完成" />
+  <String Id="SuccessRepairHeader" Value="修復已順利完成" />
+  <String Id="SuccessUninstallHeader" Value="解除安裝已順利完成" />
+  <String Id="SuccessUnsafeUninstallHeader" Value="解除安裝已順利完成" />
+  <String Id="SuccessLaunchButton" Value="啟動(&amp;L)" />
+  <String Id="SuccessRestartText" Value="您必須重新啟動電腦才能使用此軟體。" />
+  <String Id="SuccessUninstallRestartText" Value="您必須重新啟動電腦才能完成移除此軟體。" />
+  <String Id="SuccessRestartButton" Value="重新啟動(&amp;R)" />
+  <String Id="SuccessCloseButton" Value="關閉(&amp;C)" />
+  <String Id="FailureHeader" Value="安裝失敗" />
+  <String Id="FailureCacheHeader" Value="快取失敗" />
+  <String Id="FailureInstallHeader" Value="安裝失敗" />
+  <String Id="FailureLayoutHeader" Value="配置失敗" />
+  <String Id="FailureModifyHeader" Value="修改失敗" />
+  <String Id="FailureRepairHeader" Value="修復失敗" />
+  <String Id="FailureUninstallHeader" Value="解除安裝失敗" />
+  <String Id="FailureUnsafeUninstallHeader" Value="解除安裝失敗" />
+  <String Id="FailureHyperlinkLogText" Value="發生一個或多個問題導致安裝失敗。請修正問題並重試安裝。詳細資訊請參閱&lt;a href=&quot;#&quot;&gt;記錄檔&lt;/a&gt;。" />
+  <String Id="FailureRestartText" Value="您必須重新啟動電腦以完成軟體復原。" />
+  <String Id="FailureRestartButton" Value="重新啟動(&amp;R)" />
+  <String Id="FailureCloseButton" Value="關閉(&amp;C)" />
+  <String Id="FilesInUseTitle" Value="使用中的檔案" />
+  <String Id="FilesInUseLabel" Value="下列應用程式正在使用需要更新的檔案：" />
+  <String Id="FilesInUseNetfxCloseRadioButton" Value="關閉應用程式(&amp;A)。" />
+  <String Id="FilesInUseCloseRadioButton" Value="關閉應用程式並嘗試重新啟動(&amp;A)。" />
+  <String Id="FilesInUseDontCloseRadioButton" Value="不關閉應用程式(&amp;D)，安裝完成後需要重新開機。" />
+  <String Id="FilesInUseRetryButton" Value="重試(&amp;R)" />
+  <String Id="FilesInUseIgnoreButton" Value="略過(&amp;I)" />
+  <String Id="FilesInUseExitButton" Value="結束(&amp;X)" />
+</WixLocalization>

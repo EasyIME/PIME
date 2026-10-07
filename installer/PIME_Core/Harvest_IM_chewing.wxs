@@ -1,0 +1,326 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER_CHEWING">
+      <Directory Id="dir_IM_Chewing_c7a628cba22e28eb" Name="css" />
+      <Directory Id="dir_IM_Chewing_ad42f6697b035b75" Name="debug" />
+      <Directory Id="dir_IM_Chewing_bd21190449b7e88d" Name="icons" />
+      <Directory Id="dir_IM_Chewing_59b514174bffe4ae" Name="images">
+        <Directory Id="dir_IM_Chewing_ea47d8e9950061c5" Name="keyborad_layouts" />
+        <Directory Id="dir_IM_Chewing_c93a6044bfbb5d8c" Name="keyborad_layouts_json" />
+      </Directory>
+      <Directory Id="dir_IM_Chewing_32981a13284db7a0" Name="js">
+        <Directory Id="dir_IM_Chewing_fe42d2505826e9f2" Name="jquery-loading-overlay-2.1.7" />
+        <Directory Id="dir_IM_Chewing_c534ecdff3a5628c" Name="jquery-ui-1.13.2">
+          <Directory Id="dir_IM_Chewing_799c1e118e65a59f" Name="external">
+            <Directory Id="dir_IM_Chewing_66daf09b1b06b8ba" Name="jquery" />
+          </Directory>
+          <Directory Id="dir_IM_Chewing_c3d77338e6512a53" Name="images" />
+        </Directory>
+      </Directory>
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="IM_Chewing">
+      <Component Id="cmp_IM_Chewing_743b1adbf37db12e" Directory="INSTALLFOLDER_CHEWING" Guid="*">
+        <File Id="fil_IM_Chewing_743b1adbf37db12e" KeyPath="yes" Source="$(var.ChewingDir)\__init__.py" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_aaf404bfb666d5da" Directory="INSTALLFOLDER_CHEWING" Guid="*">
+        <File Id="fil_IM_Chewing_aaf404bfb666d5da" KeyPath="yes" Source="$(var.ChewingDir)\chewing_config.py" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_35b53d3b96aa5b01" Directory="INSTALLFOLDER_CHEWING" Guid="*">
+        <File Id="fil_IM_Chewing_35b53d3b96aa5b01" KeyPath="yes" Source="$(var.ChewingDir)\chewing_ime.py" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_8d722c8f179023b1" Directory="INSTALLFOLDER_CHEWING" Guid="*">
+        <File Id="fil_IM_Chewing_8d722c8f179023b1" KeyPath="yes" Source="$(var.ChewingDir)\config_tool.html" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_fa546fe8734e90eb" Directory="INSTALLFOLDER_CHEWING" Guid="*">
+        <File Id="fil_IM_Chewing_fa546fe8734e90eb" KeyPath="yes" Source="$(var.ChewingDir)\config_tool.py" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_c4d3523ea2db9d4e" Directory="INSTALLFOLDER_CHEWING" Guid="*">
+        <File Id="fil_IM_Chewing_c4d3523ea2db9d4e" KeyPath="yes" Source="$(var.ChewingDir)\icon.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_6b646d3c105145aa" Directory="INSTALLFOLDER_CHEWING" Guid="*">
+        <File Id="fil_IM_Chewing_6b646d3c105145aa" KeyPath="yes" Source="$(var.ChewingDir)\ime.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_c7d5bf814dc12066" Directory="INSTALLFOLDER_CHEWING" Guid="*">
+        <File Id="fil_IM_Chewing_c7d5bf814dc12066" KeyPath="yes" Source="$(var.ChewingDir)\user_phrase_editor.html" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_b7678607170dc582" Directory="dir_IM_Chewing_c7a628cba22e28eb" Guid="*">
+        <File Id="fil_IM_Chewing_b7678607170dc582" KeyPath="yes" Source="$(var.ChewingDir)\css\bootstrap-select.css.map" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_e2780f4f2b98b722" Directory="dir_IM_Chewing_c7a628cba22e28eb" Guid="*">
+        <File Id="fil_IM_Chewing_e2780f4f2b98b722" KeyPath="yes" Source="$(var.ChewingDir)\css\bootstrap-select.min.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_9cdab7f6742d8b2c" Directory="dir_IM_Chewing_c7a628cba22e28eb" Guid="*">
+        <File Id="fil_IM_Chewing_9cdab7f6742d8b2c" KeyPath="yes" Source="$(var.ChewingDir)\css\bootstrap.min.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_4e5207021d22e3a4" Directory="dir_IM_Chewing_c7a628cba22e28eb" Guid="*">
+        <File Id="fil_IM_Chewing_4e5207021d22e3a4" KeyPath="yes" Source="$(var.ChewingDir)\css\bootstrap.min.css.map" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_b5e9d65db7b63ab8" Directory="dir_IM_Chewing_c7a628cba22e28eb" Guid="*">
+        <File Id="fil_IM_Chewing_b5e9d65db7b63ab8" KeyPath="yes" Source="$(var.ChewingDir)\css\config.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_afa5c9309d60c46a" Directory="dir_IM_Chewing_c7a628cba22e28eb" Guid="*">
+        <File Id="fil_IM_Chewing_afa5c9309d60c46a" KeyPath="yes" Source="$(var.ChewingDir)\css\sweetalert2.min.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_e59240f4ee6ad2bf" Directory="dir_IM_Chewing_c7a628cba22e28eb" Guid="*">
+        <File Id="fil_IM_Chewing_e59240f4ee6ad2bf" KeyPath="yes" Source="$(var.ChewingDir)\css\user_phrase.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_f570b07eeb2b2c44" Directory="dir_IM_Chewing_ad42f6697b035b75" Guid="*">
+        <File Id="fil_IM_Chewing_f570b07eeb2b2c44" KeyPath="yes" Source="$(var.ChewingDir)\debug\config" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_b2e79bed2a32c1a5" Directory="dir_IM_Chewing_ad42f6697b035b75" Guid="*">
+        <File Id="fil_IM_Chewing_b2e79bed2a32c1a5" KeyPath="yes" Source="$(var.ChewingDir)\debug\keep_alive" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_d6c031580d1f379f" Directory="dir_IM_Chewing_ad42f6697b035b75" Guid="*">
+        <File Id="fil_IM_Chewing_d6c031580d1f379f" KeyPath="yes" Source="$(var.ChewingDir)\debug\version.txt" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_362e5bc18d8a2e31" Directory="dir_IM_Chewing_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Chewing_362e5bc18d8a2e31" KeyPath="yes" Source="$(var.ChewingDir)\icons\capsEng.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_73702c7be5fbe333" Directory="dir_IM_Chewing_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Chewing_73702c7be5fbe333" KeyPath="yes" Source="$(var.ChewingDir)\icons\config.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_f78871efb1ca65df" Directory="dir_IM_Chewing_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Chewing_f78871efb1ca65df" KeyPath="yes" Source="$(var.ChewingDir)\icons\eng.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_1c4b8b1502885fc2" Directory="dir_IM_Chewing_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Chewing_1c4b8b1502885fc2" KeyPath="yes" Source="$(var.ChewingDir)\icons\full.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_27c4b3e353324460" Directory="dir_IM_Chewing_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Chewing_27c4b3e353324460" KeyPath="yes" Source="$(var.ChewingDir)\icons\half.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_3aacc4aa4ec3b46b" Directory="dir_IM_Chewing_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Chewing_3aacc4aa4ec3b46b" KeyPath="yes" Source="$(var.ChewingDir)\icons\simC.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_1f0c42bfc849548e" Directory="dir_IM_Chewing_bd21190449b7e88d" Guid="*">
+        <File Id="fil_IM_Chewing_1f0c42bfc849548e" KeyPath="yes" Source="$(var.ChewingDir)\icons\traC.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_30c79909907920c4" Directory="dir_IM_Chewing_59b514174bffe4ae" Guid="*">
+        <File Id="fil_IM_Chewing_30c79909907920c4" KeyPath="yes" Source="$(var.ChewingDir)\images\logo.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_f123c3c8de676728" Directory="dir_IM_Chewing_59b514174bffe4ae" Guid="*">
+        <File Id="fil_IM_Chewing_f123c3c8de676728" KeyPath="yes" Source="$(var.ChewingDir)\images\logo.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_f5832b6e0edf1103" Directory="dir_IM_Chewing_59b514174bffe4ae" Guid="*">
+        <File Id="fil_IM_Chewing_f5832b6e0edf1103" KeyPath="yes" Source="$(var.ChewingDir)\images\phrase_editor.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_40117fca2c4d27a2" Directory="dir_IM_Chewing_59b514174bffe4ae" Guid="*">
+        <File Id="fil_IM_Chewing_40117fca2c4d27a2" KeyPath="yes" Source="$(var.ChewingDir)\images\setting.ico" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_abec302bd0f9353d" Directory="dir_IM_Chewing_ea47d8e9950061c5" Guid="*">
+        <File Id="fil_IM_Chewing_abec302bd0f9353d" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts\carpalx.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_1e9f88fc657e9768" Directory="dir_IM_Chewing_ea47d8e9950061c5" Guid="*">
+        <File Id="fil_IM_Chewing_1e9f88fc657e9768" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts\dacian26.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_d4c7561733863dea" Directory="dir_IM_Chewing_ea47d8e9950061c5" Guid="*">
+        <File Id="fil_IM_Chewing_d4c7561733863dea" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts\default-chewing.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_d8fcbe64184fecc1" Directory="dir_IM_Chewing_ea47d8e9950061c5" Guid="*">
+        <File Id="fil_IM_Chewing_d8fcbe64184fecc1" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts\dvorak-chewing.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_5fcd534201c882d6" Directory="dir_IM_Chewing_ea47d8e9950061c5" Guid="*">
+        <File Id="fil_IM_Chewing_5fcd534201c882d6" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts\dvorak-hsu.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_c40708ecd43d2dc6" Directory="dir_IM_Chewing_ea47d8e9950061c5" Guid="*">
+        <File Id="fil_IM_Chewing_c40708ecd43d2dc6" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts\et26.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_7b79c8cd26c78659" Directory="dir_IM_Chewing_ea47d8e9950061c5" Guid="*">
+        <File Id="fil_IM_Chewing_7b79c8cd26c78659" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts\et41.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_4e071e6b8ec62978" Directory="dir_IM_Chewing_ea47d8e9950061c5" Guid="*">
+        <File Id="fil_IM_Chewing_4e071e6b8ec62978" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts\hsu.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_343d076604de276c" Directory="dir_IM_Chewing_ea47d8e9950061c5" Guid="*">
+        <File Id="fil_IM_Chewing_343d076604de276c" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts\ibm.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_ac0c57c779393388" Directory="dir_IM_Chewing_ea47d8e9950061c5" Guid="*">
+        <File Id="fil_IM_Chewing_ac0c57c779393388" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts\jingye.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_16c4977f2e729c4b" Directory="dir_IM_Chewing_ea47d8e9950061c5" Guid="*">
+        <File Id="fil_IM_Chewing_16c4977f2e729c4b" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts\pinyin.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_0c69f49165fd19b9" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_0c69f49165fd19b9" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Carpalx.kbd.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_8f594221baa9d3a0" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_8f594221baa9d3a0" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Carpalx.style.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_b0933c7e4a680463" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_b0933c7e4a680463" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\DaCian26.kbd.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_b74433e8e63f2ec6" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_b74433e8e63f2ec6" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\DaCian26.style.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_9ea8a595cd4089cc" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_9ea8a595cd4089cc" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Default-Chewing.kbd.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_12d9dee460af1d28" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_12d9dee460af1d28" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Default-Chewing.style.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_7ad7bc644958046f" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_7ad7bc644958046f" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Default.kbd.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_c004c48cdac82229" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_c004c48cdac82229" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Default.style.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_64f7feaf4d69f7dc" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_64f7feaf4d69f7dc" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Dvorak-Chewing.kbd.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_036c1562f3af0ac4" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_036c1562f3af0ac4" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Dvorak-Chewing.style.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_c1f02e3055a09f53" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_c1f02e3055a09f53" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Dvorak-Hsu.kbd.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_02830d90cc135ea8" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_02830d90cc135ea8" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Dvorak-Hsu.style.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_177f7283d338ed43" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_177f7283d338ed43" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Dvorak.kbd.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_c4335f4638a6b7e5" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_c4335f4638a6b7e5" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\ET26.kbd.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_9cfe7f0544f14969" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_9cfe7f0544f14969" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\ET26.style.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_7a67f28b89970139" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_7a67f28b89970139" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\ET41.kbd.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_1eaf0e823361bf1a" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_1eaf0e823361bf1a" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\ET41.style.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_7b74a54a67331e93" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_7b74a54a67331e93" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Hsu.kbd.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_87d9e14b124a15ca" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_87d9e14b124a15ca" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Hsu.style.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_d6b74cf5d54a5cdb" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_d6b74cf5d54a5cdb" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\IBM.kbd.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_17768db8a5f3fcbc" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_17768db8a5f3fcbc" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\IBM.style.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_1b2da2cf8a049873" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_1b2da2cf8a049873" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\JingYe.kbd.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_15981cb2db2f9bb8" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_15981cb2db2f9bb8" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\JingYe.style.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_5fdd3692ba647c5d" Directory="dir_IM_Chewing_c93a6044bfbb5d8c" Guid="*">
+        <File Id="fil_IM_Chewing_5fdd3692ba647c5d" KeyPath="yes" Source="$(var.ChewingDir)\images\keyborad_layouts_json\Pinyin.kbd.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_2b7ad56b2315256d" Directory="dir_IM_Chewing_32981a13284db7a0" Guid="*">
+        <File Id="fil_IM_Chewing_2b7ad56b2315256d" KeyPath="yes" Source="$(var.ChewingDir)\js\bootstrap-select.min.js" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_f9f734ea015b607e" Directory="dir_IM_Chewing_32981a13284db7a0" Guid="*">
+        <File Id="fil_IM_Chewing_f9f734ea015b607e" KeyPath="yes" Source="$(var.ChewingDir)\js\bootstrap-select.min.js.map" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_81ec66c0fa949ae1" Directory="dir_IM_Chewing_32981a13284db7a0" Guid="*">
+        <File Id="fil_IM_Chewing_81ec66c0fa949ae1" KeyPath="yes" Source="$(var.ChewingDir)\js\bootstrap.bundle.min.js" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_808310f9d591a7ff" Directory="dir_IM_Chewing_32981a13284db7a0" Guid="*">
+        <File Id="fil_IM_Chewing_808310f9d591a7ff" KeyPath="yes" Source="$(var.ChewingDir)\js\bootstrap.bundle.min.js.map" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_de645108406065ae" Directory="dir_IM_Chewing_32981a13284db7a0" Guid="*">
+        <File Id="fil_IM_Chewing_de645108406065ae" KeyPath="yes" Source="$(var.ChewingDir)\js\config.js" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_752d491aee7aad82" Directory="dir_IM_Chewing_32981a13284db7a0" Guid="*">
+        <File Id="fil_IM_Chewing_752d491aee7aad82" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-3.7.1.min.js" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_535cd13bf23243c8" Directory="dir_IM_Chewing_32981a13284db7a0" Guid="*">
+        <File Id="fil_IM_Chewing_535cd13bf23243c8" KeyPath="yes" Source="$(var.ChewingDir)\js\sweetalert2.min.js" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_07ed748f0b389d58" Directory="dir_IM_Chewing_32981a13284db7a0" Guid="*">
+        <File Id="fil_IM_Chewing_07ed748f0b389d58" KeyPath="yes" Source="$(var.ChewingDir)\js\user_phrase.js" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_ab3e8f20f694e49d" Directory="dir_IM_Chewing_fe42d2505826e9f2" Guid="*">
+        <File Id="fil_IM_Chewing_ab3e8f20f694e49d" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-loading-overlay-2.1.7\loadingoverlay.min.js" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_945fe261ff9c8905" Directory="dir_IM_Chewing_fe42d2505826e9f2" Guid="*">
+        <File Id="fil_IM_Chewing_945fe261ff9c8905" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-loading-overlay-2.1.7\loadingoverlay.min.js.map" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_9da88ff9565fb3e9" Directory="dir_IM_Chewing_c534ecdff3a5628c" Guid="*">
+        <File Id="fil_IM_Chewing_9da88ff9565fb3e9" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\AUTHORS.txt" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_01ddfc2fbb911ccf" Directory="dir_IM_Chewing_c534ecdff3a5628c" Guid="*">
+        <File Id="fil_IM_Chewing_01ddfc2fbb911ccf" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\LICENSE.txt" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_dc6b430598545394" Directory="dir_IM_Chewing_c534ecdff3a5628c" Guid="*">
+        <File Id="fil_IM_Chewing_dc6b430598545394" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\index.html" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_9279d13872b1cd3a" Directory="dir_IM_Chewing_c534ecdff3a5628c" Guid="*">
+        <File Id="fil_IM_Chewing_9279d13872b1cd3a" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\jquery-ui.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_a7b27a7f5ad415d6" Directory="dir_IM_Chewing_c534ecdff3a5628c" Guid="*">
+        <File Id="fil_IM_Chewing_a7b27a7f5ad415d6" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\jquery-ui.js" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_f686b40845dab531" Directory="dir_IM_Chewing_c534ecdff3a5628c" Guid="*">
+        <File Id="fil_IM_Chewing_f686b40845dab531" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\jquery-ui.min.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_d1b47e472c3f7664" Directory="dir_IM_Chewing_c534ecdff3a5628c" Guid="*">
+        <File Id="fil_IM_Chewing_d1b47e472c3f7664" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\jquery-ui.min.js" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_cdbd79e687f346ff" Directory="dir_IM_Chewing_c534ecdff3a5628c" Guid="*">
+        <File Id="fil_IM_Chewing_cdbd79e687f346ff" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\jquery-ui.structure.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_cc260fa1b0bdea0b" Directory="dir_IM_Chewing_c534ecdff3a5628c" Guid="*">
+        <File Id="fil_IM_Chewing_cc260fa1b0bdea0b" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\jquery-ui.structure.min.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_3b158bf67c10376b" Directory="dir_IM_Chewing_c534ecdff3a5628c" Guid="*">
+        <File Id="fil_IM_Chewing_3b158bf67c10376b" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\jquery-ui.theme.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_4de5d2556820fb7f" Directory="dir_IM_Chewing_c534ecdff3a5628c" Guid="*">
+        <File Id="fil_IM_Chewing_4de5d2556820fb7f" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\jquery-ui.theme.min.css" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_b9c1ac931bdc7c89" Directory="dir_IM_Chewing_c534ecdff3a5628c" Guid="*">
+        <File Id="fil_IM_Chewing_b9c1ac931bdc7c89" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\package.json" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_8adb99cfb1a0d62c" Directory="dir_IM_Chewing_66daf09b1b06b8ba" Guid="*">
+        <File Id="fil_IM_Chewing_8adb99cfb1a0d62c" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\external\jquery\jquery.js" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_ac59ebcb01de03d3" Directory="dir_IM_Chewing_c3d77338e6512a53" Guid="*">
+        <File Id="fil_IM_Chewing_ac59ebcb01de03d3" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\images\ui-bg_diagonals-thick_18_b81900_40x40.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_2ef031392fca8cab" Directory="dir_IM_Chewing_c3d77338e6512a53" Guid="*">
+        <File Id="fil_IM_Chewing_2ef031392fca8cab" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\images\ui-bg_diagonals-thick_20_666666_40x40.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_2c76a23e8d7fbbcb" Directory="dir_IM_Chewing_c3d77338e6512a53" Guid="*">
+        <File Id="fil_IM_Chewing_2c76a23e8d7fbbcb" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\images\ui-bg_glass_100_f6f6f6_1x400.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_ba08f8ea1114eae5" Directory="dir_IM_Chewing_c3d77338e6512a53" Guid="*">
+        <File Id="fil_IM_Chewing_ba08f8ea1114eae5" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\images\ui-bg_glass_100_fdf5ce_1x400.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_a705834f86dffca2" Directory="dir_IM_Chewing_c3d77338e6512a53" Guid="*">
+        <File Id="fil_IM_Chewing_a705834f86dffca2" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\images\ui-bg_glass_65_ffffff_1x400.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_aec9aa19309556af" Directory="dir_IM_Chewing_c3d77338e6512a53" Guid="*">
+        <File Id="fil_IM_Chewing_aec9aa19309556af" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\images\ui-bg_gloss-wave_35_f6a828_500x100.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_733529fc266d7972" Directory="dir_IM_Chewing_c3d77338e6512a53" Guid="*">
+        <File Id="fil_IM_Chewing_733529fc266d7972" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\images\ui-bg_highlight-soft_100_eeeeee_1x100.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_33f1d3235f4b1f90" Directory="dir_IM_Chewing_c3d77338e6512a53" Guid="*">
+        <File Id="fil_IM_Chewing_33f1d3235f4b1f90" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\images\ui-bg_highlight-soft_75_ffe45c_1x100.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_73d4af2516657a68" Directory="dir_IM_Chewing_c3d77338e6512a53" Guid="*">
+        <File Id="fil_IM_Chewing_73d4af2516657a68" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\images\ui-icons_222222_256x240.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_3bb58b52f7bb3e49" Directory="dir_IM_Chewing_c3d77338e6512a53" Guid="*">
+        <File Id="fil_IM_Chewing_3bb58b52f7bb3e49" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\images\ui-icons_228ef1_256x240.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_77fb077deee89cb7" Directory="dir_IM_Chewing_c3d77338e6512a53" Guid="*">
+        <File Id="fil_IM_Chewing_77fb077deee89cb7" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\images\ui-icons_ef8c08_256x240.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_5f1b566c16e758e2" Directory="dir_IM_Chewing_c3d77338e6512a53" Guid="*">
+        <File Id="fil_IM_Chewing_5f1b566c16e758e2" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\images\ui-icons_ffd27a_256x240.png" />
+      </Component>
+      <Component Id="cmp_IM_Chewing_2285500237583f69" Directory="dir_IM_Chewing_c3d77338e6512a53" Guid="*">
+        <File Id="fil_IM_Chewing_2285500237583f69" KeyPath="yes" Source="$(var.ChewingDir)\js\jquery-ui-1.13.2\images\ui-icons_ffffff_256x240.png" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

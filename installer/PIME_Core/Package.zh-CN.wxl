@@ -1,0 +1,58 @@
+<!-- Simplified Chinese Localization -->
+<WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="zh-CN" Language="2052">
+  <String Id="LanguageId" Value="2052" />
+  <String Id="ProductName" Value="PIME 输入法平台" />
+  <String Id="DowngradeError" Value="已安装较新版本的 [ProductName]。" />
+
+  <String Id="Feat_Main_Title" Value="PIME 输入法平台" />
+  <String Id="Feat_PythonGroup_Title" Value="Python 输入法模块" />
+  <String Id="Feat_Chewing_Title" Value="新酷音 (Chewing)" />
+  <String Id="Feat_Chewing_Desc" Value="安装新酷音输入法模块。" />
+
+  <String Id="Feat_CinGroup_Title" Value="码表输入法模块" />
+  <String Id="Feat_Checj_Title" Value="酷仓 (Cangjie)" />
+  <String Id="Feat_Checj_Desc" Value="安装酷仓输入法模块。" />
+  <String Id="Feat_Cheliu_Title" Value="虾米 (须自备正版码表)" />
+  <String Id="Feat_Cheliu_Desc" Value="安装虾米输入法模块。" />
+  <String Id="Feat_Chearray_Title" Value="行列 (Array)" />
+  <String Id="Feat_Chearray_Desc" Value="安装行列输入法模块。" />
+  <String Id="Feat_Chedayi_Title" Value="大易 (Dayi)" />
+  <String Id="Feat_Chedayi_Desc" Value="安装大易输入法模块。" />
+  <String Id="Feat_Chepinyin_Title" Value="拼音 (Pinyin)" />
+  <String Id="Feat_Chepinyin_Desc" Value="安装拼音输入法模块。" />
+  <String Id="Feat_Chesimplex_Title" Value="速成 (Quick)" />
+  <String Id="Feat_Chesimplex_Desc" Value="安装速成输入法模块。" />
+  <String Id="Feat_Chephonetic_Title" Value="注音 (Phonetic)" />
+  <String Id="Feat_Chephonetic_Desc" Value="安装注音输入法模块。" />
+  <String Id="Feat_Cheez_Title" Value="轻松 (EZ Input)" />
+  <String Id="Feat_Cheez_Desc" Value="安装轻松输入法模块。" />
+  <String Id="Feat_Cheeng_Title" Value="英数 (Eng-Num)" />
+  <String Id="Feat_Cheeng_Desc" Value="安装英数输入法模块。" />
+  <String Id="Feat_BrailleChewing_Title" Value="盲文酷音 (Braille)" />
+  <String Id="Feat_BrailleChewing_Desc" Value="安装盲文酷音输入法模块。" />
+  <String Id="Feat_Rime_Title" Value="中州韵 (Rime)" />
+  <String Id="Feat_Rime_Desc" Value="安装中州韵输入法引擎。" />
+
+  <String Id="Feat_NodeGroup_Title" Value="Node.js 输入法模块" />
+  <String Id="Feat_McBopomofo_Title" Value="小麦注音 (McBopomofo)" />
+  <String Id="Feat_McBopomofo_Desc" Value="安装小麦注音输入法模块。" />
+  <String Id="Feat_McFoxim_Title" Value="小麦族语 (McFoxim)" />
+  <String Id="Feat_McFoxim_Desc" Value="安装小麦族语输入法模块。" />
+  <String Id="Feat_McTabim_Title" Value="小麥他命 (McTabim)" />
+  <String Id="Feat_McTabim_Desc" Value="安装小麥他命输入法模块。" />
+  <String Id="Feat_Emojime_Title" Value="emojime" />
+  <String Id="Feat_Emojime_Desc" Value="安装 emojime 输入法模块。" />
+
+  <String Id="Shortcut_Chewing_Config" Value="设置新酷音输入法" />
+  <String Id="Shortcut_Chewing_Phrases" Value="编辑新酷音使用者词库" />
+  <String Id="Shortcut_Checj" Value="设置酷仓输入法" />
+  <String Id="Shortcut_Cheliu" Value="设置虾米输入法" />
+  <String Id="Shortcut_Cheliu_Import" Value="导入虾米码表 (liu-uni.tab)" />
+  <String Id="Shortcut_Chearray" Value="设置行列输入法" />
+  <String Id="Shortcut_Chedayi" Value="设置大易输入法" />
+  <String Id="Shortcut_Chepinyin" Value="设置拼音输入法" />
+  <String Id="Shortcut_Chesimplex" Value="设置速成输入法" />
+  <String Id="Shortcut_Chephonetic" Value="设置注音输入法" />
+  <String Id="Shortcut_Cheez" Value="设置轻松输入法" />
+  <String Id="Shortcut_BrailleChewing" Value="设置盲文酷音输入法" />
+</WixLocalization>

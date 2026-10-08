@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>Auto-start task for PIMELauncher. Runs the PIME backend servers at user log on.</Description>
+    <URI>\PIME\PIMELauncher</URI>
+  </RegistrationInfo>
+  
+  <Triggers>
+    <!-- 
+      Reference: https://learn.microsoft.com/en-us/windows/win32/taskschd/logontrigger
+      Reason: Trigger the task as soon as any user logs in, which happens earlier than the Run registry key. 
+    -->
+    <LogonTrigger>
+      <Enabled>true</Enabled>
+    </LogonTrigger>
+  </Triggers>
+  
+  <Principals>
+    <!-- 
+      Reference: https://learn.microsoft.com/en-us/windows/win32/taskschd/principal-element
+      Reason: 
+      1. LogonType=InteractiveToken ensures the task runs in the user's active session, not as a background SYSTEM process.
+      2. RunLevel=LeastPrivilege ensures the task does not prompt for UAC or run elevated, maintaining security.
+    -->
+    <Principal id="InteractiveUser">
+      <GroupId>S-1-5-32-545</GroupId> <!-- Builtin\Users -->
+      <RunLevel>LeastPrivilege</RunLevel>
+      <LogonType>InteractiveToken</LogonType>
+    </Principal>
+  </Principals>
+  
+  <Settings>
+    <MultipleInstancesPolicy>Parallel</MultipleInstancesPolicy>
+    <!-- 
+      Reference: https://learn.microsoft.com/en-us/windows/win32/taskschd/settings-element
+      Reason: The default limit is 3 days (PT72H). We set it to PT0S (zero) meaning NO limit, because the IME launcher should run indefinitely while the user is logged in.
+    -->
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+    <!-- 
+      Reason: By default, Windows won't start scheduled tasks if the laptop is on battery. 
+      We must set this to false so the IME starts regardless of power state.
+    -->
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <!-- 
+      Reason: By default, Windows kills scheduled tasks if the laptop is unplugged from AC power. 
+      We must set this to false so the IME isn't abruptly terminated.
+    -->
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <!-- 
+      Reason: We don't want the task to be killed if it's considered "idle".
+    -->
+    <StopOnIdleEnd>false</StopOnIdleEnd>
+    <RestartOnIdle>false</RestartOnIdle>
+    <!--
+      Reason: Only start if the network is available? No, IME must work offline.
+    -->
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <WakeToRun>false</WakeToRun>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+  </Settings>
+  
+  <Actions Context="InteractiveUser">
+    <!-- 
+      Reference: https://learn.microsoft.com/en-us/windows/win32/taskschd/execaction
+      Reason: We will replace {{INSTDIR}} with the actual installation directory path during installation.
+    -->
+    <Exec>
+      <Command>{{INSTDIR}}\PIMELauncher.exe</Command>
+      <WorkingDirectory>{{INSTDIR}}</WorkingDirectory>
+    </Exec>
+  </Actions>
+</Task>

@@ -1,0 +1,49 @@
+<Project Sdk="WixToolset.Sdk/4.0.6">
+  <PropertyGroup>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <Platform>x86</Platform>
+    <Cultures>zh-TW;zh-CN;en-US</Cultures>
+    <SuppressValidation>false</SuppressValidation>
+    <ReuseCabinetCache>false</ReuseCabinetCache>
+    <CabinetCachePath>obj\cab_cache</CabinetCachePath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="4.0.6" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="4.0.6" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <PimeVersionRaw Condition="'$(ProductVersion)' == '' and Exists('$(MSBuildProjectDirectory)\..\..\version.txt')">$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\..\..\version.txt').Trim())</PimeVersionRaw>
+    <ProductVersion Condition="'$(ProductVersion)' == '' and '$(PimeVersionRaw)' != ''">$([System.Text.RegularExpressions.Regex]::Match('$(PimeVersionRaw)', '^\d+(\.\d+)*').Value)</ProductVersion>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">2.0.0.0</ProductVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <DefineConstants>
+      ProductVersion=$(ProductVersion);
+      LauncherDir=..\..\build\PIMELauncher;
+      PythonDir=..\..\build\stage\python;
+      CinbaseDir=..\..\build\stage\python\cinbase;
+      NodeDir=..\..\build\stage\node;
+      ChewingDir=..\..\build\stage\python\input_methods\chewing;
+      ChecjDir=..\..\build\stage\python\input_methods\checj;
+      CheliuDir=..\..\build\stage\python\input_methods\cheliu;
+      ChearrayDir=..\..\build\stage\python\input_methods\chearray;
+      ChedayiDir=..\..\build\stage\python\input_methods\chedayi;
+      ChepinyinDir=..\..\build\stage\python\input_methods\chepinyin;
+      ChesimplexDir=..\..\build\stage\python\input_methods\chesimplex;
+      ChephoneticDir=..\..\build\stage\python\input_methods\chephonetic;
+      CheezDir=..\..\build\stage\python\input_methods\cheez;
+      CheengDir=..\..\build\stage\python\input_methods\cheeng;
+      BrailleChewingDir=..\..\build\stage\python\input_methods\braille_chewing;
+      RimeDir=..\..\build\stage\python\input_methods\rime;
+      McBopomofoDir=..\..\build\stage\node\input_methods\McBopomofo;
+      McFoximDir=..\..\build\stage\node\input_methods\McFoxim;
+      McTabimDir=..\..\build\stage\node\input_methods\McTabim;
+      EmojimeDir=..\..\build\stage\node\input_methods\emojime;
+    </DefineConstants>
+  </PropertyGroup>
+
+
+</Project>

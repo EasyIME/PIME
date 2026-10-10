@@ -1,0 +1,1 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"><Fragment><Directory Id="TARGETDIR" Name="SourceDir"><Directory Id="INSTALLFOLDER" Name="Test" /></Directory></Fragment><Fragment><ComponentGroup Id="TestGrp" Directory="INSTALLFOLDER"><Files Include="..\python\**" /></ComponentGroup></Fragment></Wix>

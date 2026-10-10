@@ -18,6 +18,8 @@ All parts are licensed under GNU LGPL v2.1 license.
 *   [Rust Toolchain](https://rustup.rs/) (Stable channel with `i686-pc-windows-msvc` target)
 *   [git](http://windows.github.com/)
 *   [Node.js](https://nodejs.org/) (Required for some backends like McBopomofo)
+*   [.NET SDK](https://dotnet.microsoft.com/download) (Required for WiX v4)
+*   [WiX Toolset v4](https://wixtoolset.org/) (Install via `dotnet tool install --global wix`)
 
 ## How to Build
 *   Get source from github.
@@ -39,7 +41,7 @@ All parts are licensed under GNU LGPL v2.1 license.
         cmake . -Bbuild64 -G "Visual Studio 16 2019" -A x64
         cmake --build build64 --config Release --target PIMETextService
 
-*   The generated installer will be in the `installer` folder after running `makensis`.
+*   The generated MSI installers and Bootstrapper will be in the `installer/PIME_Setup/bin/Release/` folder after running `dotnet build installer/PIME_WiX.sln` using the WiX Toolset v4.
 
 ## TSF References
 *   [Text Services Framework](http://msdn.microsoft.com/en-us/library/windows/desktop/ms629032%28v=vs.85%29.aspx)

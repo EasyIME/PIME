@@ -37,6 +37,22 @@ using json = nlohmann::json;
 
 namespace PIME {
 
+// Like json::value(), but returns defaultValue instead of throwing when obj is not
+// an object or the key holds a different type. Exceptions must not escape TSF callbacks.
+template <typename T>
+static T jsonValueOr(const json& obj, const char* key, const T& defaultValue) {
+	auto it = obj.find(key);
+	if (it == obj.end()) {
+		return defaultValue;
+	}
+	try {
+		return it->get<T>();
+	}
+	catch (const json::exception&) {
+		return defaultValue;
+	}
+}
+
 static std::string uuidToString(const UUID& uuid) {
 	std::string result;
 	LPOLESTR buf = nullptr;
@@ -91,7 +107,7 @@ bool Client::handleRpcResponse(json& msg, Ime::EditSession* session) {
 	if (!msg.is_object()) {
 		return false;
 	}
-	bool success = msg.value("success", false);
+	bool success = jsonValueOr(msg, "success", false);
 	if (success) {
 		updateStatus(msg, session);
 	}
@@ -416,7 +432,7 @@ bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret)) {
-		return ret.value("return", false);
+		return jsonValueOr(ret, "return", false);
 	}
 	return false;
 }
@@ -428,7 +444,7 @@ bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret, session)) {
-		return ret.value("return", false);
+		return jsonValueOr(ret, "return", false);
 	}
 	return false;
 }
@@ -440,7 +456,7 @@ bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret)) {
-		return ret.value("return", false);
+		return jsonValueOr(ret, "return", false);
 	}
 	return false;
 }
@@ -452,7 +468,7 @@ bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret, session)) {
-		return ret.value("return", false);
+		return jsonValueOr(ret, "return", false);
 	}
 	return false;
 }
@@ -466,7 +482,7 @@ bool Client::onPreservedKey(const GUID& guid) {
 		json ret;
 		callRpcMethod(req, ret);
 		if (handleRpcResponse(ret)) {
-			return ret.value("return", false);
+			return jsonValueOr(ret, "return", false);
 		}
 	}
 	return false;
@@ -480,7 +496,7 @@ bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret)) {
-		return ret.value("return", false);
+		return jsonValueOr(ret, "return", false);
 	}
 	return false;
 }

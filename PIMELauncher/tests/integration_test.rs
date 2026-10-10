@@ -33,6 +33,40 @@ async fn read_line<R: tokio::io::AsyncBufReadExt + Unpin>(
     line.ok_or_else(|| "EOF unexpected".into())
 }
 
+/// Waits until the launcher closes the client pipe (EOF or broken pipe).
+async fn expect_disconnected<R: tokio::io::AsyncBufReadExt + Unpin>(
+    lines: &mut tokio::io::Lines<R>,
+    wait: Duration,
+) -> TestResult {
+    match timeout(wait, lines.next_line())
+        .await
+        .map_err(|_| "Timeout waiting for the launcher to close the pipe")?
+    {
+        Ok(None) | Err(_) => Ok(()),
+        Ok(Some(line)) => Err(format!("Expected the pipe to be closed, got: {}", line).into()),
+    }
+}
+
+type ClientLines = tokio::io::Lines<
+    BufReader<tokio::io::ReadHalf<tokio::net::windows::named_pipe::NamedPipeClient>>,
+>;
+type ClientWriter = tokio::io::WriteHalf<tokio::net::windows::named_pipe::NamedPipeClient>;
+
+/// Connects a new client and completes the init handshake, like the DLL does on reconnect.
+async fn connect_and_handshake(
+    pipe_name: &str,
+    guid: &str,
+) -> Result<(ClientLines, ClientWriter), Box<dyn std::error::Error + Send + Sync>> {
+    let client = connect_with_retry(pipe_name).await;
+    let (reader, mut writer) = tokio::io::split(client);
+    let mut lines = BufReader::new(reader).lines();
+
+    let handshake = format!(r#"{{"method": "init", "id": "{}"}}"#, guid);
+    send_msg(&mut writer, &handshake).await?;
+    let _ = read_line(&mut lines).await?; // skip handshake reply
+    Ok((lines, writer))
+}
+
 async fn setup_test_environment(pipe_name: &str) -> (BackendManager, PathBuf) {
     let dir = tempdir().unwrap();
     let pime_root = dir.into_path(); // This prevents the directory from being deleted
@@ -145,9 +179,11 @@ async fn test_integration_full() -> TestResult {
 
         send_msg(&mut writer, "CRASH_NOW").await?;
 
-        // Wait for crash and restart
-        tokio::time::sleep(Duration::from_millis(1500)).await;
+        // The restarted backend has lost the state of this client, so the launcher
+        // must close the pipe to make the client reconnect and re-initialize.
+        expect_disconnected(&mut lines, Duration::from_secs(5)).await?;
 
+        let (mut lines, mut writer) = connect_and_handshake(&pipe_name, GUID_TEST_CRASH).await?;
         send_msg(&mut writer, "Still here").await?;
         let resp = read_line(&mut lines).await?;
         assert_eq!(resp, "REPLY: Still here");
@@ -170,10 +206,12 @@ async fn test_integration_full() -> TestResult {
         let large_block = "A".repeat(1024 * 128); // 128KB
         send_msg(&mut writer, &large_block).await?;
 
-        // Timeout is 5s for write + 2s for flush. Let's wait 12s.
-        tokio::time::sleep(Duration::from_secs(12)).await;
+        // Timeout is 5s for write + 2s for flush. Let's wait up to 12s.
+        // After the restart, the launcher must close the pipe of this client.
+        expect_disconnected(&mut lines, Duration::from_secs(12)).await?;
 
-        // After restart, it should respond again
+        // A reconnected client should be served by the restarted backend
+        let (mut lines, mut writer) = connect_and_handshake(&pipe_name, GUID_TEST_HANG).await?;
         send_msg(&mut writer, "Hello again").await?;
         let resp = read_line(&mut lines).await?;
         assert_eq!(resp, "REPLY: Hello again");

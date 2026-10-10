@@ -21,7 +21,14 @@ pub struct BackendManager {
 
 struct BackendManagerState {
     backends: HashMap<String, BackendProcess>,
-    clients: HashMap<String, mpsc::Sender<String>>,
+    clients: HashMap<String, RegisteredClient>,
+}
+
+/// A connected client and the backend serving it.
+struct RegisteredClient {
+    backend_name: String,
+    /// Dropping this sender ends the client session and closes its pipe.
+    tx: mpsc::Sender<String>,
 }
 
 /// The reason why the backend process was terminated.
@@ -62,12 +69,37 @@ impl BackendManager {
         None
     }
 
-    /// Registers a client with its response channel.
-    pub async fn register_client(&self, client_id: String) -> mpsc::Receiver<String> {
+    /// Registers a client served by the given backend with its response channel.
+    pub async fn register_client(
+        &self,
+        client_id: String,
+        backend_name: String,
+    ) -> mpsc::Receiver<String> {
         let mut state = self.state.lock().unwrap();
         let (tx, rx) = tokio::sync::mpsc::channel::<String>(1024);
-        state.clients.insert(client_id, tx);
+        state
+            .clients
+            .insert(client_id, RegisteredClient { backend_name, tx });
         rx
+    }
+
+    /// Disconnects all clients served by the given backend.
+    ///
+    /// A restarted backend has lost the state of its clients and rejects their requests.
+    /// Closing their pipes makes the clients (PIME DLL) reconnect and send "init" again.
+    fn disconnect_backend_clients(&self, backend_name: &str) {
+        let mut state = self.state.lock().unwrap();
+        let count = state.clients.len();
+        state
+            .clients
+            .retain(|_, client| client.backend_name != backend_name);
+        let disconnected = count - state.clients.len();
+        if disconnected > 0 {
+            warn!(
+                "Disconnected {} client(s) of backend {} so they can re-initialize.",
+                disconnected, backend_name
+            );
+        }
     }
 
     /// Unregisters a client and notifies the backend of the disconnect.
@@ -185,6 +217,7 @@ impl BackendManager {
                     break; // Exit the loop entirely to prevent infinite restarts!
                 }
 
+                manager_clone.disconnect_backend_clients(&backend_name_clone);
                 warn!("Restarting backend {}", backend_name_clone);
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
@@ -276,7 +309,10 @@ impl BackendManager {
 
             let tx = {
                 let state = self.state.lock().unwrap();
-                state.clients.get(&client_id).cloned()
+                state
+                    .clients
+                    .get(&client_id)
+                    .map(|client| client.tx.clone())
             };
 
             if let Some(tx) = tx {
@@ -384,7 +420,9 @@ mod tests {
         let registry = BackendRegistry::new();
         let manager = BackendManager::new(registry);
 
-        let _ = manager.register_client("client1".to_string()).await;
+        let _ = manager
+            .register_client("client1".to_string(), "dummy".to_string())
+            .await;
 
         {
             let state = manager.state.lock().unwrap();
@@ -396,5 +434,28 @@ mod tests {
             let state = manager.state.lock().unwrap();
             assert!(!state.clients.contains_key("client1"));
         }
+    }
+
+    #[tokio::test]
+    async fn test_disconnect_backend_clients() {
+        let registry = BackendRegistry::new();
+        let manager = BackendManager::new(registry);
+
+        let mut rx_a = manager
+            .register_client("client_a".to_string(), "backend_a".to_string())
+            .await;
+        let mut rx_b = manager
+            .register_client("client_b".to_string(), "backend_b".to_string())
+            .await;
+
+        manager.disconnect_backend_clients("backend_a");
+
+        // The channel of client_a is closed, which ends its session.
+        assert!(rx_a.recv().await.is_none());
+        // client_b is served by another backend and stays connected.
+        assert_eq!(rx_b.try_recv(), Err(mpsc::error::TryRecvError::Empty));
+        let state = manager.state.lock().unwrap();
+        assert!(!state.clients.contains_key("client_a"));
+        assert!(state.clients.contains_key("client_b"));
     }
 }

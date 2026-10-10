@@ -45,9 +45,32 @@ pub fn format_backend_input(client_id: &str, message: &str) -> String {
     format!("{}|{}", client_id, message)
 }
 
+/// Returns true if a formatted backend input line (`<client_id>|<payload>`) is a
+/// `close` request. Backends do not reply to `close`, so it must not be tracked
+/// as a pending request by the hang watchdog.
+pub fn is_close_request(backend_input: &str) -> bool {
+    let Some((_, payload)) = backend_input.split_once('|') else {
+        return false;
+    };
+    serde_json::from_str::<Value>(payload)
+        .map(|json| json["method"] == "close")
+        .unwrap_or(false)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_is_close_request() {
+        assert!(is_close_request(r#"client123|{"method":"close"}"#));
+        assert!(is_close_request(
+            r#"client123|{"method": "close", "seqNum": 3}"#
+        ));
+        assert!(!is_close_request(r#"client123|{"method":"onKeyDown"}"#));
+        assert!(!is_close_request(r#"client123|not json"#));
+        assert!(!is_close_request(r#"{"method":"close"}"#));
+    }
 
     #[test]
     fn test_parse_client_handshake_init() {

@@ -326,8 +326,11 @@ impl BackendManager {
                         info!("Backend {} stdin channel closed. Exiting input loop.", backend_name);
                         return BackendExitReason::Normal;
                     };
-                    let now = Self::current_ms();
-                    last_request_time = Some(now);
+                    // Backends never reply to "close"; tracking it would make the watchdog
+                    // kill an idle backend and drop the state of all connected clients.
+                    if !protocol::is_close_request(&data) {
+                        last_request_time = Some(Self::current_ms());
+                    }
                     info!("Backend {} received request from channel. Data len: {}.", backend_name, data.len());
 
                     // LinesCodec expects data without the newline, it will add it for us.

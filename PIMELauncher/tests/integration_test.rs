@@ -62,6 +62,12 @@ async fn setup_test_environment(pipe_name: &str) -> (BackendManager, PathBuf) {
             params: "--scenario hang".to_string(),
         },
         BackendConfig {
+            name: "stateful".to_string(),
+            command: "mock_backend.exe".to_string(),
+            working_dir: "".to_string(),
+            params: "--scenario stateful".to_string(),
+        },
+        BackendConfig {
             name: "fail".to_string(),
             command: "non_existent.exe".to_string(),
             working_dir: "".to_string(),
@@ -74,6 +80,7 @@ async fn setup_test_environment(pipe_name: &str) -> (BackendManager, PathBuf) {
     guid_to_backend.insert(GUID_TEST_CRASH.to_string(), "crash".to_string());
     guid_to_backend.insert(GUID_TEST_HANG.to_string(), "hang".to_string());
     guid_to_backend.insert(GUID_TEST_FAIL.to_string(), "fail".to_string());
+    guid_to_backend.insert(GUID_TEST_STATEFUL.to_string(), "stateful".to_string());
 
     let registry = BackendRegistry::with_configs(configs, guid_to_backend, &pime_root);
     let manager = BackendManager::new(registry);
@@ -253,6 +260,44 @@ async fn test_integration_full() -> TestResult {
 
     t1.await??;
     t2.await??;
+    Ok(())
+}
+
+/// Regression test for issue #903.
+/// Backends do not reply to "close", so the watchdog must not treat it as a pending
+/// request. Otherwise the backend is killed after HANG_TIMEOUT, and the remaining
+/// clients lose their state and stop working.
+#[tokio::test]
+async fn test_close_does_not_trigger_watchdog() -> TestResult {
+    let _ = tracing_subscriber::fmt::try_init();
+
+    let pipe_name = format!(r#"\\.\pipe\pime_close_{}"#, uuid::Uuid::new_v4());
+    let (_manager, _pime_root) = setup_test_environment(&pipe_name).await;
+    let handshake = format!(r#"{{"method": "init", "id": "{}"}}"#, GUID_TEST_STATEFUL);
+
+    let client_a = connect_with_retry(&pipe_name).await;
+    let (reader_a, mut writer_a) = tokio::io::split(client_a);
+    let mut lines_a = BufReader::new(reader_a).lines();
+    send_msg(&mut writer_a, &handshake).await?;
+    let _ = read_line(&mut lines_a).await?;
+
+    // Client B connects then disconnects; the launcher sends "close" on its behalf.
+    {
+        let client_b = connect_with_retry(&pipe_name).await;
+        let (reader_b, mut writer_b) = tokio::io::split(client_b);
+        let mut lines_b = BufReader::new(reader_b).lines();
+        send_msg(&mut writer_b, &handshake).await?;
+        let _ = read_line(&mut lines_b).await?;
+        // Keep the "close" request from landing in the same millisecond as the last output.
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+
+    // Stay idle longer than the watchdog timeout.
+    tokio::time::sleep(pimelauncher::protocol::HANG_TIMEOUT + Duration::from_secs(3)).await;
+
+    send_msg(&mut writer_a, "Still here").await?;
+    let resp = read_line(&mut lines_a).await?;
+    assert_eq!(resp, "REPLY: Still here");
     Ok(())
 }
 

@@ -733,6 +733,7 @@ bool Client::callRpcMethod(json& request, json & response) {
 	}
 
 	if (!success) { // fail to send the request to the server
+		response = nullptr; // never let callers act on a stale or partial response
 		closeRpcConnection(); // close the pipe connection since it's broken
 		resetTextServiceState();  // since we lost the connection, the state is unknonw so we reset.
 	}

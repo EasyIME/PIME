@@ -1,0 +1,22 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "PIME_Core", "PIME_Core\PIME_Core.wixproj", "{E0239A16-7A60-4F4D-97C6-84AB89DFC496}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E0239A16-7A60-4F4D-97C6-84AB89DFC496}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{E0239A16-7A60-4F4D-97C6-84AB89DFC496}.Debug|Any CPU.Build.0 = Debug|x86
+		{E0239A16-7A60-4F4D-97C6-84AB89DFC496}.Release|Any CPU.ActiveCfg = Release|x86
+		{E0239A16-7A60-4F4D-97C6-84AB89DFC496}.Release|Any CPU.Build.0 = Release|x86
+	EndGlobalSection
+EndGlobal

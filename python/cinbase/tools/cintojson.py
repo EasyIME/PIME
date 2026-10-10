@@ -36,7 +36,8 @@ class CinToJson(object):
     # TODO check the possiblility if the encoding is not utf-8
     encoding = 'utf-8'
 
-    def __init__(self):
+    def __init__(self, out_dir=None):
+        self.out_dir = out_dir
         self.sortByCharset = False
 
         self.ename = ""
@@ -306,6 +307,9 @@ class CinToJson(object):
 
 
     def getJsonDir(self):
+        if getattr(self, 'out_dir', None):
+            os.makedirs(self.out_dir, mode=0o700, exist_ok=True)
+            return self.out_dir
         json_dir = os.path.join(self.curdir, os.pardir, "json")
         os.makedirs(json_dir, mode=0o700, exist_ok=True)
         return json_dir
@@ -476,12 +480,16 @@ def safeSplit(line):
 def main():
     app = CinToJson()
     if len(sys.argv) >= 2:
-        cinFile = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, "cin", sys.argv[1])
+        cinFile = sys.argv[1]
+        if not os.path.isabs(cinFile):
+            cinFile = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, "cin", sys.argv[1])
         if os.path.exists(cinFile):
+            is_sort = False
             if len(sys.argv) >= 3 and sys.argv[2] == "sort":
-                app.run(sys.argv[1], cinFile, True)
-            else:
-                app.run(sys.argv[1], cinFile, False)
+                is_sort = True
+            if len(sys.argv) >= 4:
+                app.out_dir = sys.argv[3]
+            app.run(os.path.basename(sys.argv[1]), cinFile, is_sort)
     else:
         if len(sys.argv) == 1:
             sortList = ['cnscj.cin', 'CnsPhonetic.cin']

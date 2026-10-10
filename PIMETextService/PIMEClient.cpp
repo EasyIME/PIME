@@ -515,8 +515,10 @@ bool Client::sendOnMenu(std::string button_id, json& result) {
 static bool menuFromJson(ITfMenu* pMenu, json& menuInfo) {
 	if (pMenu != nullptr && menuInfo.is_array()) {
 		for (auto& item : menuInfo) {
-			UINT id = item.value("id", 0);
-			std::wstring text = utf8ToUtf16(item.value("text", "").c_str());
+			if (!item.is_object())
+				continue;
+			UINT id = jsonValueOr(item, "id", 0u);
+			std::wstring text = utf8ToUtf16(jsonValueOr<std::string>(item, "text", "").c_str());
 
 			DWORD flags = 0;
 			json submenuInfo;
@@ -524,9 +526,9 @@ static bool menuFromJson(ITfMenu* pMenu, json& menuInfo) {
 			if (id == 0 && text.empty())
 				flags = TF_LBMENUF_SEPARATOR;
 			else {
-				if (item.value("checked", false))
+				if (jsonValueOr(item, "checked", false))
 					flags |= TF_LBMENUF_CHECKED;
-				if (!item.value("enabled", true))
+				if (!jsonValueOr(item, "enabled", true))
 					flags |= TF_LBMENUF_GRAYED;
 
 				if (item.contains("submenu") && item["submenu"].is_array()) {
@@ -559,16 +561,18 @@ static HMENU menuFromJson(json& menuInfo) {
 	if (menuInfo.is_array()) {
 		HMENU menu = ::CreatePopupMenu();
 		for (auto& item : menuInfo) {
-			UINT id = item.value("id", 0);
-			std::wstring text = utf8ToUtf16(item.value("text", "").c_str());
+			if (!item.is_object())
+				continue;
+			UINT id = jsonValueOr(item, "id", 0u);
+			std::wstring text = utf8ToUtf16(jsonValueOr<std::string>(item, "text", "").c_str());
 
 			UINT flags = MF_STRING;
 			if (id == 0 && text.empty())
 				flags = MF_SEPARATOR;
 			else {
-				if (item.value("checked", false))
+				if (jsonValueOr(item, "checked", false))
 					flags |= MF_CHECKED;
-				if (!item.value("enabled", true))
+				if (!jsonValueOr(item, "enabled", true))
 					flags |= MF_GRAYED;
 
 				if (item.contains("submenu") && item["submenu"].is_array()) {

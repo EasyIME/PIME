@@ -119,7 +119,9 @@ impl PipeSecurityAttributes {
             sa: SECURITY_ATTRIBUTES {
                 nLength: std::mem::size_of::<SECURITY_ATTRIBUTES>() as u32,
                 lpSecurityDescriptor: sd.0,
-                bInheritHandle: true.into(),
+                // Backend processes must not inherit client pipes. Otherwise a pipe stays
+                // open while any backend holds a copy, even after the launcher closes it.
+                bInheritHandle: false.into(),
             },
         })
     }
@@ -134,5 +136,11 @@ mod tests {
         // This should succeed on any standard Windows dev machine
         let sa = PipeSecurityAttributes::new();
         assert!(sa.is_some());
+    }
+
+    #[test]
+    fn test_pipe_handles_are_not_inheritable() {
+        let sa = PipeSecurityAttributes::new().unwrap();
+        assert!(!sa.sa.bInheritHandle.as_bool());
     }
 }

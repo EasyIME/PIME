@@ -87,6 +87,10 @@ void Client::addKeyEventToRpcRequest(json& request, Ime::KeyEvent& keyEvent) {
 }
 
 bool Client::handleRpcResponse(json& msg, Ime::EditSession* session) {
+	// A failed RPC call leaves msg as null, and json::value() throws on non-objects.
+	if (!msg.is_object()) {
+		return false;
+	}
 	bool success = msg.value("success", false);
 	if (success) {
 		updateStatus(msg, session);

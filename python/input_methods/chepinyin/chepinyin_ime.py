@@ -45,9 +45,8 @@ class ChePinyinTextService(TextService):
         self.cinbase.initTextService(self, TextService)
 
         # 載入用戶設定值
-        CinBaseConfig.__init__()
-        self.configVersion = CinBaseConfig.getVersion()
-        self.cfg = copy.deepcopy(CinBaseConfig)
+        self.cfg = CinBaseConfig.__class__()
+        self.configVersion = self.cfg.getVersion()
         self.cfg.imeDirName = self.imeDirName
         self.cfg.cinFileList = self.cinFileList
         self.cfg.load()

@@ -7,6 +7,11 @@ use std::path::PathBuf;
 use tracing::{error, info, warn};
 
 /// Spawns and monitors the worker process, restarting it if it exits.
+fn get_per_session_name(base: &str) -> String {
+    let username = std::env::var("USERNAME").unwrap_or_else(|_| "Unknown".to_string());
+    format!("Local\\{}_{}", base, username)
+}
+
 async fn run_watchdog(original_args: &[String]) {
     let exe = std::env::current_exe().expect("Failed to get current exe");
 
@@ -17,6 +22,25 @@ async fn run_watchdog(original_args: &[String]) {
     }
 
     info!("Watchdog started. Monitoring worker...");
+
+    let event_name = get_per_session_name("PIMELauncher2_QuitEvent");
+    let (quit_tx, mut quit_rx) = tokio::sync::mpsc::channel::<()>(1);
+    
+    std::thread::spawn(move || {
+        use windows::Win32::Foundation::CloseHandle;
+        use windows::Win32::System::Threading::{CreateEventW, WaitForSingleObject, INFINITE, ResetEvent};
+        
+        let mut name_utf16: Vec<u16> = event_name.encode_utf16().collect();
+        name_utf16.push(0);
+        unsafe {
+            if let Ok(handle) = CreateEventW(None, true, false, windows::core::PCWSTR(name_utf16.as_ptr())) {
+                let _ = WaitForSingleObject(handle, INFINITE);
+                let _ = ResetEvent(handle);
+                let _ = CloseHandle(handle);
+            }
+        }
+        let _ = quit_tx.blocking_send(());
+    });
 
     const CREATE_NEW_CONSOLE: u32 = 0x00000010;
 
@@ -50,7 +74,7 @@ async fn run_watchdog(original_args: &[String]) {
                 warn!("Worker process exited with status: {:?}. Restarting in 1s...", status);
                 tokio::time::sleep(std::time::Duration::from_secs(1)).await;
             }
-            _ = wait_for_quit_event() => {
+            _ = quit_rx.recv() => {
                 info!("Quit event received. Terminating worker and watchdog...");
                 let _ = child.kill().await;
                 return;
@@ -59,40 +83,22 @@ async fn run_watchdog(original_args: &[String]) {
     }
 }
 
-/// Signals the named quit event to notify all running instances to exit.
 fn signal_quit_event() {
-    use windows::core::w;
     use windows::Win32::Foundation::CloseHandle;
     use windows::Win32::System::Threading::{CreateEventW, SetEvent};
 
+    let event_name = get_per_session_name("PIMELauncher2_QuitEvent");
+    let mut name_utf16: Vec<u16> = event_name.encode_utf16().collect();
+    name_utf16.push(0);
+
     unsafe {
         // Create or open the event
-        if let Ok(handle) = CreateEventW(None, true, false, w!("PIMELauncher2_QuitEvent")) {
+        if let Ok(handle) = CreateEventW(None, true, false, windows::core::PCWSTR(name_utf16.as_ptr())) {
             let _ = SetEvent(handle);
             let _ = CloseHandle(handle);
             println!("Quit signal sent.");
         }
     }
-}
-
-/// Waits asynchronously for the named quit event to be signaled.
-async fn wait_for_quit_event() {
-    use windows::core::w;
-    use windows::Win32::Foundation::CloseHandle;
-    use windows::Win32::System::Threading::{CreateEventW, WaitForSingleObject, INFINITE};
-
-    // We use a dedicated thread to wait because WaitForSingleObject is blocking.
-    tokio::task::spawn_blocking(move || {
-        unsafe {
-            // Create or open the event (manual reset = true)
-            if let Ok(handle) = CreateEventW(None, true, false, w!("PIMELauncher2_QuitEvent")) {
-                let _ = WaitForSingleObject(handle, INFINITE);
-                let _ = CloseHandle(handle);
-            }
-        }
-    })
-    .await
-    .ok();
 }
 
 #[tokio::main]
@@ -125,8 +131,9 @@ async fn main() {
 
     // Ensure single instance (using a named mutex)
     // The Watchdog process (parent) holds this mutex.
+    let mutex_name = get_per_session_name("PIMELauncher2_WatchdogMutex");
     let _mutex = if !is_worker {
-        match create_single_instance_mutex("PIMELauncher2_WatchdogMutex") {
+        match create_single_instance_mutex(&mutex_name) {
             Ok(m) => Some(m),
             Err(_) => {
                 error!("Another instance of PIMELauncher2 Watchdog is already running.");

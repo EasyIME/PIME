@@ -57,13 +57,18 @@ class CheLiuTextService(TextService):
         self.cinbase.initCinBaseContext(self)
 
         # 載入輸入法碼表
-        if not CinTable.curCinType == self.cfg.selCinType and not CinTable.loading:
-            loadCinFile = LoadCinTable(self, CinTable)
-            loadCinFile.start()
-        else:
-            while CinTable.loading:
-                continue
-            self.cin = CinTable.cin
+        import threading, time
+        if not hasattr(CinTable, "lock"):
+            CinTable.lock = threading.Lock()
+        with CinTable.lock:
+            if not CinTable.curCinType == self.cfg.selCinType and not CinTable.loading:
+                CinTable.loading = True
+                loadCinFile = LoadCinTable(self, CinTable)
+                loadCinFile.start()
+        
+        while CinTable.loading:
+            time.sleep(0.01)
+        self.cin = CinTable.cin
 
 
     # 檢查設定檔是否有被更改，是否需要套用新設定

@@ -25,6 +25,10 @@ import random
 import json
 import threading
 
+# The bundled python runs in isolated mode (python3xx._pth), which does not
+# add the directory of this script to sys.path.
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from config import CinBaseConfig
 from cin import Cin
 from ctypes import c_uint, byref, create_string_buffer

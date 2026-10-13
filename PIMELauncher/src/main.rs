@@ -6,7 +6,6 @@ use pimelauncher::pipe_server;
 use std::path::PathBuf;
 use tracing::{error, info, warn};
 
-/// Spawns and monitors the worker process, restarting it if it exits.
 fn get_windows_username() -> String {
     use windows::Win32::System::WindowsProgramming::GetUserNameW;
     use windows::core::PWSTR;
@@ -25,6 +24,7 @@ fn get_per_session_name(base: &str) -> String {
     format!("Local\\{}_{}", base, username)
 }
 
+/// Spawns and monitors the worker process, restarting it if it exits.
 async fn run_watchdog(original_args: &[String]) {
     let exe = std::env::current_exe().expect("Failed to get current exe");
 
@@ -41,18 +41,17 @@ async fn run_watchdog(original_args: &[String]) {
     
     std::thread::spawn(move || {
         use windows::Win32::Foundation::CloseHandle;
-        use windows::Win32::System::Threading::{CreateEventW, WaitForSingleObject, INFINITE, ResetEvent};
+        use windows::Win32::System::Threading::{CreateEventW, WaitForSingleObject, INFINITE};
         
         let mut name_utf16: Vec<u16> = event_name.encode_utf16().collect();
         name_utf16.push(0);
         unsafe {
             if let Ok(handle) = CreateEventW(None, true, false, windows::core::PCWSTR(name_utf16.as_ptr())) {
                 let _ = WaitForSingleObject(handle, INFINITE);
-                let _ = ResetEvent(handle);
                 let _ = CloseHandle(handle);
+                let _ = quit_tx.blocking_send(());
             }
         }
-        let _ = quit_tx.blocking_send(());
     });
 
     const CREATE_NEW_CONSOLE: u32 = 0x00000010;
@@ -87,7 +86,7 @@ async fn run_watchdog(original_args: &[String]) {
                 warn!("Worker process exited with status: {:?}. Restarting in 1s...", status);
                 tokio::time::sleep(std::time::Duration::from_secs(1)).await;
             }
-            _ = quit_rx.recv() => {
+            Some(()) = quit_rx.recv() => {
                 info!("Quit event received. Terminating worker and watchdog...");
                 let _ = child.kill().await;
                 return;

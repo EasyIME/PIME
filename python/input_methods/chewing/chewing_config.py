@@ -124,8 +124,8 @@ class ChewingConfig:
         filename = self.getConfigFile()
         try:
             with open(filename, "w") as f:
-                json = self.toJson()
-                js = json.dump(json, f, indent=4)
+                config_data = self.toJson()
+                json.dump(config_data, f, indent=4)
             self.update()
         except Exception:
             pass  # FIXME: handle I/O errors?

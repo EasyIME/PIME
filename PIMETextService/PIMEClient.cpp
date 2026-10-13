@@ -87,11 +87,16 @@ void Client::addKeyEventToRpcRequest(json& request, Ime::KeyEvent& keyEvent) {
 }
 
 bool Client::handleRpcResponse(json& msg, Ime::EditSession* session) {
-	bool success = msg.value("success", false);
-	if (success) {
-		updateStatus(msg, session);
+	try {
+		bool success = msg.value("success", false);
+		if (success) {
+			updateStatus(msg, session);
+		}
+		return success;
 	}
-	return success;
+	catch (...) {
+		return false;
+	}
 }
 
 void Client::updateUI(json& data) {

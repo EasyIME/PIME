@@ -7,8 +7,21 @@ use std::path::PathBuf;
 use tracing::{error, info, warn};
 
 /// Spawns and monitors the worker process, restarting it if it exits.
+fn get_windows_username() -> String {
+    use windows::Win32::System::WindowsProgramming::GetUserNameW;
+    use windows::core::PWSTR;
+    let mut buf = [0u16; 257];
+    let mut size = buf.len() as u32;
+    unsafe {
+        if GetUserNameW(PWSTR(buf.as_mut_ptr()), &mut size).is_ok() {
+            return String::from_utf16_lossy(&buf[..(size as usize).saturating_sub(1)]);
+        }
+    }
+    std::env::var("USERNAME").unwrap_or_else(|_| "Unknown".to_string())
+}
+
 fn get_per_session_name(base: &str) -> String {
-    let username = std::env::var("USERNAME").unwrap_or_else(|_| "Unknown".to_string());
+    let username = get_windows_username();
     format!("Local\\{}_{}", base, username)
 }
 
@@ -198,7 +211,7 @@ fn setup_error_mode() {
 
 /// Core logic for the PIME Worker process.
 async fn run_worker() {
-    let username = std::env::var("USERNAME").expect("USERNAME environment variable must be set");
+    let username = get_windows_username();
     let pipe_name = format!(r"\\.\pipe\{}\PIME\Launcher", username);
 
     info!("Starting PIMELauncher2 Worker on pipe: {}", pipe_name);

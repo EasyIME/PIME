@@ -749,9 +749,14 @@ bool Client::isPipeCreatedByPIMEServer(HANDLE pipe) {
 // establish a connection to the specified pipe and returns its handle
 // static
 HANDLE Client::connectPipe(const wchar_t* pipeName, int timeoutMs) {
-	HANDLE pipe = INVALID_HANDLE_VALUE;
-	if (WaitNamedPipe(pipeName, timeoutMs)) {
-		pipe = CreateFile(pipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+	HANDLE pipe = CreateFile(pipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+	if (pipe == INVALID_HANDLE_VALUE) {
+		if (GetLastError() == ERROR_PIPE_BUSY) {
+			// The pipe exists but all instances are busy. Wait for it.
+			if (WaitNamedPipe(pipeName, timeoutMs)) {
+				pipe = CreateFile(pipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+			}
+		}
 	}
 
 	if (pipe != INVALID_HANDLE_VALUE) {
@@ -771,6 +776,19 @@ HANDLE Client::connectPipe(const wchar_t* pipeName, int timeoutMs) {
 bool Client::waitForRpcConnection() {
 	if (pipe_ != INVALID_HANDLE_VALUE) {
 		return true;
+	}
+
+	// Block TSF activation in LogonUI.exe / winlogon.exe / SYSTEM
+	// PIMELauncher.exe runs per-user. Connecting from the logon screen or SYSTEM 
+	// causes synchronous pipe hangs that result in Windows 10 blank screens on boot.
+	wchar_t exePath[MAX_PATH] = { 0 };
+	if (GetModuleFileNameW(NULL, exePath, MAX_PATH)) {
+		std::wstring path = exePath;
+		std::transform(path.begin(), path.end(), path.begin(), ::towlower);
+		if (path.find(L"\\logonui.exe") != std::wstring::npos ||
+			path.find(L"\\winlogon.exe") != std::wstring::npos) {
+			return false; // Do not attempt to connect to PIME in these processes.
+		}
 	}
 
 	wstring serverPipeName = getPipeName(L"Launcher");

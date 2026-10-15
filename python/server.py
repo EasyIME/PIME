@@ -104,6 +104,11 @@ class Server(object):
                     print("new client:", client_id, file=sys.stderr)
                 if msg.get("method") == "close":  # special handling for closing a client
                     self.remove_client(client_id)
+                    reply_dict = {"success": True}
+                    if "seqNum" in msg:
+                        reply_dict["seqNum"] = msg["seqNum"]
+                    reply_line = '|'.join(["PIME_MSG", client_id, json.dumps(reply_dict)])
+                    print(reply_line, flush=True)
                 else:
                     ret = client.handleRequest(msg)
                     # Send the response to the client via stdout

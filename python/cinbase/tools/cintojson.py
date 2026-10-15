@@ -155,7 +155,7 @@ class CinToJson(object):
 
 
     def run(self, file, filePath, sortByCharset):
-        self.jsonFile = re.sub('\.cin$', '', file) + '.json'
+        self.jsonFile = re.sub(r'\.cin$', '', file) + '.json'
         self.sortByCharset = sortByCharset
         state = PARSING_HEAD_STATE
 

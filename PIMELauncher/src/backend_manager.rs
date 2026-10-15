@@ -265,17 +265,18 @@ impl BackendManager {
             config.name, executable_path, working_dir, params
         );
 
-        let args_vec: Vec<&str> = params.split_whitespace().collect();
         debug!(
-            "Execution Details: {:?} with args {:?}",
-            executable_path, args_vec
+            "Execution Details: {:?} with params {:?}",
+            executable_path, params
         );
 
         const CREATE_NO_WINDOW: u32 = 0x08000000;
 
         let mut child_cmd = Command::new(&executable_path);
+        if !params.trim().is_empty() {
+            child_cmd.raw_arg(&params);
+        }
         child_cmd
-            .args(&args_vec)
             .current_dir(&working_dir)
             .creation_flags(CREATE_NO_WINDOW)
             .env("PYTHONIOENCODING", "utf-8:ignore")

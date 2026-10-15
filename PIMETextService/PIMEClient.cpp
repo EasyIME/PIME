@@ -87,11 +87,16 @@ void Client::addKeyEventToRpcRequest(json& request, Ime::KeyEvent& keyEvent) {
 }
 
 bool Client::handleRpcResponse(json& msg, Ime::EditSession* session) {
-	bool success = msg.value("success", false);
-	if (success) {
-		updateStatus(msg, session);
+	try {
+		bool success = msg.value("success", false);
+		if (success) {
+			updateStatus(msg, session);
+		}
+		return success;
 	}
-	return success;
+	catch (...) {
+		return false;
+	}
 }
 
 void Client::updateUI(json& data) {
@@ -216,7 +221,8 @@ void Client::updateComposition(json& msg, Ime::EditSession* session, bool& endCo
 			if (!hasCompositionString)
 				compositionString = textService_->compositionString(session);
 			int fixedCursorPos = 0;
-			for (int i = 0; i < compositionCursor; ++i) {
+			int maxCursor = std::min<int>((int)compositionString.size(), compositionCursor);
+			for (int i = 0; i < maxCursor; ++i) {
 				++fixedCursorPos;
 				if (IS_HIGH_SURROGATE(compositionString[i])) // this is the first part of a UTF16 surrogate pair (Windows uses UTF16-LE)
 					++fixedCursorPos;
@@ -661,7 +667,9 @@ bool Client::callPipeIO(bool isRead, void *buffer, DWORD size, DWORD *rlen, int 
 	}
 	else {
 		// timeout or error
-		CancelIo(pipe_);
+		CancelIoEx(pipe_, &overlapped);
+		// Wait for the cancellation to finish so the kernel stops writing to our stack buffer and OVERLAPPED struct!
+		GetOverlappedResult(pipe_, &overlapped, rlen, TRUE);
 		ok = FALSE;
 	}
 

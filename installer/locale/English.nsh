@@ -39,6 +39,7 @@
 !insertmacro LANG_STRING RIME "Rime"
 !insertmacro LANG_STRING MCBOPOMOFO "McBopomofo"
 !insertmacro LANG_STRING MCFOXIM "McFoxim"
+!insertmacro LANG_STRING MCTABIM "McTabim"
 !insertmacro LANG_STRING EMOJIME "emojime"
 !insertmacro LANG_STRING CHEENG "Eng-Num"
 !insertmacro LANG_STRING BRAILLE_CHEWING "Braille Chewing"

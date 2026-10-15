@@ -93,6 +93,7 @@ class ChewingTextService(TextService):
 
         self.lastKeyDownTime = 0.0
         self.lastKeyEvent = None
+        self.markAnchor = None  # Shift + 左右鍵標記詞的起點 (編輯區游標位置)
 
         self.configVersion = chewingConfig.getVersion()
 
@@ -282,6 +283,7 @@ class ChewingTextService(TextService):
         # 釋放 libchewing context 的資源
         self.chewingContext = None
         self.lastKeyEvent = None
+        self.markAnchor = None
 
         # 丟棄輸入法狀態
         self.lastLangMode = None
@@ -406,6 +408,12 @@ class ChewingTextService(TextService):
         oldLangMode = chewingContext.get_ChiEngMode()
         ignoreKey = False  # 新酷音是否須忽略這個按鍵
         keyHandled = False  # 輸入法是否有處理這個按鍵
+
+        # 標記詞的範圍時按下其他按鍵，先記下編輯區狀態，處理完再判斷標記是否結束
+        isMarkKey = keyEvent.isKeyDown(VK_SHIFT) and keyCode in (VK_LEFT, VK_RIGHT)
+        markSnapshot = None
+        if self.markAnchor is not None and not isMarkKey and keyCode != VK_SHIFT:
+            markSnapshot = self.editSnapshot()
 
         # 使用 Ctrl 或 Shift 鍵做快速符號輸入 (easy symbol input)
         # 這裡的 easy symbol input，是定義在 swkb.dat 設定檔中的符號
@@ -607,6 +615,25 @@ class ChewingTextService(TextService):
                 # 更新選字視窗游標位置
                 self.setCandidateCursor(candCursor)
 
+            # Shift + 左右鍵標記詞的範圍，再按 Enter 加入詞庫 (libchewing 的漢音式加詞)
+            # 效果同 Ctrl + 數字，但不會和其他程式的 Ctrl + 數字熱鍵衝突
+            if not keyHandled and not self.showCandidates and isMarkKey:
+                if self.markAnchor is None:
+                    self.markAnchor = chewingContext.cursor_Current()
+                if keyCode == VK_LEFT:
+                    chewingContext.handle_ShiftLeft()
+                else:
+                    chewingContext.handle_ShiftRight()
+                keyHandled = True
+                # libchewing 不提供標記範圍，用起點和目前游標算出來，顯示給使用者看
+                start, end = sorted((self.markAnchor, chewingContext.cursor_Current()))
+                marked = chewingContext.buffer_String().decode("UTF-8")[start:end] if chewingContext.buffer_Check() else ""
+                if marked:
+                    self.showMessage("標記「" + marked + "」，按 Enter 加入詞庫", 10)
+                else:  # 標記範圍縮回 0 個字
+                    self.markAnchor = None
+                    self.hideMessage()
+
             # 按鍵還沒被處理過
             if not keyHandled:
                 # the candidate window does not need the key. pass it to libchewing.
@@ -693,6 +720,14 @@ class ChewingTextService(TextService):
                 # for subsequent key events... I think this is a bug.
                 self.showMessage(message, 2)
 
+        # libchewing 在 Enter 或按鍵改變了編輯區時清掉標記；按鍵沒有任何作用時
+        # (例如游標已在最前面再按左鍵) 標記會保留，這裡跟著保留，兩邊才一致
+        if markSnapshot is not None and (keyCode == VK_RETURN or self.editSnapshot() != markSnapshot):
+            self.markAnchor = None
+            # 收起標記提示；若 libchewing 有新提示 (例如 Enter 加詞成功) 則保留
+            if not chewingContext.aux_Check():
+                self.hideMessage()
+
         # 若先前有暫時強制切成英文模式，需要復原
         if temporaryEnglishMode:
             chewingContext.set_ChiEngMode(oldLangMode)
@@ -701,6 +736,14 @@ class ChewingTextService(TextService):
         self.updateLangButtons()
 
         return keyHandled  # 告知系統我們是否有處理這個按鍵
+
+    # 編輯區狀態：中文字串、注音、游標位置、候選字數
+    def editSnapshot(self):
+        ctx = self.chewingContext
+        return (ctx.buffer_String() if ctx.buffer_Check() else b"",
+                ctx.bopomofo_String(None) if ctx.bopomofo_Check() else b"",
+                ctx.cursor_Current(),
+                ctx.cand_TotalChoice())
 
     # 使用者放開按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
     # return True，系統會呼叫 onKeyUp() 進一步處理這個按鍵

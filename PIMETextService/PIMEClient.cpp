@@ -216,7 +216,8 @@ void Client::updateComposition(json& msg, Ime::EditSession* session, bool& endCo
 			if (!hasCompositionString)
 				compositionString = textService_->compositionString(session);
 			int fixedCursorPos = 0;
-			for (int i = 0; i < compositionCursor; ++i) {
+			int maxCursor = std::min<int>((int)compositionString.size(), compositionCursor);
+			for (int i = 0; i < maxCursor; ++i) {
 				++fixedCursorPos;
 				if (IS_HIGH_SURROGATE(compositionString[i])) // this is the first part of a UTF16 surrogate pair (Windows uses UTF16-LE)
 					++fixedCursorPos;

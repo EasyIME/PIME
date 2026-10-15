@@ -25,10 +25,17 @@ fn main() {
                     
                     if message.contains(r#""method":"close""#) {
                         eprintln!("Mock backend received CLOSE for client {}", client_id);
-                        println!(
-                            "PIME_MSG|{}|{{\"method\":\"close\",\"success\":true}}",
-                            client_id
-                        );
+                        if let Some(seq_num) = pimelauncher::protocol::extract_seq_num(message) {
+                            println!(
+                                "PIME_MSG|{}|{{\"method\":\"close\",\"success\":true,\"seqNum\":{}}}",
+                                client_id, seq_num
+                            );
+                        } else {
+                            println!(
+                                "PIME_MSG|{}|{{\"method\":\"close\",\"success\":true}}",
+                                client_id
+                            );
+                        }
                     } else {
                         println!("PIME_MSG|{}|REPLY: {}", client_id, message);
                     }

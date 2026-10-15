@@ -148,8 +148,22 @@ async fn test_integration_full() -> TestResult {
         // Wait for crash and restart
         tokio::time::sleep(Duration::from_millis(1500)).await;
 
-        send_msg(&mut writer, "Still here").await?;
-        let resp = read_line(&mut lines).await?;
+        // Since the backend crashed, our client connection should be forcibly disconnected.
+        // We verify that the pipe is broken (either write or read fails).
+        let send_res = send_msg(&mut writer, "Still here").await;
+        let read_res = read_line(&mut lines).await;
+        assert!(send_res.is_err() || read_res.is_err(), "Expected connection to be broken after crash");
+
+        // Client must reconnect and re-initialize
+        let client2 = connect_with_retry(&pipe_name).await;
+        let (reader2, mut writer2) = tokio::io::split(client2);
+        let mut lines2 = BufReader::new(reader2).lines();
+        
+        send_msg(&mut writer2, &handshake).await?;
+        let _ = read_line(&mut lines2).await?;
+
+        send_msg(&mut writer2, "Still here").await?;
+        let resp = read_line(&mut lines2).await?;
         assert_eq!(resp, "REPLY: Still here");
     }
 
@@ -168,14 +182,21 @@ async fn test_integration_full() -> TestResult {
         // Subsequent message should trigger timeout in BackendManager
         // We send a large block to ensure the pipe buffer fills up
         let large_block = "A".repeat(1024 * 128); // 128KB
-        send_msg(&mut writer, &large_block).await?;
+        
+        let _ = send_msg(&mut writer, &large_block).await;
 
         // Timeout is 5s for write + 2s for flush. Let's wait 12s.
         tokio::time::sleep(Duration::from_secs(12)).await;
 
-        // After restart, it should respond again
-        send_msg(&mut writer, "Hello again").await?;
-        let resp = read_line(&mut lines).await?;
+        // After restart, the client connection is dropped. Reconnect.
+        let client3 = connect_with_retry(&pipe_name).await;
+        let (reader3, mut writer3) = tokio::io::split(client3);
+        let mut lines3 = BufReader::new(reader3).lines();
+        send_msg(&mut writer3, &handshake).await?;
+        let _ = read_line(&mut lines3).await?;
+
+        send_msg(&mut writer3, "Hello again").await?;
+        let resp = read_line(&mut lines3).await?;
         assert_eq!(resp, "REPLY: Hello again");
     }
 

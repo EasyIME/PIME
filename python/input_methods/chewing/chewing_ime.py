@@ -511,7 +511,10 @@ class ChewingTextService(TextService):
 
                 # 處理詞彙 Ctrl + Del、刪除詞彙、Ctrl + PageUp 提昇/ Ctrl + PageDown 降低詞頻
                 if keyEvent.isKeyDown(VK_CONTROL) and (keyCode == VK_DELETE or keyCode == VK_NEXT or keyCode == VK_PRIOR):
+                    if candCount == 0 or candCursor >= candCount:
+                        return False
                     target_phrase = self.candidateList[candCursor]
+                    phraseConnect = None
                     try:
                         phraseConnect = sqlite3.connect(chewingConfig.getUserPhrase())
                         cursor = phraseConnect.cursor()
@@ -544,6 +547,10 @@ class ChewingTextService(TextService):
                         ignoreKey = keyHandled = True
                     except Exception as err:
                         self.showMessage(str(err), 2)
+                    finally:
+                        if phraseConnect:
+                            try: phraseConnect.close()
+                            except Exception: pass
 
                 # 處理 Home、End 鍵，移到選字視窗的第一和最後一個字
                 if keyCode == VK_HOME:
@@ -727,26 +734,25 @@ class ChewingTextService(TextService):
             if keyEvent.isKeyDown(VK_CONTROL) and self.lastKeyEvent.keyCode == VK_F12 and keyEvent.keyCode == VK_F12:
                 self.setOutputSimplifiedChinese(not self.outputSimpChinese)
 
-        # 按下 Capslcok 會切換圖示
+        # 按下 Capslock 會切換圖示
         if chewingConfig.enableCapsLock and self.lastKeyEvent:
-            if self.isPressed(VK_CAPITAL):
+            if keyEvent.keyCode == VK_CAPITAL:
                 self.updateSwitchLangIcon = True
                 self.updateLangButtons()
 
         self.lastKeyDownTime = 0.0
         return False
 
-    # https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getasynckeystate
-    # 當 keyCode 對應的按鍵、曾被按下觸發過，GetAsyncKeyState() 的回傳值會 >= 1
     def isPressed(self, keyCode):
-        return windll.user32.GetAsyncKeyState(keyCode) >= 1
+        if self.lastKeyEvent:
+            return self.lastKeyEvent.isKeyDown(keyCode)
+        return False
 
     # 取得 Capslock 按鍵狀態
     def getCapslockState(self):
-        if ((windll.user32.GetKeyState(VK_CAPITAL) & 0x0001) != 0):
-            return True
-        else:
-            return False
+        if self.lastKeyEvent:
+            return self.lastKeyEvent.isKeyToggled(VK_CAPITAL)
+        return ((windll.user32.GetKeyState(VK_CAPITAL) & 0x0001) != 0)
 
     def onKeyUp(self, keyEvent):
         pressedDuration = time.time() - self.lastKeyDownTime

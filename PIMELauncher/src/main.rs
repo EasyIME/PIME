@@ -6,6 +6,24 @@ use pimelauncher::pipe_server;
 use std::path::PathBuf;
 use tracing::{error, info, warn};
 
+fn get_windows_username() -> String {
+    use windows::Win32::System::WindowsProgramming::GetUserNameW;
+    use windows::core::PWSTR;
+    let mut buf = [0u16; 257];
+    let mut size = buf.len() as u32;
+    unsafe {
+        if GetUserNameW(PWSTR(buf.as_mut_ptr()), &mut size).is_ok() {
+            return String::from_utf16_lossy(&buf[..(size as usize).saturating_sub(1)]);
+        }
+    }
+    std::env::var("USERNAME").unwrap_or_else(|_| "Unknown".to_string())
+}
+
+fn get_per_session_name(base: &str) -> String {
+    let username = get_windows_username();
+    format!("Local\\{}_{}", base, username)
+}
+
 /// Spawns and monitors the worker process, restarting it if it exits.
 async fn run_watchdog(original_args: &[String]) {
     let exe = std::env::current_exe().expect("Failed to get current exe");
@@ -17,6 +35,24 @@ async fn run_watchdog(original_args: &[String]) {
     }
 
     info!("Watchdog started. Monitoring worker...");
+
+    let event_name = get_per_session_name("PIMELauncher2_QuitEvent");
+    let (quit_tx, mut quit_rx) = tokio::sync::mpsc::channel::<()>(1);
+    
+    std::thread::spawn(move || {
+        use windows::Win32::Foundation::CloseHandle;
+        use windows::Win32::System::Threading::{CreateEventW, WaitForSingleObject, INFINITE};
+        
+        let mut name_utf16: Vec<u16> = event_name.encode_utf16().collect();
+        name_utf16.push(0);
+        unsafe {
+            if let Ok(handle) = CreateEventW(None, true, false, windows::core::PCWSTR(name_utf16.as_ptr())) {
+                let _ = WaitForSingleObject(handle, INFINITE);
+                let _ = CloseHandle(handle);
+                let _ = quit_tx.blocking_send(());
+            }
+        }
+    });
 
     const CREATE_NEW_CONSOLE: u32 = 0x00000010;
 
@@ -50,7 +86,7 @@ async fn run_watchdog(original_args: &[String]) {
                 warn!("Worker process exited with status: {:?}. Restarting in 1s...", status);
                 tokio::time::sleep(std::time::Duration::from_secs(1)).await;
             }
-            _ = wait_for_quit_event() => {
+            Some(()) = quit_rx.recv() => {
                 info!("Quit event received. Terminating worker and watchdog...");
                 let _ = child.kill().await;
                 return;
@@ -59,15 +95,17 @@ async fn run_watchdog(original_args: &[String]) {
     }
 }
 
-/// Signals the named quit event to notify all running instances to exit.
 fn signal_quit_event() {
-    use windows::core::w;
     use windows::Win32::Foundation::CloseHandle;
     use windows::Win32::System::Threading::{CreateEventW, SetEvent};
 
+    let event_name = get_per_session_name("PIMELauncher2_QuitEvent");
+    let mut name_utf16: Vec<u16> = event_name.encode_utf16().collect();
+    name_utf16.push(0);
+
     unsafe {
         // Create or open the event
-        if let Ok(handle) = CreateEventW(None, true, false, w!("PIMELauncher2_QuitEvent")) {
+        if let Ok(handle) = CreateEventW(None, true, false, windows::core::PCWSTR(name_utf16.as_ptr())) {
             let _ = SetEvent(handle);
             let _ = CloseHandle(handle);
             println!("Quit signal sent.");
@@ -75,28 +113,9 @@ fn signal_quit_event() {
     }
 }
 
-/// Waits asynchronously for the named quit event to be signaled.
-async fn wait_for_quit_event() {
-    use windows::core::w;
-    use windows::Win32::Foundation::CloseHandle;
-    use windows::Win32::System::Threading::{CreateEventW, WaitForSingleObject, INFINITE};
-
-    // We use a dedicated thread to wait because WaitForSingleObject is blocking.
-    tokio::task::spawn_blocking(move || {
-        unsafe {
-            // Create or open the event (manual reset = true)
-            if let Ok(handle) = CreateEventW(None, true, false, w!("PIMELauncher2_QuitEvent")) {
-                let _ = WaitForSingleObject(handle, INFINITE);
-                let _ = CloseHandle(handle);
-            }
-        }
-    })
-    .await
-    .ok();
-}
-
 #[tokio::main]
 async fn main() {
+    assign_process_to_job_object();
     setup_error_mode();
 
     let args: Vec<String> = std::env::args().collect();
@@ -124,8 +143,9 @@ async fn main() {
 
     // Ensure single instance (using a named mutex)
     // The Watchdog process (parent) holds this mutex.
+    let mutex_name = get_per_session_name("PIMELauncher2_WatchdogMutex");
     let _mutex = if !is_worker {
-        match create_single_instance_mutex("PIMELauncher2_WatchdogMutex") {
+        match create_single_instance_mutex(&mutex_name) {
             Ok(m) => Some(m),
             Err(_) => {
                 error!("Another instance of PIMELauncher2 Watchdog is already running.");
@@ -140,6 +160,35 @@ async fn main() {
         run_watchdog(&args).await;
     } else {
         run_worker().await;
+    }
+}
+
+/// Creates a Windows Job Object with KILL_ON_JOB_CLOSE and assigns the current process to it.
+/// This ensures that when the process exits or is forcefully killed, the OS automatically
+/// terminates all of its descendant child processes (workers, backends).
+fn assign_process_to_job_object() {
+    use windows::Win32::System::JobObjects::{
+        AssignProcessToJobObject, CreateJobObjectW, SetInformationJobObject,
+        JobObjectExtendedLimitInformation, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+        JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+    };
+    use windows::Win32::System::Threading::GetCurrentProcess;
+
+    unsafe {
+        if let Ok(job) = CreateJobObjectW(None, None) {
+            let mut limit_info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION::default();
+            limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+
+            let _ = SetInformationJobObject(
+                job,
+                JobObjectExtendedLimitInformation,
+                &limit_info as *const _ as *const std::ffi::c_void,
+                std::mem::size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
+            );
+
+            let _ = AssignProcessToJobObject(job, GetCurrentProcess());
+            // Intentionally leak the `job` handle. It will be closed by the OS when this process exits.
+        }
     }
 }
 
@@ -161,7 +210,7 @@ fn setup_error_mode() {
 
 /// Core logic for the PIME Worker process.
 async fn run_worker() {
-    let username = std::env::var("USERNAME").expect("USERNAME environment variable must be set");
+    let username = get_windows_username();
     let pipe_name = format!(r"\\.\pipe\{}\PIME\Launcher", username);
 
     info!("Starting PIMELauncher2 Worker on pipe: {}", pipe_name);

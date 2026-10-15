@@ -5,6 +5,7 @@
 
 # npm
 *.log
+package-lock.json
 
 # emojione
 !/node_modules/emojione
@@ -15,3 +16,6 @@
 !/node_modules/emojione/lib/js/
 /node_modules/emojione/lib/js/*
 !/node_modules/emojione/lib/js/emojione.js
+
+# build
+/dist/

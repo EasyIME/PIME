@@ -5,6 +5,7 @@ build_arm64/
 node/input_methods/McBopomofo
 node/input_methods/McFoxim
 node/input_methods/McTabim
+node/input_methods/emojime/dist
 installer/*.exe
 PIMELauncher/target/
 .claude/

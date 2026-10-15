@@ -39,6 +39,7 @@
 !insertmacro LANG_STRING RIME 中州韻
 !insertmacro LANG_STRING MCBOPOMOFO 小麥注音
 !insertmacro LANG_STRING MCFOXIM 小麥族語
+!insertmacro LANG_STRING MCTABIM 小麥他命
 !insertmacro LANG_STRING EMOJIME emojime
 !insertmacro LANG_STRING CHEENG 英數
 !insertmacro LANG_STRING BRAILLE_CHEWING "點字酷音"

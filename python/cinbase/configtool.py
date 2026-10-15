@@ -25,8 +25,12 @@ import random
 import json
 import threading
 
-from config import CinBaseConfig
-from cin import Cin
+try:
+    from cinbase.config import CinBaseConfig
+    from cinbase.cin import Cin
+except ModuleNotFoundError:
+    from config import CinBaseConfig
+    from cin import Cin
 from ctypes import c_uint, byref, create_string_buffer
 
 cfg = CinBaseConfig

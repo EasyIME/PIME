@@ -10,6 +10,9 @@ Implement input methods easily for Windows via Text Services Framework:
 
 All parts are licensed under GNU LGPL v2.1 license.
 
+# Contributing
+Contributions using AI coding tools are welcomed! However, to ensure code quality, they must follow the rules in [AGENTS.md](AGENTS.md) to be accepted, and AI assistance must be clearly declared in pull requests, git commits, and file headers.
+
 # Development
 
 ## Tool Requirements

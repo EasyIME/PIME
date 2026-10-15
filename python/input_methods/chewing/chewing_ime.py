@@ -511,7 +511,10 @@ class ChewingTextService(TextService):
 
                 # 處理詞彙 Ctrl + Del、刪除詞彙、Ctrl + PageUp 提昇/ Ctrl + PageDown 降低詞頻
                 if keyEvent.isKeyDown(VK_CONTROL) and (keyCode == VK_DELETE or keyCode == VK_NEXT or keyCode == VK_PRIOR):
+                    if candCount == 0 or candCursor >= candCount:
+                        return False
                     target_phrase = self.candidateList[candCursor]
+                    phraseConnect = None
                     try:
                         phraseConnect = sqlite3.connect(chewingConfig.getUserPhrase())
                         cursor = phraseConnect.cursor()
@@ -544,6 +547,10 @@ class ChewingTextService(TextService):
                         ignoreKey = keyHandled = True
                     except Exception as err:
                         self.showMessage(str(err), 2)
+                    finally:
+                        if phraseConnect:
+                            try: phraseConnect.close()
+                            except Exception: pass
 
                 # 處理 Home、End 鍵，移到選字視窗的第一和最後一個字
                 if keyCode == VK_HOME:

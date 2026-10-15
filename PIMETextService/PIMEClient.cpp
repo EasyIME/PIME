@@ -374,6 +374,16 @@ void Client::updateCandidateList(json& msg, Ime::EditSession* session) {
 		for (const auto& candidate : candidateListVal) {
 			candidates.emplace_back(utf8ToUtf16(candidate.get<string>().c_str()));
 		}
+		// The page info comes with each list. A backend that does not send it
+		// gets no page indicator, so a stale one never sticks.
+		const auto& pageVal = msg["candidatePage"];
+		const auto& pageCountVal = msg["candidatePageCount"];
+		if (pageVal.is_number_integer() && pageCountVal.is_number_integer()) {
+			textService_->setCandidatePage(pageVal.get<int>(), pageCountVal.get<int>());
+		}
+		else {
+			textService_->setCandidatePage(0, 0);
+		}
 		textService_->updateCandidates(session);
 		if (showCandidatesVal.is_boolean() && !showCandidatesVal.get<bool>()) {
 			textService_->hideCandidates();

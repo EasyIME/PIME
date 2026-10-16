@@ -37,6 +37,22 @@ using json = nlohmann::json;
 
 namespace PIME {
 
+// Like json::value(), but returns defaultValue instead of throwing when obj is not
+// an object or the key holds a different type. Exceptions must not escape TSF callbacks.
+template <typename T>
+static T jsonValueOr(const json& obj, const char* key, const T& defaultValue) {
+	auto it = obj.find(key);
+	if (it == obj.end()) {
+		return defaultValue;
+	}
+	try {
+		return it->get<T>();
+	}
+	catch (const json::exception&) {
+		return defaultValue;
+	}
+}
+
 static std::string uuidToString(const UUID& uuid) {
 	std::string result;
 	LPOLESTR buf = nullptr;
@@ -87,8 +103,12 @@ void Client::addKeyEventToRpcRequest(json& request, Ime::KeyEvent& keyEvent) {
 }
 
 bool Client::handleRpcResponse(json& msg, Ime::EditSession* session) {
+	// A failed RPC call leaves msg as null, and json::value() throws on non-objects.
+	if (!msg.is_object()) {
+		return false;
+	}
 	try {
-		bool success = msg.value("success", false);
+		bool success = jsonValueOr(msg, "success", false);
 		if (success) {
 			updateStatus(msg, session);
 		}
@@ -428,7 +448,7 @@ bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret)) {
-		return ret.value("return", false);
+		return jsonValueOr(ret, "return", false);
 	}
 	return false;
 }
@@ -440,7 +460,7 @@ bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret, session)) {
-		return ret.value("return", false);
+		return jsonValueOr(ret, "return", false);
 	}
 	return false;
 }
@@ -452,7 +472,7 @@ bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret)) {
-		return ret.value("return", false);
+		return jsonValueOr(ret, "return", false);
 	}
 	return false;
 }
@@ -464,7 +484,7 @@ bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret, session)) {
-		return ret.value("return", false);
+		return jsonValueOr(ret, "return", false);
 	}
 	return false;
 }
@@ -478,7 +498,7 @@ bool Client::onPreservedKey(const GUID& guid) {
 		json ret;
 		callRpcMethod(req, ret);
 		if (handleRpcResponse(ret)) {
-			return ret.value("return", false);
+			return jsonValueOr(ret, "return", false);
 		}
 	}
 	return false;
@@ -492,7 +512,7 @@ bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
 	json ret;
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret)) {
-		return ret.value("return", false);
+		return jsonValueOr(ret, "return", false);
 	}
 	return false;
 }
@@ -511,8 +531,10 @@ bool Client::sendOnMenu(std::string button_id, json& result) {
 static bool menuFromJson(ITfMenu* pMenu, json& menuInfo) {
 	if (pMenu != nullptr && menuInfo.is_array()) {
 		for (auto& item : menuInfo) {
-			UINT id = item.value("id", 0);
-			std::wstring text = utf8ToUtf16(item.value("text", "").c_str());
+			if (!item.is_object())
+				continue;
+			UINT id = jsonValueOr(item, "id", 0u);
+			std::wstring text = utf8ToUtf16(jsonValueOr<std::string>(item, "text", "").c_str());
 
 			DWORD flags = 0;
 			json submenuInfo;
@@ -520,9 +542,9 @@ static bool menuFromJson(ITfMenu* pMenu, json& menuInfo) {
 			if (id == 0 && text.empty())
 				flags = TF_LBMENUF_SEPARATOR;
 			else {
-				if (item.value("checked", false))
+				if (jsonValueOr(item, "checked", false))
 					flags |= TF_LBMENUF_CHECKED;
-				if (!item.value("enabled", true))
+				if (!jsonValueOr(item, "enabled", true))
 					flags |= TF_LBMENUF_GRAYED;
 
 				if (item.contains("submenu") && item["submenu"].is_array()) {
@@ -555,16 +577,18 @@ static HMENU menuFromJson(json& menuInfo) {
 	if (menuInfo.is_array()) {
 		HMENU menu = ::CreatePopupMenu();
 		for (auto& item : menuInfo) {
-			UINT id = item.value("id", 0);
-			std::wstring text = utf8ToUtf16(item.value("text", "").c_str());
+			if (!item.is_object())
+				continue;
+			UINT id = jsonValueOr(item, "id", 0u);
+			std::wstring text = utf8ToUtf16(jsonValueOr<std::string>(item, "text", "").c_str());
 
 			UINT flags = MF_STRING;
 			if (id == 0 && text.empty())
 				flags = MF_SEPARATOR;
 			else {
-				if (item.value("checked", false))
+				if (jsonValueOr(item, "checked", false))
 					flags |= MF_CHECKED;
-				if (!item.value("enabled", true))
+				if (!jsonValueOr(item, "enabled", true))
 					flags |= MF_GRAYED;
 
 				if (item.contains("submenu") && item["submenu"].is_array()) {
@@ -747,6 +771,7 @@ bool Client::callRpcMethod(json& request, json & response) {
 	}
 
 	if (!success) { // fail to send the request to the server
+		response = nullptr; // never let callers act on a stale or partial response
 		closeRpcConnection(); // close the pipe connection since it's broken
 		resetTextServiceState();  // since we lost the connection, the state is unknonw so we reset.
 	}
@@ -792,6 +817,9 @@ bool Client::waitForRpcConnection() {
 	}
 
 	wstring serverPipeName = getPipeName(L"Launcher");
+	if (serverPipeName.empty()) {
+		return false;
+	}
 	for (int attempt = 0; pipe_ == INVALID_HANDLE_VALUE && attempt < 3; ++attempt) {
 		// try to connect to the server
 		pipe_ = connectPipe(serverPipeName.c_str(), 3000);
@@ -851,11 +879,11 @@ wstring Client::getPipeName(const wchar_t* base_name) {
 	DWORD len = 0;
 	::GetUserNameW(NULL, &len); // get the required size of the buffer
 	if (len <= 0)
-		return false;
+		return L"";
 	// add username to the pipe path so it won't clash with the other users' pipes
 	unique_ptr<wchar_t[]> username(new wchar_t[len]);
 	if (!::GetUserNameW(username.get(), &len))
-		return false;
+		return L"";
 	pipeName += username.get();
 	pipeName += L"\\PIME\\";
 	pipeName += base_name;

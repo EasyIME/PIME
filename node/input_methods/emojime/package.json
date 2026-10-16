@@ -5,21 +5,18 @@
   "main": "index.js",
   "scripts": {
     "build": "esbuild src/index.js --bundle --platform=node --minify --outfile=dist/index.js",
-    "start": "cross-env DEBUG=nime:* node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Lee <jessy1092@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "debug": "^2.2.0",
-    "emojione": "^2.2.5"
+    "emojione": "2.2.5"
   },
   "engines": {
     "node": ">=6"
   },
   "devDependencies": {
-    "cross-env": "^1.0.8",
-    "esbuild": "^0.25.0",
-    "nime": "^0.2.0"
+    "esbuild": "^0.25.0"
   }
 }

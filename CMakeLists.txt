@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 3.15)
 
-# override default c/c++ flags, add /MT to link VC++ runtime statically.
-# NOTE: these two lines should go before the project() command according to CMake FAQ:
-# https://cmake.org/Wiki/CMake_FAQ#Make_Override_Files
-set(CMAKE_USER_MAKE_RULES_OVERRIDE	${CMAKE_CURRENT_SOURCE_DIR}/cmake/c_flag_overrides.cmake)
-set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX	${CMAKE_CURRENT_SOURCE_DIR}/cmake/cxx_flag_overrides.cmake)
+# Policy CMP0091 enables CMAKE_MSVC_RUNTIME_LIBRARY
+cmake_policy(SET CMP0091 NEW)
+
+# Statically link MSVC CRT (/MT in Release, /MTd in Debug) across all targets
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 project(PIME)
 

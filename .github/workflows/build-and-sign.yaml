@@ -24,6 +24,8 @@ jobs:
     permissions:
       id-token: write
       contents: write
+    env:
+      SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -73,10 +75,10 @@ jobs:
       # Sign binaries with the specified signing policy.
       # ---------------------------------------------------------------
       - name: Sign binaries
-        if: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
+        if: ${{ env.SIGNPATH_API_TOKEN != '' }}
         uses: signpath/github-action-submit-signing-request@v2
         with:
-          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          api-token: '${{ env.SIGNPATH_API_TOKEN }}'
           organization-id: '44e7ac31-01b7-47df-8a58-44125a7d21b0'
           project-slug: 'PIME'
           signing-policy-slug: '${{ inputs.signing-policy }}'
@@ -89,7 +91,7 @@ jobs:
       # Replace binaries with signed versions before building installer.
       # ---------------------------------------------------------------
       - name: Replace binaries with signed versions
-        if: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
+        if: ${{ env.SIGNPATH_API_TOKEN != '' }}
         run: |
           copy signed-binaries\build\PIMELauncher\PIMELauncher.exe build\PIMELauncher\PIMELauncher.exe
           copy signed-binaries\build\PIMETextService\Release\PIMETextService.dll build\PIMETextService\Release\PIMETextService.dll
@@ -119,10 +121,10 @@ jobs:
       # Sign the installer with the specified signing policy.
       # ---------------------------------------------------------------
       - name: Sign installer
-        if: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
+        if: ${{ env.SIGNPATH_API_TOKEN != '' }}
         uses: signpath/github-action-submit-signing-request@v2
         with:
-          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          api-token: '${{ env.SIGNPATH_API_TOKEN }}'
           organization-id: '44e7ac31-01b7-47df-8a58-44125a7d21b0'
           project-slug: 'PIME'
           signing-policy-slug: '${{ inputs.signing-policy }}'
@@ -136,7 +138,7 @@ jobs:
       # Create GitHub Release (only for release builds).
       # ---------------------------------------------------------------
       - name: Create GitHub Release
-        if: ${{ inputs.create-release && secrets.SIGNPATH_API_TOKEN != '' }}
+        if: ${{ inputs.create-release && env.SIGNPATH_API_TOKEN != '' }}
         uses: softprops/action-gh-release@v2
         with:
           files: signed-installer/**/*.exe

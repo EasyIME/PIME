@@ -1,0 +1,5 @@
+EXPORTS
+    DllCanUnloadNow=PIMETextService_x64.DllCanUnloadNow PRIVATE
+    DllGetClassObject=PIMETextService_x64.DllGetClassObject PRIVATE
+    DllRegisterServer=PIMETextService_x64.DllRegisterServer PRIVATE
+    DllUnregisterServer=PIMETextService_x64.DllUnregisterServer PRIVATE

@@ -42,6 +42,7 @@ function compositionMode(request, preState) {
         return Object.assign({}, preState, {
           action: 'SHOW_CANDIDATES',
           showCandidates: true,
+          candidateCursor: 0,
           candidateList
         });
       }

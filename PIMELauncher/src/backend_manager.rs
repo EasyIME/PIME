@@ -1,7 +1,6 @@
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 use tokio::process::Command;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info, warn};
@@ -19,9 +18,16 @@ pub struct BackendManager {
     registry: Arc<BackendRegistry>,
 }
 
+/// State for a registered client: its response channel and which backend it's connected to.
+struct ClientEntry {
+    tx: mpsc::Sender<String>,
+    backend_name: String,
+    last_seq_num: i64,
+}
+
 struct BackendManagerState {
     backends: HashMap<String, BackendProcess>,
-    clients: HashMap<String, mpsc::Sender<String>>,
+    clients: HashMap<String, ClientEntry>,
 }
 
 /// The reason why the backend process was terminated.
@@ -63,21 +69,52 @@ impl BackendManager {
     }
 
     /// Registers a client with its response channel.
-    pub async fn register_client(&self, client_id: String) -> mpsc::Receiver<String> {
+    pub async fn register_client(
+        &self,
+        client_id: String,
+        backend_name: String,
+    ) -> mpsc::Receiver<String> {
         let mut state = self.state.lock().unwrap();
         let (tx, rx) = tokio::sync::mpsc::channel::<String>(1024);
-        state.clients.insert(client_id, tx);
+        state.clients.insert(
+            client_id,
+            ClientEntry {
+                tx,
+                backend_name,
+                last_seq_num: 0,
+            },
+        );
         rx
     }
 
     /// Unregisters a client and notifies the backend of the disconnect.
     pub async fn unregister_client(&self, client_id: &str, backend_name: &str) {
-        // Notify the backend that the client is closing
-        self.send_to_backend(backend_name, client_id, r#"{"method":"close"}"#)
-            .await;
+        let close_seq_num = {
+            let mut state = self.state.lock().unwrap();
+            if let Some(entry) = state.clients.remove(client_id) {
+                entry.last_seq_num + 1
+            } else {
+                1
+            }
+        };
 
+        // Notify the backend that the client is closing
+        let close_msg = format!(r#"{{"method":"close","seqNum":{}}}"#, close_seq_num);
+        self.send_to_backend(backend_name, client_id, &close_msg)
+            .await;
+    }
+
+    /// Disconnects all clients associated with a specific backend (e.g., when it crashes).
+    pub fn disconnect_clients_for_backend(&self, backend_name: &str) {
         let mut state = self.state.lock().unwrap();
-        state.clients.remove(client_id);
+        state.clients.retain(|client_id, entry| {
+            if entry.backend_name == backend_name {
+                info!("Forcibly disconnected client {} because backend {} crashed.", client_id, backend_name);
+                false
+            } else {
+                true
+            }
+        });
     }
 
     /// Retrieves a channel to send messages directly to the backend.
@@ -150,13 +187,14 @@ impl BackendManager {
                 let stdout = child_process.stdout.take().unwrap();
                 let stderr = child_process.stderr.take().unwrap();
 
-                let last_output_time = Arc::new(AtomicU64::new(Self::current_ms()));
-                let last_output_time_clone = last_output_time.clone();
+                let pending_requests =
+                    Arc::new(Mutex::new(HashMap::<(String, i64), tokio::time::Instant>::new()));
+                let pending_requests_clone = pending_requests.clone();
 
                 let manager_for_reader = manager_clone.clone();
                 let stdout_task = tokio::spawn(async move {
                     manager_for_reader
-                        .forward_outputs_to_client(stdout, last_output_time_clone)
+                        .forward_outputs_to_client(stdout, pending_requests_clone)
                         .await;
                 });
 
@@ -166,11 +204,12 @@ impl BackendManager {
                 });
 
                 let exit_reason = Self::forward_inputs_to_backend(
+                    &manager_clone.state,
                     &mut stdin_rx,       // Inputs received from client connections.
                     stdin,               // Backend stdin.
                     &mut child_process,  // Backend process.
                     &backend_name_clone, // Backend name.
-                    last_output_time,    // Output tracker.
+                    pending_requests,    // Output tracker.
                 )
                 .await;
 
@@ -182,10 +221,14 @@ impl BackendManager {
                         "Backend {} input channel closed permanently. Stopping manager loop.",
                         backend_name_clone
                     );
+                    manager_clone.disconnect_clients_for_backend(&backend_name_clone);
                     break; // Exit the loop entirely to prevent infinite restarts!
                 }
 
                 warn!("Restarting backend {}", backend_name_clone);
+                // Disconnect all existing clients so they are forced to reconnect and re-initialize
+                // with the new backend process instance.
+                manager_clone.disconnect_clients_for_backend(&backend_name_clone);
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
         });
@@ -222,17 +265,18 @@ impl BackendManager {
             config.name, executable_path, working_dir, params
         );
 
-        let args_vec: Vec<&str> = params.split_whitespace().collect();
         debug!(
-            "Execution Details: {:?} with args {:?}",
-            executable_path, args_vec
+            "Execution Details: {:?} with params {:?}",
+            executable_path, params
         );
 
         const CREATE_NO_WINDOW: u32 = 0x08000000;
 
         let mut child_cmd = Command::new(&executable_path);
+        if !params.trim().is_empty() {
+            child_cmd.raw_arg(&params);
+        }
         child_cmd
-            .args(&args_vec)
             .current_dir(&working_dir)
             .creation_flags(CREATE_NO_WINDOW)
             .env("PYTHONIOENCODING", "utf-8:ignore")
@@ -249,16 +293,13 @@ impl BackendManager {
     async fn forward_outputs_to_client(
         self,
         stdout: tokio::process::ChildStdout,
-        last_output_time: Arc<AtomicU64>,
+        pending_requests: Arc<Mutex<HashMap<(String, i64), tokio::time::Instant>>>,
     ) {
-        // TODO: Need to detect if the backend process hangs and is not responsive.
-        // When a backend process hangs, reading from its stdout may blocks forever.
         let mut stdout_reader = FramedRead::new(
             stdout,
             LinesCodec::new_with_max_length(protocol::MAX_MESSAGE_LINE_LENGTH),
         );
         while let Some(result) = stdout_reader.next().await {
-            last_output_time.store(Self::current_ms(), Ordering::Relaxed);
             let line = match result {
                 Ok(l) => l,
                 Err(e) => {
@@ -272,27 +313,38 @@ impl BackendManager {
                 continue;
             };
 
+            if let Some(seq_num) = protocol::extract_seq_num(&payload) {
+                let mut map = pending_requests.lock().unwrap();
+                map.remove(&(client_id.clone(), seq_num));
+            }
+
             debug!("Routing to client {}: {:?}", client_id, payload);
 
             let tx = {
                 let state = self.state.lock().unwrap();
-                state.clients.get(&client_id).cloned()
+                state.clients.get(&client_id).map(|e| e.tx.clone())
             };
 
             if let Some(tx) = tx {
                 // Use a timeout to avoid blocking the backend output indefinitely if a client is slow.
                 // We give the client 500ms to clear some space in their buffer.
                 // Note: We don't add a newline here anymore; the client writer will handle it.
-                if let Err(_) =
-                    tokio::time::timeout(Duration::from_millis(500), tx.send(payload)).await
+                if tokio::time::timeout(Duration::from_millis(500), tx.send(payload))
+                    .await
+                    .is_err()
                 {
                     warn!("Client {} buffer full for 500ms. Force disconnecting to prevent backend stall.", client_id);
                     let mut state = self.state.lock().unwrap();
                     state.clients.remove(&client_id);
                 }
-            } else {
+            } else if !payload.contains(r#""method":"close""#) {
                 warn!(
                     "Received message for unknown client {}: {}",
+                    client_id, payload
+                );
+            } else {
+                debug!(
+                    "Received close reply for disconnected client {}: {}",
                     client_id, payload
                 );
             }
@@ -302,17 +354,17 @@ impl BackendManager {
 
     /// Forwards messages from the internal channel to the backend's stdin.
     async fn forward_inputs_to_backend(
+        state: &Arc<Mutex<BackendManagerState>>,
         stdin_rx: &mut mpsc::Receiver<String>,
         stdin: tokio::process::ChildStdin,
         child_process: &mut tokio::process::Child,
         backend_name: &str,
-        last_output_time: Arc<AtomicU64>,
+        pending_requests: Arc<Mutex<HashMap<(String, i64), tokio::time::Instant>>>,
     ) -> BackendExitReason {
         let mut stdin_writer = FramedWrite::new(
             stdin,
             LinesCodec::new_with_max_length(protocol::MAX_MESSAGE_LINE_LENGTH),
         );
-        let mut last_request_time: Option<u64> = None;
 
         let mut watchdog_interval = tokio::time::interval(Duration::from_secs(1));
 
@@ -326,36 +378,46 @@ impl BackendManager {
                         info!("Backend {} stdin channel closed. Exiting input loop.", backend_name);
                         return BackendExitReason::Normal;
                     };
-                    let now = Self::current_ms();
-                    last_request_time = Some(now);
+                    if let Some((client_id, json_part)) = data.split_once('|') {
+                        if let Some(seq_num) = protocol::extract_seq_num(json_part) {
+                            let mut map = pending_requests.lock().unwrap();
+                            map.insert((client_id.to_string(), seq_num), tokio::time::Instant::now());
+
+                            let mut state_guard = state.lock().unwrap();
+                            if let Some(entry) = state_guard.clients.get_mut(client_id) {
+                                entry.last_seq_num = seq_num;
+                            }
+                        }
+                    }
                     info!("Backend {} received request from channel. Data len: {}.", backend_name, data.len());
 
-                    // LinesCodec expects data without the newline, it will add it for us.
-                    let write_res = tokio::time::timeout(protocol::BACKEND_WRITE_TIMEOUT, stdin_writer.send(data)).await;
-                    if let Err(_) = write_res {
-                        error!("Timeout writing to backend {}. Forcing restart.", backend_name);
-                        let _ = child_process.kill().await;
-                        return BackendExitReason::Error;
-                    }
-                    if let Err(e) = write_res.unwrap() {
-                        error!("Failed to write to backend {}: {}", backend_name, e);
-                        let _ = child_process.kill().await;
-                        return BackendExitReason::Error;
-                    }
-                }
-                _ = watchdog_interval.tick() => {
-                    let now = Self::current_ms();
-                    if let Some(req_t) = last_request_time {
-                        let last_out = last_output_time.load(Ordering::Relaxed);
-                        debug!("Watchdog tick for {}: last_out={}, req_t={}, now={}, delta={}ms",
-                        backend_name, last_out, req_t, now, now.saturating_sub(req_t));
-
-                        if last_out < req_t && now - req_t > protocol::HANG_TIMEOUT.as_millis() as u64 {
-                            error!("Backend {} seems to be hung (no output for {}ms after request). Forcing restart.",
-                                backend_name, protocol::HANG_TIMEOUT.as_millis());
+                    match tokio::time::timeout(protocol::BACKEND_WRITE_TIMEOUT, stdin_writer.send(data)).await {
+                        Err(_) => {
+                            error!("Timeout writing to backend {}. Forcing restart.", backend_name);
                             let _ = child_process.kill().await;
                             return BackendExitReason::Error;
                         }
+                        Ok(Err(e)) => {
+                            error!("Failed to write to backend {}: {}", backend_name, e);
+                            let _ = child_process.kill().await;
+                            return BackendExitReason::Error;
+                        }
+                        Ok(Ok(())) => {}
+                    }
+                }
+                _ = watchdog_interval.tick() => {
+                    let now = tokio::time::Instant::now();
+                    let is_hung = {
+                        let map = pending_requests.lock().unwrap();
+                        map.values().any(|&sent_time| now.duration_since(sent_time) >= protocol::HANG_TIMEOUT)
+                    };
+                    if is_hung {
+                        error!(
+                            "Backend {} seems to be hung (pending request timed out after {}ms). Forcing restart.",
+                            backend_name, protocol::HANG_TIMEOUT.as_millis()
+                        );
+                        let _ = child_process.kill().await;
+                        return BackendExitReason::Error;
                     }
                 }
                 status = child_process.wait() => {
@@ -364,13 +426,6 @@ impl BackendManager {
                 }
             }
         }
-    }
-
-    fn current_ms() -> u64 {
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis() as u64
     }
 }
 
@@ -384,11 +439,14 @@ mod tests {
         let registry = BackendRegistry::new();
         let manager = BackendManager::new(registry);
 
-        let _ = manager.register_client("client1".to_string()).await;
+        let _ = manager
+            .register_client("client1".to_string(), "dummy".to_string())
+            .await;
 
         {
             let state = manager.state.lock().unwrap();
             assert!(state.clients.contains_key("client1"));
+            assert_eq!(state.clients["client1"].backend_name, "dummy");
         }
 
         manager.unregister_client("client1", "dummy").await;

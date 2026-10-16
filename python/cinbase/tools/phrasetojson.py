@@ -25,7 +25,7 @@ class PhraseToJson(object):
         self.chardefs = {}
 
     def run(self, file, filePath):
-        self.jsonFile = re.sub('\.dat$', '', file) + '.json'
+        self.jsonFile = re.sub(r'\.dat$', '', file) + '.json'
         
         with io.open(filePath, encoding='utf-8') as fs:
             for line in fs:

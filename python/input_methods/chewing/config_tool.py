@@ -25,12 +25,10 @@ import json
 
 current_dir = os.path.dirname(__file__)
 
-# The libchewing package is not in the default python path.
-# FIXME: set PYTHONPATH properly so we don't need to add this hack.
-sys.path.append(os.path.dirname(os.path.dirname(current_dir)))
-sys.path.append(current_dir)
-
-from chewing_config import chewingConfig
+try:
+    from input_methods.chewing.chewing_config import chewingConfig
+except ModuleNotFoundError:
+    from chewing_config import chewingConfig
 from libchewing import ChewingContext, CHEWING_DATA_DIR
 from ctypes import c_uint, byref, create_string_buffer
 

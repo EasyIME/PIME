@@ -20,9 +20,11 @@ from ctypes import *
 from time import time
 import sys, os
 
-if __name__ == "__main__":
-    sys.path.append('../../')
-from opencc import OpenCC
+try:
+    from opencc import OpenCC
+except ModuleNotFoundError:
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+    from opencc import OpenCC
 
 ENC = sys.getfilesystemencoding()
 RIME = "Rime"

@@ -36,7 +36,8 @@ class CinToJson(object):
     # TODO check the possiblility if the encoding is not utf-8
     encoding = 'utf-8'
 
-    def __init__(self):
+    def __init__(self, indent=0):
+        self.indent = indent
         self.sortByCharset = False
 
         self.ename = ""
@@ -155,7 +156,7 @@ class CinToJson(object):
 
 
     def run(self, file, filePath, sortByCharset):
-        self.jsonFile = re.sub('\.cin$', '', file) + '.json'
+        self.jsonFile = re.sub(r'\.cin$', '', file) + '.json'
         self.sortByCharset = sortByCharset
         state = PARSING_HEAD_STATE
 
@@ -300,7 +301,10 @@ class CinToJson(object):
         filename = self.getJsonFile(file)
         try:
             with open(filename, 'w', encoding='utf8') as f:
-                js = json.dump(self.toJson(), f, ensure_ascii=False, sort_keys=True, indent=4)
+                if self.indent and self.indent > 0:
+                    json.dump(self.toJson(), f, ensure_ascii=False, sort_keys=True, indent=self.indent)
+                else:
+                    json.dump(self.toJson(), f, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
         except Exception:
             pass # FIXME: handle I/O errors?
 
@@ -474,31 +478,44 @@ def safeSplit(line):
 
 
 def main():
-    app = CinToJson()
-    if len(sys.argv) >= 2:
-        cinFile = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, "cin", sys.argv[1])
+    import argparse
+    parser = argparse.ArgumentParser(description="Convert CIN files to JSON")
+    parser.add_argument("file", nargs="?", default=None, help="Specific .cin filename to convert")
+    parser.add_argument("sort", nargs="?", default=None, help="Pass 'sort' to sort by charset")
+    parser.add_argument("-i", "--indent", type=int, default=0, help="JSON indentation level (default: 0 to disable indent and minimize JSON)")
+    parser.add_argument("-s", "--sort-charset", action="store_true", dest="sort_flag", help="Sort by charset")
+    args = parser.parse_args()
+
+    app = CinToJson(indent=args.indent)
+    cin_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, "cin")
+
+    if args.file:
+        cinFile = os.path.join(cin_dir, args.file)
+        if not os.path.exists(cinFile) and os.path.exists(args.file):
+            cinFile = os.path.abspath(args.file)
+            cin_basename = os.path.basename(cinFile)
+        else:
+            cin_basename = args.file
+
         if os.path.exists(cinFile):
-            if len(sys.argv) >= 3 and sys.argv[2] == "sort":
-                app.run(sys.argv[1], cinFile, True)
-            else:
-                app.run(sys.argv[1], cinFile, False)
-    else:
-        if len(sys.argv) == 1:
-            sortList = ['cnscj.cin', 'CnsPhonetic.cin']
-            for file in os.listdir(os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, "cin")):
-                if file.endswith(".cin"):
-                    if DEBUG_MODE:
-                        print('轉換 ' + file + ' 中...')
-                    app.__init__()
-                    cinFile = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, "cin", file)
-                    if file in sortList:
-                        app.run(file, cinFile, True)
-                    else:
-                        app.run(file, cinFile, False)
-                app.__del__()
+            sort_by_charset = (args.sort == "sort") or args.sort_flag
+            app.run(cin_basename, cinFile, sort_by_charset)
         else:
             if DEBUG_MODE:
                 print('檔案不存在!')
+    else:
+        sortList = ['cnscj.cin', 'CnsPhonetic.cin']
+        for file in os.listdir(cin_dir):
+            if file.endswith(".cin"):
+                if DEBUG_MODE:
+                    print('轉換 ' + file + ' 中...')
+                app.__init__(indent=args.indent)
+                cinFile = os.path.join(cin_dir, file)
+                if file in sortList:
+                    app.run(file, cinFile, True)
+                else:
+                    app.run(file, cinFile, False)
+            app.__del__()
 
 
 if __name__ == "__main__":

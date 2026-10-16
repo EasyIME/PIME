@@ -7,7 +7,15 @@ node/input_methods/McFoxim
 node/input_methods/McTabim
 node/input_methods/emojime/dist
 installer/*.exe
+installer/*.msi
+installer/bin/
+installer/**/bin/
+installer/**/obj/
+installer/**/.wix/
 PIMELauncher/target/
 .claude/
 cleanup_x64.ps1
 replace_x64_dll.ps1
+
+# Harvested WiX Files
+installer/PIME_Core/Harvest/

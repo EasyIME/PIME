@@ -36,7 +36,8 @@ class CinToJson(object):
     # TODO check the possiblility if the encoding is not utf-8
     encoding = 'utf-8'
 
-    def __init__(self, indent=0):
+    def __init__(self, out_dir=None, indent=0):
+        self.out_dir = out_dir
         self.indent = indent
         self.sortByCharset = False
 
@@ -310,6 +311,9 @@ class CinToJson(object):
 
 
     def getJsonDir(self):
+        if getattr(self, 'out_dir', None):
+            os.makedirs(self.out_dir, mode=0o700, exist_ok=True)
+            return self.out_dir
         json_dir = os.path.join(self.curdir, os.pardir, "json")
         os.makedirs(json_dir, mode=0o700, exist_ok=True)
         return json_dir
@@ -482,11 +486,14 @@ def main():
     parser = argparse.ArgumentParser(description="Convert CIN files to JSON")
     parser.add_argument("file", nargs="?", default=None, help="Specific .cin filename to convert")
     parser.add_argument("sort", nargs="?", default=None, help="Pass 'sort' to sort by charset")
+    parser.add_argument("out_dir", nargs="?", default=None, help="Output directory for JSON files")
+    parser.add_argument("-o", "--output-dir", default=None, dest="out_dir_opt", help="Output directory for JSON files")
     parser.add_argument("-i", "--indent", type=int, default=0, help="JSON indentation level (default: 0 to disable indent and minimize JSON)")
     parser.add_argument("-s", "--sort-charset", action="store_true", dest="sort_flag", help="Sort by charset")
     args = parser.parse_args()
 
-    app = CinToJson(indent=args.indent)
+    out_dir = args.out_dir_opt or args.out_dir
+    app = CinToJson(out_dir=out_dir, indent=args.indent)
     cin_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, "cin")
 
     if args.file:
@@ -509,7 +516,7 @@ def main():
             if file.endswith(".cin"):
                 if DEBUG_MODE:
                     print('轉換 ' + file + ' 中...')
-                app.__init__(indent=args.indent)
+                app.__init__(out_dir=out_dir, indent=args.indent)
                 cinFile = os.path.join(cin_dir, file)
                 if file in sortList:
                     app.run(file, cinFile, True)

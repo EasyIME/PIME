@@ -807,6 +807,9 @@ bool Client::waitForRpcConnection() {
 	}
 
 	wstring serverPipeName = getPipeName(L"Launcher");
+	if (serverPipeName.empty()) {
+		return false;
+	}
 	for (int attempt = 0; pipe_ == INVALID_HANDLE_VALUE && attempt < 3; ++attempt) {
 		// try to connect to the server
 		pipe_ = connectPipe(serverPipeName.c_str(), 3000);
@@ -866,11 +869,11 @@ wstring Client::getPipeName(const wchar_t* base_name) {
 	DWORD len = 0;
 	::GetUserNameW(NULL, &len); // get the required size of the buffer
 	if (len <= 0)
-		return false;
+		return L"";
 	// add username to the pipe path so it won't clash with the other users' pipes
 	unique_ptr<wchar_t[]> username(new wchar_t[len]);
 	if (!::GetUserNameW(username.get(), &len))
-		return false;
+		return L"";
 	pipeName += username.get();
 	pipeName += L"\\PIME\\";
 	pipeName += base_name;

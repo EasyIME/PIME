@@ -16,11 +16,15 @@ Contributions using AI coding tools are welcomed! However, to ensure code qualit
 # Development
 
 ## Tool Requirements
-*   [CMake](http://www.cmake.org/) >= 3.0
-*   [Visual Studio 2019](https://visualstudio.microsoft.com/vs)
+*   [CMake](https://cmake.org/) >= 4.0 (Required for Visual Studio 2026 generator; bundled with Visual Studio 2026 or available via `winget install Kitware.CMake`)
+*   [Visual Studio 2026](https://visualstudio.microsoft.com/vs) (with "Desktop development with C++" workload)
+    *   **MSVC C++ ARM64/ARM64EC build tools** (Required component in Visual Studio Installer for building the ARM64X forwarder DLL)
+    *   **Windows 10/11 SDK**
 *   [Rust Toolchain](https://rustup.rs/) (Stable channel with `i686-pc-windows-msvc` target)
-*   [git](http://windows.github.com/)
+*   [git](https://git-scm.com/)
 *   [Node.js](https://nodejs.org/) (Required for some backends like McBopomofo)
+*   [.NET SDK](https://dotnet.microsoft.com/download) (Required for WiX v4)
+*   [WiX Toolset v4](https://wixtoolset.org/) (Install via `dotnet tool install --global wix --version 4.0.6`)
 
 ## How to Build
 *   Get source from github.
@@ -33,16 +37,25 @@ Contributions using AI coding tools are welcomed! However, to ensure code qualit
 
         rustup target add i686-pc-windows-msvc
 
-*   Use `build.bat` to build everything, or use the following CMake commands to generate Visual Studio project.
+*   Use `build.bat` to build everything, or use the following CMake commands to generate Visual Studio project:
 
-        cmake . -Bbuild -G "Visual Studio 16 2019" -A Win32
+        cmake . -Bbuild -G "Visual Studio 18 2026" -A Win32 -DCMAKE_POLICY_VERSION_MINIMUM=3.5
         cmake --build build --config Release
 
         # For 64-bit Text Service (Required for 64-bit apps)
-        cmake . -Bbuild64 -G "Visual Studio 16 2019" -A x64
+        cmake . -Bbuild64 -G "Visual Studio 18 2026" -A x64 -DCMAKE_POLICY_VERSION_MINIMUM=3.5
         cmake --build build64 --config Release --target PIMETextService
 
-*   The generated installer will be in the `installer` folder after running `makensis`.
+        # For ARM64 Text Service (Required for ARM64/ARM64X apps)
+        cmake . -Bbuild_arm64 -G "Visual Studio 18 2026" -A ARM64 -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+        cmake --build build_arm64 --config Release --target PIMETextService
+
+*   To build the installer, ensure the WiX Toolset v4 CLI is installed (`dotnet tool install --global wix --version 4.0.6`). Then run `build.bat` or:
+
+        dotnet build installer/PIME_WiX.sln -c Release
+        installer\build_multilingual.bat
+
+    The generated multilingual MSI package will be created at `installer/bin/PIME_Core_Multilingual.msi`.
 
 ## TSF References
 *   [Text Services Framework](http://msdn.microsoft.com/en-us/library/windows/desktop/ms629032%28v=vs.85%29.aspx)

@@ -3362,7 +3362,9 @@ class LoadCinTable(threading.Thread):
             if self.cbTS.cfg.selCinType >= len(self.cbTS.cinFileList):
                 self.cbTS.cfg.selCinType = 0
             selCinFile = self.cbTS.cinFileList[self.cbTS.cfg.selCinType]
-            jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
+            jsonPath = os.path.join(self.cbTS.cfg.getConfigDir(), selCinFile)
+            if not os.path.exists(jsonPath):
+                jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
 
             if self.cbTS.reLoadCinTable or not hasattr(self.cbTS, 'cin'):
                 self.cbTS.reLoadCinTable = False
@@ -3426,7 +3428,12 @@ class LoadRCinTable(threading.Thread):
         selCinFile = None
         try:
             selCinFile = self.rcinFileList[self.cbTS.cfg.selRCinType]
-            jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
+            jsonPath = os.path.join(self.cbTS.cfg.getConfigDir(), selCinFile)
+            if not os.path.exists(jsonPath) and selCinFile == "liu.json":
+                cheliu_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", "cheliu")
+                jsonPath = os.path.join(cheliu_dir, selCinFile)
+            if not os.path.exists(jsonPath):
+                jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
 
             if self.RCinTable.cin is not None and hasattr(self.RCinTable.cin, '__del__'):
                 self.RCinTable.cin.__del__()
@@ -3465,7 +3472,9 @@ class LoadHCinTable(threading.Thread):
         selCinFile = None
         try:
             selCinFile = CinBase.hcinFileList[self.cbTS.cfg.selHCinType]
-            jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
+            jsonPath = os.path.join(self.cbTS.cfg.getConfigDir(), selCinFile)
+            if not os.path.exists(jsonPath):
+                jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
 
             if self.HCinTable.cin is not None and hasattr(self.HCinTable.cin, '__del__'):
                 self.HCinTable.cin.__del__()

@@ -1,21 +1,7 @@
-
 # node
-!/node_modules
-/node_modules/*
+node_modules/
+dist/
+package-lock.json
 
 # npm
 *.log
-package-lock.json
-
-# emojione
-!/node_modules/emojione
-/node_modules/emojione/*
-!/node_modules/emojione/package.json
-!/node_modules/emojione/lib/
-/node_modules/emojione/lib/*
-!/node_modules/emojione/lib/js/
-/node_modules/emojione/lib/js/*
-!/node_modules/emojione/lib/js/emojione.js
-
-# build
-/dist/

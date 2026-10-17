@@ -32,3 +32,8 @@ let server = NIME.createServer((request) => {
 });
 
 server.listen();
+
+process.stdin.on('end', () => {
+  debug('stdin closed, exiting');
+  process.exit(0);
+});

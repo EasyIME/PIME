@@ -46,10 +46,13 @@ jobs:
           cd PIMELauncher
           cargo test --verbose
 
-      - name: Install NSIS
-        uses: repolevedavaj/install-nsis@v1.2.0
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
         with:
-          nsis-version: 3.08
+          dotnet-version: '8.0.x'
+
+      - name: Install WiX Toolset
+        run: dotnet tool install --global wix --version 4.0.6
 
       - name: Run build.bat
         env:
@@ -70,6 +73,7 @@ jobs:
             build/PIMETextService/Release/PIMETextService.dll
             build64/PIMETextService/Release/PIMETextService.dll
             build_arm64/PIMETextService/Release/PIMETextService.dll
+            build_arm64/PIMETextService/Release/PIMETextService_forwarder.dll
 
       # ---------------------------------------------------------------
       # Sign binaries with the specified signing policy.
@@ -97,14 +101,24 @@ jobs:
           copy signed-binaries\build\PIMETextService\Release\PIMETextService.dll build\PIMETextService\Release\PIMETextService.dll
           copy signed-binaries\build64\PIMETextService\Release\PIMETextService.dll build64\PIMETextService\Release\PIMETextService.dll
           copy signed-binaries\build_arm64\PIMETextService\Release\PIMETextService.dll build_arm64\PIMETextService\Release\PIMETextService.dll
+          copy signed-binaries\build_arm64\PIMETextService\Release\PIMETextService_forwarder.dll build_arm64\PIMETextService\Release\PIMETextService_forwarder.dll
 
       # ---------------------------------------------------------------
-      # Build installer with signed binaries.
+      # Build MSI installers and multilingual package with signed binaries.
       # ---------------------------------------------------------------
-      - name: Build the installer
+      - name: Build the installer (WiX)
         shell: cmd
         run: |
-          "C:\Program Files (x86)\NSIS\Bin\makensis.exe" ".\installer\installer.nsi"
+          cd installer
+          ..\python\python3\python.exe stage_payload.py
+          if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+          ..\python\python3\python.exe generate_harvest_wxs.py
+          if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+          dotnet build PIME_Core\PIME_Core.wixproj -c Release
+          if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+          call build_multilingual.bat
+          if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+          cd ..
 
       # ---------------------------------------------------------------
       # Upload installer for signing.
@@ -114,7 +128,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: unsigned-installer
-          path: installer/*.exe
+          path: installer/bin/PIME_Core_Multilingual.msi
           archive: false
 
       # ---------------------------------------------------------------
@@ -132,7 +146,7 @@ jobs:
           github-artifact-id: '${{ steps.upload-unsigned-installer.outputs.artifact-id }}'
           wait-for-completion: true
           output-artifact-directory: 'signed-installer'
-          skip-decompress: true  # installer exe is not a zip file.
+          skip-decompress: true  # installer is not a zip file.
 
       # ---------------------------------------------------------------
       # Create GitHub Release (only for release builds).
@@ -141,5 +155,5 @@ jobs:
         if: ${{ inputs.create-release && env.SIGNPATH_API_TOKEN != '' }}
         uses: softprops/action-gh-release@v2
         with:
-          files: signed-installer/**/*.exe
+          files: signed-installer/**/*.msi
           generate_release_notes: true

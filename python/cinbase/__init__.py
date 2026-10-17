@@ -1685,7 +1685,10 @@ class CinBase:
 
             if cbTS.langMode == CHINESE_MODE and cbTS.dayisymbolsmode and len(cbTS.compositionChar) == 1 and (keyCode == VK_SPACE or keyCode == VK_RETURN):
                 candidates = cbTS.cin.getCharDef(cbTS.compositionChar)
-                if cbTS.compositionBufferMode and cbTS.directShowCand:
+                if not candidates:
+                    cbTS.setCommitString(getattr(cbTS, 'DayiSymbolString', cbTS.compositionChar))
+                    self.resetComposition(cbTS)
+                elif cbTS.compositionBufferMode and cbTS.directShowCand:
                     self.removeCompositionBufferString(cbTS, 1, True)
 
             if candidates and not cbTS.phrasemode:

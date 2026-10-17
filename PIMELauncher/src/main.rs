@@ -113,38 +113,138 @@ fn signal_quit_event() {
     }
 }
 
+#[derive(Default, Debug)]
+struct LauncherArgs {
+    is_worker: bool,
+    show_console: bool,
+    is_quit: bool,
+    show_help: bool,
+    log_file: Option<String>,
+}
+
+impl LauncherArgs {
+    fn parse(args: &[String]) -> Self {
+        let mut parsed = Self::default();
+        let mut iter = args.iter().skip(1);
+
+        while let Some(arg) = iter.next() {
+            match arg.as_str() {
+                "/worker" => parsed.is_worker = true,
+                "/console" => parsed.show_console = true,
+                "/quit" => parsed.is_quit = true,
+                "/help" | "/?" => parsed.show_help = true,
+                "/log-file" => parsed.log_file = iter.next().cloned(),
+                _ if arg.starts_with("/log-file=") => {
+                    parsed.log_file = arg.split_once('=').map(|(_, v)| v.to_string());
+                }
+                _ => {}
+            }
+        }
+        parsed
+    }
+}
+
+fn print_help() {
+    use windows::Win32::System::Console::{AttachConsole, ATTACH_PARENT_PROCESS};
+    unsafe {
+        if AttachConsole(ATTACH_PARENT_PROCESS).is_err() {
+            setup_console();
+        }
+    }
+    println!(
+        r#"PIMELauncher - Background middleware for PIME text services
+
+USAGE:
+    PIMELauncher.exe [OPTIONS]
+
+OPTIONS:
+    /console            Open a console window with live DEBUG logs
+    /log-file <PATH>    Dump DEBUG logs to the specified file (or /log-file=<PATH>)
+    /quit               Gracefully terminate running PIMELauncher instance
+    /help, /?           Print this help message
+"#
+    );
+}
+
+fn open_log_file(path_str: &str) -> Option<std::fs::File> {
+    let path = std::path::Path::new(path_str);
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    match std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+    {
+        Ok(file) => Some(file),
+        Err(e) => {
+            eprintln!("Failed to open log file {}: {}", path_str, e);
+            None
+        }
+    }
+}
+
+fn setup_logging(args: &LauncherArgs) {
+    use tracing_subscriber::filter::LevelFilter;
+    use tracing_subscriber::layer::SubscriberExt;
+    use tracing_subscriber::util::SubscriberInitExt;
+
+    let console_layer = args.show_console.then(|| {
+        tracing_subscriber::fmt::layer()
+            .with_ansi(true)
+            .with_writer(std::io::stdout)
+    });
+
+    let file_layer = match &args.log_file {
+        Some(path) => open_log_file(path).map(|file| {
+            tracing_subscriber::fmt::layer()
+                .with_ansi(false)
+                .with_writer(std::sync::Mutex::new(file))
+        }),
+        None => None,
+    };
+
+    let level = if console_layer.is_some() || file_layer.is_some() {
+        LevelFilter::DEBUG
+    } else {
+        LevelFilter::WARN
+    };
+
+    tracing_subscriber::registry()
+        .with(level)
+        .with(console_layer)
+        .with(file_layer)
+        .init();
+}
+
 #[tokio::main]
 async fn main() {
     assign_process_to_job_object();
     setup_error_mode();
 
-    let args: Vec<String> = std::env::args().collect();
-    let is_worker = args.iter().any(|arg| arg == "/worker");
-    let show_console = args.iter().any(|arg| arg == "/console");
-    let is_quit = args.iter().any(|arg| arg == "/quit");
+    let raw_args: Vec<String> = std::env::args().collect();
+    let args = LauncherArgs::parse(&raw_args);
 
-    if is_quit {
+    if args.show_help {
+        print_help();
+        return;
+    }
+
+    if args.is_quit {
         signal_quit_event();
         return;
     }
 
-    if show_console {
+    if args.show_console {
         setup_console();
-        tracing_subscriber::fmt().with_ansi(true).init();
-    } else {
-        // In background mode, we MUST use a sink for tracing.
-        // Writing to a non-existent stdout in a GUI subsystem app can cause hangs.
-        tracing_subscriber::fmt()
-            .with_ansi(false)
-            .with_max_level(tracing::Level::WARN)
-            .with_writer(std::io::sink)
-            .init();
     }
+
+    setup_logging(&args);
 
     // Ensure single instance (using a named mutex)
     // The Watchdog process (parent) holds this mutex.
     let mutex_name = get_per_session_name("PIMELauncher2_WatchdogMutex");
-    let _mutex = if !is_worker {
+    let _mutex = if !args.is_worker {
         match create_single_instance_mutex(&mutex_name) {
             Ok(m) => Some(m),
             Err(_) => {
@@ -156,8 +256,8 @@ async fn main() {
         None
     };
 
-    if !is_worker {
-        run_watchdog(&args).await;
+    if !args.is_worker {
+        run_watchdog(&raw_args).await;
     } else {
         run_worker().await;
     }
@@ -314,5 +414,51 @@ fn setup_console() {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_launcher_args_parse() {
+        let args1 = vec![
+            "PIMELauncher.exe".into(),
+            "/console".into(),
+            "/log-file".into(),
+            "test.log".into(),
+        ];
+        let p1 = LauncherArgs::parse(&args1);
+        assert!(p1.show_console);
+        assert_eq!(p1.log_file, Some("test.log".to_string()));
+        assert!(!p1.is_worker);
+        assert!(!p1.is_quit);
+        assert!(!p1.show_help);
+
+        let args2 = vec![
+            "PIMELauncher.exe".into(),
+            "/log-file=output.log".into(),
+            "/worker".into(),
+        ];
+        let p2 = LauncherArgs::parse(&args2);
+        assert!(p2.is_worker);
+        assert_eq!(p2.log_file, Some("output.log".to_string()));
+
+        let args3 = vec!["PIMELauncher.exe".into(), "/quit".into()];
+        let p3 = LauncherArgs::parse(&args3);
+        assert!(p3.is_quit);
+
+        let args4 = vec!["PIMELauncher.exe".into(), "/?".into()];
+        let p4 = LauncherArgs::parse(&args4);
+        assert!(p4.show_help);
+
+        let args5 = vec!["PIMELauncher.exe".into(), "/help".into()];
+        let p5 = LauncherArgs::parse(&args5);
+        assert!(p5.show_help);
+
+        let args6 = vec!["PIMELauncher.exe".into(), "/log-file".into()];
+        let p6 = LauncherArgs::parse(&args6);
+        assert_eq!(p6.log_file, None);
     }
 }

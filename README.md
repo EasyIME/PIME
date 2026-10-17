@@ -88,9 +88,29 @@ Contributions using AI coding tools are welcomed! However, to ensure code qualit
 Please report any issue to [here](https://github.com/EasyIME/PIME/issues).
 
 # Debugging
-If you encounter issues, you can run PIMELauncher.exe with the /console argument:
+If you encounter issues, you can run `PIMELauncher.exe` with the following debugging options:
 
-    PIMELauncher.exe /console
+* **Live console output**:
+  ```powershell
+  PIMELauncher.exe /console
+  ```
+  Opens a console window displaying live `DEBUG` level logs for troubleshooting backend communication and internal events.
 
-This opens a console window which displays debug logs, making it easier to
-troubleshoot backend communication and other internal events.
+* **Log to file (headless)**:
+  ```powershell
+  PIMELauncher.exe /log-file C:\path\to\pime.log
+  ```
+  Writes `DEBUG` level logs to the specified file while running silently in the background without popping up a console window.
+
+* **Quit running instance**:
+  ```powershell
+  PIMELauncher.exe /quit
+  ```
+
+* **Show help message**:
+  ```powershell
+  PIMELauncher.exe /help
+  # or: PIMELauncher.exe /?
+  ```
+
+When run normally without `/console` or `/log-file`, all debug logging is completely suppressed to avoid unnecessary I/O overhead.

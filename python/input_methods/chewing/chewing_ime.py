@@ -639,7 +639,10 @@ class ChewingTextService(TextService):
 
                 # 檢查選字清單是否改變 (沒效率但是簡單)
                 if candidates != self.candidateList:
-                    self.setCandidateList(candidates)  # 更新候選字清單
+                    # 一起送出頁碼，讓選字視窗顯示「1/17」，使用者才知道後面還有幾頁
+                    self.setCandidateList(candidates,
+                                          chewingContext.cand_CurrentPage() + 1,
+                                          chewingContext.cand_TotalPage())  # 更新候選字清單
                     self.setShowCandidates(True)
                     if cfg.leftRightAction == 0 or cfg.upDownAction == 0:  # 如果啟用選字清單內使用游標選字
                         if keyCode == VK_LEFT:  # 如果按下左鍵，設定游標為選字清單前一頁最後一個

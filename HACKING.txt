@@ -32,12 +32,24 @@ The IPC (Inter-Process Communication) Architecture
 
 Debugging
 
-If you encounter issues, you can run PIMELauncher.exe with the /console argument:
+If you encounter issues, you can run PIMELauncher.exe with the following options:
 
+* Open a console window with live debug logs:
     PIMELauncher.exe /console
 
-This opens a console window which displays debug logs, making it easier to
-troubleshoot backend communication and other internal events.
+* Dump debug logs to a file (runs in the background without opening a console window):
+    PIMELauncher.exe /log-file C:\path\to\pime.log
+    (or: PIMELauncher.exe /log-file=C:\path\to\pime.log)
+
+* Terminate any currently running PIMELauncher instance:
+    PIMELauncher.exe /quit
+
+* Show available command-line options:
+    PIMELauncher.exe /help
+    (or: PIMELauncher.exe /?)
+
+When neither /console nor /log-file is specified (normal background mode), all debug
+logging is completely suppressed to avoid unnecessary I/O overhead.
 
 Directory structure
 * PIME:

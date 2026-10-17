@@ -52,14 +52,20 @@ cargo build --release --target i686-pc-windows-msvc
 ## Usage
 
 ### Running the Service
-PIMELauncher is typically started automatically by the PIME Text Service. However, it can be run manually for debugging:
+PIMELauncher is typically started automatically upon Windows login or on demand by the PIME Text Service. However, it can be run manually for debugging:
 
 ```powershell
-# If built via CMake
-.\build\PIMELauncher\PIMELauncher.exe
+# Run with a live debug console
+.\build\PIMELauncher\PIMELauncher.exe /console
 
-# If built via Cargo
-.\PIMELauncher\target\i686-pc-windows-msvc\release\PIMELauncher.exe
+# Dump debug logs to a file without opening a console window
+.\build\PIMELauncher\PIMELauncher.exe /log-file C:\path\to\pime.log
+
+# Gracefully terminate a running instance
+.\build\PIMELauncher\PIMELauncher.exe /quit
+
+# Show available options
+.\build\PIMELauncher\PIMELauncher.exe /help
 ```
 
 ### Named Pipe

@@ -390,6 +390,7 @@ impl BackendManager {
                         }
                     }
                     info!("Backend {} received request from channel. Data len: {}.", backend_name, data.len());
+                    tracing::debug!("Backend Input Raw: {:?}", data);
 
                     match tokio::time::timeout(protocol::BACKEND_WRITE_TIMEOUT, stdin_writer.send(data)).await {
                         Err(_) => {

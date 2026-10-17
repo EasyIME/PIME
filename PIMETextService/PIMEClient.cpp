@@ -415,7 +415,7 @@ void Client::onActivate() {
 	req["isKeyboardOpen"] = textService_->isKeyboardOpened();
 
 	json ret;
-	callRpcMethod(req, ret);
+	callRpcMethod(req, ret, kServerStartupTimeoutMs);
 	if (handleRpcResponse(ret)) {
 	}
 	isActivated_ = true;
@@ -651,7 +651,7 @@ bool Client::init() {
 	req["isConsole"] = textService_->isConsole();
 
 	json ret;
-	return callRpcMethod(req, ret) && handleRpcResponse(ret);
+	return callRpcMethod(req, ret, kServerStartupTimeoutMs) && handleRpcResponse(ret);
 }
 
 
@@ -700,13 +700,12 @@ bool Client::callPipeIO(bool isRead, void *buffer, DWORD size, DWORD *rlen, int 
 	return ok;
 }
 
-bool Client::callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply) {
+bool Client::callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std::string& serializedReply, int timeoutMs) {
 	std::string request = serializedRequest;
 	if (request.empty() || request.back() != '\n') {
 		request += '\n';
 	}
 
-	const int timeoutMs = 2000;
 	DWORD wlen = 0;
 	if (!callPipeIO(false, (void*)request.data(), (DWORD)request.size(), &wlen, timeoutMs)) {
 		return false;
@@ -732,7 +731,7 @@ bool Client::callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std:
 
 // send the request to the server
 // a sequence number will be added to the req object automatically.
-bool Client::callRpcMethod(json& request, json & response) {
+bool Client::callRpcMethod(json& request, json & response, int timeoutMs) {
 	if (shouldWaitConnection_ && !waitForRpcConnection()) {
 		return false;
 	}
@@ -745,7 +744,7 @@ bool Client::callRpcMethod(json& request, json & response) {
 
 	std::string serializedResponse;
 	bool success = false;
-	if (callRpcPipe(pipe_, serializedRequest, serializedResponse)) {
+	if (callRpcPipe(pipe_, serializedRequest, serializedResponse, timeoutMs)) {
 		try {
 			response = json::parse(serializedResponse);
 			success = true;

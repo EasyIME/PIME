@@ -343,6 +343,13 @@ void Client::updateStatus(json& msg, Ime::EditSession* session) {
 	bool endComposition = false;
 	updateMessageWindow(msg, session, endComposition);
 
+	// UI settings first, so a candidate list sent in the same reply is laid out with them.
+	auto& customizeUIVal = msg["customizeUI"];
+	if (customizeUIVal.is_object()) {
+		// customize the UI
+		updateUI(customizeUIVal);
+	}
+
 	if (session != nullptr) { // if an edit session is available
 		updateCandidateList(msg, session);
 
@@ -359,13 +366,6 @@ void Client::updateStatus(json& msg, Ime::EditSession* session) {
 
 	// keyboard status
 	updateKeyboardStatus(msg);
-
-	// other configurations
-	auto& customizeUIVal = msg["customizeUI"];
-	if (customizeUIVal.is_object()) {
-		// customize the UI
-		updateUI(customizeUIVal);
-	}
 }
 
 void Client::updateCandidateList(json& msg, Ime::EditSession* session) {

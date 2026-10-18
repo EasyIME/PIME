@@ -41,6 +41,7 @@ public:
 	}
 
     void setIconFile(std::wstring filePath);
+	TextService* textService() const;
 
 	// ITfLangBarItemButton
 	STDMETHODIMP OnClick(TfLBIClick click, POINT pt, const RECT *prcArea);

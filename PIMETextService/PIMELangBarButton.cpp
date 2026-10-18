@@ -69,11 +69,15 @@ LangBarButton* LangBarButton::fromJson(TextService* service, json& info) {
 	return nullptr;
 }
 
+TextService* LangBarButton::textService() const {
+	return static_cast<TextService*>(Ime::LangBarButton::textService());
+}
+
 void LangBarButton::setIconFile(std::wstring filePath) {
 	if (filePath != iconFile_) {
 		iconFile_ = std::move(filePath);
 		auto* service = textService();
-		auto* module = service ? static_cast<PIME::ImeModule*>(service->imeModule().get()) : nullptr;
+		auto* module = service ? service->imeModule() : nullptr;
 		HICON icon = module ? module->iconCache().getIcon(iconFile_) : NULL;
 		if (icon) {
 			setIcon(icon);
@@ -133,9 +137,9 @@ void LangBarButton::updateFromJson(json& info) {
 STDMETHODIMP LangBarButton::OnClick(TfLBIClick click, POINT pt, const RECT* prcArea) {
 	// special handling for right click on windows 8 mode icon
 	if (id_ == WINDOWS_MODE_ICON_ID && click == TF_LBI_CLK_RIGHT) {
-		TextService* service = static_cast<TextService*>(textService());
+		TextService* service = textService();
 		// check if we need to show a popup menu
-		HMENU popupMenu = service->onMenu(this);
+		HMENU popupMenu = service ? service->onMenu(this) : NULL;
 		if (popupMenu != NULL) {
 			Ime::Window window; // TrackPopupMenu requires a window to work, so let's build a transient one.
 			window.create(HWND_DESKTOP, 0);
@@ -150,7 +154,7 @@ STDMETHODIMP LangBarButton::OnClick(TfLBIClick click, POINT pt, const RECT* prcA
 }
 
 STDMETHODIMP LangBarButton::InitMenu(ITfMenu* pMenu) {
-	TextService* service = static_cast<TextService*>(textService());
+	TextService* service = textService();
 	if (service && service->onMenu(this, pMenu)) {
 		return S_OK;
 	}

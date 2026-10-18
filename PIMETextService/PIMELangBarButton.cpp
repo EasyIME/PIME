@@ -73,7 +73,7 @@ void LangBarButton::setIconFile(std::wstring filePath) {
 	if (filePath != iconFile_) {
 		iconFile_ = std::move(filePath);
 		auto* service = textService();
-		auto* module = service ? static_cast<PIME::ImeModule*>(service->imeModule()) : nullptr;
+		auto* module = service ? static_cast<PIME::ImeModule*>(service->imeModule().get()) : nullptr;
 		HICON icon = module ? module->iconCache().getIcon(iconFile_) : NULL;
 		if (icon) {
 			setIcon(icon);

@@ -255,7 +255,8 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 		::DeleteObject(font_); // delete old font
 		lf.lfHeight = candFontHeight(); // apply the new size
 		if (!candFontName_.empty()) { // apply new font name
-			wcsncpy(lf.lfFaceName, candFontName_.c_str(), 31);
+			wcsncpy(lf.lfFaceName, candFontName_.c_str(), LF_FACESIZE - 1);
+			lf.lfFaceName[LF_FACESIZE - 1] = L'\0';
 		}
 		font_ = CreateFontIndirect(&lf); // create new font
 		// if (messageWindow_)

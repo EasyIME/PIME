@@ -10,10 +10,9 @@ Welcome to the PIME repository! To maintain high code quality and consistency, a
 - **Isolate Renames and Moves**: For API renames or file moves/renames, keep them in their own dedicated commit. Never mix renames or moves with new feature implementations or bug fixes.
 - **Separate Features and Fixes**: Never mix bug fixes and new feature implementations. They must be handled in separate commits and separate Pull Requests.
 - **Commit Style**: Format your commit messages as follows:
-  - Headline: Concisely describe what it does. Include the bug number if available.
+  - Headline: Concisely describe what it does. Include the bug number if available. If the headline is not enough to explain what it does, expand in the body.
   - A blank line.
-  - Body (WHAT): Describe what the commit does using concise bullet points instead of a lengthy paragraph.
-  - Body (WHY): Concisely explain *why* this change is needed. This is the most important part.
+  - Body: Explain what the commit does using concise bullet points (if the headline is not enough) and explain *why* this change is needed (the rationale is the most important part). Do NOT literally include labels or section headers like "WHAT:" or "WHY:" in the message.
   - AI Declaration: If the commit is mostly AI-generated or involves significant AI assistance, clearly declare this at the end of the commit message (e.g., "Generated with assistance from Antigravity/Cursor", preferably including the model version if known).
 
 ## 3. Coding Style & Language Guidelines
@@ -28,7 +27,7 @@ Welcome to the PIME repository! To maintain high code quality and consistency, a
 Please stick to the existing coding style for each language in this repository:
 - **C++**: Follow standard C++ memory management (use smart pointers where applicable). Respect the repository's formatting (check for `.clang-format`).
 - **Rust**: Write idiomatic Rust. Always use `cargo fmt` and check against `cargo clippy`. Prefer robust error handling with `Result` over `unwrap()`.
-- **Python**: For historical reasons, older Python APIs do not follow PEP 8. Keep the legacy naming conventions when interacting with existing code, but stick to PEP 8 in new code where possible.
+- **Python**: For historical reasons, older Python APIs do not follow PEP 8. Keep the legacy naming conventions when interacting with existing code, but stick to PEP 8 in new code where possible. Prefer EAFP (Easier to Ask for Forgiveness than Permission) to write idiomatic, pythonic code rather than defensive checks (unlike C++).
 - **Node.js**: Follow modern ES6+ syntax and adhere to the existing stylistic patterns in the `node/` directory.
 
 ## 4. Common Best Practices

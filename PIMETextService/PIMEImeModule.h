@@ -25,6 +25,8 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
+#include "IconCache.h"
+
 namespace PIME {
 
 class ImeModule : public Ime::ImeModule {
@@ -51,10 +53,16 @@ public:
 		return backendDirs_;
 	}
 
+	IconCache& iconCache() {
+		return iconCache_;
+	}
+
 private:
 	std::wstring userDir_;
 	std::wstring programDir_;
 	std::vector<std::wstring> backendDirs_;
+
+	IconCache iconCache_;
 };
 
 }

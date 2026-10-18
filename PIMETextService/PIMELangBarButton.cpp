@@ -34,11 +34,6 @@ using json = nlohmann::json;
 
 namespace PIME {
 
-static std::mutex g_iconCacheMutex;
-
-// static
-std::unordered_map<std::wstring, HICON> LangBarButton::iconCache_; // cache loaded icons
-
 LangBarButton::LangBarButton(TextService* service, const std::string& id, const GUID& guid, UINT commandId, const wchar_t* text, DWORD style):
 	Ime::LangBarButton(service, guid, commandId, text, style),
 	id_(id) {
@@ -77,19 +72,9 @@ LangBarButton* LangBarButton::fromJson(TextService* service, json& info) {
 void LangBarButton::setIconFile(std::wstring filePath) {
 	if (filePath != iconFile_) {
 		iconFile_ = std::move(filePath);
-
-		HICON icon = NULL;
-		{
-			std::lock_guard<std::mutex> lock(g_iconCacheMutex);
-			auto icon_it = iconCache_.find(iconFile_);
-			if (icon_it != iconCache_.end()) { // found in the cache
-				icon = icon_it->second;
-			}
-			else { // not in the cache
-				icon = (HICON)LoadImageW(NULL, iconFile_.c_str(), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_LOADFROMFILE);
-				iconCache_[iconFile_] = icon; // cache the icon
-			}
-		}
+		auto* service = textService();
+		auto* module = service ? static_cast<PIME::ImeModule*>(service->imeModule()) : nullptr;
+		HICON icon = module ? module->iconCache().getIcon(iconFile_) : NULL;
 		if (icon) {
 			setIcon(icon);
 		}
@@ -143,14 +128,6 @@ void LangBarButton::updateFromJson(json& info) {
 	if (toggledValue.is_boolean()) {
 		setToggled(toggledValue.get<bool>());
 	}
-}
-
-void LangBarButton::clearIconCache() {
-	std::lock_guard<std::mutex> lock(g_iconCacheMutex);
-	for (auto it = iconCache_.begin(); it != iconCache_.end(); ++it) {
-		DestroyIcon(it->second);
-	}
-	iconCache_.clear();
 }
 
 STDMETHODIMP LangBarButton::OnClick(TfLBIClick click, POINT pt, const RECT* prcArea) {

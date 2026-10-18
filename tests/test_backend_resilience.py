@@ -123,9 +123,11 @@ class ServerResilienceTests(unittest.TestCase):
 
     def test_server_continues_after_client_exception(self):
         server_mod = self.import_server()
-        server = server_mod.Server()
+        server = server_mod.Server(PYTHON_DIR)
 
         class FailingClient:
+            service = None
+
             def handleRequest(self, msg):
                 raise RuntimeError("boom")
 
@@ -141,7 +143,7 @@ class ServerResilienceTests(unittest.TestCase):
 
     def test_server_ignores_malformed_request_line(self):
         server_mod = self.import_server()
-        server = server_mod.Server()
+        server = server_mod.Server(PYTHON_DIR)
 
         with mock.patch("builtins.input", side_effect=self.input_then_eof(["malformed-request"])), \
                 mock.patch.object(server_mod, "append_error_log") as append_error_log, \

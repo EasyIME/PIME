@@ -18,6 +18,7 @@
 //
 
 #include "PIMEImeModule.h"
+#include "JsonUtils.h"
 #include "PIMETextService.h"
 #include <string>
 #include <fstream>
@@ -67,15 +68,17 @@ ImeModule::ImeModule(HMODULE module):
 		// load backend information
 		std::ifstream fp(programDir_ + L"\\backends.json", std::ifstream::binary);
 		if (fp) {
-			json backendsInfo;
-			try {
-				fp >> backendsInfo;
-			} catch (...) {
-			}
+			json backendsInfo = parseJsonNoThrow(fp);
 			if (backendsInfo.is_array()) {
 				for (const auto& backend: backendsInfo) {
-					std::wstring name = utf8ToUtf16(backend.value("name", "").c_str());
-					backendDirs_.push_back(name);
+					if (!backend.is_object()) {
+						continue;
+					}
+					std::string nameUtf8 = jsonValueOr<std::string>(backend, "name", "");
+					if (!nameUtf8.empty()) {
+						std::wstring name = utf8ToUtf16(nameUtf8.c_str());
+						backendDirs_.push_back(name);
+					}
 				}
 			}
 		}
@@ -112,13 +115,12 @@ bool ImeModule::loadImeInfo(const std::string& guid, std::wstring& filePath, jso
 						imejson += L"\\ime.json";
 						std::ifstream fp(imejson, std::ifstream::binary);
 						if (fp) {
-							content.clear();
-							try {
-								fp >> content;
-							} catch (...) {
+							content = parseJsonNoThrow(fp);
+							if (!content.is_object() || content.is_discarded()) {
 								continue;
 							}
-							if (stricmp(guid.c_str(), content.value("guid", "").c_str()) == 0) {
+							std::string imeGuid = jsonValueOr<std::string>(content, "guid", "");
+							if (stricmp(guid.c_str(), imeGuid.c_str()) == 0) {
 								// found the language profile
 								found = true;
 								filePath = imejson;
@@ -154,9 +156,9 @@ bool ImeModule::onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile
 	json info;
 	if (loadImeInfo(guidStr, infoFilePath, info)) {
 		std::wstring currentDir = infoFilePath.substr(0, infoFilePath.length() - 8); // remove "ime.json" from file path
-		configCommand = utf8ToUtf16(info.value("configTool", "").c_str());
-		configParams = utf8ToUtf16(info.value("configToolParams", "").c_str());
-		configDir = utf8ToUtf16(info.value("configToolDir", "").c_str());
+		configCommand = utf8ToUtf16(jsonValueOr<std::string>(info, "configTool", "").c_str());
+		configParams = utf8ToUtf16(jsonValueOr<std::string>(info, "configToolParams", "").c_str());
+		configDir = utf8ToUtf16(jsonValueOr<std::string>(info, "configToolDir", "").c_str());
 		// for some mysterious reasons, relative paths do not work here (according to Win32 API doc it should work).
 		if (PathIsRelative(configCommand.c_str())) {  // convert it to an absolute path
 			wchar_t absPath[MAX_PATH];

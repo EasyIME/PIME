@@ -44,4 +44,11 @@ if("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")
     add_subdirectory(${PROJECT_SOURCE_DIR}/PIMELauncher)
 endif("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")
 
-enable_testing()
+include(CTest)
+
+if(BUILD_TESTING)
+    add_executable(PIMETextServiceCursorTest tests/composition_cursor_test.cpp)
+    target_include_directories(PIMETextServiceCursorTest PRIVATE ${PROJECT_SOURCE_DIR}/PIMETextService)
+    target_compile_features(PIMETextServiceCursorTest PRIVATE cxx_std_14)
+    add_test(NAME PIMETextServiceCursorTest COMMAND PIMETextServiceCursorTest)
+endif()

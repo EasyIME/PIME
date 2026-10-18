@@ -13,35 +13,67 @@
 using json = nlohmann::json;
 
 
-PIME::ImeModule* g_imeModule = NULL;
+#include <mutex>
+
+static HMODULE g_hModule = NULL;
+static PIME::ImeModule* g_imeModule = NULL;
+static std::mutex g_imeModuleMutex;
+
+static PIME::ImeModule* getImeModule() {
+	std::lock_guard<std::mutex> lock(g_imeModuleMutex);
+	if (!g_imeModule && g_hModule) {
+		g_imeModule = new PIME::ImeModule(g_hModule);
+	}
+	return g_imeModule;
+}
+
+static void releaseImeModule() {
+	std::lock_guard<std::mutex> lock(g_imeModuleMutex);
+	if (g_imeModule) {
+		g_imeModule->Release();
+		g_imeModule = NULL;
+	}
+}
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
 	switch (ul_reason_for_call) {
 	case DLL_PROCESS_ATTACH:
 		::DisableThreadLibraryCalls(hModule); // disable DllMain calls due to new thread creation
-		//::MessageBox(0, L"X!", 0, 0);
-		g_imeModule = new PIME::ImeModule(hModule);
+		g_hModule = hModule;
 		break;
 	case DLL_PROCESS_DETACH:
-		if(g_imeModule) {
-			g_imeModule->Release();
-			g_imeModule = NULL;
+		// When lpReserved != NULL, the process is terminating (ExitProcess).
+		// Per Microsoft DLL Best Practices, other threads and dependent DLLs (e.g. COM/CRT)
+		// may already have been terminated or unloaded, and the OS will automatically reclaim
+		// all process memory. Calling COM Release() or destructors during process exit risks
+		// deadlocks or access violations. Therefore, we only perform cleanup on dynamic unload
+		// (FreeLibrary, where lpReserved is NULL).
+		// Reference: https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-best-practices
+		if (lpReserved == NULL) {
+			releaseImeModule();
 		}
+		g_hModule = NULL;
 		break;
 	}
 	return TRUE;
 }
 
 STDAPI DllCanUnloadNow(void) {
+	std::lock_guard<std::mutex> lock(g_imeModuleMutex);
+	if (!g_imeModule) {
+		return S_OK;
+	}
 	return g_imeModule->canUnloadNow();
 }
 
 STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppvObj) {
-	return g_imeModule->getClassObject(rclsid, riid, ppvObj);
+	auto module = getImeModule();
+	return module ? module->getClassObject(rclsid, riid, ppvObj) : E_FAIL;
 }
 
 STDAPI DllUnregisterServer(void) {
-	return g_imeModule->unregisterServer();
+	auto module = getImeModule();
+	return module ? module->unregisterServer() : E_FAIL;
 }
 
 static inline Ime::LangProfileInfo langProfileFromJson(std::wstring file, std::string& guid) {
@@ -89,10 +121,14 @@ STDAPI DllRegisterServer(void) {
 		iconIndex = 1; // use Windows 8 style IME icon
 	}
 	std::vector<Ime::LangProfileInfo> langProfiles;
-	std::wstring dirPath;
-	for (const auto backendDir: g_imeModule->backendDirs()) {
+	auto module = getImeModule();
+	if (!module) {
+		return E_FAIL;
+	}
+	const std::wstring programDir = module->programDir();
+	for (const auto backendDir: module->backendDirs()) {
 		std::string backendName = utf16ToUtf8(backendDir.c_str());
-		dirPath = g_imeModule->programDir();
+		std::wstring dirPath = programDir;
 		dirPath += L'\\';
 		dirPath += backendDir;
 		dirPath += L"\\input_methods";
@@ -120,5 +156,5 @@ STDAPI DllRegisterServer(void) {
 			::FindClose(hFind);
 		}
 	}
-	return g_imeModule->registerServer(L"PIMETextService", langProfiles.data(), langProfiles.size());
+	return module->registerServer(L"PIMETextService", langProfiles.data(), langProfiles.size());
 }

@@ -714,6 +714,11 @@ bool Client::callRpcPipe(HANDLE pipe, const std::string& serializedRequest, std:
 			return true;
 		}
 
+		if (readBuffer_.size() >= kMaxIpcMessageLength) {
+			readBuffer_.clear();
+			return false;
+		}
+
 		if (!callPipeIO(true, buf, sizeof(buf), &rlen, timeoutMs) || rlen == 0) {
 			return false;
 		}

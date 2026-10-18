@@ -88,6 +88,12 @@ public:
 		candPerRow_ = candPerRow;
 	}
 
+	// page is 1-based; a pageCount of 0 or 1 hides the page indicator.
+	void setCandidatePage(int page, int pageCount) {
+		candPage_ = page;
+		candPageCount_ = pageCount;
+	}
+
 	std::wstring selKeys() const {
 		return selKeys_;
 	}
@@ -163,6 +169,8 @@ private:
 	HFONT font_;
 	bool updateFont_;
 	int candPerRow_;
+	int candPage_;
+	int candPageCount_;
 	std::wstring selKeys_;
 	bool candUseCursor_;
 	std::wstring candFontName_;

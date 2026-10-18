@@ -43,6 +43,8 @@ TextService::TextService(ImeModule* module):
 	showingCandidates_(false),
 	updateFont_(false),
 	candPerRow_(10),
+	candPage_(0),
+	candPageCount_(0),
 	selKeys_(L"1234567890"),
 	candUseCursor_(false),
 	candFontSize_(12) {
@@ -268,6 +270,7 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 
 	candidateWindow_->setUseCursor(candUseCursor_);
 	candidateWindow_->setCandPerRow(candPerRow_);
+	candidateWindow_->setPageInfo(candPage_, candPageCount_);
 
 	// the items in the candidate list should not exist the
 	// number of available keys used to select them.

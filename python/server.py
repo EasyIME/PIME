@@ -26,7 +26,7 @@ if __name__ == "__main__":
 sys.path.append(os.path.dirname(__file__))    
 
 
-from serviceManager import textServiceMgr
+from serviceManager import TextServiceManager
 
 
 def append_error_log(message):
@@ -53,7 +53,7 @@ class Client(object):
         self.isUiLess = msg["isUiLess"]
         self.isConsole = msg["isConsole"]
         # create the text service
-        self.service = textServiceMgr.createService(self, self.guid)
+        self.service = self.server.createService(self, self.guid)
         return (self.service is not None)
 
     def handleRequest(self, msg): # msg is a json object
@@ -75,8 +75,17 @@ class Client(object):
 
 
 class Server(object):
-    def __init__(self):
+    def __init__(self, input_methods_dir: str = None):
         self.clients = {}
+        self.serviceMgr = TextServiceManager()
+        if input_methods_dir:
+            try:
+                self.serviceMgr.load(input_methods_dir)
+            except Exception as e:
+                append_error_log(f"ERROR: Failed to load text services from {input_methods_dir}: {e}\n{traceback.format_exc()}")
+
+    def createService(self, client, guid):
+        return self.serviceMgr.createService(client, guid)
 
     def run(self):
         while True:
@@ -148,7 +157,9 @@ class Server(object):
 
 
 def main():
-    server = Server()
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    input_methods_dir = os.path.join(current_dir, "input_methods")
+    server = Server(input_methods_dir)
     server.run()
 
 

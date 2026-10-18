@@ -16,7 +16,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 import os
-import threading
 import json
 import importlib
 
@@ -63,30 +62,26 @@ class TextServiceInfo:
 
 
 class TextServiceManager:
-    def __init__(self):
-        self.__lock = threading.Lock()
-        self.services = {}
-        self.enumerateServices()
+    """Manages discovery, registration, and creation of PIME text services."""
 
-    def enumerateServices(self):
-        # To enumerate currently installed Input Method
-        currentDir = os.path.dirname(os.path.abspath(__file__))
-        input_methods_dir = os.path.join(currentDir, "input_methods")
+    def __init__(self):
+        """Initializes an empty TextServiceManager."""
+        self.services = {}
+
+    def load(self, input_methods_dir: str):
+        """Loads and registers all input methods found in subdirectories of input_methods_dir."""
         for subdir in os.listdir(input_methods_dir):
             filename = os.path.join(input_methods_dir, subdir, "ime.json")
             if os.path.exists(filename):
                 info = TextServiceInfo()
                 info.loadFromJson(filename)
-                print(info.guid)
                 if info.guid:
                     self.services[info.guid] = info
 
     def createService(self, client, guid):
+        """Creates an instance of the text service associated with the specified GUID."""
         guid = guid.lower()
         if guid in self.services:
             info = self.services[guid]
             return info.createInstance(client)
         return None
-
-
-textServiceMgr = TextServiceManager()

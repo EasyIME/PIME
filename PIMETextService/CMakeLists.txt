@@ -4,7 +4,7 @@ project(PIMETextService)
 
 # http://www.utf8everywhere.org/
 add_definitions(/D_UNICODE=1 /DUNICODE=1)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 # generate the resource file containing version info
 configure_file("PIMETextService.rc.in" "PIMETextService.rc" @ONLY)

@@ -51,4 +51,13 @@ if(BUILD_TESTING)
     target_include_directories(PIMETextServiceCursorTest PRIVATE ${PROJECT_SOURCE_DIR}/PIMETextService)
     target_compile_features(PIMETextServiceCursorTest PRIVATE cxx_std_14)
     add_test(NAME PIMETextServiceCursorTest COMMAND PIMETextServiceCursorTest)
+
+    add_executable(PIMETextServiceJsonTest tests/json_utils_test.cpp)
+    target_include_directories(PIMETextServiceJsonTest PRIVATE 
+        ${PROJECT_SOURCE_DIR}/PIMETextService
+        ${PROJECT_SOURCE_DIR}/json/single_include
+    )
+    target_compile_features(PIMETextServiceJsonTest PRIVATE cxx_std_17)
+    target_link_libraries(PIMETextServiceJsonTest PRIVATE gtest_main)
+    add_test(NAME PIMETextServiceJsonTest COMMAND PIMETextServiceJsonTest)
 endif()

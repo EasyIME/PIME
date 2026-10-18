@@ -18,6 +18,7 @@
 //
 
 #include "PIMELangBarButton.h"
+#include "JsonUtils.h"
 #include "PIMETextService.h"
 #include "libIME2/src/Utils.h"
 #include <string>
@@ -44,7 +45,7 @@ LangBarButton::~LangBarButton() {
 
 LangBarButton* LangBarButton::fromJson(TextService* service, json& info) {
 	if (info.is_object()) {
-		std::string id = info.value("id", "");
+		std::string id = jsonValueOr<std::string>(info, "id", "");
 
 		DWORD style = TF_LBI_STYLE_BTN_BUTTON;
 		auto& styleValue = info["style"];
@@ -86,6 +87,10 @@ void LangBarButton::setIconFile(std::wstring filePath) {
 }
 
 void LangBarButton::updateFromJson(json& info) {
+	if (!info.is_object()) {
+		return;
+	}
+
 	auto& iconValue = info["icon"];
 	if (iconValue.is_string()) {
 		setIconFile(utf8ToUtf16(iconValue.get<std::string>().c_str()));

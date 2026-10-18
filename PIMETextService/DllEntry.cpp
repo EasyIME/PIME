@@ -1,8 +1,12 @@
 #include "PIMEImeModule.h"
+#include "JsonUtils.h"
 #include "resource.h"
-#include <iostream>
+
 #include <fstream>
+#include <mutex>
+#include <optional>
 #include <vector>
+
 #include <ShlObj.h>
 #include <Shlwapi.h> // for PathIsRelative
 #include <VersionHelpers.h>  // Provided by Windows SDK >= 8.1
@@ -11,9 +15,8 @@
 #include "../libIME2/src/Utils.h"
 
 using json = nlohmann::json;
-
-
-#include <mutex>
+using PIME::jsonValueOr;
+using PIME::parseJsonNoThrow;
 
 static HMODULE g_hModule = NULL;
 static PIME::ImeModule* g_imeModule = NULL;
@@ -76,43 +79,46 @@ STDAPI DllUnregisterServer(void) {
 	return module ? module->unregisterServer() : E_FAIL;
 }
 
-static inline Ime::LangProfileInfo langProfileFromJson(std::wstring file, std::string& guid) {
+static inline std::optional<Ime::LangProfileInfo> langProfileFromJson(const std::wstring& file) {
 	// load the json file to get the info of input method
 	std::ifstream fp(file, std::ifstream::binary);
-	if(fp) {
-		json j;
-		try {
-			fp >> j;
-		} catch (...) {
-			return Ime::LangProfileInfo();
-		}
-		auto name = utf8ToUtf16(j.value("name", "").c_str());
-		guid = j.value("guid", "");
-		auto guidStr = utf8ToUtf16(guid.c_str());
-		CLSID clsidGuid = {0};
-		CLSIDFromString (guidStr.c_str(), &clsidGuid);
-		// convert locale name to lanid
-		auto locale = utf8ToUtf16(j.value("locale", "").c_str());
-		auto fallbackLocale = utf8ToUtf16(j.value("fallbackLocale", "").c_str());
-		// ::MessageBox(0, name.c_str(), 0, 0);
-		auto iconFile = utf8ToUtf16(j.value("icon", "").c_str());
-		if (!iconFile.empty() && PathIsRelative(iconFile.c_str())) {
-			int p = file.rfind('\\');
-			if (p != file.npos) {
-				iconFile = file.substr(0, p + 1) + iconFile;
-			}
-		}
-		// ::MessageBox(0, iconFile.c_str(), 0, 0);
-		Ime::LangProfileInfo langProfile = {
-			name,
-			clsidGuid,
-			locale,
-			fallbackLocale,
-			iconFile
-		};
-		return langProfile;
+	if (!fp) {
+		return std::nullopt;
 	}
-	return Ime::LangProfileInfo();
+
+	json j = parseJsonNoThrow(fp);
+	if (!j.is_object() || j.is_discarded()) {
+		return std::nullopt;
+	}
+
+	auto name = utf8ToUtf16(jsonValueOr<std::string>(j, "name", "").c_str());
+	auto guid = jsonValueOr<std::string>(j, "guid", "");
+	if (name.empty() || guid.empty()) {
+		return std::nullopt;
+	}
+
+	CLSID clsidGuid = {0};
+	if (FAILED(CLSIDFromString(utf8ToUtf16(guid.c_str()).c_str(), &clsidGuid))) {
+		return std::nullopt;
+	}
+
+	// convert locale name to lanid
+	auto locale = utf8ToUtf16(jsonValueOr<std::string>(j, "locale", "").c_str());
+	auto fallbackLocale = utf8ToUtf16(jsonValueOr<std::string>(j, "fallbackLocale", "").c_str());
+	auto iconFile = utf8ToUtf16(jsonValueOr<std::string>(j, "icon", "").c_str());
+	if (!iconFile.empty() && PathIsRelative(iconFile.c_str())) {
+		size_t p = file.rfind(L'\\');
+		if (p != file.npos) {
+			iconFile = file.substr(0, p + 1) + iconFile;
+		}
+	}
+	return Ime::LangProfileInfo{
+		std::move(name),
+		clsidGuid,
+		std::move(locale),
+		std::move(fallbackLocale),
+		std::move(iconFile)
+	};
 }
 
 STDAPI DllRegisterServer(void) {
@@ -147,8 +153,9 @@ STDAPI DllRegisterServer(void) {
 						DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
 						if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
 							// load the json file to get the info of input method
-							std::string guid;
-							langProfiles.push_back(std::move(langProfileFromJson(imejson, guid)));
+							if (auto profile = langProfileFromJson(imejson)) {
+								langProfiles.push_back(std::move(*profile));
+							}
 						}
 					}
 				}

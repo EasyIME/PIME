@@ -230,6 +230,9 @@ impl BackendManager {
                 // with the new backend process instance.
                 manager_clone.disconnect_clients_for_backend(&backend_name_clone);
                 tokio::time::sleep(Duration::from_secs(1)).await;
+                // Drain any stale requests in the queue sent by disconnected clients
+                // before or during the restart delay so they are not dispatched to the new backend.
+                while stdin_rx.try_recv().is_ok() {}
             }
         });
 
@@ -379,14 +382,21 @@ impl BackendManager {
                         return BackendExitReason::Normal;
                     };
                     if let Some((client_id, json_part)) = data.split_once('|') {
+                        let mut state_guard = state.lock().unwrap();
+                        let Some(entry) = state_guard.clients.get_mut(client_id) else {
+                            // Client is no longer active (e.g. disconnected due to backend crash/restart).
+                            // Discard this stale request to prevent corrupting the new backend state.
+                            info!(
+                                "Discarding stale message from disconnected client {} for backend {}",
+                                client_id, backend_name
+                            );
+                            continue;
+                        };
+
                         if let Some(seq_num) = protocol::extract_seq_num(json_part) {
                             let mut map = pending_requests.lock().unwrap();
                             map.insert((client_id.to_string(), seq_num), tokio::time::Instant::now());
-
-                            let mut state_guard = state.lock().unwrap();
-                            if let Some(entry) = state_guard.clients.get_mut(client_id) {
-                                entry.last_seq_num = seq_num;
-                            }
+                            entry.last_seq_num = seq_num;
                         }
                     }
                     info!("Backend {} received request from channel. Data len: {}.", backend_name, data.len());

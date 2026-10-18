@@ -12,23 +12,45 @@ if (services.length == 0) {
   process.exit(1);
 }
 
-let server = NIME.createServer((request) => {
+// Stands in when a GUID resolves to no service, e.g. an init naming a service
+// that is not registered or whose module failed to load. nime dereferences the
+// service on the next request, so returning null here kills the backend
+// (EasyIME/PIME#937). Reply with {success: false, seqNum} for every method
+// instead, the same payload shape python/server.py sends for a missing service.
+// Note: a request from a client that never sent init is still handled inside
+// nime and remains unprotected; the TSF client always sends init first.
+const NULL_SERVICE = {
+  textReducer(request, state) {
+    return state;
+  },
+  response(request) {
+    return {success: false, seqNum: request['seqNum']};
+  }
+};
 
+function resolveService(request) {
+  let id = (request['id'] || '').toLowerCase();
   let service = null;
 
   services.forEach((tmpService) => {
-    if (tmpService['guid'].toLowerCase() === request['id'].toLowerCase()) {
+    if (tmpService['guid'].toLowerCase() === id) {
       service = tmpService['textService'];
     }
   });
 
-  if (service == null) {
-    debug('Try to dynamic load service:', request['id']);
+  if (service == null && id !== '') {
+    debug('Try to dynamic load service:', id);
     // Dynamic load service without exit nodejs
-    service = loadServiceById(request['id']);
+    service = loadServiceById(id);
   }
 
-  return service;
-});
+  if (service == null) {
+    debug('No service for id:', id);
+  }
+
+  return service || NULL_SERVICE;
+}
+
+let server = NIME.createServer(resolveService);
 
 server.listen();

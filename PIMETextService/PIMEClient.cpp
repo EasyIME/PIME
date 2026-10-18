@@ -18,13 +18,13 @@
 //
 
 #include "PIMEClient.h"
+#include "CompositionCursor.h"
 #include "libIME2/src/Utils.h"
 #include <algorithm>
 #include <nlohmann/json.hpp>
 
 #include "PIMETextService.h"
 #include <VersionHelpers.h> // Provided by Windows SDK >= 8.1
-#include <Winnls.h> // for IS_HIGH_SURROGATE() macro for checking UTF16 surrogate pairs
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
@@ -240,13 +240,7 @@ void Client::updateComposition(json& msg, Ime::EditSession* session, bool& endCo
 			// surrogate pair is found.
 			if (!hasCompositionString)
 				compositionString = textService_->compositionString(session);
-			int fixedCursorPos = 0;
-			int maxCursor = std::min<int>((int)compositionString.size(), compositionCursor);
-			for (int i = 0; i < maxCursor; ++i) {
-				++fixedCursorPos;
-				if (IS_HIGH_SURROGATE(compositionString[i])) // this is the first part of a UTF16 surrogate pair (Windows uses UTF16-LE)
-					++fixedCursorPos;
-			}
+			const int fixedCursorPos = compositionCursorToUtf16Position(compositionString, compositionCursor);
 			textService_->setCompositionCursor(session, fixedCursorPos);
 		}
 	}

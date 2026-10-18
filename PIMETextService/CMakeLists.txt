@@ -19,6 +19,8 @@ add_library(PIMETextService SHARED
     # core IME implementation
     PIMEImeModule.cpp
     PIMEImeModule.h
+    IconCache.h
+    IconCache.cpp
     PIMETextService.cpp
     PIMETextService.def
     PIMETextService.h

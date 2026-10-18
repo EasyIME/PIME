@@ -83,7 +83,6 @@ Client::Client(TextService* service, REFIID langProfileGuid):
 Client::~Client(void) {
 	closeRpcConnection();
 	resetTextServiceState();
-	LangBarButton::clearIconCache();
 }
 
 // pack a keyEvent object into a json value
@@ -421,7 +420,6 @@ void Client::onDeactivate() {
 	callRpcMethod(req, ret);
 	if (handleRpcResponse(ret)) {
 	}
-	LangBarButton::clearIconCache();
 	isActivated_ = false;
 }
 

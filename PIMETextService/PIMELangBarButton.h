@@ -42,8 +42,6 @@ public:
 
     void setIconFile(std::wstring filePath);
 
-	static void clearIconCache();
-
 	// ITfLangBarItemButton
 	STDMETHODIMP OnClick(TfLBIClick click, POINT pt, const RECT *prcArea);
 	STDMETHODIMP InitMenu(ITfMenu *pMenu);
@@ -54,7 +52,6 @@ protected:
 private:
 	std::string id_;
     std::wstring iconFile_;
-	static std::unordered_map<std::wstring, HICON> iconCache_; // cache loaded icons
 };
 
 } // namespace PIME

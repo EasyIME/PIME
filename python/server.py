@@ -75,19 +75,28 @@ class Client(object):
 
 
 class Server(object):
-    def __init__(self, input_methods_dir: str = None):
+    """IPC backend server managing client sessions and text service dispatching."""
+
+    def __init__(self, base_dir: str):
+        """Initializes the server and loads text services from base_dir/input_methods.
+
+        Args:
+            base_dir: The base package directory on sys.path containing the
+                'input_methods' package. Cannot be None.
+        """
         self.clients = {}
         self.serviceMgr = TextServiceManager()
-        if input_methods_dir:
-            try:
-                self.serviceMgr.load(input_methods_dir)
-            except Exception as e:
-                append_error_log(f"ERROR: Failed to load text services from {input_methods_dir}: {e}\n{traceback.format_exc()}")
+        try:
+            self.serviceMgr.load(base_dir)
+        except Exception as e:
+            append_error_log(f"ERROR: Failed to load text services from {base_dir}: {e}\n{traceback.format_exc()}")
 
     def createService(self, client, guid):
+        """Creates a text service instance for the client associated with guid."""
         return self.serviceMgr.createService(client, guid)
 
     def run(self):
+        """Runs the main request/reply loop reading from stdin and writing to stdout."""
         while True:
             line = ""
             client_id = ""
@@ -149,6 +158,7 @@ class Server(object):
                 continue
 
     def remove_client(self, client_id):
+        """Cleans up and removes an active client session by its ID."""
         print("client disconnected:", client_id, file=sys.stderr)
         try:
             del self.clients[client_id]
@@ -158,8 +168,7 @@ class Server(object):
 
 def main():
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    input_methods_dir = os.path.join(current_dir, "input_methods")
-    server = Server(input_methods_dir)
+    server = Server(current_dir)
     server.run()
 
 

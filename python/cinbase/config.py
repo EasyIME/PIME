@@ -135,7 +135,26 @@ class CinBaseConfig:
                     self.__dict__.update(json.load(f))
         except Exception:
             self.save()
+        self.sanitize()
         self.update()
+
+    def sanitize(self):
+        def _to_int(val, default, min_val=None, max_val=None):
+            try:
+                i = int(val)
+                if min_val is not None and i < min_val:
+                    return default
+                if max_val is not None and i > max_val:
+                    return default
+                return i
+            except (ValueError, TypeError):
+                return default
+
+        self.candPerPage = _to_int(getattr(self, "candPerPage", 9), 9, min_val=1, max_val=10)
+        self.candPerRow = _to_int(getattr(self, "candPerRow", 1), 1, min_val=1, max_val=10)
+        self.fontSize = _to_int(getattr(self, "fontSize", DEF_FONT_SIZE), DEF_FONT_SIZE, min_val=6, max_val=200)
+        self.candMaxItems = _to_int(getattr(self, "candMaxItems", 100), 100, min_val=10, max_val=10000)
+        self.messageDurationTime = _to_int(getattr(self, "messageDurationTime", 3), 3, min_val=1)
 
     def toJson(self):
         return {key: value for key, value in self.__dict__.items() if not key.startswith("_") and not key in self.ignoreSaveList}

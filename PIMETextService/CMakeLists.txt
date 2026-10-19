@@ -36,3 +36,19 @@ add_library(PIMETextService SHARED
 target_link_libraries(PIMETextService
     libIME2_static
 )
+
+if(CMAKE_CXX_COMPILER_ARCHITECTURE_ID MATCHES "ARM64")
+    # Directly build the native ARM64 implementation as PIMETextService_arm64.dll
+    set_target_properties(PIMETextService PROPERTIES OUTPUT_NAME "PIMETextService_arm64")
+
+    # Link the ARM64X forwarder DLL directly as PIMETextService.dll
+    add_custom_command(
+        TARGET PIMETextService POST_BUILD
+        COMMAND "${CMAKE_LINKER}" /nologo /dll /noentry /nodefaultlib /machine:arm64x
+                /defArm64Native:${CMAKE_CURRENT_SOURCE_DIR}/PIMETextService_arm64x_arm64.def
+                /def:${CMAKE_CURRENT_SOURCE_DIR}/PIMETextService_arm64x_x64.def
+                /out:$<TARGET_FILE_DIR:PIMETextService>/PIMETextService.dll
+        COMMENT "Linking ARM64X forwarder DLL"
+    )
+endif()
+

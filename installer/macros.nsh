@@ -117,9 +117,8 @@
         !insertmacro SafeDeleteFile "$INSTDIR\x64\PIMETextService.dll"
     ${ElseIf} ${IsNativeARM64}
         !insertmacro SafeDeleteFile "$INSTDIR\arm64\PIMETextService.dll"
-        ${If} ${FileExists} "$INSTDIR\x64\PIMETextService.dll"
-            !insertmacro SafeDeleteFile "$INSTDIR\x64\PIMETextService.dll"
-        ${EndIf}
+        !insertmacro SafeDeleteFile "$INSTDIR\arm64\PIMETextService_arm64.dll"
+        !insertmacro SafeDeleteFile "$INSTDIR\arm64\PIMETextService_x64.dll"
     ${EndIf}
 !macroend
 

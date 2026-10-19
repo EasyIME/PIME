@@ -41,19 +41,12 @@ TextService::TextService(ImeModule* module):
 	candidateListElementId_(0),
 	candidateWindow_(nullptr),
 	showingCandidates_(false),
-	updateFont_(false),
+	currentCandDpi_(0),
+	currentMsgDpi_(0),
 	candPerRow_(10),
 	selKeys_(L"1234567890"),
 	candUseCursor_(false),
 	candFontSize_(12) {
-
-	// font for candidate and mesasge windows
-	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
-	LOGFONT lf;
-	GetObject(font_, sizeof(lf), &lf);
-	lf.lfHeight = candFontHeight(); // FIXME: make this configurable
-	lf.lfWeight = FW_NORMAL;
-	font_ = CreateFontIndirect(&lf);
 }
 
 TextService::~TextService(void) {
@@ -70,9 +63,6 @@ TextService::~TextService(void) {
 
 	if(messageWindow_)
 		hideMessage();
-
-	if(font_)
-		::DeleteObject(font_);
 }
 
 // virtual
@@ -231,7 +221,7 @@ void TextService::createCandidateWindow(Ime::EditSession* session) {
 		candidateWindow_ = new Ime::CandidateWindow(this, session); // assigning to smart ptr also inrease ref count
 		candidateWindow_->Release();  // decrease ref count caused by new
 
-		candidateWindow_->setFont(font_);
+		updateCandidateFont(session);
 		auto elementMgr = Ime::ComPtr<ITfUIElementMgr>::queryFrom(threadMgr());
 		if (elementMgr) {
 			BOOL pbShow = false;
@@ -247,24 +237,7 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 	createCandidateWindow(session);
 	candidateWindow_->clear();
 
-	// FIXME: is this the right place to do it?
-	if (updateFont_) {
-		// font for candidate and mesasge windows
-		LOGFONT lf;
-		GetObject(font_, sizeof(lf), &lf);
-		::DeleteObject(font_); // delete old font
-		lf.lfHeight = candFontHeight(); // apply the new size
-		if (!candFontName_.empty()) { // apply new font name
-			wcsncpy(lf.lfFaceName, candFontName_.c_str(), LF_FACESIZE - 1);
-			lf.lfFaceName[LF_FACESIZE - 1] = L'\0';
-		}
-		font_ = CreateFontIndirect(&lf); // create new font
-		// if (messageWindow_)
-		//	messageWindow_->setFont(font_);
-		if (candidateWindow_)
-			candidateWindow_->setFont(font_);
-		updateFont_ = false;
-	}
+	updateCandidateFont(session);
 
 	candidateWindow_->setUseCursor(candUseCursor_);
 	candidateWindow_->setCandPerRow(candPerRow_);
@@ -295,6 +268,7 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 
 void TextService::updateCandidatesWindow(Ime::EditSession* session) {
     if (candidateWindow_) {
+        updateCandidateFont(session);
         RECT textRect;
         // get the position of composition area from TSF
         if (selectionRect(session, &textRect)) {
@@ -343,6 +317,7 @@ void TextService::hideCandidates() {
 	if (candidateWindow_) {
 		candidateWindow_ = nullptr;
 	}
+	currentCandDpi_ = 0;
 	showingCandidates_ = false;
 }
 
@@ -352,7 +327,7 @@ void TextService::showMessage(Ime::EditSession* session, std::wstring message, i
 	hideMessage();
 	// FIXME: reuse the window whenever possible
 	messageWindow_ = make_unique<Ime::MessageWindow>(this, session);
-	messageWindow_->setFont(font_);
+	updateMessageFont(session);
 	messageWindow_->setText(message);
 	
 	int x = 0, y = 0;
@@ -371,6 +346,7 @@ void TextService::showMessage(Ime::EditSession* session, std::wstring message, i
 
 void TextService::updateMessageWindow(Ime::EditSession* session) {
     if (messageWindow_) {
+        updateMessageFont(session);
         RECT textRect;
         // get the position of composition area from TSF
         if (selectionRect(session, &textRect)) {
@@ -388,6 +364,7 @@ void TextService::hideMessage() {
 	if(messageWindow_) {
 		messageWindow_ = nullptr;
 	}
+	currentMsgDpi_ = 0;
 }
 
 // called when the message window timeout
@@ -409,15 +386,70 @@ void CALLBACK TextService::onMessageTimeout(HWND hwnd, UINT msg, UINT_PTR id, DW
 void TextService::updateLangButtons() {
 }
 
-int TextService::candFontHeight() {
-	int candFontHeight_ = candFontSize_;
-	HDC hdc = GetDC(NULL);
-	if (hdc)
-	{
-		candFontHeight_ = -MulDiv(candFontSize_, GetDeviceCaps(hdc, LOGPIXELSY), 72);
-		ReleaseDC(NULL, hdc);
+static UINT getWindowDpi(HWND hwnd) {
+	using GetDpiForWindowFn = UINT(WINAPI*)(HWND);
+	static auto pfnGetDpiForWindow = reinterpret_cast<GetDpiForWindowFn>(
+		GetProcAddress(GetModuleHandleW(L"user32.dll"), "GetDpiForWindow"));
+	if (pfnGetDpiForWindow && hwnd) {
+		UINT dpi = pfnGetDpiForWindow(hwnd);
+		if (dpi > 0)
+			return dpi;
 	}
-	return candFontHeight_;
+	HDC hdc = GetDC(hwnd);
+	if (hdc) {
+		int dpi = GetDeviceCaps(hdc, LOGPIXELSY);
+		ReleaseDC(hwnd, hdc);
+		if (dpi > 0)
+			return static_cast<UINT>(dpi);
+	}
+	return 96;
+}
+
+int TextService::candFontHeight(UINT dpi) {
+	if (dpi == 0)
+		dpi = 96;
+	return -MulDiv(candFontSize_, static_cast<int>(dpi), 72);
+}
+
+LOGFONT TextService::getLogFontForDpi(UINT dpi) {
+	LOGFONT lf = { 0 };
+	HFONT stockFont = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+	GetObject(stockFont, sizeof(lf), &lf);
+	lf.lfWeight = FW_NORMAL;
+	lf.lfHeight = candFontHeight(dpi);
+	if (!candFontName_.empty()) {
+		wcsncpy(lf.lfFaceName, candFontName_.c_str(), LF_FACESIZE - 1);
+		lf.lfFaceName[LF_FACESIZE - 1] = L'\0';
+	}
+	return lf;
+}
+
+void TextService::updateCandidateFont(Ime::EditSession* session) {
+	if (!candidateWindow_)
+		return;
+	HWND targetHwnd = compositionWindow(session);
+	if (!targetHwnd)
+		targetHwnd = candidateWindow_->hwnd();
+	UINT dpi = getWindowDpi(targetHwnd);
+	if (dpi != currentCandDpi_) {
+		currentCandDpi_ = dpi;
+		LOGFONT lf = getLogFontForDpi(dpi);
+		candidateWindow_->setFont(CreateFontIndirect(&lf));
+	}
+}
+
+void TextService::updateMessageFont(Ime::EditSession* session) {
+	if (!messageWindow_)
+		return;
+	HWND targetHwnd = compositionWindow(session);
+	if (!targetHwnd)
+		targetHwnd = messageWindow_->hwnd();
+	UINT dpi = getWindowDpi(targetHwnd);
+	if (dpi != currentMsgDpi_) {
+		currentMsgDpi_ = dpi;
+		LOGFONT lf = getLogFontForDpi(dpi);
+		messageWindow_->setFont(CreateFontIndirect(&lf));
+	}
 }
 
 void TextService::closeClient() {

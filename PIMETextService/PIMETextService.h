@@ -110,7 +110,8 @@ public:
 
 	void setCandFontName(std::wstring candFontName) {
 		candFontName_ = candFontName;
-		updateFont_ = true;
+		currentCandDpi_ = 0;
+		currentMsgDpi_ = 0;
 	}
 
 	int candFontSize() {
@@ -119,7 +120,8 @@ public:
 
 	void setCandFontSize(int candFontSize) {
 		candFontSize_ = candFontSize;
-		updateFont_ = true;
+		currentCandDpi_ = 0;
+		currentMsgDpi_ = 0;
 	}
 
 	bool showingCandidates() {
@@ -148,7 +150,10 @@ private:
 	void updateLangButtons(); // update status of language bar buttons
 
 	void createCandidateWindow(Ime::EditSession* session);
-	int candFontHeight();
+	int candFontHeight(UINT dpi);
+	LOGFONT getLogFontForDpi(UINT dpi);
+	void updateCandidateFont(Ime::EditSession* session);
+	void updateMessageFont(Ime::EditSession* session);
 
 	void closeClient();
 
@@ -160,8 +165,8 @@ private:
 	std::vector<std::wstring> candidates_; // current candidate list
 	std::unique_ptr<Ime::MessageWindow> messageWindow_;
 	UINT messageTimerId_;
-	HFONT font_;
-	bool updateFont_;
+	UINT currentCandDpi_;
+	UINT currentMsgDpi_;
 	int candPerRow_;
 	std::wstring selKeys_;
 	bool candUseCursor_;

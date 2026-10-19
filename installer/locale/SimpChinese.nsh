@@ -1,4 +1,4 @@
-!define LANG "SIMPCHINESE" ; Must be the lang name define by NSIS
+﻿!define LANG "SIMPCHINESE" ; Must be the lang name define by NSIS
 
 !insertmacro LANG_STRING INSTALLER_LANGUAGE_TITLE "安装程序语言"
 !insertmacro LANG_STRING INSTALL_LANGUAGE_MESSAGE "请选择安装程序语言"
@@ -13,6 +13,7 @@
 
 !insertmacro LANG_STRING AtLeastWinVista_MESSAGE "抱歉，本程序目前只能支持 Windows Vista 以上版本"
 !insertmacro LANG_STRING REBOOT_QUESTION "安装发生错误，无法完成。$\r$\n有时是有文件正在使用中，暂时无法删除或覆写。$\n$\n建议重新开机后，再次执行安装程序。$\r$\n你要立即重新开机吗？ (若你想要在稍后才重新开机请选择「否」)"
+!insertmacro LANG_STRING PENDING_REBOOT_QUESTION "先前的 PIME 卸载或更新尚未完成，需要重新启动计算机。$\r$\n$\r$\n如果未重启就继续安装，新安装的文件可能会在下次开机时被系统删除。$\r$\n$\r$\n您要现在重新启动计算机吗？（选“否”将退出安装程序，以便稍后重启）"
 !insertmacro LANG_STRING INST_FAILED_MESSAGE "安装发生错误，无法完成。$\n$\n有时是有文件正在使用中，暂时无法删除或覆写。$\n$\n建议重新开机后，再次执行安装程序。"
 !insertmacro LANG_STRING UNINSTALL_OLD "侦测到已安装旧版，是否要移除旧版后继续安装新版？"
 !insertmacro LANG_STRING DOWNLOAD_VCREDIST_QUESTION "这个程序需要 微软 VC++ Redistributable 更新才能运作，要自动下载安装？"

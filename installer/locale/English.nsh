@@ -1,4 +1,4 @@
-!define LANG "ENGLISH" ; Must be the lang name define by NSIS
+﻿!define LANG "ENGLISH" ; Must be the lang name define by NSIS
 
 !insertmacro LANG_STRING INSTALLER_LANGUAGE_TITLE "The installer language"
 !insertmacro LANG_STRING INSTALL_LANGUAGE_MESSAGE "Please select the installer language"
@@ -13,6 +13,7 @@
 
 !insertmacro LANG_STRING AtLeastWinVista_MESSAGE "Sorry，this program currently only supports Windows Vista or later"
 !insertmacro LANG_STRING REBOOT_QUESTION "The installation failed and could no be completed.$\r$\nA file may be in use, that prevents it from being deleted or overwritten.$\n$\nIt is recommended that you reboot the system and run the installer again.$\r$\nDo you want to reboot now? (Select $\"No$\" if you want to reboot at a later time)"
+!insertmacro LANG_STRING PENDING_REBOOT_QUESTION "A previous uninstallation or update of PIME requires a system restart to complete.$\r$\n$\r$\nIf you proceed without restarting, newly installed files may be deleted on the next reboot.$\r$\n$\r$\nDo you want to restart your computer now? (Select $\"No$\" to exit setup and restart later)"
 !insertmacro LANG_STRING INST_FAILED_MESSAGE "The installation failed and could no be completed.$\n$\rA file may be in use, that prevents it from being deleted or overwritten.$\n$\nIt is recommended that you reboot the system and run the installer again."
 !insertmacro LANG_STRING UNINSTALL_OLD "An older version of PIME has been detected. Do you want to remove the old version and continue installing the new version?"
 !insertmacro LANG_STRING DOWNLOAD_VCREDIST_QUESTION "This program requires the VC++ Redistributable to run. Would you like to automatically download and install it?"

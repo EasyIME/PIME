@@ -163,5 +163,31 @@ STDAPI DllRegisterServer(void) {
 			::FindClose(hFind);
 		}
 	}
-	return module->registerServer(L"PIMETextService", langProfiles.data(), langProfiles.size());
+	wchar_t modulePath[MAX_PATH];
+	DWORD len = ::GetModuleFileNameW(g_hModule, modulePath, MAX_PATH);
+	if (len == 0 || len >= MAX_PATH) {
+		return E_FAIL;
+	}
+#if defined(_M_ARM64) || defined(__aarch64__)
+	// On Windows 11 on ARM64, native ARM64 and emulated x64 (ARM64EC) host processes
+	// share a single 64-bit COM registry space (InprocServer32). To support both
+	// architectures under one CLSID, an ARM64X forwarder DLL is used:
+	// https://learn.microsoft.com/en-us/windows/arm/arm64x-pe
+	//
+	// An ARM64X forwarder DLL contains no implementation code; the Windows PE loader
+	// uses its dual export tables to automatically forward calls to either the native
+	// ARM64 DLL or the x64 DLL depending on the host process architecture:
+	// - <name>.dll: ARM64X forwarder DLL registered in InprocServer32
+	// - <name>_arm64.dll: native ARM64 implementation
+	// - <name>_x64.dll: x64 implementation for emulated processes
+	//
+	// When regsvr32 registers the server, execution enters the native ARM64 DLL.
+	// Strip the "_arm64" suffix so InprocServer32 points to the forwarder DLL (<name>.dll),
+	// allowing emulated x64 processes to also load the COM server.
+	if (::PathMatchSpecW(modulePath, L"*_arm64.dll")) {
+		constexpr size_t suffixLen = 10; // wcslen(L"_arm64.dll")
+		wcscpy_s(modulePath + len - suffixLen, 5, L".dll");
+	}
+#endif
+	return module->registerServer(L"PIMETextService", langProfiles.data(), static_cast<int>(langProfiles.size()), modulePath);
 }

@@ -497,7 +497,13 @@ Section "" Register
 		!insertmacro RegisterTextService 64 "$INSTDIR\x64\PIMETextService.dll"
 	${ElseIf} ${IsNativeARM64} ; This is a native ARM64 Windows system
 		SetOutPath "$INSTDIR\arm64"
+		; ARM64X forwarder DLL (built in build_arm64\PIMETextService\Release\PIMETextService.dll)
 		File "..\build_arm64\PIMETextService\Release\PIMETextService.dll"
+		; Real native ARM64 DLL (built in build_arm64\PIMETextService\Release\PIMETextService_arm64.dll)
+		File "..\build_arm64\PIMETextService\Release\PIMETextService_arm64.dll"
+		; Real x64 DLL for emulated x64 / ARM64EC processes (built in build64\PIMETextService\Release\PIMETextService.dll)
+		File "/oname=PIMETextService_x64.dll" "..\build64\PIMETextService\Release\PIMETextService.dll"
+		; Register COM objects (only register the ARM64X forwarder DLL)
 		!insertmacro RegisterTextService 64 "$INSTDIR\arm64\PIMETextService.dll"
 	${EndIf}
 
@@ -601,9 +607,6 @@ Section "Uninstall"
 		RMDir /REBOOTOK "$INSTDIR\x64"
 	${ElseIf} ${IsNativeARM64}
 		RMDir /REBOOTOK "$INSTDIR\arm64"
-		${If} ${FileExists} "$INSTDIR\x64"
-			RMDir /REBOOTOK "$INSTDIR\x64"
-		${EndIf}
 	${EndIf}
 
 	RMDir /REBOOTOK /r "$INSTDIR\python"

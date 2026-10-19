@@ -1,0 +1,22 @@
+; ARM64X Forwarder Module Definition (Native ARM64 Slice)
+;
+; On Windows 11 on ARM64, native ARM64 and emulated x64 host processes share
+; a single 64-bit InprocServer32 registry key. An ARM64X forwarder DLL is
+; registered under InprocServer32, and the Windows PE loader uses the dual
+; export tables defined here to route COM exports to the appropriate backend DLL:
+; - Native ARM64 processes -> PIMETextService_arm64.dll
+; - Emulated x64 processes  -> PIMETextService_x64.dll
+;
+; Reference:
+; https://learn.microsoft.com/en-us/windows/arm/arm64x-pe
+;
+; This DEF file is passed to the MSVC linker via /defArm64Native to forward
+; exports to the native ARM64 implementation DLL (PIMETextService_arm64.dll).
+
+LIBRARY PIMETextService.dll
+
+EXPORTS
+    DllCanUnloadNow=PIMETextService_arm64.DllCanUnloadNow PRIVATE
+    DllGetClassObject=PIMETextService_arm64.DllGetClassObject PRIVATE
+    DllRegisterServer=PIMETextService_arm64.DllRegisterServer PRIVATE
+    DllUnregisterServer=PIMETextService_arm64.DllUnregisterServer PRIVATE

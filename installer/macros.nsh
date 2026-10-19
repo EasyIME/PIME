@@ -1,4 +1,4 @@
-; NOTE: This file MUST be saved as UTF-8 with BOM (utf-8-sig) so that
+﻿; NOTE: This file MUST be saved as UTF-8 with BOM (utf-8-sig) so that
 ; NSIS (makensis) natively detects Unicode strings without breaking Git diffs.
 ; Do NOT convert this file to UTF-16.
 ;
@@ -29,50 +29,6 @@
 
 
 ; ==============================================================================
-; Macro: CheckFileMD5Equal
-; ------------------------------------------------------------------------------
-; Compares the MD5 checksums of two files using the md5dll plugin.
-;
-; Parameters:
-;   FILE_A   - Full path to first file.
-;   FILE_B   - Full path to second file.
-;   OUT_VAR  - Variable to store result: "True" if both files exist and have
-;              matching checksums; "False" otherwise.
-; ==============================================================================
-!macro CheckFileMD5Equal FILE_A FILE_B OUT_VAR
-    Push $R0
-    Push $R1
-
-    !define md5A    $R0
-    !define md5B    $R1
-    !define isMatch $R1 ; reuse R1 for result
-
-    StrCpy ${isMatch} "False"
-    ${If} ${FileExists} "${FILE_A}"
-    ${AndIf} ${FileExists} "${FILE_B}"
-        md5dll::GetMD5File "${FILE_A}"
-        Pop ${md5A}
-        md5dll::GetMD5File "${FILE_B}"
-        Pop ${md5B}
-        ${If} ${md5A} == ${md5B}
-            StrCpy ${isMatch} "True"
-        ${EndIf}
-    ${EndIf}
-
-    Push ${isMatch} ; push result onto stack
-
-    !undef md5A
-    !undef md5B
-    !undef isMatch
-
-    Exch 2
-    Pop $R0
-    Pop $R1
-    Pop ${OUT_VAR}
-!macroend
-
-
-; ==============================================================================
 ; Macro: SafeDeleteFile
 ; ------------------------------------------------------------------------------
 ; Safely deletes an in-use binary file (DLL / EXE) during uninstallation or upgrade.
@@ -84,9 +40,10 @@
 ;      - Generates a unique temporary filename in the same directory.
 ;      - Attempts to rename TARGET_FILE to this unique temporary file.
 ;      - If rename succeeds: schedules only the temporary file for deletion on
-;        reboot using Delete /REBOOTOK.
+;        reboot using Delete /REBOOTOK, and restores RebootFlag if no reboot was
+;        previously pending (as the destination path is now free for writing).
 ;      - If rename fails (hard lock): schedules original TARGET_FILE on reboot
-;        and sets RebootFlag.
+;        and sets RebootFlag true.
 ;
 ; Parameters:
 ;   TARGET_FILE - Path to file to delete.
@@ -94,9 +51,17 @@
 !macro SafeDeleteFile TARGET_FILE
     Push $R0
     Push $R1
+    Push $R2
 
     !define sdf_tempDeletedFile $R0
     !define sdf_targetDir       $R1
+    !define sdf_priorRebootFlag $R2
+
+    ; Save pre-existing RebootFlag state so we don't accidentally clear a reboot requested earlier
+    StrCpy ${sdf_priorRebootFlag} "0"
+    ${If} ${RebootFlag}
+        StrCpy ${sdf_priorRebootFlag} "1"
+    ${EndIf}
 
     ${If} ${FileExists} "${TARGET_FILE}"
         ClearErrors
@@ -115,8 +80,14 @@
             ${IfNot} ${Errors}
                 ; Renamed: schedule only the unique file for deletion on reboot
                 Delete /REBOOTOK "${sdf_tempDeletedFile}"
+                ; Delete /REBOOTOK sets RebootFlag internally. Since rename succeeded,
+                ; the destination path is now vacant and can be replaced immediately
+                ; without rebooting. Restore prior RebootFlag state.
+                ${If} ${sdf_priorRebootFlag} == "0"
+                    SetRebootFlag false
+                ${EndIf}
             ${Else}
-                ; Hard-locked: schedule original target on reboot
+                ; Hard-locked: schedule original target on reboot and flag reboot requirement
                 Delete /REBOOTOK "${TARGET_FILE}"
                 SetRebootFlag true
             ${EndIf}
@@ -125,97 +96,38 @@
 
     !undef sdf_tempDeletedFile
     !undef sdf_targetDir
+    !undef sdf_priorRebootFlag
 
+    Pop $R2
     Pop $R1
     Pop $R0
 !macroend
 
 
 ; ==============================================================================
-; Macro: InstallOrSkip
+; Macro: CleanOldBinaries
 ; ------------------------------------------------------------------------------
-; Installs a binary file (DLL / EXE) to a destination path, skipping the write
-; if the target file already exists and has identical MD5 checksum.
-;
-; Expected Behavior:
-;   1. Fast path: attempts direct CopyFiles. If target is not locked, this succeeds
-;      immediately with 0 hash calculations.
-;   2. Target is locked: calculates MD5 of both target and source.
-;   3. If MD5 matches: cleanly skips overwriting the file.
-;   4. If MD5 differs: calls SafeDeleteFile to safely rename the locked target
-;      to a unique <temp>.deleted file, freeing the destination path so the new
-;      file can be copied directly without requiring a reboot.
-;   5. If SafeDeleteFile hit a hard lock (rename failed): fails cleanly and prompts
-;      user to restart the computer.
+; Safely removes or renames all PIME binary executables and DLLs in INSTDIR.
+; If files are locked by running applications, renames them to temporary files
+; and schedules them for deletion on reboot, freeing destination paths so new
+; files can be installed immediately.
 ;
 ; Parameters:
-;   TARGET_FILE - Destination file path (e.g. "$INSTDIR\x86\PIMETextService.dll").
-;   SOURCE_FILE - Source candidate file (e.g. "$PLUGINSDIR\PIMETextService_x86.dll").
+;   None (operates on $INSTDIR, RunningX64, IsNativeARM64).
 ; ==============================================================================
-!macro InstallOrSkip TARGET_FILE SOURCE_FILE
-    Push $R0
-    Push $R1
-    Push $R2
-
-    !define ios_isMD5Equal      $R0
-    !define ios_targetDir       $R1
-    !define ios_priorRebootFlag $R2
-
-    ; Save pre-existing RebootFlag state so we don't accidentally clear a reboot requested earlier
-    StrCpy ${ios_priorRebootFlag} "0"
-    ${If} ${RebootFlag}
-        StrCpy ${ios_priorRebootFlag} "1"
-    ${EndIf}
-
-    ; Ensure parent directory exists
-    GetFullPathName ${ios_targetDir} "${TARGET_FILE}\.."
-    CreateDirectory "${ios_targetDir}"
-
-    ; 1. Try unconditional write first (succeeds if file is new or not in use)
-    ClearErrors
-    CopyFiles /SILENT "${SOURCE_FILE}" "${TARGET_FILE}"
-    ${If} ${Errors}
-        ; 2. Write failed: target is locked / in use.
-        ; Check MD5: if identical, we don't need to overwrite it! Skip cleanly.
-        !insertmacro CheckFileMD5Equal "${TARGET_FILE}" "${SOURCE_FILE}" ${ios_isMD5Equal}
-        ${If} ${ios_isMD5Equal} != "True"
-            ; 3. Target is locked and MD5 differs: safely remove/rename the old file
-            !insertmacro SafeDeleteFile "${TARGET_FILE}"
-            ${IfNot} ${FileExists} "${TARGET_FILE}"
-                ; Rename succeeded: path is now freed on disk, copy new file into place
-                ClearErrors
-                CopyFiles /SILENT "${SOURCE_FILE}" "${TARGET_FILE}"
-                ${If} ${Errors}
-                    ; Target write failed even after path was freed
-                    SetRebootFlag true
-                    MessageBox MB_YESNO|MB_ICONSTOP $(REBOOT_QUESTION) IDNO +2
-                    Reboot
-                    Quit
-                ${Else}
-                    ; Successfully replaced in place.
-                    ; Delete /REBOOTOK on the renamed temporary file sets NSIS RebootFlag
-                    ; internally. If no reboot was requested before this macro ran, clear
-                    ; the flag so we don't prompt the user for an unnecessary reboot.
-                    ${If} ${ios_priorRebootFlag} == "0"
-                        SetRebootFlag false
-                    ${EndIf}
-                ${EndIf}
-            ${Else}
-                ; 4. Hard lock: rename failed, cannot replace target without reboot.
-                MessageBox MB_YESNO|MB_ICONSTOP $(REBOOT_QUESTION) IDNO +2
-                Reboot
-                Quit
-            ${EndIf}
+!macro CleanOldBinaries
+    !insertmacro SafeDeleteFile "$INSTDIR\PIMELauncher.exe"
+    !insertmacro SafeDeleteFile "$INSTDIR\x86\PIMETextService.dll"
+    ${If} ${IsNativeAMD64}
+        !insertmacro SafeDeleteFile "$INSTDIR\x64\PIMETextService.dll"
+    ${ElseIf} ${IsNativeARM64}
+        !insertmacro SafeDeleteFile "$INSTDIR\arm64\PIMETextService.dll"
+        !insertmacro SafeDeleteFile "$INSTDIR\arm64\PIMETextService_arm64.dll"
+        !insertmacro SafeDeleteFile "$INSTDIR\arm64\PIMETextService_x64.dll"
+        ${If} ${FileExists} "$INSTDIR\x64\PIMETextService.dll"
+            !insertmacro SafeDeleteFile "$INSTDIR\x64\PIMETextService.dll"
         ${EndIf}
     ${EndIf}
-
-    !undef ios_isMD5Equal
-    !undef ios_targetDir
-    !undef ios_priorRebootFlag
-
-    Pop $R2
-    Pop $R1
-    Pop $R0
 !macroend
 
 

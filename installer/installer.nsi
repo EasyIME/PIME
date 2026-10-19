@@ -129,27 +129,19 @@ Function uninstallOldVersion
 
 			; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 			!insertmacro UnregisterTextService 32 "$INSTDIR\x86\PIMETextService.dll"
-			${If} ${RunningX64}
+			${If} ${IsNativeAMD64}
 				!insertmacro UnregisterTextService 64 "$INSTDIR\x64\PIMETextService.dll"
-			${EndIf}
-			${If} ${IsNativeARM64}
+			${ElseIf} ${IsNativeARM64}
 				!insertmacro UnregisterTextService 64 "$INSTDIR\arm64\PIMETextService.dll"
 			${EndIf}
 
 			; Remove the launcher from auto-start and clean registry
 			!insertmacro CleanPIMERegistry
 
-			; NOTE: Why binary files (DLLs, EXE) and binary folders (x86, x64, arm64) are NOT deleted here:
-			; 1. Folders: On Windows, scheduling directories for deletion on reboot (via RMDir /REBOOTOK)
-			;    while this installer is about to install new files into those exact same directories
-			;    would cause Windows PendingFileRenameOperations to wipe the newly installed directories
-			;    on the next system reboot.
-			; 2. Binaries: PIMELauncher.exe and PIMETextService.dll are handled cleanly by InstallOrSkip
-			;    later in the installation sections. If their MD5 checksum matches the new version, they
-			;    are kept untouched without unnecessary writes or reboot requirements. If their MD5
-			;    differs and they are currently locked by active applications, InstallOrSkip safely renames
-			;    the locked file to a unique .deleted temporary file, freeing the path so the new binary
-			;    can be installed immediately without forcing a reboot.
+			; Safely remove or rename old binaries so the destination paths are free for writing.
+			; If files are locked by running applications, SafeDeleteFile renames them to unique
+			; temporary files scheduled for deletion on reboot without blocking immediate installation.
+			!insertmacro CleanOldBinaries
 
 			; Clean old backend and data files
 			Delete "$INSTDIR\backends.json"
@@ -219,15 +211,7 @@ Function .onInit
 		Reboot
 	${EndIf}
 
-	; Extract candidate binaries into $PLUGINSDIR (NSIS temporary plugin directory,
-	; which Windows automatically cleans up when the installer exits).
-	; This allows InstallOrSkip to compute MD5 checksums of the new candidates against
-	; existing files on disk, and copy them safely via CopyFiles without triggering
-	; raw NSIS "File write error: Abort/Retry/Ignore" popups when files are in use.
-	File "/oname=$PLUGINSDIR\PIMETextService_x86.dll" "..\build\PIMETextService\Release\PIMETextService.dll"
-	File "/oname=$PLUGINSDIR\PIMETextService_x64.dll" "..\build64\PIMETextService\Release\PIMETextService.dll"
-	File "/oname=$PLUGINSDIR\PIMETextService_arm64.dll" "..\build_arm64\PIMETextService\Release\PIMETextService.dll"
-	File "/oname=$PLUGINSDIR\PIMELauncher.exe" "..\build\PIMELauncher\PIMELauncher.exe"
+
 
 	StrCpy $INST_PYTHON "False"
 	StrCpy $INST_CINBASE "False"
@@ -312,8 +296,11 @@ Section $(SECTION_MAIN) SecMain
     ; Install backend informations
     File "..\backends.json"
 
+	; Safely clean/rename old binaries before writing new ones
+	!insertmacro CleanOldBinaries
+
 	; Install the launcher responsible to launch the backends
-	!insertmacro InstallOrSkip "$INSTDIR\PIMELauncher.exe" "$PLUGINSDIR\PIMELauncher.exe"
+	File "..\build\PIMELauncher\PIMELauncher.exe"
 SectionEnd
 
 SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
@@ -504,17 +491,18 @@ Section "" Register
 	${EndIf}
 
 	; Install the text service dlls
-	${If} ${RunningX64} ; This is a 64-bit Windows system
-		!insertmacro InstallOrSkip "$INSTDIR\x64\PIMETextService.dll" "$PLUGINSDIR\PIMETextService_x64.dll"
+	${If} ${IsNativeAMD64} ; This is a 64-bit x86-64/x64 Windows system
+		SetOutPath "$INSTDIR\x64"
+		File "..\build64\PIMETextService\Release\PIMETextService.dll"
 		!insertmacro RegisterTextService 64 "$INSTDIR\x64\PIMETextService.dll"
-	${EndIf}
-
-	${If} ${IsNativeARM64} ; This is a native ARM64 Windows system
-		!insertmacro InstallOrSkip "$INSTDIR\arm64\PIMETextService.dll" "$PLUGINSDIR\PIMETextService_arm64.dll"
+	${ElseIf} ${IsNativeARM64} ; This is a native ARM64 Windows system
+		SetOutPath "$INSTDIR\arm64"
+		File "..\build_arm64\PIMETextService\Release\PIMETextService.dll"
 		!insertmacro RegisterTextService 64 "$INSTDIR\arm64\PIMETextService.dll"
 	${EndIf}
 
-	!insertmacro InstallOrSkip "$INSTDIR\x86\PIMETextService.dll" "$PLUGINSDIR\PIMETextService_x86.dll"
+	SetOutPath "$INSTDIR\x86"
+	File "..\build\PIMETextService\Release\PIMETextService.dll"
 	!insertmacro RegisterTextService 32 "$INSTDIR\x86\PIMETextService.dll"
 
 	; Launch the python server on startup
@@ -594,32 +582,28 @@ Section "Uninstall"
 
 	; Try to terminate running PIMELauncher and the server process
 	!insertmacro StopPIMELauncher
-	!insertmacro SafeDeleteFile "$INSTDIR\PIMELauncher.exe"
-
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 	!insertmacro UnregisterTextService 32 "$INSTDIR\x86\PIMETextService.dll"
-	${If} ${RunningX64}
+	${If} ${IsNativeAMD64}
 		!insertmacro UnregisterTextService 64 "$INSTDIR\x64\PIMETextService.dll"
-	${EndIf}
-	${If} ${IsNativeARM64}
+	${ElseIf} ${IsNativeARM64}
 		!insertmacro UnregisterTextService 64 "$INSTDIR\arm64\PIMETextService.dll"
 	${EndIf}
 
 	; Remove auto-start, uninstall, and product keys from registry
 	!insertmacro CleanPIMERegistry
 
-	; Safely delete text service DLLs (which may be locked by running processes)
-	!insertmacro SafeDeleteFile "$INSTDIR\x86\PIMETextService.dll"
+	; Safely delete binaries (which may be locked by running processes)
+	!insertmacro CleanOldBinaries
 	RMDir /REBOOTOK "$INSTDIR\x86"
 
-	${If} ${RunningX64}
-		!insertmacro SafeDeleteFile "$INSTDIR\x64\PIMETextService.dll"
+	${If} ${IsNativeAMD64}
 		RMDir /REBOOTOK "$INSTDIR\x64"
-	${EndIf}
-
-	${If} ${IsNativeARM64}
-		!insertmacro SafeDeleteFile "$INSTDIR\arm64\PIMETextService.dll"
+	${ElseIf} ${IsNativeARM64}
 		RMDir /REBOOTOK "$INSTDIR\arm64"
+		${If} ${FileExists} "$INSTDIR\x64"
+			RMDir /REBOOTOK "$INSTDIR\x64"
+		${EndIf}
 	${EndIf}
 
 	RMDir /REBOOTOK /r "$INSTDIR\python"

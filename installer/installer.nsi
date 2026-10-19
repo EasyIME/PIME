@@ -129,11 +129,15 @@ Function uninstallOldVersion
 
 			; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 			!insertmacro UnregisterTextService 32 "$INSTDIR\x86\PIMETextService.dll"
-			${If} ${RunningX64}
+			${If} ${IsNativeAMD64}
 				!insertmacro UnregisterTextService 64 "$INSTDIR\x64\PIMETextService.dll"
-			${EndIf}
-			${If} ${IsNativeARM64}
+			${ElseIf} ${IsNativeARM64}
 				!insertmacro UnregisterTextService 64 "$INSTDIR\arm64\PIMETextService.dll"
+				${If} ${FileExists} "$INSTDIR\x64"
+					!insertmacro UnregisterTextService 64 "$INSTDIR\x64\PIMETextService.dll"
+					!insertmacro SafeDeleteFile "$INSTDIR\x64\PIMETextService.dll"
+					RMDir /REBOOTOK "$INSTDIR\x64"
+				${EndIf}
 			${EndIf}
 
 			; Remove the launcher from auto-start and clean registry
@@ -226,7 +230,8 @@ Function .onInit
 	; raw NSIS "File write error: Abort/Retry/Ignore" popups when files are in use.
 	File "/oname=$PLUGINSDIR\PIMETextService_x86.dll" "..\build\PIMETextService\Release\PIMETextService.dll"
 	File "/oname=$PLUGINSDIR\PIMETextService_x64.dll" "..\build64\PIMETextService\Release\PIMETextService.dll"
-	File "/oname=$PLUGINSDIR\PIMETextService_arm64.dll" "..\build_arm64\PIMETextService\Release\PIMETextService.dll"
+	File "/oname=$PLUGINSDIR\PIMETextService_arm64.dll" "..\build_arm64\PIMETextService\Release\PIMETextService_arm64.dll"
+	File "/oname=$PLUGINSDIR\PIMETextService_arm64x.dll" "..\build_arm64\PIMETextService\Release\PIMETextService.dll"
 	File "/oname=$PLUGINSDIR\PIMELauncher.exe" "..\build\PIMELauncher\PIMELauncher.exe"
 
 	StrCpy $INST_PYTHON "False"
@@ -504,13 +509,17 @@ Section "" Register
 	${EndIf}
 
 	; Install the text service dlls
-	${If} ${RunningX64} ; This is a 64-bit Windows system
+	${If} ${IsNativeAMD64} ; This is a 64-bit x86-64/x64 Windows system
 		!insertmacro InstallOrSkip "$INSTDIR\x64\PIMETextService.dll" "$PLUGINSDIR\PIMETextService_x64.dll"
 		!insertmacro RegisterTextService 64 "$INSTDIR\x64\PIMETextService.dll"
-	${EndIf}
-
-	${If} ${IsNativeARM64} ; This is a native ARM64 Windows system
-		!insertmacro InstallOrSkip "$INSTDIR\arm64\PIMETextService.dll" "$PLUGINSDIR\PIMETextService_arm64.dll"
+	${ElseIf} ${IsNativeARM64} ; This is a native ARM64 Windows system
+		; ARM64X forwarder DLL
+		!insertmacro InstallOrSkip "$INSTDIR\arm64\PIMETextService.dll" "$PLUGINSDIR\PIMETextService_arm64x.dll"
+		; Real native ARM64 DLL
+		!insertmacro InstallOrSkip "$INSTDIR\arm64\PIMETextService_arm64.dll" "$PLUGINSDIR\PIMETextService_arm64.dll"
+		; Real x64 DLL for emulated x64 / ARM64EC processes
+		!insertmacro InstallOrSkip "$INSTDIR\arm64\PIMETextService_x64.dll" "$PLUGINSDIR\PIMETextService_x64.dll"
+		; Register COM objects (only register the ARM64X forwarder DLL)
 		!insertmacro RegisterTextService 64 "$INSTDIR\arm64\PIMETextService.dll"
 	${EndIf}
 
@@ -598,11 +607,13 @@ Section "Uninstall"
 
 	; Unregister COM objects (NSIS UnRegDLL command is broken and cannot be used)
 	!insertmacro UnregisterTextService 32 "$INSTDIR\x86\PIMETextService.dll"
-	${If} ${RunningX64}
+	${If} ${IsNativeAMD64}
 		!insertmacro UnregisterTextService 64 "$INSTDIR\x64\PIMETextService.dll"
-	${EndIf}
-	${If} ${IsNativeARM64}
+	${ElseIf} ${IsNativeARM64}
 		!insertmacro UnregisterTextService 64 "$INSTDIR\arm64\PIMETextService.dll"
+		${If} ${FileExists} "$INSTDIR\x64"
+			!insertmacro UnregisterTextService 64 "$INSTDIR\x64\PIMETextService.dll"
+		${EndIf}
 	${EndIf}
 
 	; Remove auto-start, uninstall, and product keys from registry
@@ -612,14 +623,18 @@ Section "Uninstall"
 	!insertmacro SafeDeleteFile "$INSTDIR\x86\PIMETextService.dll"
 	RMDir /REBOOTOK "$INSTDIR\x86"
 
-	${If} ${RunningX64}
+	${If} ${IsNativeAMD64}
 		!insertmacro SafeDeleteFile "$INSTDIR\x64\PIMETextService.dll"
 		RMDir /REBOOTOK "$INSTDIR\x64"
-	${EndIf}
-
-	${If} ${IsNativeARM64}
+	${ElseIf} ${IsNativeARM64}
 		!insertmacro SafeDeleteFile "$INSTDIR\arm64\PIMETextService.dll"
+		!insertmacro SafeDeleteFile "$INSTDIR\arm64\PIMETextService_arm64.dll"
+		!insertmacro SafeDeleteFile "$INSTDIR\arm64\PIMETextService_x64.dll"
 		RMDir /REBOOTOK "$INSTDIR\arm64"
+		${If} ${FileExists} "$INSTDIR\x64"
+			!insertmacro SafeDeleteFile "$INSTDIR\x64\PIMETextService.dll"
+			RMDir /REBOOTOK "$INSTDIR\x64"
+		${EndIf}
 	${EndIf}
 
 	RMDir /REBOOTOK /r "$INSTDIR\python"

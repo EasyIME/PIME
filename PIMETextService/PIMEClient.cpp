@@ -62,6 +62,7 @@ Client::Client(TextService* service, REFIID langProfileGuid):
 	isActivated_(false),
 	guid_{ uuidToString(langProfileGuid) },
 	shouldWaitConnection_{ true },
+	nextConnectAttemptTick_{ 0 },
 	ioEvent_{ CreateEvent(NULL, TRUE, FALSE, NULL) } {
 }
 
@@ -767,10 +768,19 @@ bool Client::isPipeCreatedByPIMEServer(HANDLE pipe) {
 
 // establish a connection to the specified pipe and returns its handle
 // static
-HANDLE Client::connectPipe(const wchar_t* pipeName, int timeoutMs) {
+HANDLE Client::connectPipe(const wchar_t* pipeName, int timeoutMs, bool* retryable) {
 	HANDLE pipe = INVALID_HANDLE_VALUE;
+	if (retryable) {
+		*retryable = false;
+	}
 	if (WaitNamedPipe(pipeName, timeoutMs)) {
 		pipe = CreateFile(pipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+	}
+	else if (retryable) {
+		// ERROR_SEM_TIMEOUT: the pipe exists but every instance was busy.
+		// Anything else (typically ERROR_FILE_NOT_FOUND: the launcher is not
+		// running) fails immediately and will keep failing, so don't retry.
+		*retryable = (GetLastError() == ERROR_SEM_TIMEOUT);
 	}
 
 	if (pipe != INVALID_HANDLE_VALUE) {
@@ -792,13 +802,30 @@ bool Client::waitForRpcConnection() {
 		return true;
 	}
 
+	// This runs on the UI thread of the host application for every key stroke
+	// while we are disconnected, so it must never block for long: WaitNamedPipe()
+	// is given a short timeout, a launcher that is not running is not retried at
+	// all, and after a failure we leave the keys to the application for a while
+	// instead of probing the pipe again on each of them.
+	const int kPipeWaitTimeoutMs = 200;
+	const int kMaxConnectAttempts = 3;
+	const ULONGLONG kConnectRetryIntervalMs = 1000;
+
+	if (GetTickCount64() < nextConnectAttemptTick_) {
+		return false;
+	}
+
 	wstring serverPipeName = getPipeName(L"Launcher");
 	if (serverPipeName.empty()) {
 		return false;
 	}
-	for (int attempt = 0; pipe_ == INVALID_HANDLE_VALUE && attempt < 3; ++attempt) {
+	for (int attempt = 0; pipe_ == INVALID_HANDLE_VALUE && attempt < kMaxConnectAttempts; ++attempt) {
 		// try to connect to the server
-		pipe_ = connectPipe(serverPipeName.c_str(), 3000);
+		bool retryable = false;
+		pipe_ = connectPipe(serverPipeName.c_str(), kPipeWaitTimeoutMs, &retryable);
+		if (pipe_ == INVALID_HANDLE_VALUE && !retryable) {
+			break;
+		}
 	}
 
 	if (pipe_ != INVALID_HANDLE_VALUE) {
@@ -819,7 +846,11 @@ bool Client::waitForRpcConnection() {
 		shouldWaitConnection_ = true;
 	}
 	// if init() or onActivate() RPC fails, the pipe_ might have been closed.
-	return pipe_ != INVALID_HANDLE_VALUE;
+	if (pipe_ == INVALID_HANDLE_VALUE) {
+		nextConnectAttemptTick_ = GetTickCount64() + kConnectRetryIntervalMs;
+		return false;
+	}
+	return true;
 }
 
 void Client::resetTextServiceState() {

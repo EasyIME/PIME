@@ -76,7 +76,10 @@ public:
 
 private:
 	static std::wstring getPipeName(const wchar_t* base_name);
-	HANDLE connectPipe(const wchar_t* pipeName, int timeoutMs);
+	// Connects to the named pipe and returns its handle, or INVALID_HANDLE_VALUE.
+	// *retryable is set to true only if the pipe exists but was busy, i.e.
+	// another attempt could succeed.
+	HANDLE connectPipe(const wchar_t* pipeName, int timeoutMs, bool* retryable = nullptr);
 
 	static constexpr int kDefaultRpcTimeoutMs = 2000;
 	static constexpr int kServerStartupTimeoutMs = 15000;
@@ -119,6 +122,7 @@ private:
 	unsigned int nextSeqNum_;
 	bool isActivated_;
 	bool shouldWaitConnection_;
+	ULONGLONG nextConnectAttemptTick_; // GetTickCount64() before which we don't try to reconnect
 	std::string readBuffer_;
 	HANDLE ioEvent_;
 };

@@ -256,48 +256,6 @@
 
 
 ; ==============================================================================
-; Macro: DownloadAndInstallVCRedist
-; ------------------------------------------------------------------------------
-; Prompts the user, downloads Microsoft VC++ Redistributable runtime installer
-; using the inetc plugin, runs it, and verifies that the required CRT libraries
-; are now present.
-;
-; Parameters:
-;   URL      - Download URL for the VC++ redistributable installer.
-;   EXE_NAME - Local temporary filename (e.g. "vc_redist.x64.exe").
-; ==============================================================================
-!macro DownloadAndInstallVCRedist URL EXE_NAME
-    Push $R0
-    Push $0
-
-    !define downloadStatus $R0
-    !define exitCode       $0
-
-    MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
-        Abort
-    inetc::get "${URL}" "$TEMP\${EXE_NAME}"
-    Pop ${downloadStatus}
-    ${If} ${downloadStatus} != "OK"
-        MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VCREDIST_FAILED_MESSAGE)
-        Abort
-    ${EndIf}
-    ExecWait "$TEMP\${EXE_NAME}" ${exitCode}
-    ${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
-    ${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-        MessageBox MB_ICONSTOP|MB_OK $(INST_VCREDIST_FAILED_MESSAGE)
-        ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
-        Abort
-    ${EndIf}
-
-    !undef downloadStatus
-    !undef exitCode
-
-    Pop $0
-    Pop $R0
-!macroend
-
-
-; ==============================================================================
 ; Helper Macro: _ReadWideString
 ; ------------------------------------------------------------------------------
 ; Reads a null-terminated UTF-16LE wide string from a memory pointer into OUT_VAR.

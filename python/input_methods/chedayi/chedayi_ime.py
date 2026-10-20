@@ -122,6 +122,9 @@ class CheDayiTextService(TextService):
                     self.compositionChar += charStr
                     self.canUseSelKey = False
                     candidates = self.dsymbols.getCharDef(self.compositionChar[1:])
+                elif keyCode == VK_SPACE or keyCode == VK_RETURN or keyCode == VK_ESCAPE:
+                    self.dayisymbolsmode = False
+                    self.cinbase.resetComposition(self)
 
         if not self.directShowCand:
             self.autoShowCandWhenMaxChar = True

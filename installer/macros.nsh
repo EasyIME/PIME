@@ -8,6 +8,8 @@
 ;	(Antigravity with Gemini 3.8). Copyright is claimed only for the original API
 ;	design and workflow, not for the AI-generated code implementation.
 ;
+; AI-assisted change (#966): Codex (GPT-6) removed the obsolete VC++ Redistributable macro.
+;
 ;	This library is free software; you can redistribute it and/or
 ;	modify it under the terms of the GNU Library General Public
 ;	License as published by the Free Software Foundation; either
@@ -254,47 +256,6 @@
     ${EndIf}
 !macroend
 
-
-; ==============================================================================
-; Macro: DownloadAndInstallVCRedist
-; ------------------------------------------------------------------------------
-; Prompts the user, downloads Microsoft VC++ Redistributable runtime installer
-; using the inetc plugin, runs it, and verifies that the required CRT libraries
-; are now present.
-;
-; Parameters:
-;   URL      - Download URL for the VC++ redistributable installer.
-;   EXE_NAME - Local temporary filename (e.g. "vc_redist.x64.exe").
-; ==============================================================================
-!macro DownloadAndInstallVCRedist URL EXE_NAME
-    Push $R0
-    Push $0
-
-    !define downloadStatus $R0
-    !define exitCode       $0
-
-    MessageBox MB_YESNO|MB_ICONQUESTION $(DOWNLOAD_VCREDIST_QUESTION) IDYES +2
-        Abort
-    inetc::get "${URL}" "$TEMP\${EXE_NAME}"
-    Pop ${downloadStatus}
-    ${If} ${downloadStatus} != "OK"
-        MessageBox MB_ICONSTOP|MB_OK $(DOWNLOAD_VCREDIST_FAILED_MESSAGE)
-        Abort
-    ${EndIf}
-    ExecWait "$TEMP\${EXE_NAME}" ${exitCode}
-    ${IfNot} ${FileExists} "$SYSDIR\ucrtbase.dll"
-    ${OrIfNot} ${FileExists} "$SYSDIR\msvcp140.dll"
-        MessageBox MB_ICONSTOP|MB_OK $(INST_VCREDIST_FAILED_MESSAGE)
-        ExecShell "open" "https://support.microsoft.com/en-us/kb/2999226"
-        Abort
-    ${EndIf}
-
-    !undef downloadStatus
-    !undef exitCode
-
-    Pop $0
-    Pop $R0
-!macroend
 
 
 ; ==============================================================================

@@ -5,6 +5,11 @@ let NIME  = require('nime');
 
 let {loadServices, loadServiceById} = require('./loadServices');
 
+process.on('uncaughtException', (err) => {
+  debug('Uncaught exception in Node.js backend:', err);
+  console.error('ERROR: uncaught exception in Node.js backend:', err);
+});
+
 let services = loadServices();
 
 if (services.length == 0) {

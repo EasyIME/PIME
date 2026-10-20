@@ -139,7 +139,9 @@ class ServerResilienceTests(unittest.TestCase):
                 contextlib.redirect_stderr(io.StringIO()):
             server.run()
 
-        self.assertIn('PIME_MSG|client-1|{"success":false}', stdout.getvalue())
+        replies = [line for line in stdout.getvalue().splitlines() if line.startswith("PIME_MSG|client-1|")]
+        self.assertEqual(len(replies), 1)
+        self.assertEqual(json.loads(replies[0][len("PIME_MSG|client-1|"):]), {"success": False})
 
     def test_server_ignores_malformed_request_line(self):
         server_mod = self.import_server()

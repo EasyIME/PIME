@@ -26,6 +26,8 @@ add_library(PIMETextService SHARED
     PIMETextService.h
     PIMEClient.cpp
     PIMEClient.h
+    RpcPipe.cpp
+    RpcPipe.h
     PIMELangBarButton.cpp
     PIMELangBarButton.h
     DllEntry.cpp

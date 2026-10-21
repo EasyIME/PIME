@@ -59,11 +59,16 @@ Client::Client(TextService* service, REFIID langProfileGuid):
 	textService_(service),
 	nextSeqNum_(0),
 	isActivated_(false),
-	guid_{ uuidToString(langProfileGuid) },
-	shouldWaitConnection_{ true } {
+	state_(State::Disconnected),
+	guid_{ uuidToString(langProfileGuid) } {
 }
 
 Client::~Client(void) {
+	state_ = State::Disconnected;
+	if (connector_) {
+		connector_->cancel();
+		connector_.reset();
+	}
 	pipe_.close();
 	resetTextServiceState();
 }
@@ -385,28 +390,56 @@ void Client::updateCandidateList(json& msg, Ime::EditSession* session) {
 	}
 }
 
+bool Client::ensureConnected() {
+	if (state_ == State::Ready) {
+		return true;
+	}
+	if (state_ == State::Disconnected && isActivated_) {
+		startAsyncConnect();
+	}
+	return false;
+}
+
 // handlers for the text service
 void Client::onActivate() {
-	json req = createRpcRequest("onActivate");
-	req["isKeyboardOpen"] = textService_->isKeyboardOpened();
-
-	json ret;
-	callRpcMethod(req, ret, kServerStartupTimeoutMs);
-	if (handleRpcResponse(ret)) {
-	}
 	isActivated_ = true;
+	if (state_ == State::Ready) {
+		json req = createRpcRequest("onActivate");
+		req["isKeyboardOpen"] = textService_->isKeyboardOpened();
+
+		json ret;
+		callRpcMethod(req, ret, kServerStartupTimeoutMs);
+		if (handleRpcResponse(ret)) {
+		}
+		return;
+	}
+
+	startAsyncConnect();
 }
 
 void Client::onDeactivate() {
-	json req = createRpcRequest("onDeactivate");
-	json ret;
-	callRpcMethod(req, ret);
-	if (handleRpcResponse(ret)) {
-	}
 	isActivated_ = false;
+	state_ = State::Disconnected;
+	if (connector_) {
+		connector_->cancel();
+		connector_.reset();
+	}
+
+	if (pipe_.isValid()) {
+		json req = createRpcRequest("onDeactivate");
+		json ret;
+		callRpcMethod(req, ret);
+		if (handleRpcResponse(ret)) {
+		}
+		pipe_.close();
+	}
 }
 
 bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
+	if (!ensureConnected()) {
+		return false;
+	}
+
 	json req = createRpcRequest("filterKeyDown");
 	addKeyEventToRpcRequest(req, keyEvent);
 
@@ -419,6 +452,10 @@ bool Client::filterKeyDown(Ime::KeyEvent& keyEvent) {
 }
 
 bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
+	if (!ensureConnected()) {
+		return false;
+	}
+
 	json req = createRpcRequest("onKeyDown");
 	addKeyEventToRpcRequest(req, keyEvent);
 
@@ -431,6 +468,10 @@ bool Client::onKeyDown(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 }
 
 bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
+	if (!ensureConnected()) {
+		return false;
+	}
+
 	json req = createRpcRequest("filterKeyUp");
 	addKeyEventToRpcRequest(req, keyEvent);
 
@@ -443,6 +484,10 @@ bool Client::filterKeyUp(Ime::KeyEvent& keyEvent) {
 }
 
 bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
+	if (!ensureConnected()) {
+		return false;
+	}
+
 	json req = createRpcRequest("onKeyUp");
 	addKeyEventToRpcRequest(req, keyEvent);
 
@@ -455,6 +500,10 @@ bool Client::onKeyUp(Ime::KeyEvent& keyEvent, Ime::EditSession* session) {
 }
 
 bool Client::onPreservedKey(const GUID& guid) {
+	if (!ensureConnected()) {
+		return false;
+	}
+
 	auto guidStr = uuidToString(guid);
 	if (!guidStr.empty()) {
 		json req = createRpcRequest("onPreservedKey");
@@ -470,6 +519,10 @@ bool Client::onPreservedKey(const GUID& guid) {
 }
 
 bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
+	if (!ensureConnected()) {
+		return false;
+	}
+
 	json req = createRpcRequest("onCommand");
 	req["id"] = id;
 	req["type"] = type;
@@ -483,6 +536,10 @@ bool Client::onCommand(UINT id, Ime::TextService::CommandType type) {
 }
 
 bool Client::sendOnMenu(std::string button_id, json& result) {
+	if (!ensureConnected()) {
+		return false;
+	}
+
 	json req = createRpcRequest("onMenu");
 	req["id"] = button_id;
 
@@ -573,6 +630,10 @@ static HMENU menuFromJson(json& menuInfo) {
 // called when a language bar button needs a menu
 // virtual
 HMENU Client::onMenu(LangBarButton* btn) {
+	if (!ensureConnected()) {
+		return NULL;
+	}
+
 	json result;
 	if (sendOnMenu(btn->id(), result)) {
 		json& menuInfo = result["return"];
@@ -583,6 +644,10 @@ HMENU Client::onMenu(LangBarButton* btn) {
 
 // called when a compartment value is changed
 void Client::onCompartmentChanged(const GUID& key) {
+	if (!ensureConnected()) {
+		return;
+	}
+
 	auto guidStr = uuidToString(key);
 	if (!guidStr.empty()) {
 		json req = createRpcRequest("onCompartmentChanged");
@@ -597,6 +662,10 @@ void Client::onCompartmentChanged(const GUID& key) {
 
 // called when the keyboard is opened or closed
 void Client::onKeyboardStatusChanged(bool opened) {
+	if (!ensureConnected()) {
+		return;
+	}
+
 	json req = createRpcRequest("onKeyboardStatusChanged");
 	req["opened"] = opened;
 
@@ -608,6 +677,10 @@ void Client::onKeyboardStatusChanged(bool opened) {
 
 // called just before current composition is terminated for doing cleanup.
 void Client::onCompositionTerminated(bool forced) {
+	if (!ensureConnected()) {
+		return;
+	}
+
 	json req = createRpcRequest("onCompositionTerminated");
 	req["forced"] = forced;
 
@@ -617,16 +690,43 @@ void Client::onCompositionTerminated(bool forced) {
 	}
 }
 
-bool Client::init() {
-	json req = createRpcRequest("init");
-	req["id"] = guid_.c_str();  // language profile guid
-	req["isWindows8Above"] = ::IsWindows8OrGreater();
-	req["isMetroApp"] = textService_->isMetroApp();
-	req["isUiLess"] = textService_->isUiLess();
-	req["isConsole"] = textService_->isConsole();
+void Client::startAsyncConnect() {
+	if (connector_) {
+		connector_->cancel();
+		connector_.reset();
+	}
 
-	json ret;
-	return callRpcMethod(req, ret, kServerStartupTimeoutMs) && handleRpcResponse(ret);
+	state_ = State::Connecting;
+
+	json initReq = createRpcRequest("init");
+	initReq["id"] = guid_.c_str();  // language profile guid
+	initReq["isWindows8Above"] = ::IsWindows8OrGreater();
+	initReq["isMetroApp"] = textService_->isMetroApp();
+	initReq["isUiLess"] = textService_->isUiLess();
+	initReq["isConsole"] = textService_->isConsole();
+
+	connector_ = std::make_shared<AsyncConnector>();
+	connector_->connect(getPipeName(L"Launcher"), std::move(initReq), [this](RpcPipe pipe, json initResp) {
+		connector_.reset();
+		if (pipe.isValid()) {
+			pipe_ = std::move(pipe);
+			nextSeqNum_ = 2; // seqNum 1 was used by init
+			handleRpcResponse(initResp);
+
+			// Mark Ready before sending onActivate RPC so callRpcMethod allows it:
+			state_ = State::Ready;
+
+			// With backend warmed up and pipe connected, sync onActivate takes < 1ms:
+			json req = createRpcRequest("onActivate");
+			req["isKeyboardOpen"] = textService_->isKeyboardOpened();
+			json actResp;
+			callRpcMethod(req, actResp);
+			handleRpcResponse(actResp);
+		}
+		else {
+			state_ = State::Disconnected;
+		}
+	});
 }
 
 
@@ -641,7 +741,7 @@ json Client::createRpcRequest(const char* methodName) {
 // send the request to the server
 // a sequence number will be added to the req object automatically.
 bool Client::callRpcMethod(json& request, json & response, int timeoutMs) {
-	if (shouldWaitConnection_ && !waitForRpcConnection()) {
+	if (!ensureConnected()) {
 		return false;
 	}
 
@@ -650,6 +750,8 @@ bool Client::callRpcMethod(json& request, json & response, int timeoutMs) {
 	request["seqNum"] = seqNum;
 
 	std::string serializedRequest = request.dump(); // convert the json object to string
+	std::string methodName = jsonValueOr<std::string>(request, "method", "");
+
 	std::string serializedResponse;
 	bool success = false;
 	if (pipe_.callRpc(serializedRequest, serializedResponse, timeoutMs)) {
@@ -663,47 +765,13 @@ bool Client::callRpcMethod(json& request, json & response, int timeoutMs) {
 	if (!success) { // fail to send the request to the server
 		response = nullptr; // never let callers act on a stale or partial response
 		pipe_.close(); // close the pipe connection since it's broken
+		state_ = State::Disconnected;
 		resetTextServiceState();  // since we lost the connection, the state is unknown so we reset.
+		if (methodName != "onDeactivate" && isActivated_) {
+			startAsyncConnect();
+		}
 	}
 	return success;
-}
-
-// Ensure that we're connected to the PIME input method server
-// If we are already connected, the method simply returns true;
-// otherwise, it tries to establish the connection.
-bool Client::waitForRpcConnection() {
-	if (pipe_.isValid()) {
-		return true;
-	}
-
-	wstring serverPipeName = getPipeName(L"Launcher");
-	if (serverPipeName.empty()) {
-		return false;
-	}
-	for (int attempt = 0; !pipe_.isValid() && attempt < 3; ++attempt) {
-		// try to connect to the server
-		pipe_ = RpcPipe::connect(serverPipeName.c_str(), 3000);
-	}
-
-	if (pipe_.isValid()) {
-		// send initialization info to the server for hand-shake.
-		shouldWaitConnection_ = false;  // prevent recursive call of waitForRpcConnection
-		if (!init()) {
-			pipe_.close();
-			shouldWaitConnection_ = true;
-			return false;
-		}
-
-		if (isActivated_) {
-			// we lost connection while being activated previously
-			// re-initialize the whole text service.
-			// activate the text service again.
-			onActivate();
-		}
-		shouldWaitConnection_ = true;
-	}
-	// if init() or onActivate() RPC fails, the pipe_ might have been closed.
-	return pipe_.isValid();
 }
 
 void Client::resetTextServiceState() {
@@ -722,19 +790,22 @@ void Client::resetTextServiceState() {
 	}
 }
 
-wstring Client::getPipeName(const wchar_t* base_name) {
+wstring Client::getPipeName(const wchar_t* baseName) {
 	wstring pipeName = L"\\\\.\\pipe\\";
 	DWORD len = 0;
-	::GetUserNameW(NULL, &len); // get the required size of the buffer
-	if (len <= 0)
+	::GetUserNameW(NULL, &len);
+	if (len <= 0) {
 		return L"";
-	// add username to the pipe path so it won't clash with the other users' pipes
+	}
+
 	unique_ptr<wchar_t[]> username(new wchar_t[len]);
-	if (!::GetUserNameW(username.get(), &len))
+	if (!::GetUserNameW(username.get(), &len)) {
 		return L"";
+	}
+
 	pipeName += username.get();
 	pipeName += L"\\PIME\\";
-	pipeName += base_name;
+	pipeName += baseName;
 	return pipeName;
 }
 

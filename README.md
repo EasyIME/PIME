@@ -6,7 +6,7 @@
 Implement input methods easily for Windows via Text Services Framework:
 *   LibIME contains a library which aims to be a simple wrapper for Windows Text Service Framework (TSF).
 *   PIMETextService contains an backbone implementation of Windows text service for using libIME.
-*   The python server part requires python 3.x and pywin32 package.
+*   The Python and Node.js backends run on the embedded runtimes in `python/python3/` and `node/`, so input methods are plain Python or JavaScript modules.
 
 All parts are licensed under GNU LGPL v2.1 license.
 
@@ -16,33 +16,45 @@ Contributions using AI coding tools are welcomed! However, to ensure code qualit
 # Development
 
 ## Tool Requirements
-*   [CMake](http://www.cmake.org/) >= 3.0
-*   [Visual Studio 2019](https://visualstudio.microsoft.com/vs)
+*   [CMake](https://cmake.org/) >= 4.2 (the `Visual Studio 18 2026` generator was added in 4.2)
+*   [Visual Studio 2026](https://visualstudio.microsoft.com/vs) with the "Desktop development with C++" workload
 *   [Rust Toolchain](https://rustup.rs/) (Stable channel with `i686-pc-windows-msvc` target)
-*   [git](http://windows.github.com/)
-*   [Node.js](https://nodejs.org/) (Required for some backends like McBopomofo)
+*   [git](https://git-scm.com/)
+*   [Node.js](https://nodejs.org/) with npm (builds the bundled JavaScript input methods)
+*   [NSIS](https://nsis.sourceforge.io/) 3.x (only needed to build the installer)
 
 ## How to Build
-*   Get source from github.
+*   Get source from GitHub.
 
-        git clone https://github.com/EasyIME/PIME.git
+        git clone --recursive https://github.com/EasyIME/PIME.git
         cd PIME
-        git submodule update --init
 
-*   Ensure the 32-bit Rust target is installed:
+    If you cloned without `--recursive`, run `git submodule update --init --recursive`.
+
+*   Ensure the 32-bit Rust target is installed (the launcher is 32-bit):
 
         rustup target add i686-pc-windows-msvc
 
-*   Use `build.bat` to build everything, or use the following CMake commands to generate Visual Studio project.
+*   Use `build.bat` to build everything. It builds the launcher, the x86, x64 and ARM64 text service DLLs, and bundles the JavaScript input methods.
 
-        cmake . -Bbuild -G "Visual Studio 16 2019" -A Win32
+*   To build by hand, use the same generator and policy flag as `build.bat`:
+
+        cmake . -Bbuild -G "Visual Studio 18 2026" -A Win32 -DCMAKE_POLICY_VERSION_MINIMUM=3.5
         cmake --build build --config Release
 
         # For 64-bit Text Service (Required for 64-bit apps)
-        cmake . -Bbuild64 -G "Visual Studio 16 2019" -A x64
+        cmake . -Bbuild64 -G "Visual Studio 18 2026" -A x64 -DCMAKE_POLICY_VERSION_MINIMUM=3.5
         cmake --build build64 --config Release --target PIMETextService
 
-*   The generated installer will be in the `installer` folder after running `makensis`.
+        # For ARM64 Text Service (Required for native ARM64 apps)
+        cmake . -Bbuild_arm64 -G "Visual Studio 18 2026" -A ARM64 -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+        cmake --build build_arm64 --config Release --target PIMETextService
+
+*   `build.bat` also generates the JavaScript input methods that the installer packages. After it has run, build the installer:
+
+        makensis installer\installer.nsi
+
+    The generated installer is `installer\PIME-<version>-setup.exe`. The manual CMake commands above build only the C++ binaries, so they are not enough on their own.
 
 ## TSF References
 *   [Text Services Framework](http://msdn.microsoft.com/en-us/library/windows/desktop/ms629032%28v=vs.85%29.aspx)
@@ -63,26 +75,14 @@ Contributions using AI coding tools are welcomed! However, to ensure code qualit
 *   [Creating a DACL](http://msdn.microsoft.com/en-us/library/windows/apps/ms717798.aspx)
 
 # Install
-*   Copy `PIMETextService.dll` to C:\Program Files (X86)\PIME\x86\.
-*   Copy `PIMETextService.dll` to C:\Program Files (X86)\PIME\x64\.
-*   Copy the folder `python` to `C:\Program Files (X86)\PIME\`
-*   Copy the folder `node` to `C:\Program Files (X86)\PIME\`
-*   Use `regsvr32` to register `PIMETextService.dll`. 64-bit system need to register both 32-bit and 64-bit `PIMETextService.dll`
-
-        regsvr32 "C:\Program Files (X86)\PIME\x86\PIMETextService.dll" (run as administrator)
-        regsvr32 "C:\Program Files (X86)\PIME\x64\PIMETextService.dll" (run as administrator)
-
-*   NOTICE: the `regsvr32` command needs to be run as Administrator. Otherwise you'll get access denied error.
-*   In Windows 8, if you put the dlls in places other than C:\Windows or C:\Program Files, they will not be accessible in metro apps.
+*   Download `PIME-<version>-setup.exe` from [Releases](https://github.com/EasyIME/PIME/releases), or build it as described above.
+*   Run the installer; it requests administrator rights. It installs under `C:\Program Files (x86)\PIME` (or `C:\Program Files\PIME` on 32-bit Windows) and registers the text service for the installed architectures (x86, and x64 or ARM64 on 64-bit Windows).
+*   Do not copy `PIMETextService.dll` by hand or register it with `regsvr32`; a partially registered copy will not work.
 
 # Uninstall
-*   Use `regsvr32` to unregister `PIMETextService.dll`. 64-bit system need to unregister both 32-bit and 64-bit `PIMETextService.dll`
-
-        regsvr32 /u "C:\Program Files (X86)\PIME\x86\PIMETextService.dll" (run as administrator)
-        regsvr32 /u "C:\Program Files (X86)\PIME\x64\PIMETextService.dll" (run as administrator)
-*   Remove `C:\Program Files (X86)\PIME`
-
-*   NOTICE: the `regsvr32` command needs to be run as Administrator. Otherwise you'll get access denied error.
+*   Open Settings > Apps > Installed apps, select PIME and choose Uninstall, or run `Uninstall.exe` from the install folder.
+*   The uninstaller unregisters the text service and removes the installed files. Files still in use are removed after a reboot.
+*   Do not unregister the DLLs with `regsvr32`.
 
 # Bug Report
 Please report any issue to [here](https://github.com/EasyIME/PIME/issues).

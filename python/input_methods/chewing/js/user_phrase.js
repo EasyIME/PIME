@@ -4,11 +4,7 @@ function loadUserPhrases() {
     $("#delete_count").html("");
 
     // Show loading overlay
-    $.LoadingOverlay("show", {
-        background: "rgba(80, 80, 80, 0.8)",
-        fade: [200, 500],
-        text: "載入詞彙中，請稍候..."
-    });
+    $("#loading_overlay").addClass("active");
 
     // Get user_phrases
     $.get("/user_phrases", function(data, status) {
@@ -26,7 +22,7 @@ function loadUserPhrases() {
         }
 
         // Hide loading overlay
-        $.LoadingOverlay("hide", true);
+        $("#loading_overlay").removeClass("active");
 
         // Register click table row to select phrase
         $("#table_content").on("click", function(e) {
@@ -336,10 +332,6 @@ function jQueryDialogAlert(options) {
 
 // jQuery ready
 $(function() {
-    // workaround the same origin policy of IE.
-    // http://stackoverflow.com/questions/7852225/is-it-safe-to-use-support-cors-true-in-jquery
-    $.support.cors = true;
-
     // setup UI
     $("#user_phrase_buttons").controlgroup({
         direction: "vertical"
@@ -358,7 +350,9 @@ $(function() {
         autoOpen: false,
         resizable: false,
         modal: true,
-        dialogClass: "fixed_dialog",
+        classes: {
+            "ui-dialog": "fixed_dialog"
+        },
         width: 500,
         buttons: [{
             text: "確定",

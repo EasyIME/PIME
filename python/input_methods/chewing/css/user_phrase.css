@@ -60,3 +60,40 @@
     /* for bopomofo display*/
     font-family: sans-serif !important;
 }
+
+/* Loading Overlay */
+#loading_overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(80, 80, 80, 0.8);
+    z-index: 2147483647;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #ffffff;
+    font-size: 1.2em;
+}
+
+#loading_overlay.active {
+    display: flex;
+}
+
+.loading_spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: loading_spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes loading_spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

@@ -27,12 +27,13 @@ sys.path.append(os.path.dirname(__file__))
 
 
 from serviceManager import TextServiceManager
+from pime_dirs import ensure_user_dir
 
 
 def append_error_log(message):
     try:
         log_dir = os.path.join(os.path.expandvars("%LOCALAPPDATA%"), "PIME", "Logs")
-        os.makedirs(log_dir, mode=0o700, exist_ok=True)
+        ensure_user_dir(log_dir)
         with open(os.path.join(log_dir, "python_backend.log"), "a", encoding="utf-8") as log_file:
             log_file.write(message)
             if not message.endswith("\n"):

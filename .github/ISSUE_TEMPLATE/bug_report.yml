@@ -1,0 +1,100 @@
+name: Bug report
+description: Report a problem with PIME so that it can be reproduced and fixed
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Most PIME problems depend on the Windows build and on the
+        backend that was running, so please fill in every field marked as required.
+
+        - Search the existing issues first; several known problems already have a fix in the latest beta.
+        - Drag screenshots straight into the fields below.
+        - Reports in Chinese or English are both fine.
+        - Everything here is published with the issue, so remove private text from logs before pasting.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Describe the problem
+      description: What goes wrong, and how often it happens (every time, intermittently, after a specific action).
+      placeholder: Typing in Notepad composes nothing after switching to ...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The shortest sequence that makes the problem happen every time.
+      placeholder: |
+        1. Start Notepad
+        2. Switch to 新酷音 (PIME)
+        3. Type ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      description: What should have happened instead, including the text that should have been composed.
+    validations:
+      required: true
+  - type: input
+    id: pime-version
+    attributes:
+      label: PIME version
+      description: |
+        Shown in Settings → Apps → Installed apps, and in `version.txt` inside the PIME
+        install folder (usually `C:\Program Files (x86)\PIME`).
+      placeholder: 2.0.0-beta4
+    validations:
+      required: true
+  - type: input
+    id: windows-version
+    attributes:
+      label: Windows version and build
+      description: Run `winver` and copy the version line.
+      placeholder: Windows 11 23H2 (OS build 22631.4169)
+    validations:
+      required: true
+  - type: input
+    id: input-method
+    attributes:
+      label: Input method
+      description: |
+        The name shown in the language bar, for example 新酷音 (PIME), 大易輸入法 (PIME),
+        行列輸入法 (PIME), emojime or 喵喵輸入法. Write "no input method" if the problem
+        happens before switching to one.
+      placeholder: 新酷音 (PIME)
+    validations:
+      required: true
+  - type: input
+    id: application
+    attributes:
+      label: Application
+      description: Where it happens (Notepad, Word, Chrome, ...), and whether every application is affected.
+      placeholder: Notepad; every application
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        The Python backend writes `%LOCALAPPDATA%\PIME\Logs\python_backend.log` when it hits an
+        error. For launcher logs, quit the running launcher, open a normal (not elevated) command
+        prompt in the install folder and run `PIMELauncher.exe /console`; the new console window
+        shows the log. Alternatively start it with `/log-file` and a full path such as
+        `C:\Users\me\Desktop\pime.log`, then attach that file.
+      placeholder: Paste log lines here, or drag the log file in.
+      render: text
+    validations:
+      required: false
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched the existing issues and this is not a duplicate.
+          required: true
+        - label: I can still reproduce this on the latest release.
+          required: false

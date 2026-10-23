@@ -106,3 +106,23 @@ textarea {
 .indent {
     margin-left: 2em;
 }
+
+/* Bootstrap 5 compatibility additions */
+.well {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.form-select.w-auto {
+    display: inline-block !important;
+    width: auto !important;
+    min-width: 10em;
+    vertical-align: middle;
+}
+
+.form-check {
+    margin-bottom: 0.35rem;
+}

@@ -17,31 +17,27 @@
 
 import collections
 import functools
+import inspect
 import logging
-import pycurl
 import re
 import threading
 import time
+from collections.abc import Callable
 from io import BytesIO
+from typing import Any
 
-from tornado import httputil
-from tornado import ioloop
+import pycurl
 
-from tornado.escape import utf8, native_str
+from tornado import gen, httputil, ioloop
+from tornado.escape import native_str, utf8
 from tornado.httpclient import (
+    AsyncHTTPClient,
+    HTTPError,
     HTTPRequest,
     HTTPResponse,
-    HTTPError,
-    AsyncHTTPClient,
     main,
 )
 from tornado.log import app_log
-
-from typing import Dict, Any, Callable, Optional
-import typing
-
-if typing.TYPE_CHECKING:
-    from typing import Deque, Tuple  # noqa: F401
 
 curl_log = logging.getLogger("tornado.curl_httpclient")
 
@@ -87,9 +83,9 @@ class _CurlStreamingBuffer:
         self.client = client
         self.io_loop = client.io_loop
         # Set to None in finish(); the handle may be reused after that.
-        self.curl = curl  # type: Optional[pycurl.Curl]
+        self.curl: pycurl.Curl | None = curl
         self.callback = callback
-        self.chunks = collections.deque()  # type: Deque[bytes]
+        self.chunks: collections.deque[bytes] = collections.deque()
         self.size = 0
         self.total = 0
         self.body_too_large = False
@@ -175,22 +171,21 @@ class CurlAsyncHTTPClient(AsyncHTTPClient):
     def initialize(  # type: ignore
         self,
         max_clients: int = 10,
-        defaults: Optional[Dict[str, Any]] = None,
+        defaults: dict[str, Any] | None = None,
         max_body_size: int = 104857600,
     ) -> None:
         super().initialize(defaults=defaults)
         self.max_body_size = max_body_size
-        # Typeshed is incomplete for CurlMulti, so just use Any for now.
-        self._multi = pycurl.CurlMulti()  # type: Any
+        self._multi = pycurl.CurlMulti()
         self._multi.setopt(pycurl.M_TIMERFUNCTION, self._set_timeout)
         self._multi.setopt(pycurl.M_SOCKETFUNCTION, self._handle_socket)
         self._curls = [self._curl_create() for i in range(max_clients)]
         self._free_list = self._curls[:]
-        self._requests = (
-            collections.deque()
-        )  # type: Deque[Tuple[HTTPRequest, Callable[[HTTPResponse], None], float]]
-        self._fds = {}  # type: Dict[int, int]
-        self._timeout = None  # type: Optional[object]
+        self._requests: collections.deque[
+            tuple[HTTPRequest, Callable[[HTTPResponse], None], float]
+        ] = collections.deque()
+        self._fds: dict[int, int] = {}
+        self._timeout: object | None = None
 
         # Work around a bug in libcurl 7.29.0: Some fields in the curl
         # multi object are initialized lazily, and its destructor will
@@ -212,7 +207,7 @@ class CurlAsyncHTTPClient(AsyncHTTPClient):
         # Set below properties to None to reduce the reference count of current
         # instance, because those properties hold some methods of current
         # instance that will case circular reference.
-        self._multi = None
+        self._multi = None  # type: ignore
 
     def fetch_impl(
         self, request: HTTPRequest, callback: Callable[[HTTPResponse], None]
@@ -221,7 +216,9 @@ class CurlAsyncHTTPClient(AsyncHTTPClient):
         self._process_queue()
         self._set_timeout(0)
 
-    def _handle_socket(self, event: int, fd: int, multi: Any, data: bytes) -> None:
+    def _handle_socket(
+        self, event: int, fd: int, multi: pycurl.CurlMulti, data: Any | None
+    ) -> None:
         """Called by libcurl when it wants to change the file descriptors
         it cares about.
         """
@@ -271,7 +268,8 @@ class CurlAsyncHTTPClient(AsyncHTTPClient):
             try:
                 ret, num_handles = self._multi.socket_action(fd, action)
             except pycurl.error as e:
-                ret = e.args[0]
+                if isinstance(e.args[0], int):
+                    ret = e.args[0]
             if ret != pycurl.E_CALL_MULTI_PERFORM:
                 break
         self._finish_pending_requests()
@@ -283,7 +281,8 @@ class CurlAsyncHTTPClient(AsyncHTTPClient):
             try:
                 ret, num_handles = self._multi.socket_action(pycurl.SOCKET_TIMEOUT, 0)
             except pycurl.error as e:
-                ret = e.args[0]
+                if isinstance(e.args[0], int):
+                    ret = e.args[0]
             if ret != pycurl.E_CALL_MULTI_PERFORM:
                 break
         self._finish_pending_requests()
@@ -325,7 +324,7 @@ class CurlAsyncHTTPClient(AsyncHTTPClient):
             while self._free_list and self._requests:
                 started += 1
                 curl = self._free_list.pop()
-                (request, callback, queue_start_time) = self._requests.popleft()
+                request, callback, queue_start_time = self._requests.popleft()
                 # TODO: Don't smuggle extra data on an attribute of the Curl object.
                 curl.info = {  # type: ignore
                     "headers": httputil.HTTPHeaders(),
@@ -366,8 +365,8 @@ class CurlAsyncHTTPClient(AsyncHTTPClient):
     def _finish(
         self,
         curl: pycurl.Curl,
-        curl_error: Optional[int] = None,
-        curl_message: Optional[str] = None,
+        curl_error: int | None = None,
+        curl_message: str | None = None,
     ) -> None:
         info = curl.info  # type: ignore
         curl.info = None  # type: ignore
@@ -389,7 +388,7 @@ class CurlAsyncHTTPClient(AsyncHTTPClient):
                 curl_message = "body exceeded max_body_size of %d bytes" % (
                     self.max_body_size,
                 )
-            error = CurlError(curl_error, curl_message)  # type: Optional[CurlError]
+            error: CurlError | None = CurlError(curl_error, curl_message)
             assert error is not None
             code = error.code
             effective_url = None
@@ -489,6 +488,13 @@ class CurlAsyncHTTPClient(AsyncHTTPClient):
         )
         write_function: Callable[[bytes], int]
         if request.streaming_callback:
+
+            if gen.is_coroutine_function(
+                request.streaming_callback
+            ) or inspect.iscoroutinefunction(request.streaming_callback):
+                raise TypeError(
+                    "'CurlAsyncHTTPClient' does not support async streaming_callbacks."
+                )
 
             streaming_buffer = _CurlStreamingBuffer(
                 self, curl, request.streaming_callback
@@ -681,7 +687,7 @@ class CurlAsyncHTTPClient(AsyncHTTPClient):
     def _curl_header_callback(
         self,
         headers: httputil.HTTPHeaders,
-        header_callback: Callable[[str], None],
+        header_callback: Callable[[str], None] | None,
         header_line_bytes: bytes,
     ) -> None:
         header_line = native_str(header_line_bytes.decode("latin1"))
@@ -693,7 +699,7 @@ class CurlAsyncHTTPClient(AsyncHTTPClient):
         if header_line.startswith("HTTP/"):
             headers.clear()
             try:
-                (_version, _code, reason) = httputil.parse_response_start_line(
+                _version, _code, reason = httputil.parse_response_start_line(
                     header_line
                 )
                 header_line = "X-Http-Reason: %s" % reason

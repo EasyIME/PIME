@@ -1,26 +1,3 @@
-from tornado.escape import _unicode
-from tornado import gen, version
-from tornado.httpclient import (
-    HTTPResponse,
-    HTTPError,
-    AsyncHTTPClient,
-    main,
-    _RequestProxy,
-    HTTPRequest,
-)
-from tornado import httputil
-from tornado.http1connection import HTTP1Connection, HTTP1ConnectionParameters
-from tornado.ioloop import IOLoop
-from tornado.iostream import StreamClosedError, IOStream
-from tornado.netutil import (
-    Resolver,
-    OverrideResolver,
-    _client_ssl_defaults,
-    is_valid_ip,
-)
-from tornado.log import gen_log
-from tornado.tcpclient import TCPClient
-
 import base64
 import collections
 import copy
@@ -30,15 +7,33 @@ import socket
 import ssl
 import sys
 import time
-from io import BytesIO
 import urllib.parse
-
-from typing import Dict, Any, Callable, Optional, Type, Union
+from collections.abc import Awaitable, Callable
+from io import BytesIO
 from types import TracebackType
-import typing
+from typing import Any, Optional, Type
 
-if typing.TYPE_CHECKING:
-    from typing import Deque, Tuple, List  # noqa: F401
+from tornado import gen, httputil, version
+from tornado.escape import _unicode
+from tornado.http1connection import HTTP1Connection, HTTP1ConnectionParameters
+from tornado.httpclient import (
+    AsyncHTTPClient,
+    HTTPError,
+    HTTPRequest,
+    HTTPResponse,
+    _RequestProxy,
+    main,
+)
+from tornado.ioloop import IOLoop
+from tornado.iostream import IOStream, StreamClosedError
+from tornado.log import gen_log
+from tornado.netutil import (
+    OverrideResolver,
+    Resolver,
+    _client_ssl_defaults,
+    is_valid_ip,
+)
+from tornado.tcpclient import TCPClient
 
 
 class HTTPTimeoutError(HTTPError):
@@ -118,24 +113,24 @@ class SimpleAsyncHTTPClient(AsyncHTTPClient):
     def initialize(  # type: ignore
         self,
         max_clients: int = 10,
-        hostname_mapping: Optional[Dict[str, str]] = None,
+        hostname_mapping: dict[str, str] | None = None,
         max_buffer_size: int = 104857600,
-        resolver: Optional[Resolver] = None,
-        defaults: Optional[Dict[str, Any]] = None,
-        max_header_size: Optional[int] = None,
-        max_body_size: Optional[int] = None,
+        resolver: Resolver | None = None,
+        defaults: dict[str, Any] | None = None,
+        max_header_size: int | None = None,
+        max_body_size: int | None = None,
     ) -> None:
         super().initialize(defaults=defaults)
         self.max_clients = max_clients
-        self.queue = (
-            collections.deque()
-        )  # type: Deque[Tuple[object, HTTPRequest, Callable[[HTTPResponse], None]]]
-        self.active = (
-            {}
-        )  # type: Dict[object, Tuple[HTTPRequest, Callable[[HTTPResponse], None]]]
-        self.waiting = (
-            {}
-        )  # type: Dict[object, Tuple[HTTPRequest, Callable[[HTTPResponse], None], object]]
+        self.queue: collections.deque[
+            tuple[object, HTTPRequest, Callable[[HTTPResponse], None]]
+        ] = collections.deque()
+        self.active: dict[
+            object, tuple[HTTPRequest, Callable[[HTTPResponse], None]]
+        ] = {}
+        self.waiting: dict[
+            object, tuple[HTTPRequest, Callable[[HTTPResponse], None], object]
+        ] = {}
         self.max_buffer_size = max_buffer_size
         self.max_header_size = max_header_size
         self.max_body_size = max_body_size
@@ -227,7 +222,7 @@ class SimpleAsyncHTTPClient(AsyncHTTPClient):
                 self.io_loop.remove_timeout(timeout_handle)
             del self.waiting[key]
 
-    def _on_timeout(self, key: object, info: Optional[str] = None) -> None:
+    def _on_timeout(self, key: object, info: str | None = None) -> None:
         """Timeout callback of request.
 
         Construct a timeout HTTPResponse when a timeout occurs.
@@ -254,7 +249,7 @@ class _HTTPConnection(httputil.HTTPMessageDelegate):
 
     def __init__(
         self,
-        client: Optional[SimpleAsyncHTTPClient],
+        client: SimpleAsyncHTTPClient | None,
         request: HTTPRequest,
         release_callback: Callable[[], None],
         final_callback: Callable[[HTTPResponse], None],
@@ -274,12 +269,12 @@ class _HTTPConnection(httputil.HTTPMessageDelegate):
         self.tcp_client = tcp_client
         self.max_header_size = max_header_size
         self.max_body_size = max_body_size
-        self.code = None  # type: Optional[int]
-        self.headers = None  # type: Optional[httputil.HTTPHeaders]
-        self.chunks = []  # type: List[bytes]
+        self.code: int | None = None
+        self.headers: httputil.HTTPHeaders | None = None
+        self.chunks = bytearray()
         self._decompressor = None
         # Timeout handle returned by IOLoop.add_timeout
-        self._timeout = None  # type: object
+        self._timeout: object = None
         self._sockaddr = None
         IOLoop.current().add_future(
             gen.convert_yielded(self.run()), lambda f: f.result()
@@ -330,19 +325,24 @@ class _HTTPConnection(httputil.HTTPMessageDelegate):
                 timeout = self.request.request_timeout
             else:
                 timeout = 0
-            if timeout:
-                self._timeout = self.io_loop.add_timeout(
-                    self.start_time + timeout,
-                    functools.partial(self._on_timeout, "while connecting"),
+            try:
+                stream = await self.tcp_client.connect(
+                    host,
+                    port,
+                    af=af,
+                    ssl_options=ssl_options,
+                    max_buffer_size=self.max_buffer_size,
+                    source_ip=source_ip,
+                    timeout=(
+                        self.start_time + timeout - self.io_loop.time()
+                        if timeout
+                        else None
+                    ),
                 )
-            stream = await self.tcp_client.connect(
-                host,
-                port,
-                af=af,
-                ssl_options=ssl_options,
-                max_buffer_size=self.max_buffer_size,
-                source_ip=source_ip,
-            )
+            except TimeoutError as e:
+                # TCPClient's timeout messages describe which phase of
+                # the connection timed out (DNS, TCP, or TLS).
+                raise HTTPTimeoutError(str(e) or "Timeout while connecting") from None
 
             if self.final_callback is None:
                 # final_callback is cleared if we've hit our timeout.
@@ -390,7 +390,9 @@ class _HTTPConnection(httputil.HTTPMessageDelegate):
             if username is not None:
                 assert password is not None
                 if self.request.auth_mode not in (None, "basic"):
-                    raise ValueError("unsupported auth_mode %s", self.request.auth_mode)
+                    raise ValueError(
+                        "unsupported auth_mode %s" % self.request.auth_mode
+                    )
                 self.request.headers["Authorization"] = "Basic " + _unicode(
                     base64.b64encode(
                         httputil.encode_username_password(username, password)
@@ -446,9 +448,7 @@ class _HTTPConnection(httputil.HTTPMessageDelegate):
             if not self._handle_exception(*sys.exc_info()):
                 raise
 
-    def _get_ssl_options(
-        self, scheme: str
-    ) -> Union[None, Dict[str, Any], ssl.SSLContext]:
+    def _get_ssl_options(self, scheme: str) -> None | dict[str, Any] | ssl.SSLContext:
         if scheme == "https":
             if self.request.ssl_options is not None:
                 return self.request.ssl_options
@@ -460,7 +460,7 @@ class _HTTPConnection(httputil.HTTPMessageDelegate):
                 and self.request.client_cert is None
                 and self.request.client_key is None
             ):
-                return _client_ssl_defaults
+                return _client_ssl_defaults()
             ssl_ctx = ssl.create_default_context(
                 ssl.Purpose.SERVER_AUTH, cafile=self.request.ca_certs
             )
@@ -477,7 +477,7 @@ class _HTTPConnection(httputil.HTTPMessageDelegate):
             return ssl_ctx
         return None
 
-    def _on_timeout(self, info: Optional[str] = None) -> None:
+    def _on_timeout(self, info: str | None = None) -> None:
         """Timeout callback of _HTTPConnection instance.
 
         Raise a `HTTPTimeoutError` when a timeout occurs.
@@ -542,8 +542,8 @@ class _HTTPConnection(httputil.HTTPMessageDelegate):
     def _handle_exception(
         self,
         typ: "Optional[Type[BaseException]]",
-        value: Optional[BaseException],
-        tb: Optional[TracebackType],
+        value: BaseException | None,
+        tb: TracebackType | None,
     ) -> bool:
         if self.final_callback is not None:
             self._remove_timeout()
@@ -587,7 +587,7 @@ class _HTTPConnection(httputil.HTTPMessageDelegate):
 
     async def headers_received(
         self,
-        first_line: Union[httputil.ResponseStartLine, httputil.RequestStartLine],
+        first_line: httputil.ResponseStartLine | httputil.RequestStartLine,
         headers: httputil.HTTPHeaders,
     ) -> None:
         assert isinstance(first_line, httputil.ResponseStartLine)
@@ -621,7 +621,7 @@ class _HTTPConnection(httputil.HTTPMessageDelegate):
 
     def finish(self) -> None:
         assert self.code is not None
-        data = b"".join(self.chunks)
+        data = bytes(self.chunks)
         self._remove_timeout()
         original_request = getattr(self.request, "original_request", self.request)
         if self._should_follow_redirect():
@@ -723,14 +723,15 @@ class _HTTPConnection(httputil.HTTPMessageDelegate):
     def _on_end_request(self) -> None:
         self.stream.close()
 
-    def data_received(self, chunk: bytes) -> None:
+    def data_received(self, chunk: bytes) -> Awaitable[None] | None:
         if self._should_follow_redirect():
             # We're going to follow a redirect so just discard the body.
-            return
+            return None
         if self.request.streaming_callback is not None:
-            self.request.streaming_callback(chunk)
+            return self.request.streaming_callback(chunk)
         else:
-            self.chunks.append(chunk)
+            self.chunks += chunk
+            return None
 
 
 if __name__ == "__main__":

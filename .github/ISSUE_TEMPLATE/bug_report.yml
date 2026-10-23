@@ -45,7 +45,7 @@ body:
       description: |
         Shown in Settings → Apps → Installed apps, and in `version.txt` inside the PIME
         install folder (usually `C:\Program Files (x86)\PIME`).
-      placeholder: 2.0.0-beta3
+      placeholder: 2.0.0-beta4
     validations:
       required: true
   - type: input

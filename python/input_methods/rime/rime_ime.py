@@ -24,6 +24,8 @@ from textService import *
 from ctypes import *
 import os
 
+from pime_dirs import ensure_user_dir
+
 APP = "PIME"
 APP_VERSION = "0.01"
 CONFIG_FILE = APP + ".yaml"
@@ -31,7 +33,7 @@ CONFIG_FILE = APP + ".yaml"
 user_dir = os.path.join(os.path.expandvars("%APPDATA%"), APP, RIME)
 first_run = not os.path.isdir(user_dir)
 if first_run:
-    os.makedirs(user_dir, mode=0o700, exist_ok=True)
+    ensure_user_dir(user_dir)
 curdir = os.path.abspath(os.path.dirname(__file__))
 shared_dir = os.path.join(curdir, "data")
 rimeInit(datadir=shared_dir, userdir=user_dir, appname=APP, appver=APP_VERSION, fullcheck=first_run)

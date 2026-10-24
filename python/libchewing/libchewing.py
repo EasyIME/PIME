@@ -44,8 +44,12 @@ def Init(datadir, userdir):
 
 class ChewingContext:
     def __init__(self, **kwargs):
+        self.ctx = None
         if not kwargs:
             self.ctx = _libchewing.chewing_new()
+            if not self.ctx:
+                raise RuntimeError(
+                    "chewing engine failed to start: chewing_new() returned NULL")
         else:
             syspath = kwargs.get("syspath", None)
             userpath = kwargs.get("userpath", None)
@@ -54,9 +58,18 @@ class ChewingContext:
                 userpath,
                 None,
                 None)
+            if not self.ctx:
+                # A NULL context made every key fall through to the Chinese
+                # branch and disappear, with nothing in the backend log.
+                raise RuntimeError(
+                    "chewing engine failed to start: chewing_new2() returned NULL "
+                    "(syspath={!r}, userpath={!r}); if PIME was ever started "
+                    "elevated, the per-user folder may be owned by Administrators "
+                    "(issue #973)".format(syspath, userpath))
 
     def __del__(self):
-        _libchewing.chewing_delete(self.ctx)
+        if self.ctx:
+            _libchewing.chewing_delete(self.ctx)
 
     def __getattr__(self, name):
         func = 'chewing_' + name

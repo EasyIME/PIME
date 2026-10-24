@@ -4,6 +4,8 @@ import time
 import json
 from cinbase.tools import cpuinfo
 
+from pime_dirs import ensure_user_dir
+
 class Debug:
     def __init__(self, imeDirName):
         self.info = cpuinfo.get_cpu_info()
@@ -21,7 +23,7 @@ class Debug:
 
     def getConfigDir(self):
         config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", self.imeDirName)
-        os.makedirs(config_dir, mode=0o700, exist_ok=True)
+        ensure_user_dir(config_dir)
         return config_dir
 
     def getConfigFile(self, name="debug.json"):

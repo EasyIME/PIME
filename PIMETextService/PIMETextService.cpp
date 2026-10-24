@@ -45,7 +45,9 @@ TextService::TextService(ImeModule* module):
 	candPerRow_(10),
 	selKeys_(L"1234567890"),
 	candUseCursor_(false),
-	candFontSize_(12) {
+	candFontSize_(12),
+	popupMenu_(nullptr),
+	currentLangProfile_(GUID_NULL) {
 
 	// font for candidate and mesasge windows
 	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
@@ -269,11 +271,12 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 	candidateWindow_->setUseCursor(candUseCursor_);
 	candidateWindow_->setCandPerRow(candPerRow_);
 
-	// the items in the candidate list should not exist the
-	// number of available keys used to select them.
-	size_t count = std::min<size_t>(candidates_.size(), selKeys_.size());
+	// the items in the candidate list should not exceed the
+	// number of available keys used to select them (if selection keys are configured).
+	size_t count = selKeys_.empty() ? candidates_.size() : std::min<size_t>(candidates_.size(), selKeys_.size());
 	for (size_t i = 0; i < count; ++i) {
-		candidateWindow_->add(candidates_[i], selKeys_[i]);
+		wchar_t selKey = i < selKeys_.size() ? selKeys_[i] : 0;
+		candidateWindow_->add(candidates_[i], selKey);
 	}
 	candidateWindow_->recalculateSize();
 	candidateWindow_->refresh();

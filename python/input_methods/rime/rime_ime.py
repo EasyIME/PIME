@@ -31,7 +31,7 @@ CONFIG_FILE = APP + ".yaml"
 user_dir = os.path.join(os.path.expandvars("%APPDATA%"), APP, RIME)
 first_run = not os.path.isdir(user_dir)
 if first_run:
-    os.makedirs(user_dir, mode=0o700, exist_ok=True)
+    os.makedirs(user_dir, exist_ok=True)
 curdir = os.path.abspath(os.path.dirname(__file__))
 shared_dir = os.path.join(curdir, "data")
 rimeInit(datadir=shared_dir, userdir=user_dir, appname=APP, appver=APP_VERSION, fullcheck=first_run)

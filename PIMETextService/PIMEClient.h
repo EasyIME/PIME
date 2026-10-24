@@ -26,6 +26,7 @@
 #include <libIME2/src/TextService.h>
 
 #include <nlohmann/json.hpp>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <memory>
@@ -130,7 +131,7 @@ private:
 	unsigned int nextSeqNum_;
 	bool isActivated_;
 	State state_;
-	ULONGLONG lastConnectAttempt_{0};
+	uint64_t lastConnectAttempt_{0};
 	int connectFailures_{0};
 };
 

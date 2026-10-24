@@ -1,4 +1,5 @@
-﻿!define LANG "TRADCHINESE" ; Must be the lang name define by NSIS
+﻿; AI-assisted change (#966): Codex (GPT-6) removed obsolete VC++ Redistributable strings.
+!define LANG "TRADCHINESE" ; Must be the lang name define by NSIS
 
 !insertmacro LANG_STRING INSTALLER_LANGUAGE_TITLE "安裝程式語言"
 !insertmacro LANG_STRING INSTALL_LANGUAGE_MESSAGE "請選擇安裝程式語言"
@@ -16,9 +17,6 @@
 !insertmacro LANG_STRING PENDING_REBOOT_QUESTION "先前的 PIME 解除安裝或更新尚未完成，需要重新啟動電腦。$\r$\n$\r$\n如果未重新開機便繼續安裝，新安裝的檔案可能會在下次開機時被系統刪除。$\r$\n$\r$\n您要現在重新啟動電腦嗎？（選「否」將結束安裝程式，以便稍後重新開機）"
 !insertmacro LANG_STRING INST_FAILED_MESSAGE "安裝發生錯誤，無法完成。$\n$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。"
 !insertmacro LANG_STRING UNINSTALL_OLD "偵測到已安裝舊版，是否要移除舊版後繼續安裝新版？"
-!insertmacro LANG_STRING DOWNLOAD_VCREDIST_QUESTION "這個程式需要 微軟 VC++ Redistributable 更新才能運作，要自動下載安裝？"
-!insertmacro LANG_STRING DOWNLOAD_VCREDIST_FAILED_MESSAGE "無法正確下載，請稍後再試，或手動安裝 VC++ Redistributable"
-!insertmacro LANG_STRING INST_VCREDIST_FAILED_MESSAGE "VC++ Redistributable 並未正確安裝，請參閱相關微軟文件進行更新。"
 
 !insertmacro LANG_STRING SECTION_MAIN "PIME 輸入法平台"
 !insertmacro LANG_STRING PYTHON_SECTION_GROUP "Python 輸入法模組"

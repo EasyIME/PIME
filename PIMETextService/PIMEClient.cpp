@@ -395,7 +395,11 @@ bool Client::ensureConnected() {
 		return true;
 	}
 	if (state_ == State::Disconnected && isActivated_) {
-		startAsyncConnect();
+		const ULONGLONG now = ::GetTickCount64();
+		const ULONGLONG delayMs = (connectFailures_ == 0) ? 0 : (500ULL << std::min(connectFailures_ - 1, 5));
+		if (now - lastConnectAttempt_ >= delayMs) {
+			startAsyncConnect();
+		}
 	}
 	return false;
 }
@@ -696,6 +700,7 @@ void Client::startAsyncConnect() {
 		connector_.reset();
 	}
 
+	lastConnectAttempt_ = ::GetTickCount64();
 	state_ = State::Connecting;
 
 	json initReq = createRpcRequest("init");
@@ -720,11 +725,17 @@ void Client::startAsyncConnect() {
 			json req = createRpcRequest("onActivate");
 			req["isKeyboardOpen"] = textService_->isKeyboardOpened();
 			json actResp;
-			callRpcMethod(req, actResp);
-			handleRpcResponse(actResp);
+			if (callRpcMethod(req, actResp)) {
+				connectFailures_ = 0;
+				handleRpcResponse(actResp);
+			}
+			else {
+				connectFailures_ = std::min(connectFailures_ + 1, 6);
+			}
 		}
 		else {
 			state_ = State::Disconnected;
+			connectFailures_ = std::min(connectFailures_ + 1, 6);
 		}
 	});
 }
@@ -766,10 +777,11 @@ bool Client::callRpcMethod(json& request, json & response, int timeoutMs) {
 		response = nullptr; // never let callers act on a stale or partial response
 		pipe_.close(); // close the pipe connection since it's broken
 		state_ = State::Disconnected;
+		connectFailures_ = std::min(connectFailures_ + 1, 6);
 		resetTextServiceState();  // since we lost the connection, the state is unknown so we reset.
-		if (methodName != "onDeactivate" && isActivated_) {
-			startAsyncConnect();
-		}
+		// Note: We do NOT immediately call startAsyncConnect() here synchronously.
+		// Instead, ensureConnected() handles reconnect attempts with exponential backoff
+		// to prevent UI freezing loops when the backend is unresponsive.
 	}
 	return success;
 }

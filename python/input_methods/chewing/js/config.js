@@ -28,7 +28,7 @@ $(function () {
     }
 
     function bindTabsFallback() {
-        $('.nav-tabs a[data-toggle="tab"]').on("click", function (event) {
+        $('.nav-tabs a[data-bs-toggle="tab"], .nav-tabs a[data-toggle="tab"]').on("click", function (event) {
             var target = $(this).attr("href");
             if (!target || target.charAt(0) !== "#") {
                 return;
@@ -47,7 +47,7 @@ $(function () {
     }
 
     function installNativeTabsFallback() {
-        var links = document.querySelectorAll(".nav-tabs a[data-toggle='tab']");
+        var links = document.querySelectorAll(".nav-tabs a[data-bs-toggle='tab'], .nav-tabs a[data-toggle='tab']");
         for (var i = 0; i < links.length; ++i) {
             links[i].onclick = function (event) {
                 event = event || window.event;
@@ -236,13 +236,16 @@ $(function () {
         // Setup switchLangWithWhichShift's default disabled property
         $("#switchLangWithWhichShift").prop("disabled", !chewingConfig["switchLangWithShift"]);
 
-        // Bind Bootstrap
-        $(".container select").selectpicker();
-        $('[data-toggle="popover"]').popover();
+        // Bind Bootstrap Popovers
+        $('[data-bs-toggle="popover"]').each(function () {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Popover) {
+                new bootstrap.Popover(this);
+            }
+        });
 
         // When switchLangWithShift's value changed, update switchLangWithWhichShift's disabled property
         $("#switchLangWithShift").on("click", function () {
-            $("#switchLangWithWhichShift").prop("disabled", !this.checked).selectpicker("refresh");
+            $("#switchLangWithWhichShift").prop("disabled", !this.checked);
         });
 
         // Bind shift action event
@@ -254,7 +257,7 @@ $(function () {
         $("#shiftMoveCursor").on("click", function () {
             if (this.checked) {
                 $("#switchLangWithShift").prop("checked", false);
-                $("#switchLangWithWhichShift").prop("disabled", true).selectpicker("refresh");
+                $("#switchLangWithWhichShift").prop("disabled", true);
             }
         });
 
@@ -286,19 +289,19 @@ $(function () {
             let name = keyboardNames[i][0];
             let layout = keyboardNames[i][1];
             item +=
-                '<div class="custom-control custom-radio">' +
-                '<input class="custom-control-input" type="radio" id="' +
+                '<div class="form-check">' +
+                '<input class="form-check-input" type="radio" id="' +
                 id +
                 '" name="keyboardLayout" value="' +
                 i +
                 '" data-layout="' +
                 layout +
                 '">' +
-                '<label class="custom-control-label" for="' +
+                '<label class="form-check-label" for="' +
                 id +
                 '">' +
                 name +
-                "</label><br>" +
+                "</label>" +
                 "</div>";
         }
         $("#keyboard_tab").html(item);
@@ -343,10 +346,6 @@ $(function () {
         $("#selExample").html(html);
         $("#selExample").css("font-size", `${$("#fontSize").val()}pt`);
     }
-
-    // workaround the same origin policy of IE.
-    // http://stackoverflow.com/questions/7852225/is-it-safe-to-use-support-cors-true-in-jquery
-    $.support.cors = true;
 
     // Show PIME version number
     $("#version").load(VERSION_URL);

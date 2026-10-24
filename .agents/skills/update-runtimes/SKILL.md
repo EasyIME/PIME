@@ -32,14 +32,14 @@ Runbook for updating the embedded 32-bit (x86) Windows Python and Node.js runtim
 
 ### 1. Check Latest Versions & Package Safety
 - Identify the latest stable:
-  - Python 32-bit embeddable release (e.g., `3.12.9`).
-  - Node.js 32-bit LTS/Current release (e.g., `22.14.0`).
+  - Python 32-bit embeddable release (e.g., `3.15.1`).
+  - Node.js 32-bit LTS/Current release (e.g., `22.23.4`).
 - Check `node/package.json` and `python/python3/requirements.txt`. Warn if any package is deprecated or obsolete, and suggest modern replacements.
 
 ### 2. Run Update Script
 Execute [update_runtimes.ps1](./scripts/update_runtimes.ps1) (handles downloading, pathing, dependencies, and cache cleanup):
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\.agents\skills\update-runtimes\scripts\update_runtimes.ps1 -NodeVersion "22.14.0" -PythonVersion "3.12.9"
+powershell -ExecutionPolicy Bypass -File .\.agents\skills\update-runtimes\scripts\update_runtimes.ps1 -NodeVersion "22.23.4" -PythonVersion "3.15.1"
 ```
 
 ### 3. Verify Runtimes

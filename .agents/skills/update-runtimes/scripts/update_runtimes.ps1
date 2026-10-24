@@ -27,8 +27,8 @@
 
 [CmdletBinding()]
 param(
-    [string]$NodeVersion = "22.14.0",
-    [string]$PythonVersion = "3.12.9",
+    [string]$NodeVersion = "22.23.4",
+    [string]$PythonVersion = "3.15.1",
     [bool]$StageGit = $true
 )
 
@@ -186,7 +186,7 @@ try {
     $NpmCliJs = Join-Path $NodeExtractDir "node-v$NodeVersion-win-x86\node_modules\npm\bin\npm-cli.js"
     Push-Location $NodeDestDir
     try {
-        & ".\node.exe" $NpmCliJs install --production
+        & ".\node.exe" $NpmCliJs install --production --no-save
     }
     finally {
         Pop-Location

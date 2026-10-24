@@ -373,7 +373,7 @@ class Cin(object):
 
     def getCountDir(self):
         count_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", self.imeDirName)
-        os.makedirs(count_dir, mode=0o700, exist_ok=True)
+        os.makedirs(count_dir, exist_ok=True)
         return count_dir
 
 

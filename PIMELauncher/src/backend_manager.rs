@@ -355,6 +355,16 @@ impl BackendManager {
         info!("Backend output routing stopped for a backend instance.");
     }
 
+    /// Whether a queued message may be written to the backend.
+    ///
+    /// Requests from clients that are no longer registered are stale after a
+    /// restart and must not reach the new backend instance. The close note is the
+    /// exception: `unregister_client` removes the client before queueing it, and
+    /// the backend only frees that client's service when the note arrives.
+    fn should_forward(state: &BackendManagerState, client_id: &str, json_part: &str) -> bool {
+        state.clients.contains_key(client_id) || protocol::is_close_request(json_part)
+    }
+
     /// Forwards messages from the internal channel to the backend's stdin.
     async fn forward_inputs_to_backend(
         state: &Arc<Mutex<BackendManagerState>>,
@@ -383,7 +393,7 @@ impl BackendManager {
                     };
                     if let Some((client_id, json_part)) = data.split_once('|') {
                         let mut state_guard = state.lock().unwrap();
-                        let Some(entry) = state_guard.clients.get_mut(client_id) else {
+                        if !Self::should_forward(&state_guard, client_id, json_part) {
                             // Client is no longer active (e.g. disconnected due to backend crash/restart).
                             // Discard this stale request to prevent corrupting the new backend state.
                             info!(
@@ -391,9 +401,12 @@ impl BackendManager {
                                 client_id, backend_name
                             );
                             continue;
-                        };
+                        }
 
-                        if let Some(seq_num) = protocol::extract_seq_num(json_part) {
+                        if let (Some(entry), Some(seq_num)) = (
+                            state_guard.clients.get_mut(client_id),
+                            protocol::extract_seq_num(json_part),
+                        ) {
                             let mut map = pending_requests.lock().unwrap();
                             map.insert((client_id.to_string(), seq_num), tokio::time::Instant::now());
                             entry.last_seq_num = seq_num;
@@ -465,5 +478,38 @@ mod tests {
             let state = manager.state.lock().unwrap();
             assert!(!state.clients.contains_key("client1"));
         }
+    }
+
+    #[test]
+    fn test_stale_requests_are_dropped_but_close_notes_are_forwarded() {
+        let mut state = BackendManagerState {
+            backends: HashMap::new(),
+            clients: HashMap::new(),
+        };
+        assert!(!BackendManager::should_forward(
+            &state,
+            "gone",
+            r#"{"method":"keyDown","seqNum":1}"#
+        ));
+        assert!(BackendManager::should_forward(
+            &state,
+            "gone",
+            r#"{"method":"close","seqNum":2}"#
+        ));
+
+        let (tx, _rx) = mpsc::channel(1);
+        state.clients.insert(
+            "live".to_string(),
+            ClientEntry {
+                tx,
+                backend_name: "dummy".to_string(),
+                last_seq_num: 0,
+            },
+        );
+        assert!(BackendManager::should_forward(
+            &state,
+            "live",
+            r#"{"method":"keyDown","seqNum":3}"#
+        ));
     }
 }

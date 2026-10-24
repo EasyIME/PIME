@@ -55,6 +55,14 @@ pub fn extract_seq_num(json_str: &str) -> Option<i64> {
     serde_json::from_str::<Value>(json_str).ok()?.get("seqNum")?.as_i64()
 }
 
+/// True when the payload is the launcher's close note for a departing client.
+pub fn is_close_request(json_str: &str) -> bool {
+    match serde_json::from_str::<Value>(json_str) {
+        Ok(json) => json.get("method").and_then(Value::as_str) == Some("close"),
+        Err(_) => false,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,5 +112,14 @@ mod tests {
     fn test_extract_seq_num_with_pipe_in_payload() {
         assert_eq!(extract_seq_num(r#"{"commitString":"a|b","seqNum":7}"#), Some(7));
         assert_eq!(extract_seq_num(r#"{"success":true}"#), None);
+    }
+
+    #[test]
+    fn test_is_close_request() {
+        assert!(is_close_request(r#"{"method":"close","seqNum":3}"#));
+        assert!(is_close_request(r#"{"method": "close"}"#));
+        assert!(!is_close_request(r#"{"method":"keyDown","seqNum":3}"#));
+        assert!(!is_close_request(r#"{"success":true}"#));
+        assert!(!is_close_request("not json"));
     }
 }

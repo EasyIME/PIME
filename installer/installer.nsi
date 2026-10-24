@@ -1,4 +1,4 @@
-﻿; NOTE: This file MUST be saved as UTF-8 with BOM (utf-8-sig) so that
+; NOTE: This file MUST be saved as UTF-8 with BOM (utf-8-sig) so that
 ; NSIS (makensis) natively detects Unicode strings without breaking Git diffs.
 ; Do NOT convert this file to UTF-16.
 ;
@@ -429,6 +429,7 @@ SectionGroup /e $(NODE_SECTION_GROUP) node_section_group
 				SetOutPath "$INSTDIR\node\input_methods\McBopomofo"
 				File /r /x "server.js" /x "webpack_check.js" /x "run_*.bat" /x "README.md" /x "*.txt" "..\node\input_methods\McBopomofo\*.*"
 				StrCpy $INST_NODE "True"
+				StrCpy $INST_PYTHON "True"
 		SectionEnd
 
 		Section $(MCFOXIM) McFoxim
@@ -436,6 +437,7 @@ SectionGroup /e $(NODE_SECTION_GROUP) node_section_group
 				SetOutPath "$INSTDIR\node\input_methods\McFoxim"
 				File /r /x "server.js" /x "webpack_check.js" /x "run_*.bat" /x "README.md" /x "*.txt" "..\node\input_methods\McFoxim\*.*"
 				StrCpy $INST_NODE "True"
+				StrCpy $INST_PYTHON "True"
 		SectionEnd
 
 		Section $(MCTABIM) McTabim
@@ -443,6 +445,7 @@ SectionGroup /e $(NODE_SECTION_GROUP) node_section_group
 				SetOutPath "$INSTDIR\node\input_methods\McTabim"
 				File /r /x "server.js" /x "webpack_check.js" /x "run_*.bat" /x "README.md" /x "*.txt" "..\node\input_methods\McTabim\*.*"
 				StrCpy $INST_NODE "True"
+				StrCpy $INST_PYTHON "True"
 		SectionEnd
 
 		Section $(EMOJIME) emojime
@@ -518,7 +521,7 @@ Section "" Register
 	WriteRegStr HKLM "Software\PIME" "" $INSTDIR
 	;Write an entry to Add & Remove applications
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayName" $(PRODUCT_NAME)
-	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "UninstallString" '"$INSTDIR\uninstall.exe"'
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "Publisher" $(PRODUCT_PUBLISHER)
 	; WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\x86\PIMETextService.dll"
 	WriteRegStr HKLM "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"

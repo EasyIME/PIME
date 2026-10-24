@@ -6,9 +6,12 @@ Welcome to the PIME repository! To maintain high code quality and consistency, a
 - **Read `HACKING.txt` First**: Before proposing architectural changes, adding new features, or modifying IPC logic, you must read the `HACKING.txt` file at the root of the repository. It contains critical information about the C++ client (TSF) and the Python/Node.js backend server architecture.
 
 ## 2. Modularity, Commits, and Pull Requests
-- **CRITICAL - Small, Incremental Changes**: This is the single most important rule. AI agents often generate unreviewable volumes of code. You MUST keep changes strictly scoped, small, and modular. Do not bundle multiple unrelated features, bug fixes, or refactors into a single commit. If a feature, bugfix, or refactor involves many modules, prefer doing it incrementally in smaller git commits, step by step, where each commit handles an independent part. Huge, monolithic PRs will be strictly rejected during code review.
-- **Isolate Renames and Moves**: For API renames or file moves/renames, keep them in their own dedicated commit. Never mix renames or moves with new feature implementations or bug fixes.
-- **Separate Features and Fixes**: Never mix bug fixes and new feature implementations. They must be handled in separate commits and separate Pull Requests.
+- **CRITICAL - Small, Focused PRs (One Problem at a Time)**: This is the single most important rule. AI agents often bundle multiple disparate changes into unreviewable, monolithic PRs. You MUST prefer small, highly focused Pull Requests that solve exactly **one problem at a time**.
+  - **Single Topic per PR**: Never bundle multiple unrelated bug fixes, features, or architectural adjustments into a single PR. If a task or issue involves multiple orthogonal areas, split them into independent, modular PRs. Small PRs ensure fast code review, easy rollback, and clear CI failure isolation.
+  - **Granular, Incremental Commits**: Keep changes strictly scoped. Do not combine unrelated edits into a single commit. When a fix or feature spans multiple modules, break it down into logical, incremental commits where each commit handles an independent step.
+  - **Strictly Reject Monolithic PRs**: Huge, kitchen-sink PRs will be strictly rejected during code review.
+- **Isolate Renames and Moves**: Keep API renames or file moves/renames in their own dedicated commit/PR. Never mix renames or moves with new feature implementations or bug fixes.
+- **Separate Features and Fixes**: Never mix bug fixes and new feature implementations. They must always be handled in separate commits and separate Pull Requests.
 - **Commit & PR Message Style**: Apply the same concise style to both git commit messages and GitHub Pull Requests:
   - **Headline / Title**: The first line / PR title is a concise headline describing what it does. Include the bug/issue number if available.
   - **Blank Line**: (For commits) Follow the headline with a blank line.

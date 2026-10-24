@@ -275,7 +275,11 @@ function updateConfig() {
         case "number":
             var inputValue = inputItem.value;
             if ($.isNumeric(inputValue)) {
-                inputValue = parseInt(inputValue);
+                inputValue = parseInt(inputValue, 10);
+            } else if (inputItem.name === "candPerPage") {
+                inputValue = 9;
+            } else if (inputItem.name === "candPerRow") {
+                inputValue = 1;
             }
             checjConfig[inputItem.name] = inputValue;
             break;

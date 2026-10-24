@@ -2839,6 +2839,8 @@ class CinBase:
 
     # List 分段
     def chunks(self, l, n):
+        if not isinstance(n, int) or n <= 0:
+            n = 9
         for i in range(0, len(l), n):
             yield l[i:i+n]
 
@@ -3121,14 +3123,26 @@ class CinBase:
         cbTS.configVersion = cfg.getVersion()
 
         # 每列顯示幾個候選字
-        cbTS.candPerRow = cfg.candPerRow
+        try:
+            candPerRow = int(cfg.candPerRow)
+            if candPerRow <= 0:
+                candPerRow = 1
+        except (ValueError, TypeError):
+            candPerRow = 1
+        cbTS.candPerRow = candPerRow
 
         # 如果程式為 UiLess 模式就取代設定
         if cbTS.client.isUiLess:
             cbTS.candPerRow = 1
 
         # 每頁顯示幾個候選字
-        cbTS.candPerPage = cfg.candPerPage
+        try:
+            candPerPage = int(cfg.candPerPage)
+            if candPerPage <= 0:
+                candPerPage = 9
+        except (ValueError, TypeError):
+            candPerPage = 9
+        cbTS.candPerPage = candPerPage
 
         # 設定 UI 外觀
         cbTS.customizeUI(candFontSize = cfg.fontSize,

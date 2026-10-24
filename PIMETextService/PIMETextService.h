@@ -168,10 +168,10 @@ private:
 	std::wstring candFontName_;
 	int candFontSize_;
 
-	HMENU popupMenu_;
+	HMENU popupMenu_{nullptr};
 
 	std::unique_ptr<Client> client_; // connection client
-	GUID currentLangProfile_;
+	GUID currentLangProfile_{GUID_NULL};
 };
 
 }

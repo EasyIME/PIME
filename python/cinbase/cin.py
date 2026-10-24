@@ -140,7 +140,7 @@ class Cin(object):
         highFrequencyWordCount = 0
         lowFrequencyWordCount = 0
 
-        for i in range(7):
+        for i in range(len(lowFrequencyCharSetList)):
             lowFrequencyChardefs[i] = []
 
         keyLength = len(CompositionChar)
@@ -152,8 +152,13 @@ class Cin(object):
                     matchstring = matchstring.replace(char, '\\' + char)
 
         matchstring = matchstring.replace(WildcardChar, '(.)')
+        try:
+            regex = re.compile('^' + matchstring + '$')
+        except re.error:
+            return []
+
         sortedchardefs = sorted(self.chardefs.keys())
-        matchchardefs = [self.chardefs[key] for key in sortedchardefs if re.match('^' + matchstring + '$', key) and len(key) == keyLength]
+        matchchardefs = [self.chardefs[key] for key in sortedchardefs if len(key) == keyLength and regex.match(key)]
 
         if matchchardefs:
             for chardef in matchchardefs:
@@ -168,15 +173,20 @@ class Cin(object):
                         highFrequencyWordCount += 1
                         if len(wildcardchardefs) >= candMaxItems:
                             return wildcardchardefs
-                    else:
+                    elif charSet in lowFrequencyCharSetList:
                         i = lowFrequencyCharSetList.index(charSet)
-                        if not matchstr in lowFrequencyChardefs[i]:
+                        if matchstr not in lowFrequencyChardefs[i]:
                             lowFrequencyChardefs[i].append(matchstr)
                             lowFrequencyWordCount += 1
+                    else:
+                        if matchstr not in wildcardchardefs:
+                            wildcardchardefs.append(matchstr)
+                            if len(wildcardchardefs) >= candMaxItems:
+                                return wildcardchardefs
 
-            for key in lowFrequencyChardefs:
+            for key in sorted(lowFrequencyChardefs.keys()):
                 for char in lowFrequencyChardefs[key]:
-                    if not char in wildcardchardefs:
+                    if char not in wildcardchardefs:
                         wildcardchardefs.append(char)
                     if len(wildcardchardefs) >= candMaxItems:
                         return wildcardchardefs

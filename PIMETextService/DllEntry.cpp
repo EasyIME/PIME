@@ -79,7 +79,7 @@ STDAPI DllUnregisterServer(void) {
 	return module ? module->unregisterServer() : E_FAIL;
 }
 
-static inline std::optional<Ime::LangProfileInfo> langProfileFromJson(const std::wstring& file) {
+static inline std::optional<Ime::LangProfileInfo> langProfileFromJson(const std::wstring& file, int iconIndex) {
 	// load the json file to get the info of input method
 	std::ifstream fp(file, std::ifstream::binary);
 	if (!fp) {
@@ -117,7 +117,8 @@ static inline std::optional<Ime::LangProfileInfo> langProfileFromJson(const std:
 		clsidGuid,
 		std::move(locale),
 		std::move(fallbackLocale),
-		std::move(iconFile)
+		std::move(iconFile),
+		iconIndex
 	};
 }
 
@@ -153,7 +154,7 @@ STDAPI DllRegisterServer(void) {
 						DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
 						if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
 							// load the json file to get the info of input method
-							if (auto profile = langProfileFromJson(imejson)) {
+							if (auto profile = langProfileFromJson(imejson, iconIndex)) {
 								langProfiles.push_back(std::move(*profile));
 							}
 						}

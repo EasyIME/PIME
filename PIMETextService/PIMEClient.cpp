@@ -711,10 +711,10 @@ void Client::startAsyncConnect() {
 		if (pipe.isValid()) {
 			pipe_ = std::move(pipe);
 			nextSeqNum_ = 2; // seqNum 1 was used by init
-			handleRpcResponse(initResp);
-
-			// Mark Ready before sending onActivate RPC so callRpcMethod allows it:
+			// Mark Ready before handling init response so any compartment updates
+			// or callbacks check ensureConnected() successfully:
 			state_ = State::Ready;
+			handleRpcResponse(initResp);
 
 			// With backend warmed up and pipe connected, sync onActivate takes < 1ms:
 			json req = createRpcRequest("onActivate");

@@ -171,8 +171,13 @@ class ChewingTextService(TextService):
             user_phrase = cfg.getUserPhrase().encode("UTF-8")
 
             # 建立 ChewingContext，此處路徑需要 UTF-8 編碼
-            chewingContext = ChewingContext(
-                syspath=search_paths, userpath=user_phrase)
+            try:
+                chewingContext = ChewingContext(
+                    syspath=search_paths, userpath=user_phrase)
+            except Exception:
+                # If loading user phrase fails (e.g. corrupted/locked sqlite db), fallback to memory
+                chewingContext = ChewingContext(
+                    syspath=search_paths, userpath=b":memory:")
             self.chewingContext = chewingContext
             chewingContext.set_maxChiSymbolLen(50)  # 編輯區長度：50 bytes
 

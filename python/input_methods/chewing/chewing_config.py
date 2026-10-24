@@ -80,7 +80,7 @@ class ChewingConfig:
     def getConfigDir(self):
         config_dir = os.path.join(
             os.path.expandvars("%APPDATA%"), "PIME", "chewing")
-        os.makedirs(config_dir, mode=0o700, exist_ok=True)
+        os.makedirs(config_dir, exist_ok=True)
         return config_dir
 
     def getConfigFile(self, name="config.json"):

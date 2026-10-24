@@ -54,9 +54,12 @@ class ChewingContext:
                 userpath,
                 None,
                 None)
+        if not self.ctx:
+            raise RuntimeError("Failed to create chewing context")
 
     def __del__(self):
-        _libchewing.chewing_delete(self.ctx)
+        if getattr(self, "ctx", None):
+            _libchewing.chewing_delete(self.ctx)
 
     def __getattr__(self, name):
         func = 'chewing_' + name

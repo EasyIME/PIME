@@ -311,7 +311,7 @@ class CinToJson(object):
 
     def getJsonDir(self):
         json_dir = os.path.join(self.curdir, os.pardir, "json")
-        os.makedirs(json_dir, mode=0o700, exist_ok=True)
+        os.makedirs(json_dir, exist_ok=True)
         return json_dir
 
 

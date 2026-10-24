@@ -395,8 +395,11 @@ bool Client::ensureConnected() {
 		return true;
 	}
 	if (state_ == State::Disconnected && isActivated_) {
-		const ULONGLONG now = ::GetTickCount64();
-		const ULONGLONG delayMs = (connectFailures_ == 0) ? 0 : (500ULL << std::min(connectFailures_ - 1, 5));
+		const uint64_t now = ::GetTickCount64();
+		int shift = connectFailures_ - 1;
+		if (shift < 0) shift = 0;
+		if (shift > 5) shift = 5;
+		const uint64_t delayMs = (connectFailures_ == 0) ? 0 : (500ULL << shift);
 		if (now - lastConnectAttempt_ >= delayMs) {
 			startAsyncConnect();
 		}
@@ -730,12 +733,12 @@ void Client::startAsyncConnect() {
 				handleRpcResponse(actResp);
 			}
 			else {
-				connectFailures_ = std::min(connectFailures_ + 1, 6);
+				connectFailures_ = (connectFailures_ < 6) ? connectFailures_ + 1 : 6;
 			}
 		}
 		else {
 			state_ = State::Disconnected;
-			connectFailures_ = std::min(connectFailures_ + 1, 6);
+			connectFailures_ = (connectFailures_ < 6) ? connectFailures_ + 1 : 6;
 		}
 	});
 }
@@ -777,7 +780,7 @@ bool Client::callRpcMethod(json& request, json & response, int timeoutMs) {
 		response = nullptr; // never let callers act on a stale or partial response
 		pipe_.close(); // close the pipe connection since it's broken
 		state_ = State::Disconnected;
-		connectFailures_ = std::min(connectFailures_ + 1, 6);
+		connectFailures_ = (connectFailures_ < 6) ? connectFailures_ + 1 : 6;
 		resetTextServiceState();  // since we lost the connection, the state is unknown so we reset.
 		// Note: We do NOT immediately call startAsyncConnect() here synchronously.
 		// Instead, ensureConnected() handles reconnect attempts with exponential backoff

@@ -130,6 +130,8 @@ private:
 	unsigned int nextSeqNum_;
 	bool isActivated_;
 	State state_;
+	ULONGLONG lastConnectAttempt_{0};
+	int connectFailures_{0};
 };
 
 }

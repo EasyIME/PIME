@@ -202,4 +202,4 @@ VK_OEM_CLEAR      = 0xFE
 KEY_STATE_DOWN        = 0x8000  # High-order bit: key is down
 KEY_STATE_TOGGLED     = 0x0001  # Low-order bit (GetKeyState): key is toggled (e.g. CapsLock)
 KEY_STATE_WAS_PRESSED = 0x0001  # Low-order bit (GetAsyncKeyState): key was pressed after previous call
-KEY_PRESSED_MASK      = KEY_STATE_DOWN | KEY_STATE_WAS_PRESSED  # Key is currently down or was pressed
+KEY_PRESSED_MASK      = KEY_STATE_DOWN | KEY_STATE_WAS_PRESSED  # Key is currently down or was pressed

@@ -23,6 +23,7 @@ from cinbase import CinBase
 from cinbase import LoadCinTable
 from cinbase import LoadRCinTable
 from cinbase import LoadHCinTable
+from cinbase import CinTableBase
 from cinbase.config import CinBaseConfig
 
 
@@ -61,8 +62,7 @@ class CheSimplexTextService(TextService):
             loadCinFile = LoadCinTable(self, CinTable)
             loadCinFile.start()
         else:
-            while CinTable.loading:
-                continue
+            CinTable.wait()
             self.cin = CinTable.cin
 
 
@@ -142,10 +142,9 @@ class CheSimplexTextService(TextService):
         self.currentCandPage = page
 
 
-class CinTable:
-    loading = False
+class CinTable(CinTableBase):
     def __init__(self):
-        self.cin = None
+        super().__init__()
         self.curCinType = None
         self.userExtendTable = None
         self.priorityExtendTable = None
@@ -153,17 +152,15 @@ class CinTable:
 CinTable = CinTable()
 
 
-class RCinTable:
-    loading = False
+class RCinTable(CinTableBase):
     def __init__(self):
-        self.cin = None
+        super().__init__()
         self.curCinType = None
 RCinTable = RCinTable()
 
 
-class HCinTable:
-    loading = False
+class HCinTable(CinTableBase):
     def __init__(self):
-        self.cin = None
+        super().__init__()
         self.curCinType = None
 HCinTable = HCinTable()

@@ -18,6 +18,7 @@ from textService import *
 import io
 import os.path
 import copy
+import threading
 
 from cinbase import CinBase
 from cinbase import LoadCinTable
@@ -61,8 +62,8 @@ class ChePinyinTextService(TextService):
             loadCinFile = LoadCinTable(self, CinTable)
             loadCinFile.start()
         else:
-            while CinTable.loading:
-                continue
+            if CinTable.loading:
+                CinTable.loaded_event.wait()
             self.cin = CinTable.cin
 
 
@@ -150,8 +151,10 @@ class ChePinyinTextService(TextService):
 
 
 class CinTable:
-    loading = False
     def __init__(self):
+        self.loading = False
+        self.loaded_event = threading.Event()
+        self.loaded_event.set()
         self.cin = None
         self.curCinType = None
         self.userExtendTable = None
@@ -161,16 +164,20 @@ CinTable = CinTable()
 
 
 class RCinTable:
-    loading = False
     def __init__(self):
+        self.loading = False
+        self.loaded_event = threading.Event()
+        self.loaded_event.set()
         self.cin = None
         self.curCinType = None
 RCinTable = RCinTable()
 
 
 class HCinTable:
-    loading = False
     def __init__(self):
+        self.loading = False
+        self.loaded_event = threading.Event()
+        self.loaded_event.set()
         self.cin = None
         self.curCinType = None
 HCinTable = HCinTable()

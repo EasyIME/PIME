@@ -3368,6 +3368,9 @@ class LoadCinTable(threading.Thread):
         threading.Thread.__init__(self)
         self.cbTS = cbTS
         self.CinTable = CinTable
+        self.CinTable.loading = True
+        if hasattr(self.CinTable, 'loaded_event'):
+            self.CinTable.loaded_event.clear()
 
     def run(self):
         if DEBUG_MODE:
@@ -3413,6 +3416,8 @@ class LoadCinTable(threading.Thread):
             pass
         finally:
             self.CinTable.loading = False
+            if hasattr(self.CinTable, 'loaded_event'):
+                self.CinTable.loaded_event.set()
 
         if DEBUG_MODE and selCinFile:
             self.cbTS.debug.setEndTimer("LoadCinTable")
@@ -3424,6 +3429,9 @@ class LoadRCinTable(threading.Thread):
         threading.Thread.__init__(self)
         self.cbTS = cbTS
         self.RCinTable = RCinTable
+        self.RCinTable.loading = True
+        if hasattr(self.RCinTable, 'loaded_event'):
+            self.RCinTable.loaded_event.clear()
         self.rcinFileList = ([
                                 "checj.json", "mscj3.json", "mscj3-ext.json", "cj-ext.json", "cnscj.json", "thcj.json", "newcj3.json", "cj5.json", "newcj.json", "scj6.json", "cj-fast.json",
                                 "thphonetic.json", "CnsPhonetic.json", "bpmf.json",
@@ -3462,6 +3470,8 @@ class LoadRCinTable(threading.Thread):
             pass
         finally:
             self.RCinTable.loading = False
+            if hasattr(self.RCinTable, 'loaded_event'):
+                self.RCinTable.loaded_event.set()
 
         if DEBUG_MODE and selCinFile:
             self.cbTS.debug.setEndTimer("LoadRCinTable")
@@ -3473,6 +3483,9 @@ class LoadHCinTable(threading.Thread):
         threading.Thread.__init__(self)
         self.cbTS = cbTS
         self.HCinTable = HCinTable
+        self.HCinTable.loading = True
+        if hasattr(self.HCinTable, 'loaded_event'):
+            self.HCinTable.loaded_event.clear()
 
     def run(self):
         if DEBUG_MODE:
@@ -3496,6 +3509,8 @@ class LoadHCinTable(threading.Thread):
             pass
         finally:
             self.HCinTable.loading = False
+            if hasattr(self.HCinTable, 'loaded_event'):
+                self.HCinTable.loaded_event.set()
 
         if DEBUG_MODE and selCinFile:
             self.cbTS.debug.setEndTimer("LoadHCinTable")

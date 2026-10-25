@@ -383,15 +383,21 @@ impl BackendManager {
                         info!("Backend {} stdin channel closed. Exiting input loop.", backend_name);
                         return BackendExitReason::Normal;
                     };
-                    if let Some((client_id, json_part)) = data.split_once('|') {
-                        if let Some(seq_num) = protocol::extract_seq_num(json_part) {
-                            let mut map = pending_requests.lock().unwrap();
-                            map.insert((client_id.to_string(), seq_num), tokio::time::Instant::now());
+                    let Some((client_id, json_part)) = protocol::parse_backend_input(&data) else {
+                        warn!(
+                            "Dropping malformed message for backend {}: {:?}",
+                            backend_name, data
+                        );
+                        continue;
+                    };
 
-                            let mut state_guard = state.lock().unwrap();
-                            if let Some(entry) = state_guard.clients.get_mut(client_id) {
-                                entry.last_seq_num = seq_num;
-                            }
+                    if let Some(seq_num) = protocol::extract_seq_num(json_part) {
+                        let mut map = pending_requests.lock().unwrap();
+                        map.insert((client_id.to_string(), seq_num), tokio::time::Instant::now());
+
+                        let mut state_guard = state.lock().unwrap();
+                        if let Some(entry) = state_guard.clients.get_mut(client_id) {
+                            entry.last_seq_num = seq_num;
                         }
                     }
                     info!("Backend {} received request from channel. Data len: {}.", backend_name, data.len());

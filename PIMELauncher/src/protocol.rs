@@ -4,6 +4,9 @@ use std::time::Duration;
 /// Maximum allowed length (in bytes) for a single message line.
 pub const MAX_MESSAGE_LINE_LENGTH: usize = 1048576;
 
+/// Exact length for a client ID string (standard UUID v4: 36 characters).
+pub const CLIENT_ID_LENGTH: usize = 36;
+
 /// Timeout for backend output hang detection.
 pub const HANG_TIMEOUT: Duration = Duration::from_secs(15);
 
@@ -43,6 +46,18 @@ pub fn parse_backend_output(line: &str) -> Option<(String, String)> {
 /// Format: <client_id>|<payload>
 pub fn format_backend_input(client_id: &str, message: &str) -> String {
     format!("{}|{}", client_id, message)
+}
+
+/// Validates and parses a message to be sent to a backend process.
+///
+/// Expects `<client_id>|<payload>`, where `client_id` is exactly CLIENT_ID_LENGTH characters.
+/// Returns `Some((client_id, payload))`.
+pub fn parse_backend_input(data: &str) -> Option<(&str, &str)> {
+    let (client_id, payload) = data.split_once('|')?;
+    if client_id.len() != CLIENT_ID_LENGTH {
+        return None;
+    }
+    Some((client_id, payload))
 }
 
 
@@ -104,5 +119,32 @@ mod tests {
     fn test_extract_seq_num_with_pipe_in_payload() {
         assert_eq!(extract_seq_num(r#"{"commitString":"a|b","seqNum":7}"#), Some(7));
         assert_eq!(extract_seq_num(r#"{"success":true}"#), None);
+    }
+
+    #[test]
+    fn test_parse_backend_input() {
+        let uuid = "12345678-1234-1234-1234-123456789012";
+        let valid = format!("{}|{{\"method\":\"test\"}}", uuid);
+        assert_eq!(
+            parse_backend_input(&valid),
+            Some((uuid, "{\"method\":\"test\"}"))
+        );
+
+        let valid_close = format!("{}|{{\"method\":\"close\",\"seqNum\":2}}", uuid);
+        assert_eq!(
+            parse_backend_input(&valid_close),
+            Some((uuid, "{\"method\":\"close\",\"seqNum\":2}"))
+        );
+
+        // Missing pipe delimiter
+        assert_eq!(parse_backend_input("no_delimiter"), None);
+
+        // Empty client_id
+        assert_eq!(parse_backend_input("|{\"method\":\"test\"}"), None);
+
+        // Client ID not matching CLIENT_ID_LENGTH (36 chars)
+        assert_eq!(parse_backend_input("short_id|{\"method\":\"test\"}"), None);
+        let oversized = format!("{}extra|{{\"method\":\"test\"}}", uuid);
+        assert_eq!(parse_backend_input(&oversized), None);
     }
 }

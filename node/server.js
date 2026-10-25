@@ -33,6 +33,14 @@ let server = NIME.createServer((request) => {
     service = loadServiceById(request['id']);
   }
 
+  if (service == null) {
+    // Return fallback dummy service to prevent null pointer dereference in nime requestHandler
+    return {
+      textReducer: (req, state) => state || { env: {} },
+      response: (req, state) => ({ success: false, seqNum: req['seqNum'] })
+    };
+  }
+
   return service;
 });
 

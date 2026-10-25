@@ -23,6 +23,7 @@ from textService import *
 
 from ctypes import *
 import os
+import atexit
 
 APP = "PIME"
 APP_VERSION = "0.01"
@@ -41,6 +42,7 @@ def rimeCallback(context_object, session_id, message_type, message_value):
     pass
 rime_callback = RimeNotificationHandler(rimeCallback)
 rime.set_notification_handler(rime_callback, None)
+atexit.register(rime.finalize)
 
 class RimeTextService(TextService):   
     session_id = None
@@ -180,8 +182,6 @@ class RimeTextService(TextService):
         if self.session_id:
             rime.destroy_session(self.session_id)
         self.session_id = None
-        #rime.finalize()
-        #self.style = None
 
     def getKeyState(self, keyCode):
         return WinDLL("User32.dll").GetKeyState(keyCode)
@@ -299,9 +299,6 @@ class RimeTextService(TextService):
             rime.sync_user_data()
         elif commandId == ID_DEPLOY:
             self.destroySession()
-            rime.finalize()
-            #rime.set_notification_handler(None, None)
-            rime.initialize(None)
             if rime.start_maintenance(True):
                 rime.join_maintenance_thread()
             rime.deploy_config_file(CONFIG_FILE.encode("UTF-8"), b'config_version')
@@ -321,12 +318,11 @@ class RimeTextService(TextService):
     def onKeyboardStatusChanged(self, opened):
         TextService.onKeyboardStatusChanged(self, opened)
         if opened: # 鍵盤開啟
-            rime.initialize(None)
-            self.createSession()
+            if not self.session_id:
+                self.createSession()
         else: # 鍵盤關閉，輸入法停用
             # self.hideMessage() # hide message window, if there's any
             self.destroySession()
-            rime.finalize()
         if not self.style.display_tray_icon: return
         # Windows 8 systray IME mode icon
         if self.client.isWindows8Above:

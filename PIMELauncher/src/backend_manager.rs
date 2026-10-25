@@ -39,8 +39,10 @@ enum BackendExitReason {
     Error,
 }
 
+#[derive(Clone)]
 struct BackendProcess {
     stdin_tx: mpsc::Sender<String>,
+    pending_requests: Arc<Mutex<HashMap<(String, i64), tokio::time::Instant>>>,
 }
 
 impl BackendManager {
@@ -89,14 +91,21 @@ impl BackendManager {
 
     /// Unregisters a client and notifies the backend of the disconnect.
     pub async fn unregister_client(&self, client_id: &str, backend_name: &str) {
-        let close_seq_num = {
+        let (close_seq_num, backend_opt) = {
             let mut state = self.state.lock().unwrap();
-            if let Some(entry) = state.clients.remove(client_id) {
+            let seq = if let Some(entry) = state.clients.remove(client_id) {
                 entry.last_seq_num + 1
             } else {
                 1
-            }
+            };
+            let backend = state.backends.get(backend_name).cloned();
+            (seq, backend)
         };
+
+        if let Some(backend) = backend_opt {
+            let mut map = backend.pending_requests.lock().unwrap();
+            map.retain(|(cid, _), _| cid != client_id);
+        }
 
         // Notify the backend that the client is closing
         let close_msg = format!(r#"{{"method":"close","seqNum":{}}}"#, close_seq_num);
@@ -115,6 +124,10 @@ impl BackendManager {
                 true
             }
         });
+        if let Some(backend) = state.backends.get(backend_name) {
+            let mut map = backend.pending_requests.lock().unwrap();
+            map.clear();
+        }
     }
 
     /// Retrieves a channel to send messages directly to the backend.
@@ -168,6 +181,9 @@ impl BackendManager {
         let backend_name_clone = backend_name.to_string();
         let manager_clone = self.clone();
         let config_clone = config.clone();
+        let pending_requests =
+            Arc::new(Mutex::new(HashMap::<(String, i64), tokio::time::Instant>::new()));
+        let pending_requests_process = pending_requests.clone();
 
         tokio::spawn(async move {
             loop {
@@ -187,8 +203,7 @@ impl BackendManager {
                 let stdout = child_process.stdout.take().unwrap();
                 let stderr = child_process.stderr.take().unwrap();
 
-                let pending_requests =
-                    Arc::new(Mutex::new(HashMap::<(String, i64), tokio::time::Instant>::new()));
+                pending_requests.lock().unwrap().clear();
                 let pending_requests_clone = pending_requests.clone();
 
                 let manager_for_reader = manager_clone.clone();
@@ -209,7 +224,7 @@ impl BackendManager {
                     stdin,               // Backend stdin.
                     &mut child_process,  // Backend process.
                     &backend_name_clone, // Backend name.
-                    pending_requests,    // Output tracker.
+                    pending_requests.clone(), // Output tracker.
                 )
                 .await;
 
@@ -238,7 +253,10 @@ impl BackendManager {
             }
         });
 
-        BackendProcess { stdin_tx }
+        BackendProcess {
+            stdin_tx,
+            pending_requests: pending_requests_process,
+        }
     }
 
     /// Background task that reads backend stderr and logs it.
@@ -391,9 +409,12 @@ impl BackendManager {
                         continue;
                     };
 
+                    let is_close_request = json_part.contains(r#""method":"close""#);
                     if let Some(seq_num) = protocol::extract_seq_num(json_part) {
-                        let mut map = pending_requests.lock().unwrap();
-                        map.insert((client_id.to_string(), seq_num), tokio::time::Instant::now());
+                        if !is_close_request {
+                            let mut map = pending_requests.lock().unwrap();
+                            map.insert((client_id.to_string(), seq_num), tokio::time::Instant::now());
+                        }
 
                         let mut state_guard = state.lock().unwrap();
                         if let Some(entry) = state_guard.clients.get_mut(client_id) {
@@ -420,7 +441,9 @@ impl BackendManager {
                 _ = watchdog_interval.tick() => {
                     let now = tokio::time::Instant::now();
                     let is_hung = {
-                        let map = pending_requests.lock().unwrap();
+                        let mut map = pending_requests.lock().unwrap();
+                        let state_guard = state.lock().unwrap();
+                        map.retain(|(client_id, _), _| state_guard.clients.contains_key(client_id));
                         map.values().any(|&sent_time| now.duration_since(sent_time) >= protocol::HANG_TIMEOUT)
                     };
                     if is_hung {
@@ -474,11 +497,16 @@ mod tests {
         let manager = BackendManager::new(registry);
 
         let (stdin_tx, mut stdin_rx) = mpsc::channel(10);
+        let pending_requests = Arc::new(Mutex::new(HashMap::new()));
         {
             let mut state = manager.state.lock().unwrap();
-            state
-                .backends
-                .insert("test_backend".to_string(), BackendProcess { stdin_tx });
+            state.backends.insert(
+                "test_backend".to_string(),
+                BackendProcess {
+                    stdin_tx,
+                    pending_requests: pending_requests.clone(),
+                },
+            );
         }
 
         let client_id = "00000000-0000-0000-0000-000000000001";
@@ -496,5 +524,41 @@ mod tests {
         assert_eq!(parsed_client_id, client_id);
         assert_eq!(json_part, r#"{"method":"close","seqNum":1}"#);
         assert_eq!(protocol::extract_seq_num(json_part), Some(1));
+    }
+
+    #[tokio::test]
+    async fn test_unregister_client_purges_pending_requests() {
+        let registry = BackendRegistry::new();
+        let manager = BackendManager::new(registry);
+
+        let (stdin_tx, _stdin_rx) = mpsc::channel(10);
+        let pending_requests = Arc::new(Mutex::new(HashMap::new()));
+        {
+            let mut state = manager.state.lock().unwrap();
+            state.backends.insert(
+                "test_backend".to_string(),
+                BackendProcess {
+                    stdin_tx,
+                    pending_requests: pending_requests.clone(),
+                },
+            );
+        }
+
+        let client_id = "00000000-0000-0000-0000-000000000002";
+        let _ = manager
+            .register_client(client_id.to_string(), "test_backend".to_string())
+            .await;
+
+        // Insert pending request for client
+        {
+            let mut map = pending_requests.lock().unwrap();
+            map.insert((client_id.to_string(), 42), tokio::time::Instant::now());
+        }
+
+        manager.unregister_client(client_id, "test_backend").await;
+
+        // Verify pending request for disconnected client was purged
+        let map = pending_requests.lock().unwrap();
+        assert!(!map.contains_key(&(client_id.to_string(), 42)));
     }
 }

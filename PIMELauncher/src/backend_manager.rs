@@ -384,21 +384,14 @@ impl BackendManager {
                         return BackendExitReason::Normal;
                     };
                     if let Some((client_id, json_part)) = data.split_once('|') {
-                        let mut state_guard = state.lock().unwrap();
-                        let Some(entry) = state_guard.clients.get_mut(client_id) else {
-                            // Client is no longer active (e.g. disconnected due to backend crash/restart).
-                            // Discard this stale request to prevent corrupting the new backend state.
-                            info!(
-                                "Discarding stale message from disconnected client {} for backend {}",
-                                client_id, backend_name
-                            );
-                            continue;
-                        };
-
                         if let Some(seq_num) = protocol::extract_seq_num(json_part) {
                             let mut map = pending_requests.lock().unwrap();
                             map.insert((client_id.to_string(), seq_num), tokio::time::Instant::now());
-                            entry.last_seq_num = seq_num;
+
+                            let mut state_guard = state.lock().unwrap();
+                            if let Some(entry) = state_guard.clients.get_mut(client_id) {
+                                entry.last_seq_num = seq_num;
+                            }
                         }
                     }
                     info!("Backend {} received request from channel. Data len: {}.", backend_name, data.len());
@@ -467,5 +460,35 @@ mod tests {
             let state = manager.state.lock().unwrap();
             assert!(!state.clients.contains_key("client1"));
         }
+    }
+
+    #[tokio::test]
+    async fn test_unregister_client_sends_close_notification() {
+        let registry = BackendRegistry::new();
+        let manager = BackendManager::new(registry);
+
+        let (stdin_tx, mut stdin_rx) = mpsc::channel(10);
+        {
+            let mut state = manager.state.lock().unwrap();
+            state
+                .backends
+                .insert("test_backend".to_string(), BackendProcess { stdin_tx });
+        }
+
+        let client_id = "00000000-0000-0000-0000-000000000001";
+        let _ = manager
+            .register_client(client_id.to_string(), "test_backend".to_string())
+            .await;
+
+        manager.unregister_client(client_id, "test_backend").await;
+
+        let msg = stdin_rx
+            .try_recv()
+            .expect("Expected close message in channel");
+        let (parsed_client_id, json_part) =
+            msg.split_once('|').expect("Close message must contain delimiter");
+        assert_eq!(parsed_client_id, client_id);
+        assert_eq!(json_part, r#"{"method":"close","seqNum":1}"#);
+        assert_eq!(protocol::extract_seq_num(json_part), Some(1));
     }
 }

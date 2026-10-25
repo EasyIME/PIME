@@ -195,3 +195,11 @@ VK_ZOOM           = 0xFB
 VK_NONAME         = 0xFC
 VK_PA1            = 0xFD
 VK_OEM_CLEAR      = 0xFE
+
+# Windows SDK GetKeyState() / GetAsyncKeyState() return value bitmasks (SHORT):
+# https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getkeystate
+# https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getasynckeystate
+KEY_STATE_DOWN        = 0x8000  # High-order bit: key is down
+KEY_STATE_TOGGLED     = 0x0001  # Low-order bit (GetKeyState): key is toggled (e.g. CapsLock)
+KEY_STATE_WAS_PRESSED = 0x0001  # Low-order bit (GetAsyncKeyState): key was pressed after previous call
+KEY_PRESSED_MASK      = KEY_STATE_DOWN | KEY_STATE_WAS_PRESSED  # Key is currently down or was pressed

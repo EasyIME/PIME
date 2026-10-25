@@ -184,8 +184,8 @@ class RimeTextService(TextService):
         #self.style = None
 
     def getKeyState(self, keyCode):
-        # The least significant bit (0x0001) indicates toggle state.
-        return bool(WinDLL("User32.dll").GetKeyState(keyCode) & 0x0001)
+        # The least significant bit indicates toggle state (Win SDK GetKeyState).
+        return bool(WinDLL("User32.dll").GetKeyState(keyCode) & KEY_STATE_TOGGLED)
 
     # 依照目前輸入法狀態，更新語言列顯示
     def updateLangStatus(self):

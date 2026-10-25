@@ -757,7 +757,7 @@ class ChewingTextService(TextService):
     def getCapslockState(self):
         if self.lastKeyEvent:
             return self.lastKeyEvent.isKeyToggled(VK_CAPITAL)
-        return ((windll.user32.GetKeyState(VK_CAPITAL) & 0x0001) != 0)
+        return bool(windll.user32.GetKeyState(VK_CAPITAL) & KEY_STATE_TOGGLED)
 
     def onKeyUp(self, keyEvent):
         pressedDuration = time.time() - self.lastKeyDownTime

@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "cross-env debug=nime:* node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test tests/nimeServer.test.js"
   },
   "repository": {
     "type": "git",

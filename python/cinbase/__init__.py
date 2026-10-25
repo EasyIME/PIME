@@ -2848,12 +2848,13 @@ class CinBase:
             yield l[i:i+n]
 
     def getKeyState(self, keyCode):
-        return ctypes.WinDLL("User32.dll").GetKeyState(keyCode)
+        # The least significant bit (0x0001) indicates toggle state.
+        return bool(ctypes.WinDLL("User32.dll").GetKeyState(keyCode) & 0x0001)
 
     # https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getasynckeystate
-    # 當 keyCode 對應的按鍵、曾被按下觸發過，GetAsyncKeyState() 的回傳值會 >= 1
+    # Bit 15 (0x8000) indicates key is down; bit 0 (0x0001) indicates key was pressed since last call.
     def isPressed(self, keyCode):
-        return windll.user32.GetAsyncKeyState(keyCode) >= 1
+        return bool(windll.user32.GetAsyncKeyState(keyCode) & 0x8001)
 
     def setCompositionBufferString(self, cbTS, compositionString, removeStringLength):
         compPos1 = cbTS.compositionBufferCursor - removeStringLength

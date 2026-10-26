@@ -88,7 +88,7 @@ Directory structure
   The python backend of PIME
 
   * python/python3:
-    The embedable version of python 3.5 32-bit.
+    The embedable version of python 3.12 32-bit.
     We force the use of this version to avoid any potential conflicts with 
     existing python installations.
 

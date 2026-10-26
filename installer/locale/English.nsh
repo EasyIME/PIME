@@ -11,7 +11,7 @@
 !insertmacro LANG_STRING PRODUCT_PAGE "PIME project home page"
 !insertmacro LANG_STRING PRODUCT_PUBLISHER "PIME development team"
 
-!insertmacro LANG_STRING AtLeastWinVista_MESSAGE "Sorry，this program currently only supports Windows Vista or later"
+!insertmacro LANG_STRING AtLeastWin10_MESSAGE "Sorry，this program currently only supports Windows 10 or later"
 !insertmacro LANG_STRING REBOOT_QUESTION "The installation failed and could no be completed.$\r$\nA file may be in use, that prevents it from being deleted or overwritten.$\n$\nIt is recommended that you reboot the system and run the installer again.$\r$\nDo you want to reboot now? (Select $\"No$\" if you want to reboot at a later time)"
 !insertmacro LANG_STRING PENDING_REBOOT_QUESTION "A previous uninstallation or update of PIME requires a system restart to complete.$\r$\n$\r$\nIf you proceed without restarting, newly installed files may be deleted on the next reboot.$\r$\n$\r$\nDo you want to restart your computer now? (Select $\"No$\" to exit setup and restart later)"
 !insertmacro LANG_STRING INST_FAILED_MESSAGE "The installation failed and could no be completed.$\n$\rA file may be in use, that prevents it from being deleted or overwritten.$\n$\nIt is recommended that you reboot the system and run the installer again."

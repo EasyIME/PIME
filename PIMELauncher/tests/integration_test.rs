@@ -14,10 +14,7 @@ use pimelauncher::testing::*;
 
 type TestResult = Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
-async fn send_msg<W: tokio::io::AsyncWriteExt + Unpin>(
-    writer: &mut W,
-    msg: &str,
-) -> TestResult {
+async fn send_msg<W: tokio::io::AsyncWriteExt + Unpin>(writer: &mut W, msg: &str) -> TestResult {
     writer.write_all(msg.as_bytes()).await?;
     writer.write_all(b"\n").await?;
     writer.flush().await?;
@@ -35,11 +32,11 @@ async fn read_line<R: tokio::io::AsyncBufReadExt + Unpin>(
 
 async fn setup_test_environment(pipe_name: &str) -> (BackendManager, PathBuf) {
     let dir = tempdir().unwrap();
-    let pime_root = dir.into_path(); // This prevents the directory from being deleted
+    let pime_root = dir.keep(); // This prevents the directory from being deleted
 
     let mock_backend_exe = env!("CARGO_BIN_EXE_mock_backend");
 
-    fs::copy(&mock_backend_exe, pime_root.join("mock_backend.exe")).unwrap();
+    fs::copy(mock_backend_exe, pime_root.join("mock_backend.exe")).unwrap();
 
     // Create configurations and mappings manually for the registry
     let configs = vec![
@@ -152,13 +149,16 @@ async fn test_integration_full() -> TestResult {
         // We verify that the pipe is broken (either write or read fails).
         let send_res = send_msg(&mut writer, "Still here").await;
         let read_res = read_line(&mut lines).await;
-        assert!(send_res.is_err() || read_res.is_err(), "Expected connection to be broken after crash");
+        assert!(
+            send_res.is_err() || read_res.is_err(),
+            "Expected connection to be broken after crash"
+        );
 
         // Client must reconnect and re-initialize
         let client2 = connect_with_retry(&pipe_name).await;
         let (reader2, mut writer2) = tokio::io::split(client2);
         let mut lines2 = BufReader::new(reader2).lines();
-        
+
         send_msg(&mut writer2, &handshake).await?;
         let _ = read_line(&mut lines2).await?;
 
@@ -182,7 +182,7 @@ async fn test_integration_full() -> TestResult {
         // Subsequent message should trigger timeout in BackendManager
         // We send a large block to ensure the pipe buffer fills up
         let large_block = "A".repeat(1024 * 128); // 128KB
-        
+
         let _ = send_msg(&mut writer, &large_block).await;
 
         // Timeout is 5s for write + 2s for flush. Let's wait 12s.

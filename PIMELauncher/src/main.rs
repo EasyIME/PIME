@@ -1,3 +1,4 @@
+#![allow(non_snake_case)] // The shipped binary is intentionally named PIMELauncher.exe.
 #![windows_subsystem = "windows"]
 
 use pimelauncher::backend_manager::BackendManager;
@@ -7,8 +8,8 @@ use std::path::PathBuf;
 use tracing::{error, info, warn};
 
 fn get_windows_username() -> String {
-    use windows::Win32::System::WindowsProgramming::GetUserNameW;
     use windows::core::PWSTR;
+    use windows::Win32::System::WindowsProgramming::GetUserNameW;
     let mut buf = [0u16; 257];
     let mut size = buf.len() as u32;
     unsafe {
@@ -38,15 +39,20 @@ async fn run_watchdog(original_args: &[String]) {
 
     let event_name = get_per_session_name("PIMELauncher2_QuitEvent");
     let (quit_tx, mut quit_rx) = tokio::sync::mpsc::channel::<()>(1);
-    
+
     std::thread::spawn(move || {
         use windows::Win32::Foundation::CloseHandle;
         use windows::Win32::System::Threading::{CreateEventW, WaitForSingleObject, INFINITE};
-        
+
         let mut name_utf16: Vec<u16> = event_name.encode_utf16().collect();
         name_utf16.push(0);
         unsafe {
-            if let Ok(handle) = CreateEventW(None, true, false, windows::core::PCWSTR(name_utf16.as_ptr())) {
+            if let Ok(handle) = CreateEventW(
+                None,
+                true,
+                false,
+                windows::core::PCWSTR(name_utf16.as_ptr()),
+            ) {
                 let _ = WaitForSingleObject(handle, INFINITE);
                 let _ = CloseHandle(handle);
                 let _ = quit_tx.blocking_send(());
@@ -105,7 +111,12 @@ fn signal_quit_event() {
 
     unsafe {
         // Create or open the event
-        if let Ok(handle) = CreateEventW(None, true, false, windows::core::PCWSTR(name_utf16.as_ptr())) {
+        if let Ok(handle) = CreateEventW(
+            None,
+            true,
+            false,
+            windows::core::PCWSTR(name_utf16.as_ptr()),
+        ) {
             let _ = SetEvent(handle);
             let _ = CloseHandle(handle);
             println!("Quit signal sent.");
@@ -268,8 +279,8 @@ async fn main() {
 /// terminates all of its descendant child processes (workers, backends).
 fn assign_process_to_job_object() {
     use windows::Win32::System::JobObjects::{
-        AssignProcessToJobObject, CreateJobObjectW, SetInformationJobObject,
-        JobObjectExtendedLimitInformation, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+        AssignProcessToJobObject, CreateJobObjectW, JobObjectExtendedLimitInformation,
+        SetInformationJobObject, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
         JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
     };
     use windows::Win32::System::Threading::GetCurrentProcess;
@@ -380,10 +391,7 @@ fn create_single_instance_mutex(
                 }
                 Ok(handle)
             }
-            Err(e) => Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                e.to_string(),
-            )),
+            Err(e) => Err(std::io::Error::other(e.to_string())),
         }
     }
 }

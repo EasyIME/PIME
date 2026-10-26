@@ -18,7 +18,7 @@ Contributions using AI coding tools are welcomed! However, to ensure code qualit
 ## Tool Requirements
 *   [CMake](https://cmake.org/) >= 4.2 (the `Visual Studio 18 2026` generator was added in 4.2)
 *   [Visual Studio 2026](https://visualstudio.microsoft.com/vs) with the "Desktop development with C++" workload
-*   [Rust Toolchain](https://rustup.rs/) (Stable channel with `i686-pc-windows-msvc` target)
+*   [Rust Toolchain](https://rustup.rs/) 1.77.0 with the `i686-pc-windows-msvc` target
 *   [git](https://git-scm.com/)
 *   [Node.js](https://nodejs.org/) with npm (builds the bundled JavaScript input methods)
 *   [NSIS](https://nsis.sourceforge.io/) 3.x (only needed to build the installer)
@@ -33,7 +33,7 @@ Contributions using AI coding tools are welcomed! However, to ensure code qualit
 
 *   Ensure the 32-bit Rust target is installed (the launcher is 32-bit):
 
-        rustup target add i686-pc-windows-msvc
+        rustup target add --toolchain 1.77.0 i686-pc-windows-msvc
 
 *   Use `build.bat` to build everything. It builds the launcher, the x86, x64 and ARM64 text service DLLs, and bundles the JavaScript input methods.
 

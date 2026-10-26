@@ -15,14 +15,14 @@ fn main() {
 
     for line in stdin.lock().lines() {
         let line = line.expect("Failed to read from stdin");
-        
+
         match scenario {
             "echo" => {
                 // Input format: client_id|message
                 if let Some(pos) = line.find('|') {
                     let client_id = &line[..pos];
                     let message = &line[pos + 1..];
-                    
+
                     if message.contains(r#""method":"close""#) {
                         eprintln!("Mock backend received CLOSE for client {}", client_id);
                         if let Some(seq_num) = pimelauncher::protocol::extract_seq_num(message) {

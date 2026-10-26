@@ -109,7 +109,10 @@ impl BackendManager {
         let mut state = self.state.lock().unwrap();
         state.clients.retain(|client_id, entry| {
             if entry.backend_name == backend_name {
-                info!("Forcibly disconnected client {} because backend {} crashed.", client_id, backend_name);
+                info!(
+                    "Forcibly disconnected client {} because backend {} crashed.",
+                    client_id, backend_name
+                );
                 false
             } else {
                 true
@@ -187,8 +190,10 @@ impl BackendManager {
                 let stdout = child_process.stdout.take().unwrap();
                 let stderr = child_process.stderr.take().unwrap();
 
-                let pending_requests =
-                    Arc::new(Mutex::new(HashMap::<(String, i64), tokio::time::Instant>::new()));
+                let pending_requests = Arc::new(Mutex::new(HashMap::<
+                    (String, i64),
+                    tokio::time::Instant,
+                >::new()));
                 let pending_requests_clone = pending_requests.clone();
 
                 let manager_for_reader = manager_clone.clone();
@@ -491,8 +496,9 @@ mod tests {
         let msg = stdin_rx
             .try_recv()
             .expect("Expected close message in channel");
-        let (parsed_client_id, json_part) =
-            msg.split_once('|').expect("Close message must contain delimiter");
+        let (parsed_client_id, json_part) = msg
+            .split_once('|')
+            .expect("Close message must contain delimiter");
         assert_eq!(parsed_client_id, client_id);
         assert_eq!(json_part, r#"{"method":"close","seqNum":1}"#);
         assert_eq!(protocol::extract_seq_num(json_part), Some(1));

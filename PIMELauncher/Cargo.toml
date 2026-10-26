@@ -30,4 +30,5 @@ opt-level = "z"     # Optimize for size
 lto = true          # Enable Link Time Optimization
 codegen-units = 1   # Better optimization at the cost of compile time
 panic = "abort"     # Remove unwinding code
+debug = 1           # Emit a PDB for the CMake artifact copy and crash dumps
 strip = true        # Automatically strip symbols from the binary

@@ -1973,7 +1973,7 @@ class CinBase:
                                     cbTS.homophonecandidates = HCinTable.cin.getCharDef(HCinTable.cin.getKey(commitStr))
                                     pagecandidates = list(self.chunks(cbTS.homophonecandidates, cbTS.candPerPage))
                                     cbTS.setCandidateList(pagecandidates[currentCandPage])
-                    elif (keyCode == VK_RETURN or (keyCode == VK_SPACE and not cbTS.switchPageWithSpace)) and cbTS.canSetCommitString:  # 按下 Enter 鍵或空白鍵
+                    elif ((keyCode == VK_RETURN or (keyCode == VK_SPACE and not cbTS.switchPageWithSpace)) and cbTS.canSetCommitString) or (keyCode == VK_SPACE and len(candidates) == 1 and not cbTS.homophonemode):  # 按下 Enter 鍵或空白鍵(只有一個候選字時空白鍵直接確認，issue #890)
                         if not cbTS.homophoneselpinyinmode:
                             # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                             commitStr = cbTS.candidateList[candCursor]
@@ -2188,7 +2188,7 @@ class CinBase:
                     if (currentCandPage + 1) < currentCandPageCount:
                         currentCandPage += 1
                         candCursor = 0
-                elif keyCode == VK_SPACE and not cbTS.switchPageWithSpace:  # 按下空白鍵
+                elif keyCode == VK_SPACE and (not cbTS.switchPageWithSpace or len(phrasecandidates) == 1):  # 按下空白鍵(只有一個聯想字時直接確認，issue #890)
                     if cbTS.isShowPhraseCandidates:
                         # 找出目前游標位置的選字鍵 (1234..., asdf...等等)
                         commitStr = cbTS.candidateList[candCursor]

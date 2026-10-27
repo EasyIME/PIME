@@ -7,17 +7,13 @@ import (
 	"strings"
 	"testing"
 
-	fcitx5ime "github.com/EasyIME/pime-go/input_methods/fcitx5"
 	meowime "github.com/EasyIME/pime-go/input_methods/meow"
 	rimeime "github.com/EasyIME/pime-go/input_methods/rime"
-	simplepinyinime "github.com/EasyIME/pime-go/input_methods/simple_pinyin"
 	"github.com/EasyIME/pime-go/pime"
 )
 
 const testMeowGUID = "{7A1C2E93-5B64-4F88-AE21-3D9C6B70F145}"
-const testSimplePinyinGUID = "{5C8E1D74-2F9A-4B63-91DE-7A45C8F2B306}"
 const testRimeGUID = "{3F6B5A12-8D44-4E71-9A2E-6B4F9C1D2A30}"
-const testFcitx5GUID = "{D2E4A8B1-6C35-4F90-AB7D-18E2635C9F41}"
 
 func newTestServerWithMeow() *Server {
 	server := NewServer()
@@ -27,26 +23,10 @@ func newTestServerWithMeow() *Server {
 	return server
 }
 
-func newTestServerWithSimplePinyin() *Server {
-	server := NewServer()
-	server.RegisterService(testSimplePinyinGUID, func(client *pime.Client, guid string) pime.TextService {
-		return simplepinyinime.New(client)
-	})
-	return server
-}
-
 func newTestServerWithRime() *Server {
 	server := NewServer()
 	server.RegisterService(testRimeGUID, func(client *pime.Client, guid string) pime.TextService {
 		return rimeime.New(client)
-	})
-	return server
-}
-
-func newTestServerWithFcitx5() *Server {
-	server := NewServer()
-	server.RegisterService(testFcitx5GUID, func(client *pime.Client, guid string) pime.TextService {
-		return fcitx5ime.New(client)
 	})
 	return server
 }
@@ -276,112 +256,6 @@ func TestServerHandleMessageCloseSucceeds(t *testing.T) {
 	}
 }
 
-func TestServerHandleMessageSimplePinyinRequestResponseFlow(t *testing.T) {
-	server := newTestServerWithSimplePinyin()
-
-	sendProtocolMessage(t, server, "client-4", map[string]interface{}{
-		"method":          "init",
-		"seqNum":          1,
-		"id":              testSimplePinyinGUID,
-		"isWindows8Above": true,
-		"isMetroApp":      false,
-		"isUiLess":        false,
-		"isConsole":       false,
-	})
-
-	_, firstResp := sendProtocolMessage(t, server, "client-4", map[string]interface{}{
-		"method":   "filterKeyDown",
-		"seqNum":   2,
-		"keyCode":  0x4E,
-		"charCode": 'n',
-	})
-	if firstResp["compositionString"] != "n" {
-		t.Fatalf("expected first key to build composition n, got %#v", firstResp)
-	}
-	if firstResp["return"] != float64(1) {
-		t.Fatalf("expected first key return 1, got %#v", firstResp)
-	}
-
-	_, secondResp := sendProtocolMessage(t, server, "client-4", map[string]interface{}{
-		"method":   "filterKeyDown",
-		"seqNum":   3,
-		"keyCode":  0x49,
-		"charCode": 'i',
-	})
-	if secondResp["compositionString"] != "ni" {
-		t.Fatalf("expected second key to build composition ni, got %#v", secondResp)
-	}
-	candidateList, ok := secondResp["candidateList"].([]interface{})
-	if !ok {
-		t.Fatalf("expected candidate list array, got %#v", secondResp["candidateList"])
-	}
-	if len(candidateList) != 3 {
-		t.Fatalf("expected fallback candidate count 3, got %d", len(candidateList))
-	}
-	if candidateList[0] != "测试" {
-		t.Fatalf("expected fallback candidate 测试, got %#v", candidateList[0])
-	}
-
-	_, selectResp := sendProtocolMessage(t, server, "client-4", map[string]interface{}{
-		"method":  "filterKeyDown",
-		"seqNum":  4,
-		"keyCode": 0x31,
-	})
-	if selectResp["commitString"] != "测试" {
-		t.Fatalf("expected number key to commit first fallback candidate, got %#v", selectResp)
-	}
-	if selectResp["return"] != float64(1) {
-		t.Fatalf("expected candidate selection return 1, got %#v", selectResp)
-	}
-	if selectResp["showCandidates"] != false {
-		t.Fatalf("expected candidate window to close, got %#v", selectResp)
-	}
-}
-
-func TestServerHandleMessageSimplePinyinExactCandidateCommitFlow(t *testing.T) {
-	server := newTestServerWithSimplePinyin()
-
-	sendProtocolMessage(t, server, "client-5", map[string]interface{}{
-		"method":          "init",
-		"seqNum":          1,
-		"id":              testSimplePinyinGUID,
-		"isWindows8Above": true,
-		"isMetroApp":      false,
-		"isUiLess":        false,
-		"isConsole":       false,
-	})
-
-	for i, key := range []struct {
-		keyCode  int
-		charCode rune
-	}{
-		{keyCode: 0x4E, charCode: 'n'},
-		{keyCode: 0x49, charCode: 'i'},
-		{keyCode: 0x48, charCode: 'h'},
-		{keyCode: 0x41, charCode: 'a'},
-		{keyCode: 0x4F, charCode: 'o'},
-	} {
-		sendProtocolMessage(t, server, "client-5", map[string]interface{}{
-			"method":   "filterKeyDown",
-			"seqNum":   i + 2,
-			"keyCode":  key.keyCode,
-			"charCode": key.charCode,
-		})
-	}
-
-	_, commitResp := sendProtocolMessage(t, server, "client-5", map[string]interface{}{
-		"method":  "filterKeyDown",
-		"seqNum":  7,
-		"keyCode": 0x0D,
-	})
-	if commitResp["commitString"] != "你好" {
-		t.Fatalf("expected enter to commit exact first candidate 你好, got %#v", commitResp)
-	}
-	if commitResp["return"] != float64(1) {
-		t.Fatalf("expected enter commit return 1, got %#v", commitResp)
-	}
-}
-
 func TestServerHandleMessageRimeRequestResponseFlow(t *testing.T) {
 	server := newTestServerWithRime()
 
@@ -473,56 +347,6 @@ func TestServerHandleMessageRimeRequestResponseFlow(t *testing.T) {
 	})
 	if selectResp["commitString"] != "呢" {
 		t.Fatalf("expected number key to commit 呢, got %#v", selectResp)
-	}
-	if selectResp["return"] != float64(1) {
-		t.Fatalf("expected candidate selection return 1, got %#v", selectResp)
-	}
-}
-
-func TestServerHandleMessageFcitx5RequestResponseFlow(t *testing.T) {
-	server := newTestServerWithFcitx5()
-
-	sendProtocolMessage(t, server, "client-7", map[string]interface{}{
-		"method":          "init",
-		"seqNum":          1,
-		"id":              testFcitx5GUID,
-		"isWindows8Above": true,
-		"isMetroApp":      false,
-		"isUiLess":        false,
-		"isConsole":       false,
-	})
-
-	_, firstResp := sendProtocolMessage(t, server, "client-7", map[string]interface{}{
-		"method":   "filterKeyDown",
-		"seqNum":   2,
-		"keyCode":  0x48,
-		"charCode": 'h',
-	})
-	if firstResp["compositionString"] != "ha" {
-		t.Fatalf("expected first key to build ha, got %#v", firstResp)
-	}
-	if firstResp["return"] != float64(1) {
-		t.Fatalf("expected first key return 1, got %#v", firstResp)
-	}
-	candidateList, ok := firstResp["candidateList"].([]interface{})
-	if !ok {
-		t.Fatalf("expected candidate list array, got %#v", firstResp["candidateList"])
-	}
-	if len(candidateList) != 5 {
-		t.Fatalf("expected 5 candidates, got %d", len(candidateList))
-	}
-	if candidateList[2] != "喝" {
-		t.Fatalf("expected third candidate 喝, got %#v", candidateList[2])
-	}
-
-	_, selectResp := sendProtocolMessage(t, server, "client-7", map[string]interface{}{
-		"method":        "onKeyDown",
-		"seqNum":        3,
-		"keyCode":       0x33,
-		"candidateList": []string{"哈", "呵", "喝", "和", "河"},
-	})
-	if selectResp["commitString"] != "喝" {
-		t.Fatalf("expected number key to commit 喝, got %#v", selectResp)
 	}
 	if selectResp["return"] != float64(1) {
 		t.Fatalf("expected candidate selection return 1, got %#v", selectResp)

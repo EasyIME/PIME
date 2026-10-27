@@ -8,6 +8,7 @@ pub mod acl;
 pub mod backend_manager;
 pub mod backend_registry;
 pub mod client_session;
+pub mod elevation;
 pub mod pipe_server;
 pub mod protocol;
 pub mod testing;

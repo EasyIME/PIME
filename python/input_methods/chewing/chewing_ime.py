@@ -408,6 +408,7 @@ class ChewingTextService(TextService):
 
         # 某些狀況下，需要暫時強制切成英文模式，之後再恢復
         temporaryEnglishMode = False
+        stayEnglishMode = False  # 切成英文模式後不再復原
         oldLangMode = chewingContext.get_ChiEngMode()
         ignoreKey = False  # 新酷音是否須忽略這個按鍵
         keyHandled = False  # 輸入法是否有處理這個按鍵
@@ -441,8 +442,16 @@ class ChewingTextService(TextService):
                 if keyEvent.isKeyDown(VK_SHIFT):
                     # 如果是英文字母
                     if charStr.isalpha():
+                        # 編輯區是空的，且開啟 Shift + 字母切換英文，則直接切成英文模式並保持
+                        # (優先於快速輸入符號；要回中文模式，單按 Shift 即可)
+                        if cfg.shiftLetterSwitchToEnglish and not self.isComposing():
+                            temporaryEnglishMode = True
+                            stayEnglishMode = True
+                            chewingContext.set_easySymbolInput(0)
+                            if not cfg.upperCaseWithShift:  # 如果沒有開啟 Shift 輸入大寫英文
+                                invertCase = True  # 大寫字母轉成小寫
                         # 如果不使用快速輸入符號功能，則暫時切成英文模式
-                        if not cfg.easySymbolsWithShift:
+                        elif not cfg.easySymbolsWithShift:
                             temporaryEnglishMode = True  # 暫時切換成英文模式
                             if not cfg.upperCaseWithShift:  # 如果沒有開啟 Shift 輸入大寫英文
                                 invertCase = True  # 大寫字母轉成小寫
@@ -699,7 +708,7 @@ class ChewingTextService(TextService):
                 self.showMessage(message, 2)
 
         # 若先前有暫時強制切成英文模式，需要復原
-        if temporaryEnglishMode:
+        if temporaryEnglishMode and not stayEnglishMode:
             chewingContext.set_ChiEngMode(oldLangMode)
 
         # 依照目前狀態，更新語言列顯示的圖示

@@ -108,6 +108,8 @@ class CinBase:
         cbTS.fullShapeSymbols = False
         cbTS.directOutFSymbols = False
         cbTS.easySymbolsWithShift = False
+        cbTS.enableShiftSpace = True
+        cbTS.shiftSpaceRegistered = False
         cbTS.showPhrase = False
         cbTS.sortByPhrase = False
         cbTS.intelligentSelect = False
@@ -211,13 +213,30 @@ class CinBase:
             cbTS.debug = Debug(cbTS.imeDirName)
             cbTS.debugLog = cbTS.debug.loadDebugLog()
 
+    # 讓 Shift + Space 熱鍵的註冊狀態跟隨設定 (issue #844)：
+    # 啟用期間切換設定即時註冊/除名；未註冊時空白鍵直接送給應用程式
+    def syncShiftSpaceHotkey(self, cbTS):
+        if not cbTS.isActivated:
+            return
+        if cbTS.enableShiftSpace and not cbTS.shiftSpaceRegistered:
+            cbTS.addPreservedKey(VK_SPACE, TF_MOD_SHIFT, SHIFT_SPACE_GUID); # shift + space
+            cbTS.shiftSpaceRegistered = True
+        elif not cbTS.enableShiftSpace and cbTS.shiftSpaceRegistered:
+            cbTS.removePreservedKey(SHIFT_SPACE_GUID); # shift + space
+            cbTS.shiftSpaceRegistered = False
+
 
     # 輸入法被使用者啟用
     def onActivate(self, cbTS):
         cfg = cbTS.cfg
+        # 離開輸入法期間設定可能已更改，先套用新設定再決定熱鍵 (issue #844)
+        cfg.update()
+        if cfg.isConfigChanged(cbTS.configVersion):
+            self.applyConfig(cbTS)
         # 向系統宣告 Shift + Space 這個組合為特殊用途 (全半形切換)
         # 當 Shift + Space 被按下的時候，onPreservedKey() 會被呼叫
-        cbTS.addPreservedKey(VK_SPACE, TF_MOD_SHIFT, SHIFT_SPACE_GUID); # shift + space
+        # 使用者可在設定裡取消這個熱鍵 (issue #844)，未註冊時空白鍵直接送給應用程式
+        self.syncShiftSpaceHotkey(cbTS)
 
         # 切換中英文
         icon_name = "chi.ico" if cbTS.langMode == CHINESE_MODE else "eng.ico"
@@ -276,6 +295,7 @@ class CinBase:
         cbTS.lastKeyDownCode = 0
         # 向系統宣告移除 Shift + Space 這個組合鍵用途 (全半形切換)
         cbTS.removePreservedKey(SHIFT_SPACE_GUID); # shift + space
+        cbTS.shiftSpaceRegistered = False
 
         cbTS.removeButton("switch-lang")
         cbTS.removeButton("switch-shape")
@@ -2410,6 +2430,9 @@ class CinBase:
         cbTS.lastKeyDownCode = 0;
         # some preserved keys registered are pressed
         if guid == SHIFT_SPACE_GUID: # 使用者按下 shift + space
+            if not cbTS.enableShiftSpace:
+                # 設定在啟用後被取消：不切換全半形，讓空白鍵照常送給應用程式
+                return False
             cbTS.isShapeModeChanged = True
             self.toggleShapeMode(cbTS)  # 切換全半形
             return True
@@ -3177,6 +3200,10 @@ class CinBase:
 
         # Shift 快速輸入符號?
         cbTS.easySymbolsWithShift = cfg.easySymbolsWithShift
+
+        # Shift+空白鍵切換全形/半形?
+        cbTS.enableShiftSpace = cfg.enableShiftSpace
+        self.syncShiftSpaceHotkey(cbTS)
 
         # 提示訊息顯示時間?
         cbTS.messageDurationTime = cfg.messageDurationTime

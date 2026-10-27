@@ -93,6 +93,7 @@ class ChewingTextService(TextService):
 
         self.lastKeyDownTime = 0.0
         self.lastKeyEvent = None
+        self.autoEnglishMode = False  # 目前的英文模式是否由 Shift + 字母自動切換而來
 
         self.configVersion = chewingConfig.getVersion()
 
@@ -344,6 +345,11 @@ class ChewingTextService(TextService):
         if self.isComposing():
             return True
         # --------------   以下都是「沒有」正在輸入中文的狀況   --------------
+
+        # 編輯區是空的時按 Enter：若是自動切成的英文模式，切回中文；Enter 仍交給應用程式處理
+        if self.autoEnglishMode and keyEvent.keyCode == VK_RETURN:
+            self.switchBackFromAutoEnglish(keyEvent)
+            return False
 
         # 如果按下 Alt，可能是應用程式熱鍵，輸入法不做處理
         if keyEvent.isKeyDown(VK_MENU):
@@ -712,6 +718,12 @@ class ChewingTextService(TextService):
         # 若先前有暫時強制切成英文模式，需要復原
         if temporaryEnglishMode and not stayEnglishMode:
             chewingContext.set_ChiEngMode(oldLangMode)
+        elif stayEnglishMode:
+            self.autoEnglishMode = True
+
+        # 編輯區有內容時按 Enter 送出：若是自動切成的英文模式，一併切回中文
+        if keyCode == VK_RETURN and self.autoEnglishMode:
+            self.switchBackFromAutoEnglish(keyEvent)
 
         # 依照目前狀態，更新語言列顯示的圖示
         self.updateLangButtons()
@@ -911,8 +923,21 @@ class ChewingTextService(TextService):
                 icon_path = os.path.join(self.icon_dir, icon_name)
                 self.changeButton("switch-shape", icon=icon_path)
 
+    # 由 Shift + 字母自動切成英文模式後，按 Enter 自動切回中文模式
+    # Shift/Ctrl/Alt + Enter 不切換 (例如聊天軟體的換行)
+    def switchBackFromAutoEnglish(self, keyEvent):
+        if not chewingConfig.enterSwitchBackToChinese:
+            return
+        if keyEvent.isKeyDown(VK_SHIFT) or keyEvent.isKeyDown(VK_CONTROL) or keyEvent.isKeyDown(VK_MENU):
+            return
+        self.autoEnglishMode = False
+        if self.chewingContext.get_ChiEngMode() == ENGLISH_MODE:
+            self.chewingContext.set_ChiEngMode(CHINESE_MODE)
+            self.updateLangButtons()
+
     # 切換中英文模式
     def toggleLanguageMode(self):
+        self.autoEnglishMode = False  # 手動切換後，不再自動切回中文
         chewingContext = self.chewingContext
         if chewingContext:
             if chewingContext.get_ChiEngMode() == CHINESE_MODE:

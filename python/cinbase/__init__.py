@@ -351,6 +351,10 @@ class CinBase:
                 return False
 
         # 若按下 Shift 鍵
+        # 注意：onKeyDown 裡任何要在 idle(未組字、未開選字視窗)狀態處理
+        # Shift+按鍵的分支，都必須在這裡領取該按鍵(return True)，否則
+        # compositionBufferMode 且非 directShowCand 的半形 idle 狀態下
+        # 按鍵會在此交還給應用程式，onKeyDown 的分支形同虛設
         if keyEvent.isKeyDown(VK_SHIFT):
             if cbTS.langMode == CHINESE_MODE and not keyEvent.isKeyDown(VK_CONTROL):
                 # 若開啟 Shift 快速輸入符號，輸入法需要處理此按鍵

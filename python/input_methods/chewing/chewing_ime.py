@@ -442,9 +442,11 @@ class ChewingTextService(TextService):
                 if keyEvent.isKeyDown(VK_SHIFT):
                     # 如果是英文字母
                     if charStr.isalpha():
-                        # 編輯區是空的，且開啟 Shift + 字母切換英文，則直接切成英文模式並保持
+                        # 沒有輸入到一半的注音、也沒開選字視窗時，若開啟 Shift + 字母切換英文，
+                        # 則直接切成英文模式並保持；編輯區已有的中文會留著，英文接在後面
                         # (優先於快速輸入符號；要回中文模式，單按 Shift 即可)
-                        if cfg.shiftLetterSwitchToEnglish and not self.isComposing():
+                        if cfg.shiftLetterSwitchToEnglish and not chewingContext.bopomofo_Check() \
+                                and not self.showCandidates:
                             temporaryEnglishMode = True
                             stayEnglishMode = True
                             chewingContext.set_easySymbolInput(0)

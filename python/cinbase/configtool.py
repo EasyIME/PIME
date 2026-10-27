@@ -26,14 +26,14 @@ import json
 import threading
 
 try:
-    from cinbase.config import CinBaseConfig
+    from cinbase.config import CIN_BASE_CONFIG
     from cinbase.cin import Cin
 except ModuleNotFoundError:
-    from config import CinBaseConfig
+    from config import CIN_BASE_CONFIG
     from cin import Cin
 from ctypes import c_uint, byref, create_string_buffer
 
-cfg = CinBaseConfig
+cfg = CIN_BASE_CONFIG
 cfg.imeDirName = sys.argv[2]
 config_dir = os.path.join(cfg.getConfigDir())
 current_dir = os.path.abspath(os.path.dirname(__file__))

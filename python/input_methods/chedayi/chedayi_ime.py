@@ -17,7 +17,6 @@ from keycodes import *  # for VK_XXX constants
 from textService import *
 import io
 import os.path
-import copy
 
 from cinbase import CinBase
 from cinbase import LoadCinTable
@@ -48,9 +47,8 @@ class CheDayiTextService(TextService):
         self.selDayiSymbolCharType = 0
 
         # 載入用戶設定值
-        CinBaseConfig.__init__()
-        self.configVersion = CinBaseConfig.getVersion()
-        self.cfg = copy.deepcopy(CinBaseConfig)
+        self.cfg = CinBaseConfig()
+        self.configVersion = self.cfg.getVersion()
         self.cfg.imeDirName = self.imeDirName
         self.cfg.cinFileList = self.cinFileList
         self.cfg.load()

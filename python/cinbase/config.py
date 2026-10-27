@@ -282,6 +282,8 @@ class CinBaseConfig:
         return currentVersion[1:] != self._version[1:]
 
 
-# globally shared config object
-# load configurations from a user-specific config file
-CinBaseConfig = CinBaseConfig()
+# The globally shared config object, named as a module-level constant so the
+# class name above stays the class. Each input method backend builds its own
+# config with CinBaseConfig() instead of resetting and copying this one; this
+# object is what the config tool reads, as the carrier of the version stamps.
+CIN_BASE_CONFIG = CinBaseConfig()

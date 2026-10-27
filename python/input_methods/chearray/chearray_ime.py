@@ -17,13 +17,12 @@ from keycodes import *  # for VK_XXX constants
 from textService import *
 import io
 import os.path
-import copy
 
 from cinbase import CinBase
 from cinbase import LoadCinTable
 from cinbase import LoadRCinTable
 from cinbase import LoadHCinTable
-from cinbase.config import CinBaseConfig
+from cinbase.config import CinBaseConfigClass
 
 
 class CheArrayTextService(TextService):
@@ -45,9 +44,8 @@ class CheArrayTextService(TextService):
         self.cinbase.initTextService(self, TextService)
 
         # 載入用戶設定值
-        CinBaseConfig.__init__()
-        self.configVersion = CinBaseConfig.getVersion()
-        self.cfg = copy.deepcopy(CinBaseConfig)
+        self.cfg = CinBaseConfigClass()
+        self.configVersion = self.cfg.getVersion()
         self.cfg.imeDirName = self.imeDirName
         self.cfg.cinFileList = self.cinFileList
         self.cfg.load()

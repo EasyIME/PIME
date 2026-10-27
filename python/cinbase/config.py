@@ -282,6 +282,11 @@ class CinBaseConfig:
         return currentVersion[1:] != self._version[1:]
 
 
+# The class itself, exported before the module-level name below is rebound
+# to the shared instance. Each input method backend builds its own config
+# with CinBaseConfigClass() instead of resetting and copying the shared one.
+CinBaseConfigClass = CinBaseConfig
+
 # globally shared config object
 # load configurations from a user-specific config file
 CinBaseConfig = CinBaseConfig()

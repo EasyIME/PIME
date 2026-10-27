@@ -2,6 +2,7 @@
 
 use pimelauncher::backend_manager::BackendManager;
 use pimelauncher::backend_registry::BackendRegistry;
+use pimelauncher::elevation;
 use pimelauncher::pipe_server;
 use std::path::PathBuf;
 use tracing::{error, info, warn};
@@ -240,6 +241,14 @@ async fn main() {
     }
 
     setup_logging(&args);
+
+    // Issue #973: an elevated run poisons %APPDATA%\PIME (owned by
+    // Administrators, unreadable to the normal session). The backend that
+    // creates those folders only starts below, so this is the last point
+    // where the user can still avoid the damage. The worker child inherits
+    // the token; warn_if_elevated stays silent there so the log carries one
+    // warning, not two.
+    elevation::warn_if_elevated(args.is_worker);
 
     // Ensure single instance (using a named mutex)
     // The Watchdog process (parent) holds this mutex.

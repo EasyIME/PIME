@@ -3,29 +3,120 @@
 package rime
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/EasyIME/pime-go/pime"
 )
 
+// The runtime tests drive the bundled x64 rime.dll against the real
+// luna_pinyin data from the brise submodule shared with the python side: a
+// genuine schema and dictionary, no fabricated fixtures. The schema_list in
+// the user dir is patched down to luna_pinyin so the first RimeInit only
+// compiles that one schema; librime caches the build, so every later test
+// reuses it. librime's engine is a process-global singleton, so the shared
+// and user directories are built once for the whole package.
+var (
+	rimeEnvOnce  sync.Once
+	rimeEnvErr   error
+	rimeShared   string
+	rimeUser     string
+)
+
+func setupRimeEnv() (shared, user string, err error) {
+	// The bundled rime.dll is x64; a native arm64 process cannot load it.
+	// amd64 is the default on Intel hosts and runs emulated on ARM64 Windows.
+	if runtime.GOARCH == "arm64" {
+		return "", "", fmt.Errorf("bundled x64 rime.dll needs an amd64 test process: run with GOARCH=amd64")
+	}
+
+	// Both variables set selects a pre-built pair (e.g. the real
+	// %APPDATA%\PIME\Rime data for a live-data run); otherwise they are
+	// assembled per package under %TEMP% and never touch user data.
+	shared, user = os.Getenv("PIME_TEST_SHARED_DIR"), os.Getenv("PIME_TEST_RIME_USER_DIR")
+	if shared != "" && user != "" {
+		return shared, user, nil
+	}
+
+	brise, err := filepath.Abs(filepath.Join("..", "..", "..", "python", "input_methods", "rime", "brise"))
+	if err != nil {
+		return "", "", err
+	}
+	if _, err := os.Stat(filepath.Join(brise, "preset", "luna_pinyin.dict.yaml")); err != nil {
+		return "", "", fmt.Errorf("brise submodule not initialised: run git submodule update --init python/input_methods/rime/brise")
+	}
+
+	if shared == "" {
+		if shared, err = os.MkdirTemp("", "pime-rime-shared-*"); err != nil {
+			return "", "", err
+		}
+		for _, name := range []string{"default.yaml", "essay.txt", "symbols.yaml"} {
+			if err := copyRimeFile(filepath.Join(brise, name), filepath.Join(shared, name)); err != nil {
+				return "", "", err
+			}
+		}
+		if err := copyRimeTree(filepath.Join(brise, "opencc"), filepath.Join(shared, "opencc")); err != nil {
+			return "", "", err
+		}
+		for _, name := range []string{"luna_pinyin.schema.yaml", "luna_pinyin.dict.yaml"} {
+			if err := copyRimeFile(filepath.Join(brise, "preset", name), filepath.Join(shared, name)); err != nil {
+				return "", "", err
+			}
+		}
+	}
+
+	// The product reads %APPDATA%\PIME\Rime; tests never write there.
+	if user == "" {
+		if user, err = os.MkdirTemp("", "pime-rime-user-*"); err != nil {
+			return "", "", err
+		}
+		patch := "patch:\n  schema_list:\n    - schema: luna_pinyin\n"
+		if err := os.WriteFile(filepath.Join(user, "default.custom.yaml"), []byte(patch), 0o644); err != nil {
+			return "", "", err
+		}
+	}
+	return shared, user, nil
+}
+
+func copyRimeFile(src, dst string) error {
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(dst, data, 0o644)
+}
+
+func copyRimeTree(src, dst string) error {
+	return filepath.WalkDir(src, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(dst, rel)
+		if d.IsDir() {
+			return os.MkdirAll(target, 0o755)
+		}
+		return copyRimeFile(path, target)
+	})
+}
+
 func newRealRimeSession(t *testing.T) RimeSessionId {
 	t.Helper()
 
-	wd := "D:\\vscode\\moqi-input-method-projs\\PIME\\go-backend\\input_methods\\rime"
-	appData := os.Getenv("APPDATA")
-	if appData == "" {
-		t.Skip("APPDATA is not set")
+	rimeEnvOnce.Do(func() { rimeShared, rimeUser, rimeEnvErr = setupRimeEnv() })
+	if rimeEnvErr != nil {
+		t.Skip(rimeEnvErr.Error())
 	}
-	userDir := filepath.Join(appData, APP, "Rime")
-	if info, err := os.Stat(userDir); err != nil || !info.IsDir() {
-		t.Skip("existing user Rime directory is required")
-	}
-	dataDir := filepath.Join(wd, "data")
 
-	if !RimeInit(dataDir, userDir, APP, APP_VERSION, false) {
+	if !RimeInit(rimeShared, rimeUser, APP, APP_VERSION, false) {
 		t.Fatal("RimeInit failed")
 	}
 
@@ -47,7 +138,7 @@ func newRealRimeSession(t *testing.T) RimeSessionId {
 func TestRealRimeCanCommitText(t *testing.T) {
 	sessionID := newRealRimeSession(t)
 
-	for _, input := range []string{"nihao", "xpxp", "gegegojxyzgegegojxdegoge"} {
+	for _, input := range []string{"nihao", "xiexie", "shurufa", "ceshi"} {
 		t.Run(input, func(t *testing.T) {
 			ClearComposition(sessionID)
 			for _, key := range []rune(input) {

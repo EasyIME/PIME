@@ -60,8 +60,11 @@ type RimeCommit struct {
 
 type NotificationHandler func(session RimeSessionId, messageType, messageValue string)
 
+// rimeTraitsC mirrors librime's RimeTraits. All trailing fields must be
+// present: the DLL reads the whole struct, so omitting them would make it
+// consume stack garbage (notably prebuilt_data_dir / staging_dir).
 type rimeTraitsC struct {
-	DataSize             int32
+	DataSize             uintptr
 	SharedDataDir        *byte
 	UserDataDir          *byte
 	DistributionName     *byte
@@ -69,8 +72,14 @@ type rimeTraitsC struct {
 	DistributionVersion  *byte
 	AppName              *byte
 	Modules              **byte
+	MinLogLevel          int32
+	LogDir               *byte
+	PrebuiltDataDir      *byte
+	StagingDir           *byte
 }
 
+// rimeCompositionC mirrors librime's RimeComposition: preedit is a plain
+// NUL-terminated char*, not a length-delimited view.
 type rimeCompositionC struct {
 	Length    int32
 	CursorPos int32
@@ -79,12 +88,17 @@ type rimeCompositionC struct {
 	Preedit   *byte
 }
 
+// rimeCandidateC mirrors librime's RimeCandidate: exactly two borrowed
+// strings plus a reserved slot that must be present to keep the array
+// stride correct.
 type rimeCandidateC struct {
 	Text     *byte
 	Comment  *byte
-	Reserved uintptr
+	Reserved unsafe.Pointer
 }
 
+// rimeMenuC mirrors librime's RimeMenu: the count fields are plain ints
+// in every supported librime release (32-bit safe as shipped).
 type rimeMenuC struct {
 	PageSize                  int32
 	PageNo                    int32
@@ -230,7 +244,7 @@ func boolResult(r1 uintptr) bool {
 
 func Init(traits RimeTraits) bool {
 	cTraits := rimeTraitsC{
-		DataSize:             int32(unsafe.Sizeof(rimeTraitsC{})) - 4,
+		DataSize:             uintptr(unsafe.Sizeof(rimeTraitsC{})),
 		SharedDataDir:        utf8Ptr(traits.SharedDataDir),
 		UserDataDir:          utf8Ptr(traits.UserDataDir),
 		DistributionName:     utf8Ptr(traits.DistributionName),
@@ -322,7 +336,7 @@ func GetMenu(sessionId RimeSessionId) (RimeMenu, bool) {
 }
 
 func GetCommit(sessionId RimeSessionId) (RimeCommit, bool) {
-	commit := rimeCommitC{DataSize: int32(unsafe.Sizeof(rimeCommitC{})) - 4}
+	commit := rimeCommitC{DataSize: int32(unsafe.Sizeof(rimeCommitC{}))}
 	r1, _, _ := rimeProcs.getCommit.Call(uintptr(sessionId), uintptr(unsafe.Pointer(&commit)))
 	if !boolResult(r1) {
 		return RimeCommit{}, false
@@ -446,7 +460,7 @@ func RimeInit(datadir, userdir, appname, appver string, fullcheck bool) bool {
 }
 
 func getContext(sessionId RimeSessionId) (rimeContextC, bool) {
-	context := rimeContextC{DataSize: int32(unsafe.Sizeof(rimeContextC{})) - 4}
+	context := rimeContextC{DataSize: int32(unsafe.Sizeof(rimeContextC{}))}
 	r1, _, _ := rimeProcs.getContext.Call(uintptr(sessionId), uintptr(unsafe.Pointer(&context)))
 	if !boolResult(r1) {
 		return rimeContextC{}, false

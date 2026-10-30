@@ -143,8 +143,7 @@ class UserPhraseHandler(BaseHandler):
         phrase_len = c_uint(0)
         bopomofo_len = c_uint(0)
         phrases = []
-        ret = chewing_ctx.userphrase_enumerate()
-        print(chewing_ctx, ret)
+        chewing_ctx.userphrase_enumerate()
         while chewing_ctx.userphrase_has_next(byref(phrase_len), byref(bopomofo_len)):
             phrase_buf = create_string_buffer(phrase_len.value)
             bopomofo_buf = create_string_buffer(bopomofo_len.value)
@@ -162,20 +161,24 @@ class UserPhraseHandler(BaseHandler):
         data = tornado.escape.json_decode(self.request.body)
         added = data.get("add", [])
         removed = data.get("remove", [])
-        print("add", added, "remove", removed)
 
-        # 0: error, 1: success, default to success
+        # Report the truth to the dialog: userphrase_add returns 1 on success
+        # (0/-1 on failure), userphrase_remove returns the number of rows it
+        # deleted (0 when the phrase was not found). Ask every call, so one
+        # failing item is not masked by a later successful one.
         result = 1
 
         for item in added:  # add new phrases
             phrase = item["phrase"].encode("utf8")
             bopomofo = item["bopomofo"].encode("utf8")
-            result = chewing_ctx.userphrase_add(phrase, bopomofo)
+            if chewing_ctx.userphrase_add(phrase, bopomofo) < 1:
+                result = 0
 
         for item in removed:  # remove existing phrases
             phrase = item["phrase"].encode("utf8")
             bopomofo = item["bopomofo"].encode("utf8")
-            result = chewing_ctx.userphrase_remove(phrase, bopomofo)
+            if chewing_ctx.userphrase_remove(phrase, bopomofo) < 1:
+                result = 0
 
         self.write({"result": result})
 

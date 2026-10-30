@@ -240,14 +240,27 @@ function onRemovePhrase() {
                             remove: phrases
                         }),
                         dataType: "json",
-                        complete: function() {
-                            jQueryDialogAlert({
-                                message: "刪除詞彙成功！",
-                                icon: "success",
-                                close: () => {
-                                    location.reload();
-                                }
-                            });
+                        complete: function(response) {
+                            // Tell the truth: the server reports {"result": 1}
+                            // only when every libchewing call succeeded.
+                            let result = response.responseJSON && response.responseJSON.result;
+                            if (response.status != 200 || !result) {
+                                jQueryDialogAlert({
+                                    message: "刪除未完成，詞彙可能不存在或已被移除",
+                                    icon: "error",
+                                    close: () => {
+                                        location.reload();
+                                    }
+                                });
+                            } else {
+                                jQueryDialogAlert({
+                                    message: "刪除詞彙成功！",
+                                    icon: "success",
+                                    close: () => {
+                                        location.reload();
+                                    }
+                                });
+                            }
                         }
                     });
                 },

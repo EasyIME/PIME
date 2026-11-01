@@ -39,7 +39,9 @@ from .phrase import phrase
 from .userphrase import userphrase
 from .emoji import emoji
 from .extendtable import extendtable
+import concurrent.futures
 from .config import SWITCH_LANG_WITH_BOTH_SHIFT, SWITCH_LANG_WITH_LEFT_SHIFT, SWITCH_LANG_WITH_RIGHT_SHIFT
+from .cintablebase import CinTableBase
 
 from .debug import Debug
 
@@ -3363,65 +3365,89 @@ class LoadPhraseData(threading.Thread):
             self.PhraseData.loading = False
 
 
-class LoadCinTable(threading.Thread):
-    def __init__(self, cbTS, CinTable):
-        threading.Thread.__init__(self)
+_table_executor = concurrent.futures.ThreadPoolExecutor(thread_name_prefix="CinTableLoader")
+
+
+class LoadCinTable:
+    def __init__(self, cbTS, CinTable: CinTableBase):
         self.cbTS = cbTS
         self.CinTable = CinTable
 
-    def run(self):
+    def start(self):
+        if self.cbTS.cfg.selCinType >= len(self.cbTS.cinFileList):
+            self.cbTS.cfg.selCinType = 0
+        selCinFile = self.cbTS.cinFileList[self.cbTS.cfg.selCinType]
+        jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
+
+        if not self.cbTS.reLoadCinTable and hasattr(self.cbTS, 'cin'):
+            return self.CinTable.future
+
+        self.cbTS.reLoadCinTable = False
+        if hasattr(self.cbTS, 'cin') and hasattr(self.cbTS.cin, '__del__'):
+            self.cbTS.cin.__del__()
+
+        self.CinTable.curCinType = self.cbTS.cfg.selCinType
+        self.CinTable.userExtendTable = self.cbTS.cfg.userExtendTable
+        self.CinTable.priorityExtendTable = self.cbTS.cfg.priorityExtendTable
+        self.CinTable.ignorePrivateUseArea = self.cbTS.cfg.ignorePrivateUseArea
+
+        def _on_done(fut):
+            try:
+                res = fut.result()
+                if res is not None:
+                    self.cbTS.cin = res
+                    if hasattr(res, 'extendtable'):
+                        self.cbTS.extendtable = res.extendtable
+            except Exception:
+                pass
+
+        future = _table_executor.submit(self._load_table, jsonPath, selCinFile)
+        future.add_done_callback(_on_done)
+        self.CinTable.future = future
+        return future
+
+    def _load_extendtable(self):
+        user_extend_table = getattr(self.cbTS, 'extendtable', None)
+        if user_extend_table is not None:
+            return user_extend_table
+        if self.cbTS.cfg.userExtendTable:
+            datadirs = (self.cbTS.cfg.getConfigDir(), self.cbTS.cfg.getDataDir())
+            extendtable_path = self.cbTS.cfg.findFile(datadirs, "extendtable.dat")
+            with io.open(extendtable_path, encoding='utf-8') as fs:
+                return extendtable(fs)
+        return {}
+
+    def _load_table(self, jsonPath, selCinFile):
         if DEBUG_MODE:
             self.cbTS.debug.setStartTimer("LoadCinTable")
-
-        self.CinTable.loading = True
-        selCinFile = None
         try:
-            if self.cbTS.cfg.selCinType >= len(self.cbTS.cinFileList):
-                self.cbTS.cfg.selCinType = 0
-            selCinFile = self.cbTS.cinFileList[self.cbTS.cfg.selCinType]
-            jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
+            with io.open(jsonPath, 'r', encoding='utf8') as fs:
+                cin = Cin(fs, self.cbTS.imeDirName, self.cbTS.ignorePrivateUseArea)
 
-            if self.cbTS.reLoadCinTable or not hasattr(self.cbTS, 'cin'):
-                self.cbTS.reLoadCinTable = False
-
-                if hasattr(self.cbTS, 'cin'):
-                    self.cbTS.cin.__del__()
-                if hasattr(self.CinTable.cin, '__del__'):
-                    self.CinTable.cin.__del__()
-
-                self.cbTS.cin = None
-                self.CinTable.cin = None
-
-                with io.open(jsonPath, 'r', encoding='utf8') as fs:
-                    self.cbTS.cin = Cin(fs, self.cbTS.imeDirName, self.cbTS.ignorePrivateUseArea)
-                self.CinTable.cin = self.cbTS.cin
-                self.CinTable.curCinType = self.cbTS.cfg.selCinType
-
-            if not hasattr(self.cbTS, 'extendtable'):
-                if self.cbTS.cfg.userExtendTable:
-                    datadirs = (self.cbTS.cfg.getConfigDir(), self.cbTS.cfg.getDataDir())
-                    extendtablePath = self.cbTS.cfg.findFile(datadirs, "extendtable.dat")
-                    with io.open(extendtablePath, encoding='utf-8') as fs:
-                        self.cbTS.extendtable = extendtable(fs)
-                else:
-                    self.cbTS.extendtable = {}
-            self.cbTS.cin.updateCinTable(self.cbTS.cfg.userExtendTable, self.cbTS.cfg.priorityExtendTable, self.cbTS.extendtable, self.cbTS.cfg.ignorePrivateUseArea)
-            self.CinTable.userExtendTable = self.cbTS.cfg.userExtendTable
-            self.CinTable.priorityExtendTable = self.cbTS.cfg.priorityExtendTable
-            self.CinTable.ignorePrivateUseArea = self.cbTS.cfg.ignorePrivateUseArea
-        except Exception:
-            pass
+            user_extend_table = self._load_extendtable()
+            cin.updateCinTable(
+                self.cbTS.cfg.userExtendTable,
+                self.cbTS.cfg.priorityExtendTable,
+                user_extend_table,
+                self.cbTS.cfg.ignorePrivateUseArea
+            )
+            cin.extendtable = user_extend_table
+            return cin
         finally:
-            self.CinTable.loading = False
+            if DEBUG_MODE and selCinFile:
+                self.cbTS.debug.setEndTimer("LoadCinTable")
+                self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [C]"] = (
+                    self.cbTS.debug.info['brand']
+                    + ":「"
+                    + self.cbTS.debug.jsonNameDict[selCinFile]
+                    + "」碼表載入時間約為 "
+                    + self.cbTS.debug.getDurationTime("LoadCinTable")
+                    + " 秒"
+                )
 
-        if DEBUG_MODE and selCinFile:
-            self.cbTS.debug.setEndTimer("LoadCinTable")
-            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [C]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.jsonNameDict[selCinFile] + "」碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadCinTable") + " 秒"
 
-
-class LoadRCinTable(threading.Thread):
-    def __init__(self, cbTS, RCinTable):
-        threading.Thread.__init__(self)
+class LoadRCinTable:
+    def __init__(self, cbTS, RCinTable: CinTableBase):
         self.cbTS = cbTS
         self.RCinTable = RCinTable
         self.rcinFileList = ([
@@ -3435,68 +3461,70 @@ class LoadRCinTable(threading.Thread):
                                 "liu.json"
                             ])
 
-    def run(self):
+    def start(self):
+        selCinFile = self.rcinFileList[self.cbTS.cfg.selRCinType]
+        jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
+
+        if not os.path.exists(jsonPath):
+            self.cbTS.RCinFileNotExist = True
+            self.RCinTable.curCinType = self.cbTS.cfg.selRCinType
+            self.RCinTable.future = None
+            return None
+
+        self.cbTS.RCinFileNotExist = False
+        self.RCinTable.curCinType = self.cbTS.cfg.selRCinType
+
+        future = _table_executor.submit(self._load_table, jsonPath, selCinFile)
+        self.RCinTable.future = future
+        return future
+
+    def _load_table(self, jsonPath, selCinFile):
         if DEBUG_MODE:
             self.cbTS.debug.setStartTimer("LoadRCinTable")
-
-        self.RCinTable.loading = True
-        selCinFile = None
         try:
-            selCinFile = self.rcinFileList[self.cbTS.cfg.selRCinType]
-            jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
-
-            if self.RCinTable.cin is not None and hasattr(self.RCinTable.cin, '__del__'):
-                self.RCinTable.cin.__del__()
-
-            self.RCinTable.cin = None
-
-            if os.path.exists(jsonPath):
-                self.cbTS.RCinFileNotExist = False
-                with io.open(jsonPath, 'r', encoding='utf8') as fs:
-                    self.RCinTable.cin = RCin(fs, self.cbTS.imeDirName)
-            else:
-                self.cbTS.RCinFileNotExist = True
-
-            self.RCinTable.curCinType = self.cbTS.cfg.selRCinType
-        except Exception:
-            pass
+            with io.open(jsonPath, 'r', encoding='utf8') as fs:
+                return RCin(fs, self.cbTS.imeDirName)
         finally:
-            self.RCinTable.loading = False
+            if DEBUG_MODE and selCinFile:
+                self.cbTS.debug.setEndTimer("LoadRCinTable")
+                self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [R]"] = (
+                    self.cbTS.debug.info['brand']
+                    + ":「"
+                    + self.cbTS.debug.jsonNameDict[selCinFile]
+                    + "」反查碼表載入時間約為 "
+                    + self.cbTS.debug.getDurationTime("LoadRCinTable")
+                    + " 秒"
+                )
 
-        if DEBUG_MODE and selCinFile:
-            self.cbTS.debug.setEndTimer("LoadRCinTable")
-            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [R]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.jsonNameDict[selCinFile] + "」反查碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadRCinTable") + " 秒"
 
-
-class LoadHCinTable(threading.Thread):
-    def __init__(self, cbTS, HCinTable):
-        threading.Thread.__init__(self)
+class LoadHCinTable:
+    def __init__(self, cbTS, HCinTable: CinTableBase):
         self.cbTS = cbTS
         self.HCinTable = HCinTable
 
-    def run(self):
+    def start(self):
+        selCinFile = CinBase.hcinFileList[self.cbTS.cfg.selHCinType]
+        jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
+        self.HCinTable.curCinType = self.cbTS.cfg.selHCinType
+
+        future = _table_executor.submit(self._load_table, jsonPath, selCinFile)
+        self.HCinTable.future = future
+        return future
+
+    def _load_table(self, jsonPath, selCinFile):
         if DEBUG_MODE:
             self.cbTS.debug.setStartTimer("LoadHCinTable")
-
-        self.HCinTable.loading = True
-        selCinFile = None
         try:
-            selCinFile = CinBase.hcinFileList[self.cbTS.cfg.selHCinType]
-            jsonPath = os.path.join(self.cbTS.jsondir, selCinFile)
-
-            if self.HCinTable.cin is not None and hasattr(self.HCinTable.cin, '__del__'):
-                self.HCinTable.cin.__del__()
-
-            self.HCinTable.cin = None
-
             with io.open(jsonPath, 'r', encoding='utf8') as fs:
-                self.HCinTable.cin = HCin(fs, self.cbTS.imeDirName)
-            self.HCinTable.curCinType = self.cbTS.cfg.selHCinType
-        except Exception:
-            pass
+                return HCin(fs, self.cbTS.imeDirName)
         finally:
-            self.HCinTable.loading = False
-
-        if DEBUG_MODE and selCinFile:
-            self.cbTS.debug.setEndTimer("LoadHCinTable")
-            self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [H]"] = self.cbTS.debug.info['brand'] + ":「" + self.cbTS.debug.jsonNameDict[selCinFile] + "」同音字碼表載入時間約為 " + self.cbTS.debug.getDurationTime("LoadHCinTable") + " 秒"
+            if DEBUG_MODE and selCinFile:
+                self.cbTS.debug.setEndTimer("LoadHCinTable")
+                self.cbTS.debugLog[time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + " [H]"] = (
+                    self.cbTS.debug.info['brand']
+                    + ":「"
+                    + self.cbTS.debug.jsonNameDict[selCinFile]
+                    + "」同音字碼表載入時間約為 "
+                    + self.cbTS.debug.getDurationTime("LoadHCinTable")
+                    + " 秒"
+                )

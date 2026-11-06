@@ -4540,6 +4540,7 @@ cc	比
 cc	鹿
 cc	庀
 cc	麀
+cc	廘
 cc1	飛
 cc8	粊
 cc8	廎
@@ -9975,6 +9976,7 @@ me;	雲
 me,	家
 me,	冢
 me.	冠
+me.	冢
 mf	用
 mf	冉
 mf0	週
@@ -11220,6 +11222,7 @@ peu	阱
 pev	镺
 pex	隬
 pf	陸
+pf1	阱
 pf9	陡
 pfd	陼
 pff	陸
@@ -12398,6 +12401,7 @@ te.	縳
 te.	絿
 tf	維
 tf8	績
+tf8	續
 tf8	纈
 tf0	繨
 tfd	緒
@@ -12455,6 +12459,7 @@ tk1	締
 tk2	縴
 tk5	織
 tk0	絯
+tka	絯
 tke	繵
 tkf	紸
 tkg	綧
@@ -12537,6 +12542,7 @@ tn.	紉
 tn.	纔
 to	嚮
 to8	繢
+to8	縜
 to0	繾
 toi	繰
 toj	絹
@@ -13561,6 +13567,7 @@ uvd	萫
 uve	蒩
 uvf	董
 uvf	菙
+uvf	菶
 uvg	拳
 uvi	蔾
 uvj	蕱
@@ -15050,6 +15057,7 @@ xkl	汒
 xko	滴
 xko	滴
 xko	滈
+xko	涪
 xkp	濟
 xkp	漷
 xkq	沆
@@ -16255,6 +16263,7 @@ zx;	慅
 zy	憮
 zyq	恌
 zyy	惔
+zz	憶
 zzi	橤
 zzt	繠
 zzz	惢
@@ -17272,6 +17281,7 @@ z/;	愧
 .k.	艕
 .l	姿
 .m	。
+.m	．
 .mc	舵
 .mc	盘
 .mo	凋

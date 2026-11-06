@@ -237,9 +237,17 @@ class TextService:
         self.commitString = s
         self.currentReply["commitString"] = s
 
-    def setCandidateList(self, cand):
+    def setCandidateList(self, cand, page=0, pageCount=0):
+        """Set the candidates of the current page.
+
+        page (1-based) and pageCount let the candidate window show
+        "page/pageCount" when pageCount > 1. Leave them out to show no page.
+        """
         self.candidateList = cand
         self.currentReply["candidateList"] = cand
+        if pageCount > 1:
+            self.currentReply["candidatePage"] = page
+            self.currentReply["candidatePageCount"] = pageCount
 
     def setCandidateCursor(self, pos):
         self.candidateCursor = pos

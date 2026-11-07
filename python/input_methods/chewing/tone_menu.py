@@ -19,7 +19,7 @@
 #
 # This file was generated with assistance from Claude Code (Claude Opus 5.5).
 
-import os
+import shutil
 import tempfile
 from ctypes import POINTER, c_ushort, c_void_p, create_string_buffer
 
@@ -52,11 +52,17 @@ class ToneMenu:
 
     def __init__(self, libchewing, context_class, data_dir):
         self._lib = libchewing
-        self._lib.chewing_get_phoneSeq.restype = POINTER(c_ushort)
-        self._lib.chewing_get_phoneSeq.argtypes = [c_void_p]
-        self._lib.chewing_free.argtypes = [c_void_p]
-        # 另一個看不見的新酷音引擎，只用來查每個聲調有哪些字；不碰使用者詞庫
-        user_path = os.path.join(tempfile.gettempdir(), "pime_chewing_tone_menu.sqlite3")
+        # libchewing[name] 每次都新建函式物件，不會像屬性存取那樣快取在共用的 CDLL 上，
+        # 所以在這裡設 restype/argtypes 不會改到其他程式碼看到的全域簽章
+        self._get_phone_seq = libchewing["chewing_get_phoneSeq"]
+        self._get_phone_seq.restype = POINTER(c_ushort)
+        self._get_phone_seq.argtypes = [c_void_p]
+        self._free = libchewing["chewing_free"]
+        self._free.argtypes = [c_void_p]
+        # 另一個看不見的新酷音引擎，只用來查每個聲調有哪些字；不碰使用者詞庫。
+        # 每個選單自己一個暫存資料夾，不同輸入法工作階段與行程不會共用同一個 SQLite 檔
+        self._temp_dir = tempfile.mkdtemp(prefix="pime_tone_menu_")
+        user_path = self._temp_dir + "/lookup.sqlite3"
         self._lookup = context_class(syspath=data_dir.encode("UTF-8"),
                                      userpath=user_path.encode("UTF-8"))
         self._lookup.set_ChiEngMode(1)
@@ -73,11 +79,11 @@ class ToneMenu:
 
     def phone_seq(self, ctx):
         n = ctx.get_phoneSeqLen()
-        seq = self._lib.chewing_get_phoneSeq(ctx.ctx)
+        seq = self._get_phone_seq(ctx.ctx)
         try:
             return [seq[i] for i in range(n)]
         finally:
-            self._lib.chewing_free(seq)
+            self._free(seq)
 
     def candidates(self, phone):
         """The characters of one syllable, most common first."""
@@ -126,6 +132,14 @@ class ToneMenu:
     def close(self):
         self.index = None
         self.phones = []
+
+    def dispose(self):
+        """Release the lookup engine and delete its temporary database."""
+        self._lookup = None  # 先放掉引擎，Windows 才刪得掉它開著的檔案
+        shutil.rmtree(self._temp_dir, ignore_errors=True)
+
+    def __del__(self):
+        self.dispose()
 
     def is_open(self):
         return self.index is not None

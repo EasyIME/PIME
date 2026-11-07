@@ -148,6 +148,7 @@ class ToneMenu:
         """Replace the character with menu item n. Returns True on success."""
         index, phone = self.index, self.phones[n]
         old = self.phone_seq(ctx)
+        chars = self._buffer(ctx)
         self.close()
         cursor = ctx.cursor_Current()
         self._move_cursor(ctx, index + 1)
@@ -155,10 +156,40 @@ class ToneMenu:
         self._type(ctx, phone, keyboard_layout)
         if ctx.get_phoneSeqLen() != len(old):  # 新聲調打不出來：把原本的字打回去
             self._type(ctx, old[index], keyboard_layout)
+            self._keep_characters(ctx, chars, index)
             self._move_cursor(ctx, cursor)
             return False
+        self._keep_characters(ctx, chars, index)
         self._move_cursor(ctx, cursor)
         return True
+
+    @staticmethod
+    def _buffer(ctx):
+        return list(ctx.buffer_String().decode("UTF-8"))
+
+    def _keep_characters(self, ctx, chars, skip):
+        """Choose the original character again wherever retyping changed a neighbour.
+
+        Deleting and retyping a syllable makes libchewing run its automatic phrase
+        selection again, which can turn the characters next to it into others
+        (today's weather: changing the tone of the second tian turned the following
+        character into a different one).
+        """
+        if len(self._buffer(ctx)) != len(chars):
+            return
+        for position, char in enumerate(chars):
+            if position == skip or self._buffer(ctx)[position] == char:
+                continue
+            self._move_cursor(ctx, position)
+            ctx.handle_Down()
+            ctx.cand_Enumerate()
+            candidates = []
+            while ctx.cand_hasNext():
+                candidates.append(ctx.cand_String().decode("UTF-8"))
+            if char in candidates:
+                ctx.cand_choose_by_index(candidates.index(char))
+            else:
+                ctx.handle_Esc()
 
     def _type(self, ctx, phone, keyboard_layout):
         ctx.set_KBType(KB_DEFAULT)

@@ -124,6 +124,43 @@ class ToneMenuWithLibchewingTests(unittest.TestCase):
         self.assertFalse(os.path.exists(other._temp_dir))
         self.assertTrue(os.path.isdir(self.menu._temp_dir))  # the first one is untouched
 
+    def _retype(self, keys):
+        self.ctx.set_escCleanAllBuf(1)
+        self.ctx.handle_Esc()  # start over with an empty buffer
+        self.ctx.set_KBType(0)
+        for key in keys:
+            self.ctx.handle_Default(ord(key))
+
+    def _move_to(self, index):
+        for _ in range(self.ctx.get_phoneSeqLen() + 2):
+            self.ctx.handle_Left()
+        for _ in range(index):
+            self.ctx.handle_Right()
+
+    def test_changing_a_tone_keeps_the_neighbouring_characters(self):
+        # PCMan review on #928: retyping a syllable runs phrase auto-selection again.
+        # Changing the second tian of 今天天氣 used to turn 氣 into 契.
+        self._retype("rup wu0 wu0 fu4")  # 今天天氣
+        self.assertEqual(self.buffer(), "今天天氣")
+        self._move_to(2)
+        labels = self.menu.open(self.ctx)
+        self.assertTrue(self.menu.choose(self.ctx, labels.index("ㄊㄧㄢˊ 田"), 0))
+        self.assertEqual(self.buffer(), "今天田氣")
+
+    def test_changing_a_tone_keeps_a_character_the_user_chose(self):
+        self._retype("1u41u,6wu0 ")  # 必別天
+        self._move_to(0)
+        self.ctx.handle_Down()
+        self.ctx.cand_Enumerate()
+        candidates = []
+        while self.ctx.cand_hasNext():
+            candidates.append(self.ctx.cand_String().decode("UTF-8"))
+        self.ctx.cand_choose_by_index(candidates.index("壁"))
+        self.assertEqual(self.buffer(), "壁別天")
+        self._move_to(1)
+        labels = self.menu.open(self.ctx)
+        self.assertTrue(self.menu.choose(self.ctx, labels.index("ㄅㄧㄝˇ 癟"), 0))
+        self.assertEqual(self.buffer(), "壁癟天")
 
 if __name__ == "__main__":
     unittest.main()

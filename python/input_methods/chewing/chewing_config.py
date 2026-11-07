@@ -55,6 +55,7 @@ class ChewingConfig:
         self.enableCapsLock = True
         self.enableShiftSpace = True
         self.enableSwitchTCSC = True
+        self.enterSwitchBackToChinese = False
         self.escCleanAllBuf = True
         self.fontSize = DEF_FONT_SIZE
         self.fullShapeSymbols = True
@@ -64,6 +65,7 @@ class ChewingConfig:
         self.outputSimpChinese = False
         self.phraseChoiceRearward = False
         self.selKeyType = 0
+        self.shiftLetterSwitchToEnglish = False
         self.shiftMoveCursor = 0
         self.spaceKeyAction = 1
         self.spaceKeyCandidatesAction = 0

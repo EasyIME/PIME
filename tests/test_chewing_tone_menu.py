@@ -161,6 +161,34 @@ class ToneMenuWithLibchewingTests(unittest.TestCase):
         labels = self.menu.open(self.ctx)
         self.assertTrue(self.menu.choose(self.ctx, labels.index("ㄅㄧㄝˇ 癟"), 0))
         self.assertEqual(self.buffer(), "壁癟天")
+    def _type_with_comma(self):
+        self._retype("su3cl3")  # 你好
+        self.ctx.handle_Default(ord("<"))  # a full-width comma: the buffer holds one more item than the phone sequence
+        for key in "rup wu0 wu0 fu4":  # 今天天氣
+            self.ctx.handle_Default(ord(key))
+        self.assertEqual(self.buffer(), "你好，今天天氣")
+
+    def test_a_comma_in_the_buffer_does_not_shift_the_character(self):
+        # The cursor counts the comma but the phone sequence does not; the menu used to
+        # edit the wrong character once a comma stood before the cursor.
+        self._type_with_comma()
+        self._move_to(3)  # on 今 (buffer position 3, phone position 2)
+        labels = self.menu.open(self.ctx)
+        self.assertEqual([label.split()[0] for label in labels], ["ㄐㄧㄣˇ", "ㄐㄧㄣˋ"])
+        self.assertTrue(self.menu.choose(self.ctx, labels.index("ㄐㄧㄣˇ 緊"), 0))
+        self.assertEqual(self.buffer(), "你好，緊天天氣")
+
+    def test_at_the_end_after_a_comma_the_menu_is_for_the_last_character(self):
+        self._type_with_comma()  # the cursor is after 氣, at buffer position 7
+        labels = self.menu.open(self.ctx)
+        self.assertTrue(self.menu.choose(self.ctx, labels.index("ㄑㄧˊ 其"), 0))
+        self.assertEqual(self.buffer(), "你好，今天天其")
+
+    def test_no_menu_on_punctuation(self):
+        self._type_with_comma()
+        self._move_to(2)  # on the comma
+        self.assertEqual(self.menu.open(self.ctx), [])
+        self.assertFalse(self.menu.is_open())
 
 if __name__ == "__main__":
     unittest.main()

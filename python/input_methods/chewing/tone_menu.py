@@ -69,7 +69,8 @@ class ToneMenu:
         self._lookup.set_KBType(KB_DEFAULT)
         # Esc 要清掉整個編輯區，否則上一次查的字會留著，下一次查到的是錯的字
         self._lookup.set_escCleanAllBuf(1)
-        self.index = None  # 要換聲調的字在編輯區的位置
+        self.index = None  # 要換聲調的字在編輯區的位置（含標點、空白等非注音項目）
+        self.phone_index = None  # 同一個字在注音序列裡的位置
         self.phones = []  # 選單上每一項的注音碼
 
     def bopomofo(self, phone):
@@ -110,9 +111,14 @@ class ToneMenu:
         seq = self.phone_seq(ctx)
         if not seq:
             return []
-        # 和 ↓ 選字一樣：游標在最後面時，指的是最後一個字
-        self.index = min(ctx.cursor_Current(), len(seq) - 1)
-        current = seq[self.index]
+        # 和 ↓ 選字一樣：游標在最後面時，指的是最後一個項目
+        position = min(ctx.cursor_Current(), len(self._buffer(ctx)) - 1)
+        phone_index = self._phone_index(ctx, position, len(seq))
+        if phone_index is None:  # 游標在標點或空白上，或對不上：不開選單，免得改到別的字
+            return []
+        self.index = position
+        self.phone_index = phone_index
+        current = seq[phone_index]
         items = []
         # libchewing 的聲調碼：0 一聲、1 輕聲、2 ˊ、3 ˇ、4 ˋ (5 也顯示成一聲，不能用，否則一聲會出現兩次)
         for tone in range(0, 5):
@@ -131,6 +137,7 @@ class ToneMenu:
 
     def close(self):
         self.index = None
+        self.phone_index = None
         self.phones = []
 
     def dispose(self):
@@ -146,7 +153,7 @@ class ToneMenu:
 
     def choose(self, ctx, n, keyboard_layout):
         """Replace the character with menu item n. Returns True on success."""
-        index, phone = self.index, self.phones[n]
+        index, phone_index, phone = self.index, self.phone_index, self.phones[n]
         old = self.phone_seq(ctx)
         chars = self._buffer(ctx)
         self.close()
@@ -155,7 +162,7 @@ class ToneMenu:
         ctx.handle_Backspace()
         self._type(ctx, phone, keyboard_layout)
         if ctx.get_phoneSeqLen() != len(old):  # 新聲調打不出來：把原本的字打回去
-            self._type(ctx, old[index], keyboard_layout)
+            self._type(ctx, old[phone_index], keyboard_layout)
             self._keep_characters(ctx, chars, index)
             self._move_cursor(ctx, cursor)
             return False
@@ -166,6 +173,27 @@ class ToneMenu:
     @staticmethod
     def _buffer(ctx):
         return list(ctx.buffer_String().decode("UTF-8"))
+
+    @staticmethod
+    def _is_syllable_char(char):
+        """True for a Chinese character; punctuation, spaces and English letters are not."""
+        code = ord(char)
+        return (0x3400 <= code <= 0x4DBF or 0x4E00 <= code <= 0x9FFF
+                or 0xF900 <= code <= 0xFAFF or 0x20000 <= code <= 0x2FA1F)
+
+    def _phone_index(self, ctx, position, phone_count):
+        """The place in the phone sequence of the buffer item at position, or None.
+
+        The cursor and the buffer count every item, but the phone sequence holds only
+        the Chinese characters, so a comma in the buffer shifts the two apart.
+        """
+        chars = self._buffer(ctx)
+        if position < 0 or not self._is_syllable_char(chars[position]):
+            return None
+        syllables = [self._is_syllable_char(char) for char in chars]
+        if sum(syllables) != phone_count:
+            return None
+        return sum(syllables[:position])
 
     def _keep_characters(self, ctx, chars, skip):
         """Choose the original character again wherever retyping changed a neighbour.
@@ -202,7 +230,7 @@ class ToneMenu:
     @staticmethod
     def _move_cursor(ctx, target):
         # 每次移一格；移不動就停，避免游標卡住時無限迴圈
-        for _ in range(ctx.get_phoneSeqLen() + 2):
+        for _ in range(len(ctx.buffer_String().decode("UTF-8")) + 2):
             now = ctx.cursor_Current()
             if now == target:
                 return

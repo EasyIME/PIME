@@ -296,7 +296,10 @@ class ConfigApp(tornado.web.Application):
         # setup the main event loop
         loop = tornado.ioloop.IOLoop.current()
         self.timeout_handler = loop.call_later(SERVER_TIMEOUT, self.quit)
-        loop.start()
+        try:
+            loop.start()
+        finally:
+            loop.close()
 
     def reset_timeout(self):
         loop = tornado.ioloop.IOLoop.current()
@@ -306,8 +309,7 @@ class ConfigApp(tornado.web.Application):
 
     def quit(self):
         # terminate the server process
-        tornado.ioloop.IOLoop.current().close()
-        sys.exit(0)
+        tornado.ioloop.IOLoop.current().stop()
 
 
 def main():

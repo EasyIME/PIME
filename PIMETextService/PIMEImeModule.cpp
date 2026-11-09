@@ -19,6 +19,7 @@
 
 #include "PIMEImeModule.h"
 #include "JsonUtils.h"
+#include "ImeProfileGuids.h"
 #include "PIMETextService.h"
 #include <string>
 #include <fstream>
@@ -119,23 +120,10 @@ bool ImeModule::loadImeInfo(const std::string& guid, std::wstring& filePath, jso
 							if (!content.is_object() || content.is_discarded()) {
 								continue;
 							}
-							std::string imeGuid = jsonValueOr<std::string>(content, "guid", "");
-							bool matched = (stricmp(guid.c_str(), imeGuid.c_str()) == 0);
-							// The same service also lives under the GUID of each
-							// additional language profile (additionalProfiles), so
-							// onConfigure must find this ime.json from those too.
-							if (!matched) {
-								auto profiles = content.find("additionalProfiles");
-								if (profiles != content.end() && profiles->is_array()) {
-									for (const auto& profile : *profiles) {
-										if (stricmp(guid.c_str(),
-											jsonValueOr<std::string>(profile, "guid", "").c_str()) == 0) {
-											matched = true;
-											break;
-										}
-									}
-								}
-							}
+							// The flat guid plus every additionalProfiles guid name
+							// this service; the match is a header-only helper so the
+							// local gates can run it without the Windows SDK.
+							bool matched = imeProfileGuidMatches(content, guid);
 							if (matched) {
 								// found the language profile
 								found = true;

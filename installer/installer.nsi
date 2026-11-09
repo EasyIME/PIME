@@ -151,6 +151,7 @@ Function uninstallOldVersion
 			RMDir /r "$SMPROGRAMS\$(PRODUCT_NAME)"
 
 			Delete "$INSTDIR\version.txt"
+			Delete "$INSTDIR\LICENSE.txt"
 			Delete "$INSTDIR\Uninstall.exe"
 
 			${If} ${RebootFlag}
@@ -256,6 +257,10 @@ Section $(SECTION_MAIN) SecMain
 
     ; Install backend informations
     File "..\backends.json"
+
+    ; Install the third-party data licence inventory: it names the exhibit file
+    ; that ships beside each derived table (json\*.LICENSE.txt).
+    File "..\LICENSE.txt"
 
 	; Safely clean/rename old binaries before writing new ones
 	!insertmacro CleanOldBinaries
@@ -581,6 +586,7 @@ Section "Uninstall"
 	RMDir /r "$SMPROGRAMS\$(PRODUCT_NAME)"
 
 	Delete "$INSTDIR\version.txt"
+	Delete "$INSTDIR\LICENSE.txt"
 	Delete "$INSTDIR\Uninstall.exe"
 	RMDir /REBOOTOK "$INSTDIR"
 

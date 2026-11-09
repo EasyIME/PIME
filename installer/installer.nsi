@@ -181,12 +181,6 @@ Function .onInit
 			Abort
 	${EndIf}
 
-	; Currently, we're not able to support Windows xp since it has an incomplete TSF.
-	${IfNot} ${AtLeastWinVista}
-		MessageBox MB_ICONSTOP|MB_OK $(AtLeastWinVista_MESSAGE)
-		Quit
-	${EndIf}
-
 	; The installer is an x86 (32-bit) binary. On 64-bit Windows (x64 and ARM64),
 	; the WOW64 subsystem automatically redirects all registry writes to WOW6432Node.
 	; Enable 64-bit registry view globally so NSIS registry commands (WriteRegStr,
@@ -196,6 +190,21 @@ Function .onInit
 	${OrIf} ${IsNativeARM64}
 		SetRegView 64
 	${EndIf}
+
+	; Windows 10 is the minimum supported OS. The runtime payload sets the
+	; floor: the bundled Python, Go and Rust runtimes require Windows 10, and
+	; Node 22 supports 8.1 only as experimental.
+	; Check this before the pending-reboot prompt so an unsupported system
+	; fails before any old version is removed. Keep the AtLeastWin8 feature
+	; gates below unchanged: they control optional components, not the floor.
+	${IfNot} ${AtLeastWin10}
+		MessageBox MB_ICONSTOP|MB_OK $(AtLeastWin10_MESSAGE)
+		Quit
+	${EndIf}
+
+	; Nothing to check for the C runtime: Windows 10 ships the UCRT in-box, and
+	; PIME ships no VC++ redistributable (the launcher and C++ DLLs are static
+	; and the Python embed carries its own vcruntime140.dll).
 
 	; Check if an earlier uninstallation or update scheduled locked files or directories
 	; to be deleted on reboot. If so, reinstalling before rebooting will cause Windows

@@ -11,7 +11,7 @@
 !insertmacro LANG_STRING PRODUCT_PAGE "PIME 專案網頁"
 !insertmacro LANG_STRING PRODUCT_PUBLISHER "PIME 開發團隊"
 
-!insertmacro LANG_STRING AtLeastWinVista_MESSAGE "抱歉，本程式目前只能支援 Windows Vista 以上版本"
+!insertmacro LANG_STRING AtLeastWin10_MESSAGE "抱歉，本程式目前只能支援 Windows 10 以上版本"
 !insertmacro LANG_STRING REBOOT_QUESTION "安裝發生錯誤，無法完成。$\r$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。$\r$\n你要立即重新開機嗎？ (若你想要在稍後才重新開機請選擇「否」)"
 !insertmacro LANG_STRING PENDING_REBOOT_QUESTION "先前的 PIME 解除安裝或更新尚未完成，需要重新啟動電腦。$\r$\n$\r$\n如果未重新開機便繼續安裝，新安裝的檔案可能會在下次開機時被系統刪除。$\r$\n$\r$\n您要現在重新啟動電腦嗎？（選「否」將結束安裝程式，以便稍後重新開機）"
 !insertmacro LANG_STRING INST_FAILED_MESSAGE "安裝發生錯誤，無法完成。$\n$\n有時是有檔案正在使用中，暫時無法刪除或覆寫。$\n$\n建議重新開機後，再次執行安裝程式。"

@@ -1,0 +1,14 @@
+{
+    "name":"筆畫輸入法 (PIME)",
+    "version": "1.00",
+    "guid": "{3C222F26-4251-4AA7-8E7A-85AF4808C713}",
+    "locale": "zh-Hant-TW",
+    "fallbackLocale": "zh-TW",
+    "icon": "icon.ico",
+    "win8_icon": "",
+    "moduleName": "chebihua_ime",
+    "serviceName": "CheBihuaTextService",
+    "configTool": "..\\..\\python3\\pythonw.exe",
+    "configToolParams": "configtool.py config chebihua",
+    "configToolDir": "..\\..\\cinbase"
+}

@@ -1,0 +1,19 @@
+CnsStroke.json 授權聲明 —— 筆畫輸入法（筆畫 碼表）
+
+本檔隨 CnsStroke.json 一起安裝，是該碼表對其開放資料來源所負的授權聲明。
+安裝程式只複製 json/，不含 cin/，而轉換器寫出的 JSON 只有資料欄位，故聲明
+以本檔形式送達使用者；聲明文字與 cin/CnsStroke.cin 檔頭由同一函式渲染。
+
+資料來源：數位發展部 CNS11643中文標準交換碼全字庫(簡稱全字庫) 全字庫屬性資料集對照表與全字庫中文碼對照表，版本 20260805
+授權條款：政府資料開放授權條款-第1版（Open Government Data License），https://data.gov.tw/license
+
+產生方式（勿手改此檔）：
+python cnsstroke2cin.py CNS_strokes_sequence.txt <MapingTables 目錄> \
+    -o ../cin/CnsStroke.cin --release 20260805
+python cintojson.py CnsStroke.cin
+重建本檔不需 CNS 原始資料：上述第一條指令加 --emit-license 即只寫本聲明檔。
+
+# 顯名聲明（政府資料開放授權條款-第1版 附件）：
+# 1. 數位發展部 2026 CNS11643中文標準交換碼全字庫(簡稱全字庫) 全字庫屬性資料集對照表與全字庫中文碼對照表 版本 20260805
+# 2. 此開放資料依政府資料開放授權條款 (Open Government Data License) 進行公眾釋出，使用者於遵守本條款各項規定之前提下，得利用之。
+# 3. 政府資料開放授權條款：https://data.gov.tw/license

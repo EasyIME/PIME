@@ -17,7 +17,7 @@ class Debug:
                         "ar30-big.json": "行列30大字集", "array40.json": "行列40", "thdayi.json": "泰瑞大易四碼", "dayi4.json": "大易四碼", "dayi3.json": "大易三碼",
                         "ez.json": "輕鬆", "ezsmall.json": "輕鬆小詞庫", "ezmid.json": "輕鬆中詞庫", "ezbig.json": "輕鬆大詞庫", "thpinyin.json": "泰瑞拼音",
                         "pinyin.json": "正體拼音", "roman.json": "羅馬拼音", "simplecj.json": "正體簡易", "simplex.json": "速成", "simplex5.json": "簡易五代",
-                        "liu.json": "嘸蝦米"})
+                        "liu.json": "嘸蝦米", "CnsStroke.json": "筆畫"})
 
     def getConfigDir(self):
         config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", self.imeDirName)

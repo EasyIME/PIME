@@ -84,8 +84,9 @@ CLOSURE_TIERS = frozenset({"big5F", "big5LF"})
 FULLCODE_TIERS = frozenset({"big5Other", "bopomofo", "cjk", "cjkExtA"})
 # Left out entirely: the ultra-rare planes and symbol sets a stroke typist never
 # reaches. Named rather than left implicit so a tier the converter adds becomes
-# an error instead of a silent omission (see collect_chardefs). "big5S" is listed
-# although getCharSet presently answers "big5LF" for its Big5 符號 branch.
+# an error instead of a silent omission (see collect_chardefs). "big5S", the 符號
+# set, is reachable only through the accounting: getCharSet files a character there
+# and answers "big5LF", which is why the tier comes from the dict (accounted_tier).
 EXCLUDED_TIERS = frozenset({"big5S", "cjkExtB", "cjkExtC", "cjkExtD", "cjkExtE",
                             "cjkExtF", "cjkCIibm", "cjkOther", "phrases", "pua"})
 
@@ -95,6 +96,44 @@ CHARSET_LADDER = ["big5F", "big5LF", "big5S", "big5Other", "bopomofo", "cjk",
                   "cjkExtA", "cjkExtB", "cjkExtC", "cjkExtD", "cjkExtE", "cjkExtF",
                   "cjkCIibm", "cjkOther", "phrases", "pua"]
 TIER_RANK = {tier: rank for rank, tier in enumerate(CHARSET_LADDER)}
+
+# How a tier's name is written out in the header's 收錄範圍 line: the wording the
+# converter's own branch comments use, in the terms a reader of the table expects.
+# Keyed by every name the three sets above cover, so the line can be rendered for
+# any policy those sets can express.
+TIER_LABELS_ZH = {
+    "big5F": "Big5 常用",
+    "big5LF": "Big5 次常用",
+    "big5S": "Big5 符號",
+    "big5Other": "Big5 其他漢字",
+    "bopomofo": "注音符號",
+    "cjk": "CJK 基本區",
+    "cjkExtA": "CJK 擴展 A 區",
+    "cjkExtB": "CJK 擴展 B 區",
+    "cjkExtC": "CJK 擴展 C 區",
+    "cjkExtD": "CJK 擴展 D 區",
+    "cjkExtE": "CJK 擴展 E 區",
+    "cjkExtF": "CJK 擴展 F 區",
+    "cjkCIibm": "CJK 相容字集區",
+    "cjkOther": "CJK 其他漢字",
+    "phrases": "多字詞",
+    "pua": "私用區",
+}
+
+# getCharSet's return value is a label, not the accounting. Its Big5 符號 branch
+# appends to self.big5S and cincount['big5S'] and still answers "big5LF"
+# (cintojson.py:363-369), so sorting by the label granted every prefix of its code
+# to the one tier EXCLUDED_TIERS declares excluded. The tier is read from the
+# bookkeeping instead: a single character is filed into exactly one tier dict, and
+# that dict is the truth. Which dict and under what name are the converter's own --
+# every 私人使用區/相容字集 branch files into ``privateuse`` and answers "pua", the
+# name CHARSET_LADDER and the sets above use.
+TIER_DICT_ATTR_ALIASES = {"privateuse": "pua"}
+# The classifier's instance dicts that hold the table or the ranges rather than a
+# character set; anything else it holds is a tier, so a tier dict the converter
+# adds is classified by name and lands in the unknown-tier raise.
+NON_TIER_DICT_ATTRS = frozenset({"keynames", "chardefs", "dupchardefs",
+                                 "cincount", "charsetRange"})
 
 DATA_PROVIDER = "數位發展部"
 DATASET = "CNS11643中文標準交換碼全字庫(簡稱全字庫)"
@@ -163,6 +202,41 @@ def stroke_key(sequence):
     return "".join(STROKE_KEY_BY_DIGIT[digit] for digit in sequence)
 
 
+def filed_count(candidates):
+    """How many roots the converter has filed in one of its tier dicts."""
+    return sum(len(roots) for roots in candidates.values())
+
+
+def tier_dicts(classifier):
+    """The classifier's tier dicts, keyed by the tier names the sets above use."""
+    return {TIER_DICT_ATTR_ALIASES.get(attr, attr): value
+            for attr, value in vars(classifier).items()
+            if isinstance(value, dict) and attr not in NON_TIER_DICT_ATTRS}
+
+
+def accounted_tier(classifier, codepoint):
+    """The tier the classifier's bookkeeping files ``codepoint`` under.
+
+    getCharSet appends a single character to exactly one tier dict, and that dict is
+    the tier: the string it answers is only a label, and its Big5 符號 branch answers
+    "big5LF" while filing into ``big5S`` (see TIER_DICT_ATTR_ALIASES). Filing
+    nowhere or into several dicts is a converter change this generator cannot
+    classify, so it raises -- like the unknown-tier check in collect_chardefs --
+    instead of keeping a character under a tier nobody declared.
+    """
+    root = chr(codepoint)
+    dicts = tier_dicts(classifier)
+    filed_before = {tier: filed_count(candidates) for tier, candidates in dicts.items()}
+    label = classifier.getCharSet("", root)
+    gained = [tier for tier, candidates in dicts.items()
+              if filed_count(candidates) > filed_before[tier]]
+    if len(gained) != 1:
+        raise ValueError("cintojson.py filed %r (U+%04X) under %d tier dicts while "
+                         "answering %r; the tier must be exactly one of them"
+                         % (root, codepoint, len(gained), label))
+    return gained[0]
+
+
 def collect_chardefs(strokes_path, mapping_paths):
     """Map every stroke sequence to its characters, expanding prefixes offline.
 
@@ -179,7 +253,7 @@ def collect_chardefs(strokes_path, mapping_paths):
     def tier_of(codepoint):
         tier = tier_by_codepoint.get(codepoint)
         if tier is None:
-            tier = classifier.getCharSet("", chr(codepoint))
+            tier = accounted_tier(classifier, codepoint)
             tier_by_codepoint[codepoint] = tier
         return tier
 
@@ -206,8 +280,9 @@ def collect_chardefs(strokes_path, mapping_paths):
 def load_charset_classifier():
     """The converter's charset ladder, reused so the two cannot drift apart.
 
-    getCharSet also accumulates each character into that instance's tier dicts and
-    counters; the instance here is throwaway, so only the returned tier name is used.
+    getCharSet accumulates each character into that instance's tier dicts and
+    counters as a side effect, and accounted_tier() reads exactly that bookkeeping;
+    the instance is throwaway because nothing else about the converter is used here.
     """
     converter = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cintojson.py")
     spec = importlib.util.spec_from_file_location("cintojson_for_stroke_table", converter)
@@ -275,6 +350,21 @@ def attribution_exhibit(release):
     ]
 
 
+def scope_line():
+    """The header's 收錄範圍 line, rendered from the tier sets themselves.
+
+    Written as prose it claimed prefix expansion for the Big5 符號 tier, which
+    EXCLUDED_TIERS leaves out: the artifact contradicted the policy of the code that
+    made it.  Deriving the sentence from CLOSURE_TIERS/FULLCODE_TIERS means the only
+    scope the header can state is the one collect_chardefs() applies.  The members
+    are listed in CHARSET_LADDER order so the line stays byte-stable.
+    """
+    def listed(tiers):
+        return "／".join(TIER_LABELS_ZH[tier] for tier in CHARSET_LADDER if tier in tiers)
+    return ("# 收錄範圍：%s字展開全部前綴；%s等字級僅收完整筆順；"
+            % (listed(CLOSURE_TIERS), listed(FULLCODE_TIERS)))
+
+
 def attribution_header(release):
     """Provenance comments, ending with the OGDL-1.0 顯名聲明 verbatim.
 
@@ -288,7 +378,7 @@ def attribution_header(release):
     lines.extend([
         "# 資料來源：CNS_strokes_sequence.txt 之筆順（1 橫 2 豎 3 撇 4 點 5 折），",
         "#           經 CNS2UNICODE_Unicode*.txt 對映至 Unicode 碼位",
-        "# 收錄範圍：Big5 常用／次常用字展開全部前綴；其他收錄字級僅收完整筆順；",
+        scope_line(),
         "#           超過 %d 畫者、CJK Ext-B 以後字面及私用區字一概不收" % MAX_STROKES,
         "#",
         "# " + EXHIBIT_HEADING,

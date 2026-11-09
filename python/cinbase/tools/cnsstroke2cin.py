@@ -90,8 +90,10 @@ FULLCODE_TIERS = frozenset({"big5Other", "bopomofo", "cjk", "cjkExtA"})
 EXCLUDED_TIERS = frozenset({"big5S", "cjkExtB", "cjkExtC", "cjkExtD", "cjkExtE",
                             "cjkExtF", "cjkCIibm", "cjkOther", "phrases", "pua"})
 
-# The order cintojson.py merges its charset tiers in (run -> mergeDicts). A key's
-# candidate list is sorted by it, so a colliding key leads with common characters.
+# The order cintojson.py merges its charset tiers in (run -> mergeDicts). Within each
+# completeness group render_cin() orders a key's candidates by it, so equally complete
+# characters lead with the common planes. Completeness outranks it: a colliding key can
+# lead with a rare-plane character whose own code ends there.
 CHARSET_LADDER = ["big5F", "big5LF", "big5S", "big5Other", "bopomofo", "cjk",
                   "cjkExtA", "cjkExtB", "cjkExtC", "cjkExtD", "cjkExtE", "cjkExtF",
                   "cjkCIibm", "cjkOther", "phrases", "pua"]
@@ -245,6 +247,10 @@ def collect_chardefs(strokes_path, mapping_paths):
     the shared engine keeps its exact-match semantics untouched. Fan-out is
     limited to CLOSURE_TIERS, with FULLCODE_TIERS contributing the complete code
     only -- see the table budget note above.
+
+    Returns ``(chardefs, tier_by_codepoint, filed_length)``, all keyed by the table's
+    key strings; ``filed_length`` is what render_cin() ranks on and is filled by the
+    same funnel as chardefs, never separately.
     """
     codepoints_by_cns = load_unicode_by_cns_code(mapping_paths)
     classifier = load_charset_classifier()
@@ -257,7 +263,27 @@ def collect_chardefs(strokes_path, mapping_paths):
             tier_by_codepoint[codepoint] = tier
         return tier
 
+    # Every filing goes through file(), so chardefs and filed_length are filled by one
+    # funnel and cannot disagree about who sits under which key.
     chardefs = {}
+    # The length of the shortest complete code that filed a candidate at a key, which
+    # is all render_cin() ranks on: a character filed under its own complete code
+    # carries len(key) -- it is finished there, needing no further stroke -- and one
+    # reachable only through a longer code carries that longer length. It is a length,
+    # not a count of strokes still to come; subtract len(key) for that. The shortest
+    # wins rather than the last filed, which matters only when one code point arrives
+    # through two stroke orders: the pinned 20260805 join never does that (104,680 join
+    # rows over 104,680 distinct code points, none reached by a second 字碼), so the
+    # fold is defensive -- and taking the longer would silently un-complete a
+    # character a release with variant encodings introduced.
+    filed_length = {}
+
+    def file(key, codepoint, code_length):
+        chardefs.setdefault(key, set()).add(codepoint)
+        lengths = filed_length.setdefault(key, {})
+        if code_length < lengths.get(codepoint, code_length + 1):
+            lengths[codepoint] = code_length
+
     for cns_code, sequence in load_stroke_sequences(strokes_path).items():
         if len(sequence) > MAX_STROKES:
             continue
@@ -266,15 +292,15 @@ def collect_chardefs(strokes_path, mapping_paths):
             tier = tier_of(codepoint)
             if tier in CLOSURE_TIERS:
                 for length in range(1, len(key) + 1):
-                    chardefs.setdefault(key[:length], set()).add(codepoint)
+                    file(key[:length], codepoint, len(key))
             elif tier in FULLCODE_TIERS:
-                chardefs.setdefault(key, set()).add(codepoint)
+                file(key, codepoint, len(key))
     unknown = {tier for tier in tier_by_codepoint.values()
                if tier not in CLOSURE_TIERS | FULLCODE_TIERS | EXCLUDED_TIERS}
     if unknown:
         raise ValueError("cintojson.py gained a charset tier this generator does "
                          "not classify: %s" % ", ".join(sorted(unknown)))
-    return chardefs, tier_by_codepoint
+    return chardefs, tier_by_codepoint, filed_length
 
 
 def load_charset_classifier():
@@ -291,12 +317,22 @@ def load_charset_classifier():
     return module.CinToJson()
 
 
-def render_cin(chardefs, tier_by_codepoint):
+def render_cin(chardefs, tier_by_codepoint, filed_length):
     """Render the CMIME table text: heads, keyname block, then the chardef block.
 
-    Candidates inside a key follow the converter's charset ladder -- common
-    planes first, code point order inside a tier -- which is what keeps a
-    colliding key such as a single 橫 (thousands of characters) usable.
+    Candidates inside a key are ordered complete first: a character whose own stroke
+    order ends at that key leads, then the characters still awaiting strokes, the
+    ones needing fewer of them first.  Order is the only ranking channel the format
+    carries -- a chardef line holds a key, a character, and nothing else, and
+    cin.py:97 hands the stored list to the engine as the table left it -- so a fact
+    the generator drops here is a fact the typist cannot get back: typing 橫豎 used to
+    open on characters that all need a third stroke, with 十, which is finished at two,
+    buried at index 33 of 1,684.
+
+    Inside each of the two groups the converter's charset ladder still rules -- common
+    planes first, code point order within a tier -- which is what keeps a colliding key
+    such as a single 橫 (thousands of characters) usable.  Both maps come from the one
+    funnel in collect_chardefs, so every candidate here has an entry there.
     """
     out = [CIN_HEADS, KEYNAME_HEAD]
     for key in ROOT_GLYPH_BY_KEY:  # source order is the Five-stroke order h s p n z
@@ -304,8 +340,9 @@ def render_cin(chardefs, tier_by_codepoint):
     out.append(KEYNAME_TAIL)
     out.append(CHARDEF_HEAD)
     for key in sorted(chardefs):
+        lengths = filed_length[key]
         candidates = sorted(chardefs[key],
-                            key=lambda cp: (TIER_RANK[tier_by_codepoint[cp]], cp))
+                            key=lambda cp: (lengths[cp], TIER_RANK[tier_by_codepoint[cp]], cp))
         for codepoint in candidates:
             out.append("%s %s\n" % (key, chr(codepoint)))
     out.append(CHARDEF_TAIL)
@@ -394,10 +431,10 @@ def generate_cin(strokes_path, mapping_paths, release):
     ``release`` is the open-data version string (release.txt); the attribution
     exhibit that the data license requires quotes it, so it is not optional.
     """
-    chardefs, tier_by_codepoint = collect_chardefs(strokes_path, mapping_paths)
+    chardefs, tier_by_codepoint, filed_length = collect_chardefs(strokes_path, mapping_paths)
     if not chardefs:
         raise ValueError("no stroke code survived the join; check the input files")
-    return attribution_header(release) + render_cin(chardefs, tier_by_codepoint)
+    return attribution_header(release) + render_cin(chardefs, tier_by_codepoint, filed_length)
 
 
 def license_notice(release):

@@ -50,6 +50,7 @@ class TextServiceInfo:
         self.moduleName = ""
         self.serviceName = ""
         self.guid = ""
+        self.additionalGuids = []
         self.textServiceClass = None
         self.configTool = ""
 
@@ -74,6 +75,16 @@ class TextServiceInfo:
 
         self.serviceName = json_data["serviceName"]
         self.guid = json_data["guid"].lower()
+        # 額外的語言檔：同一個 service 的第二個 TSF 語言檔（另一個 locale）。
+        # 每個 profile 的 GUID 也要能对應到這個 info，否則從該語言檔啟動的
+        # client 在 createService() 拿不到 service。缺 guid 的條目略過，
+        # 與 flat 鍵的處理一致。
+        for profile in json_data.get("additionalProfiles", []):
+            if not isinstance(profile, dict):
+                continue
+            profile_guid = profile.get("guid")
+            if isinstance(profile_guid, str) and profile_guid:
+                self.additionalGuids.append(profile_guid.lower())
         self.configTool = json_data.get("configTool", "")
 
     def createInstance(self, client):
@@ -109,6 +120,9 @@ class TextServiceManager:
                 info.loadFromJson(filename, base_dir)
                 if info.guid:
                     self.services[info.guid] = info
+                    # 同一個 service 也住在額外語言檔的 GUID 下。
+                    for profile_guid in info.additionalGuids:
+                        self.services[profile_guid] = info
             except (FileNotFoundError, NotADirectoryError):
                 continue
             except Exception:

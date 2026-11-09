@@ -5,7 +5,7 @@
 #   python cintojson.py CnsStroke.cin
 # 資料來源：CNS_strokes_sequence.txt 之筆順（1 橫 2 豎 3 撇 4 點 5 折），
 #           經 CNS2UNICODE_Unicode*.txt 對映至 Unicode 碼位
-# 收錄範圍：Big5 常用／次常用字展開全部前綴；其他收錄字級僅收完整筆順；
+# 收錄範圍：Big5 常用／Big5 次常用字展開全部前綴；Big5 其他漢字／注音符號／CJK 基本區／CJK 擴展 A 區等字級僅收完整筆順；
 #           超過 30 畫者、CJK Ext-B 以後字面及私用區字一概不收
 #
 # 顯名聲明（政府資料開放授權條款-第1版 附件）：
@@ -1358,7 +1358,6 @@ h 匴
 h 匷
 h 匼
 h 匽
-h 卄
 h 卌
 h 卍
 h 卼
@@ -14505,7 +14504,6 @@ hs 勩
 hs 匰
 hs 匷
 hs 匽
-hs 卄
 hs 卍
 hs 嗀
 hs 嘏
@@ -28511,7 +28509,6 @@ hss 刵
 hss 剒
 hss 勀
 hss 勩
-hss 卄
 hss 嘏
 hss 堇
 hss 媐

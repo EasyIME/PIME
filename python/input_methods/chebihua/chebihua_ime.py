@@ -22,6 +22,8 @@ from cinbase import LoadRCinTable
 from cinbase import LoadHCinTable
 from cinbase.config import CinBaseConfig
 
+from input_methods.chebihua.table_loaders import CinTable, RCinTable, HCinTable
+
 
 class CheBihuaTextService(TextService):
 
@@ -53,14 +55,10 @@ class CheBihuaTextService(TextService):
         self.ignorePrivateUseArea = self.cfg.ignorePrivateUseArea
         self.cinbase.initCinBaseContext(self)
 
-        # 載入輸入法碼表
-        if not CinTable.curCinType == self.cfg.selCinType and not CinTable.loading:
-            loadCinFile = LoadCinTable(self, CinTable)
-            loadCinFile.start()
-        else:
-            while CinTable.loading:
-                continue
-            self.cin = CinTable.cin
+        # 載入輸入法碼表：載入策略（檢查、生成載入執行緒、有界加入、失敗回報）
+        # 在 table_loaders.TableHolder.ensure；spawn 分支不碰 self.cin，
+        # 碼表由載入執行緒自己寫回 cbTS.cin。
+        CinTable.ensure(self, LoadCinTable)
 
 
     # 檢查設定檔是否有被更改，是否需要套用新設定
@@ -137,31 +135,4 @@ class CheBihuaTextService(TextService):
     # 設定候選字頁數
     def setCandidatePage(self, page):
         self.currentCandPage = page
-
-
-class CinTable:
-    loading = False
-    def __init__(self):
-        self.cin = None
-        self.curCinType = None
-        self.userExtendTable = None
-        self.priorityExtendTable = None
-        self.ignorePrivateUseArea = None
-CinTable = CinTable()
-
-
-class RCinTable:
-    loading = False
-    def __init__(self):
-        self.cin = None
-        self.curCinType = None
-RCinTable = RCinTable()
-
-
-class HCinTable:
-    loading = False
-    def __init__(self):
-        self.cin = None
-        self.curCinType = None
-HCinTable = HCinTable()
 

@@ -20,6 +20,8 @@ import os
 import time
 import shutil
 
+from pimepaths import appdata
+
 DEF_FONT_SIZE = 16
 
 SWITCH_LANG_WITH_BOTH_SHIFT = 0
@@ -79,7 +81,7 @@ class ChewingConfig:
 
     def getConfigDir(self):
         config_dir = os.path.join(
-            os.path.expandvars("%APPDATA%"), "PIME", "chewing")
+            appdata(), "PIME", "chewing")
         os.makedirs(config_dir, exist_ok=True)
         return config_dir
 

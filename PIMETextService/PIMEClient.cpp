@@ -20,6 +20,7 @@
 #include "PIMEClient.h"
 #include "CompositionCursor.h"
 #include "JsonUtils.h"
+#include "UIColors.h"
 #include "libIME2/src/Utils.h"
 #include <algorithm>
 #include <nlohmann/json.hpp>
@@ -117,6 +118,15 @@ void Client::updateUI(json& data) {
 		}
 		else if (value.is_boolean() && name == "candUseCursor") {
 			textService_->setCandUseCursor(value.get<bool>());
+		}
+		else if (value.is_number_integer() && name == "candTextColor") {
+			textService_->setCandTextColor(PIME::uiColorValue(data, "candTextColor", 0));
+		}
+		else if (value.is_number_integer() && name == "windowBackgroundColor") {
+			textService_->setWindowBackgroundColor(PIME::uiColorValue(data, "windowBackgroundColor", 0));
+		}
+		else if (value.is_number_integer() && name == "selKeyColor") {
+			textService_->setSelKeyColor(PIME::uiColorValue(data, "selKeyColor", 0));
 		}
 	}
 }

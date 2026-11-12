@@ -3153,7 +3153,10 @@ class CinBase:
         cbTS.customizeUI(candFontSize = cfg.fontSize,
                         candFontName = 'MingLiu',
                         candPerRow = cfg.candPerRow,
-                        candUseCursor = cfg.cursorCandList)
+                        candUseCursor = cfg.cursorCandList,
+                        candTextColor = cfg.candTextColor,
+                        windowBackgroundColor = cfg.windowBackgroundColor,
+                        selKeyColor = cfg.selKeyColor)
 
         # 設定選字按鍵 (123456..., asdf.... 等)
         # if cbTS.cin.getSelection():

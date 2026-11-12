@@ -169,11 +169,6 @@ class ChePhoneticTextService(TextService):
         self.cinbase.onCompositionTerminated(self, forced)
 
 
-    # 設定候選字頁數
-    def setCandidatePage(self, page):
-        self.currentCandPage = page
-
-
     def updateCompositionChar(self, charStr):
         compositionChar = ['', '', '', '']
         charLength = len(self.compositionChar)

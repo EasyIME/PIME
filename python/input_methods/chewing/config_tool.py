@@ -31,9 +31,10 @@ except ModuleNotFoundError:
     from chewing_config import chewingConfig
 from libchewing import ChewingContext, CHEWING_DATA_DIR
 from ctypes import c_uint, byref, create_string_buffer
+from pimepaths import appdata, localappdata
 
-config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", "chewing")
-localdata_dir = os.path.join(os.path.expandvars("%LOCALAPPDATA%"), "PIME", "chewing")
+config_dir = os.path.join(appdata(), "PIME", "chewing")
+localdata_dir = os.path.join(localappdata(), "PIME", "chewing")
 
 COOKIE_ID = "chewing_config_token"
 

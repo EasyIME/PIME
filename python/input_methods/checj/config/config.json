@@ -31,5 +31,6 @@
   "directCommitString": false,
   "directShowCand": true,
   "showPhrase": false,
-  "outputSmallLetterWithShift": false
+  "outputSmallLetterWithShift": false,
+  "enableShiftSpace": true
 }

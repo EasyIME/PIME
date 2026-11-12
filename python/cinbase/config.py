@@ -51,6 +51,10 @@ class CinBaseConfig:
         self.directShowCand = False
         self.directCommitSymbol = False
         self.fontSize = DEF_FONT_SIZE
+        # 組字/選字視窗顏色 (issue #902)：0 表示跟隨系統調色盤
+        self.candTextColor = 0
+        self.windowBackgroundColor = 0
+        self.selKeyColor = 0
         self.selCinType = 0
         self.ignorePrivateUseArea = True
         self.selKeyType = 0
@@ -155,6 +159,24 @@ class CinBaseConfig:
         self.fontSize = _to_int(getattr(self, "fontSize", DEF_FONT_SIZE), DEF_FONT_SIZE, min_val=6, max_val=200)
         self.candMaxItems = _to_int(getattr(self, "candMaxItems", 100), 100, min_val=10, max_val=10000)
         self.messageDurationTime = _to_int(getattr(self, "messageDurationTime", 3), 3, min_val=1)
+
+        # 組字/選字視窗顏色 (issue #902)：0 表示跟隨系統調色盤；非法值退回 0
+        def _to_color(val, default=0):
+            if isinstance(val, bool):
+                return default
+            if isinstance(val, int):
+                return val if 0 <= val <= 0xFFFFFF else default
+            if isinstance(val, str):
+                try:
+                    i = int(val.strip(), 0)
+                except ValueError:
+                    return default
+                return i if 0 <= i <= 0xFFFFFF else default
+            return default
+
+        self.candTextColor = _to_color(getattr(self, "candTextColor", 0), 0)
+        self.windowBackgroundColor = _to_color(getattr(self, "windowBackgroundColor", 0), 0)
+        self.selKeyColor = _to_color(getattr(self, "selKeyColor", 0), 0)
 
     def toJson(self):
         return {key: value for key, value in self.__dict__.items() if not key.startswith("_") and not key in self.ignoreSaveList}

@@ -122,6 +122,32 @@ public:
 		updateFont_ = true;
 	}
 
+	// composition/candidate colors (upstream #902); 0 means "follow the
+	// system palette", the value the python side ships as default
+	COLORREF candTextColor() const {
+		return candTextColor_;
+	}
+
+	void setCandTextColor(COLORREF color) {
+		candTextColor_ = color;
+	}
+
+	COLORREF windowBackgroundColor() const {
+		return windowBackgroundColor_;
+	}
+
+	void setWindowBackgroundColor(COLORREF color) {
+		windowBackgroundColor_ = color;
+	}
+
+	COLORREF selKeyColor() const {
+		return selKeyColor_;
+	}
+
+	void setSelKeyColor(COLORREF color) {
+		selKeyColor_ = color;
+	}
+
 	bool showingCandidates() {
 		return showingCandidates_;
 	}
@@ -167,6 +193,9 @@ private:
 	bool candUseCursor_;
 	std::wstring candFontName_;
 	int candFontSize_;
+	COLORREF candTextColor_ = 0;
+	COLORREF windowBackgroundColor_ = 0;
+	COLORREF selKeyColor_ = 0;
 
 	HMENU popupMenu_{nullptr};
 

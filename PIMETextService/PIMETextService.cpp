@@ -270,6 +270,10 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 
 	candidateWindow_->setUseCursor(candUseCursor_);
 	candidateWindow_->setCandPerRow(candPerRow_);
+	// configured colors (upstream #902); 0 keeps the system palette
+	candidateWindow_->setTextColor(candTextColor_);
+	candidateWindow_->setBackgroundColor(windowBackgroundColor_);
+	candidateWindow_->setSelKeyColor(selKeyColor_);
 
 	// the items in the candidate list should not exist the
 	// number of available keys used to select them.
@@ -355,6 +359,9 @@ void TextService::showMessage(Ime::EditSession* session, std::wstring message, i
 	// FIXME: reuse the window whenever possible
 	messageWindow_ = make_unique<Ime::MessageWindow>(this, session);
 	messageWindow_->setFont(font_);
+	// the same configured colors the candidate window gets (upstream #902)
+	messageWindow_->setTextColor(candTextColor_);
+	messageWindow_->setBackgroundColor(windowBackgroundColor_);
 	messageWindow_->setText(message);
 	
 	int x = 0, y = 0;

@@ -28,8 +28,10 @@ MENU_ITEMS = {
                          "intelligentSelectContext"),
 }
 
-# The 功能開關 items every Service gets, in menu order; a held capability's
-# own items splice in right after MENU_ANCHOR_ITEM.
+# The 功能開關 items the roster-driven branch builds from, in menu order: they
+# are the whole menu of an un-rostered Service only in the engine's own literal
+# below; a rostered Service gets these plus the items of each capability it
+# holds, spliced in right after MENU_ANCHOR_ITEM.
 COMMON_MENU_ITEMS = ("fullShapeSymbols", "easySymbolsWithShift",
                      "autoClearCompositionChar", "playSoundWhenNonCand",
                      "showPhrase", "sortByPhrase", "supportWildcard",

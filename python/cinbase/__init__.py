@@ -44,6 +44,7 @@ from .config import SWITCH_LANG_WITH_BOTH_SHIFT, SWITCH_LANG_WITH_LEFT_SHIFT, SW
 from .cintablebase import CinTableBase
 
 from .debug import Debug
+from . import capabilities
 
 CHINESE_MODE = 1
 ENGLISH_MODE = 0
@@ -81,7 +82,6 @@ class CinBase:
             self.emoji = emoji(fs)
 
         self.emojimenulist = ["表情符號", "圖形符號", "其它符號", "雜錦符號", "交通運輸", "調色盤"]
-        self.imeNameList = ["checj", "chephonetic", "chearray", "chedayi", "cheez", "chepinyin", "chesimplex", "cheliu"]
         self.hcinFileList = ["thphonetic.json", "CnsPhonetic.json", "bpmf.json"]
 
     # 初始化輸入行為設定
@@ -712,9 +712,26 @@ class CinBase:
             elif cbTS.imeDirName == "cheez":
                 cbTS.smenucandidates = [menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase, menu_supportWildcard, menu_imeReverseLookup]
                 cbTS.smenuitems = ["autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "supportWildcard", "imeReverseLookup"]
-            elif cbTS.imeDirName == "chedayi":
-                cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase, menu_intelligentSelect, menu_intelligentSelectRecent, menu_intelligentSelectContext, menu_supportWildcard, menu_imeReverseLookup, menu_homophoneQuery]
-                cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "intelligentSelect", "intelligentSelectRecent", "intelligentSelectContext", "supportWildcard", "imeReverseLookup", "homophoneQuery"]
+            elif capabilities.has_menu_items(cbTS.imeDirName):
+                # 功能開關 menu = the common items plus the items the Capability
+                # roster (cinbase/capabilities.py) declares for this Service, in
+                # roster order; display strings are looked up by item name.
+                menu_strings = {
+                    "fullShapeSymbols": menu_fullShapeSymbols,
+                    "easySymbolsWithShift": menu_easySymbolsWithShift,
+                    "autoClearCompositionChar": menu_autoClearCompositionChar,
+                    "playSoundWhenNonCand": menu_playSoundWhenNonCand,
+                    "showPhrase": menu_showPhrase,
+                    "sortByPhrase": menu_sortByPhrase,
+                    "intelligentSelect": menu_intelligentSelect,
+                    "intelligentSelectRecent": menu_intelligentSelectRecent,
+                    "intelligentSelectContext": menu_intelligentSelectContext,
+                    "supportWildcard": menu_supportWildcard,
+                    "imeReverseLookup": menu_imeReverseLookup,
+                    "homophoneQuery": menu_homophoneQuery,
+                }
+                cbTS.smenuitems = list(capabilities.menu_items_for(cbTS.imeDirName))
+                cbTS.smenucandidates = [menu_strings[item] for item in cbTS.smenuitems]
             else:
                 cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase, menu_supportWildcard, menu_imeReverseLookup, menu_homophoneQuery]
                 cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "supportWildcard", "imeReverseLookup", "homophoneQuery"]
@@ -2806,7 +2823,7 @@ class CinBase:
         return lastCommitString[-1:]
 
     def sortByIntelligentSelect(self, cbTS, key, candidates):
-        if cbTS.imeDirName != "chedayi" or not getattr(cbTS, 'intelligentSelect', False) or not candidates:
+        if not capabilities.has(cbTS.imeDirName, capabilities.INTELLIGENT_SELECT) or not getattr(cbTS, 'intelligentSelect', False) or not candidates:
             return candidates
         return cbTS.cin.sortByCount(
             key,
@@ -2817,7 +2834,7 @@ class CinBase:
         )
 
     def addIntelligentSelectCount(self, cbTS, key, commitStr):
-        if cbTS.imeDirName == "chedayi" and getattr(cbTS, 'intelligentSelect', False) and key:
+        if capabilities.has(cbTS.imeDirName, capabilities.INTELLIGENT_SELECT) and getattr(cbTS, 'intelligentSelect', False) and key:
             cbTS.cin.addCount(key, commitStr, self.getIntelligentSelectPreviousChar(cbTS))
 
     def sortByPhrase(self, cbTS, candidates):

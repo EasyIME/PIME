@@ -178,8 +178,10 @@ function onAddPhrase() {
             }]
         }),
         dataType: "json",
-        complete: function(response) {
-            if (response.responseJSON.result == 0) {
+        success: function(data) {
+            // The server answers {"result": 1} only when every libchewing
+            // call succeeded, so anything else is a failed add.
+            if (!data || !data.result) {
                 jQueryDialogAlert({
                     message: "新增失敗，請檢查詞彙跟注音格式是否正確",
                     icon: "error"
@@ -193,6 +195,12 @@ function onAddPhrase() {
                     }
                 });
             }
+        },
+        error: function() {
+            jQueryDialogAlert({
+                message: "新增失敗，請檢查詞彙跟注音格式是否正確",
+                icon: "error"
+            });
         }
     });
 }
@@ -240,11 +248,10 @@ function onRemovePhrase() {
                             remove: phrases
                         }),
                         dataType: "json",
-                        complete: function(response) {
+                        success: function(data) {
                             // Tell the truth: the server reports {"result": 1}
                             // only when every libchewing call succeeded.
-                            let result = response.responseJSON && response.responseJSON.result;
-                            if (response.status != 200 || !result) {
+                            if (!data || !data.result) {
                                 jQueryDialogAlert({
                                     message: "刪除未完成，詞彙可能不存在或已被移除",
                                     icon: "error",
@@ -261,6 +268,15 @@ function onRemovePhrase() {
                                     }
                                 });
                             }
+                        },
+                        error: function() {
+                            jQueryDialogAlert({
+                                message: "刪除未完成，詞彙可能不存在或已被移除",
+                                icon: "error",
+                                close: () => {
+                                    location.reload();
+                                }
+                            });
                         }
                     });
                 },

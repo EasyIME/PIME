@@ -34,6 +34,7 @@
 !insertmacro LANG_STRING CHESIMPLEX 速成
 !insertmacro LANG_STRING CHEPHONETIC 注音
 !insertmacro LANG_STRING CHEEZ 輕鬆
+!insertmacro LANG_STRING CHEBIHUA 筆畫
 !insertmacro LANG_STRING RIME 中州韻
 !insertmacro LANG_STRING MCBOPOMOFO 小麥注音
 !insertmacro LANG_STRING MCFOXIM 小麥族語
@@ -61,6 +62,7 @@
 !insertmacro LANG_STRING chesimplex_DESC "安裝速成輸入法模組。"
 !insertmacro LANG_STRING chephonetic_DESC "安裝注音輸入法模組。"
 !insertmacro LANG_STRING cheez_DESC "安裝輕鬆輸入法模組。"
+!insertmacro LANG_STRING chebihua_DESC "安裝筆畫輸入法模組。"
 !insertmacro LANG_STRING rime_DESC "安裝中州韻輸入法引擎，內含拼音、注音、倉頡、五筆、粵拼、吳語等數種輸入方案。"
 !insertmacro LANG_STRING mcbopomofo_DESC "安裝小麥注音輸入法模組。"
 !insertmacro LANG_STRING mcfoxim_DESC "安裝小麥族語輸入法模組。"
@@ -80,6 +82,7 @@
 !insertmacro LANG_STRING SET_CHESIMPLEX "設定速成輸入法"
 !insertmacro LANG_STRING SET_CHEPHONETIC "設定注音輸入法"
 !insertmacro LANG_STRING SET_CHEEZ "設定輕鬆輸入法"
+!insertmacro LANG_STRING SET_CHEBIHUA "設定筆畫輸入法"
 !insertmacro LANG_STRING SET_BRAILLE_CHEWING "設定點字酷音輸入法"
 
 !insertmacro LANG_STRING UNINSTALL_PIME "解除安裝 PIME"

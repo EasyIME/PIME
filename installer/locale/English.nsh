@@ -34,6 +34,7 @@
 !insertmacro LANG_STRING CHESIMPLEX "Quick"
 !insertmacro LANG_STRING CHEPHONETIC "Phonetic"
 !insertmacro LANG_STRING CHEEZ "EZ Input"
+!insertmacro LANG_STRING CHEBIHUA "Stroke Input"
 !insertmacro LANG_STRING RIME "Rime"
 !insertmacro LANG_STRING MCBOPOMOFO "McBopomofo"
 !insertmacro LANG_STRING MCFOXIM "McFoxim"
@@ -61,6 +62,7 @@
 !insertmacro LANG_STRING chesimplex_DESC "Install Quick input method module."
 !insertmacro LANG_STRING chephonetic_DESC "Install Phonetic input method module."
 !insertmacro LANG_STRING cheez_DESC "Install EZ Input method module."
+!insertmacro LANG_STRING chebihua_DESC "Install the Stroke input method module."
 !insertmacro LANG_STRING rime_DESC "Install Rime input method engine, 内含拼音、注音、仓颉、五笔、粤拼、吴语等数种输入方案。"
 !insertmacro LANG_STRING mcbopomofo_DESC "Install McBopomofo input method module."
 !insertmacro LANG_STRING mcfoxim_DESC "Install McFoxIM input method module."
@@ -80,6 +82,7 @@
 !insertmacro LANG_STRING SET_CHESIMPLEX "Setup Quick input method"
 !insertmacro LANG_STRING SET_CHEPHONETIC "Setup Phonetic input method"
 !insertmacro LANG_STRING SET_CHEEZ "Setup EZ Input method"
+!insertmacro LANG_STRING SET_CHEBIHUA "Setup Stroke input method"
 !insertmacro LANG_STRING SET_BRAILLE_CHEWING "Setup Braille Chewing input method"
 
 !insertmacro LANG_STRING UNINSTALL_PIME "Uninstall PIME"

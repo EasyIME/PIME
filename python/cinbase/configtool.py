@@ -155,6 +155,7 @@ class ConfigHandler(BaseHandler):
         CinDict["chepinyin"] = ["thpinyin.json", "pinyin.json", "roman.json"]
         CinDict["chesimplex"] = ["simplecj.json", "simplex.json", "simplex5.json"]
         CinDict["cheliu"] = ["liu.json"]
+        CinDict["chebihua"] = ["CnsStroke.json"]
         jsonFile = CinDict[cfg.imeDirName][cfg.selCinType]
 
         datafile = os.path.join(json_dir, jsonFile)

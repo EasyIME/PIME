@@ -95,12 +95,8 @@ function loadServiceById(id, baseDir) {
     }
 
     let matches = String(config.guid).toLowerCase() === targetId;
-    // 同一個 service 也可由額外語言檔（additionalProfiles）的 GUID 啟動。
-    if (!matches && Array.isArray(config.additionalProfiles)) {
-      matches = config.additionalProfiles.some(
-        (profile) => profile && typeof profile.guid === 'string' &&
-          profile.guid.toLowerCase() === targetId);
-    }
+    // 一個目錄就是一個語言檔：DllRegisterServer 為每個 ime.json 各發一次
+    // AddLanguageProfile，所以這裡只需比對該目錄自己的 guid。
     if (matches) {
       try {
         service = require(path.join(imeDir, dir, config.moduleName));

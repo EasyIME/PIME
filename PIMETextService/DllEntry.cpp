@@ -78,12 +78,11 @@ STDAPI DllUnregisterServer(void) {
 	return module ? module->unregisterServer() : E_FAIL;
 }
 
-// One ime.json may declare more than one language profile: the primary pair
-// under "locale"/"fallbackLocale", and any number of extra profiles under
-// "additionalProfiles", each with its own profile GUID. A manifest such as
-// the rime one, whose engine is used under both the Traditional and the
-// Simplified Chinese Windows locale, then registers under both buckets
-// instead of only the one its first locale name resolves to.
+// One ime.json is one language profile: `guid` names the profile and
+// "locale"/"fallbackLocale" the Windows input-language bucket it appears under
+// (PIMETextService/DllEntry.cpp → libIME2/ImeModule.cpp:registerLangProfiles).
+// An IME that serves two buckets ships one folder per bucket, so
+// langProfileFromJson returns the single profile the manifest declares.
 static inline std::vector<Ime::LangProfileInfo> langProfileFromJson(const std::wstring& file, int iconIndex) {
 	std::vector<Ime::LangProfileInfo> profiles;
 	// load the json file to get the info of input method
@@ -126,34 +125,6 @@ static inline std::vector<Ime::LangProfileInfo> langProfileFromJson(const std::w
 		iconFile,
 		iconIndex
 	});
-
-	// Extra language profiles for the same text service, each with its own
-	// profile GUID so both appear in the language list.
-	if (j.contains("additionalProfiles") && j["additionalProfiles"].is_array()) {
-		for (const auto& extra : j["additionalProfiles"]) {
-			if (!extra.is_object()) {
-				continue;
-			}
-			auto extraGuid = jsonValueOr<std::string>(extra, "guid", "");
-			auto extraLocale = jsonValueOr<std::string>(extra, "locale", "");
-			if (extraGuid.empty() || extraLocale.empty()) {
-				continue;
-			}
-			CLSID extraClsid = {0};
-			if (FAILED(CLSIDFromString(utf8ToUtf16(extraGuid.c_str()).c_str(), &extraClsid))) {
-				continue;
-			}
-			auto extraFallback = utf8ToUtf16(jsonValueOr<std::string>(extra, "fallbackLocale", "").c_str());
-			profiles.push_back(Ime::LangProfileInfo{
-				name,
-				extraClsid,
-				utf8ToUtf16(extraLocale.c_str()),
-				std::move(extraFallback),
-				iconFile,
-				iconIndex
-			});
-		}
-	}
 	return profiles;
 }
 

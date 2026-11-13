@@ -19,6 +19,7 @@
 
 #include "PIMEImeModule.h"
 #include "JsonUtils.h"
+#include "ImeProfileGuids.h"
 #include "PIMETextService.h"
 #include <string>
 #include <fstream>
@@ -119,8 +120,12 @@ bool ImeModule::loadImeInfo(const std::string& guid, std::wstring& filePath, jso
 							if (!content.is_object() || content.is_discarded()) {
 								continue;
 							}
-							std::string imeGuid = jsonValueOr<std::string>(content, "guid", "");
-							if (stricmp(guid.c_str(), imeGuid.c_str()) == 0) {
+							// One folder is one language profile, so the flat
+							// guid names it; the match is a header-only helper
+							// so the local gates can run it without the
+							// Windows SDK.
+							bool matched = imeProfileGuidMatches(content, guid);
+							if (matched) {
 								// found the language profile
 								found = true;
 								filePath = imejson;

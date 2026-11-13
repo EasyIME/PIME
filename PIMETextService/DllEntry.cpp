@@ -4,7 +4,6 @@
 
 #include <fstream>
 #include <mutex>
-#include <optional>
 #include <vector>
 
 #include <ShlObj.h>
@@ -79,27 +78,33 @@ STDAPI DllUnregisterServer(void) {
 	return module ? module->unregisterServer() : E_FAIL;
 }
 
-static inline std::optional<Ime::LangProfileInfo> langProfileFromJson(const std::wstring& file, int iconIndex) {
+// One ime.json is one language profile: `guid` names the profile and
+// "locale"/"fallbackLocale" the Windows input-language bucket it appears under
+// (PIMETextService/DllEntry.cpp → libIME2/ImeModule.cpp:registerLangProfiles).
+// An IME that serves two buckets ships one folder per bucket, so
+// langProfileFromJson returns the single profile the manifest declares.
+static inline std::vector<Ime::LangProfileInfo> langProfileFromJson(const std::wstring& file, int iconIndex) {
+	std::vector<Ime::LangProfileInfo> profiles;
 	// load the json file to get the info of input method
 	std::ifstream fp(file, std::ifstream::binary);
 	if (!fp) {
-		return std::nullopt;
+		return profiles;
 	}
 
 	json j = parseJsonNoThrow(fp);
 	if (!j.is_object() || j.is_discarded()) {
-		return std::nullopt;
+		return profiles;
 	}
 
 	auto name = utf8ToUtf16(jsonValueOr<std::string>(j, "name", "").c_str());
 	auto guid = jsonValueOr<std::string>(j, "guid", "");
 	if (name.empty() || guid.empty()) {
-		return std::nullopt;
+		return profiles;
 	}
 
 	CLSID clsidGuid = {0};
 	if (FAILED(CLSIDFromString(utf8ToUtf16(guid.c_str()).c_str(), &clsidGuid))) {
-		return std::nullopt;
+		return profiles;
 	}
 
 	// convert locale name to lanid
@@ -112,14 +117,15 @@ static inline std::optional<Ime::LangProfileInfo> langProfileFromJson(const std:
 			iconFile = file.substr(0, p + 1) + iconFile;
 		}
 	}
-	return Ime::LangProfileInfo{
-		std::move(name),
+	profiles.push_back(Ime::LangProfileInfo{
+		name,
 		clsidGuid,
-		std::move(locale),
-		std::move(fallbackLocale),
-		std::move(iconFile),
+		locale,
+		fallbackLocale,
+		iconFile,
 		iconIndex
-	};
+	});
+	return profiles;
 }
 
 STDAPI DllRegisterServer(void) {
@@ -154,8 +160,8 @@ STDAPI DllRegisterServer(void) {
 						DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
 						if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
 							// load the json file to get the info of input method
-							if (auto profile = langProfileFromJson(imejson, iconIndex)) {
-								langProfiles.push_back(std::move(*profile));
+							for (auto& profile : langProfileFromJson(imejson, iconIndex)) {
+								langProfiles.push_back(std::move(profile));
 							}
 						}
 					}

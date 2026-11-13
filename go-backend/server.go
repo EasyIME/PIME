@@ -15,10 +15,8 @@ import (
 	"github.com/EasyIME/pime-go/pime"
 
 	// 导入输入法包
-	"github.com/EasyIME/pime-go/input_methods/fcitx5"
 	"github.com/EasyIME/pime-go/input_methods/meow"
 	"github.com/EasyIME/pime-go/input_methods/rime"
-	simplepinyin "github.com/EasyIME/pime-go/input_methods/simple_pinyin"
 )
 
 // Client 客户端连接
@@ -336,6 +334,8 @@ func (s *Server) convertResponse(resp *pime.Response) map[string]interface{} {
 }
 
 // loadInputMethods 加载所有输入法
+// 每個 input_methods 目錄就是一個 Windows 輸入語言檔：一份 ime.json、一個
+// profile GUID，所以這裡只需註冊該目錄自己的 guid。
 func loadInputMethods(server *Server) {
 	// 获取当前目录
 	exePath, err := os.Executable()
@@ -379,35 +379,31 @@ func loadInputMethods(server *Server) {
 			continue
 		}
 
+		// 一個目錄一個語言檔：註冊自己的 guid 即可。
+		guids := []string{guid}
+
 		log.Printf("加载输入法: %s (%s)", name, guid)
 
 		// 根据输入法名称注册不同的服务实现
 		switch entry.Name() {
 		case "meow":
 			// 喵喵输入法
-			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
-				return meow.New(client)
-			})
-		case "rime":
-			// RIME 输入法
-			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
-				return rime.New(client)
-			})
-		case "simple_pinyin":
-			// 拼音输入法
-			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
-				return simplepinyin.New(client)
-			})
-		case "fcitx5":
-			// Fcitx5 输入法
-			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
-				return fcitx5.New(client)
-			})
+			for _, id := range guids {
+				server.RegisterService(id, func(client *pime.Client, g string) pime.TextService {
+					return meow.New(client)
+				})
+			}
+		case "rime", "rime-cn":
+			// RIME 输入法：兩個語言檔（zh-Hant-TW 與 zh-CN）共用同一個實作，
+			// 各自的 ime.json 只帶自己的 profile GUID。
+			for _, id := range guids {
+				server.RegisterService(id, func(client *pime.Client, g string) pime.TextService {
+					return rime.New(client)
+				})
+			}
 		default:
-			// 默认使用拼音输入法
-			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
-				return simplepinyin.New(client)
-			})
+			// 此仓库只有 meow 和 rime 的实现；未知目录保持未注册。
+			log.Printf("跳过未实现的输入法: %s (%s)", name, guid)
 		}
 	}
 }

@@ -44,6 +44,7 @@ from .config import SWITCH_LANG_WITH_BOTH_SHIFT, SWITCH_LANG_WITH_LEFT_SHIFT, SW
 from .cintablebase import CinTableBase
 
 from .debug import Debug
+from .wildcard_query import WildcardQuery
 
 CHINESE_MODE = 1
 ENGLISH_MODE = 0
@@ -130,9 +131,7 @@ class CinBase:
 
         cbTS.menucandidates = []
         cbTS.smenucandidates = []
-        cbTS.wildcardcandidates = []
-        cbTS.wildcardpagecandidates = []
-        cbTS.wildcardcompositionChar = ""
+        cbTS.wildcardQuery = WildcardQuery()
         cbTS.currentCandPage = 0
 
         cbTS.emojitype = 0
@@ -161,7 +160,6 @@ class CinBase:
         cbTS.fullsymbolsmode = False
         cbTS.phrasemode = False
         cbTS.isSelKeysChanged = False
-        cbTS.isWildcardChardefs = False
         cbTS.isLangModeChanged = False
         cbTS.isShapeModeChanged = False
         cbTS.isShowCandidates = False
@@ -492,7 +490,7 @@ class CinBase:
                     self.moveCursorInBrackets(cbTS)
 
         candidates = []
-        cbTS.isWildcardChardefs = False
+        cbTS.wildcardQuery.begin_event()
         cbTS.canSetCommitString = True
         cbTS.keyUsedState = False
 
@@ -1430,8 +1428,7 @@ class CinBase:
                     cbTS.lastCompositionCharLength = cbTS.lastCompositionCharLength - 1
                     cbTS.setCandidateCursor(0)
                     cbTS.setCandidatePage(0)
-                    cbTS.wildcardcandidates = []
-                    cbTS.wildcardpagecandidates = []
+                    cbTS.wildcardQuery.clear()
                     if not cbTS.directShowCand:
                         cbTS.isShowCandidates = False
                         cbTS.setShowCandidates(False)
@@ -1484,21 +1481,19 @@ class CinBase:
                     else:
                         cbTS.setCompositionString(candidates[0])
             elif cbTS.supportWildcard and cbTS.selWildcardChar in cbTS.compositionChar and cbTS.closemenu:
-                if cbTS.wildcardcandidates and cbTS.wildcardcompositionChar == cbTS.compositionChar:
-                    candidates = cbTS.wildcardcandidates
-                else:
+                fallback = None
+                if cbTS.imeDirName == "chepinyin" and cbTS.cinFileList[cbTS.cfg.selCinType] == "thpinyin.json":
+                    fallback = cbTS.compositionChar + "1"
+                if not cbTS.wildcardQuery.cached_for(
+                        cbTS.cin, cbTS.compositionChar, cbTS.selWildcardChar,
+                        cbTS.candMaxItems, fallback):
                     cbTS.setCandidateCursor(0)
                     cbTS.setCandidatePage(0)
-                    cbTS.wildcardcandidates = cbTS.cin.getWildcardCharDefs(cbTS.compositionChar, cbTS.selWildcardChar, cbTS.candMaxItems)
-                    if cbTS.imeDirName == "chepinyin" and cbTS.cinFileList[cbTS.cfg.selCinType] == "thpinyin.json":
-                        if not cbTS.wildcardcandidates:
-                            cbTS.wildcardcandidates = cbTS.cin.getWildcardCharDefs(cbTS.compositionChar + "1", cbTS.selWildcardChar, cbTS.candMaxItems)
-                    cbTS.wildcardpagecandidates = []
-                    cbTS.wildcardcompositionChar = cbTS.compositionChar
-                    candidates = cbTS.wildcardcandidates
-                    if cbTS.compositionBufferMode and not cbTS.selcandmode:
-                        cbTS.compositionBufferType = "default"
-                cbTS.isWildcardChardefs = True
+                candidates = cbTS.wildcardQuery.query(
+                    cbTS.cin, cbTS.compositionChar, cbTS.selWildcardChar,
+                    cbTS.candMaxItems, fallback)
+                if cbTS.compositionBufferMode and not cbTS.selcandmode:
+                    cbTS.compositionBufferType = "default"
                 if cbTS.sortByPhrase and candidates:
                     candidates = self.sortByPhrase(cbTS, copy.deepcopy(candidates))
                 candidates = self.sortByIntelligentSelect(cbTS, cbTS.compositionChar, candidates)
@@ -1757,14 +1752,12 @@ class CinBase:
                                     cbTS.canUseSpaceAsPageKey = False
 
                                     # 如果使用萬用字元解碼
-                                    if cbTS.isWildcardChardefs:
+                                    if cbTS.wildcardQuery.active_for(cbTS.cin, cbTS.compositionChar, cbTS.selWildcardChar):
                                         if not cbTS.client.isUiLess:
                                             cbTS.isShowMessage = True
                                             cbTS.showMessageOnKeyUp = True
                                             cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
-                                        cbTS.wildcardcandidates = []
-                                        cbTS.wildcardpagecandidates = []
-                                        cbTS.isWildcardChardefs = False
+                                        cbTS.wildcardQuery.clear()
 
                                     if cbTS.imeReverseLookup:
                                         if RCinTable.cin is not None:
@@ -1832,14 +1825,7 @@ class CinBase:
                     currentCandPage = cbTS.currentCandPage # 目前的選字清單頁數
 
                     # 候選清單分頁
-                    if cbTS.isWildcardChardefs:
-                        if cbTS.wildcardpagecandidates:
-                            pagecandidates = cbTS.wildcardpagecandidates
-                        else:
-                            cbTS.wildcardpagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
-                            pagecandidates = cbTS.wildcardpagecandidates
-                    else:
-                        pagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
+                    pagecandidates = list(self.chunks(candidates, cbTS.candPerPage))
                     cbTS.setCandidateList(pagecandidates[currentCandPage])
 
                     if not cbTS.isSelKeysChanged:
@@ -2698,8 +2684,7 @@ class CinBase:
         cbTS.setCandidatePage(0)
         cbTS.setCandidateList([])
         cbTS.setShowCandidates(False)
-        cbTS.wildcardcandidates = []
-        cbTS.wildcardpagecandidates = []
+        cbTS.wildcardQuery.clear()
         cbTS.menumode = False
         cbTS.multifunctionmode = False
         cbTS.menusymbolsmode = False
@@ -2899,14 +2884,12 @@ class CinBase:
 
     def setOutputString(self, cbTS, RCinTable, commitStr):
         # 如果使用萬用字元解碼
-        if cbTS.isWildcardChardefs:
+        if cbTS.wildcardQuery.active_for(cbTS.cin, cbTS.compositionChar, cbTS.selWildcardChar):
             if not cbTS.client.isUiLess:
                 cbTS.isShowMessage = True
                 cbTS.showMessageOnKeyUp = True
                 cbTS.onKeyUpMessage = cbTS.cin.getCharEncode(commitStr)
-            cbTS.wildcardcandidates = []
-            cbTS.wildcardpagecandidates = []
-            cbTS.isWildcardChardefs = False
+            cbTS.wildcardQuery.clear()
 
         if cbTS.imeReverseLookup:
             if RCinTable.cin is not None:

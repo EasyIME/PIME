@@ -120,9 +120,10 @@ bool ImeModule::loadImeInfo(const std::string& guid, std::wstring& filePath, jso
 							if (!content.is_object() || content.is_discarded()) {
 								continue;
 							}
-							// The flat guid plus every additionalProfiles guid name
-							// this service; the match is a header-only helper so the
-							// local gates can run it without the Windows SDK.
+							// One folder is one language profile, so the flat
+							// guid names it; the match is a header-only helper
+							// so the local gates can run it without the
+							// Windows SDK.
 							bool matched = imeProfileGuidMatches(content, guid);
 							if (matched) {
 								// found the language profile

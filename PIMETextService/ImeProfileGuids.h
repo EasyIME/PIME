@@ -47,33 +47,15 @@ inline bool imeProfileGuidEqual(const std::string& a, const std::string& b) noex
 	return true;
 }
 
-// True when `id` names the profile of a parsed ime.json object: the flat
-// "guid" key, or one "guid" of the "additionalProfiles" array. A non-object
-// entry, a missing or non-string "guid" key, and an empty "guid" are skipped
-// without throwing; an empty `id` therefore matches nothing.
+// True when `id` names the profile of a parsed ime.json object: its flat
+// "guid" key. One manifest is one Windows language profile, so no array is
+// walked; a missing or non-string "guid" key and an empty "guid" are skipped
+// without throwing, and an empty `id` therefore matches nothing.
 inline bool imeProfileGuidMatches(const nlohmann::json& content, const std::string& id) noexcept {
 	const auto guid = content.find("guid");
-	if (guid != content.end() && guid->is_string() &&
-		imeProfileGuidEqual(id, guid->get_ref<const std::string&>())) {
-		return true;
-	}
-	const auto profiles = content.find("additionalProfiles");
-	if (profiles != content.end() && profiles->is_array()) {
-		for (const auto& profile : *profiles) {
-			if (!profile.is_object()) {
-				continue; // a null or scalar entry carries no guid
-			}
-			const auto entry = profile.find("guid");
-			if (entry == profile.end() || !entry->is_string() ||
-				entry->get_ref<const std::string&>().empty()) {
-				continue; // a guid-less entry cannot name the profile
-			}
-			if (imeProfileGuidEqual(id, entry->get_ref<const std::string&>())) {
-				return true;
-			}
-		}
-	}
-	return false;
+	return guid != content.end() && guid->is_string() &&
+		!guid->get_ref<const std::string&>().empty() &&
+		imeProfileGuidEqual(id, guid->get_ref<const std::string&>());
 }
 
 } // namespace PIME

@@ -79,7 +79,7 @@ STDAPI DllUnregisterServer(void) {
 	return module ? module->unregisterServer() : E_FAIL;
 }
 
-static inline std::optional<Ime::LangProfileInfo> langProfileFromJson(const std::wstring& file, int iconIndex) {
+static inline std::optional<Ime::LangProfileInfo> langProfileFromJson(const std::wstring& file, bool useWin8Icon) {
 	// load the json file to get the info of input method
 	std::ifstream fp(file, std::ifstream::binary);
 	if (!fp) {
@@ -105,7 +105,14 @@ static inline std::optional<Ime::LangProfileInfo> langProfileFromJson(const std:
 	// convert locale name to lanid
 	auto locale = utf8ToUtf16(jsonValueOr<std::string>(j, "locale", "").c_str());
 	auto fallbackLocale = utf8ToUtf16(jsonValueOr<std::string>(j, "fallbackLocale", "").c_str());
-	auto iconFile = utf8ToUtf16(jsonValueOr<std::string>(j, "icon", "").c_str());
+	std::string iconPath;
+	if (useWin8Icon) {
+		iconPath = jsonValueOr<std::string>(j, "win8_icon", "");
+	}
+	if (iconPath.empty()) {
+		iconPath = jsonValueOr<std::string>(j, "icon", "");
+	}
+	auto iconFile = utf8ToUtf16(iconPath.c_str());
 	if (!iconFile.empty() && PathIsRelative(iconFile.c_str())) {
 		size_t p = file.rfind(L'\\');
 		if (p != file.npos) {
@@ -118,15 +125,12 @@ static inline std::optional<Ime::LangProfileInfo> langProfileFromJson(const std:
 		std::move(locale),
 		std::move(fallbackLocale),
 		std::move(iconFile),
-		iconIndex
+		0 // .ico files only contain a single icon resource at index 0
 	};
 }
 
 STDAPI DllRegisterServer(void) {
-	int iconIndex = 0; // use classic icon
-	if(::IsWindows8OrGreater()) {
-		iconIndex = 1; // use Windows 8 style IME icon
-	}
+	bool useWin8Icon = ::IsWindows8OrGreater();
 	std::vector<Ime::LangProfileInfo> langProfiles;
 	auto module = getImeModule();
 	if (!module) {
@@ -154,7 +158,7 @@ STDAPI DllRegisterServer(void) {
 						DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
 						if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
 							// load the json file to get the info of input method
-							if (auto profile = langProfileFromJson(imejson, iconIndex)) {
+							if (auto profile = langProfileFromJson(imejson, useWin8Icon)) {
 								langProfiles.push_back(std::move(*profile));
 							}
 						}

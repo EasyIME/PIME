@@ -1,4 +1,4 @@
-; NOTE: This file MUST be saved as UTF-8 with BOM (utf-8-sig) so that
+﻿; NOTE: This file MUST be saved as UTF-8 with BOM (utf-8-sig) so that
 ; NSIS (makensis) natively detects Unicode strings without breaking Git diffs.
 ; Do NOT convert this file to UTF-16.
 ;

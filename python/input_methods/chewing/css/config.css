@@ -77,6 +77,7 @@ textarea {
     border-top: 1px solid grey;
     display: inline-block;
     font-family: serif;
+    font-weight: 100;
     line-height: 110%;
     min-width: 2.3em;
     padding: 4px;
@@ -85,6 +86,7 @@ textarea {
 #selExample span {
     color: blue;
     font-family: monospace;
+    padding-right: 0.5em;
 }
 
 #keyboard_tab #keyboard_layouts {
@@ -112,15 +114,15 @@ textarea {
     background-color: #f8f9fa;
     border: 1px solid #dee2e6;
     border-radius: 4px;
-    padding: 15px;
     margin-bottom: 20px;
+    padding: 15px;
 }
 
 .form-select.w-auto {
     display: inline-block !important;
-    width: auto !important;
     min-width: 10em;
     vertical-align: middle;
+    width: auto !important;
 }
 
 .form-check {

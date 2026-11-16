@@ -344,7 +344,7 @@ $(function () {
         }
 
         $("#selExample").html(html);
-        $("#selExample").css("font-size", `${$("#fontSize").val()}pt`);
+        $("#selExample").css("font-size", `${$("#fontSize").val() - 4}pt`);
     }
 
     // Show PIME version number

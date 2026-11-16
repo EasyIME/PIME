@@ -394,7 +394,10 @@ bool Client::ensureConnected() {
 	if (state_ == State::Ready) {
 		return true;
 	}
-	if (state_ == State::Disconnected && isActivated_) {
+	// A cancelled connect leaves state_ at Connecting with no connector and no
+	// callback left to fire, so only a fresh start can make progress there; the
+	// two cases share one startAsyncConnect() call.
+	if (isActivated_ && (state_ == State::Disconnected || connector_ == nullptr)) {
 		startAsyncConnect();
 	}
 	return false;

@@ -706,7 +706,7 @@ void Client::startAsyncConnect() {
 	initReq["isConsole"] = textService_->isConsole();
 
 	connector_ = std::make_shared<AsyncConnector>();
-	connector_->connect(getPipeName(L"Launcher"), std::move(initReq), [this](RpcPipe pipe, json initResp) {
+	if (!connector_->connect(getPipeName(L"Launcher"), std::move(initReq), [this](RpcPipe pipe, json initResp) {
 		connector_.reset();
 		if (pipe.isValid()) {
 			pipe_ = std::move(pipe);
@@ -726,7 +726,10 @@ void Client::startAsyncConnect() {
 		else {
 			state_ = State::Disconnected;
 		}
-	});
+	})) {
+		connector_.reset();
+		state_ = State::Disconnected;
+	}
 }
 
 

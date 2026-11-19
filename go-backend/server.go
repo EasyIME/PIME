@@ -357,59 +357,83 @@ func loadInputMethods(server *Server) {
 			continue
 		}
 
-		// 读取 ime.json
-		imePath := filepath.Join(inputMethodsDir, entry.Name(), "ime.json")
-		data, err := os.ReadFile(imePath)
-		if err != nil {
-			log.Printf("读取 %s 失败: %v", imePath, err)
-			continue
-		}
-
-		var imeConfig map[string]interface{}
-		if err := json.Unmarshal(data, &imeConfig); err != nil {
-			log.Printf("解析 %s 失败: %v", imePath, err)
-			continue
-		}
-
-		guid, _ := imeConfig["guid"].(string)
-		name, _ := imeConfig["name"].(string)
-		guid = strings.ToLower(guid)
-		if guid == "" {
-			log.Printf("%s 缺少 guid", entry.Name())
-			continue
-		}
-
-		log.Printf("加载输入法: %s (%s)", name, guid)
-
-		// 根据输入法名称注册不同的服务实现
-		switch entry.Name() {
-		case "meow":
-			// 喵喵输入法
-			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
-				return meow.New(client)
-			})
-		case "rime":
-			// RIME 输入法
-			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
-				return rime.New(client)
-			})
-		case "simple_pinyin":
-			// 拼音输入法
-			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
-				return simplepinyin.New(client)
-			})
-		case "fcitx5":
-			// Fcitx5 输入法
-			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
-				return fcitx5.New(client)
-			})
-		default:
-			// 默认使用拼音输入法
-			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
-				return simplepinyin.New(client)
-			})
+		for _, imePath := range imeJSONPaths(filepath.Join(inputMethodsDir, entry.Name())) {
+			loadInputMethod(server, entry.Name(), imePath)
 		}
 	}
+}
+
+// loadInputMethod 从单个 ime.json 加载并注册一个输入法配置
+func loadInputMethod(server *Server, moduleName, imePath string) {
+	// 读取 ime.json
+	data, err := os.ReadFile(imePath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			log.Printf("读取 %s 失败: %v", imePath, err)
+		}
+		return
+	}
+
+	var imeConfig map[string]interface{}
+	if err := json.Unmarshal(data, &imeConfig); err != nil {
+		log.Printf("解析 %s 失败: %v", imePath, err)
+		return
+	}
+
+	guid, _ := imeConfig["guid"].(string)
+	name, _ := imeConfig["name"].(string)
+	guid = strings.ToLower(guid)
+	if guid == "" {
+		log.Printf("%s 缺少 guid", imePath)
+		return
+	}
+	// 同一 guid 以第一个为准，忽略重复的
+	if _, exists := server.factories[guid]; exists {
+		log.Printf("忽略重复的 guid %s: %s", guid, imePath)
+		return
+	}
+
+	log.Printf("加载输入法: %s (%s)", name, guid)
+
+	// 根据输入法名称注册不同的服务实现
+	switch moduleName {
+	case "meow":
+		// 喵喵输入法
+		server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
+			return meow.New(client)
+		})
+	case "rime":
+		// RIME 输入法
+		server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
+			return rime.New(client)
+		})
+	case "simple_pinyin":
+		// 拼音输入法
+		server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
+			return simplepinyin.New(client)
+		})
+	case "fcitx5":
+		// Fcitx5 输入法
+		server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
+			return fcitx5.New(client)
+		})
+	default:
+		// 默认使用拼音输入法
+		server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
+			return simplepinyin.New(client)
+		})
+	}
+}
+
+// imeJSONPaths 返回输入法模块的语言配置文件：ime.json 以及 ime_profiles/*/ime.json（文件不一定存在）
+func imeJSONPaths(moduleDir string) []string {
+	paths := []string{filepath.Join(moduleDir, "ime.json")}
+	profilesDir := filepath.Join(moduleDir, "ime_profiles")
+	profiles, _ := os.ReadDir(profilesDir) // 按文件名排序
+	for _, profile := range profiles {
+		paths = append(paths, filepath.Join(profilesDir, profile.Name(), "ime.json"))
+	}
+	return paths
 }
 
 func openLogFile() (*os.File, error) {

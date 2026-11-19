@@ -149,6 +149,7 @@ private:
 
 	void createCandidateWindow(Ime::EditSession* session);
 	int candFontHeight();
+	HFONT createFont();
 
 	void closeClient();
 
@@ -160,7 +161,6 @@ private:
 	std::vector<std::wstring> candidates_; // current candidate list
 	std::unique_ptr<Ime::MessageWindow> messageWindow_;
 	UINT messageTimerId_;
-	HFONT font_;
 	bool updateFont_;
 	int candPerRow_;
 	std::wstring selKeys_;

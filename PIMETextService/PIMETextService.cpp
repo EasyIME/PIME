@@ -48,14 +48,6 @@ TextService::TextService(ImeModule* module):
 	candFontSize_(12),
 	popupMenu_(nullptr),
 	currentLangProfile_(GUID_NULL) {
-
-	// font for candidate and mesasge windows
-	font_ = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
-	LOGFONT lf;
-	GetObject(font_, sizeof(lf), &lf);
-	lf.lfHeight = candFontHeight(); // FIXME: make this configurable
-	lf.lfWeight = FW_NORMAL;
-	font_ = CreateFontIndirect(&lf);
 }
 
 TextService::~TextService(void) {
@@ -72,9 +64,6 @@ TextService::~TextService(void) {
 
 	if(messageWindow_)
 		hideMessage();
-
-	if(font_)
-		::DeleteObject(font_);
 }
 
 // virtual
@@ -233,7 +222,7 @@ void TextService::createCandidateWindow(Ime::EditSession* session) {
 		candidateWindow_ = new Ime::CandidateWindow(this, session); // assigning to smart ptr also inrease ref count
 		candidateWindow_->Release();  // decrease ref count caused by new
 
-		candidateWindow_->setFont(font_);
+		candidateWindow_->setFont(createFont(), /*ownFont=*/true);
 		auto elementMgr = Ime::ComPtr<ITfUIElementMgr>::queryFrom(threadMgr());
 		if (elementMgr) {
 			BOOL pbShow = false;
@@ -251,20 +240,10 @@ void TextService::updateCandidates(Ime::EditSession* session) {
 
 	// FIXME: is this the right place to do it?
 	if (updateFont_) {
-		// font for candidate and mesasge windows
-		LOGFONT lf;
-		GetObject(font_, sizeof(lf), &lf);
-		::DeleteObject(font_); // delete old font
-		lf.lfHeight = candFontHeight(); // apply the new size
-		if (!candFontName_.empty()) { // apply new font name
-			wcsncpy(lf.lfFaceName, candFontName_.c_str(), LF_FACESIZE - 1);
-			lf.lfFaceName[LF_FACESIZE - 1] = L'\0';
-		}
-		font_ = CreateFontIndirect(&lf); // create new font
-		// if (messageWindow_)
-		//	messageWindow_->setFont(font_);
+		if (messageWindow_)
+			messageWindow_->setFont(createFont(), /*ownFont=*/true);
 		if (candidateWindow_)
-			candidateWindow_->setFont(font_);
+			candidateWindow_->setFont(createFont(), /*ownFont=*/true);
 		updateFont_ = false;
 	}
 
@@ -354,7 +333,7 @@ void TextService::showMessage(Ime::EditSession* session, std::wstring message, i
 	hideMessage();
 	// FIXME: reuse the window whenever possible
 	messageWindow_ = make_unique<Ime::MessageWindow>(this, session);
-	messageWindow_->setFont(font_);
+	messageWindow_->setFont(createFont(), /*ownFont=*/true);
 	messageWindow_->setText(message);
 	
 	int x = 0, y = 0;
@@ -420,6 +399,18 @@ int TextService::candFontHeight() {
 		ReleaseDC(NULL, hdc);
 	}
 	return candFontHeight_;
+}
+
+HFONT TextService::createFont() {
+	LOGFONT lf;
+	::GetObject(::GetStockObject(DEFAULT_GUI_FONT), sizeof(lf), &lf);
+	lf.lfHeight = candFontHeight();
+	lf.lfWeight = FW_NORMAL;
+	if (!candFontName_.empty()) {
+		wcsncpy(lf.lfFaceName, candFontName_.c_str(), LF_FACESIZE - 1);
+		lf.lfFaceName[LF_FACESIZE - 1] = L'\0';
+	}
+	return ::CreateFontIndirect(&lf);
 }
 
 void TextService::closeClient() {

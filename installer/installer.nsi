@@ -363,21 +363,20 @@ SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
             StrCpy $INST_PYTHON "True"
 		SectionEnd
 
+		Section $(RIME) rime_zhtw
+			SectionIn 2
+			SetOutPath "$INSTDIR\python\input_methods\rime\ime_profiles\zh_TW"
+			File "..\python\input_methods\rime\ime_profiles\zh_TW\ime.json"
+			StrCpy $INST_PYTHON "True"
+		SectionEnd
+
     SectionGroupEnd
 
 	SectionGroup /e $(PYTHON_CHS_SECTION_GROUP) python_chs_section_group
-		Section $(RIME) rime
+		Section $(RIME) rime_zhcn
 			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods\rime"
-			File /r /x "brise" "..\python\input_methods\rime\*.*"
-			SetOutPath "$INSTDIR\python\input_methods\rime\data"
-			File "..\python\input_methods\rime\brise\*.txt"
-			File "..\python\input_methods\rime\brise\*.yaml"
-			File "..\python\input_methods\rime\brise\preset\*.yaml"
-			File "..\python\input_methods\rime\brise\supplement\*.yaml"
-			File "..\python\input_methods\rime\brise\extra\*.yaml"
-			SetOutPath "$INSTDIR\python\input_methods\rime\data\opencc"
-			File "..\python\opencc\*.json" "..\python\opencc\*.ocd"
+			SetOutPath "$INSTDIR\python\input_methods\rime\ime_profiles\zh_CN"
+			File "..\python\input_methods\rime\ime_profiles\zh_CN\ime.json"
 			StrCpy $INST_PYTHON "True"
 		SectionEnd
 	SectionGroupEnd
@@ -434,6 +433,21 @@ Section "" Register
 		File /r /x "__pycache__" /x "input_methods" /x "cinbase" /x ".git" /x ".idea" "..\python\*.*"
 		SetOutPath "$INSTDIR\python\input_methods"
 		File "..\python\input_methods\__init__.py"
+	${EndIf}
+
+	; Install shared Rime engine and data when either Rime language profile is selected.
+	${If} ${SectionIsSelected} ${rime_zhtw}
+	${OrIf} ${SectionIsSelected} ${rime_zhcn}
+		SetOutPath "$INSTDIR\python\input_methods\rime"
+		File /r /x "brise" /x "ime_profiles" "..\python\input_methods\rime\*.*"
+		SetOutPath "$INSTDIR\python\input_methods\rime\data"
+		File "..\python\input_methods\rime\brise\*.txt"
+		File "..\python\input_methods\rime\brise\*.yaml"
+		File "..\python\input_methods\rime\brise\preset\*.yaml"
+		File "..\python\input_methods\rime\brise\supplement\*.yaml"
+		File "..\python\input_methods\rime\brise\extra\*.yaml"
+		SetOutPath "$INSTDIR\python\input_methods\rime\data\opencc"
+		File "..\python\opencc\*.json" "..\python\opencc\*.ocd"
 	${EndIf}
 
 	; Install the CinBase Class for all cin-based input method modules.
@@ -534,7 +548,8 @@ SectionEnd
 	!insertmacro MUI_DESCRIPTION_TEXT ${chesimplex} $(chesimplex_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${chephonetic} $(chephonetic_DESC)
     !insertmacro MUI_DESCRIPTION_TEXT ${cheez} $(cheez_DESC)
-    !insertmacro MUI_DESCRIPTION_TEXT ${rime} $(rime_DESC)
+    !insertmacro MUI_DESCRIPTION_TEXT ${rime_zhtw} $(rime_DESC)
+    !insertmacro MUI_DESCRIPTION_TEXT ${rime_zhcn} $(rime_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${mcbopomofo} $(mcbopomofo_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${mcfoxim} $(mcfoxim_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${mctabim} $(mctabim_DESC)

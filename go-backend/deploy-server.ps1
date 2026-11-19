@@ -149,9 +149,10 @@ $destinationRimeDLL = Join-Path $InstallRoot "input_methods\rime\rime.dll"
 
 $sourceDataDir = Join-Path $SourceRoot "input_methods\rime\data"
 $sourceIconsDir = Join-Path $SourceRoot "input_methods\rime\icons"
-$sourceIMEJSON = Join-Path $SourceRoot "input_methods\rime\ime.json"
+$sourceIMEJSON = Join-Path $SourceRoot "input_methods\rime\ime_profiles\zh_CN\ime.json"
+$sourceIMEJSONZhTW = Join-Path $SourceRoot "input_methods\rime\ime_profiles\zh_TW\ime.json"
 
-$sourcePaths = @($sourceServer, $sourceRimeDLL, $sourceDataDir, $sourceIconsDir, $sourceIMEJSON)
+$sourcePaths = @($sourceServer, $sourceRimeDLL, $sourceDataDir, $sourceIconsDir, $sourceIMEJSON, $sourceIMEJSONZhTW)
 foreach ($path in $sourcePaths) {
     if (-not (Test-Path -LiteralPath $path)) {
         throw "Required source path not found: $path"

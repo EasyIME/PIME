@@ -125,7 +125,6 @@ class CinBase:
         cbTS.messageDurationTime = 3
 
         cbTS.selDayiSymbolCharType = 0
-        cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
         cbTS.lastKeyEvent = None
 
@@ -276,7 +275,6 @@ class CinBase:
 
     # 使用者離開輸入法
     def onDeactivate(self, cbTS):
-        cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
         cbTS.lastKeyEvent = None
         cbTS.isLangModeChanged = False
@@ -319,9 +317,8 @@ class CinBase:
         charStrLow = charStr.lower()
 
         # 紀錄最後一次按下的鍵和按下的時間，在 filterKeyUp() 中要用
-        if cbTS.lastKeyDownTime == 0.0 or cbTS.lastKeyDownCode != keyEvent.keyCode:
+        if cbTS.lastKeyDownTime == 0.0 or cbTS.lastKeyEvent is None or cbTS.lastKeyEvent.keyCode != keyEvent.keyCode:
             cbTS.lastKeyDownTime = time.time()
-        cbTS.lastKeyDownCode = keyEvent.keyCode
         cbTS.lastKeyEvent = keyEvent
         cbTS.isLangModeChanged = False
 
@@ -2301,17 +2298,15 @@ class CinBase:
         # 若啟用使用 Shift 鍵切換中英文模式
         if cbTS.cfg.switchLangWithShift:
             # 剛才最後一個按下的鍵，和現在放開的鍵，都是 Shift
-            if cbTS.lastKeyDownCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
+            if cbTS.lastKeyEvent and cbTS.lastKeyEvent.keyCode == VK_SHIFT and keyEvent.keyCode == VK_SHIFT:
                 # 檢查使用者當前的設定，是使用哪一邊的 Shift 來切換中英文模式
                 if cbTS.cfg.switchLangWithWhichShift == SWITCH_LANG_WITH_BOTH_SHIFT:
                     pass
                 elif cbTS.cfg.switchLangWithWhichShift == SWITCH_LANG_WITH_LEFT_SHIFT and not self.isPressed(cbTS, VK_LSHIFT):
-                    cbTS.lastKeyDownCode = 0
                     cbTS.lastKeyDownTime = 0.0
                     cbTS.lastKeyEvent = None
                     return False
                 elif cbTS.cfg.switchLangWithWhichShift == SWITCH_LANG_WITH_RIGHT_SHIFT and not self.isPressed(cbTS, VK_RSHIFT):
-                    cbTS.lastKeyDownCode = 0
                     cbTS.lastKeyDownTime = 0.0
                     cbTS.lastKeyEvent = None
                     return False
@@ -2332,15 +2327,14 @@ class CinBase:
                         cbTS.isLangModeChanged = True
 
         # 不管中英文模式，只要放開 CapsLock 鍵，輸入法都須要處理
-        if cbTS.lastKeyDownCode == VK_CAPITAL and keyEvent.keyCode == VK_CAPITAL:
+        if cbTS.lastKeyEvent and cbTS.lastKeyEvent.keyCode == VK_CAPITAL and keyEvent.keyCode == VK_CAPITAL:
             return True
 
         # 使用 Ctrl + F12 切換簡體/繁體中文
-        if cbTS.enableSwitchTCSC and cbTS.lastKeyDownCode:
-            if keyEvent.isKeyDown(VK_CONTROL) and cbTS.lastKeyDownCode == VK_F12 and keyEvent.keyCode == VK_F12:
+        if cbTS.enableSwitchTCSC and cbTS.lastKeyEvent:
+            if keyEvent.isKeyDown(VK_CONTROL) and cbTS.lastKeyEvent.keyCode == VK_F12 and keyEvent.keyCode == VK_F12:
                 self.setOutputSimplifiedChinese(cbTS, not cbTS.outputSimpChinese)
 
-        cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
         cbTS.lastKeyEvent = None
 
@@ -2371,7 +2365,6 @@ class CinBase:
     def onKeyUp(self, cbTS, keyEvent):
         charCode = keyEvent.charCode
         keyCode = keyEvent.keyCode
-        cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
         cbTS.lastKeyEvent = None
 
@@ -2426,7 +2419,6 @@ class CinBase:
 
 
     def onPreservedKey(self, cbTS, guid):
-        cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
         cbTS.lastKeyEvent = None
         # some preserved keys registered are pressed

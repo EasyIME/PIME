@@ -155,13 +155,11 @@ class CinbaseShiftSwitchTests(unittest.TestCase):
         down_ev = make_key_event(VK_SHIFT, (VK_SHIFT, VK_LSHIFT))
         CinBase.filterKeyDown(self.ts, down_ev, self.cin_table, None, None)
         CinBase.onDeactivate(self.ts)
-        self.assertEqual(self.ts.lastKeyDownCode, 0)
         self.assertEqual(self.ts.lastKeyDownTime, 0.0)
         self.assertIsNone(self.ts.lastKeyEvent)
 
         CinBase.filterKeyDown(self.ts, down_ev, self.cin_table, None, None)
         CinBase.onPreservedKey(self.ts, "{00000000-0000-0000-0000-000000000000}")
-        self.assertEqual(self.ts.lastKeyDownCode, 0)
         self.assertEqual(self.ts.lastKeyDownTime, 0.0)
         self.assertIsNone(self.ts.lastKeyEvent)
 

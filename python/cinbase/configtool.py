@@ -17,6 +17,7 @@
 
 import tornado.ioloop
 import tornado.web
+import hmac
 import sys
 import io
 import os
@@ -59,11 +60,29 @@ search_paths = ";".join((cfg.getConfigDir(), data_dir)).encode("UTF-8")
 
 class BaseHandler(tornado.web.RequestHandler):
 
-    def get_current_user(self):  # override the login check
-        return self.get_cookie(COOKIE_ID)
+    # The cookie must equal this server's random token, not merely be non-empty.
+    def get_current_user(self):
+        cookie = self.get_cookie(COOKIE_ID)
+        if cookie and hmac.compare_digest(cookie.encode("utf-8"), self.settings["access_token"].encode("utf-8")):
+            return cookie
+        return None
+
+    def _allowed_origins(self):
+        port = self.application.port
+        return ("127.0.0.1:%d" % port, "localhost:%d" % port)
 
     def prepare(self):  # called before every request
-        self.application.reset_timeout()  # reset the quit server timeout
+        # reject DNS-rebinding requests whose Host is not our loopback port
+        if self.request.host.lower() not in self._allowed_origins():
+            raise tornado.web.HTTPError(403)
+        # reject cross-site state-changing requests (CSRF).
+        # The login form is posted from a local file (Origin: null), so it is exempt.
+        if self.request.method not in ("GET", "HEAD", "OPTIONS") and not isinstance(self, LoginHandler):
+            origin = self.request.headers.get("Origin")
+            if origin is not None and origin.lower() not in ["http://" + o for o in self._allowed_origins()]:
+                raise tornado.web.HTTPError(403)
+        if self.current_user:  # only authenticated requests keep the server alive
+            self.application.reset_timeout()  # reset the quit server timeout
 
 
 class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
@@ -83,9 +102,6 @@ class KeepAliveHandler(BaseHandler):
 
 
 class ConfigHandler(BaseHandler):
-
-    def get_current_user(self):  # override the login check
-        return self.get_cookie(COOKIE_ID)
 
     @tornado.web.authenticated
     def get(self):  # get config
@@ -198,11 +214,13 @@ class LoginHandler(BaseHandler):
 
     def post(self, page_name):
         token = self.get_argument("token", "")
-        if token == self.settings["access_token"]:
-            self.set_cookie(COOKIE_ID, token)
-            if page_name != "user_phrase_editor":
-                page_name = "config"
-            self.redirect("/{}.html?v={}".format(page_name, self.settings["access_token"][:8]))
+        # constant-time compare, HttpOnly + SameSite=Strict cookie, 403 on failure
+        if not hmac.compare_digest(token.encode("utf-8"), self.settings["access_token"].encode("utf-8")):
+            raise tornado.web.HTTPError(403)
+        self.set_cookie(COOKIE_ID, token, httponly=True, samesite="Strict")
+        if page_name != "user_phrase_editor":
+            page_name = "config"
+        self.redirect("/{}.html?v={}".format(page_name, self.settings["access_token"][:8]))
 
 
 
@@ -214,7 +232,7 @@ class ConfigApp(tornado.web.Application):
         settings = {
             "access_token": self.access_token, # our custom setting
             "login_url": "/version",
-            "debug": True
+            "debug": False
         }
         handlers = [
             (r"/(.*\.html|config.js)", NoCacheStaticFileHandler, {"path": current_ime_config_dir}),

@@ -127,6 +127,7 @@ class CinBase:
         cbTS.selDayiSymbolCharType = 0
         cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
+        cbTS.lastKeyEvent = None
 
         cbTS.menucandidates = []
         cbTS.smenucandidates = []
@@ -276,6 +277,9 @@ class CinBase:
     # 使用者離開輸入法
     def onDeactivate(self, cbTS):
         cbTS.lastKeyDownCode = 0
+        cbTS.lastKeyDownTime = 0.0
+        cbTS.lastKeyEvent = None
+        cbTS.isLangModeChanged = False
         # 向系統宣告移除 Shift + Space 這個組合鍵用途 (全半形切換)
         cbTS.removePreservedKey(SHIFT_SPACE_GUID); # shift + space
 
@@ -315,9 +319,11 @@ class CinBase:
         charStrLow = charStr.lower()
 
         # 紀錄最後一次按下的鍵和按下的時間，在 filterKeyUp() 中要用
-        cbTS.lastKeyDownCode = keyEvent.keyCode
-        if cbTS.lastKeyDownTime == 0.0:
+        if cbTS.lastKeyDownTime == 0.0 or cbTS.lastKeyDownCode != keyEvent.keyCode:
             cbTS.lastKeyDownTime = time.time()
+        cbTS.lastKeyDownCode = keyEvent.keyCode
+        cbTS.lastKeyEvent = keyEvent
+        cbTS.isLangModeChanged = False
 
         if CinTable.loading or not getattr(cbTS, 'cin', None):
             return True
@@ -2299,19 +2305,31 @@ class CinBase:
                 # 檢查使用者當前的設定，是使用哪一邊的 Shift 來切換中英文模式
                 if cbTS.cfg.switchLangWithWhichShift == SWITCH_LANG_WITH_BOTH_SHIFT:
                     pass
-                elif cbTS.cfg.switchLangWithWhichShift == SWITCH_LANG_WITH_LEFT_SHIFT and not self.isPressed(VK_LSHIFT):
+                elif cbTS.cfg.switchLangWithWhichShift == SWITCH_LANG_WITH_LEFT_SHIFT and not self.isPressed(cbTS, VK_LSHIFT):
                     cbTS.lastKeyDownCode = 0
                     cbTS.lastKeyDownTime = 0.0
+                    cbTS.lastKeyEvent = None
                     return False
-                elif cbTS.cfg.switchLangWithWhichShift == SWITCH_LANG_WITH_RIGHT_SHIFT and not self.isPressed(VK_RSHIFT):
+                elif cbTS.cfg.switchLangWithWhichShift == SWITCH_LANG_WITH_RIGHT_SHIFT and not self.isPressed(cbTS, VK_RSHIFT):
                     cbTS.lastKeyDownCode = 0
                     cbTS.lastKeyDownTime = 0.0
+                    cbTS.lastKeyEvent = None
                     return False
 
                 pressedDuration = time.time() - cbTS.lastKeyDownTime
                 # 按下和放開的時間相隔 < 0.5 秒
                 if pressedDuration < 0.5:
-                    cbTS.isLangModeChanged = True
+                    self.toggleLanguageMode(cbTS)  # 切換中英文模式
+                    cbTS.showmenu = False
+                    cbTS.multifunctionmode = False
+                    needsEditSession = (
+                        (not cbTS.hidePromptMessages and not cbTS.client.isUiLess)
+                        or cbTS.showCandidates
+                        or len(cbTS.compositionChar) > 0
+                        or len(cbTS.compositionBufferString) > 0
+                    )
+                    if needsEditSession:
+                        cbTS.isLangModeChanged = True
 
         # 不管中英文模式，只要放開 CapsLock 鍵，輸入法都須要處理
         if cbTS.lastKeyDownCode == VK_CAPITAL and keyEvent.keyCode == VK_CAPITAL:
@@ -2324,6 +2342,7 @@ class CinBase:
 
         cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
+        cbTS.lastKeyEvent = None
 
 
         # 若切換中英文模式
@@ -2354,13 +2373,11 @@ class CinBase:
         keyCode = keyEvent.keyCode
         cbTS.lastKeyDownCode = 0
         cbTS.lastKeyDownTime = 0.0
+        cbTS.lastKeyEvent = None
 
         # 若放開 Shift 鍵,且觸發中英文切換
         if cbTS.isLangModeChanged and keyCode == VK_SHIFT:
-            self.toggleLanguageMode(cbTS)  # 切換中英文模式
             cbTS.isLangModeChanged = False
-            cbTS.showmenu = False
-            cbTS.multifunctionmode = False
             if not cbTS.hidePromptMessages and not cbTS.client.isUiLess:
                 message = '中文模式' if cbTS.langMode == CHINESE_MODE else '英數模式'
                 cbTS.isShowMessage = True
@@ -2409,7 +2426,9 @@ class CinBase:
 
 
     def onPreservedKey(self, cbTS, guid):
-        cbTS.lastKeyDownCode = 0;
+        cbTS.lastKeyDownCode = 0
+        cbTS.lastKeyDownTime = 0.0
+        cbTS.lastKeyEvent = None
         # some preserved keys registered are pressed
         if guid == SHIFT_SPACE_GUID: # 使用者按下 shift + space
             cbTS.isShapeModeChanged = True
@@ -2853,9 +2872,11 @@ class CinBase:
         # The least significant bit indicates toggle state (Win SDK GetKeyState).
         return bool(ctypes.WinDLL("User32.dll").GetKeyState(keyCode) & KEY_STATE_TOGGLED)
 
-    def isPressed(self, keyCode):
-        # Most significant bit indicates key is down; least significant bit indicates key was pressed since last call (Win SDK GetAsyncKeyState).
-        return bool(windll.user32.GetAsyncKeyState(keyCode) & KEY_PRESSED_MASK)
+    def isPressed(self, cbTS, keyCode):
+        lastKeyEvent = getattr(cbTS, 'lastKeyEvent', None)
+        if lastKeyEvent is not None:
+            return lastKeyEvent.isKeyDown(keyCode)
+        return False
 
     def setCompositionBufferString(self, cbTS, compositionString, removeStringLength):
         compPos1 = cbTS.compositionBufferCursor - removeStringLength

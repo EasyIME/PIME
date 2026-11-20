@@ -20,9 +20,12 @@ if (services.length == 0) {
 let server = NIME.createServer((request) => {
 
   let service = null;
+  // Dispatch must not throw: the id comes from another process and may be
+  // missing or not a string, and a guid comes from a hand-written ime.json.
+  let requestId = String(request['id'] || '').toLowerCase();
 
   services.forEach((tmpService) => {
-    if (tmpService['guid'].toLowerCase() === request['id'].toLowerCase()) {
+    if (String(tmpService['guid'] || '').toLowerCase() === requestId) {
       service = tmpService['textService'];
     }
   });

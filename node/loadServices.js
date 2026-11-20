@@ -49,7 +49,9 @@ function loadServices() {
   let services = [];
   imeDir.forEach((dir) => {
     let config = parseImeConfig(dir);
-    if (!config || !config.moduleName) {
+    // A request id is matched against guid, so a config without one can never
+    // be selected; skip it instead of loading a module nothing can reach.
+    if (!config || !config.guid || !config.moduleName) {
       return;
     }
 
@@ -84,7 +86,7 @@ function loadServiceById(id) {
   }
 
   let service = null;
-  let targetId = id.toLowerCase();
+  let targetId = String(id).toLowerCase();
 
   for (let dir of imeDir) {
     let config = parseImeConfig(dir);
@@ -92,7 +94,7 @@ function loadServiceById(id) {
       continue;
     }
 
-    if (config.guid.toLowerCase() === targetId) {
+    if (String(config.guid).toLowerCase() === targetId) {
       try {
         service = require(`./input_methods/${dir}/${config.moduleName}`);
         break;

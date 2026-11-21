@@ -93,6 +93,7 @@ class ChewingTextService(TextService):
 
         self.lastKeyDownTime = 0.0
         self.lastKeyEvent = None
+        self.autoEnglishMode = False  # 目前的英文模式是否由 Shift + 字母自動切換而來
 
         self.configVersion = chewingConfig.getVersion()
 
@@ -345,6 +346,11 @@ class ChewingTextService(TextService):
             return True
         # --------------   以下都是「沒有」正在輸入中文的狀況   --------------
 
+        # 編輯區是空的時按 Enter：若是自動切成的英文模式，切回中文；Enter 仍交給應用程式處理
+        if self.autoEnglishMode and keyEvent.keyCode == VK_RETURN:
+            self.switchBackFromAutoEnglish(keyEvent)
+            return False
+
         # 如果按下 Alt，可能是應用程式熱鍵，輸入法不做處理
         if keyEvent.isKeyDown(VK_MENU):
             return False
@@ -408,6 +414,7 @@ class ChewingTextService(TextService):
 
         # 某些狀況下，需要暫時強制切成英文模式，之後再恢復
         temporaryEnglishMode = False
+        stayEnglishMode = False  # 切成英文模式後不再復原
         oldLangMode = chewingContext.get_ChiEngMode()
         ignoreKey = False  # 新酷音是否須忽略這個按鍵
         keyHandled = False  # 輸入法是否有處理這個按鍵
@@ -441,8 +448,18 @@ class ChewingTextService(TextService):
                 if keyEvent.isKeyDown(VK_SHIFT):
                     # 如果是英文字母
                     if charStr.isalpha():
+                        # 沒有輸入到一半的注音、也沒開選字視窗時，若開啟 Shift + 字母切換英文，
+                        # 則直接切成英文模式並保持；編輯區已有的中文會留著，英文接在後面
+                        # (優先於快速輸入符號；要回中文模式，單按 Shift 即可)
+                        if cfg.shiftLetterSwitchToEnglish and not chewingContext.bopomofo_Check() \
+                                and not self.showCandidates:
+                            temporaryEnglishMode = True
+                            stayEnglishMode = True
+                            chewingContext.set_easySymbolInput(0)
+                            if not cfg.upperCaseWithShift:  # 如果沒有開啟 Shift 輸入大寫英文
+                                invertCase = True  # 大寫字母轉成小寫
                         # 如果不使用快速輸入符號功能，則暫時切成英文模式
-                        if not cfg.easySymbolsWithShift:
+                        elif not cfg.easySymbolsWithShift:
                             temporaryEnglishMode = True  # 暫時切換成英文模式
                             if not cfg.upperCaseWithShift:  # 如果沒有開啟 Shift 輸入大寫英文
                                 invertCase = True  # 大寫字母轉成小寫
@@ -699,8 +716,14 @@ class ChewingTextService(TextService):
                 self.showMessage(message, 2)
 
         # 若先前有暫時強制切成英文模式，需要復原
-        if temporaryEnglishMode:
+        if temporaryEnglishMode and not stayEnglishMode:
             chewingContext.set_ChiEngMode(oldLangMode)
+        elif stayEnglishMode:
+            self.autoEnglishMode = True
+
+        # 編輯區有內容時按 Enter 送出：若是自動切成的英文模式，一併切回中文
+        if keyCode == VK_RETURN and self.autoEnglishMode:
+            self.switchBackFromAutoEnglish(keyEvent)
 
         # 依照目前狀態，更新語言列顯示的圖示
         self.updateLangButtons()
@@ -900,8 +923,21 @@ class ChewingTextService(TextService):
                 icon_path = os.path.join(self.icon_dir, icon_name)
                 self.changeButton("switch-shape", icon=icon_path)
 
+    # 由 Shift + 字母自動切成英文模式後，按 Enter 自動切回中文模式
+    # Shift/Ctrl/Alt + Enter 不切換 (例如聊天軟體的換行)
+    def switchBackFromAutoEnglish(self, keyEvent):
+        if not chewingConfig.enterSwitchBackToChinese:
+            return
+        if keyEvent.isKeyDown(VK_SHIFT) or keyEvent.isKeyDown(VK_CONTROL) or keyEvent.isKeyDown(VK_MENU):
+            return
+        self.autoEnglishMode = False
+        if self.chewingContext.get_ChiEngMode() == ENGLISH_MODE:
+            self.chewingContext.set_ChiEngMode(CHINESE_MODE)
+            self.updateLangButtons()
+
     # 切換中英文模式
     def toggleLanguageMode(self):
+        self.autoEnglishMode = False  # 手動切換後，不再自動切回中文
         chewingContext = self.chewingContext
         if chewingContext:
             if chewingContext.get_ChiEngMode() == CHINESE_MODE:

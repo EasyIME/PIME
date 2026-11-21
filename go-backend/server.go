@@ -15,10 +15,8 @@ import (
 	"github.com/EasyIME/pime-go/pime"
 
 	// 导入输入法包
-	"github.com/EasyIME/pime-go/input_methods/fcitx5"
 	"github.com/EasyIME/pime-go/input_methods/meow"
 	"github.com/EasyIME/pime-go/input_methods/rime"
-	simplepinyin "github.com/EasyIME/pime-go/input_methods/simple_pinyin"
 )
 
 // Client 客户端连接
@@ -393,21 +391,9 @@ func loadInputMethods(server *Server) {
 			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
 				return rime.New(client)
 			})
-		case "simple_pinyin":
-			// 拼音输入法
-			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
-				return simplepinyin.New(client)
-			})
-		case "fcitx5":
-			// Fcitx5 输入法
-			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
-				return fcitx5.New(client)
-			})
 		default:
-			// 默认使用拼音输入法
-			server.RegisterService(guid, func(client *pime.Client, g string) pime.TextService {
-				return simplepinyin.New(client)
-			})
+			// 此仓库只有 meow 和 rime 的实现；未知目录保持未注册。
+			log.Printf("跳过未实现的输入法: %s (%s)", name, guid)
 		}
 	}
 }

@@ -461,7 +461,13 @@ function pageReady() {
         $("#candPerRow").TouchSpin({min:1, max:10});
         $("#candPerPage").TouchSpin({min:1, max:10});
     }
-    if (imeFolderName != "chedayi") {
+    // The 智慧選字 block belongs to the Services the Capability roster grants
+    // Intelligent select to; capabilities.CAPABILITIES in
+    // python/cinbase/capabilities.py is the source of truth for that
+    // allow-list. Hiding the block also clears the inputs' name, which makes
+    // the checkboxes unsavable (updateConfig skips nameless inputs), so gate
+    // on the roster, not on one folder name.
+    if (["chedayi", "chebihua"].indexOf(imeFolderName) === -1) {
         $("#dayiSmartSelectionOptions").hide();
         $("#dayiSmartSelectionOptions input").attr("name", "");
     }

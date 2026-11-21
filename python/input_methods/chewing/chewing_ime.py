@@ -27,6 +27,8 @@ import sys
 from ctypes import windll  # for ShellExecuteW() and GetAsyncKeyState()
 
 from .chewing_config import chewingConfig, SWITCH_LANG_WITH_BOTH_SHIFT, SWITCH_LANG_WITH_LEFT_SHIFT, SWITCH_LANG_WITH_RIGHT_SHIFT
+from .tone_menu import ToneMenu
+from libchewing.libchewing import _libchewing
 import sqlite3
 
 
@@ -93,6 +95,7 @@ class ChewingTextService(TextService):
 
         self.lastKeyDownTime = 0.0
         self.lastKeyEvent = None
+        self.toneMenu = None  # 聲調選單 (第一次按 ↑ 時才建立)
 
         self.configVersion = chewingConfig.getVersion()
 
@@ -287,6 +290,8 @@ class ChewingTextService(TextService):
         # 釋放 libchewing context 的資源
         self.chewingContext = None
         self.lastKeyEvent = None
+        if self.toneMenu:
+            self.toneMenu.close()
 
         # 丟棄輸入法狀態
         self.lastLangMode = None
@@ -421,8 +426,14 @@ class ChewingTextService(TextService):
         else:
             chewingContext.set_easySymbolInput(0)
 
+        # 聲調選單開著時，所有按鍵都交給它處理
+        toneMenuKey = self.toneMenu is not None and self.toneMenu.is_open()
+        if toneMenuKey:
+            keyHandled = True
+            ignoreKey = not self.onToneMenuKey(keyEvent)
+
         # 若目前輸入的按鍵是可見字元 (字母、數字、標點、空白...等)
-        if keyEvent.isPrintableChar():
+        elif keyEvent.isPrintableChar():
             keyHandled = True
             invertCase = False  # 是否需要反轉大小寫
 
@@ -612,6 +623,13 @@ class ChewingTextService(TextService):
                 # 更新選字視窗游標位置
                 self.setCandidateCursor(candCursor)
 
+            # 編輯區有字、沒在選字、也沒在打注音時按 ↑：列出游標所在那個字的其他聲調
+            if not keyHandled and keyCode == VK_UP and not self.showCandidates \
+                    and not keyEvent.isKeyDown(VK_SHIFT) \
+                    and chewingContext.buffer_Check() and not chewingContext.bopomofo_Check():
+                self.openToneMenu()
+                keyHandled = ignoreKey = True  # 不要讓下面的流程把剛打開的選單關掉
+
             # 按鍵還沒被處理過
             if not keyHandled:
                 # the candidate window does not need the key. pass it to libchewing.
@@ -626,7 +644,8 @@ class ChewingTextService(TextService):
                     ignoreKey = True
 
         # 新酷音引擎忽略不處理此按鍵
-        if keyHandled and chewingContext.keystroke_CheckIgnore():
+        # (聲調選單換字時最後呼叫的是移動游標，它的結果不代表這個按鍵，所以不看)
+        if keyHandled and not toneMenuKey and chewingContext.keystroke_CheckIgnore():
             ignoreKey = True
 
         if not ignoreKey:  # 如果這個按鍵是有意義的，新酷音有做處理 (不可忽略)
@@ -706,6 +725,49 @@ class ChewingTextService(TextService):
         self.updateLangButtons()
 
         return keyHandled  # 告知系統我們是否有處理這個按鍵
+
+    # 打開聲調選單：用選字視窗列出游標所在那個字的其他聲調，例如「ㄅㄧˊ 鼻」
+    def openToneMenu(self):
+        if self.toneMenu is None:
+            self.toneMenu = ToneMenu(_libchewing, ChewingContext, CHEWING_DATA_DIR)
+        labels = self.toneMenu.open(self.chewingContext)
+        if not labels:
+            self.toneMenu.close()
+            self.showMessage("這個字沒有其他聲調", 2)
+            return
+        self.customizeUI(candPerRow=1)  # 聲調由上往下排，一聲在最上面
+        self.setCandidateList(labels)
+        self.setCandidateCursor(0)
+        self.setShowCandidates(True)
+
+    # 聲調選單開著時的按鍵：選字鍵或 Enter 換聲調，方向鍵移動游標，其他鍵關掉選單
+    # 回傳 True 表示編輯區可能改變，需要更新畫面
+    def onToneMenuKey(self, keyEvent):
+        menu = self.toneMenu
+        count = len(menu.phones)
+        keyCode = keyEvent.keyCode
+        selKeys = chewingConfig.getSelKeys()[:count]
+        choice = None
+        if keyEvent.isPrintableChar() and chr(keyEvent.charCode) in selKeys:
+            choice = selKeys.index(chr(keyEvent.charCode))
+        elif keyCode == VK_RETURN:
+            choice = self.candidateCursor
+        elif keyCode in (VK_LEFT, VK_UP):
+            self.setCandidateCursor((self.candidateCursor - 1) % count)
+            return False
+        elif keyCode in (VK_RIGHT, VK_DOWN):
+            self.setCandidateCursor((self.candidateCursor + 1) % count)
+            return False
+
+        if choice is not None:
+            if not menu.choose(self.chewingContext, choice, chewingConfig.keyboardLayout):
+                self.showMessage("無法換成這個聲調", 2)
+        else:
+            menu.close()
+        self.setShowCandidates(False)
+        self.setCandidateList([])
+        self.customizeUI(candPerRow=chewingConfig.candPerRow)  # 恢復一般選字的排列
+        return True
 
     # 使用者放開按鍵，在 app 收到前先過濾那些鍵是輸入法需要的。
     # return True，系統會呼叫 onKeyUp() 進一步處理這個按鍵
@@ -955,6 +1017,9 @@ class ChewingTextService(TextService):
     # forced 參數會是 True，在這種狀況下，要清除一些 buffer
     def onCompositionTerminated(self, forced):
         TextService.onCompositionTerminated(self, forced)
+        if self.toneMenu and self.toneMenu.is_open():  # 編輯區沒了，選單指的字也沒了
+            self.toneMenu.close()
+            self.customizeUI(candPerRow=chewingConfig.candPerRow)
         if forced:
             # 中文組字到一半被系統強制關閉，清除編輯區內容
             chewingContext = self.chewingContext

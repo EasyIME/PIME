@@ -126,6 +126,9 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM Step 4 copied the entire input_methods tree into %PACKAGE_DIR% (build output only;
+REM source files under %ROOT_DIR% are never modified). Strip non-runtime and dev-only
+REM files from the staged package output below.
 if exist "%PACKAGE_DIR%\input_methods\rime\brise" (
     rmdir /s /q "%PACKAGE_DIR%\input_methods\rime\brise"
     if errorlevel 1 (
@@ -136,6 +139,9 @@ if exist "%PACKAGE_DIR%\input_methods\rime\brise" (
     echo [INFO] Removed rime\brise from package output
 )
 
+REM All Go input methods are compiled into server.exe. Remove copied *.go files from
+REM every staged input_methods subdirectory so source files are not shipped and
+REM `go build ./...` / `go test ./...` do not treat build\ as duplicate Go packages.
 for /d %%D in ("%PACKAGE_DIR%\input_methods\*") do (
     if exist "%%~fD\*.go" (
         del /q "%%~fD\*.go" >nul

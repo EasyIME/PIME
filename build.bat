@@ -1,3 +1,22 @@
+@echo off
+setlocal
+
+set "BUILD_GO=0"
+if /I "%PIME_BUILD_GO%"=="1" set "BUILD_GO=1"
+if /I "%PIME_BUILD_GO%"=="true" set "BUILD_GO=1"
+
+:parse_args
+if "%~1"=="" goto :args_done
+if /I "%~1"=="--with-go" (
+    set "BUILD_GO=1"
+    shift
+    goto :parse_args
+)
+echo Unknown option: %~1
+echo Usage: build.bat [--with-go]
+exit /b 1
+
+:args_done
 cmake . -Bbuild -G "Visual Studio 18 2026" -A Win32 -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
 cmake --build build --config Release
@@ -66,5 +85,11 @@ if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
 cmd /C npm run build
 if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
 cd ..\..\..
+
+if "%BUILD_GO%"=="1" (
+    echo "Start building go-backend"
+    call go-backend\build.bat
+    if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
+)
 
 

@@ -6,6 +6,8 @@ import json
 import copy
 import time
 
+from pimepaths import appdata
+
 
 class Cin(object):
 
@@ -382,7 +384,7 @@ class Cin(object):
 
 
     def getCountDir(self):
-        count_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", self.imeDirName)
+        count_dir = os.path.join(appdata(), "PIME", self.imeDirName)
         os.makedirs(count_dir, exist_ok=True)
         return count_dir
 

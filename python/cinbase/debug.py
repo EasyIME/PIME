@@ -2,6 +2,9 @@ import os
 import copy
 import time
 import json
+
+from pimepaths import appdata
+
 from cinbase.tools import cpuinfo
 
 class Debug:
@@ -20,7 +23,7 @@ class Debug:
                         "liu.json": "嘸蝦米"})
 
     def getConfigDir(self):
-        config_dir = os.path.join(os.path.expandvars("%APPDATA%"), "PIME", self.imeDirName)
+        config_dir = os.path.join(appdata(), "PIME", self.imeDirName)
         os.makedirs(config_dir, exist_ok=True)
         return config_dir
 

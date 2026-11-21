@@ -41,6 +41,7 @@ class CinBaseConfig:
         self.switchLangWithShift = True
         self.switchLangWithWhichShift = SWITCH_LANG_WITH_BOTH_SHIFT
         self.outputSmallLetterWithShift = False
+        self.shiftLetterSwitchToEnglish = False
         self.switchPageWithSpace = False
         self.outputSimpChinese = False
         self.enableSwitchTCSC = True

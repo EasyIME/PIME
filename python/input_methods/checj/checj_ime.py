@@ -137,11 +137,6 @@ class CheCJTextService(TextService):
         self.cinbase.onCompositionTerminated(self, forced)
 
 
-    # 設定候選字頁數
-    def setCandidatePage(self, page):
-        self.currentCandPage = page
-
-
 class CinTable(CinTableBase):
     def __init__(self):
         super().__init__()

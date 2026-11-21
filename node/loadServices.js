@@ -3,13 +3,15 @@
 let fs   = require('fs');
 let path = require('path');
 
-function getImeBaseDir() {
-  return path.join(process.cwd(), 'input_methods');
+// `baseDir` defaults to the process working directory, which is what the
+// backend uses at runtime. Tests pass a fixture directory instead.
+function getImeBaseDir(baseDir) {
+  return path.join(baseDir || process.cwd(), 'input_methods');
 }
 
-function parseImeConfig(dir) {
-  let baseDir = getImeBaseDir();
-  let dirPath = path.join(baseDir, dir);
+function parseImeConfig(dir, baseDir) {
+  let imeDir = getImeBaseDir(baseDir);
+  let dirPath = path.join(imeDir, dir);
   try {
     if (!fs.lstatSync(dirPath).isDirectory()) {
       return null;
@@ -32,23 +34,23 @@ function parseImeConfig(dir) {
   }
 }
 
-function loadServices() {
-  let baseDir = getImeBaseDir();
-  if (!fs.existsSync(baseDir)) {
+function loadServices(baseDir) {
+  let imeDir = getImeBaseDir(baseDir);
+  if (!fs.existsSync(imeDir)) {
     return [];
   }
 
-  let imeDir;
+  let entries;
   try {
-    imeDir = fs.readdirSync(baseDir);
+    entries = fs.readdirSync(imeDir);
   } catch (e) {
-    console.warn(`[Node PIME] Failed to read ${baseDir}:`, e.message);
+    console.warn(`[Node PIME] Failed to read ${imeDir}:`, e.message);
     return [];
   }
 
   let services = [];
-  imeDir.forEach((dir) => {
-    let config = parseImeConfig(dir);
+  entries.forEach((dir) => {
+    let config = parseImeConfig(dir, baseDir);
     // A request id is matched against guid, so a config without one can never
     // be selected; skip it instead of loading a module nothing can reach.
     if (!config || !config.guid || !config.moduleName) {
@@ -67,34 +69,37 @@ function loadServices() {
   return services;
 }
 
-function loadServiceById(id) {
+function loadServiceById(id, baseDir) {
   if (!id) {
     return null;
   }
 
-  let baseDir = getImeBaseDir();
-  if (!fs.existsSync(baseDir)) {
+  let imeDir = getImeBaseDir(baseDir);
+  if (!fs.existsSync(imeDir)) {
     return null;
   }
 
-  let imeDir;
+  let entries;
   try {
-    imeDir = fs.readdirSync(baseDir);
+    entries = fs.readdirSync(imeDir);
   } catch (e) {
-    console.warn(`[Node PIME] Failed to read ${baseDir}:`, e.message);
+    console.warn(`[Node PIME] Failed to read ${imeDir}:`, e.message);
     return null;
   }
 
   let service = null;
   let targetId = String(id).toLowerCase();
 
-  for (let dir of imeDir) {
-    let config = parseImeConfig(dir);
+  for (let dir of entries) {
+    let config = parseImeConfig(dir, baseDir);
     if (!config || !config.guid || !config.moduleName) {
       continue;
     }
 
-    if (String(config.guid).toLowerCase() === targetId) {
+    let matches = String(config.guid).toLowerCase() === targetId;
+    // 一個目錄就是一個語言檔：DllRegisterServer 為每個 ime.json 各發一次
+    // AddLanguageProfile，所以這裡只需比對該目錄自己的 guid。
+    if (matches) {
       try {
         service = require(`./input_methods/${dir}/${config.moduleName}`);
         break;

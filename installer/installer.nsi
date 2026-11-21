@@ -368,16 +368,22 @@ SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
 	SectionGroup /e $(PYTHON_CHS_SECTION_GROUP) python_chs_section_group
 		Section $(RIME) rime
 			SectionIn 2
-			SetOutPath "$INSTDIR\python\input_methods\rime"
-			File /r /x "brise" "..\python\input_methods\rime\*.*"
-			SetOutPath "$INSTDIR\python\input_methods\rime\data"
+			SetOutPath "$INSTDIR\python\rimebase"
+			File /r /x "brise" "..\python\rimebase\*.*"
+			SetOutPath "$INSTDIR\python\rimebase\data"
 			File "..\python\input_methods\rime\brise\*.txt"
 			File "..\python\input_methods\rime\brise\*.yaml"
 			File "..\python\input_methods\rime\brise\preset\*.yaml"
 			File "..\python\input_methods\rime\brise\supplement\*.yaml"
 			File "..\python\input_methods\rime\brise\extra\*.yaml"
-			SetOutPath "$INSTDIR\python\input_methods\rime\data\opencc"
+			SetOutPath "$INSTDIR\python\rimebase\data\opencc"
 			File "..\python\opencc\*.json" "..\python\opencc\*.ocd"
+			; one folder per Windows input language: the two profiles of the
+			; same engine, each with its own ime.json and thin wrapper
+			SetOutPath "$INSTDIR\python\input_methods\rime"
+			File "..\python\input_methods\rime\*.*"
+			SetOutPath "$INSTDIR\python\input_methods\rime-cn"
+			File "..\python\input_methods\rime-cn\*.*"
 			StrCpy $INST_PYTHON "True"
 		SectionEnd
 	SectionGroupEnd

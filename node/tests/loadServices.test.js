@@ -103,6 +103,9 @@ test('an ime.json without guid does not break a sibling service', async () => {
     assert.ok(b.alive());
   } finally {
     b.stop();
+    // The child holds `root` as its cwd, so on Windows the directory unlocks
+    // only once the process is gone.
+    await b.exit();
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
@@ -114,6 +117,7 @@ test('a tree where no config has a guid exits at startup', async () => {
     assert.strictEqual(await exitWithin(b, 5000), 1, 'no usable service left, so server.js must report it');
   } finally {
     b.stop();
+    await b.exit();
     fs.rmSync(root, { recursive: true, force: true });
   }
 });

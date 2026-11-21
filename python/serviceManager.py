@@ -74,6 +74,9 @@ class TextServiceInfo:
 
         self.serviceName = json_data["serviceName"]
         self.guid = json_data["guid"].lower()
+        # 一個 input_methods 目錄就是一個 Windows 輸入語言檔：一份 ime.json、
+        # 一個 profile GUID，由 DllRegisterServer 各自註冊，所以這裡只需記
+        # flat 的 guid。見 docs/adr/0004-per-backend-profile-guids.md。
         self.configTool = json_data.get("configTool", "")
 
     def createInstance(self, client):

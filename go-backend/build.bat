@@ -56,9 +56,8 @@ if errorlevel 1 (
 echo [INFO] Output directory: "%PACKAGE_DIR%"
 
 if not exist "%RIME_DATA_DIR%\default.yaml" (
-    echo [ERROR] Missing Go Rime shared data: "%RIME_DATA_DIR%"
-    echo [ERROR] Initialize the submodule from https://github.com/gaboolic/rime-frost
-    exit /b 1
+    echo [WARN] Bundled Go Rime shared data not found: "%RIME_DATA_DIR%"
+    echo [WARN] Continuing without bundled rime-frost data; will fall back to plum or Weasel if available.
 )
 
 echo.
@@ -127,6 +126,9 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM Step 4 copied the entire input_methods tree into %PACKAGE_DIR% (build output only;
+REM source files under %ROOT_DIR% are never modified). Strip non-runtime and dev-only
+REM files from the staged package output below.
 if exist "%PACKAGE_DIR%\input_methods\rime\brise" (
     rmdir /s /q "%PACKAGE_DIR%\input_methods\rime\brise"
     if errorlevel 1 (
@@ -137,15 +139,20 @@ if exist "%PACKAGE_DIR%\input_methods\rime\brise" (
     echo [INFO] Removed rime\brise from package output
 )
 
-if exist "%PACKAGE_DIR%\input_methods\rime\*.go" (
-    del /q "%PACKAGE_DIR%\input_methods\rime\*.go" >nul
-    if errorlevel 1 (
-        echo [ERROR] Failed to remove packaged Go source files
-        popd
-        exit /b 1
+REM All Go input methods are compiled into server.exe. Remove copied *.go files from
+REM every staged input_methods subdirectory so source files are not shipped and
+REM `go build ./...` / `go test ./...` do not treat build\ as duplicate Go packages.
+for /d %%D in ("%PACKAGE_DIR%\input_methods\*") do (
+    if exist "%%~fD\*.go" (
+        del /q "%%~fD\*.go" >nul
+        if errorlevel 1 (
+            echo [ERROR] Failed to remove packaged Go source files from "%%~fD"
+            popd
+            exit /b 1
+        )
     )
-    echo [INFO] Removed packaged Go source files
 )
+echo [INFO] Removed packaged Go source files
 
 if exist "%PACKAGE_DIR%\input_methods\rime\rime.dll.bak-32bit" (
     del /q "%PACKAGE_DIR%\input_methods\rime\rime.dll.bak-32bit" >nul
@@ -221,11 +228,15 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [INFO] Copying bundled rime-frost submodule data ...
-xcopy "%RIME_DATA_DIR%" "%PACKAGE_RIME_DATA_DIR%\" /E /I /Y >nul
-if errorlevel 1 (
-    echo [ERROR] Failed to copy bundled Rime data from "%RIME_DATA_DIR%"
-    exit /b 1
+if exist "%RIME_DATA_DIR%\default.yaml" (
+    echo [INFO] Copying bundled rime-frost submodule data ...
+    xcopy "%RIME_DATA_DIR%" "%PACKAGE_RIME_DATA_DIR%\" /E /I /Y >nul
+    if errorlevel 1 (
+        echo [ERROR] Failed to copy bundled Rime data from "%RIME_DATA_DIR%"
+        exit /b 1
+    )
+) else (
+    echo [WARN] Skipping bundled Rime data copy; "%RIME_DATA_DIR%\default.yaml" not found.
 )
 
 set "PLUM_DATA_PREPARED=0"

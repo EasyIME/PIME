@@ -22,6 +22,7 @@ Contributions using AI coding tools are welcomed! However, to ensure code qualit
 *   [git](https://git-scm.com/)
 *   [Node.js](https://nodejs.org/) with npm (builds the bundled JavaScript input methods)
 *   [NSIS](https://nsis.sourceforge.io/) 3.x (only needed to build the installer)
+*   [Go](https://go.dev/) >= 1.21 (optional; only needed when building the experimental Go backend)
 
 ## How to Build
 *   Get source from GitHub.
@@ -36,6 +37,12 @@ Contributions using AI coding tools are welcomed! However, to ensure code qualit
         rustup target add i686-pc-windows-msvc
 
 *   Use `build.bat` to build everything. It builds the launcher, the x86, x64 and ARM64 text service DLLs, and bundles the JavaScript input methods.
+
+    The experimental Go backend (`go-backend\`) is disabled by default and is not packaged in the installer. To include it in the build (requires Go >= 1.21 in `PATH`):
+
+        build.bat --with-go
+
+    You can also enable it via the environment variable `PIME_BUILD_GO=1`, or run `go-backend\build.bat` directly.
 
 *   To build by hand, use the same generator and policy flag as `build.bat`:
 

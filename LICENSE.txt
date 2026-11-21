@@ -40,3 +40,16 @@ The following components are from other projects:
     framework + algorithm RIME developed by lotem licensed under BSD license.
     http://rime.im/
     https://github.com/rime
+
+  python\cinbase\json\CnsStroke.json (source: python\cinbase\cin\CnsStroke.cin):
+    The Stroke table (筆畫輸入法, 筆畫) is derived from the 全字庫屬性資料集對照表與
+    全字庫中文碼對照表 of 數位發展部 CNS11643中文標準交換碼全字庫(簡稱全字庫), version
+    20260805, and is licensed under 政府資料開放授權條款 第 1 版 (Open Government Data
+    License, OGDL-1.0).
+    https://data.gov.tw/license
+    The 顯名聲明 exhibit that license requires ships with the data as
+    python\cinbase\json\CnsStroke.LICENSE.txt, next to the JSON the engine loads,
+    and is repeated in the header of the .cin source. Both are generated from one
+    place by python\cinbase\tools\cnsstroke2cin.py.
+    This LICENSE.txt is installed into the installation directory with the payload,
+    so the inventory reaches the user as well.

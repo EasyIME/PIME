@@ -151,6 +151,7 @@ Function uninstallOldVersion
 			RMDir /r "$SMPROGRAMS\$(PRODUCT_NAME)"
 
 			Delete "$INSTDIR\version.txt"
+			Delete "$INSTDIR\LICENSE.txt"
 			Delete "$INSTDIR\Uninstall.exe"
 
 			${If} ${RebootFlag}
@@ -257,6 +258,10 @@ Section $(SECTION_MAIN) SecMain
     ; Install backend informations
     File "..\backends.json"
 
+    ; Install the third-party data licence inventory: it names the exhibit file
+    ; that ships beside each derived table (json\*.LICENSE.txt).
+    File "..\LICENSE.txt"
+
 	; Safely clean/rename old binaries before writing new ones
 	!insertmacro CleanOldBinaries
 
@@ -343,6 +348,14 @@ SectionGroup /e $(PYTHON_SECTION_GROUP) python_section_group
 			SectionIn 2
 			SetOutPath "$INSTDIR\python\input_methods\cheez"
 			File /r "..\python\input_methods\cheez\*.*"
+			StrCpy $INST_PYTHON "True"
+			StrCpy $INST_CINBASE "True"
+		SectionEnd
+
+		Section $(CHEBIHUA) chebihua
+			SectionIn 2
+			SetOutPath "$INSTDIR\python\input_methods\chebihua"
+			File /r "..\python\input_methods\chebihua\*.*"
 			StrCpy $INST_PYTHON "True"
 			StrCpy $INST_CINBASE "True"
 		SectionEnd
@@ -512,6 +525,7 @@ Section "" Register
 	!insertmacro CreateCinBaseShortcut ${chesimplex} $(SET_CHESIMPLEX) chesimplex
 	!insertmacro CreateCinBaseShortcut ${chephonetic} $(SET_CHEPHONETIC) chephonetic
 	!insertmacro CreateCinBaseShortcut ${cheez} $(SET_CHEEZ) cheez
+	!insertmacro CreateCinBaseShortcut ${chebihua} $(SET_CHEBIHUA) chebihua
 
 	CreateShortCut "$SMPROGRAMS\$(PRODUCT_NAME)\$(UNINSTALL_PIME).lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
@@ -534,6 +548,7 @@ SectionEnd
 	!insertmacro MUI_DESCRIPTION_TEXT ${chesimplex} $(chesimplex_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${chephonetic} $(chephonetic_DESC)
     !insertmacro MUI_DESCRIPTION_TEXT ${cheez} $(cheez_DESC)
+    !insertmacro MUI_DESCRIPTION_TEXT ${chebihua} $(chebihua_DESC)
     !insertmacro MUI_DESCRIPTION_TEXT ${rime} $(rime_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${mcbopomofo} $(mcbopomofo_DESC)
 	!insertmacro MUI_DESCRIPTION_TEXT ${mcfoxim} $(mcfoxim_DESC)
@@ -581,6 +596,7 @@ Section "Uninstall"
 	RMDir /r "$SMPROGRAMS\$(PRODUCT_NAME)"
 
 	Delete "$INSTDIR\version.txt"
+	Delete "$INSTDIR\LICENSE.txt"
 	Delete "$INSTDIR\Uninstall.exe"
 	RMDir /REBOOTOK "$INSTDIR"
 

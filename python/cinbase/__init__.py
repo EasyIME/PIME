@@ -712,7 +712,7 @@ class CinBase:
             elif cbTS.imeDirName == "cheez":
                 cbTS.smenucandidates = [menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase, menu_supportWildcard, menu_imeReverseLookup]
                 cbTS.smenuitems = ["autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "supportWildcard", "imeReverseLookup"]
-            elif cbTS.imeDirName == "chedayi":
+            elif cbTS.imeDirName in ("chedayi", "chebihua"):
                 cbTS.smenucandidates = [menu_fullShapeSymbols, menu_easySymbolsWithShift, menu_autoClearCompositionChar, menu_playSoundWhenNonCand, menu_showPhrase, menu_sortByPhrase, menu_intelligentSelect, menu_intelligentSelectRecent, menu_intelligentSelectContext, menu_supportWildcard, menu_imeReverseLookup, menu_homophoneQuery]
                 cbTS.smenuitems = ["fullShapeSymbols", "easySymbolsWithShift", "autoClearCompositionChar", "playSoundWhenNonCand", "showPhrase", "sortByPhrase", "intelligentSelect", "intelligentSelectRecent", "intelligentSelectContext", "supportWildcard", "imeReverseLookup", "homophoneQuery"]
             else:
@@ -2806,7 +2806,7 @@ class CinBase:
         return lastCommitString[-1:]
 
     def sortByIntelligentSelect(self, cbTS, key, candidates):
-        if cbTS.imeDirName != "chedayi" or not getattr(cbTS, 'intelligentSelect', False) or not candidates:
+        if cbTS.imeDirName not in ("chedayi", "chebihua") or not getattr(cbTS, 'intelligentSelect', False) or not candidates:
             return candidates
         return cbTS.cin.sortByCount(
             key,
@@ -2817,7 +2817,7 @@ class CinBase:
         )
 
     def addIntelligentSelectCount(self, cbTS, key, commitStr):
-        if cbTS.imeDirName == "chedayi" and getattr(cbTS, 'intelligentSelect', False) and key:
+        if cbTS.imeDirName in ("chedayi", "chebihua") and getattr(cbTS, 'intelligentSelect', False) and key:
             cbTS.cin.addCount(key, commitStr, self.getIntelligentSelectPreviousChar(cbTS))
 
     def sortByPhrase(self, cbTS, candidates):

@@ -9,6 +9,7 @@
     "switchLangWithShift": true,
     "switchLangWithWhichShift": 0,
     "outputSmallLetterWithShift": false,
+    "enableShiftSpace": true,
     "switchPageWithSpace": false,
     "fullShapeSymbols": false,
     "directOutFSymbols": false,

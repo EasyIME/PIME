@@ -7,18 +7,23 @@ function getImeBaseDir() {
   return path.join(process.cwd(), 'input_methods');
 }
 
-function parseImeConfig(dir) {
-  let baseDir = getImeBaseDir();
-  let dirPath = path.join(baseDir, dir);
+// Lists the language profile manifests of an input method module:
+// ime.json, followed by ime_profiles/*/ime.json. The files may not exist.
+function imeJsonPaths(dir) {
+  let dirPath = path.join(getImeBaseDir(), dir);
+  let paths = [path.join(dirPath, 'ime.json')];
+  let profilesDir = path.join(dirPath, 'ime_profiles');
   try {
-    if (!fs.lstatSync(dirPath).isDirectory()) {
-      return null;
-    }
+    fs.readdirSync(profilesDir).sort().forEach((profile) => {
+      paths.push(path.join(profilesDir, profile, 'ime.json'));
+    });
   } catch (e) {
-    return null;
+    // no ime_profiles dir
   }
+  return paths;
+}
 
-  let configPath = path.join(dirPath, 'ime.json');
+function parseImeConfig(configPath) {
   if (!fs.existsSync(configPath)) {
     return null;
   }
@@ -32,7 +37,8 @@ function parseImeConfig(dir) {
   }
 }
 
-function loadServices() {
+// Returns [dir, config] pairs of all language profiles. The first manifest of a guid wins.
+function loadImeConfigs() {
   let baseDir = getImeBaseDir();
   if (!fs.existsSync(baseDir)) {
     return [];
@@ -46,15 +52,31 @@ function loadServices() {
     return [];
   }
 
-  let services = [];
+  let configs = [];
+  let guids = new Set();
   imeDir.forEach((dir) => {
-    let config = parseImeConfig(dir);
-    // A request id is matched against guid, so a config without one can never
-    // be selected; skip it instead of loading a module nothing can reach.
-    if (!config || !config.guid || !config.moduleName) {
-      return;
-    }
+    imeJsonPaths(dir).forEach((configPath) => {
+      let config = parseImeConfig(configPath);
+      // A request id is matched against guid, so a config without one can never
+      // be selected; skip it instead of loading a module nothing can reach.
+      if (!config || !config.guid || !config.moduleName) {
+        return;
+      }
+      let guid = String(config.guid).toLowerCase();
+      if (guids.has(guid)) {
+        console.warn(`[Node PIME] Duplicate guid ${guid} in ${configPath} ignored`);
+        return;
+      }
+      guids.add(guid);
+      configs.push([dir, config]);
+    });
+  });
+  return configs;
+}
 
+function loadServices() {
+  let services = [];
+  loadImeConfigs().forEach(([dir, config]) => {
     try {
       let textService = require(`./input_methods/${dir}/${config.moduleName}`);
       config['textService'] = textService;
@@ -72,25 +94,11 @@ function loadServiceById(id) {
     return null;
   }
 
-  let baseDir = getImeBaseDir();
-  if (!fs.existsSync(baseDir)) {
-    return null;
-  }
-
-  let imeDir;
-  try {
-    imeDir = fs.readdirSync(baseDir);
-  } catch (e) {
-    console.warn(`[Node PIME] Failed to read ${baseDir}:`, e.message);
-    return null;
-  }
-
   let service = null;
   let targetId = String(id).toLowerCase();
 
-  for (let dir of imeDir) {
-    let config = parseImeConfig(dir);
-    if (!config || !config.guid || !config.moduleName) {
+  for (let [dir, config] of loadImeConfigs()) {
+    if (!config.guid) {
       continue;
     }
 

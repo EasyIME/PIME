@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tracing::{error, info, warn};
 
 /// Configuration for a specific backend.
@@ -111,21 +111,37 @@ impl BackendRegistry {
         };
 
         for entry in entries.flatten() {
-            if let Some(guid) = Self::extract_guid_from_entry(&entry) {
-                mappings.insert(guid.to_lowercase(), backend_name.to_string());
+            for ime_json_path in Self::ime_json_paths(&entry.path()) {
+                let Some(guid) = Self::extract_guid(&ime_json_path) else {
+                    continue;
+                };
+                let guid = guid.to_lowercase();
+                // The first manifest of a GUID wins; skip duplicates.
+                if mappings.contains_key(&guid) {
+                    warn!("Duplicate GUID {} in {:?} ignored", guid, ime_json_path);
+                    continue;
+                }
                 info!("Mapped GUID {} to backend {}", guid, backend_name);
+                mappings.insert(guid, backend_name.to_string());
             }
         }
     }
 
-    /// Attempts to extract the "guid" field from an `ime.json` file in a directory entry.
-    fn extract_guid_from_entry(entry: &fs::DirEntry) -> Option<String> {
-        let path = entry.path();
-        if !path.is_dir() {
-            return None;
+    /// Lists the language profile manifests of an input method module:
+    /// `ime.json`, followed by `ime_profiles/*/ime.json`. The files may not exist.
+    fn ime_json_paths(module_dir: &Path) -> Vec<PathBuf> {
+        let mut paths = vec![module_dir.join("ime.json")];
+        if let Ok(profiles) = fs::read_dir(module_dir.join("ime_profiles")) {
+            let mut profile_paths: Vec<PathBuf> =
+                profiles.flatten().map(|e| e.path().join("ime.json")).collect();
+            profile_paths.sort();
+            paths.extend(profile_paths);
         }
+        paths
+    }
 
-        let ime_json_path = path.join("ime.json");
+    /// Attempts to extract the "guid" field from an `ime.json` file.
+    fn extract_guid(ime_json_path: &Path) -> Option<String> {
         let content = fs::read_to_string(ime_json_path).ok()?;
         let json: serde_json::Value = serde_json::from_str(&content).ok()?;
 
@@ -188,5 +204,31 @@ mod tests {
             Some(&"chewing".to_string())
         );
         assert_eq!(registry.resolve_guid("unknown"), None);
+    }
+
+    #[test]
+    fn test_registry_load_ime_profiles() {
+        let dir = tempdir().unwrap();
+        let pime_root = dir.path();
+        let backends_json = r#"[
+            {"name": "python", "command": "python.exe", "workingDir": "python", "params": ""},
+            {"name": "node", "command": "node.exe", "workingDir": "node", "params": ""}
+        ]"#;
+        fs::write(pime_root.join("backends.json"), backends_json).unwrap();
+
+        let rime_dir = pime_root.join("python").join("input_methods").join("rime");
+        let zh_tw_dir = rime_dir.join("ime_profiles").join("zh_TW");
+        fs::create_dir_all(&zh_tw_dir).unwrap();
+        fs::write(rime_dir.join("ime.json"), r#"{"guid": "{ROOT}"}"#).unwrap();
+        fs::write(zh_tw_dir.join("ime.json"), r#"{"guid": "{PROFILE}"}"#).unwrap();
+
+        // A duplicate GUID in another backend must not override the first one.
+        let dup_dir = pime_root.join("node").join("input_methods").join("dup");
+        fs::create_dir_all(&dup_dir).unwrap();
+        fs::write(dup_dir.join("ime.json"), r#"{"guid": "{PROFILE}"}"#).unwrap();
+
+        let registry = BackendRegistry::load(pime_root);
+        assert_eq!(registry.resolve_guid("{root}"), Some(&"python".to_string()));
+        assert_eq!(registry.resolve_guid("{profile}"), Some(&"python".to_string()));
     }
 }

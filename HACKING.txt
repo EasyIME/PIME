@@ -103,3 +103,18 @@ Directory structure
     All input method modules implemented using node.js. If you're trying to implement your
     own input method, you should put your module in this directory.
 
+* Input method module layout (under `<backend>/input_methods/<ime_module>/`):
+  Each input method module resides in its own subdirectory and may define one or more
+  Windows TSF language profiles:
+  - `ime.json`: Language profile manifest at the module root (commonly used when the
+    module provides a single language profile).
+  - `ime_profiles/<profile_name>/ime.json`: Optional subdirectory for additional or
+    multi-locale language profile manifests (e.g. `zh-TW` and `zh-CN` profiles sharing
+    the same input method implementation).
+  - If both `<ime_module>/ime.json` and `<ime_module>/ime_profiles/<profile_name>/ime.json`
+    exist, both are loaded.
+  - Each profile must have a unique `guid`. If a guid is duplicated, the first manifest found
+    wins (`ime.json` first, then `ime_profiles/*` in name order) and the others are ignored.
+  - All module imports (`moduleName`) and relative asset/tool paths (`icon`, `configTool`,
+    `configToolDir`) are resolved relative to `<backend>/input_methods/<ime_module>/`.
+

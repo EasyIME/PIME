@@ -47,7 +47,19 @@ public:
 	// called when config dialog needs to be launched
 	virtual bool onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile);
 
-	bool loadImeInfo(const std::string&, std::wstring& filePath, nlohmann::json& content);
+	struct ImeManifest {
+		std::wstring jsonPath;
+		std::wstring moduleDir;
+	};
+
+	// Collects all ime.json manifest paths across all backends:
+	//   <backend>/input_methods/<module>/ime.json
+	//   <backend>/input_methods/<module>/ime_profiles/<profile>/ime.json
+	std::vector<ImeManifest> findImeManifests() const;
+
+	// Finds the manifest of the language profile with the given guid.
+	// moduleDir receives the IME module dir, against which relative paths are resolved.
+	bool loadImeInfo(const std::string& guid, std::wstring& moduleDir, nlohmann::json& content);
 
 	const std::vector<std::wstring>& backendDirs() {
 		return backendDirs_;

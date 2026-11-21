@@ -1,0 +1,11 @@
+{
+	"name": "中州韻輸入法 (PIME - Go)",
+	"version": "0.1",
+	"guid": "{8B82C262-0F74-4183-8F7C-467323F7CAD6}",
+	"locale": "zh-Hant-TW",
+	"fallbackLocale": "zh-TW",
+	"icon": "",
+	"win8_icon": "",
+	"moduleName": "rime",
+	"serviceName": "RimeTextService"
+}

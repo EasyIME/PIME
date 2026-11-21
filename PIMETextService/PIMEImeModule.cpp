@@ -20,6 +20,7 @@
 #include "PIMEImeModule.h"
 #include "JsonUtils.h"
 #include "PIMETextService.h"
+#include <algorithm>
 #include <string>
 #include <fstream>
 #include <cstring>
@@ -94,48 +95,60 @@ Ime::TextService* ImeModule::createTextService() {
 	return service;
 }
 
-bool ImeModule::loadImeInfo(const std::string& guid, std::wstring& filePath, json& content) {
-	bool found = false;
-	// find the input method module
-	for (const auto backendDir : backendDirs_) {
-		std::wstring dirPath = programDir_;
-		dirPath += '\\';
-		dirPath += backendDir;
-		dirPath += L"\\input_methods";
-		// scan the dir for lang profile definition files
-		WIN32_FIND_DATA findData = { 0 };
-		HANDLE hFind = ::FindFirstFile((dirPath + L"\\*").c_str(), &findData);
-		if (hFind != INVALID_HANDLE_VALUE) {
-			do {
-				if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { // this is a subdir
-					if (findData.cFileName[0] != '.') {
-						std::wstring imejson = dirPath;
-						imejson += '\\';
-						imejson += findData.cFileName;
-						imejson += L"\\ime.json";
-						std::ifstream fp(imejson, std::ifstream::binary);
-						if (fp) {
-							content = parseJsonNoThrow(fp);
-							if (!content.is_object() || content.is_discarded()) {
-								continue;
-							}
-							std::string imeGuid = jsonValueOr<std::string>(content, "guid", "");
-							if (stricmp(guid.c_str(), imeGuid.c_str()) == 0) {
-								// found the language profile
-								found = true;
-								filePath = imejson;
-								break;
-							}
-						}
-					}
-				}
-			} while (::FindNextFile(hFind, &findData));
-			::FindClose(hFind);
-		}
-		if (found)
-			break;
+static std::vector<std::wstring> listSubdirs(const std::wstring& dir) {
+	std::vector<std::wstring> subdirs;
+	WIN32_FIND_DATAW findData = { 0 };
+	HANDLE hFind = ::FindFirstFileW((dir + L"\\*").c_str(), &findData);
+	if (hFind != INVALID_HANDLE_VALUE) {
+		do {
+			if ((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && findData.cFileName[0] != L'.') {
+				subdirs.push_back(dir + L'\\' + findData.cFileName);
+			}
+		} while (::FindNextFileW(hFind, &findData));
+		::FindClose(hFind);
 	}
-	return found;
+	std::sort(subdirs.begin(), subdirs.end());
+	return subdirs;
+}
+
+std::vector<ImeModule::ImeManifest> ImeModule::findImeManifests() const {
+	std::vector<ImeManifest> manifests;
+	for (const auto& backendDir : backendDirs_) {
+		const std::wstring inputMethodsDir = programDir_ + L'\\' + backendDir + L"\\input_methods";
+		for (const auto& moduleDir : listSubdirs(inputMethodsDir)) {
+			std::wstring rootJson = moduleDir + L"\\ime.json";
+			if (::GetFileAttributesW(rootJson.c_str()) != INVALID_FILE_ATTRIBUTES) {
+				manifests.push_back({std::move(rootJson), moduleDir});
+			}
+			for (const auto& profileDir : listSubdirs(moduleDir + L"\\ime_profiles")) {
+				std::wstring profileJson = profileDir + L"\\ime.json";
+				if (::GetFileAttributesW(profileJson.c_str()) != INVALID_FILE_ATTRIBUTES) {
+					manifests.push_back({std::move(profileJson), moduleDir});
+				}
+			}
+		}
+	}
+	return manifests;
+}
+
+bool ImeModule::loadImeInfo(const std::string& guid, std::wstring& moduleDir, json& content) {
+	for (const auto& manifest : findImeManifests()) {
+		std::ifstream fp(manifest.jsonPath, std::ifstream::binary);
+		if (!fp) {
+			continue;
+		}
+		content = parseJsonNoThrow(fp);
+		if (!content.is_object() || content.is_discarded()) {
+			continue;
+		}
+		std::string imeGuid = jsonValueOr<std::string>(content, "guid", "");
+		if (stricmp(guid.c_str(), imeGuid.c_str()) == 0) {
+			// found the language profile
+			moduleDir = manifest.moduleDir;
+			return true;
+		}
+	}
+	return false;
 }
 
 // virtual
@@ -152,10 +165,11 @@ bool ImeModule::onConfigure(HWND hwndParent, LANGID langid, REFGUID rguidProfile
 	std::wstring configDir;
 
 	// find the input method module
-	std::wstring infoFilePath;
+	std::wstring moduleDir;
 	json info;
-	if (loadImeInfo(guidStr, infoFilePath, info)) {
-		std::wstring currentDir = infoFilePath.substr(0, infoFilePath.length() - 8); // remove "ime.json" from file path
+	if (loadImeInfo(guidStr, moduleDir, info)) {
+		// relative paths are resolved against the IME module dir
+		std::wstring currentDir = moduleDir + L'\\';
 		configCommand = utf8ToUtf16(jsonValueOr<std::string>(info, "configTool", "").c_str());
 		configParams = utf8ToUtf16(jsonValueOr<std::string>(info, "configToolParams", "").c_str());
 		configDir = utf8ToUtf16(jsonValueOr<std::string>(info, "configToolDir", "").c_str());

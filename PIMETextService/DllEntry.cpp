@@ -2,6 +2,7 @@
 #include "JsonUtils.h"
 #include "resource.h"
 
+#include <algorithm>
 #include <fstream>
 #include <mutex>
 #include <optional>
@@ -79,7 +80,7 @@ STDAPI DllUnregisterServer(void) {
 	return module ? module->unregisterServer() : E_FAIL;
 }
 
-static inline std::optional<Ime::LangProfileInfo> langProfileFromJson(const std::wstring& file, bool useWin8Icon) {
+static inline std::optional<Ime::LangProfileInfo> langProfileFromJson(const std::wstring& file, const std::wstring& moduleDir, bool useWin8Icon) {
 	// load the json file to get the info of input method
 	std::ifstream fp(file, std::ifstream::binary);
 	if (!fp) {
@@ -114,10 +115,8 @@ static inline std::optional<Ime::LangProfileInfo> langProfileFromJson(const std:
 	}
 	auto iconFile = utf8ToUtf16(iconPath.c_str());
 	if (!iconFile.empty() && PathIsRelative(iconFile.c_str())) {
-		size_t p = file.rfind(L'\\');
-		if (p != file.npos) {
-			iconFile = file.substr(0, p + 1) + iconFile;
-		}
+		// relative paths are resolved against the IME module dir
+		iconFile = moduleDir + L'\\' + iconFile;
 	}
 	return Ime::LangProfileInfo{
 		std::move(name),
@@ -136,36 +135,17 @@ STDAPI DllRegisterServer(void) {
 	if (!module) {
 		return E_FAIL;
 	}
-	const std::wstring programDir = module->programDir();
-	for (const auto backendDir: module->backendDirs()) {
-		std::string backendName = utf16ToUtf8(backendDir.c_str());
-		std::wstring dirPath = programDir;
-		dirPath += L'\\';
-		dirPath += backendDir;
-		dirPath += L"\\input_methods";
-		// scan the dir for lang profile definition files
-		WIN32_FIND_DATA findData = { 0 };
-		HANDLE hFind = ::FindFirstFile((dirPath + L"\\*").c_str(), &findData);
-		if (hFind != INVALID_HANDLE_VALUE) {
-			do {
-				if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { // this is a subdir
-					if (findData.cFileName[0] != '.') {
-						std::wstring imejson = dirPath;
-						imejson += '\\';
-						imejson += findData.cFileName;
-						imejson += L"\\ime.json";
-						// Make sure the file exists
-						DWORD fileAttrib = GetFileAttributesW(imejson.c_str());
-						if (fileAttrib != INVALID_FILE_ATTRIBUTES) {
-							// load the json file to get the info of input method
-							if (auto profile = langProfileFromJson(imejson, useWin8Icon)) {
-								langProfiles.push_back(std::move(*profile));
-							}
-						}
-					}
-				}
-			} while (::FindNextFile(hFind, &findData));
-			::FindClose(hFind);
+	for (const auto& manifest : module->findImeManifests()) {
+		auto profile = langProfileFromJson(manifest.jsonPath, manifest.moduleDir, useWin8Icon);
+		if (!profile) {
+			continue;
+		}
+		// The first manifest of a GUID wins; skip duplicates.
+		bool duplicated = std::any_of(langProfiles.begin(), langProfiles.end(), [&](const auto& p) {
+			return IsEqualGUID(p.profileGuid, profile->profileGuid);
+		});
+		if (!duplicated) {
+			langProfiles.push_back(std::move(*profile));
 		}
 	}
 	wchar_t modulePath[MAX_PATH];

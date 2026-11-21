@@ -148,6 +148,80 @@ class ServiceManagerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             dir_path_to_import_path(outside, base)
 
+    def test_load_ime_profiles_and_root_ime_json_together(self):
+        root_guid = "{aaaaaaaa-bbbb-cccc-dddd-eeeeeeee0001}"
+        prof_guid = "{aaaaaaaa-bbbb-cccc-dddd-eeeeeeee0002}"
+        im_dir = self._create_dummy_ime("multi_ime", root_guid, module_name="multi_mod", class_name="MultiClass")
+
+        prof_dir = os.path.join(im_dir, "ime_profiles", "zhtw")
+        os.makedirs(prof_dir, exist_ok=True)
+        with open(os.path.join(prof_dir, "ime.json"), "w", encoding="utf-8") as f:
+            json.dump({
+                "name": "Multi IME (zh-TW)",
+                "moduleName": "multi_mod",
+                "serviceName": "MultiClass",
+                "guid": prof_guid,
+            }, f)
+
+        mgr = TextServiceManager()
+        mgr.load(self.test_root)
+
+        self.assertIn(root_guid.lower(), mgr.services)
+        self.assertIn(prof_guid.lower(), mgr.services)
+        self.assertEqual(mgr.services[root_guid.lower()].moduleName, "input_methods.multi_ime.multi_mod")
+        self.assertEqual(mgr.services[prof_guid.lower()].moduleName, "input_methods.multi_ime.multi_mod")
+
+        srv1 = mgr.createService("client1", root_guid)
+        srv2 = mgr.createService("client2", prof_guid)
+        self.assertIsNotNone(srv1)
+        self.assertIsNotNone(srv2)
+        self.assertIs(type(srv1), type(srv2))
+
+    def test_load_ime_profiles_only_without_root_ime_json(self):
+        prof1_guid = "{bbbbbbbb-cccc-dddd-eeee-ffffffff0001}"
+        prof2_guid = "{bbbbbbbb-cccc-dddd-eeee-ffffffff0002}"
+        im_dir = self._create_dummy_ime("profiles_only_ime", prof1_guid, module_name="prof_mod", class_name="ProfClass")
+        os.remove(os.path.join(im_dir, "ime.json"))
+
+        for name, guid in [("zhcn", prof1_guid), ("zhtw", prof2_guid)]:
+            prof_dir = os.path.join(im_dir, "ime_profiles", name)
+            os.makedirs(prof_dir, exist_ok=True)
+            with open(os.path.join(prof_dir, "ime.json"), "w", encoding="utf-8") as f:
+                json.dump({
+                    "name": f"Profile {name}",
+                    "moduleName": "prof_mod",
+                    "serviceName": "ProfClass",
+                    "guid": guid,
+                }, f)
+
+        mgr = TextServiceManager()
+        mgr.load(self.test_root)
+
+        self.assertIn(prof1_guid.lower(), mgr.services)
+        self.assertIn(prof2_guid.lower(), mgr.services)
+        self.assertEqual(mgr.services[prof1_guid.lower()].moduleName, "input_methods.profiles_only_ime.prof_mod")
+        self.assertEqual(mgr.services[prof2_guid.lower()].moduleName, "input_methods.profiles_only_ime.prof_mod")
+
+    def test_duplicate_guid_in_ime_profiles_keeps_root_ime_json(self):
+        guid = "{cccccccc-dddd-eeee-ffff-000000000001}"
+        im_dir = self._create_dummy_ime("dup_ime", guid)
+
+        prof_dir = os.path.join(im_dir, "ime_profiles", "zh_TW")
+        os.makedirs(prof_dir, exist_ok=True)
+        with open(os.path.join(prof_dir, "ime.json"), "w", encoding="utf-8") as f:
+            json.dump({
+                "name": "Duplicate",
+                "moduleName": "my_ime",
+                "serviceName": "MyService",
+                "guid": guid,
+            }, f)
+
+        mgr = TextServiceManager()
+        with self.assertLogs("serviceManager", level="WARNING"):
+            mgr.load(self.test_root)
+
+        self.assertEqual(mgr.services[guid.lower()].name, "Test IME")
+
 
 if __name__ == "__main__":
     unittest.main()
